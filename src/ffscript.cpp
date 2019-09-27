@@ -24341,6 +24341,32 @@ bool FFScript::itemScriptEngine()
 				
 			}
 		}
+		/* PROBABLY NOT NEEDED?
+		else if ( ((itemsbuf[q].family)==itype_triforcepiece && !(game->lvlitems[curlvl]&0x01)) )
+		{
+			item_doscript[q] = 0;
+			lvlitemScriptData[curlvl*(LVLITEM_TRIFORCE-1)].Clear();
+			itemscriptInitialised[q] = 0;
+		}
+		else if ( ((itemsbuf[q].family)==itype_map && !(game->lvlitems[curlvl]&0x02)) )
+		{
+			item_doscript[q] = 0;
+			lvlitemScriptData[curlvl*(LVLITEM_MAP-1)].Clear();
+			itemscriptInitialised[q] = 0;
+		}
+		else if ( ((itemsbuf[q].family)==itype_compass && !(game->lvlitems[curlvl]&0x04)) )
+		{
+			item_doscript[q] = 0;
+			lvlitemScriptData[curlvl*(LVLITEM_COMPASS-1)].Clear();
+			itemscriptInitialised[q] = 0;
+		}
+		else if ( ((itemsbuf[q].family)==itype_bosskey && !(game->lvlitems[curlvl]&0x04)) )
+		{
+			item_doscript[q] = 0;
+			lvlitemScriptData[curlvl*(LVLITEM_BOSSKEY-1)].Clear();
+			itemscriptInitialised[q] = 0;
+		}
+		*/
 		
 		if(item_doscript[q]==4)  //Item set itself false, kill script and clear data here
 		{
