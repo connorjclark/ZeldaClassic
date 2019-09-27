@@ -893,10 +893,12 @@ word global_wait = 0;
 bool link_waitdraw = false;
 bool dmap_waitdraw = false;
 word item_doscript[256] = {0};
+word lvlitem_doscript[MAXLEVELS*4] = {0};
 word item_collect_doscript[256] = {0};
 byte dmapscriptInitialised[512] = {0};
 //Sprite script data
 refInfo itemScriptData[256];
+refInfo lvlitemScriptData[4*MAXLEVELS];
 refInfo itemCollectScriptData[256];
 byte itemscriptInitialised[256]={0};
 refInfo npcScriptData[256];
@@ -914,6 +916,7 @@ long(*stack)[MAX_SCRIPT_REGISTERS] = NULL;
 long ffc_stack[32][MAX_SCRIPT_REGISTERS];
 long global_stack[NUMSCRIPTGLOBAL][MAX_SCRIPT_REGISTERS];
 long item_stack[256][MAX_SCRIPT_REGISTERS];
+long lvlitem_stack[4*MAXLEVELS][MAX_SCRIPT_REGISTERS]; //compass, map, bosskey
 long item_collect_stack[256][MAX_SCRIPT_REGISTERS];
 long ffmisc[32][16];
 long link_stack[MAX_SCRIPT_REGISTERS];
@@ -14519,6 +14522,7 @@ void do_set(const bool v, const byte whichType, const long whichUID)
 		case SCRIPT_ITEM:
 		{
 			bool collect = ( ( whichUID < 1 ) || (whichUID == COLLECT_SCRIPT_ITEM_ZERO) );
+			
 			long new_UID = ( collect ) ? (( whichUID != COLLECT_SCRIPT_ITEM_ZERO ) ? (whichUID * -1) : 0) : whichUID;
 			
 			if(collect)
@@ -18639,10 +18643,42 @@ int run_script(const byte type, const word script, const long i)
 		bool collect = ( ( i < 1 ) || (i == COLLECT_SCRIPT_ITEM_ZERO) );
 		new_i = ( collect ) ? (( i != COLLECT_SCRIPT_ITEM_ZERO ) ? (i * -1) : 0) : i;
 		
-		ri = ( collect ) ? &(itemCollectScriptData[new_i]) : &(itemScriptData[i]);
+		int levelitem = 0;
+		int curlvl = DMaps[get_currdmap()].level;
+		if ( new_i >= 0 && new_i < new_i )
+		{
+			switch ( (itemsbuf[new_i].family) )
+			{
+				case itype_triforcepiece:
+					levelitem = LVLITEM_TRIFORCE; break;
+				case itype_map:
+					levelitem = LVLITEM_MAP; break;
+				case itype_compass:
+					levelitem = LVLITEM_COMPASS; break;
+				case itype_bosskey:
+					levelitem = LVLITEM_BOSSKEY; break;
+				default: break;
+				
+				
+			}
+			
+		}    
+		
+		
+		if ( levelitem )
+		{
+			--levelitem; //these are intentionally off by one. -Z
+			ri = lvlitemScriptData[curlvl*levelitem];
+			stack = &(lvlitem_stack[curlvl*levelitem]);
+		}
+		else 
+		{
+			ri = ( collect ) ? &(itemCollectScriptData[new_i]) : &(itemScriptData[i]);
+			stack = ( collect ) ?  &(item_collect_stack[new_i]) : &(item_stack[i]);
+		}
 		
 		curscript = itemscripts[script];
-		stack = ( collect ) ?  &(item_collect_stack[new_i]) : &(item_stack[i]);
+		
 		
 		if ( !(itemscriptInitialised[new_i]) )
 		{
@@ -21138,13 +21174,49 @@ int run_script(const byte type, const word script, const long i)
 			int new_i = 0;
 			bool collect = ( ( i < 1 ) || (i == COLLECT_SCRIPT_ITEM_ZERO) );
 			new_i = ( collect ) ? (( i != COLLECT_SCRIPT_ITEM_ZERO ) ? (i * -1) : 0) : i;
-			
+			int levelitem = 0;
+			int curlvl = DMaps[get_currdmap()].level;
+			if ( new_i >= 0 && new_i < new_i )
+			{
+				switch ( (itemsbuf[new_i].family) )
+				{
+					case itype_triforcepiece:
+						levelitem = LVLITEM_TRIFORCE; break;
+					case itype_map:
+						levelitem = LVLITEM_MAP; break;
+					case itype_compass:
+						levelitem = LVLITEM_COMPASS; break;
+					case itype_bosskey:
+						levelitem = LVLITEM_BOSSKEY; break;
+					default: break;
+					
+					
+				}
+				
+			}    
+		
+		
+		
 			if ( !collect )
 			{
-				if ( (itemsbuf[i].flags&ITEM_FLAG16) && game->item[i] ) itemsbuf[i].script = 0; //Quit perpetual scripts, too.
-				item_doscript[new_i] = 0;
-				for ( int q = 0; q < 1024; q++ ) item_stack[new_i][q] = 0xFFFF;
-				itemScriptData[new_i].Clear();
+				//level items
+				if ( levelitem )
+				{
+					--levelitem; //these are intentionally off by one. -Z
+					
+					if ( (itemsbuf[i].flags&ITEM_FLAG16) && game->item[i] ) itemsbuf[i].script = 0; //Quit perpetual scripts, too.
+					item_doscript[new_i] = 0;
+					for ( int q = 0; q < 1024; q++ ) lvlitem_stack[curlvl*levelitem][q] = 0xFFFF;
+					lvlitemScriptData[curlvl*levelitem].Clear();
+				}
+		
+				else
+				{
+					if ( (itemsbuf[i].flags&ITEM_FLAG16) && game->item[i] ) itemsbuf[i].script = 0; //Quit perpetual scripts, too.
+					item_doscript[new_i] = 0;
+					for ( int q = 0; q < 1024; q++ ) item_stack[new_i][q] = 0xFFFF;
+					itemScriptData[new_i].Clear();
+				}
 			}
 			else
 			{
@@ -24152,8 +24224,26 @@ bool FFScript::itemScriptEngine()
 {
 	if ( FFCore.system_suspend[susptITEMSCRIPTENGINE] ) return false;
 	//Z_scripterrlog("Trying to check if an %s is running.\n","item script");
+	int curlvl = DMaps[get_currdmap()].level;
+	int levelitem = 0;
 	for ( int q = 0; q < 256; q++ )
 	{
+		
+		switch ( (itemsbuf[new_i].family) )
+		{
+			case itype_triforcepiece:
+				levelitem = LVLITEM_TRIFORCE; break;
+			case itype_map:
+				levelitem = LVLITEM_MAP; break;
+			case itype_compass:
+				levelitem = LVLITEM_COMPASS; break;
+			case itype_bosskey:#
+				levelitem = LVLITEM_BOSSKEY; break;
+			default: break;
+			
+			
+		}
+			
 		
 		//Z_scripterrlog("Checking item ID: %d\n",q);
 		if ( itemsbuf[q].script == 0 ) continue;
