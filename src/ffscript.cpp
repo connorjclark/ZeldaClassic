@@ -24312,12 +24312,25 @@ bool FFScript::itemScriptEngine()
 			
 		}
 		
-		if ( (item_doscript[q] > 1) || ( (itemsbuf[q].flags&ITEM_FLAG16) && game->item[q] && (get_bit(quest_rules, qr_ITEMSCRIPTSKEEPRUNNING)) ) )
+		if ( (item_doscript[q] > 1) || ( (itemsbuf[q].flags&ITEM_FLAG16) && ( game->item[q] && (get_bit(quest_rules, qr_ITEMSCRIPTSKEEPRUNNING)) ) )
 		{
 			//Z_scripterrlog("ItemScriptEngine() reached a point to call RunScript for item id: %d\n",q);
 			ZScriptVersion::RunScript(SCRIPT_ITEM, itemsbuf[q].script, q&0xFFF);
 			continue;
 			
+		}
+		//run a passive script for level items if Link has them for the current level and their passive flag is checked
+		else if (
+				( ((itemsbuf[ri->idata].family)==itype_triforcepiece && (game->lvlitems[curlvl]&0x01)) || 
+				  ((itemsbuf[ri->idata].family)==itype_map && (game->lvlitems[curlvl]&0x02)) ||
+				  ((itemsbuf[ri->idata].family)==itype_compass && (game->lvlitems[curlvl]&0x04)) ||
+				  ((itemsbuf[ri->idata].family)==itype_bosskey && (game->lvlitems[curlvl]&0x08)) 
+				)
+				&& (itemsbuf[q].flags&ITEM_FLAG16) && (get_bit(quest_rules, qr_ITEMSCRIPTSKEEPRUNNING))
+			)
+		{
+			ZScriptVersion::RunScript(SCRIPT_ITEM, itemsbuf[q].script, q&0xFFF);
+			continue;
 		}
 		else if ( item_doscript[q] == 1 )
 		{
@@ -24449,6 +24462,19 @@ bool FFScript::itemScriptEngineOnWaitdraw()
 			ZScriptVersion::RunScript(SCRIPT_ITEM, itemsbuf[q].script, q&0xFFF);
 			continue;
 			
+		}
+		//run a passive script for level items if Link has them for the current level and their passive flag is checked
+		else if (
+				( ((itemsbuf[ri->idata].family)==itype_triforcepiece && (game->lvlitems[curlvl]&0x01)) || 
+				  ((itemsbuf[ri->idata].family)==itype_map && (game->lvlitems[curlvl]&0x02)) ||
+				  ((itemsbuf[ri->idata].family)==itype_compass && (game->lvlitems[curlvl]&0x04)) ||
+				  ((itemsbuf[ri->idata].family)==itype_bosskey && (game->lvlitems[curlvl]&0x08)) 
+				)
+				&& (itemsbuf[q].flags&ITEM_FLAG16) && (get_bit(quest_rules, qr_ITEMSCRIPTSKEEPRUNNING))
+			)
+		{
+			ZScriptVersion::RunScript(SCRIPT_ITEM, itemsbuf[q].script, q&0xFFF);
+			continue;
 		}
 		else if ( item_doscript[q] == 1 )
 		{
