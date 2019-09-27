@@ -24321,10 +24321,10 @@ bool FFScript::itemScriptEngine()
 		}
 		//run a passive script for level items if Link has them for the current level and their passive flag is checked
 		else if (
-				( ((itemsbuf[ri->idata].family)==itype_triforcepiece && (game->lvlitems[curlvl]&0x01)) || 
-				  ((itemsbuf[ri->idata].family)==itype_map && (game->lvlitems[curlvl]&0x02)) ||
-				  ((itemsbuf[ri->idata].family)==itype_compass && (game->lvlitems[curlvl]&0x04)) ||
-				  ((itemsbuf[ri->idata].family)==itype_bosskey && (game->lvlitems[curlvl]&0x08)) 
+				( ((itemsbuf[q].family)==itype_triforcepiece && (game->lvlitems[curlvl]&0x01)) || 
+				  ((itemsbuf[q].family)==itype_map && (game->lvlitems[curlvl]&0x02)) ||
+				  ((itemsbuf[q].family)==itype_compass && (game->lvlitems[curlvl]&0x04)) ||
+				  ((itemsbuf[q].family)==itype_bosskey && (game->lvlitems[curlvl]&0x08)) 
 				)
 				&& (itemsbuf[q].flags&ITEM_FLAG16) && (get_bit(quest_rules, qr_ITEMSCRIPTSKEEPRUNNING))
 			)
@@ -24465,10 +24465,10 @@ bool FFScript::itemScriptEngineOnWaitdraw()
 		}
 		//run a passive script for level items if Link has them for the current level and their passive flag is checked
 		else if (
-				( ((itemsbuf[ri->idata].family)==itype_triforcepiece && (game->lvlitems[curlvl]&0x01)) || 
-				  ((itemsbuf[ri->idata].family)==itype_map && (game->lvlitems[curlvl]&0x02)) ||
-				  ((itemsbuf[ri->idata].family)==itype_compass && (game->lvlitems[curlvl]&0x04)) ||
-				  ((itemsbuf[ri->idata].family)==itype_bosskey && (game->lvlitems[curlvl]&0x08)) 
+				( ((itemsbuf[q].family)==itype_triforcepiece && (game->lvlitems[curlvl]&0x01)) || 
+				  ((itemsbuf[q].family)==itype_map && (game->lvlitems[curlvl]&0x02)) ||
+				  ((itemsbuf[q].family)==itype_compass && (game->lvlitems[curlvl]&0x04)) ||
+				  ((itemsbuf[q].family)==itype_bosskey && (game->lvlitems[curlvl]&0x08)) 
 				)
 				&& (itemsbuf[q].flags&ITEM_FLAG16) && (get_bit(quest_rules, qr_ITEMSCRIPTSKEEPRUNNING))
 			)
