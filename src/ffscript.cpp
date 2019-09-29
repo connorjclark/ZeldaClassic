@@ -18668,8 +18668,8 @@ int run_script(const byte type, const word script, const long i)
 		if ( levelitem )
 		{
 			--levelitem; //these are intentionally off by one. -Z
-			ri = lvlitemScriptData[curlvl*levelitem];
-			stack = &(lvlitem_stack[curlvl*levelitem]);
+			ri = lvlitemScriptData[curlvl+(levelitem*MAXLEVELS)];
+			stack = &(lvlitem_stack[curlvl+(levelitem*MAXLEVELS)]);
 		}
 		else 
 		{
@@ -21206,8 +21206,8 @@ int run_script(const byte type, const word script, const long i)
 					
 					if ( (itemsbuf[i].flags&ITEM_FLAG16) && game->item[i] ) itemsbuf[i].script = 0; //Quit perpetual scripts, too.
 					item_doscript[new_i] = 0;
-					for ( int q = 0; q < 1024; q++ ) lvlitem_stack[curlvl*levelitem][q] = 0xFFFF;
-					lvlitemScriptData[curlvl*levelitem].Clear();
+					for ( int q = 0; q < 1024; q++ ) lvlitem_stack[curlvl+(levelitem*MAXLEVELS)][q] = 0xFFFF;
+					lvlitemScriptData[curlvl+(levelitem*MAXLEVELS)].Clear();
 				}
 		
 				else
