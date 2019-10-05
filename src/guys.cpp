@@ -530,6 +530,11 @@ bool enemy::Dead(int index)
 // the guys sprite list; index is the enemy's index in the list.
 bool enemy::animate(int index)
 {
+    Z_scripterrlog("enemy script is: %d\n", script);
+	if ( script > 0 && doscript ) 
+    {
+	if ( FFCore.getQuestHeaderInfo(vZelda) >= 0x255 && !(FFCore.system_suspend[susptNPCSCRIPTS])  ) ZScriptVersion::RunScript(SCRIPT_NPC, script, getUID());
+    }
     int nx = real_x(x);
     int ny = real_y(y);
     
@@ -655,10 +660,8 @@ bool enemy::animate(int index)
     ++c_clk;
     
     //Run its script
-    if ( script > 0 && doscript ) 
-    {
-	if ( FFCore.getQuestHeaderInfo(vZelda) >= 0x255 && !(FFCore.system_suspend[susptNPCSCRIPTS])  ) ZScriptVersion::RunScript(SCRIPT_NPC, script, getUID());
-    }
+    
+    
     
     // returns true when enemy is defeated
     return Dead(index);
@@ -6733,6 +6736,7 @@ int wpnsfx(int wpn)
 // also easier to manage all the guys this way
 guy::guy(fix X,fix Y,int Id,int Clk,bool mg) : enemy(X,Y,Id,Clk)
 {
+    d = guysbuf + (id & 0xFFF);
     mainguy=mg;
     canfreeze=false;
     dir=down;
@@ -6742,12 +6746,91 @@ guy::guy(fix X,fix Y,int Id,int Clk,bool mg) : enemy(X,Y,Id,Clk)
     hxsz=12;
     hysz=17;
     obeys_gravity = 0;
+	doscript = 1;
     
     if(!superman && (!isdungeon() || id==gFAIRY || id==gFIRE || id==gZELDA))
     {
         superman = 1;
         hxofs=1000;
     }
+        frozentile = d->frozentile;
+    
+    frozencset = d->frozencset;
+    frozenclock = 0;
+    for ( int q = 0; q < 10; q++ ) frozenmisc[q] = d->frozenmisc[q];
+   
+    for ( int q = 0; q < NUM_HIT_TYPES_USED; q++ ) hitby[q] = 0;
+    //firesfx = 0; //t.b.a -Z
+    isCore = true; //t.b.a
+    parentCore = 0; //t.b.a
+    script_UID = FFCore.GetScriptObjectUID(UID_TYPE_NPC); //This is used by child npcs. 
+    
+    firesfx = d->firesfx;
+    for ( int q = 0; q < 32; q++ ) movement[q] = d->movement[q];
+    for ( int q = 0; q < 32; q++ ) new_weapon[q] = d->new_weapon[q];
+    Z_scripterrlog("d->script: %d\n", d->script);
+    script = 1; //Dont assign invalid data. 
+    Z_scripterrlog("guybufID: %d\n", id);
+    Z_scripterrlog("guybuf script is: %d\n", guysbuf[id].script);
+    Z_scripterrlog("guybuf doscript is: %d\n", doscript);
+    //script = guysbuf[id&0xFFF].script;
+    weaponscript = (d->weaponscript >= 0) ? d->weaponscript : 0; //Dont assign invalid data. 
+    
+    for ( int q = 0; q < 8; q++ ) 
+    {
+	    initD[q] = d->initD[q];
+	    //Z_scripterrlog("(enemy::enemy(fix)): Loading weapon InitD[%d] to an enemy with a value of (%d)\n",q,d->weap_initiald[q]);
+	    weap_initiald[q] = d->weap_initiald[q];
+	    //al_trace("Guys.cpp: Assigning guy.initD[%d]: %d\n",q, d->initD.initD[q]);
+	    //al_trace("Guys.cpp: Assigning guy.initD[%d] from d->initD[%d]: %d\n",q,q, d->initD[q]);
+	    //al_trace("Guys.cpp: guy.initD[%d] is: %d\n",q, initD[q]);
+    }
+    for ( int q = 0; q < 2; q++ ) 
+    {
+	    initA[q] = d->initA[q];
+	    weap_initiala[q] = d->weap_initiala[q];
+    }
+    
+    dialogue_str = 0; //set by spawn flags. 
+    editorflags = d->editorflags; //set by Enemy Editor 
+    
+    if(bgsfx>-1)
+    {
+        cont_sfx(bgsfx);
+    }
+   
+    scripttile = -1;
+    scriptflip = -1;
+    do_animation = 1;
+    step = dstep/100.0;
+    
+    
+    item_set = d->item_set;
+    grumble = d->grumble;
+    
+    
+    //2.6 Enemy Editor Hit and TIle Sizes
+    if ( ((d->SIZEflags&guyflagOVERRIDE_TILE_HEIGHT) != 0) && d->txsz > 0 ) { txsz = d->txsz; if ( txsz > 1 ) extend = 3; } //! Don;t forget to set extend if the tilesize is > 1. 
+    //al_trace("->txsz:%i\n", d->txsz); Verified that this is setting the value. -Z
+   // al_trace("Enemy txsz:%i\n", txsz);
+    if ( ((d->SIZEflags&guyflagOVERRIDE_TILE_WIDTH) != 0) && d->tysz > 0 ) { tysz = d->tysz; if ( tysz > 1 ) extend = 3; }
+    if ( ((d->SIZEflags&guyflagOVERRIDE_HIT_WIDTH) != 0) && d->hxsz >= 0 ) hxsz = d->hxsz;
+    if ( ((d->SIZEflags&guyflagOVERRIDE_HIT_HEIGHT) != 0) && d->hysz >= 0 ) hysz = d->hysz;
+    if ( ((d->SIZEflags&guyflagOVERRIDE_HIT_Z_HEIGHT) != 0) && d->hzsz >= 0  ) hzsz = d->hzsz;
+    if ( (d->SIZEflags&guyflagOVERRIDE_HIT_X_OFFSET) != 0 ) hxofs = d->hxofs;
+    if (  (d->SIZEflags&guyflagOVERRIDE_HIT_Y_OFFSET) != 0 ) hyofs = d->hyofs;
+//    if ( (d->SIZEflags&guyflagOVERRIDEHITZOFFSET) != 0 ) hzofs = d->hzofs;
+    if (  (d->SIZEflags&guyflagOVERRIDE_DRAW_X_OFFSET) != 0 ) xofs = (int)d->xofs;
+    if ( (d->SIZEflags&guyflagOVERRIDE_DRAW_Y_OFFSET) != 0 ) 
+    {
+	    yofs = (int)d->yofs; //This seems to be setting to +48 or something with any value set?! -Z
+	    yofs += 56 ; //this offset fixes yofs not plaing properly. -Z
+    }
+  
+    if (  (d->SIZEflags&guyflagOVERRIDE_DRAW_Z_OFFSET) != 0 ) zofs = (int)d->zofs;
+    
+	SIZEflags = d->SIZEflags;
+	
 }
 
 bool guy::animate(int index)
@@ -6774,6 +6857,12 @@ bool guy::animate(int index)
             addenemy(BSZ?176:168,68,eSHOOTFBALL,0);
         }
     }
+    //Run its script
+    //script = guysbuf[id&0xFFF].script;
+    //Z_scripterrlog("Guy id is: %d\n", id);
+    //Z_scripterrlog("Guy doscript is: %d\n", doscript);
+    //Z_scripterrlog("guy UID is: %d\n", this->getUID());
+    //Z_scripterrlog("Guy Script is: %d\n", script);
     
     return enemy::animate(index);
 }
