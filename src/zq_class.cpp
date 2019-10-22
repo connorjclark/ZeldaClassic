@@ -848,7 +848,7 @@ int zmap::load(const char *path)
         
     short version;
     byte build;
-    
+    /*
     //get the version
     if(!p_igetw(&version,f,true))
     {
@@ -860,7 +860,7 @@ int zmap::load(const char *path)
     {
         goto file_error;
     }
-    
+    */
     zcmap temp_map;
     temp_map.scrResWidth = 256;
     temp_map.scrResHeight = 224;
@@ -11663,6 +11663,9 @@ int readonemapscreen(PACKFILE *f, mapscr *temp_mapscr)
 {
 	mapscr tempmapscr;
 	memset(&tempmapscr,0,sizeof(mapscr));
+	tempmapscr.data.resize(16*11);
+	tempmapscr.sflag.resize(16*11);
+	tempmapscr.cset.resize(16*11);
 	int version = 0, build = 0, sversion = 0, cversion = 0;
 	
 	if(!p_igetw(&version,f,true))
@@ -11682,7 +11685,7 @@ int readonemapscreen(PACKFILE *f, mapscr *temp_mapscr)
             return qe_invalid;
         }
 	
-    
+    al_trace("readonemapscreen: read header\n");
     if(!p_getc(&tempmapscr.valid,f,true))
     {
         return qe_invalid;
@@ -12045,48 +12048,18 @@ int readonemapscreen(PACKFILE *f, mapscr *temp_mapscr)
     
     for(int k=0; k<(16)*(11); k++)
     {
-        try
-        {
-            if(!p_igetw(&tempmapscr.data.at(k),f,true))
+        if(!p_igetw(&tempmapscr.data.at(k),f,true))
             {
                 return qe_invalid;
             }
-        }
-        catch(std::out_of_range& e)
-        {
-            return qe_invalid;
-        }
-    }
-    
-    for(int k=0; k<(16)*(11); k++)
-    {
-        try
-        {
-            if(!p_getc(&tempmapscr.sflag.at(k),f,true))
+	if(!p_getc(&tempmapscr.sflag.at(k),f,true))
             {
                 return qe_invalid;
             }
-        }
-        catch(std::out_of_range& e)
-        {
-            return qe_invalid;
-        }
-    }
-    
-//    for(int k=0; k<(ZCMaps[i].tileWidth)*(ZCMaps[i].tileHeight); k++)
-    for(int k=0; k<(16)*(11); k++)
-    {
-        try
-        {
-            if(!p_getc(&tempmapscr.cset.at(k),f,true))
+	if(!p_getc(&tempmapscr.cset.at(k),f,true))
             {
                 return qe_invalid;
             }
-        }
-        catch(std::out_of_range& e)
-        {
-            return qe_invalid;
-        }
     }
     
     if(!p_igetw(&tempmapscr.screen_midi,f,true))
@@ -12216,6 +12189,7 @@ int readonemapscreen(PACKFILE *f, mapscr *temp_mapscr)
             {
                 return qe_invalid;
             }
+	    al_trace("read ffc initd\n");
             
             if(!p_getc(&tempmapscr.inita[k][0],f,true))
             {
@@ -12232,10 +12206,6 @@ int readonemapscreen(PACKFILE *f, mapscr *temp_mapscr)
     
     return qe_OK;
 }
-
-
-
-
 int writeonemapscreen(PACKFILE *f, int i, int j)
 {
 	if(!p_iputw(ZELDA_VERSION,f))
@@ -12262,7 +12232,7 @@ int writeonemapscreen(PACKFILE *f, int i, int j)
     }
     
     mapscr& screen=TheMaps.at(i*MAPSCRS+j);
-    
+    al_trace("writeonemapscreen: wrote header\n");
     if(!p_putc(screen.valid,f))
     {
         return qe_invalid;
@@ -12623,49 +12593,20 @@ int writeonemapscreen(PACKFILE *f, int i, int j)
         }
     }
     
-    for(int k=0; k<(ZCMaps[i].tileWidth)*(ZCMaps[i].tileHeight); k++)
+    for(int k=0; k<(16)*(11); k++)
     {
-        try
-        {
-            if(!p_iputw(screen.data.at(k),f))
+        if(!p_iputw(screen.data.at(k),f))
             {
                 return qe_invalid;
             }
-        }
-        catch(std::out_of_range& e)
-        {
-            return qe_invalid;
-        }
-    }
-    
-    for(int k=0; k<(ZCMaps[i].tileWidth)*(ZCMaps[i].tileHeight); k++)
-    {
-        try
-        {
-            if(!p_putc(screen.sflag.at(k),f))
+	if(!p_putc(screen.sflag.at(k),f))
             {
                 return qe_invalid;
             }
-        }
-        catch(std::out_of_range& e)
-        {
-            return qe_invalid;
-        }
-    }
-    
-    for(int k=0; k<(ZCMaps[i].tileWidth)*(ZCMaps[i].tileHeight); k++)
-    {
-        try
-        {
-            if(!p_putc(screen.cset.at(k),f))
+	if(!p_putc(screen.cset.at(k),f))
             {
                 return qe_invalid;
             }
-        }
-        catch(std::out_of_range& e)
-        {
-            return qe_invalid;
-        }
     }
     
     if(!p_iputw(screen.screen_midi,f))
@@ -12810,4 +12751,8 @@ int writeonemapscreen(PACKFILE *f, int i, int j)
     
     return qe_OK;
 }
+
+
+
+
 
