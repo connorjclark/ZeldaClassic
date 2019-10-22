@@ -262,4 +262,9 @@ int writeffscript(PACKFILE *f, zquestheader *Header, bool keepdata);
 int write_one_ffscript(PACKFILE *f, zquestheader *Header, int i, ffscript **script);
 int writeitemdropsets(PACKFILE *f, zquestheader *Header);
 int writefavorites(PACKFILE *f, zquestheader *Header);
+
+int readonemapscreen(PACKFILE *f, mapscr *temp_mapscr);
+int writeonemapscreen(PACKFILE *f, int i, int j);
+
+
 #endif
