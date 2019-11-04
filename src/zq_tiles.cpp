@@ -8462,7 +8462,7 @@ int readtilefile(PACKFILE *f)
 	
 }
 
-int readtilefile_to_location(PACKFILE *f, int start, int skip)
+int readtilefile_to_location(PACKFILE *f, int start, int skip, byte nooverwrite)
 {
 	dword section_version=0;
 	dword section_cversion=0;
@@ -8542,20 +8542,29 @@ int readtilefile_to_location(PACKFILE *f, int start, int skip)
 			delete[] temp_tile;
 			return 0;
 		}
-			    
-		reset_tile(newtilebuf, start+(tilect-1), format);
+		
 		if ( skip )
 		{
-			if ( (start+(tilect-1)) < skip ) goto skip_tile_memcpy;
+			if ( (start+(tilect-1)) < skip ) continue;
 			
-		}
-		if ( start+(tilect-1) < NEWMAXTILES )
+		} //no else if here is intentional!
+		if ( nooverwrite && (!(blank_tile_table[start+(tilect-1)])) )
 		{
-			memcpy(newtilebuf[start+(tilect-1)].data,temp_tile,tilesize(newtilebuf[start+(tilect-1)].format));
+			al_trace("Skipping tile %d because it has data %d.\n", start+(tilect-1), blank_tile_table[start+(tilect-1)] );
+			continue;
 		}
 		
+		reset_tile(newtilebuf, start+(tilect-1), format);
+		
+		if ( start+(tilect-1) < NEWMAXTILES )
+		{
+			
+			memcpy(newtilebuf[start+(tilect-1)].data,temp_tile,tilesize(newtilebuf[start+(tilect-1)].format));
+			
+		}
 	}
 	skip_tile_memcpy:
+	{}
 	delete[] temp_tile;
 	
 	//::memcpy(&(newtilebuf[tile_index]),&temptile,sizeof(tiledata));
@@ -12688,8 +12697,9 @@ void center_zq_tiles_dialogs()
 
 //.ZCOMBO
 
-int readcombofile(PACKFILE *f)
+int readcombofile(PACKFILE *f, int skip, byte nooverwrite)
 {
+	al_trace("readcombofile\n");
 	dword section_version=0;
 	dword section_cversion=0;
 	int zversion = 0;
@@ -12824,7 +12834,51 @@ int readcombofile(PACKFILE *f)
 		{
 			return 0;
 		}
-		memcpy(&combobuf[index+(tilect)],&temp_combo,sizeof(newcombo));
+		
+		if ( skip )
+		{
+			if ( (index+(tilect-1)) < skip ) goto skip_combo_copy;
+			
+		}
+		
+		if ( nooverwrite )
+		{
+			
+			if ( combobuf[index+(tilect)].tile == 0 &&
+				combobuf[index+(tilect)].flip == 0 &&
+				combobuf[index+(tilect)].walk == 0 &&
+				combobuf[index+(tilect)].type == 0 &&
+				combobuf[index+(tilect)].csets == 0 &&
+				combobuf[index+(tilect)].foo == 0 &&
+				combobuf[index+(tilect)].frames == 0 &&
+				combobuf[index+(tilect)].speed == 0 &&
+				combobuf[index+(tilect)].nextcombo == 0 &&
+				combobuf[index+(tilect)].nextcset == 0 &&
+				combobuf[index+(tilect)].flag == 0 &&
+				combobuf[index+(tilect)].skipanim == 0 &&
+				combobuf[index+(tilect)].nexttimer == 0 &&
+				combobuf[index+(tilect)].skipanimy == 0 &&
+				combobuf[index+(tilect)].animflags == 0 &&
+				combobuf[index+(tilect)].expansion[0] == 0 &&
+				combobuf[index+(tilect)].expansion[1] == 0 &&
+				combobuf[index+(tilect)].expansion[2] == 0 &&
+				combobuf[index+(tilect)].expansion[3] == 0 &&
+				combobuf[index+(tilect)].expansion[4] == 0 &&
+				combobuf[index+(tilect)].expansion[5] == 0 
+			)
+			{
+				memcpy(&combobuf[index+(tilect)],&temp_combo,sizeof(newcombo));
+			}
+			
+			
+		}
+		else
+		{
+			memcpy(&combobuf[index+(tilect)],&temp_combo,sizeof(newcombo));
+		}
+		skip_combo_copy:
+		{
+		}
 	}
 	
 	//::memcpy(&(newtilebuf[tile_index]),&temptile,sizeof(tiledata));
@@ -12835,7 +12889,7 @@ int readcombofile(PACKFILE *f)
 }
 
 
-int readcombofile_to_location(PACKFILE *f, int start)
+int readcombofile_to_location(PACKFILE *f, int start, byte nooverwrite, int skip)
 {
 	dword section_version=0;
 	dword section_cversion=0;
@@ -12880,6 +12934,7 @@ int readcombofile_to_location(PACKFILE *f, int start)
 	
 	int index = 0;
 	int count = 0;
+	
 	
 	//tile id
 	if(!p_igetl(&index,f,true))
@@ -12972,11 +13027,58 @@ int readcombofile_to_location(PACKFILE *f, int start)
 			return 0;
 		}
 		
+		if ( skip )
+		{
+			if ( (tilect) < skip ) 
+			{
+				
+				al_trace("tilect is: %d\n", tilect);
+				al_trace("skip is: %d\n", skip);
+				continue;
+			}
+			
+		}
+		
 		
 		if ( start+(tilect) < MAXCOMBOS )
 		{
-			memcpy(&combobuf[start+(tilect)],&temp_combo,sizeof(newcombo));
+			if ( nooverwrite )
+			{
+				
+				if ( combobuf[start+(tilect)-skip].tile == 0 &&
+					combobuf[start+(tilect)-skip].flip == 0 &&
+					combobuf[start+(tilect)-skip].walk == 0 &&
+					combobuf[start+(tilect)-skip].type == 0 &&
+					combobuf[start+(tilect)-skip].csets == 0 &&
+					combobuf[start+(tilect)-skip].foo == 0 &&
+					combobuf[start+(tilect)-skip].frames == 0 &&
+					combobuf[start+(tilect)-skip].speed == 0 &&
+					combobuf[start+(tilect)-skip].nextcombo == 0 &&
+					combobuf[start+(tilect)-skip].nextcset == 0 &&
+					combobuf[start+(tilect)-skip].flag == 0 &&
+					combobuf[start+(tilect)-skip].skipanim == 0 &&
+					combobuf[start+(tilect)-skip].nexttimer == 0 &&
+					combobuf[start+(tilect)-skip].skipanimy == 0 &&
+					combobuf[start+(tilect)-skip].animflags == 0 &&
+					combobuf[start+(tilect)-skip].expansion[0] == 0 &&
+					combobuf[start+(tilect)-skip].expansion[1] == 0 &&
+					combobuf[start+(tilect)-skip].expansion[2] == 0 &&
+					combobuf[start+(tilect)-skip].expansion[3] == 0 &&
+					combobuf[start+(tilect)-skip].expansion[4] == 0 &&
+					combobuf[start+(tilect)-skip].expansion[5] == 0 
+				)
+				{
+					memcpy(&combobuf[start+(tilect)-skip],&temp_combo,sizeof(newcombo));
+				}
+				
+				
+			}
+			else
+			{
+				memcpy(&combobuf[start+(tilect)-skip],&temp_combo,sizeof(newcombo));
+			}
 		}
+		
 	}
 	
 	

@@ -1200,6 +1200,7 @@ int onColors_Sprites();
 int onImport_Map();
 int onImport_DMaps();
 int onImport_Msgs();
+int onImport_Combos_old();
 int onImport_Combos();
 int onImport_Tiles();
 int onImport_Subscreen();

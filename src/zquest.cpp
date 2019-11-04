@@ -517,7 +517,7 @@ static MENU import_250x_files[]=
 	{ (char *)"&Tiles (2.50.x)",                     onImport_Tiles_old,            NULL,                     0,            NULL   },
         { (char *)"&Graphics Pack",             onImport_ZGP,              NULL,                     0,            NULL   },
         { (char *)"&DMaps",             onImport_DMaps_old,              NULL,                     0,            NULL   },
-    
+        { (char *)"&Combo Table",               onImport_Combos_old,           NULL,                     0,            NULL   },
 	//TO-DO: Move old combo and combo alias here
 	// make new comboset and aliasset functions
 	// make new dmaps function and move old dmaps here
@@ -540,22 +540,23 @@ static MENU import_menu[] =
 {
     { (char *)"&Map",                       onImport_Map,              NULL,                     0,            NULL   },
     { (char *)"&DMaps Set",                     onImport_DMaps,            NULL,                     0,            NULL   },
-    { (char *)"&Tileset",                     onImport_Tiles,            NULL,                     0,            NULL   },
     { (char *)"&Enemies",                   onImport_Guys,             NULL,                     0,            NULL   },
     { (char *)"Su&bscreen",                 onImport_Subscreen,        NULL,                     0,            NULL   },
     { (char *)"&Palettes",                  onImport_Pals,             NULL,                     0,            NULL   },
     { (char *)"&String Table",              onImport_Msgs,             NULL,                     0,            NULL   },
-    { (char *)"&Combo Table",               onImport_Combos,           NULL,                     0,            NULL   },
     { (char *)"&Combo Alias",               onImport_ComboAlias,       NULL,                     0,            NULL   },
     { (char *)"&Quest Template",            onImport_ZQT,              NULL,                     0,            NULL   },
     { (char *)"&Unencoded Quest",           onImport_UnencodedQuest,   NULL,                     0,            NULL   },
     { (char *)"",                           NULL,                      NULL,                     0,            NULL   },
-    { (char *)"Tile Pack",           	    onImport_Tilepack,   NULL,                     0,            NULL   },
-    { (char *)"Combo Pack",           	    onImport_Combopack,   NULL,                     0,            NULL   },
-    { (char *)"Combo Alias Pack",           	    onImport_Comboaliaspack,   NULL,                     0,            NULL   },
+    { (char *)"&Tileset (Full, 1:1)",                     onImport_Tiles,            NULL,                     0,            NULL   },
+    { (char *)"Tile Pack (Range)",           	    onImport_Tilepack,   NULL,                     0,            NULL   },
+    { (char *)"Tile Pack to... (Dest)",           	    onImport_Tilepack_To,   NULL,                     0,            NULL   },
     { (char *)"",                           NULL,                      NULL,                     0,            NULL   },
-    { (char *)"Tile Pack to...",           	    onImport_Tilepack_To,   NULL,                     0,            NULL   },
-    { (char *)"Combo Pack to...",           	    onImport_Combopack_To,   NULL,                     0,            NULL   },
+    { (char *)"Combo Set (Range)",               onImport_Combos,           NULL,                     0,            NULL   },
+    { (char *)"Combo Pack (Full, 1:1)",           	    onImport_Combopack,   NULL,                     0,            NULL   },
+    { (char *)"Combo Pack to... (Dest)",           	    onImport_Combopack_To,   NULL,                     0,            NULL   },
+    { (char *)"",                           NULL,                      NULL,                     0,            NULL   },
+    { (char *)"Combo Alias Pack",           	    onImport_Comboaliaspack,   NULL,                     0,            NULL   },
     { (char *)"Combo Alias Pack to...",           	    onImport_Comboaliaspack_To,   NULL,                     0,            NULL   },
     { (char *)"2.50.x Files",           	    NULL,   import_250x_files,                     0,            NULL   },
       
@@ -1354,6 +1355,7 @@ static DIALOG read_tiles_dlg[] =
     //8
     { jwin_button_proc,   15,   72,  36,   21,   vc(14),  vc(1),  13,      D_EXIT,     0,             0, (void *) "Load", NULL, NULL },
     { jwin_button_proc,   69,  72,  36,   21,   vc(14),  vc(1),  27,      D_EXIT,     0,             0, (void *) "Cancel", NULL, NULL },
+    { jwin_check_proc,        10,     42,     95,      9,    vc(14),                 vc(1),                   0,       0,           1,    0, (void *) "Don't Overwrite",                      NULL,   NULL                  },
     { NULL,                 0,    0,    0,    0,   0,       0,       0,       0,          0,             0,       NULL,                           NULL,  NULL }
 };
 
@@ -1369,7 +1371,7 @@ void writesometiles_to(const char *prompt,int initialval)
 	
 	
 	read_tiles_dlg[0].dp2 = lfont;
-	
+	byte nooverwrite = (read_tiles_dlg[10].flags == D_SELECTED);
 	sprintf(firsttile,"%d",0);
 	//sprintf(tilecount,"%d",1);
 	
@@ -1393,7 +1395,7 @@ void writesometiles_to(const char *prompt,int initialval)
 			if(f)
 			{
 				
-				if (!readtilefile_to_location(f,first_tile_id))
+				if (!readtilefile_to_location(f,first_tile_id,0,nooverwrite))
 				{
 					al_trace("Could not read from .ztile packfile %s\n", name);
 					jwin_alert("ZTILE File: Error","Could not load the specified Tile.",NULL,NULL,"O&K",NULL,'k',0,lfont);
@@ -1480,18 +1482,18 @@ void savesomecombos(const char *prompt,int initialval)
 }
 
 
-static DIALOG read_combopack_dlg[] =
+static DIALOG load_comboset_dlg[] =
 {
     // (dialog proc)     (x)   (y)   (w)   (h)   (fg)     (bg)    (key)    (flags)     (d1)           (d2)     (dp)
 
 
-	{ jwin_win_proc,      0,   0,   120,  100,  vc(14),  vc(1),  0,       D_EXIT,          0,             0, (void *) "Load Combo Pack To:", NULL, NULL },
+	{ jwin_win_proc,      0,   0,   120,  100,  vc(14),  vc(1),  0,       D_EXIT,          0,             0, (void *) "Combo Set (Range)", NULL, NULL },
     { d_timer_proc,         0,    0,     0,    0,    0,       0,       0,       0,          0,          0,         NULL, NULL, NULL },
     //for future tabs
     { d_dummy_proc,         120,  128,  80+1,   8+1,    vc(14),  vc(1),  0,       0,          1,             0,       NULL, NULL, NULL },
     { d_dummy_proc,         120,  128,  80+1,   8+1,    vc(14),  vc(1),  0,       0,          1,             0,       NULL, NULL, NULL },
     //4
-    {  jwin_text_proc,        10,    28,     20,      8,    vc(11),     vc(1),      0,    0,          0,    0, (void *) "Starting at:",               NULL,   NULL  },
+    {  jwin_text_proc,        10,    28,     20,      8,    vc(11),     vc(1),      0,    0,          0,    0, (void *) "First:",               NULL,   NULL  },
     { jwin_edit_proc,          55,     26,    40,     16,    vc(12),                 vc(1),                   0,       0,          63,    0,  NULL,                                           NULL,   NULL                  },
     //6
     {  d_dummy_proc,        10,    46,     20,      8,    vc(11),     vc(1),      0,    0,          0,    0, (void *) "Count",               NULL,   NULL  },
@@ -1499,35 +1501,42 @@ static DIALOG read_combopack_dlg[] =
     //8
     { jwin_button_proc,   15,   72,  36,   21,   vc(14),  vc(1),  13,      D_EXIT,     0,             0, (void *) "Load", NULL, NULL },
     { jwin_button_proc,   69,  72,  36,   21,   vc(14),  vc(1),  27,      D_EXIT,     0,             0, (void *) "Cancel", NULL, NULL },
+    { jwin_check_proc,        10,     46,     95,      9,    vc(14),                 vc(1),                   0,       0,           1,    0, (void *) "Don't Overwrite",                      NULL,   NULL                  },
+    
     { NULL,                 0,    0,    0,    0,   0,       0,       0,       0,          0,             0,       NULL,                           NULL,  NULL }
 };
 
-
-void writesomecombos_to(const char *prompt,int initialval)
+void writesomecombos(const char *prompt,int initialval)
 {
 	
-	char firsttile[8];;
+	char firsttile[8];
 	int first_tile_id = 0; int the_tile_count = 1;
 	sprintf(firsttile,"%d",0);
 		//int ret;
 	
 	
 	
-	read_combopack_dlg[0].dp2 = lfont;
+	load_comboset_dlg[0].dp2 = lfont;
 	
 	sprintf(firsttile,"%d",0);
 	//sprintf(tilecount,"%d",1);
 	
-	read_combopack_dlg[5].dp = firsttile;
+	load_comboset_dlg[5].dp = firsttile;
+	
+	byte nooverwrite = 0;
+	
 	
 	if(is_large)
-		large_dialog(read_combopack_dlg);
+		large_dialog(load_comboset_dlg);
 	
-	int ret = zc_popup_dialog(read_combopack_dlg,-1);
-	jwin_center_dialog(read_combopack_dlg);
+	int ret = zc_popup_dialog(load_comboset_dlg,-1);
+	jwin_center_dialog(load_comboset_dlg);
 	
 	if(ret == 8)
 	{
+		if (load_comboset_dlg[10].flags & D_SELECTED) nooverwrite = 1;
+	
+		al_trace("Nooverwrite is: %d\n", nooverwrite);
 		first_tile_id = vbound(atoi(firsttile), 0, (MAXCOMBOS-1));
 		//the_tile_count = vbound(atoi(tilecount), 1, NEWMAXTILES-first_tile_id);
 		if(getname("Load ZCOMBO(.zcombo)", "zcombo", NULL,datapath,false))
@@ -1538,7 +1547,7 @@ void writesomecombos_to(const char *prompt,int initialval)
 			if(f)
 			{
 				
-				if (!readcombofile_to_location(f,first_tile_id))
+				if (!readcombofile(f,first_tile_id,nooverwrite))
 				{
 					al_trace("Could not read from .zcombo packfile %s\n", name);
 					jwin_alert("ZCOMBO File: Error","Could not load the specified combos.",NULL,NULL,"O&K",NULL,'k',0,lfont);
@@ -1555,6 +1564,274 @@ void writesomecombos_to(const char *prompt,int initialval)
 	}
 }
 
+static DIALOG load_combopack_dlg[] =
+{
+    // (dialog proc)     (x)   (y)   (w)   (h)   (fg)     (bg)    (key)    (flags)     (d1)           (d2)     (dp)
+
+
+	{ jwin_win_proc,      0,   0,   120,  100,  vc(14),  vc(1),  0,       D_EXIT,          0,             0, (void *) "Import Full Combo Package 1:1", NULL, NULL },
+    { d_timer_proc,         0,    0,     0,    0,    0,       0,       0,       0,          0,          0,         NULL, NULL, NULL },
+    //for future tabs
+    { d_dummy_proc,         120,  128,  80+1,   8+1,    vc(14),  vc(1),  0,       0,          1,             0,       NULL, NULL, NULL },
+    { d_dummy_proc,         120,  128,  80+1,   8+1,    vc(14),  vc(1),  0,       0,          1,             0,       NULL, NULL, NULL },
+    //4
+    {  d_dummy_proc,        10,    28,     20,      8,    vc(11),     vc(1),      0,    0,          0,    0, (void *) "Starting at:",               NULL,   NULL  },
+    { d_dummy_proc,          55,     26,    40,     16,    vc(12),                 vc(1),                   0,       0,          63,    0,  NULL,                                           NULL,   NULL                  },
+    //6
+    {  d_dummy_proc,        10,    46,     20,      8,    vc(11),     vc(1),      0,    0,          0,    0, (void *) "Count",               NULL,   NULL  },
+    { d_dummy_proc,          55,     44,    40,     16,    vc(12),                 vc(1),                   0,       0,          63,    0,  NULL,                                           NULL,   NULL                  },
+    //8
+    { jwin_button_proc,   15,   72,  36,   21,   vc(14),  vc(1),  13,      D_EXIT,     0,             0, (void *) "Load", NULL, NULL },
+    { jwin_button_proc,   69,  72,  36,   21,   vc(14),  vc(1),  27,      D_EXIT,     0,             0, (void *) "Cancel", NULL, NULL },
+    { jwin_check_proc,        10,     42,     95,      9,    vc(14),                 vc(1),                   0,       0,           1,    0, (void *) "Don't Overwrite",                      NULL,   NULL                  },
+    
+    { NULL,                 0,    0,    0,    0,   0,       0,       0,       0,          0,             0,       NULL,                           NULL,  NULL }
+};
+
+void loadcombopack(const char *prompt,int initialval)
+{
+	
+	char firsttile[8];
+	int first_tile_id = 0; int the_tile_count = 1;
+	sprintf(firsttile,"%d",0);
+		//int ret;
+	
+	
+	
+	load_combopack_dlg[0].dp2 = lfont;
+	
+	sprintf(firsttile,"%d",0);
+	//sprintf(tilecount,"%d",1);
+	
+	load_combopack_dlg[5].dp = firsttile;
+	
+	byte nooverwrite = 0;
+	
+	
+	if(is_large)
+		large_dialog(load_combopack_dlg);
+	
+	int ret = zc_popup_dialog(load_combopack_dlg,-1);
+	jwin_center_dialog(load_combopack_dlg);
+	
+	if(ret == 8)
+	{
+		if (load_combopack_dlg[10].flags & D_SELECTED) nooverwrite = 1;
+	
+		al_trace("Nooverwrite is: %d\n", nooverwrite);
+		first_tile_id = vbound(atoi(firsttile), 0, (MAXCOMBOS-1));
+		//the_tile_count = vbound(atoi(tilecount), 1, NEWMAXTILES-first_tile_id);
+		if(getname("Load ZCOMBO(.zcombo)", "zcombo", NULL,datapath,false))
+		{  
+			char name[256];
+			extract_name(temppath,name,FILENAMEALL);
+			PACKFILE *f=pack_fopen_password(temppath,F_READ, "");
+			if(f)
+			{
+				//need dialogue here
+				if (!readcombofile(f,0,nooverwrite))
+				{
+					al_trace("Could not read from .zcombo packfile %s\n", name);
+					jwin_alert("ZCOMBO File: Error","Could not load the specified Tile.",NULL,NULL,"O&K",NULL,'k',0,lfont);
+				}
+				else
+				{
+					jwin_alert("ZCOMBO File: Success!","Loaded the source combos to your combo pages!",NULL,NULL,"O&K",NULL,'k',0,lfont);
+					saved=false;
+				}
+			}
+	
+			pack_fclose(f);
+		}
+	}
+}
+
+
+static DIALOG read_combopack_dlg[] =
+{
+    // (dialog proc)     (x)   (y)   (w)   (h)   (fg)     (bg)    (key)    (flags)     (d1)           (d2)     (dp)
+
+
+	{ jwin_win_proc,      0,   0,   120,  100,  vc(14),  vc(1),  0,       D_EXIT,          0,             0, (void *) "Load Combos (Specific Dest)", NULL, NULL },
+    { d_timer_proc,         0,    0,     0,    0,    0,       0,       0,       0,          0,          0,         NULL, NULL, NULL },
+    //for future tabs
+    { d_dummy_proc,         120,  128,  80+1,   8+1,    vc(14),  vc(1),  0,       0,          1,             0,       NULL, NULL, NULL },
+    { d_dummy_proc,         120,  128,  80+1,   8+1,    vc(14),  vc(1),  0,       0,          1,             0,       NULL, NULL, NULL },
+    //4
+    {  jwin_text_proc,        10,    24,     20,      8,    vc(11),     vc(1),      0,    0,          0,    0, (void *) "Starting at:",               NULL,   NULL  },
+    { jwin_edit_proc,          55,     22,    40,     16,    vc(12),                 vc(1),                   0,       0,          63,    0,  NULL,                                           NULL,   NULL                  },
+    //6
+    {  d_dummy_proc,        10,    46,     20,      8,    vc(11),     vc(1),      0,    0,          0,    0, (void *) "Count",               NULL,   NULL  },
+    { d_dummy_proc,          55,     44,    40,     16,    vc(12),                 vc(1),                   0,       0,          63,    0,  NULL,                                           NULL,   NULL                  },
+    //8
+    { jwin_button_proc,   15,   72,  36,   21,   vc(14),  vc(1),  13,      D_EXIT,     0,             0, (void *) "Load", NULL, NULL },
+    { jwin_button_proc,   69,  72,  36,   21,   vc(14),  vc(1),  27,      D_EXIT,     0,             0, (void *) "Cancel", NULL, NULL },
+    //10
+    { jwin_check_proc,        10,     58,     95,      9,    vc(14),                 vc(1),                   0,       0,           1,    0, (void *) "Don't Overwrite",                      NULL,   NULL                  },
+    //11
+    {  jwin_text_proc,        10,    42,     20,      8,    vc(11),     vc(1),      0,    0,          0,    0, (void *) "Skip:",               NULL,   NULL  },
+    //12
+    { jwin_edit_proc,          55,     40,    40,     16,    vc(12),                 vc(1),                   0,       0,          63,    0,  NULL,                                           NULL,   NULL                  },
+    
+    { NULL,                 0,    0,    0,    0,   0,       0,       0,       0,          0,             0,       NULL,                           NULL,  NULL }
+};
+
+
+
+void writesomecombos_to(const char *prompt,int initialval)
+{
+	
+	char firsttile[8];
+	char skiptile[8];
+	int first_tile_id = 0; int the_tile_count = 1;
+	sprintf(firsttile,"%d",0);
+		//int ret;
+	
+	
+	
+	read_combopack_dlg[0].dp2 = lfont;
+	
+	sprintf(skiptile,"%d",0);
+	//sprintf(tilecount,"%d",1);
+	
+	read_combopack_dlg[5].dp = firsttile;
+	
+	byte nooverwrite = 0;
+	int skipover = 0;
+	
+	sprintf(skiptile,"%d",0);
+	//sprintf(tilecount,"%d",1);
+	
+	read_combopack_dlg[12].dp = skiptile;
+	
+	if(is_large)
+		large_dialog(read_combopack_dlg);
+	
+	int ret = zc_popup_dialog(read_combopack_dlg,-1);
+	jwin_center_dialog(read_combopack_dlg);
+	
+	if(ret == 8)
+	{
+		if (read_combopack_dlg[10].flags & D_SELECTED) nooverwrite = 1;
+		
+		first_tile_id = vbound(atoi(firsttile), 0, (MAXCOMBOS-1));
+		skipover = vbound(atoi(skiptile), 0, (MAXCOMBOS-1));
+		al_trace("skipover is: %d\n", skipover);
+		//skipover = vbound(skipover, 0, (MAXCOMBOS-1-skipover));
+		//the_tile_count = vbound(atoi(tilecount), 1, NEWMAXTILES-first_tile_id);
+		if(getname("Load ZCOMBO(.zcombo)", "zcombo", NULL,datapath,false))
+		{  
+			char name[256];
+			extract_name(temppath,name,FILENAMEALL);
+			PACKFILE *f=pack_fopen_password(temppath,F_READ, "");
+			if(f)
+			{
+				
+				if (!readcombofile_to_location(f,first_tile_id,nooverwrite, skipover))
+				{
+					al_trace("Could not read from .zcombo packfile %s\n", name);
+					jwin_alert("ZCOMBO File: Error","Could not load the specified combos.",NULL,NULL,"O&K",NULL,'k',0,lfont);
+				}
+				else
+				{
+					jwin_alert("ZCOMBO File: Success!","Loaded the source combos to your combo pages!",NULL,NULL,"O&K",NULL,'k',0,lfont);
+					saved=false;
+				}
+				pack_fclose(f);
+			}
+			
+		}
+	}
+}
+
+static DIALOG import_tileset_dlg[] =
+{
+    // (dialog proc)     (x)   (y)   (w)   (h)   (fg)     (bg)    (key)    (flags)     (d1)           (d2)     (dp)
+
+
+	{ jwin_win_proc,      0,   0,   120,  100,  vc(14),  vc(1),  0,       D_EXIT,          0,             0, (void *) "Import Full Tileset", NULL, NULL },
+    { d_timer_proc,         0,    0,     0,    0,    0,       0,       0,       0,          0,          0,         NULL, NULL, NULL },
+    //for future tabs
+    { d_dummy_proc,         120,  128,  80+1,   8+1,    vc(14),  vc(1),  0,       0,          1,             0,       NULL, NULL, NULL },
+    { d_dummy_proc,         120,  128,  80+1,   8+1,    vc(14),  vc(1),  0,       0,          1,             0,       NULL, NULL, NULL },
+    //4
+    {  jwin_text_proc,        10,    28,     20,      8,    vc(11),     vc(1),      0,    0,          0,    0, (void *) "Starting at:",               NULL,   NULL  },
+    { jwin_edit_proc,          55,     26,    40,     16,    vc(12),                 vc(1),                   0,       0,          63,    0,  NULL,                                           NULL,   NULL                  },
+    //6
+    {  d_dummy_proc,        10,    46,     20,      8,    vc(11),     vc(1),      0,    0,          0,    0, (void *) "Count",               NULL,   NULL  },
+    { d_dummy_proc,          55,     44,    40,     16,    vc(12),                 vc(1),                   0,       0,          63,    0,  NULL,                                           NULL,   NULL                  },
+    //8
+    { jwin_button_proc,   15,   72,  36,   21,   vc(14),  vc(1),  13,      D_EXIT,     0,             0, (void *) "Load", NULL, NULL },
+    { jwin_button_proc,   69,  72,  36,   21,   vc(14),  vc(1),  27,      D_EXIT,     0,             0, (void *) "Cancel", NULL, NULL },
+    { jwin_check_proc,        10,     42,     95,      9,    vc(14),                 vc(1),                   0,       0,           1,    0, (void *) "Don't Overwrite",                      NULL,   NULL                  },
+    
+    { NULL,                 0,    0,    0,    0,   0,       0,       0,       0,          0,             0,       NULL,                           NULL,  NULL }
+};
+
+void importtileset(const char *prompt,int initialval)
+{
+	
+	char firsttile[8];
+	char skiptile[8];
+	int first_tile_id = 0; int the_tile_count = 1;
+	sprintf(firsttile,"%d",0);
+		//int ret;
+	
+	
+	
+	import_tileset_dlg[0].dp2 = lfont;
+	
+	sprintf(skiptile,"%d",0);
+	//sprintf(tilecount,"%d",1);
+	
+	import_tileset_dlg[5].dp = firsttile;
+	
+	byte nooverwrite = 0;
+	int skipover = 0;
+	
+	sprintf(skiptile,"%d",0);
+	//sprintf(tilecount,"%d",1);
+	
+	import_tileset_dlg[12].dp = skiptile;
+	
+	if(is_large)
+		large_dialog(import_tileset_dlg);
+	
+	int ret = zc_popup_dialog(import_tileset_dlg,-1);
+	jwin_center_dialog(import_tileset_dlg);
+
+	
+	if(ret == 8)
+	{
+		if (import_tileset_dlg[10].flags & D_SELECTED) nooverwrite = 1;
+	
+		al_trace("Nooverwrite is: %d\n", nooverwrite);
+		first_tile_id = vbound(atoi(firsttile), 0, (NEWMAXTILES-1));
+		//the_tile_count = vbound(atoi(tilecount), 1, NEWMAXTILES-first_tile_id);
+		if(getname("Import Tiles (.ztileset)","ztileset", NULL,datapath,false))
+		{  
+			char name[256];
+			extract_name(temppath,name,FILENAMEALL);
+			PACKFILE *f=pack_fopen_password(temppath,F_READ, "");
+			if(f)
+			{
+				//need dialogue here
+				if(!readtilefile_to_location(f,0,first_tile_id,nooverwrite))
+				{
+					al_trace("Could not read from .ztileset packfile %s\n", name);
+					jwin_alert("ZTILESET File: Error","Could not load the specified Tile.",NULL,NULL,"O&K",NULL,'k',0,lfont);
+				}
+				else
+				{
+					jwin_alert("ZTILESET File: Success!","Loaded the source tiles to your tile pages!",NULL,NULL,"O&K",NULL,'k',0,lfont);
+					saved=false;
+				}
+			}
+	
+			pack_fclose(f);
+		}
+	}
+}
 
 
 static DIALOG save_comboaliasfiles_dlg[] =
@@ -26249,7 +26526,7 @@ command_pair commands[cmdMAX]=
     { "Paste Enemies",                      0, (intF) onPasteEnemies                                   },
     { "Enhanced Music ",                    0, (intF) onEnhancedMusic                                  },
     { "Exit",                               0, (intF) onCmdExit                                        },
-    { "Export Combos",                      0, (intF) onExport_Combos                                  },
+    { "Export Combo Set",                      0, (intF) onExport_Combos                                  },
     { "Export DMaps",                       0, (intF) onExport_DMaps                                   },
     { "Export Map",                         0, (intF) onExport_Map                                     },
     { "Export Palettes",                    0, (intF) onExport_Pals                                    },

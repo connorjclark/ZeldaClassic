@@ -1150,44 +1150,8 @@ int onImport_DMaps()
 
 int onImport_Tiles()
 {
-    int ret=getnumber("Import Start Page",0);
-    
-    if(cancelgetnum)
-    {
-        return D_O_K;
-    }
-    
-    bound(ret,0,TILE_PAGES-1);
-    
-    if(!getname("Import Tiles (.ztileset)","ztileset",NULL,datapath,false))
-        return D_O_K;
-        
-    saved=false;
-    
-    PACKFILE *f=pack_fopen_password(temppath,F_READ, "");
-	if(f)
-	{
-		if(!readtilefile_to_location(f,0,ret))
-		{
-			char buf[80],name[256];
-			extract_name(temppath,name,FILENAMEALL);
-			sprintf(buf,"Unable to load %s",name);
-			jwin_alert("Error",buf,NULL,NULL,"O&K",NULL,'k',0,lfont);
-		}
-		else
-		{
-			char name[256];
-			extract_name(temppath,name,FILENAMEALL);
-			char tmpbuf[80]={0};
-			sprintf(tmpbuf,"Saved %s",name);
-			jwin_alert("Success!",tmpbuf,NULL,NULL,"O&K",NULL,'k',0,lfont);
-		}
-	}
-	pack_fclose(f);
-    
-    
-    refresh(rALL);
-    return D_O_K;
+    importtileset("Load Tileset", 0);
+	return D_O_K;
 }
 
 int onExport_Tiles()
@@ -1265,6 +1229,13 @@ int onExport_Combopack()
 	
 }
 
+int onImport_Combos()
+{
+	writesomecombos("Load Combo Set", 0);
+	return D_O_K;
+	
+}
+
 int onImport_Combopack_To()
 {
 	writesomecombos_to("Load Combo Package to:", 0);
@@ -1274,29 +1245,11 @@ int onImport_Combopack_To()
 
 int onImport_Combopack()
 {
-		if(getname("Load ZCOMBO(.zcombo)", "zcombo", NULL,datapath,false))
-		{  
-			char name[256];
-			extract_name(temppath,name,FILENAMEALL);
-			PACKFILE *f=pack_fopen_password(temppath,F_READ, "");
-			if(f)
-			{
-				if (!readcombofile(f))
-				{
-					al_trace("Could not read from .zcombo packfile %s\n", name);
-					jwin_alert("ZCOMBO File: Error","Could not load the specified Tile.",NULL,NULL,"O&K",NULL,'k',0,lfont);
-				}
-				else
-				{
-					jwin_alert("ZCOMBO File: Success!","Loaded the source combos to your combo pages!",NULL,NULL,"O&K",NULL,'k',0,lfont);
-					saved=false;
-				}
-			}
-	
-			pack_fclose(f);
-		}
+		loadcombopack("Load Combo Package to:", 0);
 		return D_O_K;
 }
+
+
 
 
 int onExport_Comboaliaspack()
@@ -1469,7 +1422,7 @@ int onExport_MsgsText()
     return D_O_K;
 }
 
-int onImport_Combos()
+int onImport_Combos_old()
 {
     int ret=getnumber("Import Start Page",0);
     
@@ -1498,7 +1451,37 @@ int onImport_Combos()
     return D_O_K;
 }
 
+
 int onExport_Combos()
+{
+    if(!getname("Export Combo Set (.combo)","zcombo",NULL,datapath,false))
+        return D_O_K;
+        
+    char buf[80],buf2[80],name[256];
+    extract_name(temppath,name,FILENAMEALL);
+    
+    //writetilefile(f,first_tile_id,the_tile_count);
+    
+	PACKFILE *f=pack_fopen_password(temppath,F_WRITE, "");
+	if(f)
+	{
+		writecombofile(f,0,MAXCOMBOS);
+		pack_fclose(f);
+		
+		char tmpbuf[80]={0};
+		sprintf(tmpbuf,"Saved %s",name);
+		jwin_alert("Success!",tmpbuf,NULL,NULL,"O&K",NULL,'k',0,lfont);
+	}
+	else
+	{
+		sprintf(buf,"Error");
+		sprintf(buf2,"Error saving %s",name);
+	}
+    
+    return D_O_K;
+}
+
+int onExport_Combos_old()
 {
     if(!getname("Export Combo Table (.cmb)","cmb",NULL,datapath,false))
         return D_O_K;

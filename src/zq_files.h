@@ -43,6 +43,7 @@ int onExport_Pals();
 int onImport_Msgs();
 int onExport_Msgs();
 int onExport_MsgsText();
+int onImport_Combos_old();
 int onImport_Combos();
 int onExport_Combos();
 int onImport_Tiles();
