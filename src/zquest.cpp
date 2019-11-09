@@ -1403,7 +1403,8 @@ static DIALOG read_tiles_dlg[] =
     //8
     { jwin_button_proc,   15,   72,  36,   21,   vc(14),  vc(1),  13,      D_EXIT,     0,             0, (void *) "Load", NULL, NULL },
     { jwin_button_proc,   69,  72,  36,   21,   vc(14),  vc(1),  27,      D_EXIT,     0,             0, (void *) "Cancel", NULL, NULL },
-    { NULL,                 0,    0,    0,    0,   0,       0,       0,       0,          0,             0,       NULL,                           NULL,  NULL }
+    { jwin_check_proc,        10,     42,     95,      9,    vc(14),                 vc(1),                   0,       0,           1,    0, (void *) "Don't Overwrite",                      NULL,   NULL                  },
+   { NULL,                 0,    0,    0,    0,   0,       0,       0,       0,          0,             0,       NULL,                           NULL,  NULL }
 };
 
 
@@ -1415,7 +1416,7 @@ void writesometiles_to(const char *prompt,int initialval)
 	sprintf(firsttile,"%d",0);
 		//int ret;
 	
-	
+	byte nooverwrite = 0;
 	
 	read_tiles_dlg[0].dp2 = lfont;
 	
@@ -1433,6 +1434,7 @@ void writesometiles_to(const char *prompt,int initialval)
 	if(ret == 8)
 	{
 		first_tile_id = vbound(atoi(firsttile), 0, NEWMAXTILES);
+		if (read_tiles_dlg[10].flags & D_SELECTED) nooverwrite = 1;
 		//the_tile_count = vbound(atoi(tilecount), 1, NEWMAXTILES-first_tile_id);
 		if(getname("Load ZTILE(.ztile)", "ztile", NULL,datapath,false))
 		{  
@@ -1442,7 +1444,7 @@ void writesometiles_to(const char *prompt,int initialval)
 			if(f)
 			{
 				
-				if (!readtilefile_to_location(f,first_tile_id))
+				if (!readtilefile_to_location(f,first_tile_id, nooverwrite))
 				{
 					al_trace("Could not read from .ztile packfile %s\n", name);
 					jwin_alert("ZTILE File: Error","Could not load the specified Tile.",NULL,NULL,"O&K",NULL,'k',0,lfont);
@@ -1457,6 +1459,184 @@ void writesometiles_to(const char *prompt,int initialval)
 	}
 }
 
+static DIALOG import_tilepk_dlg[] =
+{
+    // (dialog proc)     (x)   (y)   (w)   (h)   (fg)     (bg)    (key)    (flags)     (d1)           (d2)     (dp)
+
+
+	{ jwin_win_proc,      0,   0,   120,  100,  vc(14),  vc(1),  0,       D_EXIT,          0,             0, (void *) "Import Tilepack", NULL, NULL },
+    { d_timer_proc,         0,    0,     0,    0,    0,       0,       0,       0,          0,          0,         NULL, NULL, NULL },
+    //for future tabs
+    { d_dummy_proc,         120,  128,  80+1,   8+1,    vc(14),  vc(1),  0,       0,          1,             0,       NULL, NULL, NULL },
+    { d_dummy_proc,         120,  128,  80+1,   8+1,    vc(14),  vc(1),  0,       0,          1,             0,       NULL, NULL, NULL },
+    //4
+    {  d_dummy_proc,        10,    28,     20,      8,    vc(11),     vc(1),      0,    0,          0,    0, (void *) "Starting at:",               NULL,   NULL  },
+    { d_dummy_proc,          55,     26,    40,     16,    vc(12),                 vc(1),                   0,       0,          63,    0,  NULL,                                           NULL,   NULL                  },
+    //6
+    {  d_dummy_proc,        10,    46,     20,      8,    vc(11),     vc(1),      0,    0,          0,    0, (void *) "Count",               NULL,   NULL  },
+    { d_dummy_proc,          55,     44,    40,     16,    vc(12),                 vc(1),                   0,       0,          63,    0,  NULL,                                           NULL,   NULL                  },
+    //8
+    { jwin_button_proc,   15,   72,  36,   21,   vc(14),  vc(1),  13,      D_EXIT,     0,             0, (void *) "Load", NULL, NULL },
+    { jwin_button_proc,   69,  72,  36,   21,   vc(14),  vc(1),  27,      D_EXIT,     0,             0, (void *) "Cancel", NULL, NULL },
+    { jwin_check_proc,        10,     42,     95,      9,    vc(14),                 vc(1),                   0,       0,           1,    0, (void *) "Don't Overwrite",                      NULL,   NULL                  },
+
+    { NULL,                 0,    0,    0,    0,   0,       0,       0,       0,          0,             0,       NULL,                           NULL,  NULL }
+};
+
+void importtilepk(const char *prompt,int initialval)
+{
+
+	char firsttile[8];
+	char skiptile[8];
+	int first_tile_id = 0; int the_tile_count = 1;
+	sprintf(firsttile,"%d",0);
+		//int ret;
+
+
+
+	import_tilepk_dlg[0].dp2 = lfont;
+
+	sprintf(skiptile,"%d",0);
+	//sprintf(tilecount,"%d",1);
+
+	import_tilepk_dlg[5].dp = firsttile;
+
+	byte nooverwrite = 0;
+	int skipover = 0;
+
+	sprintf(skiptile,"%d",0);
+	//sprintf(tilecount,"%d",1);
+
+	import_tilepk_dlg[12].dp = skiptile;
+
+	if(is_large)
+		large_dialog(import_tilepk_dlg);
+
+	int ret = zc_popup_dialog(import_tilepk_dlg,-1);
+	jwin_center_dialog(import_tilepk_dlg);
+
+
+	if(ret == 8)
+	{
+		if (import_tilepk_dlg[10].flags & D_SELECTED) nooverwrite = 1;
+
+		al_trace("Nooverwrite is: %d\n", nooverwrite);
+		first_tile_id = vbound(atoi(firsttile), 0, (NEWMAXTILES-1));
+		//the_tile_count = vbound(atoi(tilecount), 1, NEWMAXTILES-first_tile_id);
+		if(getname("Import Tiles (.ztile)","ztile", NULL,datapath,false))
+		{  
+			char name[256];
+			extract_name(temppath,name,FILENAMEALL);
+			PACKFILE *f=pack_fopen_password(temppath,F_READ, "");
+			if(f)
+			{
+				//need dialogue here
+				if (!readtilefile(f, nooverwrite))
+				{
+					al_trace("Could not read from .ztile packfile %s\n", name);
+					jwin_alert("ztile File: Error","Could not load the specified Tile.",NULL,NULL,"O&K",NULL,'k',0,lfont);
+				}
+				else
+				{
+					jwin_alert("ztile File: Success!","Loaded the source tiles to your tile pages!",NULL,NULL,"O&K",NULL,'k',0,lfont);
+					saved=false;
+				}
+			}
+
+			pack_fclose(f);
+		}
+	}
+}
+
+
+static DIALOG import_tileset_dlg[] =
+{
+    // (dialog proc)     (x)   (y)   (w)   (h)   (fg)     (bg)    (key)    (flags)     (d1)           (d2)     (dp)
+
+
+	{ jwin_win_proc,      0,   0,   120,  100,  vc(14),  vc(1),  0,       D_EXIT,          0,             0, (void *) "Import Full Tileset", NULL, NULL },
+    { d_timer_proc,         0,    0,     0,    0,    0,       0,       0,       0,          0,          0,         NULL, NULL, NULL },
+    //for future tabs
+    { d_dummy_proc,         120,  128,  80+1,   8+1,    vc(14),  vc(1),  0,       0,          1,             0,       NULL, NULL, NULL },
+    { d_dummy_proc,         120,  128,  80+1,   8+1,    vc(14),  vc(1),  0,       0,          1,             0,       NULL, NULL, NULL },
+    //4
+    {  jwin_text_proc,        10,    28,     20,      8,    vc(11),     vc(1),      0,    0,          0,    0, (void *) "Starting at:",               NULL,   NULL  },
+    { jwin_edit_proc,          55,     26,    40,     16,    vc(12),                 vc(1),                   0,       0,          63,    0,  NULL,                                           NULL,   NULL                  },
+    //6
+    {  d_dummy_proc,        10,    46,     20,      8,    vc(11),     vc(1),      0,    0,          0,    0, (void *) "Count",               NULL,   NULL  },
+    { d_dummy_proc,          55,     44,    40,     16,    vc(12),                 vc(1),                   0,       0,          63,    0,  NULL,                                           NULL,   NULL                  },
+    //8
+    { jwin_button_proc,   15,   72,  36,   21,   vc(14),  vc(1),  13,      D_EXIT,     0,             0, (void *) "Load", NULL, NULL },
+    { jwin_button_proc,   69,  72,  36,   21,   vc(14),  vc(1),  27,      D_EXIT,     0,             0, (void *) "Cancel", NULL, NULL },
+    { jwin_check_proc,        10,     42,     95,      9,    vc(14),                 vc(1),                   0,       0,           1,    0, (void *) "Don't Overwrite",                      NULL,   NULL                  },
+
+    { NULL,                 0,    0,    0,    0,   0,       0,       0,       0,          0,             0,       NULL,                           NULL,  NULL }
+};
+
+void importtileset(const char *prompt,int initialval)
+{
+
+	char firsttile[8];
+	char skiptile[8];
+	int first_tile_id = 0; int the_tile_count = 1;
+	sprintf(firsttile,"%d",0);
+		//int ret;
+
+
+
+	import_tileset_dlg[0].dp2 = lfont;
+
+	sprintf(skiptile,"%d",0);
+	//sprintf(tilecount,"%d",1);
+
+	import_tileset_dlg[5].dp = firsttile;
+
+	byte nooverwrite = 0;
+	int skipover = 0;
+
+	sprintf(skiptile,"%d",0);
+	//sprintf(tilecount,"%d",1);
+
+	import_tileset_dlg[12].dp = skiptile;
+
+	if(is_large)
+		large_dialog(import_tileset_dlg);
+
+	int ret = zc_popup_dialog(import_tileset_dlg,-1);
+	jwin_center_dialog(import_tileset_dlg);
+
+
+	if(ret == 8)
+	{
+		if (import_tileset_dlg[10].flags & D_SELECTED) nooverwrite = 1;
+
+		al_trace("Nooverwrite is: %d\n", nooverwrite);
+		first_tile_id = vbound(atoi(firsttile), 0, (NEWMAXTILES-1));
+		//the_tile_count = vbound(atoi(tilecount), 1, NEWMAXTILES-first_tile_id);
+		if(getname("Import Tiles (.ztileset)","ztileset", NULL,datapath,false))
+		{  
+			char name[256];
+			extract_name(temppath,name,FILENAMEALL);
+			PACKFILE *f=pack_fopen_password(temppath,F_READ, "");
+			if(f)
+			{
+				//need dialogue here
+				if(!readtilefile_to_location(f,0,first_tile_id,nooverwrite))
+				{
+					al_trace("Could not read from .ztileset packfile %s\n", name);
+					jwin_alert("ZTILESET File: Error","Could not load the specified Tile.",NULL,NULL,"O&K",NULL,'k',0,lfont);
+				}
+				else
+				{
+					jwin_alert("ZTILESET File: Success!","Loaded the source tiles to your tile pages!",NULL,NULL,"O&K",NULL,'k',0,lfont);
+					saved=false;
+				}
+			}
+
+			pack_fclose(f);
+		}
+	}
+}
 
 static DIALOG save_combofiles_dlg[] =
 {

@@ -262,6 +262,8 @@ void loadcombopack(const char *prompt,int initialval);
 void savesomecomboaliases(const char *prompt,int initialval);
 void writesomecomboaliases_to(const char *prompt,int initialval);
 int gethexnumber(const char *prompt,int initialval);
+void importtilepk(const char *prompt,int initialval);
+void importtileset(const char *prompt,int initialval);
 
 void update_combo_cycling();
 

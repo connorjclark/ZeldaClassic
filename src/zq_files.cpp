@@ -1126,6 +1126,9 @@ int onImport_DMaps()
 
 int onImport_Tiles()
 {
+	importtileset("Load Tileset", 0);
+	return D_O_K;
+/*
     int ret=getnumber("Import Start Page",0);
     
     if(cancelgetnum)
@@ -1164,6 +1167,7 @@ int onImport_Tiles()
     
     refresh(rALL);
     return D_O_K;
+    */
 }
 
 int onExport_Tiles()
@@ -1211,6 +1215,7 @@ int onExport_Tiles()
 
 int onImport_Tilepack()
 {
+	/*
 		if(getname("Load ZTILE(.ztile)", "ztile", NULL,datapath,false))
 		{  
 			char name[256];
@@ -1231,6 +1236,8 @@ int onImport_Tilepack()
 	
 			pack_fclose(f);
 		}
+		*/
+		importtilepk("Import Tilepack", 0);
 		return D_O_K;
 }
 

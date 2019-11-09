@@ -29,10 +29,10 @@ int readcomboaliasfile(PACKFILE *f);
 int readcomboaliasfile_to_location(PACKFILE *f, int start);
 int writecomboaliasfile(PACKFILE *f, int index, int count);
 
-int readtilefile(PACKFILE *f);
+int readtilefile(PACKFILE *f, byte nooverwrite);
 int writetilefile(PACKFILE *f, int index, int count);
-int readtilefile_to_location(PACKFILE *f, int start, int skip);
-int readtilefile_to_location(PACKFILE *f, int start);
+int readtilefile_to_location(PACKFILE *f, int start, int skip, byte nooverwrite);
+int readtilefile_to_location(PACKFILE *f, int start, byte nooverwrite);
 
 int readcombofile(PACKFILE *f, int skip, byte nooverwrite);
 int readcombofile_to_location(PACKFILE *f, int start, byte nooverwrite, int skip);

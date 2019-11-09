@@ -8367,7 +8367,7 @@ int writetilefile(PACKFILE *f, int index, int count)
 */
 
 
-int readtilefile(PACKFILE *f)
+int readtilefile(PACKFILE *f, byte nooverwrite)
 {
 	dword section_version=0;
 	dword section_cversion=0;
@@ -8448,8 +8448,11 @@ int readtilefile(PACKFILE *f)
 			return 0;
 		}
 			    
-		reset_tile(newtilebuf, index+(tilect), format);
-		memcpy(newtilebuf[index+(tilect)].data,temp_tile,tilesize(newtilebuf[index+(tilect)].format));
+		if ( ( nooverwrite && (!(blank_tile_table[index+(tilect)])) ) || !nooverwrite )
+		{
+			reset_tile(newtilebuf, index+(tilect), format);
+			memcpy(newtilebuf[index+(tilect)].data,temp_tile,tilesize(newtilebuf[index+(tilect)].format));
+		}
 		delete[] temp_tile;
 	}
 	
@@ -8463,7 +8466,7 @@ int readtilefile(PACKFILE *f)
 	
 }
 
-int readtilefile_to_location(PACKFILE *f, int start, int skip)
+int readtilefile_to_location(PACKFILE *f, int start, int skip, byte nooverwrite)
 {
 	dword section_version=0;
 	dword section_cversion=0;
@@ -8544,7 +8547,7 @@ int readtilefile_to_location(PACKFILE *f, int start, int skip)
 			return 0;
 		}
 			    
-		reset_tile(newtilebuf, start+(tilect), format);
+		
 		if ( skip )
 		{
 			if ( (start+(tilect)) < skip ) 
@@ -8556,7 +8559,11 @@ int readtilefile_to_location(PACKFILE *f, int start, int skip)
 		}
 		if ( start+(tilect) < NEWMAXTILES )
 		{
-			memcpy(newtilebuf[start+(tilect)].data,temp_tile,tilesize(newtilebuf[start+(tilect)].format));
+			if (( nooverwrite && ((blank_tile_table[start+(tilect)])) ) || !nooverwrite )
+			{
+				reset_tile(newtilebuf, start+(tilect), format);
+				memcpy(newtilebuf[start+(tilect)].data,temp_tile,tilesize(newtilebuf[start+(tilect)].format));
+			}
 		}
 		delete[] temp_tile;
 		
@@ -8572,7 +8579,7 @@ int readtilefile_to_location(PACKFILE *f, int start, int skip)
 	
 }
 
-int readtilefile_to_location(PACKFILE *f, int start)
+int readtilefile_to_location(PACKFILE *f, int start, byte nooverwrite)
 {
 	dword section_version=0;
 	dword section_cversion=0;
@@ -8631,7 +8638,7 @@ int readtilefile_to_location(PACKFILE *f, int start)
 		return 0;
 	}
 	al_trace("Reading tile: count(%d)\n", count);
-	
+	al_trace("Nooverwrite: %d\n", nooverwrite);
 	
 	
 
@@ -8652,11 +8659,20 @@ int readtilefile_to_location(PACKFILE *f, int start)
 			delete[] temp_tile;
 			return 0;
 		}
-			    
-		reset_tile(newtilebuf, start+(tilect), format);
-		if ( start+(tilect) < NEWMAXTILES )
+		al_trace("blank_tile_table[start+(tilect)] is: %d\n", blank_tile_table[start+(tilect)]);
+		if (nooverwrite && blank_tile_table[start+(tilect)])
 		{
-			memcpy(newtilebuf[start+(tilect)].data,temp_tile,tilesize(newtilebuf[start+(tilect)].format));
+			al_trace("Not overwriting.\n");
+		}
+		else
+		{
+			reset_tile(newtilebuf, start+(tilect), format);
+			if ( start+(tilect) < NEWMAXTILES )
+			{
+				
+				memcpy(newtilebuf[start+(tilect)].data,temp_tile,tilesize(newtilebuf[start+(tilect)].format));
+				
+			}
 		}
 		delete[] temp_tile;
 	}
@@ -8910,7 +8926,7 @@ int select_tile(int &tile,int &flip,int type,int &cs,bool edit_cs,int exnow, boo
 		PACKFILE *f=pack_fopen_password(temppath,F_READ, "");
 		if(!f) break;
 		al_trace("Saving tile: %d\n", tile);
-		if (!readtilefile(f))
+		if (!readtilefile(f,0))
 		{
 			al_trace("Could not read from .ztile packfile %s\n", temppath);
 			jwin_alert("ZTILE File: Error","Could not load the specified Tile.",NULL,NULL,"O&K",NULL,'k',0,lfont);
