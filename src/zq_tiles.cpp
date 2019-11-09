@@ -8448,7 +8448,7 @@ int readtilefile(PACKFILE *f, byte nooverwrite)
 			return 0;
 		}
 			    
-		if ( ( nooverwrite && (!(blank_tile_table[index+(tilect)])) ) || !nooverwrite )
+		if ( ( nooverwrite && ((blank_tile_table[index+(tilect)])) ) || !nooverwrite )
 		{
 			reset_tile(newtilebuf, index+(tilect), format);
 			memcpy(newtilebuf[index+(tilect)].data,temp_tile,tilesize(newtilebuf[index+(tilect)].format));
@@ -8659,7 +8659,7 @@ int readtilefile_to_location(PACKFILE *f, int start, byte nooverwrite)
 			delete[] temp_tile;
 			return 0;
 		}
-		al_trace("blank_tile_table[start+(tilect)] is: %d\n", blank_tile_table[start+(tilect)]);
+		//al_trace("blank_tile_table[start+(tilect)] is: %d\n", blank_tile_table[start+(tilect)]);
 		if (nooverwrite && blank_tile_table[start+(tilect)])
 		{
 			al_trace("Not overwriting.\n");
