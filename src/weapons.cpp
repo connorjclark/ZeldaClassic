@@ -3618,6 +3618,60 @@ void weapon::runscript(int index)
 
 bool weapon::animate(int index)
 {
+	if(weapon_dying_frame)
+	{
+		//Run the script one last time before the weapon dies; to give it a chance to revive itself, or run a death effect
+		if(doscript && FFCore.getQuestHeaderInfo(vZelda) >= 0x255  && !(FFCore.system_suspend[susptLWEAPONSCRIPTS]))
+		{
+			switch(id)
+			{
+				case wScript1:
+				case wScript2:
+				case wScript3:
+				case wScript4:
+				case wScript5:
+				case wScript6:
+				case wScript7:
+				case wScript8:
+				case wScript9:
+				case wScript10:
+					if ( ScriptGenerated && !isLWeapon ) break;
+					if ( parentitem < 0 && !(isLWeapon && ScriptGenerated)) break;
+					ZScriptVersion::RunScript(SCRIPT_LWPN, weaponscript, getUID());
+					break;
+				case wSword:
+					if(itemsbuf[parentitem].misc10 == 50)
+						ZScriptVersion::RunScript(SCRIPT_LWPN, weaponscript, getUID());
+					break;
+				case wRefBeam:
+				case wRefFireball:
+					if(ScriptGenerated)
+						ZScriptVersion::RunScript(SCRIPT_LWPN, weaponscript, getUID());
+					break;
+				case wBeam:
+				case wCByrna:
+				case wWhistle:
+				case wWind:
+				case wFire:
+				case wBomb:
+				case wLitBomb:
+				case wSBomb:
+				case wLitSBomb:
+				case wArrow:
+				case wBait:
+				case wBrang:
+				case wHookshot:
+				case wMagic:
+				case wRefMagic:
+					ZScriptVersion::RunScript(SCRIPT_LWPN, weaponscript, getUID());
+					break;
+			}
+		}
+		if(dead==0) return true; //If still dead, kill it
+		weapon_dying_frame = false; //else reset the dying frame variable
+		//fall-through; the normal animate stuff needs to run if the weapon isn't dead!
+		//(Yes the script will run twice this frame... that's fine. Scripts can detect this first frame with 'this->DeadState==WDS_DEAD') -V
+	}
     // do special timing stuff
     bool hooked=false;
 //	Z_scripterrlog("Weapon script is: %d\n",weaponscript);
@@ -5122,10 +5176,10 @@ bool weapon::animate(int index)
             if(dead != -1)
                 dead=1;
         }
-    }
     if ( doscript )
     {
 		   if ( FFCore.getQuestHeaderInfo(vZelda) >= 0x255  && !(FFCore.system_suspend[susptLWEAPONSCRIPTS])) ZScriptVersion::RunScript(SCRIPT_LWPN, weaponscript, getUID());
+    }
     }
     break;
     
@@ -5960,8 +6014,6 @@ mirrors:
             
 			if(dead == 0 && !weapon_dying_frame && get_bit(quest_rules,qr_WEAPONS_EXTRA_FRAME))
 			{
-				if(id==wSword) return true;
-				else if ( id==wBrang ) return dead==0;
 				weapon_dying_frame = true;
 				return false;
 			}
@@ -6274,7 +6326,6 @@ mirrors:
     //{
 	if(dead == 0 && !weapon_dying_frame && get_bit(quest_rules,qr_WEAPONS_EXTRA_FRAME))
 	{
-		if(id==wSword) return true;
 		weapon_dying_frame = true;
 		return false;
 	}
