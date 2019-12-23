@@ -64,7 +64,6 @@ extern byte itemscriptInitialised[256];
 extern char runningItemScripts[256];
 extern char modulepath[2048];
 
-
 extern byte dmapscriptInitialised;
 
 extern char zc_builddate[80];

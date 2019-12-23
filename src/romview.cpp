@@ -48,6 +48,7 @@ extern "C" FILE * __cdecl __iob_func(void) { return _iob; }
 
 //Yeah, not really zquest.
 //Just here for scaling purposes.
+
 bool is_zquest()
 {
     return true;
