@@ -74,6 +74,48 @@ void jumpText(int r, int g, int b);
 void onJumpText();
 void onJumpHSL();
 
+void rgb_to_hsl(unsigned char r, unsigned char g, unsigned char b, float *h2, float *s2, float *l2)
+{
+	float fr = r / 63.0, fg = g / 63.0, fb = b / 63.0;
+	float max = zc_max(zc_max(fr, fg), fb), min = zc_min(zc_min(fr, fg), fb);
+	float h, s, l = (max + min) / 2;
+
+	if(max == min)
+	{
+		h = s = 0; // achromatic
+	}
+	else
+	{
+		if(l < .50)
+		{
+			s = (max-min) / (max+min);
+		}
+		else
+		{
+			s = (max-min) / (2 - max - min);
+		}
+		
+		if(max==fb)
+		{
+			h = (fr-fg) / (max-min) + 4;
+		}
+		else if(max==fg)
+		{
+			h = (fb-fr) / (max-min) + 2;
+		}
+		else
+		{
+			h = ((fg-fb) / (max-min));
+		}
+		h*=60;
+		if(h<0) h+= 360;
+    }			
+
+    (*h2) = h / 360.0		;
+    (*s2) = s;
+    (*l2) = l;
+}
+
 static DIALOG edit_cset_dlg[] =
 {
 	/* (dialog proc)       (x)    (y)   (w)   (h)     (fg)      (bg)     (key)      (flags)     (d1)           (d2)     (dp) */
@@ -85,7 +127,7 @@ static DIALOG edit_cset_dlg[] =
 	{ d_keyboard_proc,       0,    0,     0,    0,         0,       0,      0,      0,          KEY_F1,        0, (void *) onHelp, NULL, NULL },
 	{ edit_cset_kb_handler,  0,    0,     0,    0,         0,       0,      0,      0,          0,             0, NULL, NULL, NULL },
 	// 7
-	{ d_dummy_proc,         160, 140,    61,   21,    vc(14),   vc(1),      0,      0,          0,             0, (void *) "Jump", NULL, (void*) onJumpHSL },
+	{ jwin_func_button_proc,160, 140,    60,   21,    vc(14),   vc(1),      0,      0,          0,             0, (void *) "&Jump", NULL, (void*) onJumpHSL },
 	{ jwin_hsl_proc,        72,   28,   174,   88,    vc(14),   vc(1),      0,      0,          0,             0, NULL, NULL, NULL },
 	{ jwin_cset_proc,       96,  170,   128,   24,    vc(14),   vc(1),      0,      0,          0,             0, NULL, NULL, NULL },
     // 10
@@ -95,7 +137,7 @@ static DIALOG edit_cset_dlg[] =
 	{ jwin_func_button_proc,16,  180,   40,   21,    vc(14),   vc(1),      0,      0,          0,             0, (void *) "Insert", NULL, (void*) onInsertColor_Text },
 	{ jwin_func_button_proc,16,  205,   40,   21,    vc(14),   vc(1),      0,      0,          0,             0, (void *) "Jump", NULL, (void*) onJumpText },
 	// 15
-	{ jwin_func_button_proc,130, 140,    61,   21,    vc(14),   vc(1),      0,      0,          0,             0, (void *) "&Insert", NULL, (void*) onInsertColor },
+	{ jwin_func_button_proc,100, 140,    60,   21,    vc(14),   vc(1),      0,      0,          0,             0, (void *) "&Insert", NULL, (void*) onInsertColor },
     { jwin_text_proc,        16,  124,   8,   8,    jwin_pal[jcBOXFG],  jwin_pal[jcBOX],  0,       0,          0,             0, (void *) "R", NULL, NULL },
     { jwin_text_proc,        16,  144,   8,   8,    jwin_pal[jcBOXFG],  jwin_pal[jcBOX],  0,       0,          0,             0, (void *) "G", NULL, NULL },
     { jwin_text_proc,        16,  164,   8,   8,    jwin_pal[jcBOXFG],  jwin_pal[jcBOX],  0,       0,          0,             0, (void *) "B", NULL, NULL },
@@ -617,7 +659,13 @@ void onJumpText()
 
 void onJumpHSL()
 {
+	float h,s,l;
+	rgb_to_hsl(RAMpal[14*16+color_index].r, RAMpal[14*16+color_index].g, RAMpal[14*16+color_index].b,&h,&s,&l);
+	color = int(127 * (1-h) * (is_large ? 1.5 : 1));
+	ratio = int(63 * (1-s) * (is_large ? 1.5 : 1));
+	gray = int(63 * l * (is_large ? 1.5 : 1));
 	
+	object_message(&edit_cset_dlg[8], MSG_DRAW, 0);
 }
 
 void init_gfxpal()
