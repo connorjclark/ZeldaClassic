@@ -313,11 +313,12 @@ void load_game_configs()
     
     epilepsyFlashReduction = get_config_int(cfg_sect,"epilepsy_flash_reduction",0);
    
-    digi_volume = get_config_int(cfg_sect,"digi",248);
+	digi_volume = get_config_int(cfg_sect,"digi",248);
     midi_volume = get_config_int(cfg_sect,"midi",255);
     sfx_volume = get_config_int(cfg_sect,"sfx",248);
     emusic_volume = get_config_int(cfg_sect,"emusic",248);
     pan_style = get_config_int(cfg_sect,"pan",1);
+	zc_mute(get_config_int(cfg_sect,"mute",0));
     // 1 <= zcmusic_bufsz <= 128
     zcmusic_bufsz = vbound(get_config_int(cfg_sect,"zcmusic_bufsz",64),1,128);
     volkeys = get_config_int(cfg_sect,"volkeys",0)!=0;
@@ -480,7 +481,9 @@ void save_game_configs()
     
     set_config_int(cfg_sect,"epilepsy_flash_reduction",epilepsyFlashReduction);
    
-    set_config_int(cfg_sect,"digi",digi_volume);
+    set_config_int(cfg_sect,"mute",vol_mute);
+	zc_mute(false); //restore volume before saving
+	set_config_int(cfg_sect,"digi",digi_volume);
     set_config_int(cfg_sect,"midi",midi_volume);
     set_config_int(cfg_sect,"sfx",sfx_volume);
     set_config_int(cfg_sect,"emusic",emusic_volume);
@@ -6105,6 +6108,8 @@ int buf_dp[3]  = {0,0,0};
 int sfx_dp[3]  = {3,0,0};
 int pan_dp[3]  = {0,0,0};
 
+int onToggleMute();
+
 static DIALOG sound_dlg[] =
 {
     //(dialog proc)          (x)     (y)    (w)     (h)    (fg)       (bg)                 (key) (flags)       (d1)           (d2) (dp)                           (dp2)               (dp3)
@@ -6144,6 +6149,7 @@ static DIALOG sound_dlg[] =
     { d_dummy_proc,           0,      0,      0,      0,    0,         0,                   0,    0,            0,             0,  NULL,                           NULL,               NULL     },
     { d_dummy_proc,           0,      0,      0,      0,    0,         0,                   0,    0,            0,             0,  NULL,                           NULL,               NULL     },
     { d_dummy_proc,           0,      0,      0,      0,    0,         0,                   0,    0,            0,             0,  NULL,                           NULL,               NULL     },
+    { jwin_check_proc,      220,    153,     24,      9,    vc(0),     vc(11),              0,    0,            1,             0, (void *) "Mute",                 NULL,               (void*) onToggleMute },
     { NULL,                   0,      0,      0,      0,    0,         0,                   0,    0,            0,             0,  NULL,                           NULL,               NULL     },
 };
 
@@ -7325,63 +7331,66 @@ int onSound()
 	{
 		pan_style = (long)FFCore.usr_panstyle;
 	}
-    //#endif
-    int m = midi_volume;
-    int d = digi_volume;
-    int e = emusic_volume;
-    int b = zcmusic_bufsz;
-    int s = sfx_volume;
-    int p = pan_style;
-    pan_style = vbound(pan_style,0,3);
-    
-    sound_dlg[0].dp2=lfont;
-    
-    if(is_large)
-        large_dialog(sound_dlg);
-        
-    midi_dp[1] = sound_dlg[6].x;
-    midi_dp[2] = sound_dlg[6].y;
-    digi_dp[1] = sound_dlg[7].x;
-    digi_dp[2] = sound_dlg[7].y;
-    emus_dp[1] = sound_dlg[8].x;
-    emus_dp[2] = sound_dlg[8].y;
-    buf_dp[1]  = sound_dlg[9].x;
-    buf_dp[2]  = sound_dlg[9].y;
-    sfx_dp[1]  = sound_dlg[10].x;
-    sfx_dp[2]  = sound_dlg[10].y;
-    pan_dp[1]  = sound_dlg[11].x;
-    pan_dp[2]  = sound_dlg[11].y;
-    sound_dlg[15].d2 = (midi_volume==255) ? 32 : midi_volume>>3;
-    sound_dlg[16].d2 = (digi_volume==255) ? 32 : digi_volume>>3;
-    sound_dlg[17].d2 = (emusic_volume==255) ? 32 : emusic_volume>>3;
-    sound_dlg[18].d2 = zcmusic_bufsz;
-    sound_dlg[19].d2 = (sfx_volume==255) ? 32 : sfx_volume>>3;
-    sound_dlg[20].d2 = pan_style;
-    
-    int ret = zc_popup_dialog(sound_dlg,1);
-    
-    if(ret==2)
-    {
-        master_volume(digi_volume,midi_volume);
-        
-        for(int i=0; i<WAV_COUNT; ++i)
-        {
-            //allegro assertion fails when passing in -1 as voice -DD
-            if(sfx_voice[i] > 0)
-                voice_set_volume(sfx_voice[i], sfx_volume);
-        }
-    }
-    else
-    {
-        midi_volume   = m;
-        digi_volume   = d;
-        emusic_volume = e;
-        zcmusic_bufsz = b;
-        sfx_volume    = s;
-        pan_style     = p;
-    }
-    
-    return D_O_K;
+	//#endif
+	int m = midi_volume;
+	int d = digi_volume;
+	int e = emusic_volume;
+	int b = zcmusic_bufsz;
+	int s = sfx_volume;
+	int p = pan_style;
+	int old_mute = vol_mute;
+	pan_style = vbound(pan_style,0,3);
+	
+	sound_dlg[0].dp2=lfont;
+	
+	if(is_large)
+		large_dialog(sound_dlg);
+		
+	midi_dp[1] = sound_dlg[6].x;
+	midi_dp[2] = sound_dlg[6].y;
+	digi_dp[1] = sound_dlg[7].x;
+	digi_dp[2] = sound_dlg[7].y;
+	emus_dp[1] = sound_dlg[8].x;
+	emus_dp[2] = sound_dlg[8].y;
+	buf_dp[1]  = sound_dlg[9].x;
+	buf_dp[2]  = sound_dlg[9].y;
+	sfx_dp[1]  = sound_dlg[10].x;
+	sfx_dp[2]  = sound_dlg[10].y;
+	pan_dp[1]  = sound_dlg[11].x;
+	pan_dp[2]  = sound_dlg[11].y;
+	sound_dlg[15].d2 = (midi_volume==255) ? 32 : midi_volume>>3;
+	sound_dlg[16].d2 = (digi_volume==255) ? 32 : digi_volume>>3;
+	sound_dlg[17].d2 = (emusic_volume==255) ? 32 : emusic_volume>>3;
+	sound_dlg[18].d2 = zcmusic_bufsz;
+	sound_dlg[19].d2 = (sfx_volume==255) ? 32 : sfx_volume>>3;
+	sound_dlg[20].d2 = pan_style;
+	sound_dlg[33].flags = (vol_mute ? D_SELECTED : 0);
+	
+	int ret = zc_popup_dialog(sound_dlg,1);
+	
+	if(ret==2)
+	{
+		master_volume(digi_volume,midi_volume);
+		
+		for(int i=0; i<WAV_COUNT; ++i)
+		{
+			//allegro assertion fails when passing in -1 as voice -DD
+			if(sfx_voice[i] > 0)
+				voice_set_volume(sfx_voice[i], sfx_volume);
+		}
+	}
+	else
+	{
+		midi_volume   = m;
+		digi_volume   = d;
+		emusic_volume = e;
+		zcmusic_bufsz = b;
+		sfx_volume    = s;
+		pan_style     = p;
+		zc_mute(old_mute);
+	}
+	
+	return D_O_K;
 }
 
 int queding(char const* s1, char const* s2, char const* s3)
@@ -7852,12 +7861,15 @@ int onScreenSaver()
 
 /*****  Menus  *****/
 
+int onToggleMute_Menu();
 static MENU game_menu[] =
 {
     { (char *)"&Continue\tESC",            onContinue,               NULL,                      0, NULL },
     { (char *)"",                          NULL,                     NULL,                      0, NULL },
+    { (char *)"Mute",                      onToggleMute_Menu,        NULL,                      0, NULL },
+    { (char *)"",                          NULL,                     NULL,                      0, NULL },
     { (char *)"L&oad Quest...",            onCustomGame,             NULL,                      0, NULL },
-    { (char *)"&End Game\tF6",             onTryQuitMenu,                NULL,                      0, NULL },
+    { (char *)"&End Game\tF6",             onTryQuitMenu,            NULL,                      0, NULL },
     { (char *)"",                          NULL,                     NULL,                      0, NULL },
 #ifndef ALLEGRO_MACOSX
     { (char *)"&Reset\tF9",                onReset,                  NULL,                      0, NULL },
@@ -7868,6 +7880,81 @@ static MENU game_menu[] =
 #endif
     { NULL,                                NULL,                     NULL,                      0, NULL }
 };
+
+void zc_mute(bool muted)
+{
+	if((vol_mute != 0) == muted) return;
+	vol_mute = muted ? 1 : 0;
+	if(muted)
+	{
+		digi_volume_buf = digi_volume;
+		midi_volume_buf = midi_volume;
+		sfx_volume_buf = sfx_volume;
+		emusic_volume_buf = emusic_volume;
+		digi_volume = 0;
+		midi_volume = 0;
+		sfx_volume = 0;
+		emusic_volume = 0;
+		game_menu[2].flags |= D_SELECTED;
+	}
+	else
+	{
+		digi_volume = digi_volume_buf;
+		midi_volume = midi_volume_buf;
+		sfx_volume = sfx_volume_buf;
+		emusic_volume = emusic_volume_buf;
+		game_menu[2].flags &= ~D_SELECTED;
+	}
+	for(int q = 15; q <= 20; ++q)
+	{
+		if(muted)
+			sound_dlg[q].flags |= D_DISABLED;
+		else sound_dlg[q].flags &= ~D_DISABLED;
+	}
+	
+	//Update volumes
+	{
+		master_volume(digi_volume,midi_volume);
+		
+		for(int i=0; i<WAV_COUNT; ++i)
+		{
+			//allegro assertion fails when passing in -1 as voice -DD
+			if(sfx_voice[i] > 0)
+				voice_set_volume(sfx_voice[i], sfx_volume);
+		}
+	}
+}
+
+int onToggleMute()
+{
+	zc_mute(!vol_mute);
+	if(vol_mute)
+		game_menu[2].flags |= D_SELECTED;
+	else game_menu[2].flags &= ~D_SELECTED;
+    sound_dlg[15].d2 = (midi_volume==255) ? 32 : midi_volume>>3;
+    sound_dlg[16].d2 = (digi_volume==255) ? 32 : digi_volume>>3;
+    sound_dlg[17].d2 = (emusic_volume==255) ? 32 : emusic_volume>>3;
+    sound_dlg[19].d2 = (sfx_volume==255) ? 32 : sfx_volume>>3;
+	for(int q = 15; q <= 21; ++q)
+	{
+		object_message(&sound_dlg[q], MSG_DRAW, 0);
+	}
+	object_message(&sound_dlg[1], MSG_DRAW, 0); //Stringloader
+	for(int q = 6; q <= 11; ++q)
+	{
+		object_message(&sound_dlg[q], MSG_DRAW, 0);
+	}
+	return D_O_K;
+}
+
+int onToggleMute_Menu()
+{
+	zc_mute(!vol_mute);
+	if(vol_mute)
+		game_menu[2].flags |= D_SELECTED;
+	else game_menu[2].flags &= ~D_SELECTED;
+	return D_O_K;
+}
 
 static MENU title_menu[] =
 {
@@ -9418,8 +9505,8 @@ void System()
     
     misc_menu[2].flags =(isFullScreen()==1)?D_SELECTED:0;
     
-    game_menu[2].flags = getsaveslot() > -1 ? 0 : D_DISABLED;
-    game_menu[3].flags =
+    game_menu[4].flags = getsaveslot() > -1 ? 0 : D_DISABLED;
+    game_menu[5].flags =
         misc_menu[5].flags = Playing ? 0 : D_DISABLED;
     misc_menu[7].flags = !Playing ? 0 : D_DISABLED;
     fixes_menu[0].flags = (midi_patch_fix)?D_SELECTED:0;
@@ -9940,10 +10027,12 @@ void playLevelMusic()
 
 void master_volume(int dv,int mv)
 {
-    if(dv>=0) digi_volume=zc_max(zc_min(dv,255),0);
-    
-    if(mv>=0) midi_volume=zc_max(zc_min(mv,255),0);
-    
+	if(!vol_mute)
+	{
+		if(dv>=0) digi_volume=zc_max(zc_min(dv,255),0);
+		
+		if(mv>=0) midi_volume=zc_max(zc_min(mv,255),0);
+    }
     int i = zc_min(zc_max(currmidi,0),MAXMIDIS-1);
     set_volume(digi_volume,mixvol(tunes[i].volume,midi_volume));
 }

@@ -35,6 +35,7 @@ extern bool midi_paused;
 void do_DwmFlush();
 #endif
 
+void zc_mute(bool muted);
 void draw_lens_under(BITMAP *dest, bool layer);
 void draw_lens_over();
 void fix_menu();

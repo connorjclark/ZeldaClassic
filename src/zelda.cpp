@@ -338,7 +338,8 @@ byte use_debug_console=0, console_on_top = 0, use_win32_proc=1, zasm_debugger = 
 int homescr,currscr,frame=0,currmap=0,dlevel,warpscr,worldscr,scrolling_scr=0,scrolling_map=0;
 int newscr_clk=0,opendoors=0,currdmap=0,fadeclk=-1,currgame=0,listpos=0;
 int lastentrance=0,lastentrance_dmap=0,prices[3],loadside, Bwpn, Awpn;
-int digi_volume,midi_volume,sfx_volume,emusic_volume,currmidi,hasitem,whistleclk,pan_style;
+int digi_volume,midi_volume,sfx_volume,emusic_volume,currmidi,hasitem,whistleclk,pan_style,vol_mute;
+int digi_volume_buf,midi_volume_buf,sfx_volume_buf,emusic_volume_buf;
 bool analog_movement=true;
 int joystick_index=0,Akey,Bkey,Skey,Lkey,Rkey,Pkey,Exkey1,Exkey2,Exkey3,Exkey4,Abtn,Bbtn,Sbtn,Mbtn,Lbtn,Rbtn,Pbtn,Exbtn1,Exbtn2,Exbtn3,Exbtn4,Quit=0;
 unsigned long GameFlags=0;
@@ -5496,7 +5497,6 @@ int d_timer_proc(int, DIALOG *, int)
 {
     return D_O_K;
 }
-
 
 
 
