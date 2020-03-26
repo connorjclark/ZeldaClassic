@@ -14,6 +14,8 @@ using ZScript::disassembled_script_data;
 std::string varToString(long arg);
 std::string getOpcodeString(ffscript const& line);
 disassembled_script_data disassemble_script(script_data const* script);
+void write_script(FILE* dest, disassembled_script_data const& data, bool output = false);
+void write_script(FILE* dest, script_data const* script, bool output = false);
 
 #endif
 

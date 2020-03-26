@@ -106,3 +106,31 @@ disassembled_script_data disassemble_script(script_data const* script)
 	}
 	return data;
 }
+void write_script(FILE* dest, disassembled_script_data const& data)
+{
+	string meta_str = get_meta(data.first);
+	if(output)
+	{
+		al_trace("\n");
+		al_trace("%s",it->second.scriptname.c_str());
+		al_trace("\n");
+		al_trace(meta_str.c_str());
+	}
+	fwrite(meta_str.c_str(), sizeof(char), meta_str.size(), tempfile);
+	
+	for(vector<ZScript::Opcode *>::iterator line = data.second.begin(); line != data.second.end(); line++)
+	{
+		string theline = (*line)->printLine();
+		fwrite(theline.c_str(), sizeof(char), theline.size(),tempfile);
+		
+		if(output)
+		{
+			al_trace("%s",theline.c_str());
+		}
+	}
+}
+void write_script(FILE* dest, script_data const* script)
+{
+	write_script(dest, disassemble_script(script));
+}
+

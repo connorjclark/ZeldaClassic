@@ -25019,6 +25019,142 @@ static DIALOG screenscript_sel_dlg[] =
 };
 
 
+enum
+{
+	ztype_ffc, ztype_item, ztype_combo, ztype_global, ztype_npc, ztype_lw, ztype_ew,
+	ztype_link, ztype_isprite, ztype_dmap, ztype_screen,
+	num_zasm_types
+};
+static ListData* import_zasm_lists[] =
+{
+	&ffscript_sel_dlg_list, &itemscript_sel_dlg_list, &comboscript_sel_dlg_list, &gscript_sel_dlg_list,
+	&npcscript_sel_dlg_list, &lweaponscript_sel_dlg_list, &eweaponscript_sel_dlg_list, &linkscript_sel_dlg_list
+	&itemspritescript_sel_dlg_list, &dmapscript_sel_dlg_list, &screenscript_sel_dlg_list
+};
+
+static string import_zasm_types[] =
+{
+	"FFC", "Item", "Combo", "Global", "NPC", "LWeapon", "EWeapon", "Link", "ItemSprite", "DMap", "Screen"
+};
+int get_ztype(int type)
+{
+	switch(type)
+	{
+		case SCRIPT_GLOBAL:
+			return ztype_global;
+		default:
+		case SCRIPT_FFC:
+			return ztype_ffc;
+		case SCRIPT_SCREEN:
+			return ztype_screen;
+		case SCRIPT_LINK:
+			return ztype_link;
+		case SCRIPT_ITEM:
+			return ztype_item;
+		case SCRIPT_LWPN:
+			return ztype_lw;
+		case SCRIPT_NPC:
+			return ztype_npc;
+		case SCRIPT_EWPN:
+			return ztype_ew;
+		case SCRIPT_DMAP:
+			return ztype_dmap;
+		case SCRIPT_ITEMSPRITE:
+			return ztype_isprite;
+		case SCRIPT_COMBO:
+			return ztype_combo;
+	}
+}
+
+static char import_zasm_type_buf[32];
+
+const char *importzasmlist(int index, int *list_size)
+{
+    if(index>=0)
+    {
+        bound(index,0,num_zasm_types-1);
+        
+        sprintf(import_zasm_type_buf,"%d: %s",index+1, import_zasm_types[index]);
+        return import_zasm_type_buf;
+    }
+    
+    *list_size=num_zasm_types;
+    return NULL;
+}
+
+static ListData import_zasm_type_dlg_list(importzasmlist, &font)
+
+static DIALOG zasm_import_dlg[] =
+{
+    { jwin_win_proc,        0,    0,    200, 159, vc(14),   vc(1),      0,       D_EXIT,     0,             0, (void *) "Choose Slot And Name", NULL, NULL },
+    { jwin_text_proc,       8,    80,   36,  8,   vc(14),   vc(1),     0,       0,          0,             0, (void *) "Name:", NULL, NULL },
+    { jwin_edit_proc,       44,   80-4, 146, 16,  vc(12),   vc(1),     0,       0,          19,            0,       NULL, NULL, NULL },
+    { jwin_button_proc,     35,   132,  61,   21, vc(14),   vc(1),     13,       D_EXIT,     0,             0, (void *) "OK", NULL, NULL },
+    { jwin_button_proc,     104,  132,  61,   21, vc(14),   vc(1),     27,       D_EXIT,     0,             0, (void *) "Cancel", NULL, NULL },
+    // 5
+	{ jwin_droplist_proc,   26,   25,   146,   16, jwin_pal[jcTEXTFG],  jwin_pal[jcTEXTBG],  0,  D_EXIT,          1,             0, (void *) &import_zasm_type_dlg_list, NULL, NULL },
+    { jwin_droplist_proc,   26,   45,   146,   16, jwin_pal[jcTEXTFG],  jwin_pal[jcTEXTBG],  0,       0,          1,             0, (void *) &ffscript_sel_dlg_list, NULL, NULL },
+    { d_timer_proc,         0,    0,     0,    0,    0,       0,       0,       0,          0,          0,         NULL, NULL, NULL },
+    { NULL,                 0,    0,    0,    0,   0,       0,       0,       0,          0,             0,       NULL,                           NULL,  NULL }
+};
+
+
+int onImportZASM()
+{
+	bool running = true;
+	char name[33]="";
+    zasm_import_dlg[0].dp2 = lfont;
+    zasm_import_dlg[2].dp = name;
+    zasm_import_dlg[5].d1 = 0;
+	zasm_import_dlg[6].d1 = 0;
+	zasm_import_dlg[6].dp = &ffscript_sel_dlg_list;
+	
+	if(is_large)
+        large_dialog(zasm_import_dlg);
+	
+	script_data* tempscript = NULL;
+	if(parse_script(&tempscript) != D_O_K) return D_O_K;
+	if(tempscript->meta.script_type != SCRIPT_NONE)
+	{
+		int type = get_ztype(tempscript->meta.script_type);
+		zasm_import_dlg[5].d1 = type;
+		zasm_import_dlg[6].dp = import_zasm_lists[type];
+	}
+	if(tempscript->meta.script_name[0])
+	{
+		strcpy(name, tempscript->meta.script_name);
+	}
+		
+	
+	//file loader
+	int focus = 3;
+	while(running)
+	{
+		focus = zc_popup_dialog(zasm_import_dlg,focus);
+		switch(focus)
+		{
+			case 3: //ok
+				running = false;
+				break;
+			case 4: //cancel
+				return D_O_K;
+			case 5: //Change type dropdown
+				int type = zasm_import_dlg[5].d1;
+				if(type < 0 || type >= num_zasm_types)
+					break;
+				zasm_import_dlg[6].dp = import_zasm_lists[type];
+				break;
+		}
+	}
+	
+}
+
+int onExportZASM()
+{
+	//Pop up slot selector
+	//On OK, pop up file saver
+}
+
 void clear_map_states()
 {
 	for(std::map<int, script_slot_data>::iterator it = ffcmap.begin();
@@ -25999,26 +26135,9 @@ bool do_slots(std::map<string, disassembled_script_data> &scripts)
 							return false;
 						}
 						
-						string meta_str = get_meta(scripts[it->second.scriptname].first);
-						if(output)
-						{
-							al_trace("\n");
-							al_trace("%s",it->second.scriptname.c_str());
-							al_trace("\n");
-							al_trace(meta_str.c_str());
-						}
-						fwrite(meta_str.c_str(), sizeof(char), meta_str.size(), tempfile);
+						disassembled_script_data& data = scripts[it->second.scriptname];
 						
-						for(vector<ZScript::Opcode *>::iterator line = scripts[it->second.scriptname].second.begin(); line != scripts[it->second.scriptname].second.end(); line++)
-						{
-							string theline = (*line)->printLine();
-							fwrite(theline.c_str(), sizeof(char), theline.size(),tempfile);
-							
-							if(output)
-							{
-								al_trace("%s",theline.c_str());
-							}
-						}
+						write_script(tempfile, data, output);
 						
 						fclose(tempfile);
 						parse_script_file(&ffscripts[it->first+1],"tmp",false);
@@ -26043,26 +26162,10 @@ bool do_slots(std::map<string, disassembled_script_data> &scripts)
 							return false;
 						}
 						
-						string meta_str = get_meta(scripts[it->second.scriptname].first);
-						if(output)
-						{
-							al_trace("\n");
-							al_trace("%s",it->second.scriptname.c_str());
-							al_trace("\n");
-							al_trace(meta_str.c_str());
-						}
-						fwrite(meta_str.c_str(), sizeof(char), meta_str.size(), tempfile);
+						disassembled_script_data& data = scripts[it->second.scriptname];
 						
-						for(vector<ZScript::Opcode *>::iterator line = scripts[it->second.scriptname].second.begin(); line != scripts[it->second.scriptname].second.end(); line++)
-						{
-							string theline = (*line)->printLine();
-							fwrite(theline.c_str(), sizeof(char), theline.size(),tempfile);
-							
-							if(output)
-							{
-								al_trace("%s",theline.c_str());
-							}
-						}
+						write_script(tempfile, data, output);
+						
 						fclose(tempfile);
 						parse_script_file(&globalscripts[it->first],"tmp",false);
 						if(it->second.isDisassembled()) globalscripts[it->first]->meta.flags |= ZMETA_DISASSEMBLED;
@@ -26086,26 +26189,10 @@ bool do_slots(std::map<string, disassembled_script_data> &scripts)
 							return false;
 						}
 						
-						string meta_str = get_meta(scripts[it->second.scriptname].first);
-						if(output)
-						{
-							al_trace("\n");
-							al_trace("%s",it->second.scriptname.c_str());
-							al_trace("\n");
-							al_trace(meta_str.c_str());
-						}
-						fwrite(meta_str.c_str(), sizeof(char), meta_str.size(), tempfile);
+						disassembled_script_data& data = scripts[it->second.scriptname];
 						
-						for(vector<ZScript::Opcode *>::iterator line = scripts[it->second.scriptname].second.begin(); line != scripts[it->second.scriptname].second.end(); line++)
-						{
-							string theline = (*line)->printLine();
-							fwrite(theline.c_str(), sizeof(char), theline.size(),tempfile);
-							
-							if(output)
-							{
-								al_trace("%s",theline.c_str());
-							}
-						}
+						write_script(tempfile, data, output);
+						
 						fclose(tempfile);
 						parse_script_file(&itemscripts[it->first+1],"tmp",false);
 						if(it->second.isDisassembled()) itemscripts[it->first+1]->meta.flags |= ZMETA_DISASSEMBLED;
@@ -26128,26 +26215,10 @@ bool do_slots(std::map<string, disassembled_script_data> &scripts)
 							return false;
 						}
 						
-						string meta_str = get_meta(scripts[it->second.scriptname].first);
-						if(output)
-						{
-							al_trace("\n");
-							al_trace("%s",it->second.scriptname.c_str());
-							al_trace("\n");
-							al_trace(meta_str.c_str());
-						}
-						fwrite(meta_str.c_str(), sizeof(char), meta_str.size(), tempfile);
+						disassembled_script_data& data = scripts[it->second.scriptname];
 						
-						for(vector<ZScript::Opcode *>::iterator line = scripts[it->second.scriptname].second.begin(); line != scripts[it->second.scriptname].second.end(); line++)
-						{
-							string theline = (*line)->printLine();
-							fwrite(theline.c_str(), sizeof(char), theline.size(),tempfile);
-							
-							if(output)
-							{
-								al_trace("%s",theline.c_str());
-							}
-						}
+						write_script(tempfile, data, output);
+						
 						fclose(tempfile);
 						parse_script_file(&guyscripts[it->first+1],"tmp",false);
 						if(it->second.isDisassembled()) guyscripts[it->first+1]->meta.flags |= ZMETA_DISASSEMBLED;
@@ -26170,26 +26241,10 @@ bool do_slots(std::map<string, disassembled_script_data> &scripts)
 							return false;
 						}
 						
-						string meta_str = get_meta(scripts[it->second.scriptname].first);
-						if(output)
-						{
-							al_trace("\n");
-							al_trace("%s",it->second.scriptname.c_str());
-							al_trace("\n");
-							al_trace(meta_str.c_str());
-						}
-						fwrite(meta_str.c_str(), sizeof(char), meta_str.size(), tempfile);
+						disassembled_script_data& data = scripts[it->second.scriptname];
 						
-						for(vector<ZScript::Opcode *>::iterator line = scripts[it->second.scriptname].second.begin(); line != scripts[it->second.scriptname].second.end(); line++)
-						{
-							string theline = (*line)->printLine();
-							fwrite(theline.c_str(), sizeof(char), theline.size(),tempfile);
-							
-							if(output)
-							{
-								al_trace("%s",theline.c_str());
-							}
-						}
+						write_script(tempfile, data, output);
+						
 						fclose(tempfile);
 						parse_script_file(&lwpnscripts[it->first+1],"tmp",false);
 						if(it->second.isDisassembled()) lwpnscripts[it->first+1]->meta.flags |= ZMETA_DISASSEMBLED;
@@ -26212,26 +26267,10 @@ bool do_slots(std::map<string, disassembled_script_data> &scripts)
 							return false;
 						}
 						
-						string meta_str = get_meta(scripts[it->second.scriptname].first);
-						if(output)
-						{
-							al_trace("\n");
-							al_trace("%s",it->second.scriptname.c_str());
-							al_trace("\n");
-							al_trace(meta_str.c_str());
-						}
-						fwrite(meta_str.c_str(), sizeof(char), meta_str.size(), tempfile);
+						disassembled_script_data& data = scripts[it->second.scriptname];
 						
-						for(vector<ZScript::Opcode *>::iterator line = scripts[it->second.scriptname].second.begin(); line != scripts[it->second.scriptname].second.end(); line++)
-						{
-							string theline = (*line)->printLine();
-							fwrite(theline.c_str(), sizeof(char), theline.size(),tempfile);
-							
-							if(output)
-							{
-								al_trace("%s",theline.c_str());
-							}
-						}
+						write_script(tempfile, data, output);
+						
 						fclose(tempfile);
 						parse_script_file(&ewpnscripts[it->first+1],"tmp",false);
 						if(it->second.isDisassembled()) ewpnscripts[it->first+1]->meta.flags |= ZMETA_DISASSEMBLED;
@@ -26254,26 +26293,10 @@ bool do_slots(std::map<string, disassembled_script_data> &scripts)
 							return false;
 						}
 						
-						string meta_str = get_meta(scripts[it->second.scriptname].first);
-						if(output)
-						{
-							al_trace("\n");
-							al_trace("%s",it->second.scriptname.c_str());
-							al_trace("\n");
-							al_trace(meta_str.c_str());
-						}
-						fwrite(meta_str.c_str(), sizeof(char), meta_str.size(), tempfile);
+						disassembled_script_data& data = scripts[it->second.scriptname];
 						
-						for(vector<ZScript::Opcode *>::iterator line = scripts[it->second.scriptname].second.begin(); line != scripts[it->second.scriptname].second.end(); line++)
-						{
-							string theline = (*line)->printLine();
-							fwrite(theline.c_str(), sizeof(char), theline.size(),tempfile);
-							
-							if(output)
-							{
-								al_trace("%s",theline.c_str());
-							}
-						}
+						write_script(tempfile, data, output);
+						
 						fclose(tempfile);
 						parse_script_file(&linkscripts[it->first+1],"tmp",false);
 						if(it->second.isDisassembled()) linkscripts[it->first+1]->meta.flags |= ZMETA_DISASSEMBLED;
@@ -26296,26 +26319,10 @@ bool do_slots(std::map<string, disassembled_script_data> &scripts)
 							return false;
 						}
 						
-						string meta_str = get_meta(scripts[it->second.scriptname].first);
-						if(output)
-						{
-							al_trace("\n");
-							al_trace("%s",it->second.scriptname.c_str());
-							al_trace("\n");
-							al_trace(meta_str.c_str());
-						}
-						fwrite(meta_str.c_str(), sizeof(char), meta_str.size(), tempfile);
+						disassembled_script_data& data = scripts[it->second.scriptname];
 						
-						for(vector<ZScript::Opcode *>::iterator line = scripts[it->second.scriptname].second.begin(); line != scripts[it->second.scriptname].second.end(); line++)
-						{
-							string theline = (*line)->printLine();
-							fwrite(theline.c_str(), sizeof(char), theline.size(),tempfile);
-							
-							if(output)
-							{
-								al_trace("%s",theline.c_str());
-							}
-						}
+						write_script(tempfile, data, output);
+						
 						fclose(tempfile);
 						parse_script_file(&dmapscripts[it->first+1],"tmp",false);
 						if(it->second.isDisassembled()) dmapscripts[it->first+1]->meta.flags |= ZMETA_DISASSEMBLED;
@@ -26338,26 +26345,10 @@ bool do_slots(std::map<string, disassembled_script_data> &scripts)
 							return false;
 						}
 						
-						string meta_str = get_meta(scripts[it->second.scriptname].first);
-						if(output)
-						{
-							al_trace("\n");
-							al_trace("%s",it->second.scriptname.c_str());
-							al_trace("\n");
-							al_trace(meta_str.c_str());
-						}
-						fwrite(meta_str.c_str(), sizeof(char), meta_str.size(), tempfile);
+						disassembled_script_data& data = scripts[it->second.scriptname];
 						
-						for(vector<ZScript::Opcode *>::iterator line = scripts[it->second.scriptname].second.begin(); line != scripts[it->second.scriptname].second.end(); line++)
-						{
-							string theline = (*line)->printLine();
-							fwrite(theline.c_str(), sizeof(char), theline.size(),tempfile);
-							
-							if(output)
-							{
-								al_trace("%s",theline.c_str());
-							}
-						}
+						write_script(tempfile, data, output);
+						
 						fclose(tempfile);
 						parse_script_file(&screenscripts[it->first+1],"tmp",false);
 						if(it->second.isDisassembled()) screenscripts[it->first+1]->meta.flags |= ZMETA_DISASSEMBLED;
@@ -26380,26 +26371,9 @@ bool do_slots(std::map<string, disassembled_script_data> &scripts)
 							return false;
 						}
 						
-						string meta_str = get_meta(scripts[it->second.scriptname].first);
-						if(output)
-						{
-							al_trace("\n");
-							al_trace("%s",it->second.scriptname.c_str());
-							al_trace("\n");
-							al_trace(meta_str.c_str());
-						}
-						fwrite(meta_str.c_str(), sizeof(char), meta_str.size(), tempfile);
+						disassembled_script_data& data = scripts[it->second.scriptname];
 						
-						for(vector<ZScript::Opcode *>::iterator line = scripts[it->second.scriptname].second.begin(); line != scripts[it->second.scriptname].second.end(); line++)
-						{
-							string theline = (*line)->printLine();
-							fwrite(theline.c_str(), sizeof(char), theline.size(),tempfile);
-							
-							if(output)
-							{
-								al_trace("%s",theline.c_str());
-							}
-						}
+						write_script(tempfile, data, output);
 						
 						fclose(tempfile);
 						parse_script_file(&itemspritescripts[it->first+1],"tmp",false);
@@ -26424,26 +26398,9 @@ bool do_slots(std::map<string, disassembled_script_data> &scripts)
 							return false;
 						}
 						
-						string meta_str = get_meta(scripts[it->second.scriptname].first);
-						if(output)
-						{
-							al_trace("\n");
-							al_trace("%s",it->second.scriptname.c_str());
-							al_trace("\n");
-							al_trace(meta_str.c_str());
-						}
-						fwrite(meta_str.c_str(), sizeof(char), meta_str.size(), tempfile);
+						disassembled_script_data& data = scripts[it->second.scriptname];
 						
-						for(vector<ZScript::Opcode *>::iterator line = scripts[it->second.scriptname].second.begin(); line != scripts[it->second.scriptname].second.end(); line++)
-						{
-							string theline = (*line)->printLine();
-							fwrite(theline.c_str(), sizeof(char), theline.size(),tempfile);
-							
-							if(output)
-							{
-								al_trace("%s",theline.c_str());
-							}
-						}
+						write_script(tempfile, data, output);
 						
 						fclose(tempfile);
 						parse_script_file(&comboscripts[it->first+1],"tmp",false);
@@ -27052,9 +27009,6 @@ int load_zmod_module_file()
 	    build_biew_list();
 	    return D_O_K;
 }
-
-
-
 
 int onImportFFScript()
 {
