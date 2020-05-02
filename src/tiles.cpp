@@ -578,6 +578,78 @@ bool copy_tile(tiledata *buf, int src, int dest, bool swap)
     return true;
 }
 
+void blit_tile(tiledata* buf, int dest, BITMAP* src, int src_x, int src_y, byte format)
+{
+	reset_tile(buf, dest, format);
+	unpack_tile(buf, dest, 0, true);
+	bool empty = true;
+	int mask = (format == tf4Bit ? 0x0F : 0xFF);
+	for(int x = 0; x < 16; ++x)
+	{
+		for(int y = 0; y < 16; ++y)
+		{
+			unpackbuf[x + (y*16)] = src->line[src_y+y][src_x+x] & mask;
+			if(empty && unpackbuf[x + (y*16)] != 0) empty = false;
+		}
+	}
+	blank_tile_table[dest] = empty;
+	pack_tile(buf, unpackbuf, dest);
+}
+
+void blit_tiles(tiledata* buf, int dest, BITMAP* src, int src_x, int src_y, byte format, int tilewid, int tilehei, bool mass)
+{
+	if(tilewid > 20) tilewid = 20;
+	for(int ty = 0; ty < tilehei; ++ty)
+	{
+		int t = dest + (ty*20);
+		for(int tx = 0; tx < tilewid; ++tx)
+		{
+			if(t+tx >= NEWMAXTILES) return; //sanity check
+			blit_tile(buf, t+tx, src, src_x + (mass?0:tx*16), src_y + (mass?0:ty*16), format);
+		}
+	}
+}
+
+void masked_blit_tile(tiledata* buf, int dest, BITMAP* src, int src_x, int src_y, bool underlay)
+{
+	unpack_tile(buf, dest, 0, true);
+	int mask = (buf[dest].format == tf4Bit ? 0x0F : 0xFF);
+	bool empty = true;
+	for(int x = 0; x < 16; ++x)
+	{
+		for(int y = 0; y < 16; ++y)
+		{
+			if(underlay)
+			{
+				if(unpackbuf[x + (y*16)] == 0)
+				{
+					unpackbuf[x + (y*16)] = src->line[src_y+y][src_x+x] & mask;
+				}
+			}
+			else if((src->line[src_y+y][src_x+x]&mask) != 0)
+			{
+				unpackbuf[x + (y*16)] = (src->line[src_y+y][src_x+x]) & mask;
+			}
+			if(empty && unpackbuf[x + (y*16)] != 0) empty = false;
+		}
+	}
+	blank_tile_table[dest] = empty;
+	pack_tile(buf, unpackbuf, dest);
+}
+
+void masked_blit_tiles(tiledata* buf, int dest, BITMAP* src, int src_x, int src_y, bool underlay, int tilewid, int tilehei, bool mass)
+{
+	if(tilewid > 20) tilewid = 20; //sanity check
+	for(int ty = 0; ty < tilehei; ++ty)
+	{
+		int t = dest + (ty*20);
+		for(int tx = 0; tx < tilewid; ++tx)
+		{
+			if(t+tx >= NEWMAXTILES) return; //sanity check
+			masked_blit_tile(buf, t+tx, src, src_x + (mass?0:tx*16), src_y + (mass?0:ty*16), underlay);
+		}
+	}
+}
 
 // unpacks from tilebuf to unpackbuf
 void unpack_tile(tiledata *buf, int tile, int flip, bool force)

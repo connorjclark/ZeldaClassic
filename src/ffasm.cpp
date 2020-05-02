@@ -961,6 +961,9 @@ script_command command_list[NUMCOMMANDS+1]=
 	{ "STRINGICOMPARE",		       1,   0,   0,   0},
 	{ "STRINGNICOMPARE",		       1,   0,   0,   0},
 	
+	{ "BITMAPBLITTOTILES",        0,   0,   0,   0},
+	{ "BITMAPOVERLAYTOTILES",        0,   0,   0,   0},
+	
 	{ "",                    0,   0,   0,   0}
 };
 

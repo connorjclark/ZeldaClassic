@@ -4772,6 +4772,16 @@ string ORegenerateBitmap::toString()
     return "REGENERATEBITMAP";
 }
 
+string OBitmapBlitTile::toString()
+{
+	return "BITMAPBLITTOTILES";
+}
+
+string OBitmapOverlayTile::toString()
+{
+	return "BITMAPOVERLAYTOTILES";
+}
+
 string OReadBitmap::toString()
 {
     return "READBITMAP";

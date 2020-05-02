@@ -8101,6 +8101,26 @@ namespace ZScript
 		}
 	};
 	
+	class OBitmapBlitTile : public Opcode
+	{
+	public:
+		std::string toString();
+		Opcode *clone()
+		{
+			return new OBitmapBlitTile();
+		}
+	};
+	
+	class OBitmapOverlayTile : public Opcode
+	{
+	public:
+		std::string toString();
+		Opcode *clone()
+		{
+			return new OBitmapOverlayTile();
+		}
+	};
+	
 	class OWriteBitmap : public Opcode
 	{
 	public:

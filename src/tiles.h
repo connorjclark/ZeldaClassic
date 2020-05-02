@@ -55,6 +55,10 @@ void reset_tile(tiledata *buf, int t, int format);
 void clear_tiles(tiledata *buf);
 void overlay_tile(tiledata *buf,int dest,int src,int cs,bool backwards);
 bool copy_tile(tiledata *buf, int src, int dest, bool swap);
+void blit_tile(tiledata* buf, int dest, BITMAP* src, int src_x, int src_y, byte format);
+void blit_tiles(tiledata* buf, int dest, BITMAP* src, int src_x, int src_y, byte format, int tilewid, int tilehei, bool mass = false);
+void masked_blit_tile(tiledata* buf, int dest, BITMAP* src, int src_x, int src_y, bool underlay);
+void masked_blit_tiles(tiledata* buf, int dest, BITMAP* src, int src_x, int src_y, bool underlay, int tilewid, int tilehei, bool mass = false);
 void unpack_tile(tiledata *buf, int tile, int flip, bool force);
 
 void pack_tile(tiledata *buf, byte *src,int tile);

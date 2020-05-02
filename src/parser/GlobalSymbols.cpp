@@ -8498,6 +8498,8 @@ static AccessorTable BitmapTable[] =
 	{ "Polygon",                ZVARTYPEID_VOID,          FUNCTION,     0,                    1,             0,                                    6,           {  ZVARTYPEID_BITMAP,         ZVARTYPEID_FLOAT,         ZVARTYPEID_FLOAT,         ZVARTYPEID_FLOAT,     ZVARTYPEID_FLOAT,     ZVARTYPEID_FLOAT,     -1,     -1,     -1,     -1,         -1,     -1,     -1,     -1,     -1,  -1,                         -1,                           -1,                           -1,                           -1,                           } },
 	{ "ClearToColor",           ZVARTYPEID_VOID,          FUNCTION,     0,                    1,             FUNCFLAG_INLINE,                      3,           {  ZVARTYPEID_BITMAP,          ZVARTYPEID_FLOAT,                               ZVARTYPEID_FLOAT,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1                           } },
 	{ "Free",                   ZVARTYPEID_VOID,          FUNCTION,     0,                    1,             FUNCFLAG_INLINE,                      1,           {  ZVARTYPEID_BITMAP,                -1,         -1,    -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1                           } },
+	{ "BlitToTiles",            ZVARTYPEID_VOID,          FUNCTION,     0,                    1,             0,                                    9,           {  ZVARTYPEID_BITMAP,         ZVARTYPEID_FLOAT,         ZVARTYPEID_FLOAT,         ZVARTYPEID_FLOAT,         ZVARTYPEID_FLOAT,         ZVARTYPEID_FLOAT,         ZVARTYPEID_FLOAT,         ZVARTYPEID_BOOL,         ZVARTYPEID_BOOL,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1                           } },
+	{ "OverlayToTiles",         ZVARTYPEID_VOID,          FUNCTION,     0,                    1,             0,                                    9,           {  ZVARTYPEID_BITMAP,         ZVARTYPEID_FLOAT,         ZVARTYPEID_FLOAT,         ZVARTYPEID_FLOAT,         ZVARTYPEID_FLOAT,         ZVARTYPEID_FLOAT,         ZVARTYPEID_FLOAT,         ZVARTYPEID_BOOL,         ZVARTYPEID_BOOL,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1                           } },
 	
 
 	{ "",                       -1,                       -1,           -1,                   -1,            0,                                    0,           { -1,                   -1,                     -1,               -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 } }
@@ -8604,7 +8606,36 @@ void BitmapSymbols::generateCode()
 		
 		RETURN();
 		function->giveCode(code);
-
+	}
+	//void BlitToTiles(int layer, int x, int y, int tilewid, int tilehei, int destTile, bool mass, bool is8Bit)
+	{
+		Function* function = getFunction("BlitToTiles", 9);
+		
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OBitmapBlitTile());
+		REASSIGN_PTR(EXP2);
+		LABELBACK(label);
+		POP_ARGS(8, NUL);
+		POPREF();
+		
+		RETURN();
+		function->giveCode(code);
+	}
+	//void OverlayToTiles(int layer, int x, int y, int tilewid, int tilehei, int destTile, bool mass, bool underlay)
+	{
+		Function* function = getFunction("OverlayToTiles", 9);
+		
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OBitmapOverlayTile());
+		REASSIGN_PTR(EXP2);
+		LABELBACK(label);
+		POP_ARGS(8, NUL);
+		POPREF();
+		
+		RETURN();
+		function->giveCode(code);
 	}
 	//void Write(bitmap, layer, "filename")
 	{

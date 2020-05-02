@@ -19033,6 +19033,18 @@ void do_drawing_command(const int script_command)
 		script_drawing_commands[j][17] = SH::read_stack(ri->sp+3);
 		break;
 	}
+	case BITMAPBLITTOTILES:
+	{
+		set_user_bitmap_command_args(j, 8);
+		script_drawing_commands[j][17] = SH::read_stack(ri->sp+8);
+		break;
+	}
+	case BITMAPOVERLAYTOTILES:
+	{
+		set_user_bitmap_command_args(j, 8);
+		script_drawing_commands[j][17] = SH::read_stack(ri->sp+8);
+		break;
+	}
 	case BMPPOLYGONR:
 	{
 		set_user_bitmap_command_args(j, 5);
@@ -22630,6 +22642,8 @@ int run_script(const byte type, const word script, const long i)
 			case WRITEBITMAP:
 			case CLEARBITMAP:
 			case BITMAPCLEARTOCOLOR:
+			case BITMAPBLITTOTILES:
+			case BITMAPOVERLAYTOTILES:
 				do_drawing_command(scommand);
 				break;
 			case READBITMAP:
@@ -31102,6 +31116,9 @@ script_command ZASMcommands[NUMCOMMANDS+1]=
 	{ "STRICMPR",           2,   0,   0,   0},
 	{ "STRINGICOMPARE",		       1,   0,   0,   0},
 	{ "STRINGNICOMPARE",		       1,   0,   0,   0},
+	
+	{ "BITMAPBLITTOTILES",        0,   0,   0,   0},
+	{ "BITMAPOVERLAYTOTILES",        0,   0,   0,   0},
 	
 	{ "",                    0,   0,   0,   0}
 };

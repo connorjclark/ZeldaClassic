@@ -2461,14 +2461,14 @@ void do_drawbitmapr(BITMAP *bmp, int *sdci, int xoffset, int yoffset)
 				//	//draw_sprite_ex(bmp, subBmp, dx, dy, DRAW_SPRITE_TRANS, 0);
 			
 			
-				//}
+				// }
 				//else { 
 					masked_stretch_blit(sourceBitmap, subBmp, sx, sy, sw, sh, 0, 0, dw, dh);
 					rotate_sprite(bmp, subBmp, dx, dy, degrees_to_fixed(rot));
 					//rotate_sprite(bmp, subBmp, dx, dy, degrees_to_fixed(rot));
 					//
 			
-				//}
+				// }
 			}
 			else
 				masked_stretch_blit(sourceBitmap, bmp, sx, sy, sw, sh, dx, dy, dw, dh);
@@ -2480,11 +2480,11 @@ void do_drawbitmapr(BITMAP *bmp, int *sdci, int xoffset, int yoffset)
 				//if ( rot == 4096 ) { //translucent
 				//	stretch_blit(sourceBitmap, subBmp, sx, sy, sw, sh, 0, 0, dw, dh);
 				//	draw_trans_sprite(bmp, subBmp, dx, dy);
-				//}
+				// }
 				//else {
 					stretch_blit(sourceBitmap, subBmp, sx, sy, sw, sh, 0, 0, dw, dh);
 					rotate_sprite(bmp, subBmp, dx, dy, degrees_to_fixed(rot));
-				//}
+				// }
 			}
 			else
 				stretch_blit(sourceBitmap, bmp, sx, sy, sw, sh, dx, dy, dw, dh);
@@ -2503,14 +2503,14 @@ void do_drawbitmapr(BITMAP *bmp, int *sdci, int xoffset, int yoffset)
 					//masked_stretch_blit(sourceBitmap, subBmp, sx, sy, sw, sh, 0, 0, dw, dh);
 					//rotate_sprite_trans(bmp, subBmp, dx, dy, degrees_to_fixed(rot));
 				//	draw_trans_sprite(bmp, subBmp, dx, dy);
-				//}
+				// }
 			//else {
 				masked_blit(sourceBitmap, subBmp, sx, sy, 0, 0, dw, dh);
 				rotate_sprite(bmp, subBmp, dx, dy, degrees_to_fixed(rot));  
-			//}
-		}
-		else
-			masked_blit(sourceBitmap, bmp, sx, sy, dx, dy, dw, dh);
+			// }
+			}
+			else
+				masked_blit(sourceBitmap, bmp, sx, sy, dx, dy, dw, dh);
 		}
 		else
 		{
@@ -2519,11 +2519,11 @@ void do_drawbitmapr(BITMAP *bmp, int *sdci, int xoffset, int yoffset)
 				//if ( rot == 4096 ) { //translucent
 				//	blit(sourceBitmap, subBmp, sx, sy, 0, 0, dw, dh);   
 				//	draw_trans_sprite(bmp, subBmp, dx, dy);
-				//}
+				// }
 				//else {
 					blit(sourceBitmap, subBmp, sx, sy, 0, 0, dw, dh);
 					rotate_sprite(bmp, subBmp, dx, dy, degrees_to_fixed(rot));
-				//}
+				// }
 			}
 			else
 				blit(sourceBitmap, bmp, sx, sy, dx, dy, dw, dh);
@@ -10513,7 +10513,62 @@ void do_bmpdrawlayerciflagr(BITMAP *bmp, int *sdci, int xoffset, int yoffset, bo
     //putscr
 }
 
+void do_bmp_blit_tile(int *sdci)
+{
+	//sdci[1]=layer
+	//sdci[2]=x
+	//sdci[3]=y
+	//sdci[4]=twid
+	//sdci[5]=thei
+	//sdci[6]=dest_tile
+	//sdci[7]=doMass
+	//sdci[8]=is8Bit
+	//sdci[17] Bitmap Pointer
+	if ( sdci[17] <= 0 )
+	{
+		Z_scripterrlog("bitmap->BlitToTiles() wanted to use to an invalid bitmap id: %d. Aborting.\n", sdci[17]);
+		return;
+	}
+	int bitid = sdci[17] - 10;
+	int x = sdci[2]/10000;
+	int y = sdci[3]/10000;
+	int twid = sdci[4]/10000;
+	int thei = sdci[5]/10000;
+	int dest = sdci[6]/10000;
+	bool mass = sdci[7];
+	byte format = (sdci[8] ? tf8Bit : tf4Bit);
+	BITMAP* bmp = scb.script_created_bitmaps[bitid].u_bmp;
+	
+	blit_tiles(newtilebuf, dest, bmp, x, y, format, twid, thei, mass);
+}
 
+void do_bmp_blit_overlay_tile(int *sdci)
+{
+	//sdci[1]=layer
+	//sdci[2]=x
+	//sdci[3]=y
+	//sdci[4]=twid
+	//sdci[5]=thei
+	//sdci[6]=dest_tile
+	//sdci[7]=doMass
+	//sdci[8]=underlay
+	//sdci[17] Bitmap Pointer
+	if ( sdci[17] <= 0 )
+	{
+		Z_scripterrlog("bitmap->OverlayToTiles() wanted to use to an invalid bitmap id: %d. Aborting.\n", sdci[17]);
+		return;
+	}
+	int bitid = sdci[17] - 10;
+	int x = sdci[2]/10000;
+	int y = sdci[3]/10000;
+	int twid = sdci[4]/10000;
+	int thei = sdci[5]/10000;
+	int dest = sdci[6]/10000;
+	bool mass = sdci[7];
+	bool underlay = sdci[8];
+	BITMAP* bmp = scb.script_created_bitmaps[bitid].u_bmp;
+	masked_blit_tiles(newtilebuf, dest, bmp, x, y, underlay, twid, thei, mass);
+}
 
 /////////////////////////////////////////////////////////
 // do primitives
@@ -10809,6 +10864,8 @@ void do_primitives(BITMAP *targetBitmap, int type, mapscr* theScreen, int xoff, 
 	case 	BMPDRAWLAYERCTYPER: do_bmpdrawlayerctyper(bmp, sdci, xoffset, yoffset, isTargetOffScreenBmp); break;
 	case 	BMPDRAWLAYERCIFLAGR: do_bmpdrawlayerciflagr(bmp, sdci, xoffset, yoffset, isTargetOffScreenBmp); break;
 	case 	BMPDRAWLAYERSOLIDITYR: do_bmpdrawlayersolidityr(bmp, sdci, xoffset, yoffset, isTargetOffScreenBmp); break;
+	case	BITMAPBLITTOTILES: do_bmp_blit_tile(sdci); break;
+	case	BITMAPOVERLAYTOTILES: do_bmp_blit_overlay_tile(sdci); break;
 	
         
         }
