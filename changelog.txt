@@ -1,6 +1,40 @@
 //2.55 Changes
 
 //Alpha 66
+Make default cheat modifier keys 'SHIFT', not 'CTRL+SHIFT'
+	( ZoriaRPG, 26th April, 2020 )
+
+Fix the Favorite Commands list; Zoria offset it MORE in his
+	prior commit. Now it should line up properly.
+Made old favorite commands which have been removed reset to '(None)'
+	upon loading ZQ. This prevents invalid commands from being usable.
+	( Venrob, 25th April, 2020 )
+
+Fix printf '%f' error
+Replace Allegro 'fix', using floating point, with 'zfix', as true integer fixed type. 
+Fix 'Default Defense' on weapons being reset when opening the item editor
+	( Venrob, 24th April, 2020 )
+	
+Separate errors for file missing and file errored
+Update ZScript compiler errors to be more clear about included files
+	Changed compiler error P0 a bit, too.
+	Clean up the message of compiler error P1 for include directives.
+	( Venrob and ZoriaRPG, 23rd April, 2020 )
+	
+Fix hover decoration timing
+Allow permanent secrets in Dungeon dmaps
+	( Venrob, 23rd April, 2020 )
+
+Fixed the Favourite Commands list: It was offset.
+	Condensed the existing Import ASM commands into Import ZASM,
+	and Export ZASM. Added missing commands for Compiler Settings and
+	for hero Rules. Made naming uniform.
+	Fixed Integrity Favourite Commands Check being too long for the array.
+	( ZoriaRPG, 23rd April, 2020 )
+	
+Add mid-air jumps to the Roc's Feather, number based on Attributes[0]
+Add flag to hover boots to make it's timer not reset until you land
+
 Allow scripts to overwrite Link's action when it is LA_HOPPING (with compat QR)
 	( Venrob, 22nd April, 2020 )
 Added a new Quest Report type: Bugged Next-> Combos.
