@@ -1,9 +1,6 @@
 //2.55 Changes
 
 //Alpha 66
-Make default cheat modifier keys 'SHIFT', not 'CTRL+SHIFT'
-	( ZoriaRPG, 26th April, 2020 )
-
 Fix the Favorite Commands list; Zoria offset it MORE in his
 	prior commit. Now it should line up properly.
 Made old favorite commands which have been removed reset to '(None)'
@@ -11,7 +8,6 @@ Made old favorite commands which have been removed reset to '(None)'
 	( Venrob, 25th April, 2020 )
 
 Fix printf '%f' error
-Replace Allegro 'fix', using floating point, with 'zfix', as true integer fixed type. 
 Fix 'Default Defense' on weapons being reset when opening the item editor
 	( Venrob, 24th April, 2020 )
 	
