@@ -559,11 +559,18 @@ BasicScope::~BasicScope()
 {
 	deleteSeconds(children_);
 	deleteElements(anonymousChildren_);
+	deleteSeconds(classes_);
 	deleteElements(anonymousData_);
 	deleteSeconds(namedData_);
 	deleteSeconds(getters_);
 	deleteSeconds(setters_);
 	deleteSeconds(functionsBySignature_);
+}
+
+RootScope::~RootScope()
+{
+	BasicScope::~BasicScope();
+	deleteSeconds(importsByName_);
 }
 
 // Inheritance

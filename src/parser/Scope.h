@@ -444,6 +444,7 @@ namespace ZScript
 	{
 	public:
 		RootScope(TypeStore&);
+		virtual ~RootScope();
 		
 		virtual bool isGlobal() const {return true;}
 		virtual bool isRoot() const {return true;}
