@@ -1,0 +1,30 @@
+Documentation on GlobalSymbols.cpp macros
+
+POPREF()
+ * Use when popping a pointer
+ * POPREF() will always pop to the appropriate refVar
+ * If the refVar is NUL, it will optimize, saving 2 opcodes on the function
+
+INLINE_CHECK()
+ * Automatically inlines a function, if it is absolutely most efficent to do so
+
+RETURN()
+ * Returns from a function.
+ * If a function is inline, this does nothing; else it adds the RETURN opcode.
+ * This calls INLINE_CHECK() for you
+
+LABELBACK(LBL)
+ * Applies the label LBL to the most recent opcode added to the 'code' vector
+
+LABELFRONT(LBL)
+ * Applies the label LBL to the first opcode of the function
+
+REASSIGN_PTR(reg)
+ * Reassigns the value in register 'reg' to the pointer used to call this function
+ * This will fail an assert if used on a global pointer
+ * If 'reg == EXP2', this is able to save an opcode, thus being more efficient.
+
+POP_ARGS(num_args, t)
+ * Pops 'num_args' times, into register 't'.
+ * Only uses one opcode to do all the pops; very efficient.
+

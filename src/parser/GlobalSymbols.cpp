@@ -16,24 +16,6 @@ using namespace ZScript;
 
 const int radsperdeg = 572958;
 
-//sanity underflow
-#define typeVOID ZVARTYPEID_VOID
-#define S ZVARTYPEID_SCREEN
-#define F ZVARTYPEID_FLOAT
-
-#define tV ZVARTYPEID_VOID
-#define tFF ZVARTYPEID_FFC
-#define tF ZVARTYPEID_FLOAT
-#define tN ZVARTYPEID_NPC
-#define tB ZVARTYPEID_BOOL
-#define tI ZVARTYPEID_ITEM
-#define tID ZVARTYPEID_ITEMCLASS
-#define tE ZVARTYPEID_EWEAPON
-#define tL ZVARTYPEID_LWEAPON
-#define tLI ZVARTYPEID_LINK
-#define tG ZVARTYPEID_GAME
-#define tS ZVARTYPEID_SCREEN
-
 //New Types
 
 //{ Defines
@@ -49,21 +31,6 @@ if(refVar == NUL) \
 } \
 else \
 	code.push_back(new OPopRegister(new VarArgument(refVar)))
-
-/*
-	Assert that the refVar IS NUL.
-	Set the IFUNCFLAG_SKIPPOINTER.
-*/
-#define ASSERT_NUL() \
-assert(refVar == NUL); \
-function->internal_flags |= IFUNCFLAG_SKIPPOINTER
-
-/*
-	Assert that the refVar is NON-NUL.
-	Set the IFUNCFLAG_SKIPPOINTER.
-*/
-#define ASSERT_NON_NUL() \
-assert(refVar != NUL)
 
 /*
 	Forces any function to be inline where inline gives strict gain; i.e. has no negative effects.
@@ -87,10 +54,16 @@ if(!(function->getFlag(FUNCFLAG_INLINE))) \
 code.back()->setLabel(LBL)
 
 /*
+	Adds the label passed to the front of the 'code' vector<Opcode*>
+*/
+#define LABELFRONT(LBL) \
+code.front()->setLabel(LBL)
+
+/*
 	Reassigns the pointer that was referenced to the passed register.
 */
 #define REASSIGN_PTR(reg) \
-ASSERT_NON_NUL(); \
+assert(refVar != NUL); \
 if(reg!=EXP2) code.push_back(new OSetRegister(new VarArgument(EXP2), new VarArgument(reg))); \
 function->internal_flags |= IFUNCFLAG_REASSIGNPTR
 
@@ -100,308 +73,52 @@ function->internal_flags |= IFUNCFLAG_REASSIGNPTR
 #define POP_ARGS(num_args, t) \
 	code.push_back(new OPopArgsRegister(new VarArgument(t), new LiteralArgument(num_args)))
 
-//{ Older defines
-#define ARGS_4(t, arg1, arg2, arg3, arg4) \
-	{ t, arg1, arg2, arg3, arg4, -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1 }
-#define ARGS_6(t, arg1, arg2, arg3, arg4, arg5, arg6) \
-	{ t, arg1, arg2, arg3, arg4, arg5, arg6, -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1 }
-#define ARGS_8(t, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8) \
-	{ t, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1 }
-#define ARGS_12(t, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12) { t, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8,arg9,arg10,arg11,arg12,-1,-1,-1,-1,-1,-1,-1 }
-#define ARGS_13(t, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13) { t, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8,arg9,arg10,arg11,arg12,arg13,-1,-1,-1,-1,-1,-1 }
-#define ARGS_15(t, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13, arg14, arg15) { t, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8,arg9,arg10,arg11,arg12,arg13,arg14,arg15,-1,-1,-1,-1 }
-
-#define ARGS_16(t, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13, arg14, arg15, arg16) { t, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8,arg9,arg10,arg11,arg12,arg13,arg14,arg15,arg16,-1,-1,-1 }
-
-#define ARGS_17(t, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13, arg14, arg15, arg16, arg17) { t, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8,arg9,arg10,arg11,arg12,arg13,arg14,arg15,arg16,arg17,-1,-1 }
-
-#define SetIdentifier(label) \
-{ \
-	Function* function = functions[label]; \
-	int label = function->getLabel(); \
-	vector<Opcode *> code; \
-} \
-
-#define IgnorePointer() \
-{ \
-	code.push_back(new OPopRegister(new VarArgument(NUL))); \
-} \
-
-#define PopFirstArg(reg_index) \
-{ \
-	code.push_back(new OPopRegister(new VarArgument(reg_index))); \
-	LABELBACK(label); \
-} \
-
-#define SetRefVar(reg_index, ref_index2, ref_var) \
-{ \
-	code.push_back(new OSetRegister(new VarArgument(reg_index), new VarArgument(ref_var))); \
-	code.push_back(new OPopRegister(new VarArgument(ref_index2))); \
-} \
-
-#define AddArgument(register_index) \
-{ \
-	code.push_back(new OPopRegister(new VarArgument(register_index))); \
-} \
-
-#define InstructionToRegister(instruction, reg_index) \
-{ \
-	code.push_back(new OSetRegister(new VarArgument(instruction), new VarArgument(reg_index))); \
-} \
-
-#define OpcodeToRegister(ocode, reg_index) \
-{ \
-	code.push_back(new ocode(new VarArgument(reg_index))); \
-} \
-
-//Loads a refvaar to reg_index, then pops it to reg_index2
-
-//LoadRefData
-#define LOAD_REFDATA(flabel, ffins, ref_var, numparam) \
-{ \
-        Function* function = getFunction(flabel, numparam); \
-        int label = function->getLabel(); \
-        vector<Opcode *> code; \
-        code.push_back(new OPopRegister(new VarArgument(EXP1))); \
-        LABELBACK(label); \
-        POPREF(); \
-        code.push_back(new ffins(new VarArgument(EXP1))); \
-        code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(ref_var))); \
-        RETURN(); \
-        function->giveCode(code); \
-} \
-    
-//Guydata member with one input, one return
-#define GET_GUYDATA_MEMBER(flabel, ffins) \
-{ \
-	Function* function = getFunction(flabel, 2);\
-	int label = function->getLabel(); \
-	vector<Opcode *> code; \
-	code.push_back(new OPopRegister(new VarArgument(EXP2))); \
-	LABELBACK(label); \
-	POPREF(); \
-	code.push_back(new ffins(new VarArgument(EXP1),new VarArgument(EXP2))); \
-	RETURN(); \
-	function->giveCode(code); \
-} \
-
-//Dataclass member with three inputs
-#define SET_DATACLASS_MEMBER(flabel, ffins) \
-{ \
-	Function* function = getFunction(flabel, 4); \
-	int label = function->getLabel(); \
-	vector<Opcode *> code; \
-	code.push_back(new OPopRegister(new VarArgument(SFTEMP))); \
-	LABELBACK(label); \
-	code.push_back(new OPopRegister(new VarArgument(INDEX2))); \
-	code.push_back(new OPopRegister(new VarArgument(INDEX))); \
-	POPREF(); \
-	code.push_back(new OSetRegister(new VarArgument(ffins), new VarArgument(SFTEMP))); \
-	RETURN(); \
-	function->giveCode(code); \
-} \
-
-//Dataclass Member with four inputs (int, int, int, int)
-#define SET_DATACLASS_ARRAY(flabel, ffins) \
-{ \
-	Function* function = getFunction(flabel, 5); \
-	int label = function->getLabel(); \
-	vector<Opcode *> code; \
-	code.push_back(new OPopRegister(new VarArgument(EXP2))); \
-	LABELBACK(label); \
-	code.push_back(new OPopRegister(new VarArgument(INDEX))); \
-	code.push_back(new OPopRegister(new VarArgument(EXP1))); \
-	code.push_back(new OPopRegister(new VarArgument(INDEX2))); \
-	POPREF(); \
-	code.push_back(new OSetRegister(new VarArgument(ffins), new VarArgument(EXP2))); \
-	RETURN(); \
-	function->giveCode(code); \
-} \
-
-//Dataclass member with two inputs, one return 
-#define GET_DATACLASS_MEMBER(flabel, ffins) \
-{ \
-	Function* function = getFunction(flabel, 3); \
-	int label = function->getLabel(); \
-	vector<Opcode *> code; \
-	code.push_back(new OPopRegister(new VarArgument(INDEX2))); \
-	LABELBACK(label); \
-	code.push_back(new OPopRegister(new VarArgument(INDEX))); \
-	POPREF(); \
-	code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(ffins))); \
-	RETURN(); \
-	function->giveCode(code); \
-} \
-
-//Dataclass member with three inputs, one return
-#define GET_DATACLASS_ARRAY(flabel, ocode) \
-{ \
-	Function* function = getFunction(flabel, 4); \
-	int label = function->getLabel(); \
-	vector<Opcode *> code; \
-	code.push_back(new OPopRegister(new VarArgument(INDEX))); \
-	LABELBACK(label); \
-	code.push_back(new OPopRegister(new VarArgument(INDEX2))); \
-	code.push_back(new OPopRegister(new VarArgument(EXP1))); \
-	POPREF(); \
-	code.push_back(new ocode(new VarArgument(EXP1))); \
-	RETURN(); \
-	function->giveCode(code); \
-} \
-
-//void function(int) -- follows pattern of cleartile() and trace()
-#define ONE_INPUT_NO_RETURN(flabel, ocode) \
-{ \
-        id = getFunction(flabel, 1)->id; \
-        int label = function->getLabel(); \
-        vector<Opcode *> code; \
-        code.push_back(new OPopRegister(new VarArgument(EXP2))); \
-        LABELBACK(label); \
-        code.push_back(new ocode(new VarArgument(EXP2))); \
-	RETURN(); \
-        function->giveCode(code); \
-} \
-
-//int function(int)
-#define ONE_INPUT_ONE_RETURN(flabel, ocode) \
-{ \
-	Function* function = getFunction(flabel, 2); \
-	int label = function->getLabel(); \
-        vector<Opcode *> code; \
-        code.push_back(new OPopRegister(new VarArgument(EXP1))); \
-        LABELBACK(label); \
-        code.push_back(new OPopRegister(new VarArgument(EXP2))); \
-        POPREF(); \
-        code.push_back(new ocode(new VarArgument(EXP1),new VarArgument(EXP2))); \
-	RETURN(); \
-        function->giveCode(code); \
-} \
-
-
-//void function(int, int)
-#define TWO_INPUT_NO_RETURN(flabel, ocode) \
-{ \
-	Function* function = getFunction(flabel, 3); \
-        int label = function->getLabel(); \
-        vector<Opcode *> code; \
-        code.push_back(new OPopRegister(new VarArgument(INDEX2))); \
-        LABELBACK(label); \
-        code.push_back(new OPopRegister(new VarArgument(EXP2))); \
-        code.push_back(new OPopRegister(new VarArgument(SFTEMP))); \
-        code.push_back(new ocode(new VarArgument(EXP2), new VarArgument(EXP1))); \
-        RETURN();                                  \
-        function->giveCode(code); \
-} \
-    
-	
-	
-//int function(int, int)
-#define TWO_INPUT_ONE_RETURN(flabel, ocode) \
-{ \
-        Function* function = getFunction(flabel, 3); \
-        int label = function->getLabel(); \
-        vector<Opcode *> code; \
-        code.push_back(new OPopRegister(new VarArgument(INDEX2))); \
-        LABELBACK(label); \
-        code.push_back(new OPopRegister(new VarArgument(INDEX))); \
-        POPREF(); \
-        code.push_back(new ocode(new VarArgument(EXP1))); \
-        RETURN();                    \
-        function->giveCode(code); \
-} \
-
-//void function(int, int, int)
-#define THREE_INPUT_NO_RETURN(flabel,zasmid) \
-{ \
-        Function* function = getFunction(flabel, 4); \
-        int label = function->getLabel(); \
-        vector<Opcode *> code; \
-        code.push_back(new OPopRegister(new VarArgument(SFTEMP))); \
-        LABELBACK(label); \
-        code.push_back(new OPopRegister(new VarArgument(INDEX2))); \
-        code.push_back(new OPopRegister(new VarArgument(INDEX))); \
-        POPREF(); \
-        code.push_back(new OSetRegister(new VarArgument(zasmid), new VarArgument(SFTEMP))); \
-        RETURN();                                  \
-        function->giveCode(code); \
-} \
-
-//Three Inputs, One Return -- based on int GetScreenEFlags(int map, int screen, int flagset);	
-#define THREE_INPUTS_ONE_RETURN(flabel, ocode, numparam) \
-{ \
-	Function* function = getFunction(flabel, numparam); \
-	int label = function->getLabel(); \
-	vector<Opcode *> code; \
-	code.push_back(new OPopRegister(new VarArgument(INDEX))); \
-	LABELBACK(label); \
-	code.push_back(new OPopRegister(new VarArgument(INDEX2))); \
-	code.push_back(new OPopRegister(new VarArgument(EXP1))); \
-	POPREF(); \
-	code.push_back(new ocode(new VarArgument(EXP1))); \
-	RETURN(); \
-	function->giveCode(code); \
-} \
-
-//This will trace the float value of any pointer type to allegro.log. 
-#define TRACING_FUNCTION(flabel, numparam) \
-{ \
-	Function* function = getFunction(flabel, numparam); \
-	int label = function->getLabel(); \
-	vector<Opcode *> code; \
-	code.push_back(new OPopRegister(new VarArgument(EXP2))); \
-	LABELBACK(label); \
-	code.push_back(new OTraceRegister(new VarArgument(EXP2))); \
-	RETURN(); \
-	function->giveCode(code); \
-} \
-
-//}
 //}
 
 LibrarySymbols* LibrarySymbols::getTypeInstance(DataTypeId typeId)
 {
-    switch (typeId)
-    {
-    case ZVARTYPEID_FFC: return &FFCSymbols::getInst();
-    case ZVARTYPEID_LINK: return &LinkSymbols::getInst();
-    case ZVARTYPEID_SCREEN: return &ScreenSymbols::getInst();
-    case ZVARTYPEID_GAME: return &GameSymbols::getInst();
-    case ZVARTYPEID_ITEM: return &ItemSymbols::getInst();
-    case ZVARTYPEID_ITEMCLASS: return &ItemclassSymbols::getInst();
-    case ZVARTYPEID_NPC: return &NPCSymbols::getInst();
-    case ZVARTYPEID_LWPN: return &LinkWeaponSymbols::getInst();
-    case ZVARTYPEID_EWPN: return &EnemyWeaponSymbols::getInst();
-    case ZVARTYPEID_NPCDATA: return &NPCDataSymbols::getInst();
-    case ZVARTYPEID_DEBUG: return &DebugSymbols::getInst();
-    case ZVARTYPEID_AUDIO: return &AudioSymbols::getInst();
-    case ZVARTYPEID_COMBOS: return &CombosPtrSymbols::getInst();
-    case ZVARTYPEID_SPRITEDATA: return &SpriteDataSymbols::getInst();
-    case ZVARTYPEID_GRAPHICS: return &GraphicsSymbols::getInst();
-    case ZVARTYPEID_BITMAP: return &BitmapSymbols::getInst();
-    case ZVARTYPEID_TEXT: return &TextPtrSymbols::getInst();
-    case ZVARTYPEID_INPUT: return &InputSymbols::getInst();
-    case ZVARTYPEID_MAPDATA: return &MapDataSymbols::getInst();
-    case ZVARTYPEID_DMAPDATA: return &DMapDataSymbols::getInst();
-    case ZVARTYPEID_ZMESSAGE: return &MessageDataSymbols::getInst();
-    case ZVARTYPEID_SHOPDATA: return &ShopDataSymbols::getInst();
-    case ZVARTYPEID_UNTYPED: return &UntypedSymbols::getInst();
-    case ZVARTYPEID_DROPSET: return &DropsetSymbols::getInst();
-    case ZVARTYPEID_PONDS: return &PondSymbols::getInst();
-    case ZVARTYPEID_WARPRING: return &WarpringSymbols::getInst();
-    case ZVARTYPEID_DOORSET: return &DoorsetSymbols::getInst();
-    case ZVARTYPEID_ZUICOLOURS: return &MiscColourSymbols::getInst();
-    case ZVARTYPEID_RGBDATA: return &RGBSymbols::getInst();
-    case ZVARTYPEID_PALETTE: return &PaletteSymbols::getInst();
-    case ZVARTYPEID_TUNES: return &TunesSymbols::getInst();
-    case ZVARTYPEID_PALCYCLE: return &PalCycleSymbols::getInst();
-    case ZVARTYPEID_GAMEDATA: return &GamedataSymbols::getInst();
-    case ZVARTYPEID_CHEATS: return &CheatsSymbols::getInst();
+	switch (typeId)
+	{
+	case ZVARTYPEID_FFC: return &FFCSymbols::getInst();
+	case ZVARTYPEID_LINK: return &LinkSymbols::getInst();
+	case ZVARTYPEID_SCREEN: return &ScreenSymbols::getInst();
+	case ZVARTYPEID_GAME: return &GameSymbols::getInst();
+	case ZVARTYPEID_ITEM: return &ItemSymbols::getInst();
+	case ZVARTYPEID_ITEMCLASS: return &ItemclassSymbols::getInst();
+	case ZVARTYPEID_NPC: return &NPCSymbols::getInst();
+	case ZVARTYPEID_LWPN: return &LinkWeaponSymbols::getInst();
+	case ZVARTYPEID_EWPN: return &EnemyWeaponSymbols::getInst();
+	case ZVARTYPEID_NPCDATA: return &NPCDataSymbols::getInst();
+	case ZVARTYPEID_DEBUG: return &DebugSymbols::getInst();
+	case ZVARTYPEID_AUDIO: return &AudioSymbols::getInst();
+	case ZVARTYPEID_COMBOS: return &CombosPtrSymbols::getInst();
+	case ZVARTYPEID_SPRITEDATA: return &SpriteDataSymbols::getInst();
+	case ZVARTYPEID_GRAPHICS: return &GraphicsSymbols::getInst();
+	case ZVARTYPEID_BITMAP: return &BitmapSymbols::getInst();
+	case ZVARTYPEID_TEXT: return &TextPtrSymbols::getInst();
+	case ZVARTYPEID_INPUT: return &InputSymbols::getInst();
+	case ZVARTYPEID_MAPDATA: return &MapDataSymbols::getInst();
+	case ZVARTYPEID_DMAPDATA: return &DMapDataSymbols::getInst();
+	case ZVARTYPEID_ZMESSAGE: return &MessageDataSymbols::getInst();
+	case ZVARTYPEID_SHOPDATA: return &ShopDataSymbols::getInst();
+	case ZVARTYPEID_UNTYPED: return &UntypedSymbols::getInst();
+	case ZVARTYPEID_DROPSET: return &DropsetSymbols::getInst();
+	case ZVARTYPEID_PONDS: return &PondSymbols::getInst();
+	case ZVARTYPEID_WARPRING: return &WarpringSymbols::getInst();
+	case ZVARTYPEID_DOORSET: return &DoorsetSymbols::getInst();
+	case ZVARTYPEID_ZUICOLOURS: return &MiscColourSymbols::getInst();
+	case ZVARTYPEID_RGBDATA: return &RGBSymbols::getInst();
+	case ZVARTYPEID_PALETTE: return &PaletteSymbols::getInst();
+	case ZVARTYPEID_TUNES: return &TunesSymbols::getInst();
+	case ZVARTYPEID_PALCYCLE: return &PalCycleSymbols::getInst();
+	case ZVARTYPEID_GAMEDATA: return &GamedataSymbols::getInst();
+	case ZVARTYPEID_CHEATS: return &CheatsSymbols::getInst();
 	case ZVARTYPEID_FILESYSTEM: return &FileSystemSymbols::getInst();
 	case ZVARTYPEID_SUBSCREENDATA: return &SubscreenDataSymbols::getInst();
 	case ZVARTYPEID_FILE: return &FileSymbols::getInst();
 	case ZVARTYPEID_MODULE: return &ModuleSymbols::getInst();
-    default: return NULL;
-    }
+	default: return NULL;
+	}
 }
 
 void getVariable(int refVar, Function* function, int var)
@@ -415,16 +132,15 @@ void getVariable(int refVar, Function* function, int var)
 	{
 		function->internal_flags |= IFUNCFLAG_SKIPPOINTER;
 		code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(var)));
-		LABELBACK(label);
 	}
 	else
 	{
 		//Pop object pointer
 		code.push_back(new OPopRegister(new VarArgument(refVar)));
-		LABELBACK(label);
 		code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(var)));
 	}
 	RETURN();
+	LABELFRONT(label);
 	function->giveCode(code);
 }
 
@@ -436,11 +152,11 @@ void getIndexedVariable(int refVar, Function* function, int var)
 	vector<Opcode *> code;
 	//pop index
 	code.push_back(new OPopRegister(new VarArgument(INDEX)));
-	LABELBACK(label);
-	//pop object pointer
+		//pop object pointer
 	POPREF();
 	code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(var)));
 	RETURN();
+	LABELFRONT(label);
 	function->giveCode(code);
 }
 
@@ -452,11 +168,11 @@ void setVariable(int refVar, Function* function, int var)
 	vector<Opcode *> code;
 	//pop off the value to set to
 	code.push_back(new OPopRegister(new VarArgument(EXP1)));
-	LABELBACK(label);
-	//pop object pointer
+		//pop object pointer
 	POPREF();
 	code.push_back(new OSetRegister(new VarArgument(var), new VarArgument(EXP1)));
 	RETURN();
+	LABELFRONT(label);
 	function->giveCode(code);
 }
 
@@ -468,8 +184,7 @@ void setBoolVariable(int refVar, Function* function, int var)
 	vector<Opcode *> code;
 	//pop off the value to set to
 	code.push_back(new OPopRegister(new VarArgument(EXP1)));
-	LABELBACK(label);
-	//renormalize true to 1
+		//renormalize true to 1
 	int donerenorm = ScriptParser::getUniqueLabelID();
 	code.push_back(new OCompareImmediate(new VarArgument(EXP1), new LiteralArgument(0)));
 	code.push_back(new OGotoTrueImmediate(new LabelArgument(donerenorm)));
@@ -489,6 +204,7 @@ void setBoolVariable(int refVar, Function* function, int var)
 		code.push_back(new OSetRegister(new VarArgument(var), new VarArgument(EXP1)));
 	}
 	RETURN();
+	LABELFRONT(label);
 	function->giveCode(code);
 }
 
@@ -500,13 +216,13 @@ void setIndexedVariable(int refVar, Function* function, int var)
 	vector<Opcode *> code;
 	//pop off index
 	code.push_back(new OPopRegister(new VarArgument(INDEX)));
-	LABELBACK(label);
-	//pop off the value to set to
+		//pop off the value to set to
 	code.push_back(new OPopRegister(new VarArgument(EXP1)));
 	//pop object pointer
 	POPREF();
 	code.push_back(new OSetRegister(new VarArgument(var), new VarArgument(EXP1)));
 	RETURN();
+	LABELFRONT(label);
 	function->giveCode(code);
 }
 
@@ -577,17 +293,18 @@ void LibrarySymbols::addSymbolsToScope(Scope& scope)
 
 Function* LibrarySymbols::getFunction(std::string const& name, int numParams) const
 {
+	printf("Searching for function %s, numParams %d\n", name.c_str(), numParams);
 	std::pair<std::string, int> p = make_pair(name, numParams);
 	Function* ret = find<Function*>(functions, p).value_or(NULL);
-	/*if(!ret)
-		al_trace("Internal function %s not found with %d parameters!", name, numParams);*/
+	if(!ret)
+		al_trace("Internal function %s not found with %d parameters!", name, numParams);
 	assert(ret);
 	return ret;
 }
 
 LibrarySymbols::~LibrarySymbols()
 {
-    return;
+	return;
 }
 
 GlobalSymbols GlobalSymbols::singleton;
@@ -748,8 +465,8 @@ static AccessorTable GlobalTable[] =
 
 GlobalSymbols::GlobalSymbols()
 {
-    table = GlobalTable;
-    refVar = NUL;
+	table = GlobalTable;
+	refVar = NUL;
 	hasPrefixType = false;
 }
 
@@ -757,74 +474,73 @@ void GlobalSymbols::generateCode()
 {
 	//no input, one return
 	/*
-    //untyped NULL()(global)
-    {
-	    Function* function = getFunction("NULL", 1);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop pointer, and ignore it
-		ASSERT_NUL();
-        code.push_back(new OSetImmediate(new VarArgument(EXP1), new LiteralArgument(0)));
-        LABELBACK(label);
-        RETURN();
-        function->giveCode(code);
-    }
+	//untyped NULL()(global)
+	{
+		Function* function = getFunction("NULL", 1);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OSetImmediate(new VarArgument(EXP1), new LiteralArgument(0)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
 	*/
-    
-    //one input, one return
-    //untyped Untype(untype)
-    {
-	    Function* function = getFunction("Untype", 1);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop pointer, and ignore it
+	
+	//one input, one return
+	//untyped Untype(untype)
+	{
+		Function* function = getFunction("Untype", 1);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop pointer, and ignore it
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
-		LABELBACK(label);
 		/*
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        LABELBACK(label);*/
-        //code.push_back(new OSetImmediate(new VarArgument(EXP1), new VarArgument(EXP2)));
-        RETURN(); //Just return it?
-        function->giveCode(code);
-    }
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));*/
+		//code.push_back(new OSetImmediate(new VarArgument(EXP1), new VarArgument(EXP2)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
 	
-    //int Rand(int maxval)
-    {
-	    Function* function = getFunction("Rand", 1);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop maxval
-        code.push_back(new OPopRegister(new VarArgument(EXP2)));
-        LABELBACK(label);
-        code.push_back(new ORandRegister(new VarArgument(EXP1), new VarArgument(EXP2)));
-        RETURN();
-        function->giveCode(code);
-    }
+	//int Rand(int maxval)
+	{
+		Function* function = getFunction("Rand", 1);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop maxval
+		code.push_back(new OPopRegister(new VarArgument(EXP2)));
+		code.push_back(new ORandRegister(new VarArgument(EXP1), new VarArgument(EXP2)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
 	
-    //int_full SRand(int_full seed)
-    {
-	    Function* function = getFunction("SRand", 1);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop seed
-        code.push_back(new OPopRegister(new VarArgument(EXP2)));
-        LABELBACK(label);
-        code.push_back(new OSRandRegister(new VarArgument(EXP2)));
-        RETURN();
-        function->giveCode(code);
-    }
+	//int_full SRand(int_full seed)
+	{
+		Function* function = getFunction("SRand", 1);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop seed
+		code.push_back(new OPopRegister(new VarArgument(EXP2)));
+		code.push_back(new OSRandRegister(new VarArgument(EXP2)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
 	
-    //int_full SRand()
-    {
-	    Function* function = getFunction("SRand", 0);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        code.push_back(new OSRandRand(new VarArgument(EXP1)));
-        LABELBACK(label);
-        RETURN();
-        function->giveCode(code);
-    }
-    
+	//int_full SRand()
+	{
+		Function* function = getFunction("SRand", 0);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OSRandRand(new VarArgument(EXP1)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	
 	//bool IsValidArray(untyped)
 	{
 		Function* function = getFunction("IsValidArray", 1);
@@ -832,715 +548,756 @@ void GlobalSymbols::generateCode()
 		vector<Opcode*> code;
 		//Pop array ptr
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
-		LABELBACK(label);
 		code.push_back(new OIsValidArray(new VarArgument(EXP1)));
 		RETURN();
+		LABELFRONT(label);
 		function->giveCode(code);
 	}
-    
-    //int GetSystemTime(int category)
-    {
-	    Function* function = getFunction("GetSystemTime", 1);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        LABELBACK(label);
-        code.push_back(new OGetSystemRTCRegister(new VarArgument(EXP1)));
-        RETURN();
-        function->giveCode(code);
-    }
-    
-    //void Quit()
-    {
-	    Function* function = getFunction("Quit", 0);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        code.push_back(new OQuit());
-        LABELBACK(label);
-        function->giveCode(code);
-    }
-    //void Waitframe()
-    {
-	    Function* function = getFunction("Waitframe", 0);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        code.push_back(new OWaitframe());
-        LABELBACK(label);
-        RETURN();
-        function->giveCode(code);
-    }
-    //void Waitdraw()
-    {
-	    Function* function = getFunction("Waitdraw", 0);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        code.push_back(new OWaitdraw());
-        LABELBACK(label);
-        RETURN();
-        function->giveCode(code);
-    }
-    //void Trace(int val)
-    {
-	    Function* function = getFunction("Trace", 1);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        code.push_back(new OPopRegister(new VarArgument(EXP2)));
-        LABELBACK(label);
-        code.push_back(new OTraceRegister(new VarArgument(EXP2)));
-        RETURN();
-        function->giveCode(code);
-    }
-    {
-	 TRACING_FUNCTION("TraceLWeapon", 1);   
-    }
-    {
-	 TRACING_FUNCTION("TraceEWeapon", 1);   
-    }
-    {
-	 TRACING_FUNCTION("TraceNPC", 1);   
-    }
-    {
-	 TRACING_FUNCTION("TraceFFC", 1);   
-    }
-    {
-	 TRACING_FUNCTION("TraceItem", 1);   
-    }
-    {
-	 TRACING_FUNCTION("TraceItemData", 1);   
-    }
-    //void TraceB(bool val)
-    {
-	    Function* function = getFunction("TraceB", 1);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        code.push_back(new OPopRegister(new VarArgument(EXP2)));
-        LABELBACK(label);
-        code.push_back(new OTrace2Register(new VarArgument(EXP2)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //void TraceS(bool val)
-    {
-	    Function* function = getFunction("TraceS", 1);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        code.push_back(new OPopRegister(new VarArgument(INDEX)));
-        LABELBACK(label);
-        code.push_back(new OTrace6Register(new VarArgument(EXP2)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //void TraceNL()
-    {
-	    Function* function = getFunction("TraceNL", 0);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        code.push_back(new OTrace3());
-        LABELBACK(label);
-        RETURN();
-        function->giveCode(code);
-    }
-    //void ClearTrace()
-    {
-	    Function* function = getFunction("ClearTrace", 0);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        code.push_back(new OTrace4());
-        LABELBACK(label);
-        RETURN();
-        function->giveCode(code);
-    }
-    //void TraceToBase(float, float, float)
-    {
-	    Function* function = getFunction("TraceToBase", 3);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        code.push_back(new OTrace5Register());
-        LABELBACK(label);
+	
+	//int GetSystemTime(int category)
+	{
+		Function* function = getFunction("GetSystemTime", 1);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		code.push_back(new OGetSystemRTCRegister(new VarArgument(EXP1)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	
+	//void Quit()
+	{
+		Function* function = getFunction("Quit", 0);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OQuit());
+		function->giveCode(code);
+	}
+	//void Waitframe()
+	{
+		Function* function = getFunction("Waitframe", 0);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OWaitframe());
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//void Waitdraw()
+	{
+		Function* function = getFunction("Waitdraw", 0);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OWaitdraw());
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//void Trace(int val)
+	{
+		Function* function = getFunction("Trace", 1);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OPopRegister(new VarArgument(EXP2)));
+		code.push_back(new OTraceRegister(new VarArgument(EXP2)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	{
+		Function* function = getFunction("TraceLWeapon", 1);  
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OPopRegister(new VarArgument(EXP2)));
+		code.push_back(new OTraceRegister(new VarArgument(EXP2)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code); 
+	}
+	{
+		Function* function = getFunction("TraceEWeapon", 1);   
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OPopRegister(new VarArgument(EXP2)));
+		code.push_back(new OTraceRegister(new VarArgument(EXP2)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	{
+		Function* function = getFunction("TraceNPC", 1);   
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OPopRegister(new VarArgument(EXP2)));
+		code.push_back(new OTraceRegister(new VarArgument(EXP2)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	{
+		Function* function = getFunction("TraceFFC", 1);   
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OPopRegister(new VarArgument(EXP2)));
+		code.push_back(new OTraceRegister(new VarArgument(EXP2)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	{
+		Function* function = getFunction("TraceItem", 1);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OPopRegister(new VarArgument(EXP2)));
+		code.push_back(new OTraceRegister(new VarArgument(EXP2)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	{
+		Function* function = getFunction("TraceItemData", 1);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OPopRegister(new VarArgument(EXP2)));
+		code.push_back(new OTraceRegister(new VarArgument(EXP2)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code); 
+	}
+	//void TraceB(bool val)
+	{
+		Function* function = getFunction("TraceB", 1);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OPopRegister(new VarArgument(EXP2)));
+		code.push_back(new OTrace2Register(new VarArgument(EXP2)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//void TraceS(bool val)
+	{
+		Function* function = getFunction("TraceS", 1);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OPopRegister(new VarArgument(INDEX)));
+		code.push_back(new OTrace6Register(new VarArgument(EXP2)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//void TraceNL()
+	{
+		Function* function = getFunction("TraceNL", 0);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OTrace3());
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//void ClearTrace()
+	{
+		Function* function = getFunction("ClearTrace", 0);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OTrace4());
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//void TraceToBase(float, float, float)
+	{
+		Function* function = getFunction("TraceToBase", 3);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OTrace5Register());
 		POP_ARGS(3, NUL);
-        
-        RETURN();
-        function->giveCode(code);
-    }
-    //int Sin(int val)
-    {
-	    Function* function = getFunction("Sin", 1);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        code.push_back(new OPopRegister(new VarArgument(EXP2)));
-        LABELBACK(label);
-        code.push_back(new OSinRegister(new VarArgument(EXP1), new VarArgument(EXP2)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //int RadianSin(int val)
-    {
-	    Function* function = getFunction("RadianSin", 1);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        code.push_back(new OPopRegister(new VarArgument(EXP2)));
-        LABELBACK(label);
-        code.push_back(new OMultImmediate(new VarArgument(EXP2), new LiteralArgument(radsperdeg)));
-        code.push_back(new OSinRegister(new VarArgument(EXP1), new VarArgument(EXP2)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //int ArcSin(int val)
-    {
-	    Function* function = getFunction("ArcSin", 1);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        code.push_back(new OPopRegister(new VarArgument(EXP2)));
-        LABELBACK(label);
-        code.push_back(new OArcSinRegister(new VarArgument(EXP1), new VarArgument(EXP2)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //int Cos(int val)
-    {
-	    Function* function = getFunction("Cos", 1);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        code.push_back(new OPopRegister(new VarArgument(EXP2)));
-        LABELBACK(label);
-        code.push_back(new OCosRegister(new VarArgument(EXP1), new VarArgument(EXP2)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //int RadianCos(int val)
-    {
-	    Function* function = getFunction("RadianCos", 1);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        code.push_back(new OPopRegister(new VarArgument(EXP2)));
-        LABELBACK(label);
-        code.push_back(new OMultImmediate(new VarArgument(EXP2), new LiteralArgument(radsperdeg)));
-        code.push_back(new OCosRegister(new VarArgument(EXP1), new VarArgument(EXP2)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //int ArcCos(int val)
-    {
-	    Function* function = getFunction("ArcCos", 1);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        code.push_back(new OPopRegister(new VarArgument(EXP2)));
-        LABELBACK(label);
-        code.push_back(new OArcCosRegister(new VarArgument(EXP1), new VarArgument(EXP2)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //int Tan(int val)
-    {
-	    Function* function = getFunction("Tan", 1);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        code.push_back(new OPopRegister(new VarArgument(EXP2)));
-        LABELBACK(label);
-        code.push_back(new OTanRegister(new VarArgument(EXP1), new VarArgument(EXP2)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //int ArcTan(int X, int Y)
-    {
-	    Function* function = getFunction("ArcTan", 2);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        code.push_back(new OPopRegister(new VarArgument(INDEX2)));
-        LABELBACK(label);
-        code.push_back(new OPopRegister(new VarArgument(INDEX)));
-        code.push_back(new OATanRegister(new VarArgument(EXP1)));
-        RETURN();
-        function->giveCode(code);
-    }
-    
-    //int RadianTan(int val)
-    {
-	    Function* function = getFunction("RadianTan", 1);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        code.push_back(new OPopRegister(new VarArgument(EXP2)));
-        LABELBACK(label);
-        code.push_back(new OMultImmediate(new VarArgument(EXP2), new LiteralArgument(radsperdeg)));
-        code.push_back(new OTanRegister(new VarArgument(EXP1), new VarArgument(EXP2)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //int Max(int first, int second)
-    {
-	    Function* function = getFunction("Max", 2);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        code.push_back(new OPopRegister(new VarArgument(EXP2)));
-        LABELBACK(label);
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        code.push_back(new OMaxRegister(new VarArgument(EXP1), new VarArgument(EXP2)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //int Min(int first, int second)
-    {
-	    Function* function = getFunction("Min", 2);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        code.push_back(new OPopRegister(new VarArgument(EXP2)));
-        LABELBACK(label);
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        code.push_back(new OMinRegister(new VarArgument(EXP1), new VarArgument(EXP2)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //int Pow(int first, int second)
-    {
-	    Function* function = getFunction("Pow", 2);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        code.push_back(new OPopRegister(new VarArgument(EXP2)));
-        LABELBACK(label);
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        code.push_back(new OPowRegister(new VarArgument(EXP1), new VarArgument(EXP2)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //int InvPow(int first, int second)
-    {
-	    Function* function = getFunction("InvPow", 2);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        code.push_back(new OPopRegister(new VarArgument(EXP2)));
-        LABELBACK(label);
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        code.push_back(new OInvPowRegister(new VarArgument(EXP1), new VarArgument(EXP2)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //int Factorial(int val)
-    {
-	    Function* function = getFunction("Factorial", 1);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        LABELBACK(label);
-        code.push_back(new OFactorial(new VarArgument(EXP1)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //int Abs(int val)
-    {
-	    Function* function = getFunction("Abs", 1);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        LABELBACK(label);
-        code.push_back(new OAbsRegister(new VarArgument(EXP1)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //int Log10(int val)
-    {
-	    Function* function = getFunction("Log10", 1);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        LABELBACK(label);
-        code.push_back(new OLog10Register(new VarArgument(EXP1)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //int Ln(int val)
-    {
-	    Function* function = getFunction("Ln", 1);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        LABELBACK(label);
-        code.push_back(new OLogERegister(new VarArgument(EXP1)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //int Sqrt(int val)
-    {
-	    Function* function = getFunction("Sqrt", 1);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        LABELBACK(label);
-        code.push_back(new OSqrtRegister(new VarArgument(EXP1), new VarArgument(EXP1)));
-        RETURN();
-        function->giveCode(code);
-    }
-    
-    
-    //int CopyTile(int source, int dest)
-    {
-	    Function* function = getFunction("CopyTile", 2);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        code.push_back(new OPopRegister(new VarArgument(EXP2)));
-        LABELBACK(label);
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        code.push_back(new OCopyTileRegister(new VarArgument(EXP1), new VarArgument(EXP2)));
-        RETURN();
-        function->giveCode(code);
-    }
-    
-    
-    //int SwapTile(int first, int second)
-    {
-	    Function* function = getFunction("SwapTile", 2);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        code.push_back(new OPopRegister(new VarArgument(EXP2)));
-        LABELBACK(label);
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        code.push_back(new OSwapTileRegister(new VarArgument(EXP1), new VarArgument(EXP2)));
-        RETURN();
-        function->giveCode(code);
-    }
-    
-    //int OverlayTile(int first, int second)
-    {
-	    Function* function = getFunction("OverlayTile", 2);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        code.push_back(new OPopRegister(new VarArgument(EXP2)));
-        LABELBACK(label);
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        code.push_back(new OOverlayTileRegister(new VarArgument(EXP1), new VarArgument(EXP2)));
-        RETURN();
-        function->giveCode(code);
-    }
-    
-    //void ClearTile(int tile)
-    {
-	    Function* function = getFunction("ClearTile", 1);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        code.push_back(new OPopRegister(new VarArgument(EXP2)));
-        LABELBACK(label);
-        code.push_back(new OClearTileRegister(new VarArgument(EXP2)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //void GetGlobalRAM(int)
-    {
-	    Function* function = getFunction("GetGlobalRAM", 1);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the params
-        code.push_back(new OPopRegister(new VarArgument(INDEX)));
-        LABELBACK(label);
-        code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(GLOBALRAMD)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //void SetGlobalRAM(int, int)
-    {
-	    Function* function = getFunction("SetGlobalRAM", 2);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the params
-        code.push_back(new OPopRegister(new VarArgument(EXP2)));
-        LABELBACK(label);
-        code.push_back(new OPopRegister(new VarArgument(INDEX)));
-        code.push_back(new OSetRegister(new VarArgument(GLOBALRAMD), new VarArgument(EXP2)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //void GetScriptRAM(int)
-    {
-	    Function* function = getFunction("GetScriptRAM", 1);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the params
-        code.push_back(new OPopRegister(new VarArgument(INDEX)));
-        LABELBACK(label);
-        //code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(SCRIPTRAMD)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //void SetScriptRAM(int, int)
-    {
-	    Function* function = getFunction("SetScriptRAM", 2);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the params
-        code.push_back(new OPopRegister(new VarArgument(EXP2)));
-        LABELBACK(label);
-        code.push_back(new OPopRegister(new VarArgument(INDEX)));
-        code.push_back(new OSetRegister(new VarArgument(SCRIPTRAMD), new VarArgument(EXP2)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //void SetColorBuffer(int amount, int offset, int stride, int *ptr)
-    {
-	    Function* function = getFunction("SetColorBuffer", 4);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        code.push_back(new OSetColorBufferRegister());
-        LABELBACK(label);
-        code.push_back(new OPopRegister(new VarArgument(EXP2)));
-        code.push_back(new OPopRegister(new VarArgument(EXP2)));
-        code.push_back(new OPopRegister(new VarArgument(EXP2)));
-        code.push_back(new OPopRegister(new VarArgument(EXP2)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //void SetDepthBuffer(int amount, int offset, int stride, int *ptr)
-    {
-	    Function* function = getFunction("SetDepthBuffer", 4);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        code.push_back(new OSetDepthBufferRegister());
-        LABELBACK(label);
-        code.push_back(new OPopRegister(new VarArgument(EXP2)));
-        code.push_back(new OPopRegister(new VarArgument(EXP2)));
-        code.push_back(new OPopRegister(new VarArgument(EXP2)));
-        code.push_back(new OPopRegister(new VarArgument(EXP2)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //void GetColorBuffer(int amount, int offset, int stride, int *ptr)
-    {
-	    Function* function = getFunction("GetColorBuffer", 4);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        code.push_back(new OGetColorBufferRegister());
-        LABELBACK(label);
-        code.push_back(new OPopRegister(new VarArgument(EXP2)));
-        code.push_back(new OPopRegister(new VarArgument(EXP2)));
-        code.push_back(new OPopRegister(new VarArgument(EXP2)));
-        code.push_back(new OPopRegister(new VarArgument(EXP2)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //void GetDepthBuffer(int amount, int offset, int stride, int *ptr)
-    {
-	    Function* function = getFunction("GetDepthBuffer", 4);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        code.push_back(new OGetDepthBufferRegister());
-        LABELBACK(label);
-        code.push_back(new OPopRegister(new VarArgument(EXP2)));
-        code.push_back(new OPopRegister(new VarArgument(EXP2)));
-        code.push_back(new OPopRegister(new VarArgument(EXP2)));
-        code.push_back(new OPopRegister(new VarArgument(EXP2)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //int SizeOfArray(int val)
-    {
-	    Function* function = getFunction("SizeOfArray", 1);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        LABELBACK(label);
-        code.push_back(new OArraySize(new VarArgument(EXP1)));
-        RETURN();
-        function->giveCode(code);
-    }
-    
-    {
-	    Function* function = getFunction("Byte", 1);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        LABELBACK(label);
-        code.push_back(new OByte(new VarArgument(EXP1)));
-        RETURN();
-        function->giveCode(code);
-    }
-    {
-	    Function* function = getFunction("Int8", 1);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        LABELBACK(label);
-        code.push_back(new OByte(new VarArgument(EXP1)));
-        RETURN();
-        function->giveCode(code);
-    }
-    {
-	    Function* function = getFunction("SignedByte", 1);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        LABELBACK(label);
-        code.push_back(new OSByte(new VarArgument(EXP1)));
-        RETURN();
-        function->giveCode(code);
-    }
-    {
-	    Function* function = getFunction("Word", 1);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        LABELBACK(label);
-        code.push_back(new OWord(new VarArgument(EXP1)));
-        RETURN();
-        function->giveCode(code);
-    }
-    {
-	    Function* function = getFunction("Int16", 1);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        LABELBACK(label);
-        code.push_back(new OWord(new VarArgument(EXP1)));
-        RETURN();
-        function->giveCode(code);
-    }
-    {
-	    Function* function = getFunction("Short", 1);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        LABELBACK(label);
-        code.push_back(new OShort(new VarArgument(EXP1)));
-        RETURN();
-        function->giveCode(code);
-    }
-    {
-	    Function* function = getFunction("Integer", 1);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        LABELBACK(label);
-        code.push_back(new OToInteger(new VarArgument(EXP1)));
-        RETURN();
-        function->giveCode(code);
-    }
-    {
-	    Function* function = getFunction("Floor", 1);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        LABELBACK(label);
-        code.push_back(new OFloor(new VarArgument(EXP1)));
-        RETURN();
-        function->giveCode(code);
-    }
-    {
-	    Function* function = getFunction("Ceiling", 1);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        LABELBACK(label);
-        code.push_back(new OCeiling(new VarArgument(EXP1)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //int SizeOfArrayFFC(ffc *ptr)
-    {
-	    Function* function = getFunction("SizeOfArrayFFC", 1);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        LABELBACK(label);
-        code.push_back(new OArraySizeF(new VarArgument(EXP1)));
-        RETURN();
-        function->giveCode(code);
-    }
-    
-     //int SizeOfArrayNPC(npc *ptr)
-    {
-	    Function* function = getFunction("SizeOfArrayNPC", 1);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        LABELBACK(label);
-        code.push_back(new OArraySizeN(new VarArgument(EXP1)));
-        RETURN();
-        function->giveCode(code);
-    } 
-    
-    //int SizeOfArrayBool(bool *ptr)
-    {
-	    Function* function = getFunction("SizeOfArrayBool", 1);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        LABELBACK(label);
-        code.push_back(new OArraySizeB(new VarArgument(EXP1)));
-        RETURN();
-        function->giveCode(code);
-    } //int SizeOfArrayItem(item *ptr)
-    {
-	    Function* function = getFunction("SizeOfArrayItem", 1);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        LABELBACK(label);
-        code.push_back(new OArraySizeI(new VarArgument(EXP1)));
-        RETURN();
-        function->giveCode(code);
-    } //int SizeOfArrayItemdata(itemdata *ptr)
-    {
-	    Function* function = getFunction("SizeOfArrayItemdata", 1);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        LABELBACK(label);
-        code.push_back(new OArraySizeID(new VarArgument(EXP1)));
-        RETURN();
-        function->giveCode(code);
-    } //int SizeOfArrayLWeapon(lweapon *ptr)
-    {
-	    Function* function = getFunction("SizeOfArrayLWeapon", 1);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        LABELBACK(label);
-        code.push_back(new OArraySizeL(new VarArgument(EXP1)));
-        RETURN();
-        function->giveCode(code);
-    } 
-    //int SaveSRAM(eweapon *ptr)
-    {
-	    Function* function = getFunction("SaveSRAM", 2);
-	    int label = function->getLabel();
-        vector<Opcode *> code;
-        code.push_back(new OPopRegister(new VarArgument(EXP2)));
-        LABELBACK(label);
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        code.push_back(new OSaveGameStructs(new VarArgument(EXP1), new VarArgument(EXP2)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //int LoadSRAM(eweapon *ptr)
-    {
-	    Function* function = getFunction("LoadSRAM", 2);
-	    int label = function->getLabel();
-        vector<Opcode *> code;
-        code.push_back(new OPopRegister(new VarArgument(EXP2)));
-        LABELBACK(label);
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        code.push_back(new OReadGameStructs(new VarArgument(EXP1), new VarArgument(EXP2)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //int SizeOfArrayEWeapon(eweapon *ptr)
-    {
-	    Function* function = getFunction("SizeOfArrayEWeapon", 1);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        LABELBACK(label);
-        code.push_back(new OArraySizeE(new VarArgument(EXP1)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //String and Array Functions (String.h, Array.h)
-    	//int strlen(*p)
+		
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//int Sin(int val)
+	{
+		Function* function = getFunction("Sin", 1);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OPopRegister(new VarArgument(EXP2)));
+		code.push_back(new OSinRegister(new VarArgument(EXP1), new VarArgument(EXP2)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//int RadianSin(int val)
+	{
+		Function* function = getFunction("RadianSin", 1);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OPopRegister(new VarArgument(EXP2)));
+		code.push_back(new OMultImmediate(new VarArgument(EXP2), new LiteralArgument(radsperdeg)));
+		code.push_back(new OSinRegister(new VarArgument(EXP1), new VarArgument(EXP2)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//int ArcSin(int val)
+	{
+		Function* function = getFunction("ArcSin", 1);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OPopRegister(new VarArgument(EXP2)));
+		code.push_back(new OArcSinRegister(new VarArgument(EXP1), new VarArgument(EXP2)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//int Cos(int val)
+	{
+		Function* function = getFunction("Cos", 1);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OPopRegister(new VarArgument(EXP2)));
+		code.push_back(new OCosRegister(new VarArgument(EXP1), new VarArgument(EXP2)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//int RadianCos(int val)
+	{
+		Function* function = getFunction("RadianCos", 1);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OPopRegister(new VarArgument(EXP2)));
+		code.push_back(new OMultImmediate(new VarArgument(EXP2), new LiteralArgument(radsperdeg)));
+		code.push_back(new OCosRegister(new VarArgument(EXP1), new VarArgument(EXP2)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//int ArcCos(int val)
+	{
+		Function* function = getFunction("ArcCos", 1);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OPopRegister(new VarArgument(EXP2)));
+		code.push_back(new OArcCosRegister(new VarArgument(EXP1), new VarArgument(EXP2)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//int Tan(int val)
+	{
+		Function* function = getFunction("Tan", 1);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OPopRegister(new VarArgument(EXP2)));
+		code.push_back(new OTanRegister(new VarArgument(EXP1), new VarArgument(EXP2)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//int ArcTan(int X, int Y)
+	{
+		Function* function = getFunction("ArcTan", 2);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX)));
+		code.push_back(new OATanRegister(new VarArgument(EXP1)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	
+	//int RadianTan(int val)
+	{
+		Function* function = getFunction("RadianTan", 1);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OPopRegister(new VarArgument(EXP2)));
+		code.push_back(new OMultImmediate(new VarArgument(EXP2), new LiteralArgument(radsperdeg)));
+		code.push_back(new OTanRegister(new VarArgument(EXP1), new VarArgument(EXP2)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//int Max(int first, int second)
+	{
+		Function* function = getFunction("Max", 2);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OPopRegister(new VarArgument(EXP2)));
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		code.push_back(new OMaxRegister(new VarArgument(EXP1), new VarArgument(EXP2)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//int Min(int first, int second)
+	{
+		Function* function = getFunction("Min", 2);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OPopRegister(new VarArgument(EXP2)));
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		code.push_back(new OMinRegister(new VarArgument(EXP1), new VarArgument(EXP2)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//int Pow(int first, int second)
+	{
+		Function* function = getFunction("Pow", 2);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OPopRegister(new VarArgument(EXP2)));
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		code.push_back(new OPowRegister(new VarArgument(EXP1), new VarArgument(EXP2)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//int InvPow(int first, int second)
+	{
+		Function* function = getFunction("InvPow", 2);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OPopRegister(new VarArgument(EXP2)));
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		code.push_back(new OInvPowRegister(new VarArgument(EXP1), new VarArgument(EXP2)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//int Factorial(int val)
+	{
+		Function* function = getFunction("Factorial", 1);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		code.push_back(new OFactorial(new VarArgument(EXP1)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//int Abs(int val)
+	{
+		Function* function = getFunction("Abs", 1);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		code.push_back(new OAbsRegister(new VarArgument(EXP1)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//int Log10(int val)
+	{
+		Function* function = getFunction("Log10", 1);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		code.push_back(new OLog10Register(new VarArgument(EXP1)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//int Ln(int val)
+	{
+		Function* function = getFunction("Ln", 1);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		code.push_back(new OLogERegister(new VarArgument(EXP1)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//int Sqrt(int val)
+	{
+		Function* function = getFunction("Sqrt", 1);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		code.push_back(new OSqrtRegister(new VarArgument(EXP1), new VarArgument(EXP1)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	
+	
+	//int CopyTile(int source, int dest)
+	{
+		Function* function = getFunction("CopyTile", 2);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OPopRegister(new VarArgument(EXP2)));
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		code.push_back(new OCopyTileRegister(new VarArgument(EXP1), new VarArgument(EXP2)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	
+	
+	//int SwapTile(int first, int second)
+	{
+		Function* function = getFunction("SwapTile", 2);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OPopRegister(new VarArgument(EXP2)));
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		code.push_back(new OSwapTileRegister(new VarArgument(EXP1), new VarArgument(EXP2)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	
+	//int OverlayTile(int first, int second)
+	{
+		Function* function = getFunction("OverlayTile", 2);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OPopRegister(new VarArgument(EXP2)));
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		code.push_back(new OOverlayTileRegister(new VarArgument(EXP1), new VarArgument(EXP2)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	
+	//void ClearTile(int tile)
+	{
+		Function* function = getFunction("ClearTile", 1);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OPopRegister(new VarArgument(EXP2)));
+		code.push_back(new OClearTileRegister(new VarArgument(EXP2)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//void GetGlobalRAM(int)
+	{
+		Function* function = getFunction("GetGlobalRAM", 1);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the params
+		code.push_back(new OPopRegister(new VarArgument(INDEX)));
+		code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(GLOBALRAMD)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//void SetGlobalRAM(int, int)
+	{
+		Function* function = getFunction("SetGlobalRAM", 2);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the params
+		code.push_back(new OPopRegister(new VarArgument(EXP2)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX)));
+		code.push_back(new OSetRegister(new VarArgument(GLOBALRAMD), new VarArgument(EXP2)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//void GetScriptRAM(int)
+	{
+		Function* function = getFunction("GetScriptRAM", 1);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the params
+		code.push_back(new OPopRegister(new VarArgument(INDEX)));
+		//code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(SCRIPTRAMD)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//void SetScriptRAM(int, int)
+	{
+		Function* function = getFunction("SetScriptRAM", 2);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the params
+		code.push_back(new OPopRegister(new VarArgument(EXP2)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX)));
+		code.push_back(new OSetRegister(new VarArgument(SCRIPTRAMD), new VarArgument(EXP2)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//void SetColorBuffer(int amount, int offset, int stride, int *ptr)
+	{
+		Function* function = getFunction("SetColorBuffer", 4);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OSetColorBufferRegister());
+		code.push_back(new OPopRegister(new VarArgument(EXP2)));
+		code.push_back(new OPopRegister(new VarArgument(EXP2)));
+		code.push_back(new OPopRegister(new VarArgument(EXP2)));
+		code.push_back(new OPopRegister(new VarArgument(EXP2)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//void SetDepthBuffer(int amount, int offset, int stride, int *ptr)
+	{
+		Function* function = getFunction("SetDepthBuffer", 4);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OSetDepthBufferRegister());
+		code.push_back(new OPopRegister(new VarArgument(EXP2)));
+		code.push_back(new OPopRegister(new VarArgument(EXP2)));
+		code.push_back(new OPopRegister(new VarArgument(EXP2)));
+		code.push_back(new OPopRegister(new VarArgument(EXP2)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//void GetColorBuffer(int amount, int offset, int stride, int *ptr)
+	{
+		Function* function = getFunction("GetColorBuffer", 4);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OGetColorBufferRegister());
+		code.push_back(new OPopRegister(new VarArgument(EXP2)));
+		code.push_back(new OPopRegister(new VarArgument(EXP2)));
+		code.push_back(new OPopRegister(new VarArgument(EXP2)));
+		code.push_back(new OPopRegister(new VarArgument(EXP2)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//void GetDepthBuffer(int amount, int offset, int stride, int *ptr)
+	{
+		Function* function = getFunction("GetDepthBuffer", 4);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OGetDepthBufferRegister());
+		code.push_back(new OPopRegister(new VarArgument(EXP2)));
+		code.push_back(new OPopRegister(new VarArgument(EXP2)));
+		code.push_back(new OPopRegister(new VarArgument(EXP2)));
+		code.push_back(new OPopRegister(new VarArgument(EXP2)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//int SizeOfArray(int val)
+	{
+		Function* function = getFunction("SizeOfArray", 1);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		code.push_back(new OArraySize(new VarArgument(EXP1)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	
+	{
+		Function* function = getFunction("Byte", 1);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		code.push_back(new OByte(new VarArgument(EXP1)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	{
+		Function* function = getFunction("Int8", 1);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		code.push_back(new OByte(new VarArgument(EXP1)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	{
+		Function* function = getFunction("SignedByte", 1);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		code.push_back(new OSByte(new VarArgument(EXP1)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	{
+		Function* function = getFunction("Word", 1);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		code.push_back(new OWord(new VarArgument(EXP1)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	{
+		Function* function = getFunction("Int16", 1);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		code.push_back(new OWord(new VarArgument(EXP1)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	{
+		Function* function = getFunction("Short", 1);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		code.push_back(new OShort(new VarArgument(EXP1)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	{
+		Function* function = getFunction("Integer", 1);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		code.push_back(new OToInteger(new VarArgument(EXP1)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	{
+		Function* function = getFunction("Floor", 1);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		code.push_back(new OFloor(new VarArgument(EXP1)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	{
+		Function* function = getFunction("Ceiling", 1);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		code.push_back(new OCeiling(new VarArgument(EXP1)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//int SizeOfArrayFFC(ffc *ptr)
+	{
+		Function* function = getFunction("SizeOfArrayFFC", 1);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		code.push_back(new OArraySizeF(new VarArgument(EXP1)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	
+	 //int SizeOfArrayNPC(npc *ptr)
+	{
+		Function* function = getFunction("SizeOfArrayNPC", 1);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		code.push_back(new OArraySizeN(new VarArgument(EXP1)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	} 
+	
+	//int SizeOfArrayBool(bool *ptr)
+	{
+		Function* function = getFunction("SizeOfArrayBool", 1);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		code.push_back(new OArraySizeB(new VarArgument(EXP1)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	} //int SizeOfArrayItem(item *ptr)
+	{
+		Function* function = getFunction("SizeOfArrayItem", 1);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		code.push_back(new OArraySizeI(new VarArgument(EXP1)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	} //int SizeOfArrayItemdata(itemdata *ptr)
+	{
+		Function* function = getFunction("SizeOfArrayItemdata", 1);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		code.push_back(new OArraySizeID(new VarArgument(EXP1)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	} //int SizeOfArrayLWeapon(lweapon *ptr)
+	{
+		Function* function = getFunction("SizeOfArrayLWeapon", 1);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		code.push_back(new OArraySizeL(new VarArgument(EXP1)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	} 
+	//int SaveSRAM(eweapon *ptr)
+	{
+		Function* function = getFunction("SaveSRAM", 2);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OPopRegister(new VarArgument(EXP2)));
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		code.push_back(new OSaveGameStructs(new VarArgument(EXP1), new VarArgument(EXP2)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//int LoadSRAM(eweapon *ptr)
+	{
+		Function* function = getFunction("LoadSRAM", 2);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OPopRegister(new VarArgument(EXP2)));
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		code.push_back(new OReadGameStructs(new VarArgument(EXP1), new VarArgument(EXP2)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//int SizeOfArrayEWeapon(eweapon *ptr)
+	{
+		Function* function = getFunction("SizeOfArrayEWeapon", 1);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		code.push_back(new OArraySizeE(new VarArgument(EXP1)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//String and Array Functions (String.h, Array.h)
+		//int strlen(*p)
 	{
 		Function* function = getFunction("strlen", 1);
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
-		LABELBACK(label);
 		code.push_back(new Ostrlen(new VarArgument(EXP1), new VarArgument(EXP2)));
 		RETURN();
+		LABELFRONT(label);
 		function->giveCode(code);
 	}
 	//void strcpy(str* dest, str* src)
@@ -1549,10 +1306,10 @@ void GlobalSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
-		LABELBACK(label);
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		code.push_back(new Ostrcpy(new VarArgument(EXP1), new VarArgument(EXP2)));
 		RETURN();
+		LABELFRONT(label);
 		function->giveCode(code);
 	}
 	//int strcmp(*a, *b)
@@ -1561,10 +1318,10 @@ void GlobalSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
-		LABELBACK(label);
 		code.push_back(new OPopRegister(new VarArgument(INDEX)));
 		code.push_back(new OStrCmp(new VarArgument(EXP1)));
 		RETURN();
+		LABELFRONT(label);
 		function->giveCode(code);
 	}
 	//int strncmp(*a, *b, int len)
@@ -1573,23 +1330,23 @@ void GlobalSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
-		LABELBACK(label);
 		code.push_back(new OPopRegister(new VarArgument(INDEX)));
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
 		code.push_back(new OStrNCmp(new VarArgument(EXP1)));
 		RETURN();
+		LABELFRONT(label);
 		function->giveCode(code);
 	}
-    //int stricmp(*a, *b)
+	//int stricmp(*a, *b)
 	{
 		Function* function = getFunction("stricmp",2);
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
-		LABELBACK(label);
 		code.push_back(new OPopRegister(new VarArgument(INDEX)));
 		code.push_back(new OStrICmp(new VarArgument(EXP1)));
 		RETURN();
+		LABELFRONT(label);
 		function->giveCode(code);
 	}
 	//int strnicmp(*a, *b, int len)
@@ -1598,24 +1355,24 @@ void GlobalSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
-		LABELBACK(label);
 		code.push_back(new OPopRegister(new VarArgument(INDEX)));
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
 		code.push_back(new OStrNICmp(new VarArgument(EXP1)));
 		RETURN();
+		LABELFRONT(label);
 		function->giveCode(code);
 	}
-    
+	
 	//int ArrayCopy(int source, int dest)
 	{
 		Function* function = getFunction("ArrayCopy", 2);
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
-		LABELBACK(label);
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		code.push_back(new oARRAYCOPY(new VarArgument(EXP1), new VarArgument(EXP2)));
 		RETURN();
+		LABELFRONT(label);
 		function->giveCode(code);
 	}
 	//int atoi(*p)
@@ -1624,9 +1381,9 @@ void GlobalSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
-		LABELBACK(label);
 		code.push_back(new Oatoi(new VarArgument(EXP1), new VarArgument(EXP2)));
 		RETURN();
+		LABELFRONT(label);
 		function->giveCode(code);
 	}
 	/*int atoi2(*a, *b)
@@ -1635,10 +1392,10 @@ void GlobalSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
-		LABELBACK(label);
 		code.push_back(new OPopRegister(new VarArgument(INDEX)));
 		code.push_back(new Oatoi2(new VarArgument(EXP1)));
 		RETURN();
+		LABELFRONT(label);
 		function->giveCode(code);
 	}*/
 	
@@ -1648,9 +1405,9 @@ void GlobalSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
-		LABELBACK(label);
 		code.push_back(new Oilen(new VarArgument(EXP1), new VarArgument(EXP2)));
 		RETURN();
+		LABELFRONT(label);
 		function->giveCode(code);
 	}
 	//int utol(*p)
@@ -1659,9 +1416,9 @@ void GlobalSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
-		LABELBACK(label);
 		code.push_back(new Ouppertolower(new VarArgument(EXP1), new VarArgument(EXP2)));
 		RETURN();
+		LABELFRONT(label);
 		function->giveCode(code);
 	}
 	//int ltou(*p)
@@ -1670,9 +1427,9 @@ void GlobalSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
-		LABELBACK(label);
 		code.push_back(new Olowertoupper(new VarArgument(EXP1), new VarArgument(EXP2)));
 		RETURN();
+		LABELFRONT(label);
 		function->giveCode(code);
 	}
 	//int convcase(*p)
@@ -1681,36 +1438,36 @@ void GlobalSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
-		LABELBACK(label);
 		code.push_back(new Oconvertcase(new VarArgument(EXP1), new VarArgument(EXP2)));
 		RETURN();
+		LABELFRONT(label);
 		function->giveCode(code);
 	}
-        /*
+		/*
 	//int ilen2(*a, *b)
 	{
 		Function* function = getFunction("ilen",2);
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
-		LABELBACK(label);
 		code.push_back(new OPopRegister(new VarArgument(INDEX)));
 		code.push_back(new Oilen2(new VarArgument(EXP1)));
 		RETURN();
+		LABELFRONT(label);
 		function->giveCode(code);
 	}
 	*/
-    
+	
 	//int itoa(*a, *b)
 	{
 		Function* function = getFunction("itoa_c",2);
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
-		LABELBACK(label);
 		code.push_back(new OPopRegister(new VarArgument(INDEX)));
 		code.push_back(new Oitoa(new VarArgument(EXP1)));
 		RETURN();
+		LABELFRONT(label);
 		function->giveCode(code);
 	}
 	/*int remchr(*a, *b)
@@ -1719,10 +1476,10 @@ void GlobalSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
-		LABELBACK(label);
 		code.push_back(new OPopRegister(new VarArgument(INDEX)));
 		code.push_back(new Oremchr2(new VarArgument(EXP1)));
 		RETURN();
+		LABELFRONT(label);
 		function->giveCode(code);
 	}*/
 	//int strcat(*a, *b)
@@ -1731,10 +1488,10 @@ void GlobalSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
-		LABELBACK(label);
 		code.push_back(new OPopRegister(new VarArgument(INDEX)));
 		code.push_back(new Ostrcat(new VarArgument(EXP1)));
 		RETURN();
+		LABELFRONT(label);
 		function->giveCode(code);
 	}
 	//int strchr(*a, *b)
@@ -1743,10 +1500,10 @@ void GlobalSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
-		LABELBACK(label);
 		code.push_back(new OPopRegister(new VarArgument(INDEX)));
 		code.push_back(new Ostrchr(new VarArgument(EXP1)));
 		RETURN();
+		LABELFRONT(label);
 		function->giveCode(code);
 	}
 	//int strcspn(*a, *b)
@@ -1755,10 +1512,10 @@ void GlobalSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
-		LABELBACK(label);
 		code.push_back(new OPopRegister(new VarArgument(INDEX)));
 		code.push_back(new Ostrcspn(new VarArgument(EXP1)));
 		RETURN();
+		LABELFRONT(label);
 		function->giveCode(code);
 	}
 	//int strspn(*a, *b)
@@ -1767,10 +1524,10 @@ void GlobalSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
-		LABELBACK(label);
 		code.push_back(new OPopRegister(new VarArgument(INDEX)));
 		code.push_back(new Ostrspn(new VarArgument(EXP1)));
 		RETURN();
+		LABELFRONT(label);
 		function->giveCode(code);
 	}
 	//int strstr(*a, *b)
@@ -1779,10 +1536,10 @@ void GlobalSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
-		LABELBACK(label);
 		code.push_back(new OPopRegister(new VarArgument(INDEX)));
 		code.push_back(new Ostrstr(new VarArgument(EXP1)));
 		RETURN();
+		LABELFRONT(label);
 		function->giveCode(code);
 	}
 	//int strrchr(*a, *b)
@@ -1791,10 +1548,10 @@ void GlobalSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
-		LABELBACK(label);
 		code.push_back(new OPopRegister(new VarArgument(INDEX)));
 		code.push_back(new Ostrrchr(new VarArgument(EXP1)));
 		RETURN();
+		LABELFRONT(label);
 		function->giveCode(code);
 	}
 	/*
@@ -1804,9 +1561,9 @@ void GlobalSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
-		LABELBACK(label);
 		code.push_back(new Oxlen(new VarArgument(EXP1), new VarArgument(EXP2)));
 		RETURN();
+		LABELFRONT(label);
 		function->giveCode(code);
 	}
 	//int xlen(*a, *b)
@@ -1815,10 +1572,10 @@ void GlobalSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
-		LABELBACK(label);
 		code.push_back(new OPopRegister(new VarArgument(INDEX)));
 		code.push_back(new Oxlen2(new VarArgument(EXP1)));
 		RETURN();
+		LABELFRONT(label);
 		function->giveCode(code);
 	}
 	//int xtoa(*a, *b)
@@ -1827,10 +1584,10 @@ void GlobalSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
-		LABELBACK(label);
 		code.push_back(new OPopRegister(new VarArgument(INDEX)));
 		code.push_back(new Oxtoa(new VarArgument(EXP1)));
 		RETURN();
+		LABELFRONT(label);
 		function->giveCode(code);
 	}
 	//int xtoi(*p)
@@ -1839,9 +1596,9 @@ void GlobalSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
-		LABELBACK(label);
 		code.push_back(new Oxtoi(new VarArgument(EXP1), new VarArgument(EXP2)));
 		RETURN();
+		LABELFRONT(label);
 		function->giveCode(code);
 	}
 	//int xtoi2(*a, *b)
@@ -1850,10 +1607,10 @@ void GlobalSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
-		LABELBACK(label);
 		code.push_back(new OPopRegister(new VarArgument(INDEX)));
 		code.push_back(new Oxtoi2(new VarArgument(EXP1)));
 		RETURN();
+		LABELFRONT(label);
 		function->giveCode(code);
 	}
 	*/
@@ -1865,9 +1622,9 @@ void GlobalSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		code.push_back(new OPrintfImmediate(new LiteralArgument(q * 10000)));
-		LABELBACK(label);
 		POP_ARGS(q+1, NUL);
 		RETURN();
+		LABELFRONT(label);
 		function->giveCode(code);
 	}
 	//void sprintf(str* buf, str* format, untyped args...)
@@ -1877,9 +1634,9 @@ void GlobalSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		code.push_back(new OSPrintfImmediate(new LiteralArgument(q * 10000)));
-		LABELBACK(label);
 		POP_ARGS(q+2, NUL);
 		RETURN();
+		LABELFRONT(label);
 		function->giveCode(code);
 	}
 }
@@ -1936,54 +1693,55 @@ static AccessorTable FFCTable[] =
 
 FFCSymbols::FFCSymbols()
 {
-    table = FFCTable;
-    refVar = REFFFC;
+	table = FFCTable;
+	refVar = REFFFC;
 }
 
 void FFCSymbols::generateCode()
 {
 	//void ChangeFFCScript(ffc, int)
-    {
-	    Function* function = getFunction("ChangeFFCScript", 2);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the param
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        LABELBACK(label);
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new OChangeFFCScriptRegister(new VarArgument(EXP1)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //bool WasTriggered(ffc)
-    /*{
-      Function* function = getFunction("WasTriggered", 1);
-    	int label = function->getLabel();
-    	vector<Opcode *> code;
-    	//pop ffc
-    	code.push_back(new OPopRegister(new VarArgument(EXP2)));
-    	LABELBACK(label);
-    	//if ffc = -1, it is "this"
-    	int thislabel = ScriptParser::getUniqueLabelID();
-    	code.push_back(new OCompareImmediate(new VarArgument(EXP2), new LiteralArgument(-1)));
-    	code.push_back(new OGotoTrueImmediate(new LabelArgument(thislabel)));
-    	//if not this
-    	//NOT POSSIBLE YET
-    	//QUIT
-    	code.push_back(new OQuit());
-    	//if "this"
-    	code.push_back(new OCheckTrig());
-    	int truelabel = ScriptParser::getUniqueLabelID();
-    	code.push_back(new OGotoTrueImmediate(new LabelArgument(truelabel)));
-    	code.push_back(new OSetImmediate(new VarArgument(EXP1), new LiteralArgument(0)));
-    	RETURN();
-    	code.push_back(new OSetImmediate(new VarArgument(EXP1), new LiteralArgument(1)));
-    	LABELBACK(truelabel);
-    	RETURN();
-    	function->giveCode(code);
-    }*/
-    
+	{
+		Function* function = getFunction("ChangeFFCScript", 2);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the param
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OChangeFFCScriptRegister(new VarArgument(EXP1)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//bool WasTriggered(ffc)
+	/*{
+	  Function* function = getFunction("WasTriggered", 1);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop ffc
+		code.push_back(new OPopRegister(new VarArgument(EXP2)));
+		//if ffc = -1, it is "this"
+		int thislabel = ScriptParser::getUniqueLabelID();
+		code.push_back(new OCompareImmediate(new VarArgument(EXP2), new LiteralArgument(-1)));
+		code.push_back(new OGotoTrueImmediate(new LabelArgument(thislabel)));
+		//if not this
+		//NOT POSSIBLE YET
+		//QUIT
+		code.push_back(new OQuit());
+		//if "this"
+		code.push_back(new OCheckTrig());
+		int truelabel = ScriptParser::getUniqueLabelID();
+		code.push_back(new OGotoTrueImmediate(new LabelArgument(truelabel)));
+		code.push_back(new OSetImmediate(new VarArgument(EXP1), new LiteralArgument(0)));
+		RETURN();
+		LABELFRONT(label);
+		code.push_back(new OSetImmediate(new VarArgument(EXP1), new LiteralArgument(1)));
+		LABELFRONT(truelabel);
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}*/
+	
 }
 
 LinkSymbols LinkSymbols::singleton = LinkSymbols();
@@ -2219,186 +1977,186 @@ static AccessorTable LinkSTable[] =
 
 LinkSymbols::LinkSymbols()
 {
-    table = LinkSTable;
-    refVar = NUL;
+	table = LinkSTable;
+	refVar = NUL;
 }
 
 void LinkSymbols::generateCode()
 {
-    //Warp(link, int, int)
-    {
-	    Function* function = getFunction("Warp", 3);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the params
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        LABELBACK(label);
-        code.push_back(new OPopRegister(new VarArgument(EXP2)));
-        //pop ffc, and ignore it
-        POPREF();
-        //ffc must be this (link is not a user-accessible type)
-        code.push_back(new OWarp(new VarArgument(EXP2), new VarArgument(EXP1)));
-        RETURN();
-        function->giveCode(code);
-    }
-    {
+	//Warp(link, int, int)
+	{
+		Function* function = getFunction("Warp", 3);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the params
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		code.push_back(new OPopRegister(new VarArgument(EXP2)));
+		//pop ffc, and ignore it
+		POPREF();
+		//ffc must be this (link is not a user-accessible type)
+		code.push_back(new OWarp(new VarArgument(EXP2), new VarArgument(EXP1)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	{
 	Function* function = getFunction("WarpEx", 2);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the param
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        LABELBACK(label);
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new OLinkWarpExRegister(new VarArgument(EXP1)));
-        RETURN();
-        function->giveCode(code);    
-    }
-    {
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the param
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OLinkWarpExRegister(new VarArgument(EXP1)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);    
+	}
+	{
 	Function* function = getFunction("Warp", 2);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the param
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        LABELBACK(label);
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new OLinkWarpExRegister(new VarArgument(EXP1)));
-        RETURN();
-        function->giveCode(code);    
-    }
-    {
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the param
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OLinkWarpExRegister(new VarArgument(EXP1)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);    
+	}
+	{
 	Function* function = getFunction("Explode", 2);
 	int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the param
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        LABELBACK(label);
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new OLinkExplodeRegister(new VarArgument(EXP1)));
-        RETURN();
-        function->giveCode(code);        
-    }
-       //void SetItemSlot(link, int item, int slot, int force)
-    {
-	    Function* function = getFunction("SetItemSlot", 4);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the params
-        code.push_back(new OPopRegister(new VarArgument(SFTEMP)));
-        LABELBACK(label);
-        code.push_back(new OPopRegister(new VarArgument(INDEX2)));
-        code.push_back(new OPopRegister(new VarArgument(INDEX)));
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new OSetRegister(new VarArgument(SETITEMSLOT), new VarArgument(SFTEMP)));
-        RETURN();
-        function->giveCode(code);
-    }
-    
-    //void SetItemA(link, int)
-    {
-	    Function* function = getFunction("SetItemA", 2);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the params
-        code.push_back(new OPopRegister(new VarArgument(EXP2)));
-        LABELBACK(label);
-        POPREF();
-        code.push_back(new OSetRegister(new VarArgument(GAMESETA), new VarArgument(EXP2)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //void SetItemB(link, int)
-    {
-	    Function* function = getFunction("SetItemB", 2);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the params
-        code.push_back(new OPopRegister(new VarArgument(EXP2)));
-        LABELBACK(label);
-        POPREF();
-        code.push_back(new OSetRegister(new VarArgument(GAMESETB), new VarArgument(EXP2)));
-        RETURN();
-        function->giveCode(code);
-    }
-    
-    //PitWarp(link, int, int)
-    {
-	    Function* function = getFunction("PitWarp", 3);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the params
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        LABELBACK(label);
-        code.push_back(new OPopRegister(new VarArgument(EXP2)));
-        //pop ffc, and ignore it
-        POPREF();
-        //ffc must be this (link is not a user-accessible type)
-        code.push_back(new OPitWarp(new VarArgument(EXP2), new VarArgument(EXP1)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //SelectAWeapon(link, int)
-    {
-	    Function* function = getFunction("SelectAWeapon", 2);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the param
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        LABELBACK(label);
-        //pop pointer and ignore it
-        POPREF();
-        code.push_back(new OSelectAWeaponRegister(new VarArgument(EXP1)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //SelectBWeapon(link, int)
-    {
-	    Function* function = getFunction("SelectBWeapon", 2);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the param
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        LABELBACK(label);
-        //pop pointer and ignore it
-        POPREF();
-        code.push_back(new OSelectBWeaponRegister(new VarArgument(EXP1)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //int GetLinkOriginaTile(link, int,int)
-    {
-        Function* function = getFunction("GetOriginalTile", 3);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the params
-        code.push_back(new OPopRegister(new VarArgument(INDEX2)));
-        LABELBACK(label);
-        code.push_back(new OPopRegister(new VarArgument(INDEX)));
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(LINKOTILE)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //int GetLinkOriginalFlip(link, int,int)
-    {
-        Function* function = getFunction("GetOriginalFlip", 3);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the params
-        code.push_back(new OPopRegister(new VarArgument(INDEX2)));
-        LABELBACK(label);
-        code.push_back(new OPopRegister(new VarArgument(INDEX)));
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(LINKOFLIP)));
-        RETURN();
-        function->giveCode(code);
-    }
-    
+		vector<Opcode *> code;
+		//pop off the param
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OLinkExplodeRegister(new VarArgument(EXP1)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);        
+	}
+	   //void SetItemSlot(link, int item, int slot, int force)
+	{
+		Function* function = getFunction("SetItemSlot", 4);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the params
+		code.push_back(new OPopRegister(new VarArgument(SFTEMP)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OSetRegister(new VarArgument(SETITEMSLOT), new VarArgument(SFTEMP)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	
+	//void SetItemA(link, int)
+	{
+		Function* function = getFunction("SetItemA", 2);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the params
+		code.push_back(new OPopRegister(new VarArgument(EXP2)));
+		POPREF();
+		code.push_back(new OSetRegister(new VarArgument(GAMESETA), new VarArgument(EXP2)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//void SetItemB(link, int)
+	{
+		Function* function = getFunction("SetItemB", 2);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the params
+		code.push_back(new OPopRegister(new VarArgument(EXP2)));
+		POPREF();
+		code.push_back(new OSetRegister(new VarArgument(GAMESETB), new VarArgument(EXP2)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	
+	//PitWarp(link, int, int)
+	{
+		Function* function = getFunction("PitWarp", 3);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the params
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		code.push_back(new OPopRegister(new VarArgument(EXP2)));
+		//pop ffc, and ignore it
+		POPREF();
+		//ffc must be this (link is not a user-accessible type)
+		code.push_back(new OPitWarp(new VarArgument(EXP2), new VarArgument(EXP1)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//SelectAWeapon(link, int)
+	{
+		Function* function = getFunction("SelectAWeapon", 2);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the param
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		//pop pointer and ignore it
+		POPREF();
+		code.push_back(new OSelectAWeaponRegister(new VarArgument(EXP1)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//SelectBWeapon(link, int)
+	{
+		Function* function = getFunction("SelectBWeapon", 2);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the param
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		//pop pointer and ignore it
+		POPREF();
+		code.push_back(new OSelectBWeaponRegister(new VarArgument(EXP1)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//int GetLinkOriginaTile(link, int,int)
+	{
+		Function* function = getFunction("GetOriginalTile", 3);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the params
+		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(LINKOTILE)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//int GetLinkOriginalFlip(link, int,int)
+	{
+		Function* function = getFunction("GetOriginalFlip", 3);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the params
+		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(LINKOFLIP)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	
 }
 
 ScreenSymbols ScreenSymbols::singleton = ScreenSymbols();
@@ -2465,8 +2223,8 @@ static AccessorTable ScreenTable[] =
 	{ "FastCombo",                    ZVARTYPEID_VOID,          FUNCTION,     0,                                1,            0,                                    7,           {  ZVARTYPEID_SCREEN,         ZVARTYPEID_FLOAT,         ZVARTYPEID_FLOAT,         ZVARTYPEID_FLOAT,     ZVARTYPEID_FLOAT,     ZVARTYPEID_FLOAT,     ZVARTYPEID_FLOAT,     -1,                           -1,                          -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                              } },
 	{ "DrawString",                   ZVARTYPEID_VOID,          FUNCTION,     0,                                1,            0,                                    10,          {  ZVARTYPEID_SCREEN,         ZVARTYPEID_FLOAT,         ZVARTYPEID_FLOAT,         ZVARTYPEID_FLOAT,     ZVARTYPEID_FLOAT,     ZVARTYPEID_FLOAT,     ZVARTYPEID_FLOAT,     ZVARTYPEID_FLOAT,     ZVARTYPEID_FLOAT,     ZVARTYPEID_FLOAT,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                              } },
 	{ "DrawString",                   ZVARTYPEID_VOID,          FUNCTION,     0,                                1,            0,                                    11,          {  ZVARTYPEID_SCREEN,         ZVARTYPEID_FLOAT,         ZVARTYPEID_FLOAT,         ZVARTYPEID_FLOAT,     ZVARTYPEID_FLOAT,     ZVARTYPEID_FLOAT,     ZVARTYPEID_FLOAT,     ZVARTYPEID_FLOAT,     ZVARTYPEID_FLOAT,     ZVARTYPEID_FLOAT,     ZVARTYPEID_FLOAT,     ZVARTYPEID_FLOAT,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                              } },
-	{ "DrawLayer",                    typeVOID,                 FUNCTION,     0,                                1,            0,                                    9,           ARGS_8(S,F,F,F,F,F,F,F,F) },
-	{ "DrawScreen",                   typeVOID,                 FUNCTION,     0,                                1,            0,                                    7,           ARGS_6(S,F,F,F,F,F,F) },
+	{ "DrawLayer",                    ZVARTYPEID_VOID,                 FUNCTION,     0,                                1,            0,                                    9,           {ZVARTYPEID_SCREEN, ZVARTYPEID_FLOAT, ZVARTYPEID_FLOAT, ZVARTYPEID_FLOAT, ZVARTYPEID_FLOAT, ZVARTYPEID_FLOAT, ZVARTYPEID_FLOAT, ZVARTYPEID_FLOAT, ZVARTYPEID_FLOAT, -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1 } },
+	{ "DrawScreen",                   ZVARTYPEID_VOID,                 FUNCTION,     0,                                1,            0,                                    7,           {ZVARTYPEID_SCREEN, ZVARTYPEID_FLOAT, ZVARTYPEID_FLOAT, ZVARTYPEID_FLOAT, ZVARTYPEID_FLOAT, ZVARTYPEID_FLOAT, ZVARTYPEID_FLOAT, -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1 } },
 	{ "DrawBitmap",                   ZVARTYPEID_VOID,          FUNCTION,     0,                                1,            0,                                    13,          {  ZVARTYPEID_SCREEN,         ZVARTYPEID_FLOAT,         ZVARTYPEID_FLOAT,         ZVARTYPEID_FLOAT,     ZVARTYPEID_FLOAT,     ZVARTYPEID_FLOAT,     ZVARTYPEID_FLOAT,     ZVARTYPEID_FLOAT,     ZVARTYPEID_FLOAT,       ZVARTYPEID_FLOAT,   ZVARTYPEID_FLOAT,        ZVARTYPEID_FLOAT,    ZVARTYPEID_BOOL,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                              } },
 	{ "DrawBitmapEx",                 ZVARTYPEID_VOID,          FUNCTION,     0,                                1,            0,                                    17,          { ZVARTYPEID_SCREEN, ZVARTYPEID_FLOAT,ZVARTYPEID_FLOAT,ZVARTYPEID_FLOAT,ZVARTYPEID_FLOAT,ZVARTYPEID_FLOAT,ZVARTYPEID_FLOAT,ZVARTYPEID_FLOAT,ZVARTYPEID_FLOAT,ZVARTYPEID_FLOAT,ZVARTYPEID_FLOAT,ZVARTYPEID_FLOAT,ZVARTYPEID_FLOAT,ZVARTYPEID_FLOAT,ZVARTYPEID_FLOAT,ZVARTYPEID_FLOAT,ZVARTYPEID_BOOL, -1,                           -1,                           -1,                              } },
 	{ "SetRenderTarget",              ZVARTYPEID_VOID,          FUNCTION,     0,                                1,            FUNCFLAG_INLINE,                      2,           {  ZVARTYPEID_SCREEN,         ZVARTYPEID_FLOAT,          -1,                            -1,                              -1,                            -1,                              -1,                            -1,                              -1,                            -1,                              -1,                            -1,                              -1,                            -1,                              -1,                            -1,                              -1,                            -1,                              -1,                            -1                             } },
@@ -2761,649 +2519,649 @@ static AccessorTable ScreenTable[] =
 
 ScreenSymbols::ScreenSymbols()
 {
-    table = ScreenTable;
-    refVar = NUL;
+	table = ScreenTable;
+	refVar = NUL;
 }
 
 void ScreenSymbols::generateCode()
 {
-    //item LoadItem(screen, int)
-    {
-	    Function* function = getFunction("LoadItem", 2);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the param
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        LABELBACK(label);
-        //pop pointer, and ignore it
-        POPREF();
-        //convert from 1-index to 0-index
-        code.push_back(new OSubImmediate(new VarArgument(EXP1), new LiteralArgument(10000)));
-        code.push_back(new OLoadItemRegister(new VarArgument(EXP1)));
-        code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(REFITEM)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //item CreateItem(screen, int)
-    {
-	    Function* function = getFunction("CreateItem", 2);
-        
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the param
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        LABELBACK(label);
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new OCreateItemRegister(new VarArgument(EXP1)));
-        code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(REFITEM)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //ffc LoadFFC(screen, int)
-    {
-	    Function* function = getFunction("LoadFFC", 2);
-        
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the param
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        LABELBACK(label);
-        //pop pointer, and ignore it
-        POPREF();
-        //code.push_back(new OSetRegister(new VarArgument(REFFFC), new VarArgument(EXP1)));
-        code.push_back(new OSubImmediate(new VarArgument(EXP1), new LiteralArgument(10000)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //npc LoadNPC(screen, int)
-    {
-	    Function* function = getFunction("LoadNPC", 2);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the param
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        LABELBACK(label);
-        //pop pointer, and ignore it
-        POPREF();
-        //convert from 1-index to 0-index
-        code.push_back(new OSubImmediate(new VarArgument(EXP1), new LiteralArgument(10000)));
-        code.push_back(new OLoadNPCRegister(new VarArgument(EXP1)));
-        code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(REFNPC)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //npc CreateNPC(screen, int)
-    {
-	    Function* function = getFunction("CreateNPC", 2);
-        
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the param
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        LABELBACK(label);
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new OCreateNPCRegister(new VarArgument(EXP1)));
-        code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(REFNPC)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //npc LoadLWeapon(screen, int)
-    {
-	    Function* function = getFunction("LoadLWeapon", 2);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the param
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        LABELBACK(label);
-        //pop pointer, and ignore it
-        POPREF();
-        //convert from 1-index to 0-index
-        code.push_back(new OSubImmediate(new VarArgument(EXP1), new LiteralArgument(10000)));
-        code.push_back(new OLoadLWpnRegister(new VarArgument(EXP1)));
-        code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(REFLWPN)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //npc CreateLWeapon(screen, int)
-    {
-	    Function* function = getFunction("CreateLWeapon", 2);
-        
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the param
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        LABELBACK(label);
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new OCreateLWpnRegister(new VarArgument(EXP1)));
-        code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(REFLWPN)));
-        RETURN();
-        function->giveCode(code);
-    }
-    
-    //lweapon CreateLWeaponDX(screen, int type, int itemid)
-    {
-	    Function* function = getFunction("CreateLWeaponDx", 3);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the params
-        code.push_back(new OPopRegister(new VarArgument(INDEX2)));
-        LABELBACK(label);
-        code.push_back(new OPopRegister(new VarArgument(INDEX)));
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(CREATELWPNDX)));
-        RETURN();
-        function->giveCode(code);
-    }
-     
-    //ewpn LoadEWeapon(screen, int)
-    {
-	    Function* function = getFunction("LoadEWeapon", 2);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the param
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        LABELBACK(label);
-        //pop pointer, and ignore it
-        POPREF();
-        //convert from 1-index to 0-index
-        code.push_back(new OSubImmediate(new VarArgument(EXP1), new LiteralArgument(10000)));
-        code.push_back(new OLoadEWpnRegister(new VarArgument(EXP1)));
-        code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(REFEWPN)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //npc LoadNPCByUID(screen, int)
-    {
-	    Function* function = getFunction("LoadNPCByUID", 2);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the param
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        LABELBACK(label);
-        //pop pointer, and ignore it
-        POPREF();
-        
-        code.push_back(new OLoadNPCBySUIDRegister(new VarArgument(EXP1)));
-        code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(REFNPC)));
-        RETURN();
-        function->giveCode(code);
-    }
-    
-     //npc LoadLWeaponByUID(screen, int)
-    {
-	    Function* function = getFunction("LoadLWeaponByUID", 2);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the param
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        LABELBACK(label);
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new OLoadLWeaponBySUIDRegister(new VarArgument(EXP1)));
-        code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(REFLWPN)));
-        RETURN();
-        function->giveCode(code);
-    }
-    
-    //ewpn LoadEWeaponByUID(screen, int)
-    {
-	    Function* function = getFunction("LoadEWeaponByUID", 2);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the param
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        LABELBACK(label);
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new OLoadEWeaponBySUIDRegister(new VarArgument(EXP1)));
-        code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(REFEWPN)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //ewpn CreateEWeapon(screen, int)
-    {
-	    Function* function = getFunction("CreateEWeapon", 2);
-        
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the param
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        LABELBACK(label);
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new OCreateEWpnRegister(new VarArgument(EXP1)));
-        code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(REFEWPN)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //void ClearSprites(screen, int)
-    {
-	    Function* function = getFunction("ClearSprites", 2);
-        
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the param
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        LABELBACK(label);
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new OClearSpritesRegister(new VarArgument(EXP1)));
-        code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(REFNPC)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //void Rectangle(screen, float, float, float, float, float, float, float, float, float, float, bool, float)
-    {
-	    Function* function = getFunction("Rectangle", 13);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        code.push_back(new ORectangleRegister());
-        LABELBACK(label);
-        POP_ARGS(13, NUL);
-        RETURN();
-        
-        function->giveCode(code);
-    }
-    //void Circle(screen, float, float, float, float, float, float, float, float, float, bool, float)
-    {
-	    Function* function = getFunction("Circle", 12);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        code.push_back(new OCircleRegister());
-        LABELBACK(label);
-        POP_ARGS(12, NUL);
-        
-        RETURN();
-        function->giveCode(code);
-    }
-    //void Arc(screen, float, float, float, float, float, float, float, float, float, float, float, bool, bool, float)
-    {
-	    Function* function = getFunction("Arc", 15);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        code.push_back(new OArcRegister());
-        LABELBACK(label);
-        POP_ARGS(15, NUL);
-        
-        RETURN();
-        function->giveCode(code);
-    }
-    //void Ellipse(screen, float, float, float, float, float, bool, float, float, float)
-    {
-	    Function* function = getFunction("Ellipse", 13);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        code.push_back(new OEllipseRegister());
-        LABELBACK(label);
-        POP_ARGS(13, NUL);
-        
-        RETURN();
-        function->giveCode(code);
-    }
-    //void Line(screen, float, float, float, float, float, float, float, float, float, float, float)
-    {
-	    Function* function = getFunction("Line", 12);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        code.push_back(new OLineRegister());
-        LABELBACK(label);
-        POP_ARGS(12, NUL);
-        
-        RETURN();
-        function->giveCode(code);
-    }
-    //void Spline(screen, float, float, float, float, float, float, float, float, float, float, float)
-    {
-	    Function* function = getFunction("Spline", 12);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        code.push_back(new OSplineRegister());
-        LABELBACK(label);
-        POP_ARGS(12, NUL);
-        
-        RETURN();
-        function->giveCode(code);
-    }
-    //void PutPixel(screen, float, float, float, float, float, float, float, float)
-    {
-	    Function* function = getFunction("PutPixel", 9);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        code.push_back(new OPutPixelRegister());
-        LABELBACK(label);
-        POP_ARGS(9, NUL);
-        
-        RETURN();
-        function->giveCode(code);
-    }
-    //void PutPixels(screen, float, float, float, float, float)
-    {
-	    Function* function = getFunction("PutPixels", 6);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        code.push_back(new OPutPixelArrayRegister());
-        LABELBACK(label);
-        POP_ARGS(6, NUL);
-        
-        RETURN();
-        function->giveCode(code);
-    }
-    //void DrawTiles(screen, float, float)
-    {
-	    Function* function = getFunction("DrawTiles", 3);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        code.push_back(new OPutTileArrayRegister());
-        LABELBACK(label);
-        POP_ARGS(3, NUL);
-        
-        RETURN();
-        function->giveCode(code);
-    }
-    //void DrawCombos(screen, float, float)
-    {
-	    Function* function = getFunction("DrawCombos", 3);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        code.push_back(new OFastComboArrayRegister());
-        LABELBACK(label);
-        POP_ARGS(3, NUL);
-        
-        RETURN();
-        function->giveCode(code);
-    }
-    //void Lines(screen, float, float)
-    {
-	    Function* function = getFunction("Lines", 3);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        code.push_back(new OPutLinesArrayRegister());
-        LABELBACK(label);
-        POP_ARGS(3, NUL);
-        
-        RETURN();
-        function->giveCode(code);
-    }
-    //void DrawCharacter(screen, float, float, float, float, float, float, float, float, float, float)
-    {
-	    Function* function = getFunction("DrawCharacter", 11);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        code.push_back(new ODrawCharRegister());
-        LABELBACK(label);
-        POP_ARGS(11, NUL);
-        
-        RETURN();
-        function->giveCode(code);
-    }
-    //void DrawInteger(screen, float, float, float, float, float, float, float, float, float, float, float)
-    {
-	    Function* function = getFunction("DrawInteger", 12);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        code.push_back(new ODrawIntRegister());
-        LABELBACK(label);
-        POP_ARGS(12, NUL);
-        
-        RETURN();
-        function->giveCode(code);
-    }
-    //void DrawTile(screen, float, float, float, float, float, bool, float, float, float)
-    {
-	    Function* function = getFunction("DrawTile", 16);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        code.push_back(new ODrawTileRegister());
-        LABELBACK(label);
-        POP_ARGS(16, NUL);
-        
-        RETURN();
-        function->giveCode(code);
-    }
-    //void DrawTileCloaked(screen, ...args)
-    {
-	    Function* function = getFunction("DrawTileCloaked", 8);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        code.push_back(new ODrawTileCloakedRegister());
-        LABELBACK(label);
-        POP_ARGS(8, NUL);
-        
-        RETURN();
-        function->giveCode(code);
-    }
-    //void DrawCombo(screen, float, float, float, float, float, bool, float, float, float)
-    {
-	    Function* function = getFunction("DrawCombo", 17);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        code.push_back(new ODrawComboRegister());
-        LABELBACK(label);
-        POP_ARGS(17, NUL);
-        
-        RETURN();
-        function->giveCode(code);
-    }
-    //void DrawComboCloaked(screen, ...args)
-    {
-	    Function* function = getFunction("DrawComboCloaked", 8);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        code.push_back(new ODrawComboCloakedRegister());
-        LABELBACK(label);
-        POP_ARGS(8, NUL);
-        
-        RETURN();
-        function->giveCode(code);
-    }
-    //void Quad(screen, float, float, float, float, float, float, float, float, float)
-    {
-	    Function* function = getFunction("Quad", 16);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        code.push_back(new OQuadRegister());
-        LABELBACK(label);
-        POP_ARGS(16, NUL);
-        
-        RETURN();
-        function->giveCode(code);
-    }
-    //void Polygon(screen, float, float, float, float, float)
-    
-    {
-	    Function* function = getFunction("Polygon", 6);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        code.push_back(new OPolygonRegister());
-        LABELBACK(label);
-        POP_ARGS(6, NUL);
-        
-        RETURN();
-        function->giveCode(code);
-    }
-    
-    //void Triangle(screen, float, float, float, float, float, float, float, float, float)
-    {
+	//item LoadItem(screen, int)
+	{
+		Function* function = getFunction("LoadItem", 2);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the param
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		//pop pointer, and ignore it
+		POPREF();
+		//convert from 1-index to 0-index
+		code.push_back(new OSubImmediate(new VarArgument(EXP1), new LiteralArgument(10000)));
+		code.push_back(new OLoadItemRegister(new VarArgument(EXP1)));
+		code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(REFITEM)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//item CreateItem(screen, int)
+	{
+		Function* function = getFunction("CreateItem", 2);
+		
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the param
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OCreateItemRegister(new VarArgument(EXP1)));
+		code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(REFITEM)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//ffc LoadFFC(screen, int)
+	{
+		Function* function = getFunction("LoadFFC", 2);
+		
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the param
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		//pop pointer, and ignore it
+		POPREF();
+		//code.push_back(new OSetRegister(new VarArgument(REFFFC), new VarArgument(EXP1)));
+		code.push_back(new OSubImmediate(new VarArgument(EXP1), new LiteralArgument(10000)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//npc LoadNPC(screen, int)
+	{
+		Function* function = getFunction("LoadNPC", 2);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the param
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		//pop pointer, and ignore it
+		POPREF();
+		//convert from 1-index to 0-index
+		code.push_back(new OSubImmediate(new VarArgument(EXP1), new LiteralArgument(10000)));
+		code.push_back(new OLoadNPCRegister(new VarArgument(EXP1)));
+		code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(REFNPC)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//npc CreateNPC(screen, int)
+	{
+		Function* function = getFunction("CreateNPC", 2);
+		
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the param
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OCreateNPCRegister(new VarArgument(EXP1)));
+		code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(REFNPC)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//npc LoadLWeapon(screen, int)
+	{
+		Function* function = getFunction("LoadLWeapon", 2);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the param
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		//pop pointer, and ignore it
+		POPREF();
+		//convert from 1-index to 0-index
+		code.push_back(new OSubImmediate(new VarArgument(EXP1), new LiteralArgument(10000)));
+		code.push_back(new OLoadLWpnRegister(new VarArgument(EXP1)));
+		code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(REFLWPN)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//npc CreateLWeapon(screen, int)
+	{
+		Function* function = getFunction("CreateLWeapon", 2);
+		
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the param
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OCreateLWpnRegister(new VarArgument(EXP1)));
+		code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(REFLWPN)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	
+	//lweapon CreateLWeaponDX(screen, int type, int itemid)
+	{
+		Function* function = getFunction("CreateLWeaponDx", 3);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the params
+		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(CREATELWPNDX)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	 
+	//ewpn LoadEWeapon(screen, int)
+	{
+		Function* function = getFunction("LoadEWeapon", 2);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the param
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		//pop pointer, and ignore it
+		POPREF();
+		//convert from 1-index to 0-index
+		code.push_back(new OSubImmediate(new VarArgument(EXP1), new LiteralArgument(10000)));
+		code.push_back(new OLoadEWpnRegister(new VarArgument(EXP1)));
+		code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(REFEWPN)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//npc LoadNPCByUID(screen, int)
+	{
+		Function* function = getFunction("LoadNPCByUID", 2);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the param
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		//pop pointer, and ignore it
+		POPREF();
+		
+		code.push_back(new OLoadNPCBySUIDRegister(new VarArgument(EXP1)));
+		code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(REFNPC)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	
+	 //npc LoadLWeaponByUID(screen, int)
+	{
+		Function* function = getFunction("LoadLWeaponByUID", 2);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the param
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OLoadLWeaponBySUIDRegister(new VarArgument(EXP1)));
+		code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(REFLWPN)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	
+	//ewpn LoadEWeaponByUID(screen, int)
+	{
+		Function* function = getFunction("LoadEWeaponByUID", 2);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the param
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OLoadEWeaponBySUIDRegister(new VarArgument(EXP1)));
+		code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(REFEWPN)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//ewpn CreateEWeapon(screen, int)
+	{
+		Function* function = getFunction("CreateEWeapon", 2);
+		
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the param
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OCreateEWpnRegister(new VarArgument(EXP1)));
+		code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(REFEWPN)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//void ClearSprites(screen, int)
+	{
+		Function* function = getFunction("ClearSprites", 2);
+		
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the param
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OClearSpritesRegister(new VarArgument(EXP1)));
+		code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(REFNPC)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//void Rectangle(screen, float, float, float, float, float, float, float, float, float, float, bool, float)
+	{
+		Function* function = getFunction("Rectangle", 13);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new ORectangleRegister());
+		POP_ARGS(13, NUL);
+		RETURN();
+		LABELFRONT(label);
+		
+		function->giveCode(code);
+	}
+	//void Circle(screen, float, float, float, float, float, float, float, float, float, bool, float)
+	{
+		Function* function = getFunction("Circle", 12);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OCircleRegister());
+		POP_ARGS(12, NUL);
+		
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//void Arc(screen, float, float, float, float, float, float, float, float, float, float, float, bool, bool, float)
+	{
+		Function* function = getFunction("Arc", 15);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OArcRegister());
+		POP_ARGS(15, NUL);
+		
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//void Ellipse(screen, float, float, float, float, float, bool, float, float, float)
+	{
+		Function* function = getFunction("Ellipse", 13);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OEllipseRegister());
+		POP_ARGS(13, NUL);
+		
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//void Line(screen, float, float, float, float, float, float, float, float, float, float, float)
+	{
+		Function* function = getFunction("Line", 12);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OLineRegister());
+		POP_ARGS(12, NUL);
+		
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//void Spline(screen, float, float, float, float, float, float, float, float, float, float, float)
+	{
+		Function* function = getFunction("Spline", 12);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OSplineRegister());
+		POP_ARGS(12, NUL);
+		
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//void PutPixel(screen, float, float, float, float, float, float, float, float)
+	{
+		Function* function = getFunction("PutPixel", 9);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OPutPixelRegister());
+		POP_ARGS(9, NUL);
+		
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//void PutPixels(screen, float, float, float, float, float)
+	{
+		Function* function = getFunction("PutPixels", 6);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OPutPixelArrayRegister());
+		POP_ARGS(6, NUL);
+		
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//void DrawTiles(screen, float, float)
+	{
+		Function* function = getFunction("DrawTiles", 3);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OPutTileArrayRegister());
+		POP_ARGS(3, NUL);
+		
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//void DrawCombos(screen, float, float)
+	{
+		Function* function = getFunction("DrawCombos", 3);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OFastComboArrayRegister());
+		POP_ARGS(3, NUL);
+		
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//void Lines(screen, float, float)
+	{
+		Function* function = getFunction("Lines", 3);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OPutLinesArrayRegister());
+		POP_ARGS(3, NUL);
+		
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//void DrawCharacter(screen, float, float, float, float, float, float, float, float, float, float)
+	{
+		Function* function = getFunction("DrawCharacter", 11);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new ODrawCharRegister());
+		POP_ARGS(11, NUL);
+		
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//void DrawInteger(screen, float, float, float, float, float, float, float, float, float, float, float)
+	{
+		Function* function = getFunction("DrawInteger", 12);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new ODrawIntRegister());
+		POP_ARGS(12, NUL);
+		
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//void DrawTile(screen, float, float, float, float, float, bool, float, float, float)
+	{
+		Function* function = getFunction("DrawTile", 16);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new ODrawTileRegister());
+		POP_ARGS(16, NUL);
+		
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//void DrawTileCloaked(screen, ...args)
+	{
+		Function* function = getFunction("DrawTileCloaked", 8);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new ODrawTileCloakedRegister());
+		POP_ARGS(8, NUL);
+		
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//void DrawCombo(screen, float, float, float, float, float, bool, float, float, float)
+	{
+		Function* function = getFunction("DrawCombo", 17);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new ODrawComboRegister());
+		POP_ARGS(17, NUL);
+		
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//void DrawComboCloaked(screen, ...args)
+	{
+		Function* function = getFunction("DrawComboCloaked", 8);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new ODrawComboCloakedRegister());
+		POP_ARGS(8, NUL);
+		
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//void Quad(screen, float, float, float, float, float, float, float, float, float)
+	{
+		Function* function = getFunction("Quad", 16);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OQuadRegister());
+		POP_ARGS(16, NUL);
+		
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//void Polygon(screen, float, float, float, float, float)
+	
+	{
+		Function* function = getFunction("Polygon", 6);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OPolygonRegister());
+		POP_ARGS(6, NUL);
+		
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	
+	//void Triangle(screen, float, float, float, float, float, float, float, float, float)
+	{
 	Function* function = getFunction("Triangle", 14);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        code.push_back(new OTriangleRegister());
-        LABELBACK(label);
-        POP_ARGS(14, NUL);
-        
-        RETURN();
-        function->giveCode(code);
-    }
-    
-    //void Quad3D(screen, float, float, float, float, float, float, float, float, float)
-    {
-	    Function* function = getFunction("Quad3D", 9);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        code.push_back(new OQuad3DRegister());
-        LABELBACK(label);
-        POP_ARGS(9, NUL);
-        
-        RETURN();
-        function->giveCode(code);
-    }
-    //void Triangle3D(screen, float, float, float, float, float, float, float, float, float)
-    {
-	    Function* function = getFunction("Triangle3D", 9);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        code.push_back(new OTriangle3DRegister());
-        LABELBACK(label);
-        POP_ARGS(9, NUL);
-        
-        RETURN();
-        function->giveCode(code);
-    }
-    
-    //void FastTile(screen, float, float, float, float, float)
-    {
-	    Function* function = getFunction("FastTile", 7);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        code.push_back(new OFastTileRegister());
-        LABELBACK(label);
-        POP_ARGS(7, NUL);
-        
-        RETURN();
-        function->giveCode(code);
-    }
-    //void FastCombo(screen, float, float, float, float, float)
-    {
-	    Function* function = getFunction("FastCombo", 7);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        code.push_back(new OFastComboRegister());
-        LABELBACK(label);
-        POP_ARGS(7, NUL);
-        
-        RETURN();
-        function->giveCode(code);
-    }
-    //void DrawString(screen, float, float, float, float, float, float, float, int *string)
-    {
-	    Function* function = getFunction("DrawString", 10);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        code.push_back(new ODrawStringRegister());
-        LABELBACK(label);
-        POP_ARGS(10, NUL);
-        
-        RETURN();
-        function->giveCode(code);
-    }
-    //void DrawString(screen, float, float, float, float, float, float, float, int *string)
-    {
-	    Function* function = getFunction("DrawString", 12);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        code.push_back(new ODrawString2Register());
-        LABELBACK(label);
-        POP_ARGS(12, NUL);
-        
-        RETURN();
-        function->giveCode(code);
-    }
-    //void DrawLayer(screen, float, float, float, float, float, float, float, float)
-    {
-	    Function* function = getFunction("DrawLayer", 9);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        code.push_back(new ODrawLayerRegister());
-        LABELBACK(label);
-        POP_ARGS(9, NUL);
-        
-        RETURN();
-        function->giveCode(code);
-    }
-    //void DrawScreen(screen, float, float, float, float, float, float)
-    {
-	    Function* function = getFunction("DrawScreen", 7);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        code.push_back(new ODrawScreenRegister());
-        LABELBACK(label);
-        POP_ARGS(7, NUL);
-        
-        RETURN();
-        function->giveCode(code);
-    }
-    //void DrawBitmap(screen, float, float, float, float, float, float, float, float, float, bool)
-    {
-	    Function* function = getFunction("DrawBitmap", 13);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        code.push_back(new ODrawBitmapRegister());
-        LABELBACK(label);
-        POP_ARGS(13, NUL);
-        
-        RETURN();
-        function->giveCode(code);
-    }
-    
-    //void DrawBitmapEx(screen, float, float, float, float, float, float, float, float, float, float, bool)
-    {
-	    Function* function = getFunction("DrawBitmapEx", 17);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        code.push_back(new ODrawBitmapExRegister());
-        LABELBACK(label);
-        POP_ARGS(17, NUL);
-        
-        RETURN();
-        function->giveCode(code);
-    }
-    
-    //void SetRenderTarget(bitmap)
-    {
-	    Function* function = getFunction("SetRenderTarget", 2);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        code.push_back(new OSetRenderTargetRegister());
-        LABELBACK(label);
-        code.push_back(new OPopRegister(new VarArgument(EXP2)));
-        //pop pointer, and ignore it
-        POPREF();
-        
-        RETURN();
-        function->giveCode(code);
-    }
-    //void Message(screen, float)
-    {
-	    Function* function = getFunction("Message", 2);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        code.push_back(new OPopRegister(new VarArgument(EXP2)));
-        LABELBACK(label);
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new OMessageRegister(new VarArgument(EXP2)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //bool isSolid(screen, int, int)
-    {
-	    Function* function = getFunction("isSolid", 3);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the params
-        code.push_back(new OPopRegister(new VarArgument(INDEX2)));
-        LABELBACK(label);
-        code.push_back(new OPopRegister(new VarArgument(INDEX)));
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new OIsSolid(new VarArgument(EXP1)));
-        RETURN();
-        function->giveCode(code);
-    }
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OTriangleRegister());
+		POP_ARGS(14, NUL);
+		
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	
+	//void Quad3D(screen, float, float, float, float, float, float, float, float, float)
+	{
+		Function* function = getFunction("Quad3D", 9);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OQuad3DRegister());
+		POP_ARGS(9, NUL);
+		
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//void Triangle3D(screen, float, float, float, float, float, float, float, float, float)
+	{
+		Function* function = getFunction("Triangle3D", 9);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OTriangle3DRegister());
+		POP_ARGS(9, NUL);
+		
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	
+	//void FastTile(screen, float, float, float, float, float)
+	{
+		Function* function = getFunction("FastTile", 7);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OFastTileRegister());
+		POP_ARGS(7, NUL);
+		
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//void FastCombo(screen, float, float, float, float, float)
+	{
+		Function* function = getFunction("FastCombo", 7);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OFastComboRegister());
+		POP_ARGS(7, NUL);
+		
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//void DrawString(screen, float, float, float, float, float, float, float, int *string)
+	{
+		Function* function = getFunction("DrawString", 10);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new ODrawStringRegister());
+		POP_ARGS(10, NUL);
+		
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//void DrawString(screen, float, float, float, float, float, float, float, int *string)
+	{
+		Function* function = getFunction("DrawString", 12);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new ODrawString2Register());
+		POP_ARGS(12, NUL);
+		
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//void DrawLayer(screen, float, float, float, float, float, float, float, float)
+	{
+		Function* function = getFunction("DrawLayer", 9);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new ODrawLayerRegister());
+		POP_ARGS(9, NUL);
+		
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//void DrawScreen(screen, float, float, float, float, float, float)
+	{
+		Function* function = getFunction("DrawScreen", 7);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new ODrawScreenRegister());
+		POP_ARGS(7, NUL);
+		
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//void DrawBitmap(screen, float, float, float, float, float, float, float, float, float, bool)
+	{
+		Function* function = getFunction("DrawBitmap", 13);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new ODrawBitmapRegister());
+		POP_ARGS(13, NUL);
+		
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	
+	//void DrawBitmapEx(screen, float, float, float, float, float, float, float, float, float, float, bool)
+	{
+		Function* function = getFunction("DrawBitmapEx", 17);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new ODrawBitmapExRegister());
+		POP_ARGS(17, NUL);
+		
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	
+	//void SetRenderTarget(bitmap)
+	{
+		Function* function = getFunction("SetRenderTarget", 2);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OSetRenderTargetRegister());
+		code.push_back(new OPopRegister(new VarArgument(EXP2)));
+		//pop pointer, and ignore it
+		POPREF();
+		
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//void Message(screen, float)
+	{
+		Function* function = getFunction("Message", 2);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OPopRegister(new VarArgument(EXP2)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OMessageRegister(new VarArgument(EXP2)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//bool isSolid(screen, int, int)
+	{
+		Function* function = getFunction("isSolid", 3);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the params
+		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OIsSolid(new VarArgument(EXP1)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
 	//bool isSolidLayer(screen, int, int, int)
 	{
 		Function* function = getFunction("isSolidLayer", 4);
@@ -3411,285 +3169,285 @@ void ScreenSymbols::generateCode()
 		vector<Opcode *> code;
 		//pop off the params
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
-		LABELBACK(label);
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
 		code.push_back(new OPopRegister(new VarArgument(INDEX)));
 		//pop pointer
 		POPREF();
 		code.push_back(new OIsSolidLayer(new VarArgument(EXP1)));
 		RETURN();
+		LABELFRONT(label);
 		function->giveCode(code);
 	}
-    //void SetSideWarp(screen, float, float, float, float)
-    {
-	    Function* function = getFunction("SetSideWarp", 5);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        code.push_back(new OSetSideWarpRegister());
-        LABELBACK(label);
-        code.push_back(new OPopRegister(new VarArgument(EXP2)));
-        code.push_back(new OPopRegister(new VarArgument(EXP2)));
-        code.push_back(new OPopRegister(new VarArgument(EXP2)));
-        code.push_back(new OPopRegister(new VarArgument(EXP2)));
-        //pop pointer, and ignore it
-        POPREF();
-        
-        RETURN();
-        function->giveCode(code);
-    }
-    //void SetTileWarp(screen, float, float, float, float)
-    {
-	    Function* function = getFunction("SetTileWarp", 5);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        code.push_back(new OSetTileWarpRegister());
-        LABELBACK(label);
-        code.push_back(new OPopRegister(new VarArgument(EXP2)));
-        code.push_back(new OPopRegister(new VarArgument(EXP2)));
-        code.push_back(new OPopRegister(new VarArgument(EXP2)));
-        code.push_back(new OPopRegister(new VarArgument(EXP2)));
-        //pop pointer, and ignore it
-        POPREF();
-        
-        RETURN();
-        function->giveCode(code);
-    }
-    //float LayerScreen(screen, float)
-    {
-	    Function* function = getFunction("LayerScreen", 2);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        code.push_back(new OPopRegister(new VarArgument(EXP2)));
-        LABELBACK(label);
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new OLayerScreenRegister(new VarArgument(EXP1),new VarArgument(EXP2)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //float LayerMap(screen, float)
-    {
-	    Function* function = getFunction("LayerMap", 2);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        code.push_back(new OPopRegister(new VarArgument(EXP2)));
-        LABELBACK(label);
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new OLayerMapRegister(new VarArgument(EXP1),new VarArgument(EXP2)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //void TriggerSecrets(screen)
-    {
-	    Function* function = getFunction("TriggerSecrets", 1);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-		ASSERT_NUL();
-        code.push_back(new OTriggerSecrets());
-        LABELBACK(label);
-        RETURN();
-        function->giveCode(code);
-    }
-    //void ZapIn(screen)
-    {
-	    Function* function = getFunction("ZapIn", 1);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop pointer, and ignore it
-		ASSERT_NUL();
-        code.push_back(new OZapIn());
-        LABELBACK(label);
-        RETURN();
-        function->giveCode(code);
-    }
-      
+	//void SetSideWarp(screen, float, float, float, float)
+	{
+		Function* function = getFunction("SetSideWarp", 5);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OSetSideWarpRegister());
+		code.push_back(new OPopRegister(new VarArgument(EXP2)));
+		code.push_back(new OPopRegister(new VarArgument(EXP2)));
+		code.push_back(new OPopRegister(new VarArgument(EXP2)));
+		code.push_back(new OPopRegister(new VarArgument(EXP2)));
+		//pop pointer, and ignore it
+		POPREF();
+		
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//void SetTileWarp(screen, float, float, float, float)
+	{
+		Function* function = getFunction("SetTileWarp", 5);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OSetTileWarpRegister());
+		code.push_back(new OPopRegister(new VarArgument(EXP2)));
+		code.push_back(new OPopRegister(new VarArgument(EXP2)));
+		code.push_back(new OPopRegister(new VarArgument(EXP2)));
+		code.push_back(new OPopRegister(new VarArgument(EXP2)));
+		//pop pointer, and ignore it
+		POPREF();
+		
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//float LayerScreen(screen, float)
+	{
+		Function* function = getFunction("LayerScreen", 2);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OPopRegister(new VarArgument(EXP2)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OLayerScreenRegister(new VarArgument(EXP1),new VarArgument(EXP2)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//float LayerMap(screen, float)
+	{
+		Function* function = getFunction("LayerMap", 2);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OPopRegister(new VarArgument(EXP2)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OLayerMapRegister(new VarArgument(EXP1),new VarArgument(EXP2)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//void TriggerSecrets(screen)
+	{
+		Function* function = getFunction("TriggerSecrets", 1);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		POPREF();
+		code.push_back(new OTriggerSecrets());
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//void ZapIn(screen)
+	{
+		Function* function = getFunction("ZapIn", 1);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OZapIn());
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	  
 
 	//void ZapOut(screen)
-    {
-	    Function* function = getFunction("ZapOut", 1);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop pointer, and ignore it
-		ASSERT_NUL();
-        code.push_back(new OZapOut());
-        LABELBACK(label);
-        RETURN();
-        function->giveCode(code);
-    }
-    
-     //void OpeningWipe(screen)
-    {
-	    Function* function = getFunction("OpeningWipe", 1);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop pointer, and ignore it
-		ASSERT_NUL();
-        code.push_back(new OOpenWipe());
-        LABELBACK(label);
-        RETURN();
-        function->giveCode(code);
-    }
+	{
+		Function* function = getFunction("ZapOut", 1);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OZapOut());
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	
+	 //void OpeningWipe(screen)
+	{
+		Function* function = getFunction("OpeningWipe", 1);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OOpenWipe());
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
 
 	//void WavyIn(screen)
-    {
-	    Function* function = getFunction("WavyIn", 1);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop pointer, and ignore it
-		ASSERT_NUL();
-        code.push_back(new OWavyIn());
-        LABELBACK(label);
-        RETURN();
-        function->giveCode(code);
-    }
-            
+	{
+		Function* function = getFunction("WavyIn", 1);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OWavyIn());
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+			
 	//void WavyOut(screen)
-    {
-	    Function* function = getFunction("WavyOut", 1);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop pointer, and ignore it
-		ASSERT_NUL();
-        code.push_back(new OWavyOut());
-        LABELBACK(label);
-        RETURN();
-        function->giveCode(code);
-    }
-    
-    //int GetSideWarpDMap(screen, int)
-    {
-	    Function* function = getFunction("GetSideWarpDMap", 2);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        LABELBACK(label);
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new OGetSideWarpDMap(new VarArgument(EXP1)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //int GetSideWarpScreen(screen, int)
-    {
-	    Function* function = getFunction("GetSideWarpScreen", 2);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        LABELBACK(label);
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new OGetSideWarpScreen(new VarArgument(EXP1)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //int GetSideWarpType(screen, int)
-    {
-	    Function* function = getFunction("GetSideWarpType", 2);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        LABELBACK(label);
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new OGetSideWarpType(new VarArgument(EXP1)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //int GetTileWarpDMap(screen, int)
-    {
-	    Function* function = getFunction("GetTileWarpDMap", 2);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        LABELBACK(label);
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new OGetTileWarpDMap(new VarArgument(EXP1)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //int GetTileWarpScreen(screen, int)
-    {
-	    Function* function = getFunction("GetTileWarpScreen", 2);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        LABELBACK(label);
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new OGetTileWarpScreen(new VarArgument(EXP1)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //int GetTileWarpType(screen, int)
-    {
-	    Function* function = getFunction("GetTileWarpType", 2);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        LABELBACK(label);
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new OGetTileWarpType(new VarArgument(EXP1)));
-        RETURN();
-        function->giveCode(code);
-    }
-    
-    //void ZapIn(screen)
-    {
-	    Function* function = getFunction("ZapIn", 1);
-	    int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop pointer, and ignore it
-		ASSERT_NUL();
-        code.push_back(new OZapIn());
-        LABELBACK(label);
-        RETURN();
-        function->giveCode(code);
-    }
-    
-     //void ClosingWipe(screen)
-    {
-	    Function* function = getFunction("ClosingWipe", 1);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop pointer, and ignore it
-		ASSERT_NUL();
-        code.push_back(new OCloseWipe());
-        LABELBACK(label);
-        RETURN();
-        function->giveCode(code);
-    }
-    
-     //void OpeningWipe(screen, int)
-    {
-	    Function* function = getFunction("OpeningWipe", 2);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        LABELBACK(label);
-        //pop pointer, and ignore it
+	{
+		Function* function = getFunction("WavyOut", 1);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop pointer, and ignore it
 		POPREF();
-        code.push_back(new OOpenWipeShape(new VarArgument(EXP1)));
-        RETURN();
-        function->giveCode(code);
-    }
-    
-     //void ClosingWipe(screen, int)
-    {
-	    Function* function = getFunction("ClosingWipe", 2);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        LABELBACK(label);
-        //pop pointer, and ignore it
+		code.push_back(new OWavyOut());
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	
+	//int GetSideWarpDMap(screen, int)
+	{
+		Function* function = getFunction("GetSideWarpDMap", 2);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		//pop pointer, and ignore it
 		POPREF();
-        code.push_back(new OCloseWipeShape(new VarArgument(EXP1)));
-        RETURN();
-        function->giveCode(code);
-    }
-          
+		code.push_back(new OGetSideWarpDMap(new VarArgument(EXP1)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//int GetSideWarpScreen(screen, int)
+	{
+		Function* function = getFunction("GetSideWarpScreen", 2);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OGetSideWarpScreen(new VarArgument(EXP1)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//int GetSideWarpType(screen, int)
+	{
+		Function* function = getFunction("GetSideWarpType", 2);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OGetSideWarpType(new VarArgument(EXP1)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//int GetTileWarpDMap(screen, int)
+	{
+		Function* function = getFunction("GetTileWarpDMap", 2);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OGetTileWarpDMap(new VarArgument(EXP1)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//int GetTileWarpScreen(screen, int)
+	{
+		Function* function = getFunction("GetTileWarpScreen", 2);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OGetTileWarpScreen(new VarArgument(EXP1)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//int GetTileWarpType(screen, int)
+	{
+		Function* function = getFunction("GetTileWarpType", 2);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OGetTileWarpType(new VarArgument(EXP1)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	
+	//void ZapIn(screen)
+	{
+		Function* function = getFunction("ZapIn", 1);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OZapIn());
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	
+	 //void ClosingWipe(screen)
+	{
+		Function* function = getFunction("ClosingWipe", 1);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OCloseWipe());
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	
+	 //void OpeningWipe(screen, int)
+	{
+		Function* function = getFunction("OpeningWipe", 2);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OOpenWipeShape(new VarArgument(EXP1)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	
+	 //void ClosingWipe(screen, int)
+	{
+		Function* function = getFunction("ClosingWipe", 2);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OCloseWipeShape(new VarArgument(EXP1)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+		  
 }
 
 ItemSymbols ItemSymbols::singleton = ItemSymbols();
@@ -3801,40 +3559,40 @@ static AccessorTable itemTable[] =
 
 ItemSymbols::ItemSymbols()
 {
-    table = itemTable;
-    refVar = REFITEM;
+	table = itemTable;
+	refVar = REFITEM;
 }
 
 void ItemSymbols::generateCode()
 {
-    //bool isValid(item)
-    {
-	    Function* function = getFunction("isValid", 1);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the pointer
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        LABELBACK(label);
-        //Check validity
-        code.push_back(new OIsValidItem(new VarArgument(EXP1)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //void Explode(ITEM, int)
-    {
-	    Function* function = getFunction("Explode", 2);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the param
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        LABELBACK(label);
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new OItemExplodeRegister(new VarArgument(EXP1)));
-        RETURN();
-        function->giveCode(code);
-    }
-    
+	//bool isValid(item)
+	{
+		Function* function = getFunction("isValid", 1);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the pointer
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		//Check validity
+		code.push_back(new OIsValidItem(new VarArgument(EXP1)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//void Explode(ITEM, int)
+	{
+		Function* function = getFunction("Explode", 2);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the param
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OItemExplodeRegister(new VarArgument(EXP1)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	
 }
 
 ItemclassSymbols ItemclassSymbols::singleton = ItemclassSymbols();
@@ -4034,42 +3792,42 @@ static AccessorTable itemclassTable[] =
 
 ItemclassSymbols::ItemclassSymbols()
 {
-    table = itemclassTable;
-    refVar = REFITEMCLASS;
+	table = itemclassTable;
+	refVar = REFITEMCLASS;
 }
 
 void ItemclassSymbols::generateCode()
 {
 
-    //void GetName(itemclass, int)
-    {
+	//void GetName(itemclass, int)
+	{
 	Function* function = getFunction("GetName", 2);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the param
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        LABELBACK(label);
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new OGetItemName(new VarArgument(EXP1)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //void RunScript(itemclass)
-    {
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the param
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OGetItemName(new VarArgument(EXP1)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//void RunScript(itemclass)
+	{
 	Function* function = getFunction("RunScript", 2);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the param
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        LABELBACK(label);
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new ORunItemScript(new VarArgument(EXP1)));
-        RETURN();
-        function->giveCode(code);
-    }
-    
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the param
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new ORunItemScript(new VarArgument(EXP1)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	
 }
 
 GameSymbols GameSymbols::singleton = GameSymbols();
@@ -4352,2088 +4110,2081 @@ static AccessorTable gameTable[] =
 
 GameSymbols::GameSymbols()
 {
-    table = gameTable;
-    refVar = NUL;
+	table = gameTable;
+	refVar = NUL;
 }
 
 void GameSymbols::generateCode()
 {
-    //itemclass LoadItemData(game, int)
-    {
-	    Function* function = getFunction("LoadItemData", 2);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the param
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        LABELBACK(label);
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new OLoadItemDataRegister(new VarArgument(EXP1)));
-        code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(REFITEMCLASS)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //NPCData
-    {
-	    Function* function = getFunction("LoadNPCData", 2);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the param
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        LABELBACK(label);
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new OLoadNPCDataRegister(new VarArgument(EXP1)));
-        code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(REFNPCCLASS)));
-        RETURN();
-        function->giveCode(code);
-    }
-    
-    //DMapdata
-    {
-	    Function* function = getFunction("LoadDMapData", 2);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the param
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        LABELBACK(label);
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new OLoadDMapDataRegister(new VarArgument(EXP1)));
-        code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(REFDMAPDATA)));
-        RETURN();
-        function->giveCode(code);
-    }
-    
-    //Dropset
-    {
-	    Function* function = getFunction("LoadDropset", 2);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the param
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        LABELBACK(label);
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new OLoadDropsetRegister(new VarArgument(EXP1)));
-        code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(REFDROPS)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //Messagedata
-    {
-	    Function* function = getFunction("LoadMessageData", 2);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the param
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        LABELBACK(label);
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new OLoadMessageDataRegister(new VarArgument(EXP1)));
-        code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(REFMSGDATA)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //ComboData
-    {
-	    Function* function = getFunction("LoadComboData", 2);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the param
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        LABELBACK(label);
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new OLoadComboDataRegister(new VarArgument(EXP1)));
-        code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(REFCOMBODATA)));
-        RETURN();
-        function->giveCode(code); 
-    }
-    //MapData
-    /*
-    { //LoadMapData(int map, int screen)
-	Function* function = getFunction("LoadMapData", 2);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the param
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        LABELBACK(label);
-	code.push_back(new OPopRegister(new VarArgument(INDEX)));
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new OLoadMapDataRegister(new VarArgument(EXP1), new VarArgument(INDEX)));
-        code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(REFMAPDATA)));
-        RETURN();
-        function->giveCode(code);     
-	//LOAD_REFDATA("LoadMapData", OLoadMapDataRegister, REFMAPDATA);
-    }
-    */
-    
-    //int LoadMapData(mapdata, int map,int scr)
-    {
-        Function* function = getFunction("LoadMapData", 3);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the params
-        code.push_back(new OPopRegister(new VarArgument(INDEX2)));
-        LABELBACK(label);
-        code.push_back(new OPopRegister(new VarArgument(INDEX)));
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(LOADMAPDATA)));
-        RETURN();
-        function->giveCode(code);
-    }
-    
-    //int LoadTempScreen(game, int layer)
-    {
-        Function* function = getFunction("LoadTempScreen", 2);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the params
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        LABELBACK(label);
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new OLoadTmpScr(new VarArgument(EXP1)));
-        RETURN();
-        function->giveCode(code);
-    }
-    
-    //int LoadScrollingScreen(game, int layer)
-    {
-        Function* function = getFunction("LoadScrollingScreen", 2);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the params
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        LABELBACK(label);
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new OLoadScrollScr(new VarArgument(EXP1)));
-        RETURN();
-        function->giveCode(code);
-    }
+	//itemclass LoadItemData(game, int)
+	{
+		Function* function = getFunction("LoadItemData", 2);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the param
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OLoadItemDataRegister(new VarArgument(EXP1)));
+		code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(REFITEMCLASS)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//NPCData
+	{
+		Function* function = getFunction("LoadNPCData", 2);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the param
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OLoadNPCDataRegister(new VarArgument(EXP1)));
+		code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(REFNPCCLASS)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
 	
-    //long Create(bitmap, int map,int scr)
+	//DMapdata
+	{
+		Function* function = getFunction("LoadDMapData", 2);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the param
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OLoadDMapDataRegister(new VarArgument(EXP1)));
+		code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(REFDMAPDATA)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	
+	//Dropset
+	{
+		Function* function = getFunction("LoadDropset", 2);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the param
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OLoadDropsetRegister(new VarArgument(EXP1)));
+		code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(REFDROPS)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//Messagedata
+	{
+		Function* function = getFunction("LoadMessageData", 2);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the param
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OLoadMessageDataRegister(new VarArgument(EXP1)));
+		code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(REFMSGDATA)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//ComboData
+	{
+		Function* function = getFunction("LoadComboData", 2);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the param
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OLoadComboDataRegister(new VarArgument(EXP1)));
+		code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(REFCOMBODATA)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code); 
+	}
+
+	//int LoadMapData(mapdata, int map,int scr)
+	{
+		Function* function = getFunction("LoadMapData", 3);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the params
+		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(LOADMAPDATA)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	
+	//int LoadTempScreen(game, int layer)
+	{
+		Function* function = getFunction("LoadTempScreen", 2);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the params
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OLoadTmpScr(new VarArgument(EXP1)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	
+	//int LoadScrollingScreen(game, int layer)
+	{
+		Function* function = getFunction("LoadScrollingScreen", 2);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the params
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OLoadScrollScr(new VarArgument(EXP1)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	
+	//long Create(bitmap, int map,int scr)
 	{
 		Function* function = getFunction("CreateBitmap", 3);
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		//pop off the params
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
-		LABELBACK(label);
 		code.push_back(new OPopRegister(new VarArgument(INDEX)));
 		//pop pointer, and ignore it
 		POPREF();
 		code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(CREATEBITMAP)));
 		RETURN();
+		LABELFRONT(label);
 		function->giveCode(code);
 	}
    
-    //SpriteData
-    {
-	    
+	//SpriteData
+	{
+		
 	Function* function = getFunction("LoadSpriteData", 2);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the param
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        LABELBACK(label);
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new OLoadSpriteDataRegister(new VarArgument(EXP1)));
-        code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(REFSPRITEDATA)));
-        RETURN();
-        function->giveCode(code);    
-    }
-    //ShopData
-    {
-	    Function* function = getFunction("LoadShopData", 2);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the param
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        LABELBACK(label);
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new OLoadShopDataRegister(new VarArgument(EXP1)));
-        code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(REFSHOPDATA)));
-        RETURN();
-        function->giveCode(code);    
-    }
-    //InfoShopData
-    {
-	    Function* function = getFunction("LoadInfoShopData", 2);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the param
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        LABELBACK(label);
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new OLoadInfoShopDataRegister(new VarArgument(EXP1)));
-        code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(REFSHOPDATA)));
-        RETURN();
-        function->giveCode(code);    
-    }
-    //ScreenData
-    /*
-    {
-	LOAD_REFDATA("LoadScreenData", OLoadScreenDataRegister, NUL); //Change when we set this up! -Z
-    }
-    */
-    //Bitmap
-    {
-	    Function* function = getFunction("LoadBitmapID", 2);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the param
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        LABELBACK(label);
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new OLoadBitmapDataRegister(new VarArgument(EXP1)));
-        code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(REFBITMAP)));
-        RETURN();
-        function->giveCode(code);   
-    }
-    
-    //bool GetScreenState(game, int,int,int)
-    {
-        Function* function = getFunction("GetScreenState", 4);
-        int label = function->getLabel();
-        int done = ScriptParser::getUniqueLabelID();
-        vector<Opcode *> code;
-        //pop off the params
-        code.push_back(new OPopRegister(new VarArgument(INDEX2)));
-        LABELBACK(label);
-        code.push_back(new OPopRegister(new VarArgument(INDEX)));
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        code.push_back(new OSubImmediate(new VarArgument(EXP1), new LiteralArgument(10000)));
-        code.push_back(new OMultImmediate(new VarArgument(EXP1), new LiteralArgument(1360000)));
-        code.push_back(new OAddRegister(new VarArgument(INDEX), new VarArgument(EXP1)));
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(SCREENSTATEDD)));
-        code.push_back(new OCompareImmediate(new VarArgument(EXP1), new LiteralArgument(0)));
-        code.push_back(new OGotoTrueImmediate(new LabelArgument(done)));
-        code.push_back(new OSetImmediate(new VarArgument(EXP1), new LiteralArgument(10000)));
-        code.push_back(new OGotoImmediate(new LabelArgument(done)));
-        code.push_back(new OReturn());
-        LABELBACK(done);
-        function->giveCode(code);
-    }
-    //void SetScreenState(game, int,int,int,bool)
-    {
-        Function* function = getFunction("SetScreenState", 5);
-        int label = function->getLabel();
-        int done = ScriptParser::getUniqueLabelID();
-        vector<Opcode *> code;
-        //pop off the params
-        code.push_back(new OPopRegister(new VarArgument(SFTEMP)));
-        LABELBACK(label);
-        code.push_back(new OPopRegister(new VarArgument(INDEX2)));
-        code.push_back(new OPopRegister(new VarArgument(INDEX)));
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        code.push_back(new OSubImmediate(new VarArgument(EXP1), new LiteralArgument(10000)));
-        code.push_back(new OMultImmediate(new VarArgument(EXP1), new LiteralArgument(1360000)));
-        code.push_back(new OAddRegister(new VarArgument(INDEX), new VarArgument(EXP1)));
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new OCompareImmediate(new VarArgument(SFTEMP), new LiteralArgument(0)));
-        code.push_back(new OGotoTrueImmediate(new LabelArgument(done)));
-        code.push_back(new OSetImmediate(new VarArgument(SFTEMP), new LiteralArgument(10000)));
-        code.push_back(new OSetRegister(new VarArgument(SCREENSTATEDD), new VarArgument(SFTEMP)));
-        LABELBACK(done);
-        RETURN();
-        function->giveCode(code);
-    }
-    //int GetScreenD(game, int,int)
-    {
-        Function* function = getFunction("GetScreenD", 3);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the params
-        code.push_back(new OPopRegister(new VarArgument(INDEX2)));
-        LABELBACK(label);
-        code.push_back(new OPopRegister(new VarArgument(INDEX)));
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(SDDD)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //void SetScreenD(game, int,int,int)
-    {
-	    Function* function = getFunction("SetScreenD", 4);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the params
-        code.push_back(new OPopRegister(new VarArgument(SFTEMP)));
-        LABELBACK(label);
-        code.push_back(new OPopRegister(new VarArgument(INDEX2)));
-        code.push_back(new OPopRegister(new VarArgument(INDEX)));
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new OSetRegister(new VarArgument(SDDD), new VarArgument(SFTEMP)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //int GetDMapScreenD(game, int,int,int)
-    {
-	    Function* function = getFunction("GetDMapScreenD", 4);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the params
-        code.push_back(new OPopRegister(new VarArgument(SFTEMP)));
-        LABELBACK(label);
-        code.push_back(new OPopRegister(new VarArgument(INDEX2)));
-        code.push_back(new OPopRegister(new VarArgument(INDEX)));
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(SDDDD)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //void SetDMapScreenD(game, int,int,int,int)
-    {
-	    Function* function = getFunction("SetDMapScreenD", 5);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the params
-        code.push_back(new OPopRegister(new VarArgument(SFTEMP)));
-        LABELBACK(label);
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        code.push_back(new OPopRegister(new VarArgument(INDEX2)));
-        code.push_back(new OPopRegister(new VarArgument(INDEX)));
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new OSetRegister(new VarArgument(SDDDD), new VarArgument(SFTEMP)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //void PlaySound(game, int)
-    {
-	    Function* function = getFunction("PlaySound", 2);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the param
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        LABELBACK(label);
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new OPlaySoundRegister(new VarArgument(EXP1)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //void PlayMIDI(game, int)
-    {
-	    Function* function = getFunction("PlayMIDI", 2);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the param
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        LABELBACK(label);
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new OPlayMIDIRegister(new VarArgument(EXP1)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //void PlayEnhancedMusic(game, int, int)
-    {
-	    Function* function = getFunction("PlayEnhancedMusic", 3);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the params
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        LABELBACK(label);
-        code.push_back(new OPopRegister(new VarArgument(EXP2)));
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new OPlayEnhancedMusic(new VarArgument(EXP2), new VarArgument(EXP1)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //void GetDMapMusicFilename(game, int, int)
-    {
-	    Function* function = getFunction("GetDMapMusicFilename", 3);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the params
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        LABELBACK(label);
-        code.push_back(new OPopRegister(new VarArgument(EXP2)));
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new OGetDMapMusicFilename(new VarArgument(EXP2), new VarArgument(EXP1)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //int GetDMapMusicTrack(game, int)
-    {
-	    Function* function = getFunction("GetDMapMusicTrack", 2);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        LABELBACK(label);
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new OGetDMapMusicTrack(new VarArgument(EXP1)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //void SetDMapEnhancedMusic(game, int,int,int)
-    {
-	    Function* function = getFunction("SetDMapEnhancedMusic", 4);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        code.push_back(new OSetDMapEnhancedMusic());
-        LABELBACK(label);
-        code.push_back(new OPopRegister(new VarArgument(EXP2)));
-        code.push_back(new OPopRegister(new VarArgument(EXP2)));
-        code.push_back(new OPopRegister(new VarArgument(EXP2)));
-        //pop pointer, and ignore it
-        POPREF();
-        
-        RETURN();
-        function->giveCode(code);
-    }
-    //int GetComboData(int,int,int)
-    {
-	    Function* function = getFunction("GetComboData", 4);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the params
-        code.push_back(new OPopRegister(new VarArgument(INDEX)));
-        LABELBACK(label);
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        code.push_back(new OPopRegister(new VarArgument(INDEX2)));
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(COMBODDM)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //void SetComboData(int,int,int,int)
-    {
-	    Function* function = getFunction("SetComboData", 5);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the params
-        code.push_back(new OPopRegister(new VarArgument(EXP2)));
-        LABELBACK(label);
-        code.push_back(new OPopRegister(new VarArgument(INDEX)));
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        code.push_back(new OPopRegister(new VarArgument(INDEX2)));
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new OSetRegister(new VarArgument(COMBODDM), new VarArgument(EXP2)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //int GetComboCSet(int,int,int)
-    {
-	    Function* function = getFunction("GetComboCSet", 4);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the params
-        code.push_back(new OPopRegister(new VarArgument(INDEX)));
-        LABELBACK(label);
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        code.push_back(new OPopRegister(new VarArgument(INDEX2)));
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(COMBOCDM)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //void SetComboCSet(int,int,int,int)
-    {
-	    Function* function = getFunction("SetComboCSet", 5);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the params
-        code.push_back(new OPopRegister(new VarArgument(EXP2)));
-        LABELBACK(label);
-        code.push_back(new OPopRegister(new VarArgument(INDEX)));
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        code.push_back(new OPopRegister(new VarArgument(INDEX2)));
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new OSetRegister(new VarArgument(COMBOCDM), new VarArgument(EXP2)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //int GetComboFlag(int,int,int)
-    {
-	    Function* function = getFunction("GetComboFlag", 4);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the params
-        code.push_back(new OPopRegister(new VarArgument(INDEX)));
-        LABELBACK(label);
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        code.push_back(new OPopRegister(new VarArgument(INDEX2)));
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(COMBOFDM)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //void SetComboFlag(int,int,int,int)
-    {
-	    Function* function = getFunction("SetComboFlag", 5);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the params
-        code.push_back(new OPopRegister(new VarArgument(EXP2)));
-        LABELBACK(label);
-        code.push_back(new OPopRegister(new VarArgument(INDEX)));
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        code.push_back(new OPopRegister(new VarArgument(INDEX2)));
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new OSetRegister(new VarArgument(COMBOFDM), new VarArgument(EXP2)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //int GetComboType(int,int,int)
-    {
-	    Function* function = getFunction("GetComboType", 4);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the params
-        code.push_back(new OPopRegister(new VarArgument(INDEX)));
-        LABELBACK(label);
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        code.push_back(new OPopRegister(new VarArgument(INDEX2)));
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(COMBOTDM)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //void SetComboType(int,int,int,int)
-    {
-	    Function* function = getFunction("SetComboType", 5);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the params
-        code.push_back(new OPopRegister(new VarArgument(EXP2)));
-        LABELBACK(label);
-        code.push_back(new OPopRegister(new VarArgument(INDEX)));
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        code.push_back(new OPopRegister(new VarArgument(INDEX2)));
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new OSetRegister(new VarArgument(COMBOTDM), new VarArgument(EXP2)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //int GetComboInherentFlag(int,int,int)
-    {
-	    Function* function = getFunction("GetComboInherentFlag", 4);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the params
-        code.push_back(new OPopRegister(new VarArgument(INDEX)));
-        LABELBACK(label);
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        code.push_back(new OPopRegister(new VarArgument(INDEX2)));
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(COMBOIDM)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //void SetComboInherentFlag(int,int,int,int)
-    {
-	    Function* function = getFunction("SetComboInherentFlag", 5);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the params
-        code.push_back(new OPopRegister(new VarArgument(EXP2)));
-        LABELBACK(label);
-        code.push_back(new OPopRegister(new VarArgument(INDEX)));
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        code.push_back(new OPopRegister(new VarArgument(INDEX2)));
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new OSetRegister(new VarArgument(COMBOIDM), new VarArgument(EXP2)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //int GetComboCollision(int,int,int)
-    {
-	    Function* function = getFunction("GetComboSolid", 4);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the params
-        code.push_back(new OPopRegister(new VarArgument(INDEX)));
-        LABELBACK(label);
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        code.push_back(new OPopRegister(new VarArgument(INDEX2)));
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(COMBOSDM)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //void SetComboCollision(int,int,int,int)
-    {
-	    Function* function = getFunction("SetComboSolid", 5);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the params
-        code.push_back(new OPopRegister(new VarArgument(EXP2)));
-        LABELBACK(label);
-        code.push_back(new OPopRegister(new VarArgument(INDEX)));
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        code.push_back(new OPopRegister(new VarArgument(INDEX2)));
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new OSetRegister(new VarArgument(COMBOSDM), new VarArgument(EXP2)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //int GetScreenFlags(game,int,int,int)
-    {
-	    Function* function = getFunction("GetScreenFlags", 4);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the params
-        code.push_back(new OPopRegister(new VarArgument(INDEX)));
-        LABELBACK(label);
-        code.push_back(new OPopRegister(new VarArgument(INDEX2)));
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new OGetScreenFlags(new VarArgument(EXP1)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //int GetScreenEFlags(game,int,int,int)
-    {
-	    Function* function = getFunction("GetScreenEFlags", 4);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the params
-        code.push_back(new OPopRegister(new VarArgument(INDEX)));
-        LABELBACK(label);
-        code.push_back(new OPopRegister(new VarArgument(INDEX2)));
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new OGetScreenEFlags(new VarArgument(EXP1)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //void Save(game)
-    {
-	    Function* function = getFunction("Save", 1);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop pointer, and ignore it
-		ASSERT_NUL();
-        code.push_back(new OSave());
-        LABELBACK(label);
-        RETURN();
-        function->giveCode(code);
-    }
-    //void End(game)
-    {
-	    Function* function = getFunction("End", 1);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop pointer, and ignore it
-		ASSERT_NUL();
-        code.push_back(new OEnd());
-        LABELBACK(label);
-        RETURN();
-        function->giveCode(code);
-    }
-    
-    //void Continue(game)
-    {
-	    Function* function = getFunction("Continue", 1);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop pointer, and ignore it
-		ASSERT_NUL();
-        code.push_back(new OGameContinue());
-        LABELBACK(label);
-        RETURN();
-        function->giveCode(code);
-    }
-    
-    //void SaveAndQuit(game)
-    {
-	    Function* function = getFunction("SaveAndQuit", 1);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop pointer, and ignore it
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the param
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		//pop pointer, and ignore it
 		POPREF();
-        LABELBACK(label);
-        code.push_back(new OGameSaveQuit());
-        RETURN();
-        function->giveCode(code);
-    }
-    
-    //void SaveAndContinue(game)
-    {
-	    Function* function = getFunction("SaveAndContinue", 1);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop pointer, and ignore it
+		code.push_back(new OLoadSpriteDataRegister(new VarArgument(EXP1)));
+		code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(REFSPRITEDATA)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);    
+	}
+	//ShopData
+	{
+		Function* function = getFunction("LoadShopData", 2);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the param
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		//pop pointer, and ignore it
 		POPREF();
-        LABELBACK(label);
-        code.push_back(new OGameSaveContinue());
-        RETURN();
-        function->giveCode(code);
-    }
-    //void ShowContinueScreen(game)
-    {
-	    Function* function = getFunction("ShowContinueScreen", 1);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop pointer, and ignore it
-		ASSERT_NUL();
-        code.push_back(new OShowF6Screen());
-        LABELBACK(label);
-        RETURN();
-        function->giveCode(code);
-    }
-    //int ComboTile(game,int)
-    {
-	    Function* function = getFunction("ComboTile", 2);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        code.push_back(new OPopRegister(new VarArgument(EXP2)));
-        LABELBACK(label);
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new OComboTile(new VarArgument(EXP1),new VarArgument(EXP2)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //void GetSaveName(game, int)
-    {
-	    Function* function = getFunction("GetSaveName", 2);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the param
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        LABELBACK(label);
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new OGetSaveName(new VarArgument(EXP1)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //void GetSaveName(game, int)
-    {
-	    Function* function = getFunction("SetSaveName", 2);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the param
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        LABELBACK(label);
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new OSetSaveName(new VarArgument(EXP1)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //GetMessage(game, int, int)
-    {
-	    Function* function = getFunction("GetMessage", 3);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the params
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        LABELBACK(label);
-        code.push_back(new OPopRegister(new VarArgument(EXP2)));
-        //pop pointer, and ignore it
+		code.push_back(new OLoadShopDataRegister(new VarArgument(EXP1)));
+		code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(REFSHOPDATA)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);    
+	}
+	//InfoShopData
+	{
+		Function* function = getFunction("LoadInfoShopData", 2);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the param
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		//pop pointer, and ignore it
 		POPREF();
-        code.push_back(new OGetMessage(new VarArgument(EXP2), new VarArgument(EXP1)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //GetDMapName(game, int, int)
-    {
-	    Function* function = getFunction("GetDMapName", 3);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the params
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        LABELBACK(label);
-        code.push_back(new OPopRegister(new VarArgument(EXP2)));
-        //pop pointer, and ignore it
+		code.push_back(new OLoadInfoShopDataRegister(new VarArgument(EXP1)));
+		code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(REFSHOPDATA)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);    
+	}
+	//Bitmap
+	{
+		Function* function = getFunction("LoadBitmapID", 2);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the param
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		//pop pointer, and ignore it
 		POPREF();
-        code.push_back(new OGetDMapName(new VarArgument(EXP2), new VarArgument(EXP1)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //GetDMapTitle(game, int, int)
-    {
-	    Function* function = getFunction("GetDMapTitle", 3);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the params
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        LABELBACK(label);
-        code.push_back(new OPopRegister(new VarArgument(EXP2)));
-        //pop pointer, and ignore it
+		code.push_back(new OLoadBitmapDataRegister(new VarArgument(EXP1)));
+		code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(REFBITMAP)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);   
+	}
+	
+	//bool GetScreenState(game, int,int,int)
+	{
+		Function* function = getFunction("GetScreenState", 4);
+		int label = function->getLabel();
+		int done = ScriptParser::getUniqueLabelID();
+		vector<Opcode *> code;
+		//pop off the params
+		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX)));
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		code.push_back(new OSubImmediate(new VarArgument(EXP1), new LiteralArgument(10000)));
+		code.push_back(new OMultImmediate(new VarArgument(EXP1), new LiteralArgument(1360000)));
+		code.push_back(new OAddRegister(new VarArgument(INDEX), new VarArgument(EXP1)));
+		//pop pointer, and ignore it
 		POPREF();
-        code.push_back(new OGetDMapTitle(new VarArgument(EXP2), new VarArgument(EXP1)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //GetDMapIntro(game, int, int)
-    {
-	    Function* function = getFunction("GetDMapIntro", 3);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the params
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        LABELBACK(label);
-        code.push_back(new OPopRegister(new VarArgument(EXP2)));
-        //pop pointer, and ignore it
+		code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(SCREENSTATEDD)));
+		code.push_back(new OCompareImmediate(new VarArgument(EXP1), new LiteralArgument(0)));
+		code.push_back(new OGotoTrueImmediate(new LabelArgument(done)));
+		code.push_back(new OSetImmediate(new VarArgument(EXP1), new LiteralArgument(10000)));
+		code.push_back(new OGotoImmediate(new LabelArgument(done)));
+		code.push_back(new OReturn());
+		LABELBACK(done);
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//void SetScreenState(game, int,int,int,bool)
+	{
+		Function* function = getFunction("SetScreenState", 5);
+		int label = function->getLabel();
+		int done = ScriptParser::getUniqueLabelID();
+		vector<Opcode *> code;
+		//pop off the params
+		code.push_back(new OPopRegister(new VarArgument(SFTEMP)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX)));
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		code.push_back(new OSubImmediate(new VarArgument(EXP1), new LiteralArgument(10000)));
+		code.push_back(new OMultImmediate(new VarArgument(EXP1), new LiteralArgument(1360000)));
+		code.push_back(new OAddRegister(new VarArgument(INDEX), new VarArgument(EXP1)));
+		//pop pointer, and ignore it
 		POPREF();
-        code.push_back(new OGetDMapIntro(new VarArgument(EXP2), new VarArgument(EXP1)));
-        RETURN();
-        function->giveCode(code);
-    }
-    
-    
-    
-    //void GreyscaleOn(game)
-    {
-	    Function* function = getFunction("GreyscaleOn", 1);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop pointer, and ignore it
-		ASSERT_NUL();
-        code.push_back(new OGreyscaleOn());
-        LABELBACK(label);
-        RETURN();
-        function->giveCode(code);
-    }
-            
+		code.push_back(new OCompareImmediate(new VarArgument(SFTEMP), new LiteralArgument(0)));
+		code.push_back(new OGotoTrueImmediate(new LabelArgument(done)));
+		code.push_back(new OSetImmediate(new VarArgument(SFTEMP), new LiteralArgument(10000)));
+		code.push_back(new OSetRegister(new VarArgument(SCREENSTATEDD), new VarArgument(SFTEMP)));
+		code.push_back(new OReturn());
+		LABELBACK(done);
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//int GetScreenD(game, int,int)
+	{
+		Function* function = getFunction("GetScreenD", 3);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the params
+		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(SDDD)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//void SetScreenD(game, int,int,int)
+	{
+		Function* function = getFunction("SetScreenD", 4);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the params
+		code.push_back(new OPopRegister(new VarArgument(SFTEMP)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OSetRegister(new VarArgument(SDDD), new VarArgument(SFTEMP)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//int GetDMapScreenD(game, int,int,int)
+	{
+		Function* function = getFunction("GetDMapScreenD", 4);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the params
+		code.push_back(new OPopRegister(new VarArgument(SFTEMP)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(SDDDD)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//void SetDMapScreenD(game, int,int,int,int)
+	{
+		Function* function = getFunction("SetDMapScreenD", 5);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the params
+		code.push_back(new OPopRegister(new VarArgument(SFTEMP)));
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OSetRegister(new VarArgument(SDDDD), new VarArgument(SFTEMP)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//void PlaySound(game, int)
+	{
+		Function* function = getFunction("PlaySound", 2);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the param
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OPlaySoundRegister(new VarArgument(EXP1)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//void PlayMIDI(game, int)
+	{
+		Function* function = getFunction("PlayMIDI", 2);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the param
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OPlayMIDIRegister(new VarArgument(EXP1)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//void PlayEnhancedMusic(game, int, int)
+	{
+		Function* function = getFunction("PlayEnhancedMusic", 3);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the params
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		code.push_back(new OPopRegister(new VarArgument(EXP2)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OPlayEnhancedMusic(new VarArgument(EXP2), new VarArgument(EXP1)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//void GetDMapMusicFilename(game, int, int)
+	{
+		Function* function = getFunction("GetDMapMusicFilename", 3);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the params
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		code.push_back(new OPopRegister(new VarArgument(EXP2)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OGetDMapMusicFilename(new VarArgument(EXP2), new VarArgument(EXP1)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//int GetDMapMusicTrack(game, int)
+	{
+		Function* function = getFunction("GetDMapMusicTrack", 2);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OGetDMapMusicTrack(new VarArgument(EXP1)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//void SetDMapEnhancedMusic(game, int,int,int)
+	{
+		Function* function = getFunction("SetDMapEnhancedMusic", 4);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OSetDMapEnhancedMusic());
+		code.push_back(new OPopRegister(new VarArgument(EXP2)));
+		code.push_back(new OPopRegister(new VarArgument(EXP2)));
+		code.push_back(new OPopRegister(new VarArgument(EXP2)));
+		//pop pointer, and ignore it
+		POPREF();
+		
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//int GetComboData(int,int,int)
+	{
+		Function* function = getFunction("GetComboData", 4);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the params
+		code.push_back(new OPopRegister(new VarArgument(INDEX)));
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(COMBODDM)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//void SetComboData(int,int,int,int)
+	{
+		Function* function = getFunction("SetComboData", 5);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the params
+		code.push_back(new OPopRegister(new VarArgument(EXP2)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX)));
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OSetRegister(new VarArgument(COMBODDM), new VarArgument(EXP2)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//int GetComboCSet(int,int,int)
+	{
+		Function* function = getFunction("GetComboCSet", 4);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the params
+		code.push_back(new OPopRegister(new VarArgument(INDEX)));
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(COMBOCDM)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//void SetComboCSet(int,int,int,int)
+	{
+		Function* function = getFunction("SetComboCSet", 5);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the params
+		code.push_back(new OPopRegister(new VarArgument(EXP2)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX)));
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OSetRegister(new VarArgument(COMBOCDM), new VarArgument(EXP2)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//int GetComboFlag(int,int,int)
+	{
+		Function* function = getFunction("GetComboFlag", 4);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the params
+		code.push_back(new OPopRegister(new VarArgument(INDEX)));
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(COMBOFDM)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//void SetComboFlag(int,int,int,int)
+	{
+		Function* function = getFunction("SetComboFlag", 5);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the params
+		code.push_back(new OPopRegister(new VarArgument(EXP2)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX)));
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OSetRegister(new VarArgument(COMBOFDM), new VarArgument(EXP2)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//int GetComboType(int,int,int)
+	{
+		Function* function = getFunction("GetComboType", 4);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the params
+		code.push_back(new OPopRegister(new VarArgument(INDEX)));
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(COMBOTDM)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//void SetComboType(int,int,int,int)
+	{
+		Function* function = getFunction("SetComboType", 5);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the params
+		code.push_back(new OPopRegister(new VarArgument(EXP2)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX)));
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OSetRegister(new VarArgument(COMBOTDM), new VarArgument(EXP2)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//int GetComboInherentFlag(int,int,int)
+	{
+		Function* function = getFunction("GetComboInherentFlag", 4);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the params
+		code.push_back(new OPopRegister(new VarArgument(INDEX)));
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(COMBOIDM)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//void SetComboInherentFlag(int,int,int,int)
+	{
+		Function* function = getFunction("SetComboInherentFlag", 5);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the params
+		code.push_back(new OPopRegister(new VarArgument(EXP2)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX)));
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OSetRegister(new VarArgument(COMBOIDM), new VarArgument(EXP2)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//int GetComboCollision(int,int,int)
+	{
+		Function* function = getFunction("GetComboSolid", 4);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the params
+		code.push_back(new OPopRegister(new VarArgument(INDEX)));
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(COMBOSDM)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//void SetComboCollision(int,int,int,int)
+	{
+		Function* function = getFunction("SetComboSolid", 5);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the params
+		code.push_back(new OPopRegister(new VarArgument(EXP2)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX)));
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OSetRegister(new VarArgument(COMBOSDM), new VarArgument(EXP2)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//int GetScreenFlags(game,int,int,int)
+	{
+		Function* function = getFunction("GetScreenFlags", 4);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the params
+		code.push_back(new OPopRegister(new VarArgument(INDEX)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OGetScreenFlags(new VarArgument(EXP1)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//int GetScreenEFlags(game,int,int,int)
+	{
+		Function* function = getFunction("GetScreenEFlags", 4);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the params
+		code.push_back(new OPopRegister(new VarArgument(INDEX)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OGetScreenEFlags(new VarArgument(EXP1)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//void Save(game)
+	{
+		Function* function = getFunction("Save", 1);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OSave());
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//void End(game)
+	{
+		Function* function = getFunction("End", 1);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OEnd());
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	
+	//void Continue(game)
+	{
+		Function* function = getFunction("Continue", 1);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OGameContinue());
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	
+	//void SaveAndQuit(game)
+	{
+		Function* function = getFunction("SaveAndQuit", 1);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OGameSaveQuit());
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	
+	//void SaveAndContinue(game)
+	{
+		Function* function = getFunction("SaveAndContinue", 1);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OGameSaveContinue());
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//void ShowContinueScreen(game)
+	{
+		Function* function = getFunction("ShowContinueScreen", 1);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OShowF6Screen());
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//int ComboTile(game,int)
+	{
+		Function* function = getFunction("ComboTile", 2);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OPopRegister(new VarArgument(EXP2)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OComboTile(new VarArgument(EXP1),new VarArgument(EXP2)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//void GetSaveName(game, int)
+	{
+		Function* function = getFunction("GetSaveName", 2);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the param
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OGetSaveName(new VarArgument(EXP1)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//void GetSaveName(game, int)
+	{
+		Function* function = getFunction("SetSaveName", 2);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the param
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OSetSaveName(new VarArgument(EXP1)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//GetMessage(game, int, int)
+	{
+		Function* function = getFunction("GetMessage", 3);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the params
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		code.push_back(new OPopRegister(new VarArgument(EXP2)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OGetMessage(new VarArgument(EXP2), new VarArgument(EXP1)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//GetDMapName(game, int, int)
+	{
+		Function* function = getFunction("GetDMapName", 3);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the params
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		code.push_back(new OPopRegister(new VarArgument(EXP2)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OGetDMapName(new VarArgument(EXP2), new VarArgument(EXP1)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//GetDMapTitle(game, int, int)
+	{
+		Function* function = getFunction("GetDMapTitle", 3);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the params
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		code.push_back(new OPopRegister(new VarArgument(EXP2)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OGetDMapTitle(new VarArgument(EXP2), new VarArgument(EXP1)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//GetDMapIntro(game, int, int)
+	{
+		Function* function = getFunction("GetDMapIntro", 3);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the params
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		code.push_back(new OPopRegister(new VarArgument(EXP2)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OGetDMapIntro(new VarArgument(EXP2), new VarArgument(EXP1)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	
+	
+	
+	//void GreyscaleOn(game)
+	{
+		Function* function = getFunction("GreyscaleOn", 1);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OGreyscaleOn());
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+			
 	//void GreyscaleOff(game)
-    {
-	    Function* function = getFunction("GreyscaleOff", 1);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop pointer, and ignore it
-		ASSERT_NUL();
-        code.push_back(new OGreyscaleOff());
-        LABELBACK(label);
-        RETURN();
-        function->giveCode(code);
-    }
-    
-    
+	{
+		Function* function = getFunction("GreyscaleOff", 1);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OGreyscaleOff());
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	
+	
    // SetMessage(game, int, int)
-    {
-	    Function* function = getFunction("SetMessage", 3);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the params
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        LABELBACK(label);
-        code.push_back(new OPopRegister(new VarArgument(EXP2)));
-        //pop pointer, and ignore it
+	{
+		Function* function = getFunction("SetMessage", 3);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the params
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		code.push_back(new OPopRegister(new VarArgument(EXP2)));
+		//pop pointer, and ignore it
 		POPREF();
-        code.push_back(new OSetMessage(new VarArgument(EXP2), new VarArgument(EXP1)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //SetDMapName(game, int, int)
-    {
-	    Function* function = getFunction("SetDMapName", 3);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the params
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        LABELBACK(label);
-        code.push_back(new OPopRegister(new VarArgument(EXP2)));
-        //pop pointer, and ignore it
+		code.push_back(new OSetMessage(new VarArgument(EXP2), new VarArgument(EXP1)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//SetDMapName(game, int, int)
+	{
+		Function* function = getFunction("SetDMapName", 3);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the params
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		code.push_back(new OPopRegister(new VarArgument(EXP2)));
+		//pop pointer, and ignore it
 		POPREF();
-        code.push_back(new OSetDMapName(new VarArgument(EXP2), new VarArgument(EXP1)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //SetDMapTitle(game, int, int)
-    {
-	    Function* function = getFunction("SetDMapTitle", 3);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the params
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        LABELBACK(label);
-        code.push_back(new OPopRegister(new VarArgument(EXP2)));
-        //pop pointer, and ignore it
+		code.push_back(new OSetDMapName(new VarArgument(EXP2), new VarArgument(EXP1)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//SetDMapTitle(game, int, int)
+	{
+		Function* function = getFunction("SetDMapTitle", 3);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the params
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		code.push_back(new OPopRegister(new VarArgument(EXP2)));
+		//pop pointer, and ignore it
 		POPREF();
-        code.push_back(new OSetDMapTitle(new VarArgument(EXP2), new VarArgument(EXP1)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //SetDMapIntro(game, int, int)
-    {
-	    Function* function = getFunction("SetDMapIntro", 3);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the params
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        LABELBACK(label);
-        code.push_back(new OPopRegister(new VarArgument(EXP2)));
-        //pop pointer, and ignore it
+		code.push_back(new OSetDMapTitle(new VarArgument(EXP2), new VarArgument(EXP1)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//SetDMapIntro(game, int, int)
+	{
+		Function* function = getFunction("SetDMapIntro", 3);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the params
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		code.push_back(new OPopRegister(new VarArgument(EXP2)));
+		//pop pointer, and ignore it
 		POPREF();
-        code.push_back(new OSetDMapIntro(new VarArgument(EXP2), new VarArgument(EXP1)));
-        RETURN();
-        function->giveCode(code);
-    }
-    
-    //bool ShowSaveScreen(game)
-    {
-	    Function* function = getFunction("ShowSaveScreen", 1);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop pointer, and ignore it
-		ASSERT_NUL();
-        code.push_back(new OShowSaveScreen(new VarArgument(EXP1)));
-        LABELBACK(label);
-        RETURN();
-        function->giveCode(code);
-    }
-    
-    //void ShowSaveQuitScreen(game)
-    {
-	    Function* function = getFunction("ShowSaveQuitScreen", 1);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop pointer, and ignore it
-		ASSERT_NUL();
-        code.push_back(new OShowSaveQuitScreen());
-        LABELBACK(label);
-        RETURN();
-        function->giveCode(code);
-    }
-    
-    //int GetFFCScript(game, int)
-    {
-	    Function* function = getFunction("GetFFCScript", 2);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the param
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        LABELBACK(label);
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new OGetFFCScript(new VarArgument(EXP1)));
-        RETURN();
-        function->giveCode(code);
-    }
-    
-    
-     //int GetItemScript(game, int)
-    {
-	    Function* function = getFunction("GetItemScript", 2);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the param
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        LABELBACK(label);
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new OGetItemScript(new VarArgument(EXP1)));
-        RETURN();
-        function->giveCode(code);
-    }
-    
-     //int GetNPCScript(game, int)
-    {
-	    Function* function = getFunction("GetNPCScript", 2);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the param
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        LABELBACK(label);
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new OGETNPCSCRIPT(new VarArgument(EXP1)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //int GetLWeaponScript(game, int)
-    {
-	    Function* function = getFunction("GetLWeaponScript", 2);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the param
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        LABELBACK(label);
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new OGETLWEAPONSCRIPT(new VarArgument(EXP1)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //int GetEWeaponScript(game, int)
-    {
-	    Function* function = getFunction("GetEWeaponScript", 2);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the param
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        LABELBACK(label);
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new OGETEWEAPONSCRIPT(new VarArgument(EXP1)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //int GetHeroScript(game, int)
-    {
-	    Function* function = getFunction("GetHeroScript", 2);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the param
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        LABELBACK(label);
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new OGETHEROSCRIPT(new VarArgument(EXP1)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //int GetPlayerScript(game, int)
-    {
-	    Function* function = getFunction("GetPlayerScript", 2);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the param
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        LABELBACK(label);
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new OGETHEROSCRIPT(new VarArgument(EXP1)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //int GetLinkScript(game, int)
-    {
-	    Function* function = getFunction("GetLinkScript", 2);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the param
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        LABELBACK(label);
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new OGETHEROSCRIPT(new VarArgument(EXP1)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //int GetGlobalScript(game, int)
-    {
-	    Function* function = getFunction("GetGlobalScript", 2);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the param
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        LABELBACK(label);
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new OGETGLOBALSCRIPT(new VarArgument(EXP1)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //int GetDMapScript(game, int)
-    {
-	    Function* function = getFunction("GetDMapScript", 2);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the param
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        LABELBACK(label);
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new OGETDMAPSCRIPT(new VarArgument(EXP1)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //int GetScreenScript(game, int)
-    {
-	    Function* function = getFunction("GetScreenScript", 2);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the param
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        LABELBACK(label);
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new OGETSCREENSCRIPT(new VarArgument(EXP1)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //int GetItemSpriteScript(game, int)
-    {
-	    Function* function = getFunction("GetItemSpriteScript", 2);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the param
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        LABELBACK(label);
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new OGETSPRITESCRIPT(new VarArgument(EXP1)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //int GetUntypedScript(game, int)
-    {
-	    Function* function = getFunction("GetUntypedScript", 2);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the param
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        LABELBACK(label);
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new OGETUNTYPEDSCRIPT(new VarArgument(EXP1)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //int GetSubscreenScript(game, int)
-    {
-	    Function* function = getFunction("GetSubscreenScript", 2);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the param
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        LABELBACK(label);
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new OGETSUBSCREENSCRIPT(new VarArgument(EXP1)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //int GetNPC(game, int)
-    {
-	    Function* function = getFunction("GetNPC", 2);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the param
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        LABELBACK(label);
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new OGETNPCBYNAME(new VarArgument(EXP1)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //int GetItem(game, int)
-    {
-	    Function* function = getFunction("GetItem", 2);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the param
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        LABELBACK(label);
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new OGETITEMBYNAME(new VarArgument(EXP1)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //int GetCombo(game, int)
-    {
-	    Function* function = getFunction("GetCombo", 2);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the param
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        LABELBACK(label);
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new OGETCOMBOBYNAME(new VarArgument(EXP1)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //int GetDMap(game, int)
-    {
-	    Function* function = getFunction("GetDMap", 2);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the param
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        LABELBACK(label);
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new OGETDMAPBYNAME(new VarArgument(EXP1)));
-        RETURN();
-        function->giveCode(code);
-    }
-    
-     //int GetScreenEnemy(game,int,int,int)
-    {
-	    Function* function = getFunction("GetScreenEnemy", 4);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the params
-        code.push_back(new OPopRegister(new VarArgument(INDEX)));
-        LABELBACK(label);
-        code.push_back(new OPopRegister(new VarArgument(INDEX2)));
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new OGetScreenEnemy(new VarArgument(EXP1)));
-        RETURN();
-        function->giveCode(code);
-    }
-     //int GetScreenDoor(game,int,int,int)
-    {
-	    Function* function = getFunction("GetScreenDoor", 4);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the params
-        code.push_back(new OPopRegister(new VarArgument(INDEX)));
-        LABELBACK(label);
-        code.push_back(new OPopRegister(new VarArgument(INDEX2)));
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new OGetScreenDoor(new VarArgument(EXP1)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //void SetScreenEnemy(int,int,int,int)
-    {
-	    Function* function = getFunction("SetScreenEnemy", 5);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the params
-        code.push_back(new OPopRegister(new VarArgument(EXP2)));
-        LABELBACK(label);
-        code.push_back(new OPopRegister(new VarArgument(INDEX)));
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        code.push_back(new OPopRegister(new VarArgument(INDEX2)));
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new OSetRegister(new VarArgument(SETSCREENENEMY), new VarArgument(EXP2)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //void SetScreenDoor(int,int,int,int)
-    {
-	    Function* function = getFunction("SetScreenDoor", 5);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the params
-        code.push_back(new OPopRegister(new VarArgument(EXP2)));
-        LABELBACK(label);
-        code.push_back(new OPopRegister(new VarArgument(INDEX)));
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        code.push_back(new OPopRegister(new VarArgument(INDEX2)));
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new OSetRegister(new VarArgument(SETSCREENDOOR), new VarArgument(EXP2)));
-        RETURN();
-        function->giveCode(code);
-    }
-    
-    //void SetScreenWidth(game, int,int,int)
-    {
-	    Function* function = getFunction("SetScreenWidth", 4);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the params
-        code.push_back(new OPopRegister(new VarArgument(SFTEMP)));
-        LABELBACK(label);
-        code.push_back(new OPopRegister(new VarArgument(INDEX2)));
-        code.push_back(new OPopRegister(new VarArgument(INDEX)));
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new OSetRegister(new VarArgument(SCREENWIDTH), new VarArgument(SFTEMP)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //int GetScreenWidth(game, int,int)
-    {
-	    Function* function = getFunction("GetScreenWidth", 3);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the params
-        code.push_back(new OPopRegister(new VarArgument(INDEX2)));
-        LABELBACK(label);
-        code.push_back(new OPopRegister(new VarArgument(INDEX)));
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(SCREENWIDTH)));
-        RETURN();
-        function->giveCode(code);
-    }
-    
-    //void SetScreenHeight(game, int,int,int)
-    {
-	    Function* function = getFunction("SetScreenHeight", 4);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the params
-        code.push_back(new OPopRegister(new VarArgument(SFTEMP)));
-        LABELBACK(label);
-        code.push_back(new OPopRegister(new VarArgument(INDEX2)));
-        code.push_back(new OPopRegister(new VarArgument(INDEX)));
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new OSetRegister(new VarArgument(SCREENHEIGHT), new VarArgument(SFTEMP)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //int GetScreenHeight(game, int,int)
-    {
-	    Function* function = getFunction("GetScreenHeight", 3);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the params
-        code.push_back(new OPopRegister(new VarArgument(INDEX2)));
-        LABELBACK(label);
-        code.push_back(new OPopRegister(new VarArgument(INDEX)));
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(SCREENHEIGHT)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //void SetScreenViewX(game, int,int,int)
-    {
-	    Function* function = getFunction("SetScreenViewX", 4);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the params
-        code.push_back(new OPopRegister(new VarArgument(SFTEMP)));
-        LABELBACK(label);
-        code.push_back(new OPopRegister(new VarArgument(INDEX2)));
-        code.push_back(new OPopRegister(new VarArgument(INDEX)));
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new OSetRegister(new VarArgument(SCREENVIEWX), new VarArgument(SFTEMP)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //int GetScreenViewX(game, int,int)
-    {
-	    Function* function = getFunction("GetScreenViewX", 3);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the params
-        code.push_back(new OPopRegister(new VarArgument(INDEX2)));
-        LABELBACK(label);
-        code.push_back(new OPopRegister(new VarArgument(INDEX)));
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(SCREENVIEWX)));
-        RETURN();
-        function->giveCode(code);
-    }
-     //void SetScreenViewY(game, int,int,int)
-    {
-	    Function* function = getFunction("SetScreenViewY", 4);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the params
-        code.push_back(new OPopRegister(new VarArgument(SFTEMP)));
-        LABELBACK(label);
-        code.push_back(new OPopRegister(new VarArgument(INDEX2)));
-        code.push_back(new OPopRegister(new VarArgument(INDEX)));
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new OSetRegister(new VarArgument(SCREENVIEWY), new VarArgument(SFTEMP)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //int GetScreenViewY(game, int,int)
-    {
-	    Function* function = getFunction("GetScreenViewY", 3);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the params
-        code.push_back(new OPopRegister(new VarArgument(INDEX2)));
-        LABELBACK(label);
-        code.push_back(new OPopRegister(new VarArgument(INDEX)));
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(SCREENVIEWY)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //void SetScreenGuy(game, int,int,int)
-    {
-	    Function* function = getFunction("SetScreenGuy", 4);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the params
-        code.push_back(new OPopRegister(new VarArgument(SFTEMP)));
-        LABELBACK(label);
-        code.push_back(new OPopRegister(new VarArgument(INDEX2)));
-        code.push_back(new OPopRegister(new VarArgument(INDEX)));
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new OSetRegister(new VarArgument(SCREENGUY), new VarArgument(SFTEMP)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //int GetScreenGuy(game, int,int)
-    {
-	    Function* function = getFunction("GetScreenGuy", 3);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the params
-        code.push_back(new OPopRegister(new VarArgument(INDEX2)));
-        LABELBACK(label);
-        code.push_back(new OPopRegister(new VarArgument(INDEX)));
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(SCREENGUY)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //void SetScreenString(game, int,int,int)
-    {
-	    Function* function = getFunction("SetScreenString", 4);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the params
-        code.push_back(new OPopRegister(new VarArgument(SFTEMP)));
-        LABELBACK(label);
-        code.push_back(new OPopRegister(new VarArgument(INDEX2)));
-        code.push_back(new OPopRegister(new VarArgument(INDEX)));
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new OSetRegister(new VarArgument(SCREENSTRING), new VarArgument(SFTEMP)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //int GetScreenString(game, int,int)
-    {
-	    Function* function = getFunction("GetScreenString", 3);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the params
-        code.push_back(new OPopRegister(new VarArgument(INDEX2)));
-        LABELBACK(label);
-        code.push_back(new OPopRegister(new VarArgument(INDEX)));
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(SCREENSTRING)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //void SetScreenRoomType(game, int,int,int)
-    {
-	    Function* function = getFunction("SetScreenRoomType", 4);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the params
-        code.push_back(new OPopRegister(new VarArgument(SFTEMP)));
-        LABELBACK(label);
-        code.push_back(new OPopRegister(new VarArgument(INDEX2)));
-        code.push_back(new OPopRegister(new VarArgument(INDEX)));
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new OSetRegister(new VarArgument(SCREENROOM), new VarArgument(SFTEMP)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //int GetScreenRoomType(game, int,int)
-    {
-	    Function* function = getFunction("GetScreenRoomType", 3);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the params
-        code.push_back(new OPopRegister(new VarArgument(INDEX2)));
-        LABELBACK(label);
-        code.push_back(new OPopRegister(new VarArgument(INDEX)));
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(SCREENROOM)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //void SetScreenEntryX(game, int,int,int)
-    {
-	    Function* function = getFunction("SetScreenEntryX", 4);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the params
-        code.push_back(new OPopRegister(new VarArgument(SFTEMP)));
-        LABELBACK(label);
-        code.push_back(new OPopRegister(new VarArgument(INDEX2)));
-        code.push_back(new OPopRegister(new VarArgument(INDEX)));
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new OSetRegister(new VarArgument(SCREENENTX), new VarArgument(SFTEMP)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //int GetScreenEntryX(game, int,int)
-    {
-	    Function* function = getFunction("GetScreenEntryX", 3);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the params
-        code.push_back(new OPopRegister(new VarArgument(INDEX2)));
-        LABELBACK(label);
-        code.push_back(new OPopRegister(new VarArgument(INDEX)));
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(SCREENENTX)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //void SetScreenEntryY(game, int,int,int)
-    {
-	    Function* function = getFunction("SetScreenEntryY", 4);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the params
-        code.push_back(new OPopRegister(new VarArgument(SFTEMP)));
-        LABELBACK(label);
-        code.push_back(new OPopRegister(new VarArgument(INDEX2)));
-        code.push_back(new OPopRegister(new VarArgument(INDEX)));
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new OSetRegister(new VarArgument(SCREENENTY), new VarArgument(SFTEMP)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //int GetScreenEntryY(game, int,int)
-    {
-	    Function* function = getFunction("GetScreenEntryY", 3);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the params
-        code.push_back(new OPopRegister(new VarArgument(INDEX2)));
-        LABELBACK(label);
-        code.push_back(new OPopRegister(new VarArgument(INDEX)));
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(SCREENENTY)));
-        RETURN();
-        function->giveCode(code);
-    }
-     //void SetScreenItem(game, int,int,int)
-    {
-	    Function* function = getFunction("SetScreenItem", 4);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the params
-        code.push_back(new OPopRegister(new VarArgument(SFTEMP)));
-        LABELBACK(label);
-        code.push_back(new OPopRegister(new VarArgument(INDEX2)));
-        code.push_back(new OPopRegister(new VarArgument(INDEX)));
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new OSetRegister(new VarArgument(SCREENITEM), new VarArgument(SFTEMP)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //int GetScreenItem(game, int,int)
-    {
-	    Function* function = getFunction("GetScreenItem", 3);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the params
-        code.push_back(new OPopRegister(new VarArgument(INDEX2)));
-        LABELBACK(label);
-        code.push_back(new OPopRegister(new VarArgument(INDEX)));
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(SCREENITEM)));
-        RETURN();
-        function->giveCode(code);
-    }
-     //void SetScreenUndercombo(game, int,int,int)
-    {
-	    Function* function = getFunction("SetScreenUndercombo", 4);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the params
-        code.push_back(new OPopRegister(new VarArgument(SFTEMP)));
-        LABELBACK(label);
-        code.push_back(new OPopRegister(new VarArgument(INDEX2)));
-        code.push_back(new OPopRegister(new VarArgument(INDEX)));
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new OSetRegister(new VarArgument(SCREENUNDCMB), new VarArgument(SFTEMP)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //int GetScreenUndercombo(game, int,int)
-    {
-	    Function* function = getFunction("GetScreenUndercombo", 3);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the params
-        code.push_back(new OPopRegister(new VarArgument(INDEX2)));
-        LABELBACK(label);
-        code.push_back(new OPopRegister(new VarArgument(INDEX)));
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(SCREENUNDCMB)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //void SetScreenUnderCSet(game, int,int,int)
-    {
-	    Function* function = getFunction("SetScreenUnderCSet", 4);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the params
-        code.push_back(new OPopRegister(new VarArgument(SFTEMP)));
-        LABELBACK(label);
-        code.push_back(new OPopRegister(new VarArgument(INDEX2)));
-        code.push_back(new OPopRegister(new VarArgument(INDEX)));
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new OSetRegister(new VarArgument(SCREENUNDCST), new VarArgument(SFTEMP)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //int GetScreenUnderCSet(game, int,int)
-    {
-	    Function* function = getFunction("GetScreenUnderCSet", 3);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the params
-        code.push_back(new OPopRegister(new VarArgument(INDEX2)));
-        LABELBACK(label);
-        code.push_back(new OPopRegister(new VarArgument(INDEX)));
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(SCREENUNDCST)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //void SetScreenCatchall(game, int,int,int)
-    {
-	    Function* function = getFunction("SetScreenCatchall", 4);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the params
-        code.push_back(new OPopRegister(new VarArgument(SFTEMP)));
-        LABELBACK(label);
-        code.push_back(new OPopRegister(new VarArgument(INDEX2)));
-        code.push_back(new OPopRegister(new VarArgument(INDEX)));
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new OSetRegister(new VarArgument(SCREENCATCH), new VarArgument(SFTEMP)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //int GetScreenCatchall(game, int,int)
-    {
-	    Function* function = getFunction("GetScreenCatchall", 3);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the params
-        code.push_back(new OPopRegister(new VarArgument(INDEX2)));
-        LABELBACK(label);
-        code.push_back(new OPopRegister(new VarArgument(INDEX)));
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(SCREENCATCH)));
-        RETURN();
-        function->giveCode(code);
-    }
-    
-    //void SetScreenLayerOpacity(int,int,int,int)
-    {
-	    Function* function = getFunction("SetScreenLayerOpacity", 5);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the params
-        code.push_back(new OPopRegister(new VarArgument(EXP2)));
-        LABELBACK(label);
-        code.push_back(new OPopRegister(new VarArgument(INDEX)));
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        code.push_back(new OPopRegister(new VarArgument(INDEX2)));
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new OSetRegister(new VarArgument(SETSCREENLAYOP), new VarArgument(EXP2)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //int GetScreenLayerOpacity(game,int,int,int)
-    {
-	    Function* function = getFunction("GetScreenLayerOpacity", 4);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the params
-        code.push_back(new OPopRegister(new VarArgument(INDEX)));
-        LABELBACK(label);
-        code.push_back(new OPopRegister(new VarArgument(INDEX2)));
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new OGetScreenLayerOpacity(new VarArgument(EXP1)));
-        RETURN();
-        function->giveCode(code);
-    }
+		code.push_back(new OSetDMapIntro(new VarArgument(EXP2), new VarArgument(EXP1)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	
+	//bool ShowSaveScreen(game)
+	{
+		Function* function = getFunction("ShowSaveScreen", 1);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OShowSaveScreen(new VarArgument(EXP1)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	
+	//void ShowSaveQuitScreen(game)
+	{
+		Function* function = getFunction("ShowSaveQuitScreen", 1);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OShowSaveQuitScreen());
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	
+	//int GetFFCScript(game, int)
+	{
+		Function* function = getFunction("GetFFCScript", 2);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the param
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OGetFFCScript(new VarArgument(EXP1)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	
+	
+	 //int GetItemScript(game, int)
+	{
+		Function* function = getFunction("GetItemScript", 2);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the param
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OGetItemScript(new VarArgument(EXP1)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	
+	 //int GetNPCScript(game, int)
+	{
+		Function* function = getFunction("GetNPCScript", 2);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the param
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OGETNPCSCRIPT(new VarArgument(EXP1)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//int GetLWeaponScript(game, int)
+	{
+		Function* function = getFunction("GetLWeaponScript", 2);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the param
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OGETLWEAPONSCRIPT(new VarArgument(EXP1)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//int GetEWeaponScript(game, int)
+	{
+		Function* function = getFunction("GetEWeaponScript", 2);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the param
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OGETEWEAPONSCRIPT(new VarArgument(EXP1)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//int GetHeroScript(game, int)
+	{
+		Function* function = getFunction("GetHeroScript", 2);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the param
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OGETHEROSCRIPT(new VarArgument(EXP1)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//int GetPlayerScript(game, int)
+	{
+		Function* function = getFunction("GetPlayerScript", 2);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the param
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OGETHEROSCRIPT(new VarArgument(EXP1)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//int GetLinkScript(game, int)
+	{
+		Function* function = getFunction("GetLinkScript", 2);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the param
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OGETHEROSCRIPT(new VarArgument(EXP1)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//int GetGlobalScript(game, int)
+	{
+		Function* function = getFunction("GetGlobalScript", 2);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the param
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OGETGLOBALSCRIPT(new VarArgument(EXP1)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//int GetDMapScript(game, int)
+	{
+		Function* function = getFunction("GetDMapScript", 2);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the param
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OGETDMAPSCRIPT(new VarArgument(EXP1)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//int GetScreenScript(game, int)
+	{
+		Function* function = getFunction("GetScreenScript", 2);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the param
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OGETSCREENSCRIPT(new VarArgument(EXP1)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//int GetItemSpriteScript(game, int)
+	{
+		Function* function = getFunction("GetItemSpriteScript", 2);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the param
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OGETSPRITESCRIPT(new VarArgument(EXP1)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//int GetUntypedScript(game, int)
+	{
+		Function* function = getFunction("GetUntypedScript", 2);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the param
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OGETUNTYPEDSCRIPT(new VarArgument(EXP1)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//int GetSubscreenScript(game, int)
+	{
+		Function* function = getFunction("GetSubscreenScript", 2);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the param
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OGETSUBSCREENSCRIPT(new VarArgument(EXP1)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//int GetNPC(game, int)
+	{
+		Function* function = getFunction("GetNPC", 2);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the param
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OGETNPCBYNAME(new VarArgument(EXP1)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//int GetItem(game, int)
+	{
+		Function* function = getFunction("GetItem", 2);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the param
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OGETITEMBYNAME(new VarArgument(EXP1)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//int GetCombo(game, int)
+	{
+		Function* function = getFunction("GetCombo", 2);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the param
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OGETCOMBOBYNAME(new VarArgument(EXP1)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//int GetDMap(game, int)
+	{
+		Function* function = getFunction("GetDMap", 2);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the param
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OGETDMAPBYNAME(new VarArgument(EXP1)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	
+	 //int GetScreenEnemy(game,int,int,int)
+	{
+		Function* function = getFunction("GetScreenEnemy", 4);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the params
+		code.push_back(new OPopRegister(new VarArgument(INDEX)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OGetScreenEnemy(new VarArgument(EXP1)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	 //int GetScreenDoor(game,int,int,int)
+	{
+		Function* function = getFunction("GetScreenDoor", 4);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the params
+		code.push_back(new OPopRegister(new VarArgument(INDEX)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OGetScreenDoor(new VarArgument(EXP1)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//void SetScreenEnemy(int,int,int,int)
+	{
+		Function* function = getFunction("SetScreenEnemy", 5);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the params
+		code.push_back(new OPopRegister(new VarArgument(EXP2)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX)));
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OSetRegister(new VarArgument(SETSCREENENEMY), new VarArgument(EXP2)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//void SetScreenDoor(int,int,int,int)
+	{
+		Function* function = getFunction("SetScreenDoor", 5);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the params
+		code.push_back(new OPopRegister(new VarArgument(EXP2)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX)));
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OSetRegister(new VarArgument(SETSCREENDOOR), new VarArgument(EXP2)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	
+	//void SetScreenWidth(game, int,int,int)
+	{
+		Function* function = getFunction("SetScreenWidth", 4);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the params
+		code.push_back(new OPopRegister(new VarArgument(SFTEMP)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OSetRegister(new VarArgument(SCREENWIDTH), new VarArgument(SFTEMP)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//int GetScreenWidth(game, int,int)
+	{
+		Function* function = getFunction("GetScreenWidth", 3);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the params
+		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(SCREENWIDTH)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	
+	//void SetScreenHeight(game, int,int,int)
+	{
+		Function* function = getFunction("SetScreenHeight", 4);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the params
+		code.push_back(new OPopRegister(new VarArgument(SFTEMP)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OSetRegister(new VarArgument(SCREENHEIGHT), new VarArgument(SFTEMP)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//int GetScreenHeight(game, int,int)
+	{
+		Function* function = getFunction("GetScreenHeight", 3);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the params
+		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(SCREENHEIGHT)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//void SetScreenViewX(game, int,int,int)
+	{
+		Function* function = getFunction("SetScreenViewX", 4);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the params
+		code.push_back(new OPopRegister(new VarArgument(SFTEMP)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OSetRegister(new VarArgument(SCREENVIEWX), new VarArgument(SFTEMP)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//int GetScreenViewX(game, int,int)
+	{
+		Function* function = getFunction("GetScreenViewX", 3);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the params
+		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(SCREENVIEWX)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	 //void SetScreenViewY(game, int,int,int)
+	{
+		Function* function = getFunction("SetScreenViewY", 4);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the params
+		code.push_back(new OPopRegister(new VarArgument(SFTEMP)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OSetRegister(new VarArgument(SCREENVIEWY), new VarArgument(SFTEMP)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//int GetScreenViewY(game, int,int)
+	{
+		Function* function = getFunction("GetScreenViewY", 3);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the params
+		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(SCREENVIEWY)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//void SetScreenGuy(game, int,int,int)
+	{
+		Function* function = getFunction("SetScreenGuy", 4);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the params
+		code.push_back(new OPopRegister(new VarArgument(SFTEMP)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OSetRegister(new VarArgument(SCREENGUY), new VarArgument(SFTEMP)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//int GetScreenGuy(game, int,int)
+	{
+		Function* function = getFunction("GetScreenGuy", 3);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the params
+		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(SCREENGUY)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//void SetScreenString(game, int,int,int)
+	{
+		Function* function = getFunction("SetScreenString", 4);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the params
+		code.push_back(new OPopRegister(new VarArgument(SFTEMP)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OSetRegister(new VarArgument(SCREENSTRING), new VarArgument(SFTEMP)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//int GetScreenString(game, int,int)
+	{
+		Function* function = getFunction("GetScreenString", 3);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the params
+		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(SCREENSTRING)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//void SetScreenRoomType(game, int,int,int)
+	{
+		Function* function = getFunction("SetScreenRoomType", 4);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the params
+		code.push_back(new OPopRegister(new VarArgument(SFTEMP)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OSetRegister(new VarArgument(SCREENROOM), new VarArgument(SFTEMP)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//int GetScreenRoomType(game, int,int)
+	{
+		Function* function = getFunction("GetScreenRoomType", 3);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the params
+		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(SCREENROOM)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//void SetScreenEntryX(game, int,int,int)
+	{
+		Function* function = getFunction("SetScreenEntryX", 4);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the params
+		code.push_back(new OPopRegister(new VarArgument(SFTEMP)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OSetRegister(new VarArgument(SCREENENTX), new VarArgument(SFTEMP)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//int GetScreenEntryX(game, int,int)
+	{
+		Function* function = getFunction("GetScreenEntryX", 3);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the params
+		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(SCREENENTX)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//void SetScreenEntryY(game, int,int,int)
+	{
+		Function* function = getFunction("SetScreenEntryY", 4);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the params
+		code.push_back(new OPopRegister(new VarArgument(SFTEMP)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OSetRegister(new VarArgument(SCREENENTY), new VarArgument(SFTEMP)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//int GetScreenEntryY(game, int,int)
+	{
+		Function* function = getFunction("GetScreenEntryY", 3);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the params
+		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(SCREENENTY)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	 //void SetScreenItem(game, int,int,int)
+	{
+		Function* function = getFunction("SetScreenItem", 4);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the params
+		code.push_back(new OPopRegister(new VarArgument(SFTEMP)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OSetRegister(new VarArgument(SCREENITEM), new VarArgument(SFTEMP)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//int GetScreenItem(game, int,int)
+	{
+		Function* function = getFunction("GetScreenItem", 3);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the params
+		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(SCREENITEM)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	 //void SetScreenUndercombo(game, int,int,int)
+	{
+		Function* function = getFunction("SetScreenUndercombo", 4);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the params
+		code.push_back(new OPopRegister(new VarArgument(SFTEMP)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OSetRegister(new VarArgument(SCREENUNDCMB), new VarArgument(SFTEMP)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//int GetScreenUndercombo(game, int,int)
+	{
+		Function* function = getFunction("GetScreenUndercombo", 3);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the params
+		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(SCREENUNDCMB)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//void SetScreenUnderCSet(game, int,int,int)
+	{
+		Function* function = getFunction("SetScreenUnderCSet", 4);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the params
+		code.push_back(new OPopRegister(new VarArgument(SFTEMP)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OSetRegister(new VarArgument(SCREENUNDCST), new VarArgument(SFTEMP)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//int GetScreenUnderCSet(game, int,int)
+	{
+		Function* function = getFunction("GetScreenUnderCSet", 3);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the params
+		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(SCREENUNDCST)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//void SetScreenCatchall(game, int,int,int)
+	{
+		Function* function = getFunction("SetScreenCatchall", 4);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the params
+		code.push_back(new OPopRegister(new VarArgument(SFTEMP)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OSetRegister(new VarArgument(SCREENCATCH), new VarArgument(SFTEMP)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//int GetScreenCatchall(game, int,int)
+	{
+		Function* function = getFunction("GetScreenCatchall", 3);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the params
+		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(SCREENCATCH)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	
+	//void SetScreenLayerOpacity(int,int,int,int)
+	{
+		Function* function = getFunction("SetScreenLayerOpacity", 5);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the params
+		code.push_back(new OPopRegister(new VarArgument(EXP2)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX)));
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OSetRegister(new VarArgument(SETSCREENLAYOP), new VarArgument(EXP2)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//int GetScreenLayerOpacity(game,int,int,int)
+	{
+		Function* function = getFunction("GetScreenLayerOpacity", 4);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the params
+		code.push_back(new OPopRegister(new VarArgument(INDEX)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OGetScreenLayerOpacity(new VarArgument(EXP1)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
 
-     //void SetScreenSecretCombo(int,int,int,int)
-    {
-	    Function* function = getFunction("SetScreenSecretCombo", 5);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the params
-        code.push_back(new OPopRegister(new VarArgument(EXP2)));
-        LABELBACK(label);
-        code.push_back(new OPopRegister(new VarArgument(INDEX)));
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        code.push_back(new OPopRegister(new VarArgument(INDEX2)));
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new OSetRegister(new VarArgument(SETSCREENSECCMB), new VarArgument(EXP2)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //int GetScreenSecretCombo(game,int,int,int)
-    {
-	    Function* function = getFunction("GetScreenSecretCombo", 4);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the params
-        code.push_back(new OPopRegister(new VarArgument(INDEX)));
-        LABELBACK(label);
-        code.push_back(new OPopRegister(new VarArgument(INDEX2)));
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new OGetScreenSecretCombo(new VarArgument(EXP1)));
-        RETURN();
-        function->giveCode(code);
-    }
+	 //void SetScreenSecretCombo(int,int,int,int)
+	{
+		Function* function = getFunction("SetScreenSecretCombo", 5);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the params
+		code.push_back(new OPopRegister(new VarArgument(EXP2)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX)));
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OSetRegister(new VarArgument(SETSCREENSECCMB), new VarArgument(EXP2)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//int GetScreenSecretCombo(game,int,int,int)
+	{
+		Function* function = getFunction("GetScreenSecretCombo", 4);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the params
+		code.push_back(new OPopRegister(new VarArgument(INDEX)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OGetScreenSecretCombo(new VarArgument(EXP1)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
 
-     //void SetScreenSecretCSet(int,int,int,int)
-    {
-	    Function* function = getFunction("SetScreenSecretCSet", 5);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the params
-        code.push_back(new OPopRegister(new VarArgument(EXP2)));
-        LABELBACK(label);
-        code.push_back(new OPopRegister(new VarArgument(INDEX)));
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        code.push_back(new OPopRegister(new VarArgument(INDEX2)));
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new OSetRegister(new VarArgument(SETSCREENSECCST), new VarArgument(EXP2)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //int GetScreenSecretCSet(game,int,int,int)
-    {
-	    Function* function = getFunction("GetScreenSecretCSet", 4);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the params
-        code.push_back(new OPopRegister(new VarArgument(INDEX)));
-        LABELBACK(label);
-        code.push_back(new OPopRegister(new VarArgument(INDEX2)));
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new OGetScreenSecretCSet(new VarArgument(EXP1)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //void SetScreenSecretFlag(int,int,int,int)
-    {
-	    Function* function = getFunction("SetScreenSecretFlag", 5);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the params
-        code.push_back(new OPopRegister(new VarArgument(EXP2)));
-        LABELBACK(label);
-        code.push_back(new OPopRegister(new VarArgument(INDEX)));
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        code.push_back(new OPopRegister(new VarArgument(INDEX2)));
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new OSetRegister(new VarArgument(SETSCREENSECFLG), new VarArgument(EXP2)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //int GetScreenSecretFlag(game,int,int,int)
-    {
-	    Function* function = getFunction("GetScreenSecretFlag", 4);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the params
-        code.push_back(new OPopRegister(new VarArgument(INDEX)));
-        LABELBACK(label);
-        code.push_back(new OPopRegister(new VarArgument(INDEX2)));
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new OGetScreenSecretFlag(new VarArgument(EXP1)));
-        RETURN();
-        function->giveCode(code);
-    }
+	 //void SetScreenSecretCSet(int,int,int,int)
+	{
+		Function* function = getFunction("SetScreenSecretCSet", 5);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the params
+		code.push_back(new OPopRegister(new VarArgument(EXP2)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX)));
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OSetRegister(new VarArgument(SETSCREENSECCST), new VarArgument(EXP2)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//int GetScreenSecretCSet(game,int,int,int)
+	{
+		Function* function = getFunction("GetScreenSecretCSet", 4);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the params
+		code.push_back(new OPopRegister(new VarArgument(INDEX)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OGetScreenSecretCSet(new VarArgument(EXP1)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//void SetScreenSecretFlag(int,int,int,int)
+	{
+		Function* function = getFunction("SetScreenSecretFlag", 5);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the params
+		code.push_back(new OPopRegister(new VarArgument(EXP2)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX)));
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OSetRegister(new VarArgument(SETSCREENSECFLG), new VarArgument(EXP2)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//int GetScreenSecretFlag(game,int,int,int)
+	{
+		Function* function = getFunction("GetScreenSecretFlag", 4);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the params
+		code.push_back(new OPopRegister(new VarArgument(INDEX)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OGetScreenSecretFlag(new VarArgument(EXP1)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
 
-     //void SetScreenLayerMap(int,int,int,int)
-    {
-	    Function* function = getFunction("SetScreenLayerMap", 5);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the params
-        code.push_back(new OPopRegister(new VarArgument(EXP2)));
-        LABELBACK(label);
-        code.push_back(new OPopRegister(new VarArgument(INDEX)));
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        code.push_back(new OPopRegister(new VarArgument(INDEX2)));
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new OSetRegister(new VarArgument(SETSCREENLAYMAP), new VarArgument(EXP2)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //int GetScreenLayerMap(game,int,int,int)
-    {
-	    Function* function = getFunction("GetScreenLayerMap", 4);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the params
-        code.push_back(new OPopRegister(new VarArgument(INDEX)));
-        LABELBACK(label);
-        code.push_back(new OPopRegister(new VarArgument(INDEX2)));
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new OGetScreenLayerMap(new VarArgument(EXP1)));
-        RETURN();
-        function->giveCode(code);
-    }
+	 //void SetScreenLayerMap(int,int,int,int)
+	{
+		Function* function = getFunction("SetScreenLayerMap", 5);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the params
+		code.push_back(new OPopRegister(new VarArgument(EXP2)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX)));
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OSetRegister(new VarArgument(SETSCREENLAYMAP), new VarArgument(EXP2)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//int GetScreenLayerMap(game,int,int,int)
+	{
+		Function* function = getFunction("GetScreenLayerMap", 4);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the params
+		code.push_back(new OPopRegister(new VarArgument(INDEX)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OGetScreenLayerMap(new VarArgument(EXP1)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
 
-    
-    //void SetScreenLayerScreen(int,int,int,int)
-    {
-	    Function* function = getFunction("SetScreenLayerScreen", 5);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the params
-        code.push_back(new OPopRegister(new VarArgument(EXP2)));
-        LABELBACK(label);
-        code.push_back(new OPopRegister(new VarArgument(INDEX)));
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        code.push_back(new OPopRegister(new VarArgument(INDEX2)));
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new OSetRegister(new VarArgument(SETSCREENLAYSCR), new VarArgument(EXP2)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //int GetScreenLayerScreen(game,int,int,int)
-    {
-	    Function* function = getFunction("GetScreenLayerScreen", 4);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the params
-        code.push_back(new OPopRegister(new VarArgument(INDEX)));
-        LABELBACK(label);
-        code.push_back(new OPopRegister(new VarArgument(INDEX2)));
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new OGetScreenLayerScreen(new VarArgument(EXP1)));
-        RETURN();
-        function->giveCode(code);
-    }
+	
+	//void SetScreenLayerScreen(int,int,int,int)
+	{
+		Function* function = getFunction("SetScreenLayerScreen", 5);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the params
+		code.push_back(new OPopRegister(new VarArgument(EXP2)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX)));
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OSetRegister(new VarArgument(SETSCREENLAYSCR), new VarArgument(EXP2)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//int GetScreenLayerScreen(game,int,int,int)
+	{
+		Function* function = getFunction("GetScreenLayerScreen", 4);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the params
+		code.push_back(new OPopRegister(new VarArgument(INDEX)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OGetScreenLayerScreen(new VarArgument(EXP1)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
 
-    //void SetScreenPath(int,int,int,int)
-    {
-	    Function* function = getFunction("SetScreenPath", 5);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the params
-        code.push_back(new OPopRegister(new VarArgument(EXP2)));
-        LABELBACK(label);
-        code.push_back(new OPopRegister(new VarArgument(INDEX)));
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        code.push_back(new OPopRegister(new VarArgument(INDEX2)));
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new OSetRegister(new VarArgument(SETSCREENPATH), new VarArgument(EXP2)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //int GetScreenPath(game,int,int,int)
-    {
-	    Function* function = getFunction("GetScreenPath", 4);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the params
-        code.push_back(new OPopRegister(new VarArgument(INDEX)));
-        LABELBACK(label);
-        code.push_back(new OPopRegister(new VarArgument(INDEX2)));
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new OGetScreenPath(new VarArgument(EXP1)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //void SetScreenWarpReturnX(int,int,int,int)
-    {
-	    Function* function = getFunction("SetScreenWarpReturnX", 5);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the params
-        code.push_back(new OPopRegister(new VarArgument(EXP2)));
-        LABELBACK(label);
-        code.push_back(new OPopRegister(new VarArgument(INDEX)));
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        code.push_back(new OPopRegister(new VarArgument(INDEX2)));
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new OSetRegister(new VarArgument(SETSCREENWARPRX), new VarArgument(EXP2)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //int GetScreenWarpReturnX(game,int,int,int)
-    {
-	    Function* function = getFunction("GetScreenWarpReturnX", 4);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the params
-        code.push_back(new OPopRegister(new VarArgument(INDEX)));
-        LABELBACK(label);
-        code.push_back(new OPopRegister(new VarArgument(INDEX2)));
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new OGetScreenWarpReturnX(new VarArgument(EXP1)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //void SetScreenWarpReturnY(int,int,int,int)
-    {
-	    Function* function = getFunction("SetScreenWarpReturnY", 5);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the params
-        code.push_back(new OPopRegister(new VarArgument(EXP2)));
-        LABELBACK(label);
-        code.push_back(new OPopRegister(new VarArgument(INDEX)));
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        code.push_back(new OPopRegister(new VarArgument(INDEX2)));
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new OSetRegister(new VarArgument(SETSCREENWARPRY), new VarArgument(EXP2)));
-        RETURN();
-        function->giveCode(code);
-    }
-    /*
-    {
-        TWO_INPUT_NO_RETURN("SetContinueScreen",OSSetContinueScreen);
-    }
-    */
-    /*
-    {
-        TWO_INPUT_NO_RETURN("SetContinueString",OSSetContinueString);
-    }
-    */
-    //int GetScreenWarpReturnY(game,int,int,int)
-    {
-	    Function* function = getFunction("GetScreenWarpReturnY", 4);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the params
-        code.push_back(new OPopRegister(new VarArgument(INDEX)));
-        LABELBACK(label);
-        code.push_back(new OPopRegister(new VarArgument(INDEX2)));
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new OGetScreenWarpReturnY(new VarArgument(EXP1)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //void PlayOgg(game, int, int)
-    {
-	    Function* function = getFunction("PlayOgg", 3);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the params
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        LABELBACK(label);
-        code.push_back(new OPopRegister(new VarArgument(EXP2)));
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new OPlayEnhancedMusicEx(new VarArgument(EXP2), new VarArgument(EXP1)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //int GetOggPos(game)
+	//void SetScreenPath(int,int,int,int)
+	{
+		Function* function = getFunction("SetScreenPath", 5);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the params
+		code.push_back(new OPopRegister(new VarArgument(EXP2)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX)));
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OSetRegister(new VarArgument(SETSCREENPATH), new VarArgument(EXP2)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//int GetScreenPath(game,int,int,int)
+	{
+		Function* function = getFunction("GetScreenPath", 4);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the params
+		code.push_back(new OPopRegister(new VarArgument(INDEX)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OGetScreenPath(new VarArgument(EXP1)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//void SetScreenWarpReturnX(int,int,int,int)
+	{
+		Function* function = getFunction("SetScreenWarpReturnX", 5);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the params
+		code.push_back(new OPopRegister(new VarArgument(EXP2)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX)));
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OSetRegister(new VarArgument(SETSCREENWARPRX), new VarArgument(EXP2)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//int GetScreenWarpReturnX(game,int,int,int)
+	{
+		Function* function = getFunction("GetScreenWarpReturnX", 4);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the params
+		code.push_back(new OPopRegister(new VarArgument(INDEX)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OGetScreenWarpReturnX(new VarArgument(EXP1)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//void SetScreenWarpReturnY(int,int,int,int)
+	{
+		Function* function = getFunction("SetScreenWarpReturnY", 5);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the params
+		code.push_back(new OPopRegister(new VarArgument(EXP2)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX)));
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OSetRegister(new VarArgument(SETSCREENWARPRY), new VarArgument(EXP2)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	/*
+	{
+		Function* function = getFunction("SetContinueScreen", 3);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
+		code.push_back(new OPopRegister(new VarArgument(EXP2)));
+		code.push_back(new OPopRegister(new VarArgument(SFTEMP)));
+		code.push_back(new OSSetContinueScreen(new VarArgument(EXP2), new VarArgument(EXP1)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	*/
+	/*
+	{
+		Function* function = getFunction("SetContinueString", 3);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
+		code.push_back(new OPopRegister(new VarArgument(EXP2)));
+		code.push_back(new OPopRegister(new VarArgument(SFTEMP)));
+		code.push_back(new OSSetContinueString(new VarArgument(EXP2), new VarArgument(EXP1)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	*/
+	//int GetScreenWarpReturnY(game,int,int,int)
+	{
+		Function* function = getFunction("GetScreenWarpReturnY", 4);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the params
+		code.push_back(new OPopRegister(new VarArgument(INDEX)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OGetScreenWarpReturnY(new VarArgument(EXP1)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//void PlayOgg(game, int, int)
+	{
+		Function* function = getFunction("PlayOgg", 3);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the params
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		code.push_back(new OPopRegister(new VarArgument(EXP2)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OPlayEnhancedMusicEx(new VarArgument(EXP2), new VarArgument(EXP1)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//int GetOggPos(game)
 {
-	    Function* function = getFunction("GetOggPos", 1);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop pointer, and ignore it
-		ASSERT_NUL();
-        code.push_back(new OGetEnhancedMusicPos(new VarArgument(EXP1)));
-        LABELBACK(label);
-        RETURN();
-        function->giveCode(code);
+		Function* function = getFunction("GetOggPos", 1);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OGetEnhancedMusicPos(new VarArgument(EXP1)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
 }
-     //void SetOggPos(game, int)
-    {
-	    Function* function = getFunction("SetOggPos", 2);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the params
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        LABELBACK(label);
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new OSetEnhancedMusicPos(new VarArgument(EXP1)));
-        RETURN();
-        function->giveCode(code);
-    }
-    
-    //void SetOggSpeed(game, int)
-    {
-	    Function* function = getFunction("SetOggSpeed", 2);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the params
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        LABELBACK(label);
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new OSetEnhancedMusicSpeed(new VarArgument(EXP1)));
-        RETURN();
-        function->giveCode(code);
-    }
+	 //void SetOggPos(game, int)
+	{
+		Function* function = getFunction("SetOggPos", 2);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the params
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OSetEnhancedMusicPos(new VarArgument(EXP1)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	
+	//void SetOggSpeed(game, int)
+	{
+		Function* function = getFunction("SetOggSpeed", 2);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the params
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OSetEnhancedMusicSpeed(new VarArgument(EXP1)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
 	
 	//void Reload(game)
-    {
-	    Function* function = getFunction("Reload", 1);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop pointer, and ignore it
-		ASSERT_NUL();
-        code.push_back(new OGameReload());
-        LABELBACK(label);
-        RETURN();
-        function->giveCode(code);
-    }
+	{
+		Function* function = getFunction("Reload", 1);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OGameReload());
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
 }
 
 NPCSymbols NPCSymbols::singleton = NPCSymbols();
@@ -6634,8 +6385,8 @@ static AccessorTable npcTable[] =
 
 NPCSymbols::NPCSymbols()
 {
-    table = npcTable;
-    refVar = REFNPC;
+	table = npcTable;
+	refVar = REFNPC;
 }
 
 void NPCSymbols::generateCode()
@@ -6647,10 +6398,10 @@ void NPCSymbols::generateCode()
 		vector<Opcode *> code;
 		//pop off the pointer
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
-		LABELBACK(label);
 		//Check validity
 		code.push_back(new OIsValidNPC(new VarArgument(EXP1)));
 		RETURN();
+		LABELFRONT(label);
 		function->giveCode(code);
 	}
 	//void GetName(npc, int)
@@ -6660,25 +6411,25 @@ void NPCSymbols::generateCode()
 		vector<Opcode *> code;
 		//pop off the param
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
-		LABELBACK(label);
 		//pop pointer, and ignore it
 		POPREF();
 		code.push_back(new OGetNPCName(new VarArgument(EXP1)));
 		RETURN();
+		LABELFRONT(label);
 		function->giveCode(code);
 	}
 	//void Explode(npc, int)
 	{
-		    Function* function = getFunction("Explode", 2);
+			Function* function = getFunction("Explode", 2);
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		//pop off the param
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
-		LABELBACK(label);
 		//pop pointer, and ignore it
 		POPREF();
 		code.push_back(new ONPCExplodeRegister(new VarArgument(EXP1)));
 		RETURN();
+		LABELFRONT(label);
 		function->giveCode(code);
 	}
 	//void BreakShield(npc)
@@ -6688,10 +6439,10 @@ void NPCSymbols::generateCode()
 		vector<Opcode *> code;
 		//pop off the pointer
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
-		LABELBACK(label);
 		//Break shield
 		code.push_back(new OBreakShield(new VarArgument(EXP1)));
 		RETURN();
+		LABELFRONT(label);
 		function->giveCode(code);
 	}
 	//bool isDead(npc)
@@ -6701,10 +6452,10 @@ void NPCSymbols::generateCode()
 		vector<Opcode *> code;
 		//pop off the pointer
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
-		LABELBACK(label);
 		//Check validity
 		code.push_back(new ONPCDead(new VarArgument(EXP1)));
 		RETURN();
+		LABELFRONT(label);
 		function->giveCode(code);
 	}
 	//bool CanSlide(npc)
@@ -6714,10 +6465,10 @@ void NPCSymbols::generateCode()
 		vector<Opcode *> code;
 		//pop off the pointer
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
-		LABELBACK(label);
 		//Check validity
 		code.push_back(new ONPCCanSlide(new VarArgument(EXP1)));
 		RETURN();
+		LABELFRONT(label);
 		function->giveCode(code);
 	}
 	//int Slide(npc)
@@ -6727,10 +6478,10 @@ void NPCSymbols::generateCode()
 		vector<Opcode *> code;
 		//pop off the pointer
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
-		LABELBACK(label);
 		//Check validity
 		code.push_back(new ONPCSlide(new VarArgument(EXP1)));
 		RETURN();
+		LABELFRONT(label);
 		function->giveCode(code);
 	}
 	//void Remove(npc)
@@ -6740,10 +6491,10 @@ void NPCSymbols::generateCode()
 		vector<Opcode *> code;
 		//pop off the pointer
 		POPREF();
-		LABELBACK(label);
 		//Break shield
 		code.push_back(new ONPCRemove(new VarArgument(EXP1)));
 		RETURN();
+		LABELFRONT(label);
 		 function->giveCode(code);
 	}
 	//void StopBGSFX(npc)
@@ -6753,10 +6504,10 @@ void NPCSymbols::generateCode()
 		vector<Opcode *> code;
 		//pop off the pointer
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
-		LABELBACK(label);
 		//Break shield
 		code.push_back(new ONPCStopSFX(new VarArgument(EXP1)));
 		RETURN();
+		LABELFRONT(label);
 		 function->giveCode(code);
 	}
 	//void Attack(npc)
@@ -6766,10 +6517,10 @@ void NPCSymbols::generateCode()
 		vector<Opcode *> code;
 		//pop off the pointer
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
-		LABELBACK(label);
 		//Break shield
 		code.push_back(new ONPCAttack(new VarArgument(EXP1)));
 		RETURN();
+		LABELFRONT(label);
 		 function->giveCode(code);
 	}
 	//void NewDir(int arr[])
@@ -6779,11 +6530,11 @@ void NPCSymbols::generateCode()
 		vector<Opcode *> code;
 		//pop off the param
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
-		LABELBACK(label);
 		//pop pointer, and ignore it
 		POPREF();
 		code.push_back(new ONPCNewDir(new VarArgument(EXP1)));
 		RETURN();
+		LABELFRONT(label);
 		function->giveCode(code);
 	}
 	//void ConstantWalk(int arr[])
@@ -6793,11 +6544,11 @@ void NPCSymbols::generateCode()
 		vector<Opcode *> code;
 		//pop off the param
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
-		LABELBACK(label);
 		//pop pointer, and ignore it
 		POPREF();
 		code.push_back(new ONPCConstWalk(new VarArgument(EXP1)));
 		RETURN();
+		LABELFRONT(label);
 		function->giveCode(code);
 	}
 	
@@ -6808,11 +6559,11 @@ void NPCSymbols::generateCode()
 		vector<Opcode *> code;
 		//pop off the param
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
-		LABELBACK(label);
 		//pop pointer, and ignore it
 		POPREF();
 		code.push_back(new ONPCConstWalk8(new VarArgument(EXP1)));
 		RETURN();
+		LABELFRONT(label);
 		function->giveCode(code);
 	}
 	
@@ -6823,11 +6574,11 @@ void NPCSymbols::generateCode()
 		vector<Opcode *> code;
 		//pop off the param
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
-		LABELBACK(label);
 		//pop pointer, and ignore it
 		POPREF();
 		code.push_back(new ONPCVarWalk(new VarArgument(EXP1)));
 		RETURN();
+		LABELFRONT(label);
 		function->giveCode(code);
 	}
 	//void VariableWalk8(int arr[])
@@ -6837,11 +6588,11 @@ void NPCSymbols::generateCode()
 		vector<Opcode *> code;
 		//pop off the param
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
-		LABELBACK(label);
 		//pop pointer, and ignore it
 		POPREF();
 		code.push_back(new ONPCVarWalk8(new VarArgument(EXP1)));
 		RETURN();
+		LABELFRONT(label);
 		function->giveCode(code);
 	}
 	//void HaltingWalk(int arr[])
@@ -6851,11 +6602,11 @@ void NPCSymbols::generateCode()
 		vector<Opcode *> code;
 		//pop off the param
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
-		LABELBACK(label);
 		//pop pointer, and ignore it
 		POPREF();
 		code.push_back(new ONPCHaltWalk(new VarArgument(EXP1)));
 		RETURN();
+		LABELFRONT(label);
 		function->giveCode(code);
 	}
 	//void HaltingWalk8(int arr[])
@@ -6865,11 +6616,11 @@ void NPCSymbols::generateCode()
 		vector<Opcode *> code;
 		//pop off the param
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
-		LABELBACK(label);
 		//pop pointer, and ignore it
 		POPREF();
 		code.push_back(new ONPCHaltWalk8(new VarArgument(EXP1)));
 		RETURN();
+		LABELFRONT(label);
 		function->giveCode(code);
 	}
 	//void FloatingWalk(int arr[])
@@ -6879,11 +6630,11 @@ void NPCSymbols::generateCode()
 		vector<Opcode *> code;
 		//pop off the param
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
-		LABELBACK(label);
 		//pop pointer, and ignore it
 		POPREF();
 		code.push_back(new ONPCFloatWalk(new VarArgument(EXP1)));
 		RETURN();
+		LABELFRONT(label);
 		function->giveCode(code);
 	}
 	//void BreathAttack(bool seeklink)
@@ -6893,11 +6644,11 @@ void NPCSymbols::generateCode()
 		vector<Opcode *> code;
 		//pop off the param
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
-		LABELBACK(label);
 		//pop pointer, and ignore it
 		POPREF();
 		code.push_back(new ONPCBreatheFire(new VarArgument(EXP1)));
 		RETURN();
+		LABELFRONT(label);
 		function->giveCode(code);
 	}
 	//void NewDir8(int arr[])
@@ -6907,11 +6658,11 @@ void NPCSymbols::generateCode()
 		vector<Opcode *> code;
 		//pop off the param
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
-		LABELBACK(label);
 		//pop pointer, and ignore it
 		POPREF();
 		code.push_back(new ONPCNewDir8(new VarArgument(EXP1)));
 		RETURN();
+		LABELFRONT(label);
 		function->giveCode(code);
 	}
 	//bool Collision(int obj_type, untyped obj_pointer)
@@ -6921,12 +6672,12 @@ void NPCSymbols::generateCode()
 		vector<Opcode *> code;
 		//pop off the params
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
-		LABELBACK(label);
 		code.push_back(new OPopRegister(new VarArgument(INDEX)));
 		//pop pointer, and ignore it
 		POPREF();
 		code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(NPCCOLLISION)));
 		RETURN();
+		LABELFRONT(label);
 		function->giveCode(code);
 	}
 	//int LinedUp(int range, bool dir8)
@@ -6936,12 +6687,12 @@ void NPCSymbols::generateCode()
 		vector<Opcode *> code;
 		//pop off the params
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
-		LABELBACK(label);
 		code.push_back(new OPopRegister(new VarArgument(INDEX)));
 		//pop pointer, and ignore it
 		POPREF();
 		code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(NPCLINEDUP)));
 		RETURN();
+		LABELFRONT(label);
 		function->giveCode(code);
 	}
 	//bool LinkInRange(int dist_in_pixels)
@@ -6950,28 +6701,28 @@ void NPCSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
-		LABELBACK(label);
 		//pop pointer, and ignore it
 		POPREF();
 		code.push_back(new ONPCLinkInRange(new VarArgument(EXP1)));
 		RETURN();
+		LABELFRONT(label);
 		function->giveCode(code);
 	}
-    
+	
 	//npc Create(int array[])
 	{
 		Function* function = getFunction("Create", 2);
-        
+		
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		//pop off the param
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
-		LABELBACK(label);
 		//pop pointer, and ignore it
 		POPREF();
 		code.push_back(new ONPCAdd(new VarArgument(EXP1)));
 		REASSIGN_PTR(EXP2); //The value from ONPCAdd is placed in REFNPC, EXP1, and EXP2.
 		RETURN();
+		LABELFRONT(label);
 		function->giveCode(code);
 	}
 	//bool CanMove(int array[])
@@ -6980,11 +6731,11 @@ void NPCSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
-		LABELBACK(label);
 		//pop pointer, and ignore it
 		POPREF();
 		code.push_back(new ONPCCanMove(new VarArgument(EXP1)));
 		RETURN();
+		LABELFRONT(label);
 		function->giveCode(code);
 	}
 	//bool SimulateHit(int array[])
@@ -6993,11 +6744,11 @@ void NPCSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
-		LABELBACK(label);
 		//pop pointer, and ignore it
 		POPREF();
 		code.push_back(new ONPCHitWith(new VarArgument(EXP1)));
 		RETURN();
+		LABELFRONT(label);
 		function->giveCode(code);
 	}
 	//bool Knockback(int time, int dir, int spd)
@@ -7006,16 +6757,16 @@ void NPCSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		code.push_back(new OPopRegister(new VarArgument(INDEX)));
-		LABELBACK(label);
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		//pop pointer, and ignore it
 		POPREF();
 		code.push_back(new ONPCKnockback(new VarArgument(EXP1), new VarArgument(EXP2)));
 		RETURN();
+		LABELFRONT(label);
 		function->giveCode(code);
 	}
-    
+	
 }
 
 LinkWeaponSymbols LinkWeaponSymbols::singleton = LinkWeaponSymbols();
@@ -7150,54 +6901,54 @@ static AccessorTable lwpnTable[] =
 
 LinkWeaponSymbols::LinkWeaponSymbols()
 {
-    table = lwpnTable;
-    refVar = REFLWPN;
+	table = lwpnTable;
+	refVar = REFLWPN;
 }
 
 void LinkWeaponSymbols::generateCode()
 {
-    //bool isValid(lweapon)
-    {
-	    Function* function = getFunction("isValid", 1);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the pointer
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        LABELBACK(label);
-        //Check validity
-        code.push_back(new OIsValidLWpn(new VarArgument(EXP1)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //void Explode(lweapon, int)
-    {
-	    Function* function = getFunction("Explode", 2);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the param
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        LABELBACK(label);
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new OLWeaponExplodeRegister(new VarArgument(EXP1)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //void UseSprite(lweapon, int val)
-    {
-	    Function* function = getFunction("UseSprite", 2);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the val
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        LABELBACK(label);
-        //pop off the pointer
-        POPREF();
-        code.push_back(new OUseSpriteLWpn(new VarArgument(EXP1)));
-        RETURN();
-        function->giveCode(code);
-    }
-    
+	//bool isValid(lweapon)
+	{
+		Function* function = getFunction("isValid", 1);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the pointer
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		//Check validity
+		code.push_back(new OIsValidLWpn(new VarArgument(EXP1)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//void Explode(lweapon, int)
+	{
+		Function* function = getFunction("Explode", 2);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the param
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OLWeaponExplodeRegister(new VarArgument(EXP1)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//void UseSprite(lweapon, int val)
+	{
+		Function* function = getFunction("UseSprite", 2);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the val
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		//pop off the pointer
+		POPREF();
+		code.push_back(new OUseSpriteLWpn(new VarArgument(EXP1)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	
 }
 
 EnemyWeaponSymbols EnemyWeaponSymbols::singleton = EnemyWeaponSymbols();
@@ -7324,54 +7075,54 @@ static AccessorTable ewpnTable[] =
 
 EnemyWeaponSymbols::EnemyWeaponSymbols()
 {
-    table = ewpnTable;
-    refVar = REFEWPN;
+	table = ewpnTable;
+	refVar = REFEWPN;
 }
 
 void EnemyWeaponSymbols::generateCode()
 {
-    //bool isValid(eweapon)
-    {
-	    Function* function = getFunction("isValid", 1);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the pointer
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        LABELBACK(label);
-        //Check validity
-        code.push_back(new OIsValidEWpn(new VarArgument(EXP1)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //void Explode(eweapon, int)
-    {
-	    Function* function = getFunction("Explode", 2);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the param
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        LABELBACK(label);
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new OEWeaponExplodeRegister(new VarArgument(EXP1)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //void UseSprite(eweapon, int val)
-    {
-	    Function* function = getFunction("UseSprite", 2);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the val
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        LABELBACK(label);
-        //pop off the pointer
-        POPREF();
-        code.push_back(new OUseSpriteEWpn(new VarArgument(EXP1)));
-        RETURN();
-        function->giveCode(code);
-    }
-    
+	//bool isValid(eweapon)
+	{
+		Function* function = getFunction("isValid", 1);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the pointer
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		//Check validity
+		code.push_back(new OIsValidEWpn(new VarArgument(EXP1)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//void Explode(eweapon, int)
+	{
+		Function* function = getFunction("Explode", 2);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the param
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OEWeaponExplodeRegister(new VarArgument(EXP1)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//void UseSprite(eweapon, int val)
+	{
+		Function* function = getFunction("UseSprite", 2);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the val
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		//pop off the pointer
+		POPREF();
+		code.push_back(new OUseSpriteEWpn(new VarArgument(EXP1)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	
 }
 
 /////// New Types
@@ -7397,8 +7148,8 @@ static AccessorTable TextTable[] =
 
 TextPtrSymbols::TextPtrSymbols()
 {
-    table = TextTable;
-    refVar = NUL;
+	table = TextTable;
+	refVar = NUL;
 }
 
 void TextPtrSymbols::generateCode()
@@ -7410,13 +7161,13 @@ void TextPtrSymbols::generateCode()
 		vector<Opcode *> code;
 		//pop off the font
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
-		LABELBACK(label);
 		//pop off the string ptr
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
 		//pop off the pointer
 		POPREF();
 		code.push_back(new OStringWidth(new VarArgument(EXP2),new VarArgument(EXP1)));
 		RETURN();
+		LABELFRONT(label);
 		function->giveCode(code);
 	}
 	//void CharWidth(char32 chr, int font)
@@ -7426,13 +7177,13 @@ void TextPtrSymbols::generateCode()
 		vector<Opcode *> code;
 		//pop off the font
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
-		LABELBACK(label);
 		//pop off the character
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
 		//pop off the pointer
 		POPREF();
 		code.push_back(new OCharWidth(new VarArgument(EXP2),new VarArgument(EXP1)));
 		RETURN();
+		LABELFRONT(label);
 		function->giveCode(code);
 	}
 	//void StringHeight(char32 ptr, int font)
@@ -7442,13 +7193,13 @@ void TextPtrSymbols::generateCode()
 		vector<Opcode *> code;
 		//pop off the font
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
-		LABELBACK(label);
 		//ignore the string ptr; height is purely font-based
 		code.push_back(new OPopRegister(new VarArgument(NUL)));
 		//pop off the pointer
 		POPREF();
 		code.push_back(new OFontHeight(new VarArgument(EXP1)));
 		RETURN();
+		LABELFRONT(label);
 		function->giveCode(code);
 	}
 	//void CharHeight(char32 chr, int font)
@@ -7458,13 +7209,13 @@ void TextPtrSymbols::generateCode()
 		vector<Opcode *> code;
 		//pop off the font
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
-		LABELBACK(label);
 		//ignore the character; height is purely font-based
 		code.push_back(new OPopRegister(new VarArgument(NUL)));
 		//pop off the pointer
 		POPREF();
 		code.push_back(new OFontHeight(new VarArgument(EXP1)));
 		RETURN();
+		LABELFRONT(label);
 		function->giveCode(code);
 	}
 	//void FontHeight(int font)
@@ -7474,11 +7225,11 @@ void TextPtrSymbols::generateCode()
 		vector<Opcode *> code;
 		//pop off the font
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
-		LABELBACK(label);
 		//pop off the pointer
 		POPREF();
 		code.push_back(new OFontHeight(new VarArgument(EXP1)));
 		RETURN();
+		LABELFRONT(label);
 		function->giveCode(code);
 	}
 	//void MessageWidth(int message)
@@ -7488,11 +7239,11 @@ void TextPtrSymbols::generateCode()
 		vector<Opcode *> code;
 		//pop off the message
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
-		LABELBACK(label);
 		//pop off the pointer
 		POPREF();
 		code.push_back(new OMessageWidth(new VarArgument(EXP1)));
 		RETURN();
+		LABELFRONT(label);
 		function->giveCode(code);
 	}
 	//void MessageHeight(int message)
@@ -7502,11 +7253,11 @@ void TextPtrSymbols::generateCode()
 		vector<Opcode *> code;
 		//pop off the message
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
-		LABELBACK(label);
 		//pop off the pointer
 		POPREF();
 		code.push_back(new OMessageHeight(new VarArgument(EXP1)));
 		RETURN();
+		LABELFRONT(label);
 		function->giveCode(code);
 	}
 }
@@ -7893,204 +7644,682 @@ static AccessorTable MapDataTable[] =
 
 MapDataSymbols::MapDataSymbols()
 {
-    table = MapDataTable;
-    refVar = REFMAPDATA; //NUL; //
+	table = MapDataTable;
+	refVar = REFMAPDATA; //NUL; //
 }
 
 void MapDataSymbols::generateCode()
 {
 	//int GetEnemy(game,int,int,int)
 	{
-		GET_DATACLASS_ARRAY("GetEnemy",OGetScreenEnemy);
+		Function* function = getFunction("GetEnemy", 4);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OPopRegister(new VarArgument(INDEX)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		POPREF();
+		code.push_back(new OGetScreenEnemy(new VarArgument(EXP1)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
 	}
 	//int GetDoor(game,int,int,int)
 	{
-		GET_DATACLASS_ARRAY("GetDoor",OGetScreenDoor);
+		Function* function = getFunction("GetDoor", 4);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OPopRegister(new VarArgument(INDEX)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		POPREF();
+		code.push_back(new OGetScreenDoor(new VarArgument(EXP1)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
 	}
 	//void SetEnemy(int,int,int,int)
 	{
-		SET_DATACLASS_ARRAY("SetEnemy", SETSCREENENEMY);
+		Function* function = getFunction("SetEnemy", 5);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OPopRegister(new VarArgument(EXP2)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX)));
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
+		POPREF();
+		code.push_back(new OSetRegister(new VarArgument(SETSCREENENEMY), new VarArgument(EXP2)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
 	}
 	//void SetDoor(int,int,int,int)
 	{
-		SET_DATACLASS_ARRAY("SetDoor", SETSCREENDOOR);
+		Function* function = getFunction("SetDoor", 5);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OPopRegister(new VarArgument(EXP2)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX)));
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
+		POPREF();
+		code.push_back(new OSetRegister(new VarArgument(SETSCREENDOOR), new VarArgument(EXP2)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
 	}
 	//void SetWidth(game, int,int,int)
 	{
-		SET_DATACLASS_MEMBER("SetWidth",SCREENWIDTH);
+		Function* function = getFunction("SetWidth", 4);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OPopRegister(new VarArgument(SFTEMP)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX)));
+		POPREF();
+		code.push_back(new OSetRegister(new VarArgument(SCREENWIDTH), new VarArgument(SFTEMP)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
 	}
 	//int GetWidth(game, int,int)
 	{
-		GET_DATACLASS_MEMBER("GetWidth",SCREENWIDTH);
+		Function* function = getFunction("GetWidth", 3);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX)));
+		POPREF();
+		code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(SCREENWIDTH)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
 	}
 	//void SetHeight(game, int,int,int)
 	{
-		SET_DATACLASS_MEMBER("SetHeight",SCREENHEIGHT);
+		Function* function = getFunction("SetHeight", 4);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OPopRegister(new VarArgument(SFTEMP)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX)));
+		POPREF();
+		code.push_back(new OSetRegister(new VarArgument(SCREENHEIGHT), new VarArgument(SFTEMP)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
 	}
 	//int GetHeight(game, int,int)
 	{
-		GET_DATACLASS_MEMBER("GetHeight",SCREENHEIGHT);
+		Function* function = getFunction("GetHeight", 3);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX)));
+		POPREF();
+		code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(SCREENHEIGHT)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
 	}
 	//void SetViewX(game, int,int,int)
 	{
-		SET_DATACLASS_MEMBER("SetViewX",SCREENVIEWX);
+		Function* function = getFunction("SetViewX", 4);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OPopRegister(new VarArgument(SFTEMP)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX)));
+		POPREF();
+		code.push_back(new OSetRegister(new VarArgument(SCREENVIEWX), new VarArgument(SFTEMP)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
 	}
 	//int GetViewX(game, int,int)
 	{
-		GET_DATACLASS_MEMBER("GetViewX",SCREENVIEWX);
+		Function* function = getFunction("GetViewX", 3);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX)));
+		POPREF();
+		code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(SCREENVIEWX)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
 	}
 	//void SetViewY(game, int,int,int)
 	{
-		SET_DATACLASS_MEMBER("SetViewY",SCREENVIEWY);
+		Function* function = getFunction("SetViewY", 4);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OPopRegister(new VarArgument(SFTEMP)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX)));
+		POPREF();
+		code.push_back(new OSetRegister(new VarArgument(SCREENVIEWY), new VarArgument(SFTEMP)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
 	}
 	//int GetViewY(game, int,int)
 	{
-		GET_DATACLASS_MEMBER("GetViewY",SCREENVIEWY);
+		Function* function = getFunction("GetViewY", 3);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX)));
+		POPREF();
+		code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(SCREENVIEWY)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
 	}
 	//void SetGuy(game, int,int,int)
 	{
-		SET_DATACLASS_MEMBER("SetGuy",SCREENGUY);
+		Function* function = getFunction("SetGuy", 4);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OPopRegister(new VarArgument(SFTEMP)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX)));
+		POPREF();
+		code.push_back(new OSetRegister(new VarArgument(SCREENGUY), new VarArgument(SFTEMP)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
 	}
 	//int GetGuy(game, int,int)
 	{
-		GET_DATACLASS_MEMBER("GetGuy",SCREENGUY);
+		Function* function = getFunction("GetGuy", 3);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX)));
+		POPREF();
+		code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(SCREENGUY)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
 	}
 	//void SetString(game, int,int,int)
 	{
-		SET_DATACLASS_MEMBER("SetString",SCREENSTRING);
+		Function* function = getFunction("SetString", 4);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OPopRegister(new VarArgument(SFTEMP)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX)));
+		POPREF();
+		code.push_back(new OSetRegister(new VarArgument(SCREENSTRING), new VarArgument(SFTEMP)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
 	}
 	//int GetString(game, int,int)
 	{
-		GET_DATACLASS_MEMBER("GetString",SCREENSTRING);
+		Function* function = getFunction("GetString", 3);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX)));
+		POPREF();
+		code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(SCREENSTRING)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
 	}
 	//void SetRoomType(game, int,int,int)
 	{
-		SET_DATACLASS_MEMBER("SetRoomType",SCREENROOM);
+		Function* function = getFunction("SetRoomType", 4);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OPopRegister(new VarArgument(SFTEMP)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX)));
+		POPREF();
+		code.push_back(new OSetRegister(new VarArgument(SCREENROOM), new VarArgument(SFTEMP)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
 	}
 	//int GetRoomType(game, int,int)
 	{
-		GET_DATACLASS_MEMBER("GetRoomType",SCREENROOM);
+		Function* function = getFunction("GetRoomType", 3);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX)));
+		POPREF();
+		code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(SCREENROOM)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
 	}
 	//void SetEntryX(game, int,int,int)
 	{
-		SET_DATACLASS_MEMBER("SetEntryX",SCREENENTX);
+		Function* function = getFunction("SetEntryX", 4);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OPopRegister(new VarArgument(SFTEMP)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX)));
+		POPREF();
+		code.push_back(new OSetRegister(new VarArgument(SCREENENTX), new VarArgument(SFTEMP)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
 	}
 	//int GetEntryX(game, int,int)
 	{
-		GET_DATACLASS_MEMBER("GetEntryX",SCREENENTX);
+		Function* function = getFunction("GetEntryX", 3);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX)));
+		POPREF();
+		code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(SCREENENTX)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
 	}
 	//void SetEntryY(game, int,int,int)
 	{
-		SET_DATACLASS_MEMBER("SetEntryY",SCREENENTY);
+		Function* function = getFunction("SetEntryY", 4);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OPopRegister(new VarArgument(SFTEMP)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX)));
+		POPREF();
+		code.push_back(new OSetRegister(new VarArgument(SCREENENTY), new VarArgument(SFTEMP)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
 	}
 	//int GetEntryY(game, int,int)
 	{
-		GET_DATACLASS_MEMBER("GetEntryY",SCREENENTY);
+		Function* function = getFunction("GetEntryY", 3);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX)));
+		POPREF();
+		code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(SCREENENTY)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
 	}
 	//void SetItem(game, int,int,int)
 	{
-		SET_DATACLASS_MEMBER("SetItem",SCREENITEM);
+		Function* function = getFunction("SetItem", 4);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OPopRegister(new VarArgument(SFTEMP)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX)));
+		POPREF();
+		code.push_back(new OSetRegister(new VarArgument(SCREENITEM), new VarArgument(SFTEMP)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
 	}
 	//int GetItem(game, int,int)
 	{
-		GET_DATACLASS_MEMBER("GetItem",SCREENITEM);
+		Function* function = getFunction("GetItem", 3);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX)));
+		POPREF();
+		code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(SCREENITEM)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
 	}
 	//void SetUndercombo(game, int,int,int)
 	{
-		SET_DATACLASS_MEMBER("SetUndercombo",SCREENUNDCMB);
+		Function* function = getFunction("SetUndercombo", 4);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OPopRegister(new VarArgument(SFTEMP)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX)));
+		POPREF();
+		code.push_back(new OSetRegister(new VarArgument(SCREENUNDCMB), new VarArgument(SFTEMP)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
 	}
 	//int GetUndercombo(game, int,int)
 	{
-		GET_DATACLASS_MEMBER("GetUndercombo",SCREENUNDCMB);
+		Function* function = getFunction("GetUndercombo", 3);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX)));
+		POPREF();
+		code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(SCREENUNDCMB)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
 	}
 	//void SetUnderCSet(game, int,int,int)
 	{
-		SET_DATACLASS_MEMBER("SetUnderCSet",SCREENUNDCST);
+		Function* function = getFunction("SetUnderCSet", 4);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OPopRegister(new VarArgument(SFTEMP)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX)));
+		POPREF();
+		code.push_back(new OSetRegister(new VarArgument(SCREENUNDCST), new VarArgument(SFTEMP)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
 	}
 	//int GetUnderCSet(game, int,int)
 	{
-		GET_DATACLASS_MEMBER("GetUnderCSet",SCREENUNDCST);
+		Function* function = getFunction("GetUnderCSet", 3);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX)));
+		POPREF();
+		code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(SCREENUNDCST)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
 	}
 	//void SetCatchall(game, int,int,int)
 	{
-		SET_DATACLASS_MEMBER("SetCatchall",SCREENCATCH);
+		Function* function = getFunction("SetCatchall", 4);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OPopRegister(new VarArgument(SFTEMP)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX)));
+		POPREF();
+		code.push_back(new OSetRegister(new VarArgument(SCREENCATCH), new VarArgument(SFTEMP)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
 	}
 	//int GetCatchall(game, int,int)
 	{
-		GET_DATACLASS_MEMBER("GetCatchall",SCREENCATCH);
+		Function* function = getFunction("GetCatchall", 3);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX)));
+		POPREF();
+		code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(SCREENCATCH)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
 	}
 	//void SetLayerOpacity(int,int,int,int)
 	{
-		SET_DATACLASS_ARRAY("SetLayerOpacity",SETSCREENLAYOP); 
+		Function* function = getFunction("SetLayerOpacity", 5);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OPopRegister(new VarArgument(EXP2)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX)));
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
+		POPREF();
+		code.push_back(new OSetRegister(new VarArgument(SETSCREENLAYOP), new VarArgument(EXP2)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code); 
 	}
 	//int GetLayerOpacity(game,int,int,int)
 	{
-		GET_DATACLASS_ARRAY("GetLayerOpacity",OGetScreenLayerOpacity);
+		Function* function = getFunction("GetLayerOpacity", 4);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OPopRegister(new VarArgument(INDEX)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		POPREF();
+		code.push_back(new OGetScreenLayerOpacity(new VarArgument(EXP1)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
 	}
 	//void SetSecretCombo(int,int,int,int)
 	{
-		SET_DATACLASS_ARRAY("SetSecretCombo",SETSCREENSECCMB); 
+		Function* function = getFunction("SetSecretCombo", 5);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OPopRegister(new VarArgument(EXP2)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX)));
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
+		POPREF();
+		code.push_back(new OSetRegister(new VarArgument(SETSCREENSECCMB), new VarArgument(EXP2)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code); 
 	}
 	//int GetSecretCombo(game,int,int,int)
 	{
-		GET_DATACLASS_ARRAY("GetSecretCombo",OGetScreenSecretCombo);
+		Function* function = getFunction("GetSecretCombo", 4);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OPopRegister(new VarArgument(INDEX)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		POPREF();
+		code.push_back(new OGetScreenSecretCombo(new VarArgument(EXP1)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
 	}
 	//void SetSecretCSet(int,int,int,int)
 	{
-		SET_DATACLASS_ARRAY("SetSecretCSet",SETSCREENSECCST);
+		Function* function = getFunction("SetSecretCSet", 5);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OPopRegister(new VarArgument(EXP2)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX)));
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
+		POPREF();
+		code.push_back(new OSetRegister(new VarArgument(SETSCREENSECCST), new VarArgument(EXP2)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
 	}
 	//int GetSecretCSet(game,int,int,int)
 	{
-		GET_DATACLASS_ARRAY("GetSecretCSet",OGetScreenSecretCSet);
+		Function* function = getFunction("GetSecretCSet", 4);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OPopRegister(new VarArgument(INDEX)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		POPREF();
+		code.push_back(new OGetScreenSecretCSet(new VarArgument(EXP1)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
 	}
 	//void SetSecretFlag(int,int,int,int)
 	{
-		SET_DATACLASS_ARRAY("SetSecretFlag",SETSCREENSECFLG);
+		Function* function = getFunction("SetSecretFlag", 5);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OPopRegister(new VarArgument(EXP2)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX)));
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
+		POPREF();
+		code.push_back(new OSetRegister(new VarArgument(SETSCREENSECFLG), new VarArgument(EXP2)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
 	}
 	//int GetSecretFlag(game,int,int,int)
 	{
-		GET_DATACLASS_ARRAY("GetSecretFlag",OGetScreenSecretFlag);
+		Function* function = getFunction("GetSecretFlag", 4);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OPopRegister(new VarArgument(INDEX)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		POPREF();
+		code.push_back(new OGetScreenSecretFlag(new VarArgument(EXP1)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
 	}
 	//void SetLayerMap(int,int,int,int)
 	{
-		SET_DATACLASS_ARRAY("SetLayerMap",SETSCREENLAYMAP);
+		Function* function = getFunction("SetLayerMap", 5);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OPopRegister(new VarArgument(EXP2)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX)));
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
+		POPREF();
+		code.push_back(new OSetRegister(new VarArgument(SETSCREENLAYMAP), new VarArgument(EXP2)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
 	}
 	//int GetLayerMap(game,int,int,int)
 	{
-		GET_DATACLASS_ARRAY("GetLayerMap",OGetScreenLayerMap);
+		Function* function = getFunction("GetLayerMap", 4);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OPopRegister(new VarArgument(INDEX)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		POPREF();
+		code.push_back(new OGetScreenLayerMap(new VarArgument(EXP1)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
 	}
 	//void SetLayerScreen(int,int,int,int)
 	{
-		SET_DATACLASS_ARRAY("SetLayerScreen",SETSCREENLAYSCR);
+		Function* function = getFunction("SetLayerScreen", 5);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OPopRegister(new VarArgument(EXP2)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX)));
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
+		POPREF();
+		code.push_back(new OSetRegister(new VarArgument(SETSCREENLAYSCR), new VarArgument(EXP2)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
 	}
 	//int GetLayerScreen(game,int,int,int)
 	{
-		GET_DATACLASS_ARRAY("GetLayerScreen",OGetScreenLayerScreen);
+		Function* function = getFunction("GetLayerScreen", 4);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OPopRegister(new VarArgument(INDEX)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		POPREF();
+		code.push_back(new OGetScreenLayerScreen(new VarArgument(EXP1)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
 	}
 
 	//void SetPath(int,int,int,int)
 	{
-		SET_DATACLASS_ARRAY("SetPath",SETSCREENPATH);
+		Function* function = getFunction("SetPath", 5);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OPopRegister(new VarArgument(EXP2)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX)));
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
+		POPREF();
+		code.push_back(new OSetRegister(new VarArgument(SETSCREENPATH), new VarArgument(EXP2)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
 	}
 	//int GetPath(game,int,int,int)
 	{
-		GET_DATACLASS_ARRAY("GetPath",OGetScreenPath);
+		Function* function = getFunction("GetPath", 4);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OPopRegister(new VarArgument(INDEX)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		POPREF();
+		code.push_back(new OGetScreenPath(new VarArgument(EXP1)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
 	}
 	//void SetWarpReturnX(int,int,int,int)
 	{
-		SET_DATACLASS_ARRAY("SetWarpReturnX",SETSCREENWARPRX);
+		Function* function = getFunction("SetWarpReturnX", 5);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OPopRegister(new VarArgument(EXP2)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX)));
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
+		POPREF();
+		code.push_back(new OSetRegister(new VarArgument(SETSCREENWARPRX), new VarArgument(EXP2)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
 	}
 	//int GetWarpReturnX(game,int,int,int)
 	{
-		GET_DATACLASS_ARRAY("GetWarpReturnX",OGetScreenWarpReturnX);
+		Function* function = getFunction("GetWarpReturnX", 4);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OPopRegister(new VarArgument(INDEX)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		POPREF();
+		code.push_back(new OGetScreenWarpReturnX(new VarArgument(EXP1)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
 	}
 	//void SetWarpReturnY(int,int,int,int)
 	{
-		SET_DATACLASS_ARRAY("SetWarpReturnY",SETSCREENWARPRY);
+		Function* function = getFunction("SetWarpReturnY", 5);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OPopRegister(new VarArgument(EXP2)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX)));
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
+		POPREF();
+		code.push_back(new OSetRegister(new VarArgument(SETSCREENWARPRY), new VarArgument(EXP2)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
 	}
 	//int GetWarpReturnY(game,int,int,int)
 	{
-		GET_DATACLASS_ARRAY("GetWarpReturnY",OGetScreenWarpReturnY);
+		Function* function = getFunction("GetWarpReturnY", 4);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OPopRegister(new VarArgument(INDEX)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		POPREF();
+		code.push_back(new OGetScreenWarpReturnY(new VarArgument(EXP1)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
 	}
 	
 	
@@ -8105,12 +8334,12 @@ void MapDataSymbols::generateCode()
 		vector<Opcode *> code;
 		//pop off the params
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
-		LABELBACK(label);
 		code.push_back(new OPopRegister(new VarArgument(INDEX)));
 		//pop pointer
 		POPREF();
 		code.push_back(new OIsSolidMapdata(new VarArgument(EXP1)));
 		RETURN();
+		LABELFRONT(label);
 		function->giveCode(code);
 	}
 	
@@ -8121,13 +8350,13 @@ void MapDataSymbols::generateCode()
 		vector<Opcode *> code;
 		//pop off the params
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
-		LABELBACK(label);
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
 		code.push_back(new OPopRegister(new VarArgument(INDEX)));
 		//pop pointer
 		POPREF();
 		code.push_back(new OIsSolidMapdataLayer(new VarArgument(EXP1)));
 		RETURN();
+		LABELFRONT(label);
 		function->giveCode(code);
 	}
 
@@ -8138,16 +8367,16 @@ void MapDataSymbols::generateCode()
 		vector<Opcode *> code;
 		//pop off the params
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
-		LABELBACK(label);
 		code.push_back(new OPopRegister(new VarArgument(INDEX)));
 		//pop pointer
 		POPREF();
 		code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(MAPDATAINTID)));
 		RETURN();
+		LABELFRONT(label);
 		function->giveCode(code);
 	
 	}
-    
+	
 	//void SetFFCInitD(mapsc, int,int,int,int)
 	{
 		Function* function = getFunction("SetFFCInitD", 4);
@@ -8155,17 +8384,17 @@ void MapDataSymbols::generateCode()
 		vector<Opcode *> code;
 		//pop off the params
 		code.push_back(new OPopRegister(new VarArgument(SFTEMP)));
-		LABELBACK(label);
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
 		code.push_back(new OPopRegister(new VarArgument(INDEX)));
 		//pop pointer
 		POPREF();
 		code.push_back(new OSetRegister(new VarArgument(MAPDATAINTID), new VarArgument(SFTEMP)));
 		RETURN();
+		LABELFRONT(label);
 		function->giveCode(code);
 	}
-    
-    
+	
+	
 	//int GetFFCInitA(mapscr, int,int,int)
 	{
 		Function* function = getFunction("GetFFCInitA", 3);
@@ -8173,16 +8402,16 @@ void MapDataSymbols::generateCode()
 		vector<Opcode *> code;
 		//pop off the params
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
-		LABELBACK(label);
 		code.push_back(new OPopRegister(new VarArgument(INDEX)));
 		//pop pointer
 		POPREF();
 		code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(MAPDATAINITA)));
 		RETURN();
+		LABELFRONT(label);
 		function->giveCode(code);
 	
 	}
-    
+	
 	//void SetFFCInitA(mapsc, int,int,int,int)
 	{
 		Function* function = getFunction("SetFFCInitA", 4);
@@ -8190,13 +8419,13 @@ void MapDataSymbols::generateCode()
 		vector<Opcode *> code;
 		//pop off the params
 		code.push_back(new OPopRegister(new VarArgument(SFTEMP)));
-		LABELBACK(label);
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
 		code.push_back(new OPopRegister(new VarArgument(INDEX)));
 		//pop pointer
 		POPREF();
 		code.push_back(new OSetRegister(new VarArgument(MAPDATAINITA), new VarArgument(SFTEMP)));
 		RETURN();
+		LABELFRONT(label);
 		function->giveCode(code);
 	}
 }
@@ -8246,8 +8475,8 @@ static AccessorTable InputTable[] =
 
 InputSymbols::InputSymbols()
 {
-    table = InputTable;
-    refVar = NUL;
+	table = InputTable;
+	refVar = NUL;
 	
 }
 
@@ -8256,34 +8485,34 @@ InputSymbols::InputSymbols()
 void InputSymbols::generateCode()
 {
 	//SetType(SpriteData, int, int)
-    {
-        Function* function = getFunction("SetType", 3);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the params
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        LABELBACK(label);
-        code.push_back(new OPopRegister(new VarArgument(EXP2)));
-        //pop pointer, and ignore it
+	{
+		Function* function = getFunction("SetType", 3);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the params
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		code.push_back(new OPopRegister(new VarArgument(EXP2)));
+		//pop pointer, and ignore it
 		POPREF();
-        code.push_back(new OSSetDataType(new VarArgument(EXP2), new VarArgument(EXP1)));
-        RETURN();
-        function->giveCode(code);
-    }
-    {
-	    Function* function = getFunction("GetType", 2);
-	    int label = function->getLabel();
-	    vector<Opcode *> code;
-	    //pop off the params
-	    code.push_back(new OPopRegister(new VarArgument(EXP1)));
-	    LABELBACK(label);
-	    code.push_back(new OPopRegister(new VarArgument(EXP2)));
-	    //pop pointer, and ignore it
-	    POPREF();
-	    code.push_back(new OSDataType(new VarArgument(EXP1),new VarArgument(EXP2)));
-	    RETURN();
-	    function->giveCode(code);
-    }
+		code.push_back(new OSSetDataType(new VarArgument(EXP2), new VarArgument(EXP1)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	{
+		Function* function = getFunction("GetType", 2);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the params
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		code.push_back(new OPopRegister(new VarArgument(EXP2)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OSDataType(new VarArgument(EXP1),new VarArgument(EXP2)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
 }
 
 GraphicsSymbols GraphicsSymbols::singleton = GraphicsSymbols();
@@ -8308,8 +8537,8 @@ static AccessorTable GraphicsTable[] =
 
 GraphicsSymbols::GraphicsSymbols()
 {
-    table = GraphicsTable;
-    refVar = NUL;
+	table = GraphicsTable;
+	refVar = NUL;
 }
 
 void GraphicsSymbols::generateCode()
@@ -8320,11 +8549,11 @@ void GraphicsSymbols::generateCode()
 		vector<Opcode *> code;
 		// Pop argument.
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
-		LABELBACK(label);
 		// Pop pointer.
 		POPREF();
 		code.push_back(new OWavyR(new VarArgument(EXP2)));
 		RETURN();
+		LABELFRONT(label);
 		function->giveCode(code);
 	}
 	
@@ -8335,13 +8564,13 @@ void GraphicsSymbols::generateCode()
 		vector<Opcode *> code;
 		//pop off the params
 		code.push_back(new OPopRegister(new VarArgument(INDEX)));
-		LABELBACK(label);
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		//pop pointer, and ignore it
 		POPREF();
 		code.push_back(new OGraphicsGetpixel(new VarArgument(EXP1)));
 		RETURN();
+		LABELFRONT(label);
 		function->giveCode(code);
 	}
 	{
@@ -8350,11 +8579,11 @@ void GraphicsSymbols::generateCode()
 		vector<Opcode *> code;
 		// Pop argument.
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
-		LABELBACK(label);
 		// Pop pointer.
 		POPREF();
 		code.push_back(new OZapR(new VarArgument(EXP2)));
 		RETURN();
+		LABELFRONT(label);
 		function->giveCode(code);
 	}
 	{
@@ -8363,11 +8592,11 @@ void GraphicsSymbols::generateCode()
 		vector<Opcode *> code;
 		// Pop argument.
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
-		LABELBACK(label);
 		// Pop pointer.
 		POPREF();
 		code.push_back(new OGreyscaleR(new VarArgument(EXP2)));
 		RETURN();
+		LABELFRONT(label);
 		function->giveCode(code);
 	}
 	{
@@ -8376,36 +8605,36 @@ void GraphicsSymbols::generateCode()
 		vector<Opcode *> code;
 		// Pop argument.
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
-		LABELBACK(label);
 		// Pop pointer.
 		POPREF();
 		code.push_back(new OMonochromeR(new VarArgument(EXP2)));
 		RETURN();
+		LABELFRONT(label);
 		function->giveCode(code);
 	}
 
 	//void Tint(graphics, float, float, float)
 	{
-		    Function* function = getFunction("Tint", 4);
+			Function* function = getFunction("Tint", 4);
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		code.push_back(new OTintR());
-		LABELBACK(label);
 		POP_ARGS(4, NUL);
 		
 		RETURN();
+		LABELFRONT(label);
 		function->giveCode(code);
 	}
 	//void MonochromeHue(graphics, float, float, float, bool)
 	{
-		    Function* function = getFunction("MonochromeHue", 5);
+			Function* function = getFunction("MonochromeHue", 5);
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		code.push_back(new OMonoHueR());
-		LABELBACK(label);
 		POP_ARGS(5, NUL);
 		
 		RETURN();
+		LABELFRONT(label);
 		function->giveCode(code);
 	}
 	
@@ -8415,9 +8644,9 @@ void GraphicsSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		code.push_back(new OClearTint());
-		LABELBACK(label);
 		POPREF(); //pop the 'this'
 		RETURN();
+		LABELFRONT(label);
 		function->giveCode(code);
 	}
 }
@@ -8450,18 +8679,18 @@ static AccessorTable BitmapTable[] =
 	{ "FastCombo",              ZVARTYPEID_VOID,          FUNCTION,     0,                    1,             0,                                    7,           {  ZVARTYPEID_BITMAP,         ZVARTYPEID_FLOAT,         ZVARTYPEID_FLOAT,         ZVARTYPEID_FLOAT,     ZVARTYPEID_FLOAT,     ZVARTYPEID_FLOAT,     ZVARTYPEID_FLOAT,     -1,                           -1,                          -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                              } },
 	{ "DrawString",             ZVARTYPEID_VOID,          FUNCTION,     0,                    1,             0,                                    10,          {  ZVARTYPEID_BITMAP,         ZVARTYPEID_FLOAT,         ZVARTYPEID_FLOAT,         ZVARTYPEID_FLOAT,     ZVARTYPEID_FLOAT,     ZVARTYPEID_FLOAT,     ZVARTYPEID_FLOAT,     ZVARTYPEID_FLOAT,     ZVARTYPEID_FLOAT,     ZVARTYPEID_FLOAT,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                              } },
 	{ "DrawString",             ZVARTYPEID_VOID,          FUNCTION,     0,                    1,             0,                                    11,          {  ZVARTYPEID_BITMAP,         ZVARTYPEID_FLOAT,         ZVARTYPEID_FLOAT,         ZVARTYPEID_FLOAT,     ZVARTYPEID_FLOAT,     ZVARTYPEID_FLOAT,     ZVARTYPEID_FLOAT,     ZVARTYPEID_FLOAT,     ZVARTYPEID_FLOAT,     ZVARTYPEID_FLOAT,     ZVARTYPEID_FLOAT,     ZVARTYPEID_FLOAT,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                              } },
-	{ "DrawLayer",              typeVOID,                 FUNCTION,     0,                    1,             0,                                    9,           ARGS_8(ZVARTYPEID_BITMAP,F,F,F,F,F,F,F,F) },
-	{ "DrawLayerSolid",         typeVOID,                 FUNCTION,     0,                    1,             0,                                    9,           ARGS_8(ZVARTYPEID_BITMAP,F,F,F,F,F,F,F,F) },
-	{ "DrawLayerSolidity",      typeVOID,                 FUNCTION,     0,                    1,             0,                                    9,           ARGS_8(ZVARTYPEID_BITMAP,F,F,F,F,F,F,F,F) },
-	{ "DrawLayerComboTypes",    typeVOID,                 FUNCTION,     0,                    1,             0,                                    9,           ARGS_8(ZVARTYPEID_BITMAP,F,F,F,F,F,F,F,F) },
-	{ "DrawLayerComboFlags",    typeVOID,                 FUNCTION,     0,                    1,             0,                                    9,           ARGS_8(ZVARTYPEID_BITMAP,F,F,F,F,F,F,F,F) },
-	{ "DrawLayerComboIFlags",   typeVOID,                 FUNCTION,     0,                    1,             0,                                    9,           ARGS_8(ZVARTYPEID_BITMAP,F,F,F,F,F,F,F,F) },
-	{ "DrawScreen",             typeVOID,                 FUNCTION,     0,                    1,             0,                                    7,           ARGS_6(ZVARTYPEID_BITMAP,F,F,F,F,F,F) },
-	{ "DrawScreenSolid",        typeVOID,                 FUNCTION,     0,                    1,             0,                                    7,           ARGS_6(ZVARTYPEID_BITMAP,F,F,F,F,F,F) },
-	{ "DrawScreenSolidity",     typeVOID,                 FUNCTION,     0,                    1,             0,                                    7,           ARGS_6(ZVARTYPEID_BITMAP,F,F,F,F,F,F) },
-	{ "DrawScreenComboTypes",   typeVOID,                 FUNCTION,     0,                    1,             0,                                    7,           ARGS_6(ZVARTYPEID_BITMAP,F,F,F,F,F,F) },
-	{ "DrawScreenComboFlags",   typeVOID,                 FUNCTION,     0,                    1,             0,                                    7,           ARGS_6(ZVARTYPEID_BITMAP,F,F,F,F,F,F) },
-	{ "DrawScreenComboIFlags",  typeVOID,                 FUNCTION,     0,                    1,             0,                                    7,           ARGS_6(ZVARTYPEID_BITMAP,F,F,F,F,F,F) },
+	{ "DrawLayer",              ZVARTYPEID_VOID,                 FUNCTION,     0,                    1,             0,                                    9,           {ZVARTYPEID_BITMAP, ZVARTYPEID_FLOAT, ZVARTYPEID_FLOAT, ZVARTYPEID_FLOAT, ZVARTYPEID_FLOAT, ZVARTYPEID_FLOAT, ZVARTYPEID_FLOAT, ZVARTYPEID_FLOAT, ZVARTYPEID_FLOAT, -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1 } },
+	{ "DrawLayerSolid",         ZVARTYPEID_VOID,                 FUNCTION,     0,                    1,             0,                                    9,           {ZVARTYPEID_BITMAP, ZVARTYPEID_FLOAT, ZVARTYPEID_FLOAT, ZVARTYPEID_FLOAT, ZVARTYPEID_FLOAT, ZVARTYPEID_FLOAT, ZVARTYPEID_FLOAT, ZVARTYPEID_FLOAT, ZVARTYPEID_FLOAT, -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1 } },
+	{ "DrawLayerSolidity",      ZVARTYPEID_VOID,                 FUNCTION,     0,                    1,             0,                                    9,           {ZVARTYPEID_BITMAP, ZVARTYPEID_FLOAT, ZVARTYPEID_FLOAT, ZVARTYPEID_FLOAT, ZVARTYPEID_FLOAT, ZVARTYPEID_FLOAT, ZVARTYPEID_FLOAT, ZVARTYPEID_FLOAT, ZVARTYPEID_FLOAT, -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1 } },
+	{ "DrawLayerComboTypes",    ZVARTYPEID_VOID,                 FUNCTION,     0,                    1,             0,                                    9,           {ZVARTYPEID_BITMAP, ZVARTYPEID_FLOAT, ZVARTYPEID_FLOAT, ZVARTYPEID_FLOAT, ZVARTYPEID_FLOAT, ZVARTYPEID_FLOAT, ZVARTYPEID_FLOAT, ZVARTYPEID_FLOAT, ZVARTYPEID_FLOAT, -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1 } },
+	{ "DrawLayerComboFlags",    ZVARTYPEID_VOID,                 FUNCTION,     0,                    1,             0,                                    9,           {ZVARTYPEID_BITMAP, ZVARTYPEID_FLOAT, ZVARTYPEID_FLOAT, ZVARTYPEID_FLOAT, ZVARTYPEID_FLOAT, ZVARTYPEID_FLOAT, ZVARTYPEID_FLOAT, ZVARTYPEID_FLOAT, ZVARTYPEID_FLOAT, -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1 } },
+	{ "DrawLayerComboIFlags",   ZVARTYPEID_VOID,                 FUNCTION,     0,                    1,             0,                                    9,           {ZVARTYPEID_BITMAP, ZVARTYPEID_FLOAT, ZVARTYPEID_FLOAT, ZVARTYPEID_FLOAT, ZVARTYPEID_FLOAT, ZVARTYPEID_FLOAT, ZVARTYPEID_FLOAT, ZVARTYPEID_FLOAT, ZVARTYPEID_FLOAT, -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1 } },
+	{ "DrawScreen",             ZVARTYPEID_VOID,                 FUNCTION,     0,                    1,             0,                                    7,           {ZVARTYPEID_BITMAP, ZVARTYPEID_FLOAT, ZVARTYPEID_FLOAT, ZVARTYPEID_FLOAT, ZVARTYPEID_FLOAT, ZVARTYPEID_FLOAT, ZVARTYPEID_FLOAT, -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1 } },
+	{ "DrawScreenSolid",        ZVARTYPEID_VOID,                 FUNCTION,     0,                    1,             0,                                    7,           {ZVARTYPEID_BITMAP, ZVARTYPEID_FLOAT, ZVARTYPEID_FLOAT, ZVARTYPEID_FLOAT, ZVARTYPEID_FLOAT, ZVARTYPEID_FLOAT, ZVARTYPEID_FLOAT, -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1 } },
+	{ "DrawScreenSolidity",     ZVARTYPEID_VOID,                 FUNCTION,     0,                    1,             0,                                    7,           {ZVARTYPEID_BITMAP, ZVARTYPEID_FLOAT, ZVARTYPEID_FLOAT, ZVARTYPEID_FLOAT, ZVARTYPEID_FLOAT, ZVARTYPEID_FLOAT, ZVARTYPEID_FLOAT, -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1 } },
+	{ "DrawScreenComboTypes",   ZVARTYPEID_VOID,                 FUNCTION,     0,                    1,             0,                                    7,           {ZVARTYPEID_BITMAP, ZVARTYPEID_FLOAT, ZVARTYPEID_FLOAT, ZVARTYPEID_FLOAT, ZVARTYPEID_FLOAT, ZVARTYPEID_FLOAT, ZVARTYPEID_FLOAT, -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1 } },
+	{ "DrawScreenComboFlags",   ZVARTYPEID_VOID,                 FUNCTION,     0,                    1,             0,                                    7,           {ZVARTYPEID_BITMAP, ZVARTYPEID_FLOAT, ZVARTYPEID_FLOAT, ZVARTYPEID_FLOAT, ZVARTYPEID_FLOAT, ZVARTYPEID_FLOAT, ZVARTYPEID_FLOAT, -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1 } },
+	{ "DrawScreenComboIFlags",  ZVARTYPEID_VOID,                 FUNCTION,     0,                    1,             0,                                    7,           {ZVARTYPEID_BITMAP, ZVARTYPEID_FLOAT, ZVARTYPEID_FLOAT, ZVARTYPEID_FLOAT, ZVARTYPEID_FLOAT, ZVARTYPEID_FLOAT, ZVARTYPEID_FLOAT, -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1 } },
 	{ "Blit",                   ZVARTYPEID_VOID,          FUNCTION,     0,                    1,             0,                                    17,          { ZVARTYPEID_BITMAP, ZVARTYPEID_FLOAT,ZVARTYPEID_UNTYPED,ZVARTYPEID_FLOAT,ZVARTYPEID_FLOAT,ZVARTYPEID_FLOAT,ZVARTYPEID_FLOAT,ZVARTYPEID_FLOAT,ZVARTYPEID_FLOAT,ZVARTYPEID_FLOAT,ZVARTYPEID_FLOAT,ZVARTYPEID_FLOAT,ZVARTYPEID_FLOAT,ZVARTYPEID_FLOAT,ZVARTYPEID_FLOAT,ZVARTYPEID_FLOAT,ZVARTYPEID_BOOL, -1,                           -1,                           -1,                              } },
 	{ "BlitTo",                 ZVARTYPEID_VOID,          FUNCTION,     0,                    1,             0,                                    17,          { ZVARTYPEID_BITMAP, ZVARTYPEID_FLOAT,ZVARTYPEID_UNTYPED,ZVARTYPEID_FLOAT,ZVARTYPEID_FLOAT,ZVARTYPEID_FLOAT,ZVARTYPEID_FLOAT,ZVARTYPEID_FLOAT,ZVARTYPEID_FLOAT,ZVARTYPEID_FLOAT,ZVARTYPEID_FLOAT,ZVARTYPEID_FLOAT,ZVARTYPEID_FLOAT,ZVARTYPEID_FLOAT,ZVARTYPEID_FLOAT,ZVARTYPEID_FLOAT,ZVARTYPEID_BOOL, -1,                           -1,                           -1,                              } },
 	{ "RevBlit",                 ZVARTYPEID_VOID,          FUNCTION,     0,                    1,             0,                                    17,          { ZVARTYPEID_BITMAP, ZVARTYPEID_FLOAT,ZVARTYPEID_UNTYPED,ZVARTYPEID_FLOAT,ZVARTYPEID_FLOAT,ZVARTYPEID_FLOAT,ZVARTYPEID_FLOAT,ZVARTYPEID_FLOAT,ZVARTYPEID_FLOAT,ZVARTYPEID_FLOAT,ZVARTYPEID_FLOAT,ZVARTYPEID_FLOAT,ZVARTYPEID_FLOAT,ZVARTYPEID_FLOAT,ZVARTYPEID_FLOAT,ZVARTYPEID_FLOAT,ZVARTYPEID_BOOL, -1,                           -1,                           -1,                              } },
@@ -8487,8 +8716,8 @@ static AccessorTable BitmapTable[] =
 
 BitmapSymbols::BitmapSymbols()
 {
-    table = BitmapTable;
-    refVar = REFBITMAP;
+	table = BitmapTable;
+	refVar = REFBITMAP;
 }
 
 void BitmapSymbols::generateCode()
@@ -8500,12 +8729,12 @@ void BitmapSymbols::generateCode()
 		vector<Opcode *> code;
 		//pop off the params
 		code.push_back(new OPopRegister(new VarArgument(INDEX)));
-		LABELBACK(label);
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
 		//pop pointer to EXP1
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		code.push_back(new OGraphicsGetpixel(new VarArgument(EXP1)));
 		RETURN();
+		LABELFRONT(label);
 		function->giveCode(code);
 	}
 	/*
@@ -8516,12 +8745,12 @@ void BitmapSymbols::generateCode()
 		vector<Opcode *> code;
 		//pop off the params
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
-		LABELBACK(label);
 		code.push_back(new OPopRegister(new VarArgument(INDEX)));
 		//pop pointer, and ignore it
 		POPREF();
 		code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(CREATEBITMAP)));
 		RETURN();
+		LABELFRONT(label);
 		function->giveCode(code);
 	}
 	*/
@@ -8531,10 +8760,10 @@ void BitmapSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		code.push_back(new OBMPRectangleRegister());
-		LABELBACK(label);
 		POP_ARGS(13, NUL);
 		RETURN();
-        
+		LABELFRONT(label);
+		
 		function->giveCode(code);
 	}
 	//void Read(bitmap, layer, "filename")
@@ -8545,9 +8774,9 @@ void BitmapSymbols::generateCode()
 		vector<Opcode *> code;
 		code.push_back(new OReadBitmap());
 		REASSIGN_PTR(EXP2);
-		LABELBACK(label);
 		POP_ARGS(3, NUL);
 		RETURN();
+		LABELFRONT(label);
 		function->giveCode(code);
 
 	}
@@ -8558,10 +8787,10 @@ void BitmapSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		code.push_back(new OClearBitmap());
-		LABELBACK(label);
 		POP_ARGS(2, NUL);
 		
 		RETURN();
+		LABELFRONT(label);
 		function->giveCode(code);
 
 	}
@@ -8573,10 +8802,10 @@ void BitmapSymbols::generateCode()
 		vector<Opcode *> code;
 		code.push_back(new ORegenerateBitmap());
 		REASSIGN_PTR(EXP2);
-		LABELBACK(label);
 		POP_ARGS(4, NUL);
 		
 		RETURN();
+		LABELFRONT(label);
 		function->giveCode(code);
 
 	}
@@ -8586,10 +8815,10 @@ void BitmapSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		code.push_back(new OWriteBitmap());
-		LABELBACK(label);
 		POP_ARGS(4, NUL);
 		RETURN();
-        
+		LABELFRONT(label);
+		
 		function->giveCode(code);
 	}
 	//void Circle(bitmap, float, float, float, float, float, float, float, float, float, bool, float)
@@ -8598,10 +8827,10 @@ void BitmapSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		code.push_back(new OBMPCircleRegister());
-		LABELBACK(label);
 		POP_ARGS(12, NUL);
-        
+		
 		RETURN();
+		LABELFRONT(label);
 		function->giveCode(code);
 	}
 	//void Arc(bitmap, float, float, float, float, float, float, float, float, float, float, float, bool, bool, float)
@@ -8610,10 +8839,10 @@ void BitmapSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		code.push_back(new OBMPArcRegister());
-		LABELBACK(label);
 		POP_ARGS(15, NUL);
-        
+		
 		RETURN();
+		LABELFRONT(label);
 		function->giveCode(code);
 	}
 	//void Ellipse(bitmap, float, float, float, float, float, bool, float, float, float)
@@ -8622,10 +8851,10 @@ void BitmapSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		code.push_back(new OBMPEllipseRegister());
-		LABELBACK(label);
 		POP_ARGS(13, NUL);
-        
+		
 		RETURN();
+		LABELFRONT(label);
 		function->giveCode(code);
 	}
 	//void Line(bitmap, float, float, float, float, float, float, float, float, float, float, float)
@@ -8634,10 +8863,10 @@ void BitmapSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		code.push_back(new OBMPLineRegister());
-		LABELBACK(label);
 		POP_ARGS(12, NUL);
-        
+		
 		RETURN();
+		LABELFRONT(label);
 		function->giveCode(code);
 	}
 	//void Spline(bitmap, float, float, float, float, float, float, float, float, float, float, float)
@@ -8646,10 +8875,10 @@ void BitmapSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		code.push_back(new OBMPSplineRegister());
-		LABELBACK(label);
 		POP_ARGS(12, NUL);
-        
+		
 		RETURN();
+		LABELFRONT(label);
 		function->giveCode(code);
 	}
 	//void PutPixel(bitmap, float, float, float, float, float, float, float, float)
@@ -8658,10 +8887,10 @@ void BitmapSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		code.push_back(new OBMPPutPixelRegister());
-		LABELBACK(label);
 		POP_ARGS(9, NUL);
-        
+		
 		RETURN();
+		LABELFRONT(label);
 		function->giveCode(code);
 	}
 	//void DrawCharacter(bitmap, float, float, float, float, float, float, float, float, float, float)
@@ -8670,10 +8899,10 @@ void BitmapSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		code.push_back(new OBMPDrawCharRegister());
-		LABELBACK(label);
 		POP_ARGS(11, NUL);
-        
+		
 		RETURN();
+		LABELFRONT(label);
 		function->giveCode(code);
 	}
 	//void DrawInteger(bitmap, float, float, float, float, float, float, float, float, float, float, float)
@@ -8682,10 +8911,10 @@ void BitmapSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		code.push_back(new OBMPDrawIntRegister());
-		LABELBACK(label);
 		POP_ARGS(12, NUL);
-        
+		
 		RETURN();
+		LABELFRONT(label);
 		function->giveCode(code);
 	}
 	//void DrawTile(bitmap, float, float, float, float, float, bool, float, float, float)
@@ -8694,10 +8923,10 @@ void BitmapSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		code.push_back(new OBMPDrawTileRegister());
-		LABELBACK(label);
 		POP_ARGS(16, NUL);
-        
+		
 		RETURN();
+		LABELFRONT(label);
 		function->giveCode(code);
 	}
 	//void DrawTileCloaked(bitmap, ...args)
@@ -8706,10 +8935,10 @@ void BitmapSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		code.push_back(new OBMPDrawTileCloakedRegister());
-		LABELBACK(label);
 		POP_ARGS(8, NUL);
-        
+		
 		RETURN();
+		LABELFRONT(label);
 		function->giveCode(code);
 	}
 	//void DrawCombo(bitmap, float, float, float, float, float, bool, float, float, float)
@@ -8718,10 +8947,10 @@ void BitmapSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		code.push_back(new OBMPDrawComboRegister());
-		LABELBACK(label);
 		POP_ARGS(17, NUL);
-        
+		
 		RETURN();
+		LABELFRONT(label);
 		function->giveCode(code);
 	}
 	//void DrawComboCloaked(bitmap, ...args)
@@ -8730,10 +8959,10 @@ void BitmapSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		code.push_back(new OBMPDrawComboCloakedRegister());
-		LABELBACK(label);
 		POP_ARGS(8, NUL);
-        
+		
 		RETURN();
+		LABELFRONT(label);
 		function->giveCode(code);
 	}
 	//void Quad(bitmap, float, float, float, float, float, float, float, float, float, bitmap)
@@ -8742,10 +8971,10 @@ void BitmapSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		code.push_back(new OBMPQuadRegister());
-		LABELBACK(label);
 		POP_ARGS(17, NUL);
-        
+		
 		RETURN();
+		LABELFRONT(label);
 		function->giveCode(code);
 	}
 	//void Polygon(bitmap, float, float, float, float, float)
@@ -8755,36 +8984,36 @@ void BitmapSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		code.push_back(new OBMPPolygonRegister());
-		LABELBACK(label);
 		POP_ARGS(6, NUL);
-        
+		
 		RETURN();
+		LABELFRONT(label);
 		function->giveCode(code);
 	}
-    
+	
 	//void Triangle(bitmap, float, float, float, float, float, float, float, float, float, bitmap)
 	{
 		Function* function = getFunction("Triangle", 15);
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		code.push_back(new OBMPTriangleRegister());
-		LABELBACK(label);
 		POP_ARGS(15, NUL);
-        
+		
 		RETURN();
+		LABELFRONT(label);
 		function->giveCode(code);
 	}
-    
+	
 	//void Quad3D(bitmap, float, float, float, float, float, float, float, float, float, bitmap)
 	{
 		Function* function = getFunction("Quad3D", 10);
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		code.push_back(new OBMPQuad3DRegister());
-		LABELBACK(label);
 		POP_ARGS(10, NUL);
-        
+		
 		RETURN();
+		LABELFRONT(label);
 		function->giveCode(code);
 	}
 	//void Triangle3D(bitmap, float, float, float, float, float, float, float, float, float, bitmap)
@@ -8793,23 +9022,23 @@ void BitmapSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		code.push_back(new OBMPTriangle3DRegister());
-		LABELBACK(label);
 		POP_ARGS(10, NUL);
-        
+		
 		RETURN();
+		LABELFRONT(label);
 		function->giveCode(code);
 	}
-    
+	
 	//void FastTile(bitmap, float, float, float, float, float)
 	{
 		Function* function = getFunction("FastTile", 7);
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		code.push_back(new OBMPFastTileRegister());
-		LABELBACK(label);
 		POP_ARGS(7, NUL);
-        
+		
 		RETURN();
+		LABELFRONT(label);
 		function->giveCode(code);
 	}
 	//void FastCombo(bitmap, float, float, float, float, float)
@@ -8818,10 +9047,10 @@ void BitmapSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		code.push_back(new OBMPFastComboRegister());
-		LABELBACK(label);
 		POP_ARGS(7, NUL);
-        
+		
 		RETURN();
+		LABELFRONT(label);
 		function->giveCode(code);
 	}
 	//void DrawString(bitmap, float, float, float, float, float, float, float, int *string)
@@ -8830,10 +9059,10 @@ void BitmapSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		code.push_back(new OBMPDrawStringRegister());
-		LABELBACK(label);
 		POP_ARGS(10, NUL);
-        
+		
 		RETURN();
+		LABELFRONT(label);
 		function->giveCode(code);
 	}
 	//void DrawString(bitmap, float, float, float, float, float, float, float, int *string)
@@ -8842,10 +9071,10 @@ void BitmapSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		code.push_back(new OBMPDrawString2Register());
-		LABELBACK(label);
 		POP_ARGS(12, NUL);
-        
+		
 		RETURN();
+		LABELFRONT(label);
 		function->giveCode(code);
 	}
 	//void DrawLayer(bitmap, float, float, float, float, float, float, float, float)
@@ -8854,10 +9083,10 @@ void BitmapSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		code.push_back(new OBMPDrawLayerRegister());
-		LABELBACK(label);
 		POP_ARGS(9, NUL);
-        
+		
 		RETURN();
+		LABELFRONT(label);
 		function->giveCode(code);
 	}
 	//void DrawLayerComboIFlags(bitmap, float, float, float, float, float, float, float, float)
@@ -8866,10 +9095,10 @@ void BitmapSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		code.push_back(new OBMPDrawScreenCIFlagRegister());
-		LABELBACK(label);
 		POP_ARGS(9, NUL);
-        
+		
 		RETURN();
+		LABELFRONT(label);
 		function->giveCode(code);
 	}
 	//void DrawLayerComboFlags(bitmap, float, float, float, float, float, float, float, float)
@@ -8878,10 +9107,10 @@ void BitmapSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		code.push_back(new OBMPDrawScreenCFlagRegister());
-		LABELBACK(label);
 		POP_ARGS(9, NUL);
-        
+		
 		RETURN();
+		LABELFRONT(label);
 		function->giveCode(code);
 	}
 	//void DrawLayerSolid(bitmap, float, float, float, float, float, float, float, float)
@@ -8890,10 +9119,10 @@ void BitmapSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		code.push_back(new OBMPDrawScreenSolidMaskRegister());
-		LABELBACK(label);
 		POP_ARGS(9, NUL);
-        
+		
 		RETURN();
+		LABELFRONT(label);
 		function->giveCode(code);
 	}
 	//void DrawLayerComboTypes(bitmap, float, float, float, float, float, float, float, float)
@@ -8902,10 +9131,10 @@ void BitmapSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		code.push_back(new OBMPDrawScreenCTypeRegister());
-		LABELBACK(label);
 		POP_ARGS(9, NUL);
-        
+		
 		RETURN();
+		LABELFRONT(label);
 		function->giveCode(code);
 	}
 	
@@ -8915,10 +9144,10 @@ void BitmapSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		code.push_back(new OBMPDrawScreenSolidityRegister());
-		LABELBACK(label);
 		POP_ARGS(9, NUL);
-        
+		
 		RETURN();
+		LABELFRONT(label);
 		function->giveCode(code);
 	}
 	//void DrawScreen(bitmap, float, float, float, float, float, float)
@@ -8927,10 +9156,10 @@ void BitmapSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		code.push_back(new OBMPDrawScreenRegister());
-		LABELBACK(label);
 		POP_ARGS(7, NUL);
-        
+		
 		RETURN();
+		LABELFRONT(label);
 		function->giveCode(code);
 	}
 	
@@ -8940,10 +9169,10 @@ void BitmapSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		code.push_back(new OBMPDrawScreenSolidRegister());
-		LABELBACK(label);
 		POP_ARGS(7, NUL);
-        
+		
 		RETURN();
+		LABELFRONT(label);
 		function->giveCode(code);
 	}
 	
@@ -8953,10 +9182,10 @@ void BitmapSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		code.push_back(new OBMPDrawScreenSolid2Register());
-		LABELBACK(label);
 		POP_ARGS(7, NUL);
-        
+		
 		RETURN();
+		LABELFRONT(label);
 		function->giveCode(code);
 	}
 	//void DrawScreenComboTypes(bitmap, float, float, float, float, float, float)
@@ -8965,10 +9194,10 @@ void BitmapSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		code.push_back(new OBMPDrawScreenComboTRegister());
-		LABELBACK(label);
 		POP_ARGS(7, NUL);
-        
+		
 		RETURN();
+		LABELFRONT(label);
 		function->giveCode(code);
 	}
 	//void DrawScreenComboFlags(bitmap, float, float, float, float, float, float)
@@ -8977,10 +9206,10 @@ void BitmapSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		code.push_back(new OBMPDrawScreenComboFRegister());
-		LABELBACK(label);
 		POP_ARGS(7, NUL);
-        
+		
 		RETURN();
+		LABELFRONT(label);
 		function->giveCode(code);
 	}
 	//void DrawScreenComboFlags(bitmap, float, float, float, float, float, float)
@@ -8989,24 +9218,24 @@ void BitmapSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		code.push_back(new OBMPDrawScreenComboIRegister());
-		LABELBACK(label);
 		POP_ARGS(7, NUL);
-        
+		
 		RETURN();
+		LABELFRONT(label);
 		function->giveCode(code);
 	}
 	
-    
+	
 	//void DrawBitmapEx(bitmap, float, float, float, float, float, float, float, float, float, float, bool)
 	{
 		Function* function = getFunction("Blit", 17);
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		code.push_back(new OBMPDrawBitmapExRegister());
-		LABELBACK(label);
 		POP_ARGS(17, NUL);
-        
+		
 		RETURN();
+		LABELFRONT(label);
 		function->giveCode(code);
 	}
 	//void DrawPlane(bitmap, float, float, float, float, float, float, float, float, float, float, bool)
@@ -9015,10 +9244,10 @@ void BitmapSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		code.push_back(new OBMPMode7());
-		LABELBACK(label);
 		POP_ARGS(14, NUL);
-        
+		
 		RETURN();
+		LABELFRONT(label);
 		function->giveCode(code);
 	}
 	//void DrawBitmapEx(bitmap, float, float, float, float, float, float, float, float, float, float, bool)
@@ -9027,10 +9256,10 @@ void BitmapSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		code.push_back(new OBMPBlitTO());
-		LABELBACK(label);
 		POP_ARGS(17, NUL);
-        
+		
 		RETURN();
+		LABELFRONT(label);
 		function->giveCode(code);
 	}
 	//void DrawBitmapEx(bitmap, float, float, float, float, float, float, float, float, float, float, bool)
@@ -9039,10 +9268,10 @@ void BitmapSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		code.push_back(new OBMPBlitTO());
-		LABELBACK(label);
 		POP_ARGS(17, NUL);
-        
+		
 		RETURN();
+		LABELFRONT(label);
 		function->giveCode(code);
 	}
 	//bool isValid(bitmap)
@@ -9052,10 +9281,10 @@ void BitmapSymbols::generateCode()
 		vector<Opcode *> code;
 		//pop off the pointer
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
-		LABELBACK(label);
 		//Check validity
 		code.push_back(new OIsValidBitmap(new VarArgument(EXP1)));
 		RETURN();
+		LABELFRONT(label);
 		function->giveCode(code);
 	}
 	//bool isAllocated(bitmap)
@@ -9065,10 +9294,10 @@ void BitmapSymbols::generateCode()
 		vector<Opcode *> code;
 		//pop off the pointer
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
-		LABELBACK(label);
 		//Check validity
 		code.push_back(new OIsAllocatedBitmap(new VarArgument(EXP1)));
 		RETURN();
+		LABELFRONT(label);
 		function->giveCode(code);
 	}
 	//void ClearToColor(bitmap, layer, color)
@@ -9077,12 +9306,12 @@ void BitmapSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		code.push_back(new OBitmapClearToColor());
-		LABELBACK(label);
 		POP_ARGS(2, NUL);
 		//pop pointer, and ignore it
 		POPREF();
 		
 		RETURN();
+		LABELFRONT(label);
 		function->giveCode(code);
 
 	}
@@ -9092,11 +9321,10 @@ void BitmapSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		//pop pointer
-		ASSERT_NON_NUL();
 		POPREF();
-		LABELBACK(label);
 		code.push_back(new OBitmapFree());
 		RETURN();
+		LABELFRONT(label);
 		function->giveCode(code);
 	}
 }
@@ -9142,194 +9370,194 @@ static AccessorTable SpriteDataTable[] =
 
 SpriteDataSymbols::SpriteDataSymbols()
 {
-    table = SpriteDataTable;
-    refVar = REFSPRITEDATA; //NUL;// 
+	table = SpriteDataTable;
+	refVar = REFSPRITEDATA; //NUL;// 
 }
 
 void SpriteDataSymbols::generateCode()
 {
 	//GetTile(SpriteData, int)
-    /*
-    {
-        Function* function = getFunction("GetTile", 2);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the params
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        LABELBACK(label);
-        code.push_back(new OPopRegister(new VarArgument(EXP2)));
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new OSDataTile(new VarArgument(EXP1),new VarArgument(EXP2)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //GetMisc(SpriteData, int)
-    {
-        Function* function = getFunction("GetMisc", 2);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the params
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        LABELBACK(label);
-        code.push_back(new OPopRegister(new VarArgument(EXP2)));
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new OSDataMisc(new VarArgument(EXP1),new VarArgument(EXP2)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //GetCSets(SpriteData, int)
-    {
-        Function* function = getFunction("GetCSets", 2);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the params
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        LABELBACK(label);
-        code.push_back(new OPopRegister(new VarArgument(EXP2)));
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new OSDataCSets(new VarArgument(EXP1),new VarArgument(EXP2)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //GetFrames(SpriteData, int)
-    {
-        Function* function = getFunction("GetFrames", 2);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the params
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        LABELBACK(label);
-        code.push_back(new OPopRegister(new VarArgument(EXP2)));
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new OSDataFrames(new VarArgument(EXP1),new VarArgument(EXP2)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //GetSpeed(SpriteData, int)
-    {
-        Function* function = getFunction("GetSpeed", 2);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the params
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        LABELBACK(label);
-        code.push_back(new OPopRegister(new VarArgument(EXP2)));
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new OSDataSpeed(new VarArgument(EXP1),new VarArgument(EXP2)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //GetType(SpriteData, int)
-    {
-        Function* function = getFunction("GetType", 2);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the params
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        LABELBACK(label);
-        code.push_back(new OPopRegister(new VarArgument(EXP2)));
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new OSDataType(new VarArgument(EXP1),new VarArgument(EXP2)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //SetTile(SpriteData, int, int)
-    {
-        Function* function = getFunction("SetTile", 3);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the params
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        LABELBACK(label);
-        code.push_back(new OPopRegister(new VarArgument(EXP2)));
-        //pop pointer, and ignore it
+	/*
+	{
+		Function* function = getFunction("GetTile", 2);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the params
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		code.push_back(new OPopRegister(new VarArgument(EXP2)));
+		//pop pointer, and ignore it
 		POPREF();
-        code.push_back(new OSSetDataTile(new VarArgument(EXP2), new VarArgument(EXP1)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //SetMisc(SpriteData, int, int)
-    {
-        Function* function = getFunction("SetMisc", 3);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the params
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        LABELBACK(label);
-        code.push_back(new OPopRegister(new VarArgument(EXP2)));
-        //pop pointer, and ignore it
+		code.push_back(new OSDataTile(new VarArgument(EXP1),new VarArgument(EXP2)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//GetMisc(SpriteData, int)
+	{
+		Function* function = getFunction("GetMisc", 2);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the params
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		code.push_back(new OPopRegister(new VarArgument(EXP2)));
+		//pop pointer, and ignore it
 		POPREF();
-        code.push_back(new OSSetDataMisc(new VarArgument(EXP2), new VarArgument(EXP1)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //SetCSets(SpriteData, int, int)
-    {
-        Function* function = getFunction("SetCSets", 3);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the params
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        LABELBACK(label);
-        code.push_back(new OPopRegister(new VarArgument(EXP2)));
-        //pop pointer, and ignore it
+		code.push_back(new OSDataMisc(new VarArgument(EXP1),new VarArgument(EXP2)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//GetCSets(SpriteData, int)
+	{
+		Function* function = getFunction("GetCSets", 2);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the params
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		code.push_back(new OPopRegister(new VarArgument(EXP2)));
+		//pop pointer, and ignore it
 		POPREF();
-        code.push_back(new OSSetDataCSets(new VarArgument(EXP2), new VarArgument(EXP1)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //SetFrames(SpriteData, int, int)
-    {
-        Function* function = getFunction("SetFrames", 3);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the params
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        LABELBACK(label);
-        code.push_back(new OPopRegister(new VarArgument(EXP2)));
-        //pop pointer, and ignore it
+		code.push_back(new OSDataCSets(new VarArgument(EXP1),new VarArgument(EXP2)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//GetFrames(SpriteData, int)
+	{
+		Function* function = getFunction("GetFrames", 2);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the params
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		code.push_back(new OPopRegister(new VarArgument(EXP2)));
+		//pop pointer, and ignore it
 		POPREF();
-        code.push_back(new OSSetDataFrames(new VarArgument(EXP2), new VarArgument(EXP1)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //SetSpeed(SpriteData, int, int)
-    {
-        Function* function = getFunction("SetSpeed", 3);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the params
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        LABELBACK(label);
-        code.push_back(new OPopRegister(new VarArgument(EXP2)));
-        //pop pointer, and ignore it
+		code.push_back(new OSDataFrames(new VarArgument(EXP1),new VarArgument(EXP2)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//GetSpeed(SpriteData, int)
+	{
+		Function* function = getFunction("GetSpeed", 2);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the params
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		code.push_back(new OPopRegister(new VarArgument(EXP2)));
+		//pop pointer, and ignore it
 		POPREF();
-        code.push_back(new OSSetDataSpeed(new VarArgument(EXP2), new VarArgument(EXP1)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //SetType(SpriteData, int, int)
-    {
-        Function* function = getFunction("SetType", 3);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the params
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        LABELBACK(label);
-        code.push_back(new OPopRegister(new VarArgument(EXP2)));
-        //pop pointer, and ignore it
+		code.push_back(new OSDataSpeed(new VarArgument(EXP1),new VarArgument(EXP2)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//GetType(SpriteData, int)
+	{
+		Function* function = getFunction("GetType", 2);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the params
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		code.push_back(new OPopRegister(new VarArgument(EXP2)));
+		//pop pointer, and ignore it
 		POPREF();
-        code.push_back(new OSSetDataType(new VarArgument(EXP2), new VarArgument(EXP1)));
-        RETURN();
-        function->giveCode(code);
-    }
-    */
+		code.push_back(new OSDataType(new VarArgument(EXP1),new VarArgument(EXP2)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//SetTile(SpriteData, int, int)
+	{
+		Function* function = getFunction("SetTile", 3);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the params
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		code.push_back(new OPopRegister(new VarArgument(EXP2)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OSSetDataTile(new VarArgument(EXP2), new VarArgument(EXP1)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//SetMisc(SpriteData, int, int)
+	{
+		Function* function = getFunction("SetMisc", 3);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the params
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		code.push_back(new OPopRegister(new VarArgument(EXP2)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OSSetDataMisc(new VarArgument(EXP2), new VarArgument(EXP1)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//SetCSets(SpriteData, int, int)
+	{
+		Function* function = getFunction("SetCSets", 3);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the params
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		code.push_back(new OPopRegister(new VarArgument(EXP2)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OSSetDataCSets(new VarArgument(EXP2), new VarArgument(EXP1)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//SetFrames(SpriteData, int, int)
+	{
+		Function* function = getFunction("SetFrames", 3);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the params
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		code.push_back(new OPopRegister(new VarArgument(EXP2)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OSSetDataFrames(new VarArgument(EXP2), new VarArgument(EXP1)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//SetSpeed(SpriteData, int, int)
+	{
+		Function* function = getFunction("SetSpeed", 3);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the params
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		code.push_back(new OPopRegister(new VarArgument(EXP2)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OSSetDataSpeed(new VarArgument(EXP2), new VarArgument(EXP1)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//SetType(SpriteData, int, int)
+	{
+		Function* function = getFunction("SetType", 3);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the params
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		code.push_back(new OPopRegister(new VarArgument(EXP2)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OSSetDataType(new VarArgument(EXP2), new VarArgument(EXP1)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	*/
 }
 
 CombosPtrSymbols CombosPtrSymbols::singleton = CombosPtrSymbols();
@@ -9528,655 +9756,18 @@ static AccessorTable CombosTable[] =
 //	{ "GetName",                  ZVARTYPEID_FLOAT,         FUNCTION,     0,                            1,             0,                                    2,           {  ZVARTYPEID_COMBOS,          ZVARTYPEID_FLOAT,        -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1                           } },
 //	{ "SetName",                  ZVARTYPEID_FLOAT,         FUNCTION,     0,                            1,             0,                                    2,           {  ZVARTYPEID_COMBOS,          ZVARTYPEID_FLOAT,        -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1                           } },
 	
-	
-//	one input, one return
-	{ "GetBlockEnemies",          ZVARTYPEID_FLOAT,         FUNCTION,     0,                            1,             0,                                    2,           {  ZVARTYPEID_COMBOS,          ZVARTYPEID_FLOAT,        -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1                           } },
-	{ "GetBlockHole",             ZVARTYPEID_FLOAT,         FUNCTION,     0,                            1,             0,                                    2,           {  ZVARTYPEID_COMBOS,          ZVARTYPEID_FLOAT,        -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1                           } },
-	{ "GetBlockTrigger",          ZVARTYPEID_FLOAT,         FUNCTION,     0,                            1,             0,                                    2,           {  ZVARTYPEID_COMBOS,          ZVARTYPEID_FLOAT,        -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1                           } },
-	{ "GetConveyorSpeedX",        ZVARTYPEID_FLOAT,         FUNCTION,     0,                            1,             0,                                    2,           {  ZVARTYPEID_COMBOS,          ZVARTYPEID_FLOAT,        -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1                           } },
-	{ "GetConveyorSpeedY",        ZVARTYPEID_FLOAT,         FUNCTION,     0,                            1,             0,                                    2,           {  ZVARTYPEID_COMBOS,          ZVARTYPEID_FLOAT,        -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1                           } },
-	{ "GetCreateEnemy",           ZVARTYPEID_FLOAT,         FUNCTION,     0,                            1,             0,                                    2,           {  ZVARTYPEID_COMBOS,          ZVARTYPEID_FLOAT,        -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1                           } },
-	{ "GetCreateEnemyWhen",       ZVARTYPEID_FLOAT,         FUNCTION,     0,                            1,             0,                                    2,           {  ZVARTYPEID_COMBOS,          ZVARTYPEID_FLOAT,        -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1                           } },
-	{ "GetCreateEnemyChnge",      ZVARTYPEID_FLOAT,         FUNCTION,     0,                            1,             0,                                    2,           {  ZVARTYPEID_COMBOS,          ZVARTYPEID_FLOAT,        -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1                           } },
-	{ "GetDirChangeType",         ZVARTYPEID_FLOAT,         FUNCTION,     0,                            1,             0,                                    2,           {  ZVARTYPEID_COMBOS,          ZVARTYPEID_FLOAT,        -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1                           } },
-	{ "GetDistanceChangeTiles",   ZVARTYPEID_FLOAT,         FUNCTION,     0,                            1,             0,                                    2,           {  ZVARTYPEID_COMBOS,          ZVARTYPEID_FLOAT,        -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1                           } },
-	{ "GetDiveItem",              ZVARTYPEID_FLOAT,         FUNCTION,     0,                            1,             0,                                    2,           {  ZVARTYPEID_COMBOS,          ZVARTYPEID_FLOAT,        -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1                           } },
-	{ "GetDock",                  ZVARTYPEID_FLOAT,         FUNCTION,     0,                            1,             0,                                    2,           {  ZVARTYPEID_COMBOS,          ZVARTYPEID_FLOAT,        -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1                           } },
-	{ "GetFairy",                 ZVARTYPEID_FLOAT,         FUNCTION,     0,                            1,             0,                                    2,           {  ZVARTYPEID_COMBOS,          ZVARTYPEID_FLOAT,        -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1                           } },
-	{ "GetFFComboChangeAttrib",   ZVARTYPEID_FLOAT,         FUNCTION,     0,                            1,             0,                                    2,           {  ZVARTYPEID_COMBOS,          ZVARTYPEID_FLOAT,        -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1                           } },
-	{ "GetFootDecorationsTile",   ZVARTYPEID_FLOAT,         FUNCTION,     0,                            1,             0,                                    2,           {  ZVARTYPEID_COMBOS,          ZVARTYPEID_FLOAT,        -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1                           } },
-	{ "GetFootDecorationsType",   ZVARTYPEID_FLOAT,         FUNCTION,     0,                            1,             0,                                    2,           {  ZVARTYPEID_COMBOS,          ZVARTYPEID_FLOAT,        -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1                           } },
-	{ "GetHookshotGrab",          ZVARTYPEID_FLOAT,         FUNCTION,     0,                            1,             0,                                    2,           {  ZVARTYPEID_COMBOS,          ZVARTYPEID_FLOAT,        -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1                           } },
-	{ "GetLadderPass",            ZVARTYPEID_FLOAT,         FUNCTION,     0,                            1,             0,                                    2,           {  ZVARTYPEID_COMBOS,          ZVARTYPEID_FLOAT,        -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1                           } },
-	{ "GetLockBlockType",         ZVARTYPEID_FLOAT,         FUNCTION,     0,                            1,             0,                                    2,           {  ZVARTYPEID_COMBOS,          ZVARTYPEID_FLOAT,        -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1                           } },
-	{ "GetLockBlockChange",       ZVARTYPEID_FLOAT,         FUNCTION,     0,                            1,             0,                                    2,           {  ZVARTYPEID_COMBOS,          ZVARTYPEID_FLOAT,        -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1                           } },
-	{ "GetMagicMirror",           ZVARTYPEID_FLOAT,         FUNCTION,     0,                            1,             0,                                    2,           {  ZVARTYPEID_COMBOS,          ZVARTYPEID_FLOAT,        -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1                           } },
-	{ "GetModifyHPAmount",        ZVARTYPEID_FLOAT,         FUNCTION,     0,                            1,             0,                                    2,           {  ZVARTYPEID_COMBOS,          ZVARTYPEID_FLOAT,        -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1                           } },
-	{ "GetModifyHPDelay",         ZVARTYPEID_FLOAT,         FUNCTION,     0,                            1,             0,                                    2,           {  ZVARTYPEID_COMBOS,          ZVARTYPEID_FLOAT,        -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1                           } },
-	{ "GetModifyHPType",          ZVARTYPEID_FLOAT,         FUNCTION,     0,                            1,             0,                                    2,           {  ZVARTYPEID_COMBOS,          ZVARTYPEID_FLOAT,        -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1                           } },
-	{ "GetModifyMPAmount",        ZVARTYPEID_FLOAT,         FUNCTION,     0,                            1,             0,                                    2,           {  ZVARTYPEID_COMBOS,          ZVARTYPEID_FLOAT,        -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1                           } },
-	{ "GetModifyMPDelay",         ZVARTYPEID_FLOAT,         FUNCTION,     0,                            1,             0,                                    2,           {  ZVARTYPEID_COMBOS,          ZVARTYPEID_FLOAT,        -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1                           } },
-	{ "GetModifyMPType",          ZVARTYPEID_FLOAT,         FUNCTION,     0,                            1,             0,                                    2,           {  ZVARTYPEID_COMBOS,          ZVARTYPEID_FLOAT,        -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1                           } },
-	{ "GetNoPushBlocks",          ZVARTYPEID_FLOAT,         FUNCTION,     0,                            1,             0,                                    2,           {  ZVARTYPEID_COMBOS,          ZVARTYPEID_FLOAT,        -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1                           } },
-	{ "GetOverhead",              ZVARTYPEID_FLOAT,         FUNCTION,     0,                            1,             0,                                    2,           {  ZVARTYPEID_COMBOS,          ZVARTYPEID_FLOAT,        -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1                           } },
-	{ "GetPlaceEnemy",            ZVARTYPEID_FLOAT,         FUNCTION,     0,                            1,             0,                                    2,           {  ZVARTYPEID_COMBOS,          ZVARTYPEID_FLOAT,        -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1                           } },
-	{ "GetPushDirection",         ZVARTYPEID_FLOAT,         FUNCTION,     0,                            1,             0,                                    2,           {  ZVARTYPEID_COMBOS,          ZVARTYPEID_FLOAT,        -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1                           } },
-	{ "GetPushWeight",            ZVARTYPEID_FLOAT,         FUNCTION,     0,                            1,             0,                                    2,           {  ZVARTYPEID_COMBOS,          ZVARTYPEID_FLOAT,        -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1                           } },
-	{ "GetPushWait",              ZVARTYPEID_FLOAT,         FUNCTION,     0,                            1,             0,                                    2,           {  ZVARTYPEID_COMBOS,          ZVARTYPEID_FLOAT,        -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1                           } },
-	{ "GetPushed",                ZVARTYPEID_FLOAT,         FUNCTION,     0,                            1,             0,                                    2,           {  ZVARTYPEID_COMBOS,          ZVARTYPEID_FLOAT,        -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1                           } },
-	{ "GetRaft",                  ZVARTYPEID_FLOAT,         FUNCTION,     0,                            1,             0,                                    2,           {  ZVARTYPEID_COMBOS,          ZVARTYPEID_FLOAT,        -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1                           } },
-	{ "GetResetRoom",             ZVARTYPEID_FLOAT,         FUNCTION,     0,                            1,             0,                                    2,           {  ZVARTYPEID_COMBOS,          ZVARTYPEID_FLOAT,        -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1                           } },
-	{ "GetSavePoint",             ZVARTYPEID_FLOAT,         FUNCTION,     0,                            1,             0,                                    2,           {  ZVARTYPEID_COMBOS,          ZVARTYPEID_FLOAT,        -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1                           } },
-	{ "GetScreenFreeze",          ZVARTYPEID_FLOAT,         FUNCTION,     0,                            1,             0,                                    2,           {  ZVARTYPEID_COMBOS,          ZVARTYPEID_FLOAT,        -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1                           } },
-	{ "GetSecretCombo",           ZVARTYPEID_FLOAT,         FUNCTION,     0,                            1,             0,                                    2,           {  ZVARTYPEID_COMBOS,          ZVARTYPEID_FLOAT,        -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1                           } },
-	{ "GetSingular",              ZVARTYPEID_FLOAT,         FUNCTION,     0,                            1,             0,                                    2,           {  ZVARTYPEID_COMBOS,          ZVARTYPEID_FLOAT,        -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1                           } },
-	{ "GetSlowMove",              ZVARTYPEID_FLOAT,         FUNCTION,     0,                            1,             0,                                    2,           {  ZVARTYPEID_COMBOS,          ZVARTYPEID_FLOAT,        -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1                           } },
-	{ "GetStatue",                ZVARTYPEID_FLOAT,         FUNCTION,     0,                            1,             0,                                    2,           {  ZVARTYPEID_COMBOS,          ZVARTYPEID_FLOAT,        -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1                           } },
-	{ "GetStepType",              ZVARTYPEID_FLOAT,         FUNCTION,     0,                            1,             0,                                    2,           {  ZVARTYPEID_COMBOS,          ZVARTYPEID_FLOAT,        -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1                           } },
-	{ "GetStepChangeTo",          ZVARTYPEID_FLOAT,         FUNCTION,     0,                            1,             0,                                    2,           {  ZVARTYPEID_COMBOS,          ZVARTYPEID_FLOAT,        -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1                           } },
-	{ "GetStrikeRemnants",        ZVARTYPEID_FLOAT,         FUNCTION,     0,                            1,             0,                                    2,           {  ZVARTYPEID_COMBOS,          ZVARTYPEID_FLOAT,        -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1                           } },
-	{ "GetStrikeRemnantsType",    ZVARTYPEID_FLOAT,         FUNCTION,     0,                            1,             0,                                    2,           {  ZVARTYPEID_COMBOS,          ZVARTYPEID_FLOAT,        -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1                           } },
-	{ "GetStrikeChange",          ZVARTYPEID_FLOAT,         FUNCTION,     0,                            1,             0,                                    2,           {  ZVARTYPEID_COMBOS,          ZVARTYPEID_FLOAT,        -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1                           } },
-	{ "GetStrikeItem",            ZVARTYPEID_FLOAT,         FUNCTION,     0,                            1,             0,                                    2,           {  ZVARTYPEID_COMBOS,          ZVARTYPEID_FLOAT,        -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1                           } },
-	{ "GetTouchItem",             ZVARTYPEID_FLOAT,         FUNCTION,     0,                            1,             0,                                    2,           {  ZVARTYPEID_COMBOS,          ZVARTYPEID_FLOAT,        -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1                           } },
-	{ "GetTouchStairs",           ZVARTYPEID_FLOAT,         FUNCTION,     0,                            1,             0,                                    2,           {  ZVARTYPEID_COMBOS,          ZVARTYPEID_FLOAT,        -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1                           } },
-	{ "GetTriggerType",           ZVARTYPEID_FLOAT,         FUNCTION,     0,                            1,             0,                                    2,           {  ZVARTYPEID_COMBOS,          ZVARTYPEID_FLOAT,        -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1                           } },
-	{ "GetTriggerSens",           ZVARTYPEID_FLOAT,         FUNCTION,     0,                            1,             0,                                    2,           {  ZVARTYPEID_COMBOS,          ZVARTYPEID_FLOAT,        -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1                           } },
-	{ "GetWarpType",              ZVARTYPEID_FLOAT,         FUNCTION,     0,                            1,             0,                                    2,           {  ZVARTYPEID_COMBOS,          ZVARTYPEID_FLOAT,        -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1                           } },
-	{ "GetWarpSens",              ZVARTYPEID_FLOAT,         FUNCTION,     0,                            1,             0,                                    2,           {  ZVARTYPEID_COMBOS,          ZVARTYPEID_FLOAT,        -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1                           } },
-	{ "GetWarpDirect",            ZVARTYPEID_FLOAT,         FUNCTION,     0,                            1,             0,                                    2,           {  ZVARTYPEID_COMBOS,          ZVARTYPEID_FLOAT,        -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1                           } },
-	{ "GetWarpLocation",          ZVARTYPEID_FLOAT,         FUNCTION,     0,                            1,             0,                                    2,           {  ZVARTYPEID_COMBOS,          ZVARTYPEID_FLOAT,        -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1                           } },
-	{ "GetWater",                 ZVARTYPEID_FLOAT,         FUNCTION,     0,                            1,             0,                                    2,           {  ZVARTYPEID_COMBOS,          ZVARTYPEID_FLOAT,        -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1                           } },
-	{ "GetWhistle",               ZVARTYPEID_FLOAT,         FUNCTION,     0,                            1,             0,                                    2,           {  ZVARTYPEID_COMBOS,          ZVARTYPEID_FLOAT,        -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1                           } },
-	{ "GetWinGame",               ZVARTYPEID_FLOAT,         FUNCTION,     0,                            1,             0,                                    2,           {  ZVARTYPEID_COMBOS,          ZVARTYPEID_FLOAT,        -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1                           } },
-	{ "GetBlockWeaponLevel",      ZVARTYPEID_FLOAT,         FUNCTION,     0,                            1,             0,                                    2,           {  ZVARTYPEID_COMBOS,          ZVARTYPEID_FLOAT,        -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1                           } },
-	{ "GetTile",                  ZVARTYPEID_FLOAT,         FUNCTION,     0,                            1,             0,                                    2,           {  ZVARTYPEID_COMBOS,          ZVARTYPEID_FLOAT,        -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1                           } },
-	{ "GetFlip",                  ZVARTYPEID_FLOAT,         FUNCTION,     0,                            1,             0,                                    2,           {  ZVARTYPEID_COMBOS,          ZVARTYPEID_FLOAT,        -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1                           } },
-	{ "GetWalkability",           ZVARTYPEID_FLOAT,         FUNCTION,     0,                            1,             0,                                    2,           {  ZVARTYPEID_COMBOS,          ZVARTYPEID_FLOAT,        -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1                           } },
-	{ "GetType",                  ZVARTYPEID_FLOAT,         FUNCTION,     0,                            1,             0,                                    2,           {  ZVARTYPEID_COMBOS,          ZVARTYPEID_FLOAT,        -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1                           } },
-	{ "GetCSets",                 ZVARTYPEID_FLOAT,         FUNCTION,     0,                            1,             0,                                    2,           {  ZVARTYPEID_COMBOS,          ZVARTYPEID_FLOAT,        -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1                           } },
-	{ "GetFoo",                   ZVARTYPEID_FLOAT,         FUNCTION,     0,                            1,             0,                                    2,           {  ZVARTYPEID_COMBOS,          ZVARTYPEID_FLOAT,        -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1                           } },
-	{ "GetFrames",                ZVARTYPEID_FLOAT,         FUNCTION,     0,                            1,             0,                                    2,           {  ZVARTYPEID_COMBOS,          ZVARTYPEID_FLOAT,        -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1                           } },
-	{ "GetSpeed",                 ZVARTYPEID_FLOAT,         FUNCTION,     0,                            1,             0,                                    2,           {  ZVARTYPEID_COMBOS,          ZVARTYPEID_FLOAT,        -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1                           } },
-	{ "GetNextCombo",             ZVARTYPEID_FLOAT,         FUNCTION,     0,                            1,             0,                                    2,           {  ZVARTYPEID_COMBOS,          ZVARTYPEID_FLOAT,        -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1                           } },
-	{ "GetNextCSet",              ZVARTYPEID_FLOAT,         FUNCTION,     0,                            1,             0,                                    2,           {  ZVARTYPEID_COMBOS,          ZVARTYPEID_FLOAT,        -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1                           } },
-	{ "GetFlag",                  ZVARTYPEID_FLOAT,         FUNCTION,     0,                            1,             0,                                    2,           {  ZVARTYPEID_COMBOS,          ZVARTYPEID_FLOAT,        -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1                           } },
-	{ "GetSkipAnim",              ZVARTYPEID_FLOAT,         FUNCTION,     0,                            1,             0,                                    2,           {  ZVARTYPEID_COMBOS,          ZVARTYPEID_FLOAT,        -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1                           } },
-	{ "GetNextTimer",             ZVARTYPEID_FLOAT,         FUNCTION,     0,                            1,             0,                                    2,           {  ZVARTYPEID_COMBOS,          ZVARTYPEID_FLOAT,        -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1                           } },
-	{ "GetSkipAnimY",             ZVARTYPEID_FLOAT,         FUNCTION,     0,                            1,             0,                                    2,           {  ZVARTYPEID_COMBOS,          ZVARTYPEID_FLOAT,        -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1                           } },
-	{ "GetAnimFlags",             ZVARTYPEID_FLOAT,         FUNCTION,     0,                            1,             0,                                    2,           {  ZVARTYPEID_COMBOS,          ZVARTYPEID_FLOAT,        -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1                           } },
-	
-//	two inputs, one return
-	{ "GetBlockWeapon",           ZVARTYPEID_FLOAT,         FUNCTION,     0,                            1,             0,                                    3,           {  ZVARTYPEID_COMBOS,          ZVARTYPEID_FLOAT,        ZVARTYPEID_FLOAT,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1                           } },
-	{ "GetExpansion",             ZVARTYPEID_FLOAT,         FUNCTION,     0,                            1,             0,                                    3,           {  ZVARTYPEID_COMBOS,          ZVARTYPEID_FLOAT,        ZVARTYPEID_FLOAT,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1                           } },
-	{ "GetStrikeWeapons",         ZVARTYPEID_FLOAT,         FUNCTION,     0,                            1,             0,                                    3,           {  ZVARTYPEID_COMBOS,          ZVARTYPEID_FLOAT,        ZVARTYPEID_FLOAT,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1                           } },
-	
-//	two inputs, no return
-	{ "SetBlockEnemies",          ZVARTYPEID_VOID,          FUNCTION,     0,                            1,             0,                                    3,           {  ZVARTYPEID_COMBOS,          ZVARTYPEID_FLOAT,         ZVARTYPEID_FLOAT,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1                           } },
-	{ "SetBlockHole",             ZVARTYPEID_VOID,          FUNCTION,     0,                            1,             0,                                    3,           {  ZVARTYPEID_COMBOS,          ZVARTYPEID_FLOAT,         ZVARTYPEID_FLOAT,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1                           } },
-	{ "SetBlockTrigger",          ZVARTYPEID_VOID,          FUNCTION,     0,                            1,             0,                                    3,           {  ZVARTYPEID_COMBOS,          ZVARTYPEID_FLOAT,         ZVARTYPEID_FLOAT,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1                           } },
-	{ "SetConveyorSpeedX",        ZVARTYPEID_VOID,          FUNCTION,     0,                            1,             0,                                    3,           {  ZVARTYPEID_COMBOS,          ZVARTYPEID_FLOAT,         ZVARTYPEID_FLOAT,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1                           } },
-	{ "SetConveyorSpeedY",        ZVARTYPEID_VOID,          FUNCTION,     0,                            1,             0,                                    3,           {  ZVARTYPEID_COMBOS,          ZVARTYPEID_FLOAT,         ZVARTYPEID_FLOAT,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1                           } },
-	{ "SetCreateEnemy",           ZVARTYPEID_VOID,          FUNCTION,     0,                            1,             0,                                    3,           {  ZVARTYPEID_COMBOS,          ZVARTYPEID_FLOAT,         ZVARTYPEID_FLOAT,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1                           } },
-	{ "SetCreateEnemyWhen",       ZVARTYPEID_VOID,          FUNCTION,     0,                            1,             0,                                    3,           {  ZVARTYPEID_COMBOS,          ZVARTYPEID_FLOAT,         ZVARTYPEID_FLOAT,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1                           } },
-	{ "SetCreateEnemyChnge",      ZVARTYPEID_VOID,          FUNCTION,     0,                            1,             0,                                    3,           {  ZVARTYPEID_COMBOS,          ZVARTYPEID_FLOAT,         ZVARTYPEID_FLOAT,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1                           } },
-	{ "SetDirChangeType",         ZVARTYPEID_VOID,          FUNCTION,     0,                            1,             0,                                    3,           {  ZVARTYPEID_COMBOS,          ZVARTYPEID_FLOAT,         ZVARTYPEID_FLOAT,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1                           } },
-	{ "SetDistanceChangeTiles",   ZVARTYPEID_VOID,          FUNCTION,     0,                            1,             0,                                    3,           {  ZVARTYPEID_COMBOS,          ZVARTYPEID_FLOAT,         ZVARTYPEID_FLOAT,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1                           } },
-	{ "SetDiveItem",              ZVARTYPEID_VOID,          FUNCTION,     0,                            1,             0,                                    3,           {  ZVARTYPEID_COMBOS,          ZVARTYPEID_FLOAT,         ZVARTYPEID_FLOAT,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1                           } },
-	{ "SetDock",                  ZVARTYPEID_VOID,          FUNCTION,     0,                            1,             0,                                    3,           {  ZVARTYPEID_COMBOS,          ZVARTYPEID_FLOAT,         ZVARTYPEID_FLOAT,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1                           } },
-	{ "SetFairy",                 ZVARTYPEID_VOID,          FUNCTION,     0,                            1,             0,                                    3,           {  ZVARTYPEID_COMBOS,          ZVARTYPEID_FLOAT,         ZVARTYPEID_FLOAT,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1                           } },
-	{ "SetFFComboChangeAttrib",   ZVARTYPEID_VOID,          FUNCTION,     0,                            1,             0,                                    3,           {  ZVARTYPEID_COMBOS,          ZVARTYPEID_FLOAT,         ZVARTYPEID_FLOAT,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1                           } },
-	{ "SetFootDecorationsTile",   ZVARTYPEID_VOID,          FUNCTION,     0,                            1,             0,                                    3,           {  ZVARTYPEID_COMBOS,          ZVARTYPEID_FLOAT,         ZVARTYPEID_FLOAT,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1                           } },
-	{ "SetFootDecorationsType",   ZVARTYPEID_VOID,          FUNCTION,     0,                            1,             0,                                    3,           {  ZVARTYPEID_COMBOS,          ZVARTYPEID_FLOAT,         ZVARTYPEID_FLOAT,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1                           } },
-	{ "SetHookshotGrab",          ZVARTYPEID_VOID,          FUNCTION,     0,                            1,             0,                                    3,           {  ZVARTYPEID_COMBOS,          ZVARTYPEID_FLOAT,         ZVARTYPEID_FLOAT,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1                           } },
-	{ "SetLadderPass",            ZVARTYPEID_VOID,          FUNCTION,     0,                            1,             0,                                    3,           {  ZVARTYPEID_COMBOS,          ZVARTYPEID_FLOAT,         ZVARTYPEID_FLOAT,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1                           } },
-	{ "SetLockBlockType",         ZVARTYPEID_VOID,          FUNCTION,     0,                            1,             0,                                    3,           {  ZVARTYPEID_COMBOS,          ZVARTYPEID_FLOAT,         ZVARTYPEID_FLOAT,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1                           } },
-	{ "SetLockBlockChange",       ZVARTYPEID_VOID,          FUNCTION,     0,                            1,             0,                                    3,           {  ZVARTYPEID_COMBOS,          ZVARTYPEID_FLOAT,         ZVARTYPEID_FLOAT,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1                           } },
-	{ "SetMagicMirror",           ZVARTYPEID_VOID,          FUNCTION,     0,                            1,             0,                                    3,           {  ZVARTYPEID_COMBOS,          ZVARTYPEID_FLOAT,         ZVARTYPEID_FLOAT,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1                           } },
-	{ "SetModifyHPAmount",        ZVARTYPEID_VOID,          FUNCTION,     0,                            1,             0,                                    3,           {  ZVARTYPEID_COMBOS,          ZVARTYPEID_FLOAT,         ZVARTYPEID_FLOAT,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1                           } },
-	{ "SetModifyHPDelay",         ZVARTYPEID_VOID,          FUNCTION,     0,                            1,             0,                                    3,           {  ZVARTYPEID_COMBOS,          ZVARTYPEID_FLOAT,         ZVARTYPEID_FLOAT,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1                           } },
-	{ "SetModifyHPType",          ZVARTYPEID_VOID,          FUNCTION,     0,                            1,             0,                                    3,           {  ZVARTYPEID_COMBOS,          ZVARTYPEID_FLOAT,         ZVARTYPEID_FLOAT,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1                           } },
-	{ "SetModifyMPAmount",        ZVARTYPEID_VOID,          FUNCTION,     0,                            1,             0,                                    3,           {  ZVARTYPEID_COMBOS,          ZVARTYPEID_FLOAT,         ZVARTYPEID_FLOAT,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1                           } },
-	{ "SetModifyMPDelay",         ZVARTYPEID_VOID,          FUNCTION,     0,                            1,             0,                                    3,           {  ZVARTYPEID_COMBOS,          ZVARTYPEID_FLOAT,         ZVARTYPEID_FLOAT,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1                           } },
-	{ "SetModifyMPType",          ZVARTYPEID_VOID,          FUNCTION,     0,                            1,             0,                                    3,           {  ZVARTYPEID_COMBOS,          ZVARTYPEID_FLOAT,         ZVARTYPEID_FLOAT,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1                           } },
-	{ "SetNoPushBlocks",          ZVARTYPEID_VOID,          FUNCTION,     0,                            1,             0,                                    3,           {  ZVARTYPEID_COMBOS,          ZVARTYPEID_FLOAT,         ZVARTYPEID_FLOAT,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1                           } },
-	{ "SetOverhead",              ZVARTYPEID_VOID,          FUNCTION,     0,                            1,             0,                                    3,           {  ZVARTYPEID_COMBOS,          ZVARTYPEID_FLOAT,         ZVARTYPEID_FLOAT,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1                           } },
-	{ "SetPlaceEnemy",            ZVARTYPEID_VOID,          FUNCTION,     0,                            1,             0,                                    3,           {  ZVARTYPEID_COMBOS,          ZVARTYPEID_FLOAT,         ZVARTYPEID_FLOAT,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1                           } },
-	{ "SetPushDirection",         ZVARTYPEID_VOID,          FUNCTION,     0,                            1,             0,                                    3,           {  ZVARTYPEID_COMBOS,          ZVARTYPEID_FLOAT,         ZVARTYPEID_FLOAT,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1                           } },
-	{ "SetPushWeight",            ZVARTYPEID_VOID,          FUNCTION,     0,                            1,             0,                                    3,           {  ZVARTYPEID_COMBOS,          ZVARTYPEID_FLOAT,         ZVARTYPEID_FLOAT,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1                           } },
-	{ "SetPushWait",              ZVARTYPEID_VOID,          FUNCTION,     0,                            1,             0,                                    3,           {  ZVARTYPEID_COMBOS,          ZVARTYPEID_FLOAT,         ZVARTYPEID_FLOAT,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1                           } },
-	{ "SetPushed",                ZVARTYPEID_VOID,          FUNCTION,     0,                            1,             0,                                    3,           {  ZVARTYPEID_COMBOS,          ZVARTYPEID_FLOAT,         ZVARTYPEID_FLOAT,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1                           } },
-	{ "SetRaft",                  ZVARTYPEID_VOID,          FUNCTION,     0,                            1,             0,                                    3,           {  ZVARTYPEID_COMBOS,          ZVARTYPEID_FLOAT,         ZVARTYPEID_FLOAT,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1                           } },
-	{ "SetResetRoom",             ZVARTYPEID_VOID,          FUNCTION,     0,                            1,             0,                                    3,           {  ZVARTYPEID_COMBOS,          ZVARTYPEID_FLOAT,         ZVARTYPEID_FLOAT,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1                           } },
-	{ "SetSavePoint",             ZVARTYPEID_VOID,          FUNCTION,     0,                            1,             0,                                    3,           {  ZVARTYPEID_COMBOS,          ZVARTYPEID_FLOAT,         ZVARTYPEID_FLOAT,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1                           } },
-	{ "SetScreenFreeze",          ZVARTYPEID_VOID,          FUNCTION,     0,                            1,             0,                                    3,           {  ZVARTYPEID_COMBOS,          ZVARTYPEID_FLOAT,         ZVARTYPEID_FLOAT,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1                           } },
-	{ "SetSecretCombo",           ZVARTYPEID_VOID,          FUNCTION,     0,                            1,             0,                                    3,           {  ZVARTYPEID_COMBOS,          ZVARTYPEID_FLOAT,         ZVARTYPEID_FLOAT,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1                           } },
-	{ "SetSingular",              ZVARTYPEID_VOID,          FUNCTION,     0,                            1,             0,                                    3,           {  ZVARTYPEID_COMBOS,          ZVARTYPEID_FLOAT,         ZVARTYPEID_FLOAT,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1                           } },
-	{ "SetSlowMove",              ZVARTYPEID_VOID,          FUNCTION,     0,                            1,             0,                                    3,           {  ZVARTYPEID_COMBOS,          ZVARTYPEID_FLOAT,         ZVARTYPEID_FLOAT,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1                           } },
-	{ "SetStatue",                ZVARTYPEID_VOID,          FUNCTION,     0,                            1,             0,                                    3,           {  ZVARTYPEID_COMBOS,          ZVARTYPEID_FLOAT,         ZVARTYPEID_FLOAT,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1                           } },
-	{ "SetStepType",              ZVARTYPEID_VOID,          FUNCTION,     0,                            1,             0,                                    3,           {  ZVARTYPEID_COMBOS,          ZVARTYPEID_FLOAT,         ZVARTYPEID_FLOAT,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1                           } },
-	{ "SetStepChangeTo",          ZVARTYPEID_VOID,          FUNCTION,     0,                            1,             0,                                    3,           {  ZVARTYPEID_COMBOS,          ZVARTYPEID_FLOAT,         ZVARTYPEID_FLOAT,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1                           } },
-	{ "SetStrikeRemnants",        ZVARTYPEID_VOID,          FUNCTION,     0,                            1,             0,                                    3,           {  ZVARTYPEID_COMBOS,          ZVARTYPEID_FLOAT,         ZVARTYPEID_FLOAT,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1                           } },
-	{ "SetStrikeRemnantsType",    ZVARTYPEID_VOID,          FUNCTION,     0,                            1,             0,                                    3,           {  ZVARTYPEID_COMBOS,          ZVARTYPEID_FLOAT,         ZVARTYPEID_FLOAT,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1                           } },
-	{ "SetStrikeChange",          ZVARTYPEID_VOID,          FUNCTION,     0,                            1,             0,                                    3,           {  ZVARTYPEID_COMBOS,          ZVARTYPEID_FLOAT,         ZVARTYPEID_FLOAT,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1                           } },
-	{ "SetStrikeItem",            ZVARTYPEID_VOID,          FUNCTION,     0,                            1,             0,                                    3,           {  ZVARTYPEID_COMBOS,          ZVARTYPEID_FLOAT,         ZVARTYPEID_FLOAT,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1                           } },
-	{ "SetTouchItem",             ZVARTYPEID_VOID,          FUNCTION,     0,                            1,             0,                                    3,           {  ZVARTYPEID_COMBOS,          ZVARTYPEID_FLOAT,         ZVARTYPEID_FLOAT,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1                           } },
-	{ "SetTouchStairs",           ZVARTYPEID_VOID,          FUNCTION,     0,                            1,             0,                                    3,           {  ZVARTYPEID_COMBOS,          ZVARTYPEID_FLOAT,         ZVARTYPEID_FLOAT,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1                           } },
-	{ "SetTriggerType",           ZVARTYPEID_VOID,          FUNCTION,     0,                            1,             0,                                    3,           {  ZVARTYPEID_COMBOS,          ZVARTYPEID_FLOAT,         ZVARTYPEID_FLOAT,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1                           } },
-	{ "SetTriggerSens",           ZVARTYPEID_VOID,          FUNCTION,     0,                            1,             0,                                    3,           {  ZVARTYPEID_COMBOS,          ZVARTYPEID_FLOAT,         ZVARTYPEID_FLOAT,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1                           } },
-	{ "SetWarpType",              ZVARTYPEID_VOID,          FUNCTION,     0,                            1,             0,                                    3,           {  ZVARTYPEID_COMBOS,          ZVARTYPEID_FLOAT,         ZVARTYPEID_FLOAT,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1                           } },
-	{ "SetWarpSens",              ZVARTYPEID_VOID,          FUNCTION,     0,                            1,             0,                                    3,           {  ZVARTYPEID_COMBOS,          ZVARTYPEID_FLOAT,         ZVARTYPEID_FLOAT,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1                           } },
-	{ "SetWarpDirect",            ZVARTYPEID_VOID,          FUNCTION,     0,                            1,             0,                                    3,           {  ZVARTYPEID_COMBOS,          ZVARTYPEID_FLOAT,         ZVARTYPEID_FLOAT,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1                           } },
-	{ "SetWarpLocation",          ZVARTYPEID_VOID,          FUNCTION,     0,                            1,             0,                                    3,           {  ZVARTYPEID_COMBOS,          ZVARTYPEID_FLOAT,         ZVARTYPEID_FLOAT,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1                           } },
-	{ "SetWater",                 ZVARTYPEID_VOID,          FUNCTION,     0,                            1,             0,                                    3,           {  ZVARTYPEID_COMBOS,          ZVARTYPEID_FLOAT,         ZVARTYPEID_FLOAT,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1                           } },
-	{ "SetWhistle",               ZVARTYPEID_VOID,          FUNCTION,     0,                            1,             0,                                    3,           {  ZVARTYPEID_COMBOS,          ZVARTYPEID_FLOAT,         ZVARTYPEID_FLOAT,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1                           } },
-	{ "SetWinGame",               ZVARTYPEID_VOID,          FUNCTION,     0,                            1,             0,                                    3,           {  ZVARTYPEID_COMBOS,          ZVARTYPEID_FLOAT,         ZVARTYPEID_FLOAT,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1                           } },
-	{ "SetBlockWeaponLevel",      ZVARTYPEID_VOID,          FUNCTION,     0,                            1,             0,                                    3,           {  ZVARTYPEID_COMBOS,          ZVARTYPEID_FLOAT,         ZVARTYPEID_FLOAT,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1                           } },
-	{ "SetTile",                  ZVARTYPEID_VOID,          FUNCTION,     0,                            1,             0,                                    3,           {  ZVARTYPEID_COMBOS,          ZVARTYPEID_FLOAT,         ZVARTYPEID_FLOAT,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1                           } },
-	{ "SetFlip",                  ZVARTYPEID_VOID,          FUNCTION,     0,                            1,             0,                                    3,           {  ZVARTYPEID_COMBOS,          ZVARTYPEID_FLOAT,         ZVARTYPEID_FLOAT,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1                           } },
-	{ "SetWalkability",           ZVARTYPEID_VOID,          FUNCTION,     0,                            1,             0,                                    3,           {  ZVARTYPEID_COMBOS,          ZVARTYPEID_FLOAT,         ZVARTYPEID_FLOAT,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1                           } },
-	{ "SetType",                  ZVARTYPEID_VOID,          FUNCTION,     0,                            1,             0,                                    3,           {  ZVARTYPEID_COMBOS,          ZVARTYPEID_FLOAT,         ZVARTYPEID_FLOAT,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1                           } },
-	{ "SetCSets",                 ZVARTYPEID_VOID,          FUNCTION,     0,                            1,             0,                                    3,           {  ZVARTYPEID_COMBOS,          ZVARTYPEID_FLOAT,         ZVARTYPEID_FLOAT,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1                           } },
-	{ "SetFoo",                   ZVARTYPEID_VOID,          FUNCTION,     0,                            1,             0,                                    3,           {  ZVARTYPEID_COMBOS,          ZVARTYPEID_FLOAT,         ZVARTYPEID_FLOAT,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1                           } },
-	{ "SetFrames",                ZVARTYPEID_VOID,          FUNCTION,     0,                            1,             0,                                    3,           {  ZVARTYPEID_COMBOS,          ZVARTYPEID_FLOAT,         ZVARTYPEID_FLOAT,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1                           } },
-	{ "SetSpeed",                 ZVARTYPEID_VOID,          FUNCTION,     0,                            1,             0,                                    3,           {  ZVARTYPEID_COMBOS,          ZVARTYPEID_FLOAT,         ZVARTYPEID_FLOAT,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1                           } },
-	{ "SetNextCombo",             ZVARTYPEID_VOID,          FUNCTION,     0,                            1,             0,                                    3,           {  ZVARTYPEID_COMBOS,          ZVARTYPEID_FLOAT,         ZVARTYPEID_FLOAT,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1                           } },
-	{ "SetNextCSet",              ZVARTYPEID_VOID,          FUNCTION,     0,                            1,             0,                                    3,           {  ZVARTYPEID_COMBOS,          ZVARTYPEID_FLOAT,         ZVARTYPEID_FLOAT,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1                           } },
-	{ "SetFlag",                  ZVARTYPEID_VOID,          FUNCTION,     0,                            1,             0,                                    3,           {  ZVARTYPEID_COMBOS,          ZVARTYPEID_FLOAT,         ZVARTYPEID_FLOAT,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1                           } },
-	{ "SetSkipAnim",              ZVARTYPEID_VOID,          FUNCTION,     0,                            1,             0,                                    3,           {  ZVARTYPEID_COMBOS,          ZVARTYPEID_FLOAT,         ZVARTYPEID_FLOAT,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1                           } },
-	{ "SetNextTimer",             ZVARTYPEID_VOID,          FUNCTION,     0,                            1,             0,                                    3,           {  ZVARTYPEID_COMBOS,          ZVARTYPEID_FLOAT,         ZVARTYPEID_FLOAT,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1                           } },
-	{ "SetSkipAnimY",             ZVARTYPEID_VOID,          FUNCTION,     0,                            1,             0,                                    3,           {  ZVARTYPEID_COMBOS,          ZVARTYPEID_FLOAT,         ZVARTYPEID_FLOAT,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1                           } },
-	{ "SetAnimFlags",             ZVARTYPEID_VOID,          FUNCTION,     0,                            1,             0,                                    3,           {  ZVARTYPEID_COMBOS,          ZVARTYPEID_FLOAT,         ZVARTYPEID_FLOAT,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1                           } },
-	
-//	three inputs, no return
-	{ "SetBlockWeapon",           ZVARTYPEID_VOID,          FUNCTION,     0,                            1,             0,                                    4,           {  ZVARTYPEID_COMBOS,          ZVARTYPEID_FLOAT,        ZVARTYPEID_FLOAT,                           ZVARTYPEID_FLOAT,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1                           } },
-	{ "GetExpansion",             ZVARTYPEID_VOID,          FUNCTION,     0,                            1,             0,                                    4,           {  ZVARTYPEID_COMBOS,          ZVARTYPEID_FLOAT,        ZVARTYPEID_FLOAT,                           ZVARTYPEID_FLOAT,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1                           } },
-	{ "SetStrikeWeapons",         ZVARTYPEID_VOID,          FUNCTION,     0,                            1,             0,                                    4,           {  ZVARTYPEID_COMBOS,          ZVARTYPEID_FLOAT,        ZVARTYPEID_FLOAT,                           ZVARTYPEID_FLOAT,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1                           } },
-	
-	
 	{ "",                         -1,                       -1,           -1,                           -1,            0,                                    0,           { -1,                               -1,                               -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1,                           -1                           } }
 };
 
 CombosPtrSymbols::CombosPtrSymbols()
 {
-    table = CombosTable;
-    refVar = REFCOMBODATA; //NUL;
+	table = CombosTable;
+	refVar = REFCOMBODATA; //NUL;
 }
 
 void CombosPtrSymbols::generateCode()
 {
-    {
-        ONE_INPUT_ONE_RETURN("GetBlockEnemies",OCDataBlockEnemy);
-    }
-    {
-        ONE_INPUT_ONE_RETURN("GetBlockHole",OCDataBlockHole);
-    }
-    {
-        ONE_INPUT_ONE_RETURN("GetBlockTrigger",OCDataBlockTrig);
-    }
-    {
-        ONE_INPUT_ONE_RETURN("GetConveyorSpeedX",OCDataConveyX);
-    }
-    {
-        ONE_INPUT_ONE_RETURN("GetConveyorSpeedY",OCDataConveyY);
-    }
-    {
-        ONE_INPUT_ONE_RETURN("GetCreateEnemy",OCDataCreateNPC);
-    }
-    {
-        ONE_INPUT_ONE_RETURN("GetCreateEnemyWhen",OCDataCreateEnemW);
-    }
-    {
-        ONE_INPUT_ONE_RETURN("GetCreateEnemyChnge",OCDataCreateEnemC);
-    }
-    {
-        ONE_INPUT_ONE_RETURN("GetDirChangeType",OCDataDirch);
-    }
-    {
-        ONE_INPUT_ONE_RETURN("GetDistanceChangeTiles",OCDataDistTiles);
-    }
-    {
-        ONE_INPUT_ONE_RETURN("GetDiveItem",OCDataDiveItem);
-    }
-    {
-        ONE_INPUT_ONE_RETURN("GetDock",OCDataDock);
-    }
-    {
-        ONE_INPUT_ONE_RETURN("GetFairy",OCDataFairy);
-    }
-    {
-        ONE_INPUT_ONE_RETURN("GetFFComboChangeAttrib",OCDataAttrib);
-    }
-    {
-        ONE_INPUT_ONE_RETURN("GetFootDecorationsTile",OCDataDecoTile);
-    }
-    {
-        ONE_INPUT_ONE_RETURN("GetFootDecorationsType",OCDataDecoType);
-    }
-    {
-        ONE_INPUT_ONE_RETURN("GetHookshotGrab",OCDataHookshotGrab);
-    }
-    {
-        ONE_INPUT_ONE_RETURN("GetLadderPass",OCDataLadderPass);
-    }
-    {
-        ONE_INPUT_ONE_RETURN("GetLockBlockType",OCDataLockBlock);
-    }
-    {
-        ONE_INPUT_ONE_RETURN("GetLockBlockChange",OCDataLockBlockChange);
-    }
-    {
-        ONE_INPUT_ONE_RETURN("GetMagicMirror",OCDataMagicMirror);
-    }
-    {
-        ONE_INPUT_ONE_RETURN("GetModifyHPAmount",OCDataModHP);
-    }
-    {
-        ONE_INPUT_ONE_RETURN("GetModifyHPDelay",OCDataModHPDelay);
-    }
-    {
-        ONE_INPUT_ONE_RETURN("GetModifyHPType",OCDataModHpType);
-    }
-    {
-        ONE_INPUT_ONE_RETURN("GetModifyMPAmount",OCDataModMP);
-    }
-    {
-        ONE_INPUT_ONE_RETURN("GetModifyMPDelay",OCDataMpdMPDelay);
-    }
-    {
-        ONE_INPUT_ONE_RETURN("GetModifyMPType",OCDataModMPType);
-    }
-    {
-        ONE_INPUT_ONE_RETURN("GetNoPushBlocks",OCDataNoPush);
-    }
-    {
-        ONE_INPUT_ONE_RETURN("GetOverhead",OCDataOverhead);
-    }
-    {
-        ONE_INPUT_ONE_RETURN("GetPlaceEnemy",OCDataEnemyLoc);
-    }
-    {
-        ONE_INPUT_ONE_RETURN("GetPushDirection",OCDataPushDir);
-    }
-    {
-        ONE_INPUT_ONE_RETURN("GetPushWeight",OCDataPushWeight);
-    }
-    {
-        ONE_INPUT_ONE_RETURN("GetPushWait",OCDataPushWait);
-    }
-    {
-        ONE_INPUT_ONE_RETURN("GetPushed",OCDataPushed);
-    }
-    {
-        ONE_INPUT_ONE_RETURN("GetRaft",OCDataRaft);
-    }
-    {
-        ONE_INPUT_ONE_RETURN("GetResetRoom",OCDataResetRoom);
-    }
-    {
-        ONE_INPUT_ONE_RETURN("GetSavePoint",OCDataSavePoint);
-    }
-    {
-        ONE_INPUT_ONE_RETURN("GetScreenFreeze",OCDataFreeezeScreen);
-    }
-    {
-        ONE_INPUT_ONE_RETURN("GetSecretCombo",OCDataSecretCombo);
-    }
-    {
-        ONE_INPUT_ONE_RETURN("GetSingular",OCDataSingular);
-    }
-    {
-        ONE_INPUT_ONE_RETURN("GetSlowMove",OCDataSlowMove);
-    }
-    {
-        ONE_INPUT_ONE_RETURN("GetStatue",OCDataStatue);
-    }
-    {
-        ONE_INPUT_ONE_RETURN("GetStepType",OCDataStepType);
-    }
-    {
-        ONE_INPUT_ONE_RETURN("GetStepChangeTo",OCDataSteoChange);
-    }
-    {
-        ONE_INPUT_ONE_RETURN("GetStrikeRemnants",OCDataStrikeRem);
-    }
-    {
-        ONE_INPUT_ONE_RETURN("GetStrikeRemnantsType",OCDataStrikeRemType);
-    }
-    {
-        ONE_INPUT_ONE_RETURN("GetStrikeChange",OCDataStrikeChange);
-    }
-    {
-        ONE_INPUT_ONE_RETURN("GetStrikeItem",OCDataStrikeChangeItem);
-    }
-    {
-        ONE_INPUT_ONE_RETURN("GetTouchItem",OCDataTouchItem);
-    }
-    {
-        ONE_INPUT_ONE_RETURN("GetTouchStairs",OCDataTouchStairs);
-    }
-    {
-        ONE_INPUT_ONE_RETURN("GetTriggerType",OCDataTriggerType);
-    }
-    {
-        ONE_INPUT_ONE_RETURN("GetTriggerSens",OCDataTriggerSens);
-    }
-    {
-        ONE_INPUT_ONE_RETURN("GetWarpType",OCDataWarpType);
-    }
-    {
-        ONE_INPUT_ONE_RETURN("GetWarpSens",OCDataWarpSens);
-    }
-    {
-        ONE_INPUT_ONE_RETURN("GetWarpDirect",OCDataWarpDirect);
-    }
-    {
-        ONE_INPUT_ONE_RETURN("GetWarpLocation",OCDataWarpLoc);
-    }
-    {
-        ONE_INPUT_ONE_RETURN("GetWater",OCDataWater);
-    }
-    {
-        ONE_INPUT_ONE_RETURN("GetWhistle",OCDataWhistle);
-    }
-    {
-        ONE_INPUT_ONE_RETURN("GetWinGame",OCDataWinGame);
-    }
-    {
-        ONE_INPUT_ONE_RETURN("GetBlockWeaponLevel",OCDataWeapBlockLevel);
-    }
-    {
-        ONE_INPUT_ONE_RETURN("GetTile",OCDataTile);
-    }
-    {
-        ONE_INPUT_ONE_RETURN("GetFlip",OCDataFlip);
-    }
-    {
-        ONE_INPUT_ONE_RETURN("GetWalkability",OCDataWalkability);
-    }
-    {
-        ONE_INPUT_ONE_RETURN("GetType",OCDataType);
-    }
-    {
-        ONE_INPUT_ONE_RETURN("GetCSets",OCDataCSets);
-    }
-    {
-        ONE_INPUT_ONE_RETURN("GetFoo",OCDataFoo);
-    }
-    {
-        ONE_INPUT_ONE_RETURN("GetFrames",OCDataFrames);
-    }
-    {
-        ONE_INPUT_ONE_RETURN("GetSpeed",OCDataSpeed);
-    }
-    {
-        ONE_INPUT_ONE_RETURN("GetNextCombo",OCDataNext);
-    }
-    {
-        ONE_INPUT_ONE_RETURN("GetNextCSet",OCDataNextCSet);
-    }
-    {
-        ONE_INPUT_ONE_RETURN("GetFlag",OCDataFlag);
-    }
-    {
-        ONE_INPUT_ONE_RETURN("GetSkipAnim",OCSetDataSkipAnim);
-    }
-    {
-        ONE_INPUT_ONE_RETURN("GetNextTimer",OCDataTimer);
-    }
-    {
-        ONE_INPUT_ONE_RETURN("GetSkipAnimY",OCDataAnimY);
-    }
-    {
-        ONE_INPUT_ONE_RETURN("GetAnimFlags",OCDataAnimFlags);
-    }
-    
-    {
-        TWO_INPUT_NO_RETURN("SetBlockEnemies",OCSetDataBlockEnemy);
-    }
-    {
-        TWO_INPUT_NO_RETURN("SetBlockHole",OCSetDataBlockHole);
-    }
-    {
-        TWO_INPUT_NO_RETURN("SetBlockTrigger",OCSetDataBlockTrig);
-    }
-    {
-        TWO_INPUT_NO_RETURN("SetConveyorSpeedX",OCSetDataConveyX);
-    }
-    {
-        TWO_INPUT_NO_RETURN("SetConveyorSpeedY",OCSetDataConveyY);
-    }
-    {
-        TWO_INPUT_NO_RETURN("SetCreateEnemy",OCSetDataCreateNPC);
-    }
-    {
-        TWO_INPUT_NO_RETURN("SetCreateEnemyWhen",OCSetDataCreateEnemW);
-    }
-    {
-        TWO_INPUT_NO_RETURN("SetCreateEnemyChnge",OCSetDataCreateEnemC);
-    }
-    {
-        TWO_INPUT_NO_RETURN("SetDirChangeType",OCSetDataDirch);
-    }
-    {
-        TWO_INPUT_NO_RETURN("SetDistanceChangeTiles",OCSetDataDistTiles);
-    }
-    {
-        TWO_INPUT_NO_RETURN("SetDiveItem",OCSetDataDiveItem);
-    }
-    {
-        TWO_INPUT_NO_RETURN("SetDock",OCSetDataDock);
-    }
-    {
-        TWO_INPUT_NO_RETURN("SetFairy",OCSetDataFairy);
-    }
-    {
-        TWO_INPUT_NO_RETURN("SetFFComboChangeAttrib",OCSetDataAttrib);
-    }
-    {
-        TWO_INPUT_NO_RETURN("SetFootDecorationsTile",OCSetDataDecoTile);
-    }
-    {
-        TWO_INPUT_NO_RETURN("SetFootDecorationsType",OCSetDataDecoType);
-    }
-    {
-        TWO_INPUT_NO_RETURN("SetHookshotGrab",OCSetDataHookshotGrab);
-    }
-    {
-        TWO_INPUT_NO_RETURN("SetLadderPass",OCSetDataLadderPass);
-    }
-    {
-        TWO_INPUT_NO_RETURN("SetLockBlockType",OCSetDataLockBlock);
-    }
-    {
-        TWO_INPUT_NO_RETURN("SetLockBlockChange",OCSetDataLockBlockChange);
-    }
-    {
-        TWO_INPUT_NO_RETURN("SetMagicMirror",OCSetDataMagicMirror);
-    }
-    {
-        TWO_INPUT_NO_RETURN("SetModifyHPAmount",OCSetDataModHP);
-    }
-    {
-        TWO_INPUT_NO_RETURN("SetModifyHPDelay",OCSetDataModHPDelay);
-    }
-    {
-        TWO_INPUT_NO_RETURN("SetModifyHPType",OCSetDataModHpType);
-    }
-    {
-        TWO_INPUT_NO_RETURN("SetModifyMPAmount",OCSetDataModMP);
-    }
-    {
-        TWO_INPUT_NO_RETURN("SetModifyMPDelay",OCSetDataMpdMPDelay);
-    }
-    {
-        TWO_INPUT_NO_RETURN("SetModifyMPType",OCSetDataModMPType);
-    }
-    {
-        TWO_INPUT_NO_RETURN("SetNoPushBlocks",OCSetDataNoPush);
-    }
-    {
-        TWO_INPUT_NO_RETURN("SetOverhead",OCSetDataOverhead);
-    }
-    {
-        TWO_INPUT_NO_RETURN("SetPlaceEnemy",OCSetDataEnemyLoc);
-    }
-    {
-        TWO_INPUT_NO_RETURN("SetPushDirection",OCSetDataPushDir);
-    }
-    {
-        TWO_INPUT_NO_RETURN("SetPushWeight",OCSetDataPushWeight);
-    }
-    {
-        TWO_INPUT_NO_RETURN("SetPushWait",OCSetDataPushWait);
-    }
-    {
-        TWO_INPUT_NO_RETURN("SetPushed",OCSetDataPushed);
-    }
-    {
-        TWO_INPUT_NO_RETURN("SetRaft",OCSetDataRaft);
-    }
-    {
-        TWO_INPUT_NO_RETURN("SetResetRoom",OCSetDataResetRoom);
-    }
-    {
-        TWO_INPUT_NO_RETURN("SetSavePoint",OCSetDataSavePoint);
-    }
-    {
-        TWO_INPUT_NO_RETURN("SetScreenFreeze",OCSetDataFreeezeScreen);
-    }
-    {
-        TWO_INPUT_NO_RETURN("SetSecretCombo",OCSetDataSecretCombo);
-    }
-    {
-        TWO_INPUT_NO_RETURN("SetSingular",OCSetDataSingular);
-    }
-    {
-        TWO_INPUT_NO_RETURN("SetSlowMove",OCSetDataSlowMove);
-    }
-    {
-        TWO_INPUT_NO_RETURN("SetStatue",OCSetDataStatue);
-    }
-    {
-        TWO_INPUT_NO_RETURN("SetStepType",OCSetDataStepType);
-    }
-    {
-        TWO_INPUT_NO_RETURN("SetStepChangeTo",OCSetDataSteoChange);
-    }
-    {
-        TWO_INPUT_NO_RETURN("SetStrikeRemnants",OCSetDataStrikeRem);
-    }
-    {
-        TWO_INPUT_NO_RETURN("SetStrikeRemnantsType",OCSetDataStrikeRemType);
-    }
-    {
-        TWO_INPUT_NO_RETURN("SetStrikeChange",OCSetDataStrikeChange);
-    }
-    {
-        TWO_INPUT_NO_RETURN("SetStrikeItem",OCSetDataStrikeChangeItem);
-    }
-    {
-        TWO_INPUT_NO_RETURN("SetTouchItem",OCSetDataTouchItem);
-    }
-    {
-        TWO_INPUT_NO_RETURN("SetTouchStairs",OCSetDataTouchStairs);
-    }
-    {
-        TWO_INPUT_NO_RETURN("SetTriggerType",OCSetDataTriggerType);
-    }
-    {
-        TWO_INPUT_NO_RETURN("SetTriggerSens",OCSetDataTriggerSens);
-    }
-    {
-        TWO_INPUT_NO_RETURN("SetWarpType",OCSetDataWarpType);
-    }
-    {
-        TWO_INPUT_NO_RETURN("SetWarpSens",OCSetDataWarpSens);
-    }
-    {
-        TWO_INPUT_NO_RETURN("SetWarpDirect",OCSetDataWarpDirect);
-    }
-    {
-        TWO_INPUT_NO_RETURN("SetWarpLocation",OCSetDataWarpLoc);
-    }
-    {
-        TWO_INPUT_NO_RETURN("SetWater",OCSetDataWater);
-    }
-    {
-        TWO_INPUT_NO_RETURN("SetWhistle",OCSetDataWhistle);
-    }
-    {
-        TWO_INPUT_NO_RETURN("SetWinGame",OCSetDataWinGame);
-    }
-    {
-        TWO_INPUT_NO_RETURN("SetBlockWeaponLevel",OCSetDataWeapBlockLevel);
-    }
-    {
-        TWO_INPUT_NO_RETURN("SetTile",OCSetDataTile);
-    }
-    {
-        TWO_INPUT_NO_RETURN("SetFlip",OCSetDataFlip);
-    }
-    {
-        TWO_INPUT_NO_RETURN("SetWalkability",OCSetDataWalkability);
-    }
-    {
-        TWO_INPUT_NO_RETURN("SetType",OCSetDataType);
-    }
-    {
-        TWO_INPUT_NO_RETURN("SetCSets",OCSetDataCSets);
-    }
-    {
-        TWO_INPUT_NO_RETURN("SetFoo",OCSetDataFoo);
-    }
-    {
-        TWO_INPUT_NO_RETURN("SetFrames",OCSetDataFrames);
-    }
-    {
-        TWO_INPUT_NO_RETURN("SetSpeed",OCSetDataSpeed);
-    }
-    {
-        TWO_INPUT_NO_RETURN("SetNextCombo",OCSetDataNext);
-    }
-    {
-        TWO_INPUT_NO_RETURN("SetNextCSet",OCSetDataNextCSet);
-    }
-    {
-        TWO_INPUT_NO_RETURN("SetFlag",OCSetDataFlag);
-    }
-    {
-        TWO_INPUT_NO_RETURN("SetSkipAnim",OCSetDataSkipAnim);
-    }
-    {
-        TWO_INPUT_NO_RETURN("SetNextTimer",OCSetDataTimer);
-    }
-    {
-        TWO_INPUT_NO_RETURN("SetSkipAnimY",OCSetDataAnimY);
-    }
-    {
-        TWO_INPUT_NO_RETURN("SetAnimFlags",OCSetDataAnimFlags);
-    }
-    
-    {
-        TWO_INPUT_ONE_RETURN("GetBlockWeapon",OCDataBlockWeapon);
-    }
-    {
-        TWO_INPUT_ONE_RETURN("GetExpansion",OCDataExpansion);
-    }
-    {
-        TWO_INPUT_ONE_RETURN("GetStrikeWeapons",OCDataStrikeWeapon);
-    }
-    {
-	THREE_INPUT_NO_RETURN("SetBlockWeapon", SCDBLOCKWEAPON);
-    }
-    /*
-    {
-	THREE_INPUT_NO_RETURN("SetExpansion", SCDEXPANSION);
-    }
-    */
-    {
-	THREE_INPUT_NO_RETURN("SetStrikeWeapons", SCDSTRIKEWEAPONS);
-    }
+	
 }
 
 AudioSymbols AudioSymbols::singleton = AudioSymbols();
@@ -10213,241 +9804,241 @@ static AccessorTable AudioTable[] =
 
 AudioSymbols::AudioSymbols()
 {
-    table = AudioTable;
-    refVar = NUL;
+	table = AudioTable;
+	refVar = NUL;
 }
 
 void AudioSymbols::generateCode()
 {
-    //void AdjustVolume(audio, int)
-    {
-        Function* function = getFunction("AdjustMusicVolume", 2);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the param
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        LABELBACK(label);
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new OAdjustVolumeRegister(new VarArgument(EXP1)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //void AdjustSFXVolume(audio, int)
-    {
-        Function* function = getFunction("AdjustSFXVolume", 2);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the param
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        LABELBACK(label);
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new OAdjustSFXVolumeRegister(new VarArgument(EXP1)));
-        RETURN();
-        function->giveCode(code);
-    }
-    
-    //void AdjustSound(game, int,int,bool)
-    {
-        Function* function = getFunction("AdjustSound", 4);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the params
-        code.push_back(new OPopRegister(new VarArgument(SFTEMP)));
-        LABELBACK(label);
-        code.push_back(new OPopRegister(new VarArgument(INDEX2)));
-        code.push_back(new OPopRegister(new VarArgument(INDEX)));
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new OSetRegister(new VarArgument(ADJUSTSFX), new VarArgument(SFTEMP)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //void PlaySound(game, int)
-    {
-        Function* function = getFunction("PlaySound", 2);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the param
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        LABELBACK(label);
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new OPlaySoundRegister(new VarArgument(EXP1)));
-        RETURN();
-        function->giveCode(code);
-    }
-    
-    //void EndSound(game, int)
-    {
-        Function* function = getFunction("EndSound", 2);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the param
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        LABELBACK(label);
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new OEndSoundRegister(new VarArgument(EXP1)));
-        RETURN();
-        function->giveCode(code);
-    }
-    
-    //void PauseSound(game, int)
-    {
-        Function* function = getFunction("PauseSound", 2);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the param
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        LABELBACK(label);
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new OPauseSoundRegister(new VarArgument(EXP1)));
-        RETURN();
-        function->giveCode(code);
-    }
-    
-    //void ContinueSound(game, int)
-    {
-        Function* function = getFunction("ContinueSound", 2);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the param
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        LABELBACK(label);
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new OContinueSFX(new VarArgument(EXP1)));
-        RETURN();
-        function->giveCode(code);
-    }
-    
-    //void ResumeSound(game, int)
-    {
-        Function* function = getFunction("ResumeSound", 2);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the param
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        LABELBACK(label);
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new OResumeSoundRegister(new VarArgument(EXP1)));
-        RETURN();
-        function->giveCode(code);
-    }
-    
-    //void PauseCurMIDI(game)
-    {
-        Function* function = getFunction("PauseCurMIDI", 1);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop pointer, and ignore it
-		ASSERT_NUL();
-        code.push_back(new OPauseMusic());
-        LABELBACK(label);
-        RETURN();
-        function->giveCode(code);
-    }
-    
-    //void ResumeCurMIDI(game)
-    {
-        Function* function = getFunction("ResumeCurMIDI", 1);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop pointer, and ignore it
-		ASSERT_NUL();
-        code.push_back(new OResumeMusic());
-        LABELBACK(label);
-        RETURN();
-        function->giveCode(code);
-    }
-    //void PlayMIDI(game, int)
-    {
-        Function* function = getFunction("PlayMIDI", 2);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the param
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        LABELBACK(label);
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new OPlayMIDIRegister(new VarArgument(EXP1)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //void PlayEnhancedMusic(game, int, int)
-    {
-        Function* function = getFunction("PlayEnhancedMusic", 3);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the params
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        LABELBACK(label);
-        code.push_back(new OPopRegister(new VarArgument(EXP2)));
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new OPlayEnhancedMusic(new VarArgument(EXP2), new VarArgument(EXP1)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //void PlayEnhancedMusicEx(game, int, int)
-    {
-        Function* function = getFunction("PlayOgg", 3);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the params
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        LABELBACK(label);
-        code.push_back(new OPopRegister(new VarArgument(EXP2)));
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new OPlayEnhancedMusicEx(new VarArgument(EXP2), new VarArgument(EXP1)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //int GetEnhancedMusicPos(game)
+	//void AdjustVolume(audio, int)
+	{
+		Function* function = getFunction("AdjustMusicVolume", 2);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the param
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OAdjustVolumeRegister(new VarArgument(EXP1)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//void AdjustSFXVolume(audio, int)
+	{
+		Function* function = getFunction("AdjustSFXVolume", 2);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the param
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OAdjustSFXVolumeRegister(new VarArgument(EXP1)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	
+	//void AdjustSound(game, int,int,bool)
+	{
+		Function* function = getFunction("AdjustSound", 4);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the params
+		code.push_back(new OPopRegister(new VarArgument(SFTEMP)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OSetRegister(new VarArgument(ADJUSTSFX), new VarArgument(SFTEMP)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//void PlaySound(game, int)
+	{
+		Function* function = getFunction("PlaySound", 2);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the param
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OPlaySoundRegister(new VarArgument(EXP1)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	
+	//void EndSound(game, int)
+	{
+		Function* function = getFunction("EndSound", 2);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the param
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OEndSoundRegister(new VarArgument(EXP1)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	
+	//void PauseSound(game, int)
+	{
+		Function* function = getFunction("PauseSound", 2);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the param
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OPauseSoundRegister(new VarArgument(EXP1)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	
+	//void ContinueSound(game, int)
+	{
+		Function* function = getFunction("ContinueSound", 2);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the param
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OContinueSFX(new VarArgument(EXP1)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	
+	//void ResumeSound(game, int)
+	{
+		Function* function = getFunction("ResumeSound", 2);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the param
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OResumeSoundRegister(new VarArgument(EXP1)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	
+	//void PauseCurMIDI(game)
+	{
+		Function* function = getFunction("PauseCurMIDI", 1);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OPauseMusic());
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	
+	//void ResumeCurMIDI(game)
+	{
+		Function* function = getFunction("ResumeCurMIDI", 1);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OResumeMusic());
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//void PlayMIDI(game, int)
+	{
+		Function* function = getFunction("PlayMIDI", 2);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the param
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OPlayMIDIRegister(new VarArgument(EXP1)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//void PlayEnhancedMusic(game, int, int)
+	{
+		Function* function = getFunction("PlayEnhancedMusic", 3);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the params
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		code.push_back(new OPopRegister(new VarArgument(EXP2)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OPlayEnhancedMusic(new VarArgument(EXP2), new VarArgument(EXP1)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//void PlayEnhancedMusicEx(game, int, int)
+	{
+		Function* function = getFunction("PlayOgg", 3);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the params
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		code.push_back(new OPopRegister(new VarArgument(EXP2)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OPlayEnhancedMusicEx(new VarArgument(EXP2), new VarArgument(EXP1)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//int GetEnhancedMusicPos(game)
 {
-	    Function* function = getFunction("GetOggPos", 1);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop pointer, and ignore it
-		ASSERT_NUL();
-        code.push_back(new OGetEnhancedMusicPos(new VarArgument(EXP1)));
-        LABELBACK(label);
-        RETURN();
-        function->giveCode(code);
+		Function* function = getFunction("GetOggPos", 1);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OGetEnhancedMusicPos(new VarArgument(EXP1)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
 }
-     //void SetEnhancedMusicPos(game, int)
-    {
-	    Function* function = getFunction("SetOggPos", 2);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the params
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        LABELBACK(label);
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new OSetEnhancedMusicPos(new VarArgument(EXP1)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //void SetEnhancedMusicSpeed(game, int)
-    {
-	    Function* function = getFunction("SetOggSpeed", 2);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the params
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        LABELBACK(label);
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new OSetEnhancedMusicSpeed(new VarArgument(EXP1)));
-        RETURN();
-        function->giveCode(code);
-    }
+	 //void SetEnhancedMusicPos(game, int)
+	{
+		Function* function = getFunction("SetOggPos", 2);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the params
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OSetEnhancedMusicPos(new VarArgument(EXP1)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//void SetEnhancedMusicSpeed(game, int)
+	{
+		Function* function = getFunction("SetOggSpeed", 2);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the params
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OSetEnhancedMusicSpeed(new VarArgument(EXP1)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
 }
 
 
@@ -10518,243 +10109,243 @@ static AccessorTable DebugTable[] =
 
 DebugSymbols::DebugSymbols()
 {
-    table = DebugTable;
-    refVar = NUL;
+	table = DebugTable;
+	refVar = NUL;
 }
 
 void DebugSymbols::generateCode()
 {
 	//int GetPointer(itemclass, itemclass)
-    {
-        Function* function = getFunction("GetItemdataPointer", 2);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        LABELBACK(label);
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new OGetItemDataPointer(new VarArgument(EXP1)));
-        RETURN();
-        function->giveCode(code);
-    }
-    
-    //int SetPointer(itemclass, float)
-    {
-        Function* function = getFunction("SetItemdataPointer", 2);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        LABELBACK(label);
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new OSetItemDataPointer(new VarArgument(EXP1)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //int GetPointer(item, item)
-    {
-        Function* function = getFunction("GetItemPointer", 2);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        LABELBACK(label);
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new OGetItemPointer(new VarArgument(EXP1)));
-        RETURN();
-        function->giveCode(code);
-    }
-    
-    //int SetPointer(item, float)
-    {
-        Function* function = getFunction("SetItemPointer", 2);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        LABELBACK(label);
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new OSetItemPointer(new VarArgument(EXP1)));
-        RETURN();
-        function->giveCode(code);
-    }    
-    //int GetPointer(ffc, ffc)
-    {
-        Function* function = getFunction("GetFFCPointer", 2);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        LABELBACK(label);
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new OGetFFCPointer(new VarArgument(EXP1)));
-        RETURN();
-        function->giveCode(code);
-    }
-    
-    //int SetPointer(ffc, float)
-    {
-        Function* function = getFunction("SetFFCPointer", 2);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        LABELBACK(label);
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new OSetFFCPointer(new VarArgument(EXP1)));
-        RETURN();
-        function->giveCode(code);
-    }
-          //int GetPointer(eweapon, eweapon)
-    {
-        Function* function = getFunction("GetEWeaponPointer", 2);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        LABELBACK(label);
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new OGetEWeaponPointer(new VarArgument(EXP1)));
-        RETURN();
-        function->giveCode(code);
-    }
-    
-    //int SetPointer(eweapon, float)
-    {
-        Function* function = getFunction("SetEWeaponPointer", 2);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        LABELBACK(label);
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new OSetEWeaponPointer(new VarArgument(EXP1)));
-        RETURN();
-        function->giveCode(code);
-    }
-       //int GetPointer(lweapon, lweapon)
-    {
-        Function* function = getFunction("GetLWeaponPointer", 2);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        LABELBACK(label);
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new OGetLWeaponPointer(new VarArgument(EXP1)));
-        RETURN();
-        function->giveCode(code);
-    }
-    
-    //int SetPointer(lweapon, float)
-    {
-        Function* function = getFunction("SetLWeaponPointer", 2);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        LABELBACK(label);
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new OSetLWeaponPointer(new VarArgument(EXP1)));
-        RETURN();
-        function->giveCode(code);
-    }
+	{
+		Function* function = getFunction("GetItemdataPointer", 2);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OGetItemDataPointer(new VarArgument(EXP1)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	
+	//int SetPointer(itemclass, float)
+	{
+		Function* function = getFunction("SetItemdataPointer", 2);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OSetItemDataPointer(new VarArgument(EXP1)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//int GetPointer(item, item)
+	{
+		Function* function = getFunction("GetItemPointer", 2);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OGetItemPointer(new VarArgument(EXP1)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	
+	//int SetPointer(item, float)
+	{
+		Function* function = getFunction("SetItemPointer", 2);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OSetItemPointer(new VarArgument(EXP1)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}    
+	//int GetPointer(ffc, ffc)
+	{
+		Function* function = getFunction("GetFFCPointer", 2);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OGetFFCPointer(new VarArgument(EXP1)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	
+	//int SetPointer(ffc, float)
+	{
+		Function* function = getFunction("SetFFCPointer", 2);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OSetFFCPointer(new VarArgument(EXP1)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+		  //int GetPointer(eweapon, eweapon)
+	{
+		Function* function = getFunction("GetEWeaponPointer", 2);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OGetEWeaponPointer(new VarArgument(EXP1)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	
+	//int SetPointer(eweapon, float)
+	{
+		Function* function = getFunction("SetEWeaponPointer", 2);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OSetEWeaponPointer(new VarArgument(EXP1)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	   //int GetPointer(lweapon, lweapon)
+	{
+		Function* function = getFunction("GetLWeaponPointer", 2);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OGetLWeaponPointer(new VarArgument(EXP1)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	
+	//int SetPointer(lweapon, float)
+	{
+		Function* function = getFunction("SetLWeaponPointer", 2);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OSetLWeaponPointer(new VarArgument(EXP1)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
 	 //int GetPointer(npc, ffc)
-    {
-        Function* function = getFunction("GetNPCPointer", 2);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        LABELBACK(label);
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new OGetNPCPointer(new VarArgument(EXP1)));
-        RETURN();
-        function->giveCode(code);
-    }
-    
-    //int SetPointer(npc, float)
-    {
-        Function* function = getFunction("SetNPCPointer", 2);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        LABELBACK(label);
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new OSetNPCPointer(new VarArgument(EXP1)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //int GetPointer(game, bool)
-    {
-        Function* function = getFunction("GetBoolPointer", 2);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        LABELBACK(label);
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new OGetBoolPointer(new VarArgument(EXP1)));
-        RETURN();
-        function->giveCode(code);
-    }
-    
-    //int SetPointer(game, float)
-    {
-        Function* function = getFunction("SetBoolPointer", 2);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        LABELBACK(label);
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new OSetBoolPointer(new VarArgument(EXP1)));
-        RETURN();
-        function->giveCode(code);
-    }
-    
-    
-    //void TriggerSecret(game, int)
-    {
-        Function* function = getFunction("TriggerSecret", 2);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the param
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        LABELBACK(label);
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new OTriggerSecretRegister(new VarArgument(EXP1)));
-        RETURN();
-        function->giveCode(code);
-    }
-    
-    //void ChangeFFCScript(game, int)
-    {
-        Function* function = getFunction("ChangeFFCScript", 2);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the param
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        LABELBACK(label);
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new OChangeFFCScriptRegister(new VarArgument(EXP1)));
-        RETURN();
-        function->giveCode(code);
-    }
+	{
+		Function* function = getFunction("GetNPCPointer", 2);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OGetNPCPointer(new VarArgument(EXP1)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	
+	//int SetPointer(npc, float)
+	{
+		Function* function = getFunction("SetNPCPointer", 2);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OSetNPCPointer(new VarArgument(EXP1)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//int GetPointer(game, bool)
+	{
+		Function* function = getFunction("GetBoolPointer", 2);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OGetBoolPointer(new VarArgument(EXP1)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	
+	//int SetPointer(game, float)
+	{
+		Function* function = getFunction("SetBoolPointer", 2);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OSetBoolPointer(new VarArgument(EXP1)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	
+	
+	//void TriggerSecret(game, int)
+	{
+		Function* function = getFunction("TriggerSecret", 2);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the param
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OTriggerSecretRegister(new VarArgument(EXP1)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	
+	//void ChangeFFCScript(game, int)
+	{
+		Function* function = getFunction("ChangeFFCScript", 2);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the param
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OChangeFFCScriptRegister(new VarArgument(EXP1)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
 	//void Breakpoint(debug, char)
 	{
-	    Function* function = getFunction("Breakpoint", 2);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        code.push_back(new OPopRegister(new VarArgument(EXP2)));
-        LABELBACK(label);
+		Function* function = getFunction("Breakpoint", 2);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OPopRegister(new VarArgument(EXP2)));
 		POPREF();
-        code.push_back(new OBreakpoint(new VarArgument(EXP2)));
-        RETURN();
-        function->giveCode(code);
+		code.push_back(new OBreakpoint(new VarArgument(EXP2)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
 	}
 }
 
@@ -10987,912 +10578,950 @@ static AccessorTable NPCDataTable[] =
 
 NPCDataSymbols::NPCDataSymbols()
 {
-    table = NPCDataTable;
-    refVar = REFNPCCLASS; // NUL; //
+	table = NPCDataTable;
+	refVar = REFNPCCLASS; // NUL; //
 }
 
 void NPCDataSymbols::generateCode()
 {
 	//GetTile(NPCData, int)
-    {
+	{
 	
-        Function* function = getFunction("GetTile", 2);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        code.push_back(new OPopRegister(new VarArgument(EXP2)));
-        LABELBACK(label);
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new ONDataBaseTile(new VarArgument(EXP1),new VarArgument(EXP2)));
-        RETURN();
-        function->giveCode(code);
-    
-	//GET_GUYDATA_MEMBER("Tile", ONDataBaseTile);
-    }
-    
-    //void GetName(npcdata, int)
+		Function* function = getFunction("GetTile", 2);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OPopRegister(new VarArgument(EXP2)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new ONDataBaseTile(new VarArgument(EXP1),new VarArgument(EXP2)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	
+	//void GetName(npcdata, int)
 	{
 		Function* function = getFunction("GetName", 2);
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		//pop off the param
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
-		LABELBACK(label);
 		//pop pointer, and ignore it
 		POPREF();
 		code.push_back(new OGetNPCDataName(new VarArgument(EXP1)));
 		RETURN();
+		LABELFRONT(label);
 		function->giveCode(code);
 	}
-    //void GetInitDLabel(npc, int buffer[], int d)
-     //void GetDMapMusicFilename(game, int, int)
-    {
-	    Function* function = getFunction("GetInitDLabel", 3);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the params
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        LABELBACK(label);
-        code.push_back(new OPopRegister(new VarArgument(EXP2)));
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new OGetNPCDataInitDLabel(new VarArgument(EXP2), new VarArgument(EXP1)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //bool MatchInitDLabel(npc, "label", d)
+	//void GetInitDLabel(npc, int buffer[], int d)
+	 //void GetDMapMusicFilename(game, int, int)
+	{
+		Function* function = getFunction("GetInitDLabel", 3);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the params
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		code.push_back(new OPopRegister(new VarArgument(EXP2)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OGetNPCDataInitDLabel(new VarArgument(EXP2), new VarArgument(EXP1)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//bool MatchInitDLabel(npc, "label", d)
 	{
 		Function* function = getFunction("MatchInitDLabel", 3);
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		//pop off the params
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
-		LABELBACK(label);
 		code.push_back(new OPopRegister(new VarArgument(INDEX)));
 		//pop pointer, and ignore it
 		POPREF();
 		code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(NPCMATCHINITDLABEL)));
 		RETURN();
+		LABELFRONT(label);
 		function->giveCode(code);
 	
 	}
-    
-    //GetEHeight(NPCData, int)
-     {
-	GET_GUYDATA_MEMBER("GetEHeight", ONDataEHeight);
-     }
+	
+	//GetEHeight(NPCData, int)
+	{
+		Function* function = getFunction("GetEHeight", 2);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OPopRegister(new VarArgument(EXP2)));
+		POPREF();
+		code.push_back(new ONDataEHeight(new VarArgument(EXP1),new VarArgument(EXP2)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
 	
 
 	//int GetScriptDefense((NPCData, int, int)
-    {
-        Function* function = getFunction("GetScriptDefense", 3);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the params
-        code.push_back(new OPopRegister(new VarArgument(INDEX2)));
-        LABELBACK(label);
-        code.push_back(new OPopRegister(new VarArgument(INDEX)));
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new ONDataScriptDef(new VarArgument(EXP1)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //int GetDefense(NPCData, int, int)
-    {
-        Function* function = getFunction("GetDefense", 3);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the params
-        code.push_back(new OPopRegister(new VarArgument(INDEX2)));
-        LABELBACK(label);
-        code.push_back(new OPopRegister(new VarArgument(INDEX)));
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new ONDataDefense(new VarArgument(EXP1)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //int GetSizeFlag(NPCData, int, int)
-    {
-        Function* function = getFunction("GetSizeFlag", 3);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the params
-        code.push_back(new OPopRegister(new VarArgument(INDEX2)));
-        LABELBACK(label);
-        code.push_back(new OPopRegister(new VarArgument(INDEX)));
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new ONDataSizeFlag(new VarArgument(EXP1)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //int GetAttribute(NPCData, int, int)
-    {
-        Function* function = getFunction("GetAttribute", 3);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the params
-        code.push_back(new OPopRegister(new VarArgument(INDEX2)));
-        LABELBACK(label);
-        code.push_back(new OPopRegister(new VarArgument(INDEX)));
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new ONDatattributes(new VarArgument(EXP1)));
-        RETURN();
-        function->giveCode(code);
-    }
-    
-    
-      //three inputs, no return
-    
-      //void SetScriptDefense(NPCData, int,int,int)
-    {
-        Function* function = getFunction("SetScriptDefense", 4);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the params
-        code.push_back(new OPopRegister(new VarArgument(SFTEMP)));
-        LABELBACK(label);
-        code.push_back(new OPopRegister(new VarArgument(INDEX2)));
-        code.push_back(new OPopRegister(new VarArgument(INDEX)));
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new OSetRegister(new VarArgument(SETNPCDATASCRIPTDEF), new VarArgument(SFTEMP)));
-        RETURN();
-        function->giveCode(code);
-    }
-      //three inputs, no return
-    
-      //void SetDefense(NPCData, int,int,int)
-    {
-        Function* function = getFunction("SetDefense", 4);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the params
-        code.push_back(new OPopRegister(new VarArgument(SFTEMP)));
-        LABELBACK(label);
-        code.push_back(new OPopRegister(new VarArgument(INDEX2)));
-        code.push_back(new OPopRegister(new VarArgument(INDEX)));
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new OSetRegister(new VarArgument(SETNPCDATADEFENSE), new VarArgument(SFTEMP)));
-        RETURN();
-        function->giveCode(code);
-    }
-      //three inputs, no return
-    
-      //void SetSizeFlag(NPCData, int,int,int)
-    {
-        Function* function = getFunction("SetSizeFlag", 4);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the params
-        code.push_back(new OPopRegister(new VarArgument(SFTEMP)));
-        LABELBACK(label);
-        code.push_back(new OPopRegister(new VarArgument(INDEX2)));
-        code.push_back(new OPopRegister(new VarArgument(INDEX)));
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new OSetRegister(new VarArgument(SETNPCDATASIZEFLAG), new VarArgument(SFTEMP)));
-        RETURN();
-        function->giveCode(code);
-    }
-      //three inputs, no return
-    
-      //void SetAttribute(NPCData, int,int,int)
-    {
-        Function* function = getFunction("SetAttribute", 4);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the params
-        code.push_back(new OPopRegister(new VarArgument(SFTEMP)));
-        LABELBACK(label);
-        code.push_back(new OPopRegister(new VarArgument(INDEX2)));
-        code.push_back(new OPopRegister(new VarArgument(INDEX)));
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new OSetRegister(new VarArgument(SETNPCDATAATTRIBUTE), new VarArgument(SFTEMP)));
-        RETURN();
-        function->giveCode(code);
-    }
+	{
+		Function* function = getFunction("GetScriptDefense", 3);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the params
+		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new ONDataScriptDef(new VarArgument(EXP1)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//int GetDefense(NPCData, int, int)
+	{
+		Function* function = getFunction("GetDefense", 3);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the params
+		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new ONDataDefense(new VarArgument(EXP1)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//int GetSizeFlag(NPCData, int, int)
+	{
+		Function* function = getFunction("GetSizeFlag", 3);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the params
+		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new ONDataSizeFlag(new VarArgument(EXP1)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//int GetAttribute(NPCData, int, int)
+	{
+		Function* function = getFunction("GetAttribute", 3);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the params
+		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new ONDatattributes(new VarArgument(EXP1)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	
+	
+	  //three inputs, no return
+	
+	  //void SetScriptDefense(NPCData, int,int,int)
+	{
+		Function* function = getFunction("SetScriptDefense", 4);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the params
+		code.push_back(new OPopRegister(new VarArgument(SFTEMP)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OSetRegister(new VarArgument(SETNPCDATASCRIPTDEF), new VarArgument(SFTEMP)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	  //three inputs, no return
+	
+	  //void SetDefense(NPCData, int,int,int)
+	{
+		Function* function = getFunction("SetDefense", 4);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the params
+		code.push_back(new OPopRegister(new VarArgument(SFTEMP)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OSetRegister(new VarArgument(SETNPCDATADEFENSE), new VarArgument(SFTEMP)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	  //three inputs, no return
+	
+	  //void SetSizeFlag(NPCData, int,int,int)
+	{
+		Function* function = getFunction("SetSizeFlag", 4);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the params
+		code.push_back(new OPopRegister(new VarArgument(SFTEMP)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OSetRegister(new VarArgument(SETNPCDATASIZEFLAG), new VarArgument(SFTEMP)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	  //three inputs, no return
+	
+	  //void SetAttribute(NPCData, int,int,int)
+	{
+		Function* function = getFunction("SetAttribute", 4);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the params
+		code.push_back(new OPopRegister(new VarArgument(SFTEMP)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
+		code.push_back(new OPopRegister(new VarArgument(INDEX)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new OSetRegister(new VarArgument(SETNPCDATAATTRIBUTE), new VarArgument(SFTEMP)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
 	//GetFlags(NPCData, int)
-    {
-	GET_GUYDATA_MEMBER("GetFlags", ONDataFlags);
-    }
-    //GetFlags2(NPCData, int)
-    {
-        Function* function = getFunction("GetFlags2", 2);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        code.push_back(new OPopRegister(new VarArgument(EXP2)));
-        LABELBACK(label);
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new ONDataFlags2(new VarArgument(EXP1),new VarArgument(EXP2)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //GetWidth(game, int)
-    {
-	GET_GUYDATA_MEMBER("GetWidth", ONDataWidth);
-    }
-    //GetHeight(NPCData, int)
-    {
-	GET_GUYDATA_MEMBER("GetHeight", ONDataHeight);
-    }
-    //GetSTile(NPCData, int)
-    {
-	GET_GUYDATA_MEMBER("GetSTile", ONDataTile);
-    }
-    //GetSWidth(NPCData, int)
-    {
-        Function* function = getFunction("GetSWidth", 2);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        code.push_back(new OPopRegister(new VarArgument(EXP2)));
-        LABELBACK(label);
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new ONDataSWidth(new VarArgument(EXP1),new VarArgument(EXP2)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //GetSHeight(NPCData, int)
-    {
-        Function* function = getFunction("GetSHeight", 2);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        code.push_back(new OPopRegister(new VarArgument(EXP2)));
-        LABELBACK(label);
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new ONDataSHeight(new VarArgument(EXP1),new VarArgument(EXP2)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //GetETile(NPCData, int)
-    {
-        Function* function = getFunction("GetETile", 2);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        code.push_back(new OPopRegister(new VarArgument(EXP2)));
-        LABELBACK(label);
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new ONDataETile(new VarArgument(EXP1),new VarArgument(EXP2)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //GetEWidth(NPCData, int)
-    {
-        Function* function = getFunction("GetEWidth", 2);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        code.push_back(new OPopRegister(new VarArgument(EXP2)));
-        LABELBACK(label);
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new ONDataEWidth(new VarArgument(EXP1),new VarArgument(EXP2)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //GetHP(NPCData, int)
-    {
-        Function* function = getFunction("GetHP", 2);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        code.push_back(new OPopRegister(new VarArgument(EXP2)));
-        LABELBACK(label);
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new ONDataHP(new VarArgument(EXP1),new VarArgument(EXP2)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //GetFamily(NPCData, int)
-    {
-        Function* function = getFunction("GetFamily", 2);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        code.push_back(new OPopRegister(new VarArgument(EXP2)));
-        LABELBACK(label);
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new ONDataFamily(new VarArgument(EXP1),new VarArgument(EXP2)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //GetCSet(NPCData, int)
-    {
-        Function* function = getFunction("GetCSet", 2);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        code.push_back(new OPopRegister(new VarArgument(EXP2)));
-        LABELBACK(label);
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new ONDataCSet(new VarArgument(EXP1),new VarArgument(EXP2)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //SetDMapIntro(NPCData, int)
-    {
-        Function* function = getFunction("GetAnim", 2);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        code.push_back(new OPopRegister(new VarArgument(EXP2)));
-        LABELBACK(label);
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new ONDataAnim(new VarArgument(EXP1),new VarArgument(EXP2)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //GetEAnim(NPCData, int)
-    {
-        Function* function = getFunction("GetEAnim", 2);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        code.push_back(new OPopRegister(new VarArgument(EXP2)));
-        LABELBACK(label);
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new ONDataEAnim(new VarArgument(EXP1),new VarArgument(EXP2)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //GetFramerate(NPCData, int)
-    {
-        Function* function = getFunction("GetFramerate", 2);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        code.push_back(new OPopRegister(new VarArgument(EXP2)));
-        LABELBACK(label);
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new ONDataFramerate(new VarArgument(EXP1),new VarArgument(EXP2)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //GetEFramerate(NPCData, int)
-    {
-        Function* function = getFunction("GetEFramerate", 2);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        code.push_back(new OPopRegister(new VarArgument(EXP2)));
-        LABELBACK(label);
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new ONDataEFramerate(new VarArgument(EXP1),new VarArgument(EXP2)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //GetTouchDamage(NPCData,, int)
-    {
-        Function* function = getFunction("GetTouchDamage", 2);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        code.push_back(new OPopRegister(new VarArgument(EXP2)));
-        LABELBACK(label);
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new ONDataTouchDamage(new VarArgument(EXP1),new VarArgument(EXP2)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //GetWeaponDamage(NPCData, int)
-    {
-        Function* function = getFunction("GetWeaponDamage", 2);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        code.push_back(new OPopRegister(new VarArgument(EXP2)));
-        LABELBACK(label);
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new ONDataWeaponDamage(new VarArgument(EXP1),new VarArgument(EXP2)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //GetWeapon(NPCData, int)
-    {
-        Function* function = getFunction("GetWeapon", 2);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        code.push_back(new OPopRegister(new VarArgument(EXP2)));
-        LABELBACK(label);
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new ONDataWeapon(new VarArgument(EXP1),new VarArgument(EXP2)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //GetRandom(NPCData, int)
-    {
-        Function* function = getFunction("GetRandom", 2);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        code.push_back(new OPopRegister(new VarArgument(EXP2)));
-        LABELBACK(label);
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new ONDataRandom(new VarArgument(EXP1),new VarArgument(EXP2)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //GetHaltRate(NPCData, int)
-    {
-        Function* function = getFunction("GetHaltRate", 2);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        code.push_back(new OPopRegister(new VarArgument(EXP2)));
-        LABELBACK(label);
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new ONDataHalt(new VarArgument(EXP1),new VarArgument(EXP2)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //GetStep(NPCData, int)
-    {
-        Function* function = getFunction("GetStep", 2);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        code.push_back(new OPopRegister(new VarArgument(EXP2)));
-        LABELBACK(label);
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new ONDataStep(new VarArgument(EXP1),new VarArgument(EXP2)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //GetHoming(NPCData, int)
-    {
-        Function* function = getFunction("GetHoming", 2);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        code.push_back(new OPopRegister(new VarArgument(EXP2)));
-        LABELBACK(label);
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new ONDataHoming(new VarArgument(EXP1),new VarArgument(EXP2)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //GetHunger(NPCData, int)
-    {
-        Function* function = getFunction("GetHunger", 2);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        code.push_back(new OPopRegister(new VarArgument(EXP2)));
-        LABELBACK(label);
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new ONDataHunger(new VarArgument(EXP1),new VarArgument(EXP2)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //GetDropset(NPCData, int)
-    {
-        Function* function = getFunction("GetDropset", 2);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        code.push_back(new OPopRegister(new VarArgument(EXP2)));
-        LABELBACK(label);
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new ONDataropset(new VarArgument(EXP1),new VarArgument(EXP2)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //GetBGSFX(NPCData, int)
-    {
-        Function* function = getFunction("GetBGSFX", 2);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        code.push_back(new OPopRegister(new VarArgument(EXP2)));
-        LABELBACK(label);
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new ONDataBGSound(new VarArgument(EXP1),new VarArgument(EXP2)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //GetHitSFX(NPCData, int)
-    {
-        Function* function = getFunction("GetHitSFX", 2);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        code.push_back(new OPopRegister(new VarArgument(EXP2)));
-        LABELBACK(label);
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new ONDataHitSound(new VarArgument(EXP1),new VarArgument(EXP2)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //GetDeathSFX(NPCData, int)
-    {
-        Function* function = getFunction("GetDeathSFX", 2);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        code.push_back(new OPopRegister(new VarArgument(EXP2)));
-        LABELBACK(label);
-        //pop pointer, and ignore it
-        POPREF(); 
-        code.push_back(new ONDataDeathSound(new VarArgument(EXP1),new VarArgument(EXP2)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //GetDrawXOffset(NPCData, int)
-    {
-        Function* function = getFunction("GetDrawXOffset", 2);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        code.push_back(new OPopRegister(new VarArgument(EXP2)));
-        LABELBACK(label);
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new ONDataXofs(new VarArgument(EXP1),new VarArgument(EXP2)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //GetDrawYOffset(NPCData, int)
-    {
-        Function* function = getFunction("GetDrawYOffset", 2);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        code.push_back(new OPopRegister(new VarArgument(EXP2)));
-        LABELBACK(label);
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new ONDataYofs(new VarArgument(EXP1),new VarArgument(EXP2)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //GetDrawZOffset(NPCData,int)
-    {
-        Function* function = getFunction("GetDrawZOffset", 2);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        code.push_back(new OPopRegister(new VarArgument(EXP2)));
-        LABELBACK(label);
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new ONDataZofs(new VarArgument(EXP1),new VarArgument(EXP2)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //GetHitXOffset(NPCData, int)
-    {
-        Function* function = getFunction("GetHitXOffset", 2);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        code.push_back(new OPopRegister(new VarArgument(EXP2)));
-        LABELBACK(label);
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new ONDataHitXOfs(new VarArgument(EXP1),new VarArgument(EXP2)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //GetHitYOffset(NPCData, int)
-    {
-        Function* function = getFunction("GetHitYOffset", 2);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        code.push_back(new OPopRegister(new VarArgument(EXP2)));
-        LABELBACK(label);
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new ONDataHYOfs(new VarArgument(EXP1),new VarArgument(EXP2)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //GetHitWidth(NPCData, int)
-    {
-        Function* function = getFunction("GetHitWidth", 2);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        code.push_back(new OPopRegister(new VarArgument(EXP2)));
-        LABELBACK(label);
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new ONDataHitWidth(new VarArgument(EXP1),new VarArgument(EXP2)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //GetHitHeight(NPCData, int)
-    {
-        Function* function = getFunction("GetHitHeight", 2);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        code.push_back(new OPopRegister(new VarArgument(EXP2)));
-        LABELBACK(label);
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new ONDataHitHeight(new VarArgument(EXP1),new VarArgument(EXP2)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //GetHitZHeight(NPCData, int)
-    {
-        Function* function = getFunction("GetHitZHeight", 2);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        code.push_back(new OPopRegister(new VarArgument(EXP2)));
-        LABELBACK(label);
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new ONDataHitZ(new VarArgument(EXP1),new VarArgument(EXP2)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //GetTileWidth(NPCData, int)
-    {
-        Function* function = getFunction("GetTileWidth", 2);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        code.push_back(new OPopRegister(new VarArgument(EXP2)));
-        LABELBACK(label);
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new ONDataTileWidth(new VarArgument(EXP1),new VarArgument(EXP2)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //GetTileHeight(NPCData, int)
-    {
-        Function* function = getFunction("GetTileHeight", 2);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        code.push_back(new OPopRegister(new VarArgument(EXP2)));
-        LABELBACK(label);
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new ONDataTileHeight(new VarArgument(EXP1),new VarArgument(EXP2)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //GetWeaponSprite(NPCData, int)
-    {
-        Function* function = getFunction("GetWeaponSprite", 2);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        code.push_back(new OPopRegister(new VarArgument(EXP2)));
-        LABELBACK(label);
-        //pop pointer, and ignore it
-        POPREF();
-        code.push_back(new ONDataWeapSprite(new VarArgument(EXP1),new VarArgument(EXP2)));
-        RETURN();
-        function->giveCode(code);
-    }
+	{
+		Function* function = getFunction("GetFlags", 2);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OPopRegister(new VarArgument(EXP2)));
+		POPREF();
+		code.push_back(new ONDataFlags(new VarArgument(EXP1),new VarArgument(EXP2)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//GetFlags2(NPCData, int)
+	{
+		Function* function = getFunction("GetFlags2", 2);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OPopRegister(new VarArgument(EXP2)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new ONDataFlags2(new VarArgument(EXP1),new VarArgument(EXP2)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//GetWidth(game, int)
+	{
+		Function* function = getFunction("GetWidth", 2);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OPopRegister(new VarArgument(EXP2)));
+		POPREF();
+		code.push_back(new ONDataWidth(new VarArgument(EXP1),new VarArgument(EXP2)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//GetHeight(NPCData, int)
+	{
+		Function* function = getFunction("GetHeight", 2);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OPopRegister(new VarArgument(EXP2)));
+		POPREF();
+		code.push_back(new ONDataHeight(new VarArgument(EXP1),new VarArgument(EXP2)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//GetSTile(NPCData, int)
+	{
+		Function* function = getFunction("GetSTile", 2);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OPopRegister(new VarArgument(EXP2)));
+		POPREF();
+		code.push_back(new ONDataTile(new VarArgument(EXP1),new VarArgument(EXP2)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//GetSWidth(NPCData, int)
+	{
+		Function* function = getFunction("GetSWidth", 2);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OPopRegister(new VarArgument(EXP2)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new ONDataSWidth(new VarArgument(EXP1),new VarArgument(EXP2)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//GetSHeight(NPCData, int)
+	{
+		Function* function = getFunction("GetSHeight", 2);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OPopRegister(new VarArgument(EXP2)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new ONDataSHeight(new VarArgument(EXP1),new VarArgument(EXP2)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//GetETile(NPCData, int)
+	{
+		Function* function = getFunction("GetETile", 2);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OPopRegister(new VarArgument(EXP2)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new ONDataETile(new VarArgument(EXP1),new VarArgument(EXP2)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//GetEWidth(NPCData, int)
+	{
+		Function* function = getFunction("GetEWidth", 2);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OPopRegister(new VarArgument(EXP2)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new ONDataEWidth(new VarArgument(EXP1),new VarArgument(EXP2)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//GetHP(NPCData, int)
+	{
+		Function* function = getFunction("GetHP", 2);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OPopRegister(new VarArgument(EXP2)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new ONDataHP(new VarArgument(EXP1),new VarArgument(EXP2)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//GetFamily(NPCData, int)
+	{
+		Function* function = getFunction("GetFamily", 2);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OPopRegister(new VarArgument(EXP2)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new ONDataFamily(new VarArgument(EXP1),new VarArgument(EXP2)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//GetCSet(NPCData, int)
+	{
+		Function* function = getFunction("GetCSet", 2);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OPopRegister(new VarArgument(EXP2)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new ONDataCSet(new VarArgument(EXP1),new VarArgument(EXP2)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//SetDMapIntro(NPCData, int)
+	{
+		Function* function = getFunction("GetAnim", 2);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OPopRegister(new VarArgument(EXP2)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new ONDataAnim(new VarArgument(EXP1),new VarArgument(EXP2)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//GetEAnim(NPCData, int)
+	{
+		Function* function = getFunction("GetEAnim", 2);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OPopRegister(new VarArgument(EXP2)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new ONDataEAnim(new VarArgument(EXP1),new VarArgument(EXP2)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//GetFramerate(NPCData, int)
+	{
+		Function* function = getFunction("GetFramerate", 2);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OPopRegister(new VarArgument(EXP2)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new ONDataFramerate(new VarArgument(EXP1),new VarArgument(EXP2)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//GetEFramerate(NPCData, int)
+	{
+		Function* function = getFunction("GetEFramerate", 2);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OPopRegister(new VarArgument(EXP2)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new ONDataEFramerate(new VarArgument(EXP1),new VarArgument(EXP2)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//GetTouchDamage(NPCData,, int)
+	{
+		Function* function = getFunction("GetTouchDamage", 2);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OPopRegister(new VarArgument(EXP2)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new ONDataTouchDamage(new VarArgument(EXP1),new VarArgument(EXP2)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//GetWeaponDamage(NPCData, int)
+	{
+		Function* function = getFunction("GetWeaponDamage", 2);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OPopRegister(new VarArgument(EXP2)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new ONDataWeaponDamage(new VarArgument(EXP1),new VarArgument(EXP2)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//GetWeapon(NPCData, int)
+	{
+		Function* function = getFunction("GetWeapon", 2);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OPopRegister(new VarArgument(EXP2)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new ONDataWeapon(new VarArgument(EXP1),new VarArgument(EXP2)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//GetRandom(NPCData, int)
+	{
+		Function* function = getFunction("GetRandom", 2);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OPopRegister(new VarArgument(EXP2)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new ONDataRandom(new VarArgument(EXP1),new VarArgument(EXP2)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//GetHaltRate(NPCData, int)
+	{
+		Function* function = getFunction("GetHaltRate", 2);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OPopRegister(new VarArgument(EXP2)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new ONDataHalt(new VarArgument(EXP1),new VarArgument(EXP2)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//GetStep(NPCData, int)
+	{
+		Function* function = getFunction("GetStep", 2);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OPopRegister(new VarArgument(EXP2)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new ONDataStep(new VarArgument(EXP1),new VarArgument(EXP2)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//GetHoming(NPCData, int)
+	{
+		Function* function = getFunction("GetHoming", 2);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OPopRegister(new VarArgument(EXP2)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new ONDataHoming(new VarArgument(EXP1),new VarArgument(EXP2)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//GetHunger(NPCData, int)
+	{
+		Function* function = getFunction("GetHunger", 2);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OPopRegister(new VarArgument(EXP2)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new ONDataHunger(new VarArgument(EXP1),new VarArgument(EXP2)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//GetDropset(NPCData, int)
+	{
+		Function* function = getFunction("GetDropset", 2);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OPopRegister(new VarArgument(EXP2)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new ONDataropset(new VarArgument(EXP1),new VarArgument(EXP2)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//GetBGSFX(NPCData, int)
+	{
+		Function* function = getFunction("GetBGSFX", 2);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OPopRegister(new VarArgument(EXP2)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new ONDataBGSound(new VarArgument(EXP1),new VarArgument(EXP2)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//GetHitSFX(NPCData, int)
+	{
+		Function* function = getFunction("GetHitSFX", 2);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OPopRegister(new VarArgument(EXP2)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new ONDataHitSound(new VarArgument(EXP1),new VarArgument(EXP2)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//GetDeathSFX(NPCData, int)
+	{
+		Function* function = getFunction("GetDeathSFX", 2);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OPopRegister(new VarArgument(EXP2)));
+		//pop pointer, and ignore it
+		POPREF(); 
+		code.push_back(new ONDataDeathSound(new VarArgument(EXP1),new VarArgument(EXP2)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//GetDrawXOffset(NPCData, int)
+	{
+		Function* function = getFunction("GetDrawXOffset", 2);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OPopRegister(new VarArgument(EXP2)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new ONDataXofs(new VarArgument(EXP1),new VarArgument(EXP2)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//GetDrawYOffset(NPCData, int)
+	{
+		Function* function = getFunction("GetDrawYOffset", 2);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OPopRegister(new VarArgument(EXP2)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new ONDataYofs(new VarArgument(EXP1),new VarArgument(EXP2)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//GetDrawZOffset(NPCData,int)
+	{
+		Function* function = getFunction("GetDrawZOffset", 2);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OPopRegister(new VarArgument(EXP2)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new ONDataZofs(new VarArgument(EXP1),new VarArgument(EXP2)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//GetHitXOffset(NPCData, int)
+	{
+		Function* function = getFunction("GetHitXOffset", 2);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OPopRegister(new VarArgument(EXP2)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new ONDataHitXOfs(new VarArgument(EXP1),new VarArgument(EXP2)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//GetHitYOffset(NPCData, int)
+	{
+		Function* function = getFunction("GetHitYOffset", 2);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OPopRegister(new VarArgument(EXP2)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new ONDataHYOfs(new VarArgument(EXP1),new VarArgument(EXP2)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//GetHitWidth(NPCData, int)
+	{
+		Function* function = getFunction("GetHitWidth", 2);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OPopRegister(new VarArgument(EXP2)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new ONDataHitWidth(new VarArgument(EXP1),new VarArgument(EXP2)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//GetHitHeight(NPCData, int)
+	{
+		Function* function = getFunction("GetHitHeight", 2);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OPopRegister(new VarArgument(EXP2)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new ONDataHitHeight(new VarArgument(EXP1),new VarArgument(EXP2)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//GetHitZHeight(NPCData, int)
+	{
+		Function* function = getFunction("GetHitZHeight", 2);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OPopRegister(new VarArgument(EXP2)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new ONDataHitZ(new VarArgument(EXP1),new VarArgument(EXP2)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//GetTileWidth(NPCData, int)
+	{
+		Function* function = getFunction("GetTileWidth", 2);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OPopRegister(new VarArgument(EXP2)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new ONDataTileWidth(new VarArgument(EXP1),new VarArgument(EXP2)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//GetTileHeight(NPCData, int)
+	{
+		Function* function = getFunction("GetTileHeight", 2);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OPopRegister(new VarArgument(EXP2)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new ONDataTileHeight(new VarArgument(EXP1),new VarArgument(EXP2)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//GetWeaponSprite(NPCData, int)
+	{
+		Function* function = getFunction("GetWeaponSprite", 2);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		code.push_back(new OPopRegister(new VarArgument(EXP2)));
+		//pop pointer, and ignore it
+		POPREF();
+		code.push_back(new ONDataWeapSprite(new VarArgument(EXP1),new VarArgument(EXP2)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
 	//SetFlags(NPCData, int, int)
-    {
-        Function* function = getFunction("SetFlags", 3);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the params
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        LABELBACK(label);
-        code.push_back(new OPopRegister(new VarArgument(EXP2)));
-        //pop pointer, and ignore it
+	{
+		Function* function = getFunction("SetFlags", 3);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the params
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		code.push_back(new OPopRegister(new VarArgument(EXP2)));
+		//pop pointer, and ignore it
 		POPREF();
-        code.push_back(new ONDataSetFlags(new VarArgument(EXP2), new VarArgument(EXP1)));
-        RETURN();
-        function->giveCode(code);
-    }
-     //SetTile(NPCData, int, int)
-    {
-        Function* function = getFunction("SetTile", 3);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the params
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        LABELBACK(label);
-        code.push_back(new OPopRegister(new VarArgument(EXP2)));
-        //pop pointer, and ignore it
+		code.push_back(new ONDataSetFlags(new VarArgument(EXP2), new VarArgument(EXP1)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	 //SetTile(NPCData, int, int)
+	{
+		Function* function = getFunction("SetTile", 3);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the params
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		code.push_back(new OPopRegister(new VarArgument(EXP2)));
+		//pop pointer, and ignore it
 		POPREF();
-        code.push_back(new ONDataSetBaseTile(new VarArgument(EXP2), new VarArgument(EXP1)));
-        RETURN();
-        function->giveCode(code);
-    }
-     //SetEHeight(NPCData, int, int)
-    {
-        Function* function = getFunction("SetEHeight", 3);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the params
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        LABELBACK(label);
-        code.push_back(new OPopRegister(new VarArgument(EXP2)));
-        //pop pointer, and ignore it
+		code.push_back(new ONDataSetBaseTile(new VarArgument(EXP2), new VarArgument(EXP1)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	 //SetEHeight(NPCData, int, int)
+	{
+		Function* function = getFunction("SetEHeight", 3);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the params
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		code.push_back(new OPopRegister(new VarArgument(EXP2)));
+		//pop pointer, and ignore it
 		POPREF();
-        code.push_back(new ONDataSetEHeight(new VarArgument(EXP2), new VarArgument(EXP1)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //SetFlags2(NPCData, int, int)
-    {
-        Function* function = getFunction("SetFlags2", 3);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the params
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        LABELBACK(label);
-        code.push_back(new OPopRegister(new VarArgument(EXP2)));
-        //pop pointer, and ignore it
+		code.push_back(new ONDataSetEHeight(new VarArgument(EXP2), new VarArgument(EXP1)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//SetFlags2(NPCData, int, int)
+	{
+		Function* function = getFunction("SetFlags2", 3);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the params
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		code.push_back(new OPopRegister(new VarArgument(EXP2)));
+		//pop pointer, and ignore it
 		POPREF();
-        code.push_back(new ONDataSetFlags2(new VarArgument(EXP2), new VarArgument(EXP1)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //SetWidth(NPCData, int, int)
-    {
-        Function* function = getFunction("SetWidth", 3);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the params
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        LABELBACK(label);
-        code.push_back(new OPopRegister(new VarArgument(EXP2)));
-        //pop pointer, and ignore it
+		code.push_back(new ONDataSetFlags2(new VarArgument(EXP2), new VarArgument(EXP1)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//SetWidth(NPCData, int, int)
+	{
+		Function* function = getFunction("SetWidth", 3);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the params
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		code.push_back(new OPopRegister(new VarArgument(EXP2)));
+		//pop pointer, and ignore it
 		POPREF();
-        code.push_back(new ONDataSetWidth(new VarArgument(EXP2), new VarArgument(EXP1)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //SetHeight(NPCData, int, int)
-    {
-        Function* function = getFunction("SetHeight", 3);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the params
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        LABELBACK(label);
-        code.push_back(new OPopRegister(new VarArgument(EXP2)));
-        //pop pointer, and ignore it
+		code.push_back(new ONDataSetWidth(new VarArgument(EXP2), new VarArgument(EXP1)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//SetHeight(NPCData, int, int)
+	{
+		Function* function = getFunction("SetHeight", 3);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the params
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		code.push_back(new OPopRegister(new VarArgument(EXP2)));
+		//pop pointer, and ignore it
 		POPREF();
-        code.push_back(new ONDataSetHeight(new VarArgument(EXP2), new VarArgument(EXP1)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //SetSTile(NPCData, int, int)
-    {
-        Function* function = getFunction("SetSTile", 3);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the params
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        LABELBACK(label);
-        code.push_back(new OPopRegister(new VarArgument(EXP2)));
-        //pop pointer, and ignore it
+		code.push_back(new ONDataSetHeight(new VarArgument(EXP2), new VarArgument(EXP1)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//SetSTile(NPCData, int, int)
+	{
+		Function* function = getFunction("SetSTile", 3);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the params
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		code.push_back(new OPopRegister(new VarArgument(EXP2)));
+		//pop pointer, and ignore it
 		POPREF();
-        code.push_back(new ONDataSetTile(new VarArgument(EXP2), new VarArgument(EXP1)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //SetSWidth(NPCData, int, int)
-    {
-        Function* function = getFunction("SetSWidth", 3);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the params
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        LABELBACK(label);
-        code.push_back(new OPopRegister(new VarArgument(EXP2)));
-        //pop pointer, and ignore it
+		code.push_back(new ONDataSetTile(new VarArgument(EXP2), new VarArgument(EXP1)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//SetSWidth(NPCData, int, int)
+	{
+		Function* function = getFunction("SetSWidth", 3);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the params
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		code.push_back(new OPopRegister(new VarArgument(EXP2)));
+		//pop pointer, and ignore it
 		POPREF();
-        code.push_back(new ONDataSetSWidth(new VarArgument(EXP2), new VarArgument(EXP1)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //SetSHeight(NPCData, int, int)
-    {
-        Function* function = getFunction("SetSHeight", 3);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the params
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        LABELBACK(label);
-        code.push_back(new OPopRegister(new VarArgument(EXP2)));
-        //pop pointer, and ignore it
+		code.push_back(new ONDataSetSWidth(new VarArgument(EXP2), new VarArgument(EXP1)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//SetSHeight(NPCData, int, int)
+	{
+		Function* function = getFunction("SetSHeight", 3);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the params
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		code.push_back(new OPopRegister(new VarArgument(EXP2)));
+		//pop pointer, and ignore it
 		POPREF();
-        code.push_back(new ONDataSetSHeight(new VarArgument(EXP2), new VarArgument(EXP1)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //SetETile(NPCData, int, int)
-    {
-        Function* function = getFunction("SetETile", 3);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the params
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        LABELBACK(label);
-        code.push_back(new OPopRegister(new VarArgument(EXP2)));
-        //pop pointer, and ignore it
+		code.push_back(new ONDataSetSHeight(new VarArgument(EXP2), new VarArgument(EXP1)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//SetETile(NPCData, int, int)
+	{
+		Function* function = getFunction("SetETile", 3);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the params
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		code.push_back(new OPopRegister(new VarArgument(EXP2)));
+		//pop pointer, and ignore it
 		POPREF();
-        code.push_back(new ONDataSetETile(new VarArgument(EXP2), new VarArgument(EXP1)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //SetEWidth(NPCData, int, int)
-    {
-        Function* function = getFunction("SetEWidth", 3);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the params
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        LABELBACK(label);
-        code.push_back(new OPopRegister(new VarArgument(EXP2)));
-        //pop pointer, and ignore it
+		code.push_back(new ONDataSetETile(new VarArgument(EXP2), new VarArgument(EXP1)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//SetEWidth(NPCData, int, int)
+	{
+		Function* function = getFunction("SetEWidth", 3);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the params
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		code.push_back(new OPopRegister(new VarArgument(EXP2)));
+		//pop pointer, and ignore it
 		POPREF();
-        code.push_back(new ONDataSetEWidth(new VarArgument(EXP2), new VarArgument(EXP1)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //SetHP(NPCData, int, int)
-    {
-        Function* function = getFunction("SetHP", 3);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the params
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        LABELBACK(label);
-        code.push_back(new OPopRegister(new VarArgument(EXP2)));
-        //pop pointer, and ignore it
+		code.push_back(new ONDataSetEWidth(new VarArgument(EXP2), new VarArgument(EXP1)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//SetHP(NPCData, int, int)
+	{
+		Function* function = getFunction("SetHP", 3);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the params
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		code.push_back(new OPopRegister(new VarArgument(EXP2)));
+		//pop pointer, and ignore it
 		POPREF();
-        code.push_back(new ONDataSetHP(new VarArgument(EXP2), new VarArgument(EXP1)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //SetFamily(NPCData, int, int)
-    {
-        Function* function = getFunction("SetFamily", 3);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the params
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        LABELBACK(label);
-        code.push_back(new OPopRegister(new VarArgument(EXP2)));
-        //pop pointer, and ignore it
+		code.push_back(new ONDataSetHP(new VarArgument(EXP2), new VarArgument(EXP1)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//SetFamily(NPCData, int, int)
+	{
+		Function* function = getFunction("SetFamily", 3);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the params
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		code.push_back(new OPopRegister(new VarArgument(EXP2)));
+		//pop pointer, and ignore it
 		POPREF();
-        code.push_back(new ONDataSetFamily(new VarArgument(EXP2), new VarArgument(EXP1)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //SetCSet(NPCData, int, int)
-    {
-        Function* function = getFunction("SetCSet", 3);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the params
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        LABELBACK(label);
-        code.push_back(new OPopRegister(new VarArgument(EXP2)));
-        //pop pointer, and ignore it
+		code.push_back(new ONDataSetFamily(new VarArgument(EXP2), new VarArgument(EXP1)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//SetCSet(NPCData, int, int)
+	{
+		Function* function = getFunction("SetCSet", 3);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the params
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		code.push_back(new OPopRegister(new VarArgument(EXP2)));
+		//pop pointer, and ignore it
 		POPREF();
-        code.push_back(new ONDataSetCSet(new VarArgument(EXP2), new VarArgument(EXP1)));
-        RETURN();
-        function->giveCode(code);
-    }
-    //SetDMapIntro(NPCData, int, int)
-    {
-        Function* function = getFunction("SetAnim", 3);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the params
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        LABELBACK(label);
-        code.push_back(new OPopRegister(new VarArgument(EXP2)));
-        //pop pointer, and ignore it
+		code.push_back(new ONDataSetCSet(new VarArgument(EXP2), new VarArgument(EXP1)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	//SetDMapIntro(NPCData, int, int)
+	{
+		Function* function = getFunction("SetAnim", 3);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the params
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		code.push_back(new OPopRegister(new VarArgument(EXP2)));
+		//pop pointer, and ignore it
 		POPREF();
-        code.push_back(new ONDataSetAnim(new VarArgument(EXP2), new VarArgument(EXP1)));
-        RETURN();
-        function->giveCode(code);
-    }
+		code.push_back(new ONDataSetAnim(new VarArgument(EXP2), new VarArgument(EXP1)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
 }
 
 DMapDataSymbols DMapDataSymbols::singleton = DMapDataSymbols();
@@ -11972,8 +11601,8 @@ static AccessorTable DMapDataTable[] =
 
 DMapDataSymbols::DMapDataSymbols()
 {
-    table = DMapDataTable;
-    refVar = REFDMAPDATA;
+	table = DMapDataTable;
+	refVar = REFDMAPDATA;
 }
 
 void DMapDataSymbols::generateCode()
@@ -12005,8 +11634,8 @@ static AccessorTable ShopDataTable[] =
 
 ShopDataSymbols::ShopDataSymbols()
 {
-    table = ShopDataTable;
-    refVar = REFSHOPDATA;
+	table = ShopDataTable;
+	refVar = REFSHOPDATA;
 }
 
 void ShopDataSymbols::generateCode()
@@ -12076,38 +11705,40 @@ static AccessorTable MessageDataTable[] =
 
 MessageDataSymbols::MessageDataSymbols()
 {
-    table = MessageDataTable;
-    refVar = REFMSGDATA;
+	table = MessageDataTable;
+	refVar = REFMSGDATA;
 }
 
 void MessageDataSymbols::generateCode()
 {
-    // Get("dest_string[]")
-    {
-	    Function* function = getFunction("Get", 2); 
-	    int label = function->getLabel(); 
-	    vector<Opcode *> code; 
-	    code.push_back(new OPopRegister(new VarArgument(EXP2)));
-	    LABELBACK(label); 
+	// Get("dest_string[]")
+	{
+		Function* function = getFunction("Get", 2); 
+		int label = function->getLabel(); 
+		vector<Opcode *> code; 
+		code.push_back(new OPopRegister(new VarArgument(EXP2)));
+		LABELFRONT(label); 
 		POPREF();
-	    code.push_back(new OMessageDataSetStringRegister(new VarArgument(EXP2))); 
-	    RETURN(); 
-        function->giveCode(code);
-    }
-    
-    //void TriggerSecret(game, int)
-    /*
-    {
-	    Function* function = getFunction("TriggerSecret", 2);
-	    int label = function->getLabel();
-	    vector<Opcode *> code; 
-	    code.push_back(new OPopRegister(new VarArgument(EXP2)));
-	    LABELBACK(label); 
-	    code.push_back(new OMessageDataSetStringRegister(new VarArgument(EXP2))); 
-	    RETURN(); 
-	    function->giveCode(code); 
-    }
-    */
+		code.push_back(new OMessageDataSetStringRegister(new VarArgument(EXP2))); 
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
+	
+	//void TriggerSecret(game, int)
+	/*
+	{
+		Function* function = getFunction("TriggerSecret", 2);
+		int label = function->getLabel();
+		vector<Opcode *> code; 
+		code.push_back(new OPopRegister(new VarArgument(EXP2)));
+		LABELFRONT(label); 
+		code.push_back(new OMessageDataSetStringRegister(new VarArgument(EXP2))); 
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code); 
+	}
+	*/
 }
 
 UntypedSymbols UntypedSymbols::singleton = UntypedSymbols();
@@ -12123,8 +11754,8 @@ static AccessorTable NilTable[] =
 
 UntypedSymbols::UntypedSymbols()
 {
-    table = NilTable;
-    refVar = REFNIL;
+	table = NilTable;
+	refVar = REFNIL;
 	//hasPrefixType = false;
 }
 
@@ -12154,8 +11785,8 @@ static AccessorTable DropsetTable[] =
 
 DropsetSymbols::DropsetSymbols()
 {
-    table = DropsetTable;
-    refVar = REFDROPS;
+	table = DropsetTable;
+	refVar = REFDROPS;
 }
 
 void DropsetSymbols::generateCode()
@@ -12175,8 +11806,8 @@ static AccessorTable PondsTable[] =
 
 PondSymbols::PondSymbols()
 {
-    table = PondsTable;
-    refVar = REFPONDS;
+	table = PondsTable;
+	refVar = REFPONDS;
 }
 
 void PondSymbols::generateCode()
@@ -12196,8 +11827,8 @@ static AccessorTable WarpringTable[] =
 
 WarpringSymbols::WarpringSymbols()
 {
-    table = WarpringTable;
-    refVar = REFWARPRINGS;
+	table = WarpringTable;
+	refVar = REFWARPRINGS;
 }
 
 void WarpringSymbols::generateCode()
@@ -12217,8 +11848,8 @@ static AccessorTable DoorsetTable[] =
 
 DoorsetSymbols::DoorsetSymbols()
 {
-    table = DoorsetTable;
-    refVar = REFDOORS;
+	table = DoorsetTable;
+	refVar = REFDOORS;
 }
 
 void DoorsetSymbols::generateCode()
@@ -12238,8 +11869,8 @@ static AccessorTable MiscColoursTable[] =
 
 MiscColourSymbols::MiscColourSymbols()
 {
-    table = MiscColoursTable;
-    refVar = REFUICOLOURS;
+	table = MiscColoursTable;
+	refVar = REFUICOLOURS;
 }
 
 void MiscColourSymbols::generateCode()
@@ -12259,8 +11890,8 @@ static AccessorTable RGBTable[] =
 
 RGBSymbols::RGBSymbols()
 {
-    table = RGBTable;
-    refVar = REFRGB;
+	table = RGBTable;
+	refVar = REFRGB;
 }
 
 void RGBSymbols::generateCode()
@@ -12280,8 +11911,8 @@ static AccessorTable PaletteTable[] =
 
 PaletteSymbols::PaletteSymbols()
 {
-    table = PaletteTable;
-    refVar = REFPALETTE;
+	table = PaletteTable;
+	refVar = REFPALETTE;
 }
 
 void PaletteSymbols::generateCode()
@@ -12301,8 +11932,8 @@ static AccessorTable TunesTable[] =
 
 TunesSymbols::TunesSymbols()
 {
-    table = TunesTable;
-    refVar = REFTUNES;
+	table = TunesTable;
+	refVar = REFTUNES;
 }
 
 void TunesSymbols::generateCode()
@@ -12322,8 +11953,8 @@ static AccessorTable PalCycleTable[] =
 
 PalCycleSymbols::PalCycleSymbols()
 {
-    table = PalCycleTable;
-    refVar = REFPALCYCLE;
+	table = PalCycleTable;
+	refVar = REFPALCYCLE;
 }
 
 void PalCycleSymbols::generateCode()
@@ -12343,8 +11974,8 @@ static AccessorTable GameDataTable[] =
 
 GamedataSymbols::GamedataSymbols()
 {
-    table = GameDataTable;
-    refVar = REFGAMEDATA;
+	table = GameDataTable;
+	refVar = REFGAMEDATA;
 }
 
 void GamedataSymbols::generateCode()
@@ -12364,8 +11995,8 @@ static AccessorTable CheatTable[] =
 
 CheatsSymbols::CheatsSymbols()
 {
-    table = CheatTable;
-    refVar = REFCHEATS;
+	table = CheatTable;
+	refVar = REFCHEATS;
 }
 
 void CheatsSymbols::generateCode()
@@ -12386,54 +12017,54 @@ static AccessorTable FileSystemTable[] =
 
 FileSystemSymbols::FileSystemSymbols()
 {
-    table = FileSystemTable;
-    refVar = NUL;
+	table = FileSystemTable;
+	refVar = NUL;
 }
 
 void FileSystemSymbols::generateCode()
 {
 	//bool DirExists(FileSystem, char32*)
-    {
-	    Function* function = getFunction("DirExists", 2);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the params
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        LABELBACK(label);
-        //pop pointer
-        POPREF();
-        code.push_back(new ODirExists(new VarArgument(EXP1)));
-        RETURN();
-        function->giveCode(code);
-    }
+	{
+		Function* function = getFunction("DirExists", 2);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the params
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		//pop pointer
+		POPREF();
+		code.push_back(new ODirExists(new VarArgument(EXP1)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
 	//bool FileExists(FileSystem, char32*)
-    {
-	    Function* function = getFunction("FileExists", 2);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the params
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        LABELBACK(label);
-        //pop pointer
-        POPREF();
-        code.push_back(new OFileExists(new VarArgument(EXP1)));
-        RETURN();
-        function->giveCode(code);
-    }
+	{
+		Function* function = getFunction("FileExists", 2);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the params
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		//pop pointer
+		POPREF();
+		code.push_back(new OFileExists(new VarArgument(EXP1)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
 	//bool Remove(FileSystem, char32*)
-    {
-	    Function* function = getFunction("Remove", 2);
-        int label = function->getLabel();
-        vector<Opcode *> code;
-        //pop off the params
-        code.push_back(new OPopRegister(new VarArgument(EXP1)));
-        LABELBACK(label);
-        //pop pointer
-        POPREF();
-        code.push_back(new OFileSystemRemove(new VarArgument(EXP1)));
-        RETURN();
-        function->giveCode(code);
-    }
+	{
+		Function* function = getFunction("Remove", 2);
+		int label = function->getLabel();
+		vector<Opcode *> code;
+		//pop off the params
+		code.push_back(new OPopRegister(new VarArgument(EXP1)));
+		//pop pointer
+		POPREF();
+		code.push_back(new OFileSystemRemove(new VarArgument(EXP1)));
+		RETURN();
+		LABELFRONT(label);
+		function->giveCode(code);
+	}
 }
 
 FileSymbols FileSymbols::singleton = FileSymbols();
@@ -12473,8 +12104,8 @@ static AccessorTable FileTable[] =
 
 FileSymbols::FileSymbols()
 {
-    table = FileTable;
-    refVar = REFFILE;
+	table = FileTable;
+	refVar = REFFILE;
 }
 
 void FileSymbols::generateCode()
@@ -12486,12 +12117,12 @@ void FileSymbols::generateCode()
 		vector<Opcode *> code;
 		//pop off the params
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
-		LABELBACK(label);
 		//pop pointer
 		POPREF();
 		code.push_back(new OFileOpen(new VarArgument(EXP1)));
 		REASSIGN_PTR(EXP2);
 		RETURN();
+		LABELFRONT(label);
 		function->giveCode(code);
 	}
 	//bool Create(file, char32*)
@@ -12501,12 +12132,12 @@ void FileSymbols::generateCode()
 		vector<Opcode *> code;
 		//pop off the params
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
-		LABELBACK(label);
 		//pop pointer
 		POPREF();
 		code.push_back(new OFileCreate(new VarArgument(EXP1)));
 		REASSIGN_PTR(EXP2);
 		RETURN();
+		LABELFRONT(label);
 		function->giveCode(code);
 	}
 	//void Close(file)
@@ -12515,11 +12146,10 @@ void FileSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		//pop pointer
-		ASSERT_NON_NUL();
 		POPREF();
-		LABELBACK(label);
 		code.push_back(new OFileClose());
 		RETURN();
+		LABELFRONT(label);
 		function->giveCode(code);
 	}
 	//void Free(file)
@@ -12528,11 +12158,10 @@ void FileSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		//pop pointer
-		ASSERT_NON_NUL();
 		POPREF();
-		LABELBACK(label);
 		code.push_back(new OFileFree());
 		RETURN();
+		LABELFRONT(label);
 		function->giveCode(code);
 	}
 	//bool isAllocated(file)
@@ -12541,11 +12170,10 @@ void FileSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		//pop pointer
-		ASSERT_NON_NUL();
 		POPREF();
-		LABELBACK(label);
 		code.push_back(new OFileIsAllocated());
 		RETURN();
+		LABELFRONT(label);
 		function->giveCode(code);
 	}
 	//bool isValid(file)
@@ -12554,11 +12182,10 @@ void FileSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		//pop pointer
-		ASSERT_NON_NUL();
 		POPREF();
-		LABELBACK(label);
 		code.push_back(new OFileIsValid());
 		RETURN();
+		LABELFRONT(label);
 		function->giveCode(code);
 	}
 	//bool Allocate(file)
@@ -12567,12 +12194,11 @@ void FileSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		//pop pointer
-		ASSERT_NON_NUL();
 		POPREF();
-		LABELBACK(label);
 		code.push_back(new OAllocateFile());
 		REASSIGN_PTR(EXP2);
 		RETURN();
+		LABELFRONT(label);
 		function->giveCode(code);
 	}
 	//bool Flush(file)
@@ -12581,11 +12207,10 @@ void FileSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		//pop pointer
-		ASSERT_NON_NUL();
 		POPREF();
-		LABELBACK(label);
 		code.push_back(new OFileFlush());
 		RETURN();
+		LABELFRONT(label);
 		function->giveCode(code);
 	}
 	//int ReadChars(file, char32*, int, int)
@@ -12594,13 +12219,13 @@ void FileSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		code.push_back(new OPopRegister(new VarArgument(INDEX)));
-		LABELBACK(label);
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		//pop pointer
 		POPREF();
 		code.push_back(new OFileReadChars(new VarArgument(EXP1),new VarArgument(EXP2)));
 		RETURN();
+		LABELFRONT(label);
 		function->giveCode(code);
 	}
 	//int ReadString(file, char32*)
@@ -12609,11 +12234,11 @@ void FileSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
-		LABELBACK(label);
 		//pop pointer
 		POPREF();
 		code.push_back(new OFileReadString(new VarArgument(EXP1)));
 		RETURN();
+		LABELFRONT(label);
 		function->giveCode(code);
 	}
 	//int ReadInts(file, char32*, int, int)
@@ -12622,13 +12247,13 @@ void FileSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		code.push_back(new OPopRegister(new VarArgument(INDEX)));
-		LABELBACK(label);
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		//pop pointer
 		POPREF();
 		code.push_back(new OFileReadInts(new VarArgument(EXP1),new VarArgument(EXP2)));
 		RETURN();
+		LABELFRONT(label);
 		function->giveCode(code);
 	}
 	//int WriteChars(file, char32*, int, int)
@@ -12637,13 +12262,13 @@ void FileSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		code.push_back(new OPopRegister(new VarArgument(INDEX)));
-		LABELBACK(label);
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		//pop pointer
 		POPREF();
 		code.push_back(new OFileWriteChars(new VarArgument(EXP1),new VarArgument(EXP2)));
 		RETURN();
+		LABELFRONT(label);
 		function->giveCode(code);
 	}
 	//int WriteString(file, char32*)
@@ -12652,11 +12277,11 @@ void FileSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
-		LABELBACK(label);
 		//pop pointer
 		POPREF();
 		code.push_back(new OFileWriteString(new VarArgument(EXP1)));
 		RETURN();
+		LABELFRONT(label);
 		function->giveCode(code);
 	}
 	//int WriteInts(file, char32*, int, int)
@@ -12665,13 +12290,13 @@ void FileSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		code.push_back(new OPopRegister(new VarArgument(INDEX)));
-		LABELBACK(label);
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		//pop pointer
 		POPREF();
 		code.push_back(new OFileWriteInts(new VarArgument(EXP1),new VarArgument(EXP2)));
 		RETURN();
+		LABELFRONT(label);
 		function->giveCode(code);
 	}
 	//char32 GetChar(file)
@@ -12680,11 +12305,10 @@ void FileSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		//pop pointer
-		ASSERT_NON_NUL();
 		POPREF();
-		LABELBACK(label);
 		code.push_back(new OFileGetChar());
 		RETURN();
+		LABELFRONT(label);
 		function->giveCode(code);
 	}
 	//char32 PutChar(file, char32 c)
@@ -12693,11 +12317,11 @@ void FileSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
-		LABELBACK(label);
 		//pop pointer
 		POPREF();
 		code.push_back(new OFilePutChar(new VarArgument(EXP1)));
 		RETURN();
+		LABELFRONT(label);
 		function->giveCode(code);
 	}
 	//char32 UngetChar(file, char32 c)
@@ -12706,11 +12330,11 @@ void FileSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
-		LABELBACK(label);
 		//pop pointer
 		POPREF();
 		code.push_back(new OFileUngetChar(new VarArgument(EXP1)));
 		RETURN();
+		LABELFRONT(label);
 		function->giveCode(code);
 	}
 	//bool Seek(file, int_full, bool)
@@ -12719,12 +12343,12 @@ void FileSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
-		LABELBACK(label);
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		//pop pointer
 		POPREF();
 		code.push_back(new OFileSeek(new VarArgument(EXP1),new VarArgument(EXP2)));
 		RETURN();
+		LABELFRONT(label);
 		function->giveCode(code);
 	}
 	//void Rewind(file)
@@ -12733,11 +12357,10 @@ void FileSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		//pop pointer
-		ASSERT_NON_NUL();
 		POPREF();
-		LABELBACK(label);
 		code.push_back(new OFileRewind());
 		RETURN();
+		LABELFRONT(label);
 		function->giveCode(code);
 	}
 	//void ClearError(file)
@@ -12746,11 +12369,10 @@ void FileSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		//pop pointer
-		ASSERT_NON_NUL();
 		POPREF();
-		LABELBACK(label);
 		code.push_back(new OFileClearError());
 		RETURN();
+		LABELFRONT(label);
 		function->giveCode(code);
 	}
 	//int OpenMode(file, char32*, char32*)
@@ -12759,13 +12381,13 @@ void FileSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
-		LABELBACK(label);
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		//pop pointer
 		POPREF();
 		code.push_back(new OFileOpenMode(new VarArgument(EXP1),new VarArgument(EXP2)));
 		REASSIGN_PTR(EXP2);
 		RETURN();
+		LABELFRONT(label);
 		function->giveCode(code);
 	}
 	//int GetError(file, char32*)
@@ -12774,11 +12396,11 @@ void FileSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
-		LABELBACK(label);
 		//pop pointer
 		POPREF();
 		code.push_back(new OFileGetError(new VarArgument(EXP1)));
 		RETURN();
+		LABELFRONT(label);
 		function->giveCode(code);
 	}
 	//bool Remove(file)
@@ -12787,11 +12409,10 @@ void FileSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		//pop pointer
-		ASSERT_NON_NUL();
 		POPREF();
-		LABELBACK(label);
 		code.push_back(new OFileRemove());
 		RETURN();
+		LABELFRONT(label);
 		function->giveCode(code);
 	}
 }
@@ -12808,8 +12429,8 @@ static AccessorTable SubscreenDataTable[] =
 
 SubscreenDataSymbols::SubscreenDataSymbols()
 {
-    table = SubscreenDataTable;
-    refVar = REFSUBSCREEN;
+	table = SubscreenDataTable;
+	refVar = REFSUBSCREEN;
 }
 
 void SubscreenDataSymbols::generateCode()
@@ -12830,8 +12451,8 @@ static AccessorTable ModuleTable[] =
 
 ModuleSymbols::ModuleSymbols()
 {
-    table = ModuleTable;
-    refVar = NUL;
+	table = ModuleTable;
+	refVar = NUL;
 }
 
 void ModuleSymbols::generateCode()
@@ -12843,12 +12464,12 @@ void ModuleSymbols::generateCode()
 		vector<Opcode *> code;
 		//pop off the params
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
-		LABELBACK(label);
 		code.push_back(new OPopRegister(new VarArgument(INDEX)));
 		//pop pointer, and ignore it
 		POPREF();
 		code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(MODULEGETINT)));
 		RETURN();
+		LABELFRONT(label);
 		function->giveCode(code);
 	}
 	//int GetString(file, char32* dest, char32* section, char32* entry)
@@ -12858,13 +12479,13 @@ void ModuleSymbols::generateCode()
 		vector<Opcode *> code;
 		//pop off the params
 		code.push_back(new OPopRegister(new VarArgument(SFTEMP)));
-		LABELBACK(label);
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
 		code.push_back(new OPopRegister(new VarArgument(INDEX)));
 		//pop pointer, and ignore it
 		POPREF();
 		code.push_back(new OSetRegister(new VarArgument(MODULEGETSTR), new VarArgument(SFTEMP)));
 		RETURN();
+		LABELFRONT(label);
 		function->giveCode(code);
 	}
 	//GetItemClass(char32* dest, int ic)
@@ -12874,12 +12495,12 @@ void ModuleSymbols::generateCode()
 		vector<Opcode *> code;
 		//pop off the params
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
-		LABELBACK(label);
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
 		//pop pointer, and ignore it
 		POPREF();
 		code.push_back(new OModuleGetIC(new VarArgument(EXP2), new VarArgument(EXP1)));
 		RETURN();
+		LABELFRONT(label);
 		function->giveCode(code);
 	}
 }

@@ -466,7 +466,8 @@ Script* Function::getScript() const
 
 int Function::getLabel() const
 {
-	if (!label) label = ScriptParser::getUniqueLabelID();
+	if (!label) 
+		label = ScriptParser::getUniqueLabelID();
 	return *label;
 }
 

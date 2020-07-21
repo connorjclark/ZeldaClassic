@@ -1085,6 +1085,7 @@ RootScope::RootScope(TypeStore& typeStore)
 			*static_cast<DataTypeClass const*>(DataType::get(typeId));
 		ZClass& klass = *typeStore.getClass(type.getClassId());
 		LibrarySymbols& library = *LibrarySymbols::getTypeInstance(typeId);
+		al_trace("Adding symbols %d\n", typeId);
 		library.addSymbolsToScope(klass);
 	}
 
