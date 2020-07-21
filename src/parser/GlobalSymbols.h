@@ -47,6 +47,19 @@ protected:
 	LibrarySymbols() : refVar(0), hasPrefixType(true) {}
     int refVar;
 	bool hasPrefixType;
+	//Old macros
+	void POPREF(Function* function, vector<Opcode *> &code);
+	void INLINE_CHECK(Function* function, vector<Opcode *> &code);
+	void RETURN(Function* function, vector<Opcode *> &code);
+	void REASSIGN_PTR(Function* function, vector<Opcode *> &code, int reg);
+	void POPARGS(vector<Opcode *> &code, int num_args, int reg);
+	//getter/setter
+	void getVariable(Function* function, int var);
+	void getIndexedVariable(Function* function, int var);
+	void setVariable(Function* function, int var);
+	void setBoolVariable(Function* function, int var);
+	void setIndexedVariable(Function* function, int var);
+	//
 
 	ZScript::Function* getFunction(string const& name, int numParams) const;
 

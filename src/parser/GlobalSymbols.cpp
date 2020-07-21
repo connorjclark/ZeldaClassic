@@ -16,42 +16,38 @@ using namespace ZScript;
 
 const int radsperdeg = 572958;
 
-//New Types
-
-//{ Defines
+//{ Helper Functions
 
 /*
 	Pop to refVar, unless refVar is NUL.
 	If refVar is NUL, instead set the IFUNCFLAG_SKIPPOINTER
 */
-#define POPREF() \
-if(refVar == NUL) \
-{ \
-	function->internal_flags |= IFUNCFLAG_SKIPPOINTER; \
-} \
-else \
-	code.push_back(new OPopRegister(new VarArgument(refVar)))
+void LibrarySymbols::POPREF(Function* function, vector<Opcode *> &code)
+{
+	if(refVar == NUL)
+		function->internal_flags |= IFUNCFLAG_SKIPPOINTER;
+	else
+		code.push_back(new OPopRegister(new VarArgument(refVar)));
+}
 
 /*
 	Forces any function to be inline where inline gives strict gain; i.e. has no negative effects.
 	Presently, this is defined as any function with < 5 opcodes, before adding 'RETURN'.
 */
-#define INLINE_CHECK() \
-if(code.size() < 5) function->setFlag(FUNCFLAG_INLINE)
+void LibrarySymbols::INLINE_CHECK(Function* function, vector<Opcode *> &code)
+{
+	if(code.size() < 5) function->setFlag(FUNCFLAG_INLINE);
+}
 
 /*
 	Return from the function. Automatically skips OReturn() on inline functions.
 */
-#define RETURN() \
-INLINE_CHECK(); \
-if(!(function->getFlag(FUNCFLAG_INLINE))) \
-	code.push_back(new OReturn())
-
-/*
-	Adds the label passed to the back of the 'code' vector<Opcode*>
-*/
-#define LABELBACK(LBL) \
-code.back()->setLabel(LBL)
+void LibrarySymbols::RETURN(Function* function, vector<Opcode *> &code)
+{
+	INLINE_CHECK(function, code);
+	if(!(function->getFlag(FUNCFLAG_INLINE)))
+		code.push_back(new OReturn());
+}
 
 /*
 	Adds the label passed to the front of the 'code' vector<Opcode*>
@@ -62,17 +58,20 @@ code.front()->setLabel(LBL)
 /*
 	Reassigns the pointer that was referenced to the passed register.
 */
-#define REASSIGN_PTR(reg) \
-assert(refVar != NUL); \
-if(reg!=EXP2) code.push_back(new OSetRegister(new VarArgument(EXP2), new VarArgument(reg))); \
-function->internal_flags |= IFUNCFLAG_REASSIGNPTR
+void LibrarySymbols::REASSIGN_PTR(Function* function, vector<Opcode *> &code, int reg)
+{
+	assert(refVar != NUL);
+	if(reg!=EXP2) code.push_back(new OSetRegister(new VarArgument(EXP2), new VarArgument(reg)));
+	function->internal_flags |= IFUNCFLAG_REASSIGNPTR;
+}
 
 /*
 	Pop multiple args to 1 register; mostly used to clear the stack after drawing commands.
 */
-#define POP_ARGS(num_args, t) \
-	code.push_back(new OPopArgsRegister(new VarArgument(t), new LiteralArgument(num_args)))
-
+void LibrarySymbols::POPARGS(vector<Opcode *> &code, int num_args, int reg)
+{
+	code.push_back(new OPopArgsRegister(new VarArgument(reg), new LiteralArgument(num_args)));
+}
 //}
 
 LibrarySymbols* LibrarySymbols::getTypeInstance(DataTypeId typeId)
@@ -121,30 +120,21 @@ LibrarySymbols* LibrarySymbols::getTypeInstance(DataTypeId typeId)
 	}
 }
 
-void getVariable(int refVar, Function* function, int var)
+void LibrarySymbols::getVariable(Function* function, int var)
 {
 	//Functions passed here take 1 opcode, +popref, +ret; therefore should be inlined -V
 	function->setFlag(FUNCFLAG_INLINE);
 	int label = function->getLabel();
 	vector<Opcode *> code;
 	//pop object pointer
-	if(refVar == NUL)
-	{
-		function->internal_flags |= IFUNCFLAG_SKIPPOINTER;
-		code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(var)));
-	}
-	else
-	{
-		//Pop object pointer
-		code.push_back(new OPopRegister(new VarArgument(refVar)));
-		code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(var)));
-	}
-	RETURN();
-	LABELFRONT(label);
+	POPREF(function, code);
+	code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(var)));
+	RETURN(function, code);
+	code.front()->setLabel(label);
 	function->giveCode(code);
 }
 
-void getIndexedVariable(int refVar, Function* function, int var)
+void LibrarySymbols::getIndexedVariable(Function* function, int var)
 {
 	//Functions passed here take 2 opcodes, +popref, +ret; therefore should be inlined -V
 	function->setFlag(FUNCFLAG_INLINE);
@@ -153,14 +143,14 @@ void getIndexedVariable(int refVar, Function* function, int var)
 	//pop index
 	code.push_back(new OPopRegister(new VarArgument(INDEX)));
 		//pop object pointer
-	POPREF();
+	POPREF(function, code);
 	code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(var)));
-	RETURN();
-	LABELFRONT(label);
+	RETURN(function, code);
+	code.front()->setLabel(label);
 	function->giveCode(code);
 }
 
-void setVariable(int refVar, Function* function, int var)
+void LibrarySymbols::setVariable(Function* function, int var)
 {
 	//Functions passed here take 2 opcodes, +popref, +ret; therefore should be inlined -V
 	function->setFlag(FUNCFLAG_INLINE);
@@ -169,14 +159,14 @@ void setVariable(int refVar, Function* function, int var)
 	//pop off the value to set to
 	code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		//pop object pointer
-	POPREF();
+	POPREF(function, code);
 	code.push_back(new OSetRegister(new VarArgument(var), new VarArgument(EXP1)));
-	RETURN();
-	LABELFRONT(label);
+	RETURN(function, code);
+	code.front()->setLabel(label);
 	function->giveCode(code);
 }
 
-void setBoolVariable(int refVar, Function* function, int var)
+void LibrarySymbols::setBoolVariable(Function* function, int var)
 {
 	//Functions passed here take 5 opcodes, +popref, +ret; therefore should NOT be inlined -V
 	//function->setFlag(FUNCFLAG_INLINE);
@@ -195,20 +185,20 @@ void setBoolVariable(int refVar, Function* function, int var)
 	{
 		function->internal_flags |= IFUNCFLAG_SKIPPOINTER;
 		code.push_back(new OSetRegister(new VarArgument(var), new VarArgument(EXP1)));
-		LABELBACK(donerenorm);
+		code.back()->setLabel(donerenorm);
 	}
 	else
 	{
 		code.push_back(new OPopRegister(new VarArgument(refVar)));
-		LABELBACK(donerenorm);
+		code.back()->setLabel(donerenorm);
 		code.push_back(new OSetRegister(new VarArgument(var), new VarArgument(EXP1)));
 	}
-	RETURN();
-	LABELFRONT(label);
+	RETURN(function, code);
+	code.front()->setLabel(label);
 	function->giveCode(code);
 }
 
-void setIndexedVariable(int refVar, Function* function, int var)
+void LibrarySymbols::setIndexedVariable(Function* function, int var)
 {
 	//Functions passed here take 3 opcodes, +popref, +ret; therefore should be inlined -V
 	function->setFlag(FUNCFLAG_INLINE);
@@ -219,10 +209,10 @@ void setIndexedVariable(int refVar, Function* function, int var)
 		//pop off the value to set to
 	code.push_back(new OPopRegister(new VarArgument(EXP1)));
 	//pop object pointer
-	POPREF();
+	POPREF(function, code);
 	code.push_back(new OSetRegister(new VarArgument(var), new VarArgument(EXP1)));
-	RETURN();
-	LABELFRONT(label);
+	RETURN(function, code);
+	code.front()->setLabel(label);
 	function->giveCode(code);
 }
 
@@ -271,18 +261,18 @@ void LibrarySymbols::addSymbolsToScope(Scope& scope)
 		if (entry.setorget == GETTER)
 		{
 			if (isArray)
-				getIndexedVariable(refVar, function, entry.var);
+				getIndexedVariable(function, entry.var);
 			else
-				getVariable(refVar, function, entry.var);
+				getVariable(function, entry.var);
 		}
 		if (entry.setorget == SETTER)
 		{
 			if (isArray)
-				setIndexedVariable(refVar, function, entry.var);
+				setIndexedVariable(function, entry.var);
 			else if (entry.params[1] == ZVARTYPEID_BOOL)
-				setBoolVariable(refVar, function, entry.var);
+				setBoolVariable(function, entry.var);
 			else
-				setVariable(refVar, function, entry.var);
+				setVariable(function, entry.var);
 		}
 			
 	}
@@ -480,10 +470,10 @@ void GlobalSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OSetImmediate(new VarArgument(EXP1), new LiteralArgument(0)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	*/
@@ -499,8 +489,8 @@ void GlobalSymbols::generateCode()
 		/*
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));*/
 		//code.push_back(new OSetImmediate(new VarArgument(EXP1), new VarArgument(EXP2)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	
@@ -512,8 +502,8 @@ void GlobalSymbols::generateCode()
 		//pop maxval
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
 		code.push_back(new ORandRegister(new VarArgument(EXP1), new VarArgument(EXP2)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	
@@ -525,8 +515,8 @@ void GlobalSymbols::generateCode()
 		//pop seed
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
 		code.push_back(new OSRandRegister(new VarArgument(EXP2)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	
@@ -536,8 +526,8 @@ void GlobalSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		code.push_back(new OSRandRand(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	
@@ -549,8 +539,8 @@ void GlobalSymbols::generateCode()
 		//Pop array ptr
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		code.push_back(new OIsValidArray(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	
@@ -561,8 +551,8 @@ void GlobalSymbols::generateCode()
 		vector<Opcode *> code;
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		code.push_back(new OGetSystemRTCRegister(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	
@@ -580,8 +570,8 @@ void GlobalSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		code.push_back(new OWaitframe());
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//void Waitdraw()
@@ -590,8 +580,8 @@ void GlobalSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		code.push_back(new OWaitdraw());
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//void Trace(int val)
@@ -601,8 +591,8 @@ void GlobalSymbols::generateCode()
 		vector<Opcode *> code;
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
 		code.push_back(new OTraceRegister(new VarArgument(EXP2)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	{
@@ -611,8 +601,8 @@ void GlobalSymbols::generateCode()
 		vector<Opcode *> code;
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
 		code.push_back(new OTraceRegister(new VarArgument(EXP2)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code); 
 	}
 	{
@@ -621,8 +611,8 @@ void GlobalSymbols::generateCode()
 		vector<Opcode *> code;
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
 		code.push_back(new OTraceRegister(new VarArgument(EXP2)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	{
@@ -631,8 +621,8 @@ void GlobalSymbols::generateCode()
 		vector<Opcode *> code;
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
 		code.push_back(new OTraceRegister(new VarArgument(EXP2)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	{
@@ -641,8 +631,8 @@ void GlobalSymbols::generateCode()
 		vector<Opcode *> code;
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
 		code.push_back(new OTraceRegister(new VarArgument(EXP2)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	{
@@ -651,8 +641,8 @@ void GlobalSymbols::generateCode()
 		vector<Opcode *> code;
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
 		code.push_back(new OTraceRegister(new VarArgument(EXP2)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	{
@@ -661,8 +651,8 @@ void GlobalSymbols::generateCode()
 		vector<Opcode *> code;
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
 		code.push_back(new OTraceRegister(new VarArgument(EXP2)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code); 
 	}
 	//void TraceB(bool val)
@@ -672,8 +662,8 @@ void GlobalSymbols::generateCode()
 		vector<Opcode *> code;
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
 		code.push_back(new OTrace2Register(new VarArgument(EXP2)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//void TraceS(bool val)
@@ -683,8 +673,8 @@ void GlobalSymbols::generateCode()
 		vector<Opcode *> code;
 		code.push_back(new OPopRegister(new VarArgument(INDEX)));
 		code.push_back(new OTrace6Register(new VarArgument(EXP2)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//void TraceNL()
@@ -693,8 +683,8 @@ void GlobalSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		code.push_back(new OTrace3());
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//void ClearTrace()
@@ -703,8 +693,8 @@ void GlobalSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		code.push_back(new OTrace4());
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//void TraceToBase(float, float, float)
@@ -713,10 +703,10 @@ void GlobalSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		code.push_back(new OTrace5Register());
-		POP_ARGS(3, NUL);
+		POPARGS(code, 3, NUL);
 		
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//int Sin(int val)
@@ -726,8 +716,8 @@ void GlobalSymbols::generateCode()
 		vector<Opcode *> code;
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
 		code.push_back(new OSinRegister(new VarArgument(EXP1), new VarArgument(EXP2)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//int RadianSin(int val)
@@ -738,8 +728,8 @@ void GlobalSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
 		code.push_back(new OMultImmediate(new VarArgument(EXP2), new LiteralArgument(radsperdeg)));
 		code.push_back(new OSinRegister(new VarArgument(EXP1), new VarArgument(EXP2)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//int ArcSin(int val)
@@ -749,8 +739,8 @@ void GlobalSymbols::generateCode()
 		vector<Opcode *> code;
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
 		code.push_back(new OArcSinRegister(new VarArgument(EXP1), new VarArgument(EXP2)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//int Cos(int val)
@@ -760,8 +750,8 @@ void GlobalSymbols::generateCode()
 		vector<Opcode *> code;
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
 		code.push_back(new OCosRegister(new VarArgument(EXP1), new VarArgument(EXP2)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//int RadianCos(int val)
@@ -772,8 +762,8 @@ void GlobalSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
 		code.push_back(new OMultImmediate(new VarArgument(EXP2), new LiteralArgument(radsperdeg)));
 		code.push_back(new OCosRegister(new VarArgument(EXP1), new VarArgument(EXP2)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//int ArcCos(int val)
@@ -783,8 +773,8 @@ void GlobalSymbols::generateCode()
 		vector<Opcode *> code;
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
 		code.push_back(new OArcCosRegister(new VarArgument(EXP1), new VarArgument(EXP2)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//int Tan(int val)
@@ -794,8 +784,8 @@ void GlobalSymbols::generateCode()
 		vector<Opcode *> code;
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
 		code.push_back(new OTanRegister(new VarArgument(EXP1), new VarArgument(EXP2)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//int ArcTan(int X, int Y)
@@ -806,8 +796,8 @@ void GlobalSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
 		code.push_back(new OPopRegister(new VarArgument(INDEX)));
 		code.push_back(new OATanRegister(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	
@@ -819,8 +809,8 @@ void GlobalSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
 		code.push_back(new OMultImmediate(new VarArgument(EXP2), new LiteralArgument(radsperdeg)));
 		code.push_back(new OTanRegister(new VarArgument(EXP1), new VarArgument(EXP2)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//int Max(int first, int second)
@@ -831,8 +821,8 @@ void GlobalSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		code.push_back(new OMaxRegister(new VarArgument(EXP1), new VarArgument(EXP2)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//int Min(int first, int second)
@@ -843,8 +833,8 @@ void GlobalSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		code.push_back(new OMinRegister(new VarArgument(EXP1), new VarArgument(EXP2)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//int Pow(int first, int second)
@@ -855,8 +845,8 @@ void GlobalSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		code.push_back(new OPowRegister(new VarArgument(EXP1), new VarArgument(EXP2)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//int InvPow(int first, int second)
@@ -867,8 +857,8 @@ void GlobalSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		code.push_back(new OInvPowRegister(new VarArgument(EXP1), new VarArgument(EXP2)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//int Factorial(int val)
@@ -878,8 +868,8 @@ void GlobalSymbols::generateCode()
 		vector<Opcode *> code;
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		code.push_back(new OFactorial(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//int Abs(int val)
@@ -889,8 +879,8 @@ void GlobalSymbols::generateCode()
 		vector<Opcode *> code;
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		code.push_back(new OAbsRegister(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//int Log10(int val)
@@ -900,8 +890,8 @@ void GlobalSymbols::generateCode()
 		vector<Opcode *> code;
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		code.push_back(new OLog10Register(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//int Ln(int val)
@@ -911,8 +901,8 @@ void GlobalSymbols::generateCode()
 		vector<Opcode *> code;
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		code.push_back(new OLogERegister(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//int Sqrt(int val)
@@ -922,8 +912,8 @@ void GlobalSymbols::generateCode()
 		vector<Opcode *> code;
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		code.push_back(new OSqrtRegister(new VarArgument(EXP1), new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	
@@ -936,8 +926,8 @@ void GlobalSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		code.push_back(new OCopyTileRegister(new VarArgument(EXP1), new VarArgument(EXP2)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	
@@ -950,8 +940,8 @@ void GlobalSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		code.push_back(new OSwapTileRegister(new VarArgument(EXP1), new VarArgument(EXP2)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	
@@ -963,8 +953,8 @@ void GlobalSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		code.push_back(new OOverlayTileRegister(new VarArgument(EXP1), new VarArgument(EXP2)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	
@@ -975,8 +965,8 @@ void GlobalSymbols::generateCode()
 		vector<Opcode *> code;
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
 		code.push_back(new OClearTileRegister(new VarArgument(EXP2)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//void GetGlobalRAM(int)
@@ -987,8 +977,8 @@ void GlobalSymbols::generateCode()
 		//pop off the params
 		code.push_back(new OPopRegister(new VarArgument(INDEX)));
 		code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(GLOBALRAMD)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//void SetGlobalRAM(int, int)
@@ -1000,8 +990,8 @@ void GlobalSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
 		code.push_back(new OPopRegister(new VarArgument(INDEX)));
 		code.push_back(new OSetRegister(new VarArgument(GLOBALRAMD), new VarArgument(EXP2)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//void GetScriptRAM(int)
@@ -1013,8 +1003,8 @@ void GlobalSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(INDEX)));
 		//code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(SCRIPTRAMD)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//void SetScriptRAM(int, int)
@@ -1026,8 +1016,8 @@ void GlobalSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
 		code.push_back(new OPopRegister(new VarArgument(INDEX)));
 		code.push_back(new OSetRegister(new VarArgument(SCRIPTRAMD), new VarArgument(EXP2)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//void SetColorBuffer(int amount, int offset, int stride, int *ptr)
@@ -1040,8 +1030,8 @@ void GlobalSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//void SetDepthBuffer(int amount, int offset, int stride, int *ptr)
@@ -1054,8 +1044,8 @@ void GlobalSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//void GetColorBuffer(int amount, int offset, int stride, int *ptr)
@@ -1068,8 +1058,8 @@ void GlobalSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//void GetDepthBuffer(int amount, int offset, int stride, int *ptr)
@@ -1082,8 +1072,8 @@ void GlobalSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//int SizeOfArray(int val)
@@ -1093,8 +1083,8 @@ void GlobalSymbols::generateCode()
 		vector<Opcode *> code;
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		code.push_back(new OArraySize(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	
@@ -1104,8 +1094,8 @@ void GlobalSymbols::generateCode()
 		vector<Opcode *> code;
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		code.push_back(new OByte(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	{
@@ -1114,8 +1104,8 @@ void GlobalSymbols::generateCode()
 		vector<Opcode *> code;
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		code.push_back(new OByte(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	{
@@ -1124,8 +1114,8 @@ void GlobalSymbols::generateCode()
 		vector<Opcode *> code;
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		code.push_back(new OSByte(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	{
@@ -1134,8 +1124,8 @@ void GlobalSymbols::generateCode()
 		vector<Opcode *> code;
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		code.push_back(new OWord(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	{
@@ -1144,8 +1134,8 @@ void GlobalSymbols::generateCode()
 		vector<Opcode *> code;
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		code.push_back(new OWord(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	{
@@ -1154,8 +1144,8 @@ void GlobalSymbols::generateCode()
 		vector<Opcode *> code;
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		code.push_back(new OShort(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	{
@@ -1164,8 +1154,8 @@ void GlobalSymbols::generateCode()
 		vector<Opcode *> code;
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		code.push_back(new OToInteger(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	{
@@ -1174,8 +1164,8 @@ void GlobalSymbols::generateCode()
 		vector<Opcode *> code;
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		code.push_back(new OFloor(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	{
@@ -1184,8 +1174,8 @@ void GlobalSymbols::generateCode()
 		vector<Opcode *> code;
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		code.push_back(new OCeiling(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//int SizeOfArrayFFC(ffc *ptr)
@@ -1195,8 +1185,8 @@ void GlobalSymbols::generateCode()
 		vector<Opcode *> code;
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		code.push_back(new OArraySizeF(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	
@@ -1207,8 +1197,8 @@ void GlobalSymbols::generateCode()
 		vector<Opcode *> code;
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		code.push_back(new OArraySizeN(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	} 
 	
@@ -1219,8 +1209,8 @@ void GlobalSymbols::generateCode()
 		vector<Opcode *> code;
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		code.push_back(new OArraySizeB(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	} //int SizeOfArrayItem(item *ptr)
 	{
@@ -1229,8 +1219,8 @@ void GlobalSymbols::generateCode()
 		vector<Opcode *> code;
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		code.push_back(new OArraySizeI(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	} //int SizeOfArrayItemdata(itemdata *ptr)
 	{
@@ -1239,8 +1229,8 @@ void GlobalSymbols::generateCode()
 		vector<Opcode *> code;
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		code.push_back(new OArraySizeID(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	} //int SizeOfArrayLWeapon(lweapon *ptr)
 	{
@@ -1249,8 +1239,8 @@ void GlobalSymbols::generateCode()
 		vector<Opcode *> code;
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		code.push_back(new OArraySizeL(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	} 
 	//int SaveSRAM(eweapon *ptr)
@@ -1261,8 +1251,8 @@ void GlobalSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		code.push_back(new OSaveGameStructs(new VarArgument(EXP1), new VarArgument(EXP2)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//int LoadSRAM(eweapon *ptr)
@@ -1273,8 +1263,8 @@ void GlobalSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		code.push_back(new OReadGameStructs(new VarArgument(EXP1), new VarArgument(EXP2)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//int SizeOfArrayEWeapon(eweapon *ptr)
@@ -1284,8 +1274,8 @@ void GlobalSymbols::generateCode()
 		vector<Opcode *> code;
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		code.push_back(new OArraySizeE(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//String and Array Functions (String.h, Array.h)
@@ -1296,8 +1286,8 @@ void GlobalSymbols::generateCode()
 		vector<Opcode *> code;
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
 		code.push_back(new Ostrlen(new VarArgument(EXP1), new VarArgument(EXP2)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//void strcpy(str* dest, str* src)
@@ -1308,8 +1298,8 @@ void GlobalSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		code.push_back(new Ostrcpy(new VarArgument(EXP1), new VarArgument(EXP2)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//int strcmp(*a, *b)
@@ -1320,8 +1310,8 @@ void GlobalSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
 		code.push_back(new OPopRegister(new VarArgument(INDEX)));
 		code.push_back(new OStrCmp(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//int strncmp(*a, *b, int len)
@@ -1333,8 +1323,8 @@ void GlobalSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(INDEX)));
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
 		code.push_back(new OStrNCmp(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//int stricmp(*a, *b)
@@ -1345,8 +1335,8 @@ void GlobalSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
 		code.push_back(new OPopRegister(new VarArgument(INDEX)));
 		code.push_back(new OStrICmp(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//int strnicmp(*a, *b, int len)
@@ -1358,8 +1348,8 @@ void GlobalSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(INDEX)));
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
 		code.push_back(new OStrNICmp(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	
@@ -1371,8 +1361,8 @@ void GlobalSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		code.push_back(new oARRAYCOPY(new VarArgument(EXP1), new VarArgument(EXP2)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//int atoi(*p)
@@ -1382,8 +1372,8 @@ void GlobalSymbols::generateCode()
 		vector<Opcode *> code;
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
 		code.push_back(new Oatoi(new VarArgument(EXP1), new VarArgument(EXP2)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	/*int atoi2(*a, *b)
@@ -1394,8 +1384,8 @@ void GlobalSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
 		code.push_back(new OPopRegister(new VarArgument(INDEX)));
 		code.push_back(new Oatoi2(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}*/
 	
@@ -1406,8 +1396,8 @@ void GlobalSymbols::generateCode()
 		vector<Opcode *> code;
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
 		code.push_back(new Oilen(new VarArgument(EXP1), new VarArgument(EXP2)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//int utol(*p)
@@ -1417,8 +1407,8 @@ void GlobalSymbols::generateCode()
 		vector<Opcode *> code;
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
 		code.push_back(new Ouppertolower(new VarArgument(EXP1), new VarArgument(EXP2)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//int ltou(*p)
@@ -1428,8 +1418,8 @@ void GlobalSymbols::generateCode()
 		vector<Opcode *> code;
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
 		code.push_back(new Olowertoupper(new VarArgument(EXP1), new VarArgument(EXP2)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//int convcase(*p)
@@ -1439,8 +1429,8 @@ void GlobalSymbols::generateCode()
 		vector<Opcode *> code;
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
 		code.push_back(new Oconvertcase(new VarArgument(EXP1), new VarArgument(EXP2)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 		/*
@@ -1452,8 +1442,8 @@ void GlobalSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
 		code.push_back(new OPopRegister(new VarArgument(INDEX)));
 		code.push_back(new Oilen2(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	*/
@@ -1466,8 +1456,8 @@ void GlobalSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
 		code.push_back(new OPopRegister(new VarArgument(INDEX)));
 		code.push_back(new Oitoa(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	/*int remchr(*a, *b)
@@ -1478,8 +1468,8 @@ void GlobalSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
 		code.push_back(new OPopRegister(new VarArgument(INDEX)));
 		code.push_back(new Oremchr2(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}*/
 	//int strcat(*a, *b)
@@ -1490,8 +1480,8 @@ void GlobalSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
 		code.push_back(new OPopRegister(new VarArgument(INDEX)));
 		code.push_back(new Ostrcat(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//int strchr(*a, *b)
@@ -1502,8 +1492,8 @@ void GlobalSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
 		code.push_back(new OPopRegister(new VarArgument(INDEX)));
 		code.push_back(new Ostrchr(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//int strcspn(*a, *b)
@@ -1514,8 +1504,8 @@ void GlobalSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
 		code.push_back(new OPopRegister(new VarArgument(INDEX)));
 		code.push_back(new Ostrcspn(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//int strspn(*a, *b)
@@ -1526,8 +1516,8 @@ void GlobalSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
 		code.push_back(new OPopRegister(new VarArgument(INDEX)));
 		code.push_back(new Ostrspn(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//int strstr(*a, *b)
@@ -1538,8 +1528,8 @@ void GlobalSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
 		code.push_back(new OPopRegister(new VarArgument(INDEX)));
 		code.push_back(new Ostrstr(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//int strrchr(*a, *b)
@@ -1550,8 +1540,8 @@ void GlobalSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
 		code.push_back(new OPopRegister(new VarArgument(INDEX)));
 		code.push_back(new Ostrrchr(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	/*
@@ -1562,8 +1552,8 @@ void GlobalSymbols::generateCode()
 		vector<Opcode *> code;
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
 		code.push_back(new Oxlen(new VarArgument(EXP1), new VarArgument(EXP2)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//int xlen(*a, *b)
@@ -1574,8 +1564,8 @@ void GlobalSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
 		code.push_back(new OPopRegister(new VarArgument(INDEX)));
 		code.push_back(new Oxlen2(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//int xtoa(*a, *b)
@@ -1586,8 +1576,8 @@ void GlobalSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
 		code.push_back(new OPopRegister(new VarArgument(INDEX)));
 		code.push_back(new Oxtoa(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//int xtoi(*p)
@@ -1597,8 +1587,8 @@ void GlobalSymbols::generateCode()
 		vector<Opcode *> code;
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
 		code.push_back(new Oxtoi(new VarArgument(EXP1), new VarArgument(EXP2)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//int xtoi2(*a, *b)
@@ -1609,8 +1599,8 @@ void GlobalSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
 		code.push_back(new OPopRegister(new VarArgument(INDEX)));
 		code.push_back(new Oxtoi2(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	*/
@@ -1622,9 +1612,9 @@ void GlobalSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		code.push_back(new OPrintfImmediate(new LiteralArgument(q * 10000)));
-		POP_ARGS(q+1, NUL);
-		RETURN();
-		LABELFRONT(label);
+		POPARGS(code, q+1, NUL);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//void sprintf(str* buf, str* format, untyped args...)
@@ -1634,9 +1624,9 @@ void GlobalSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		code.push_back(new OSPrintfImmediate(new LiteralArgument(q * 10000)));
-		POP_ARGS(q+2, NUL);
-		RETURN();
-		LABELFRONT(label);
+		POPARGS(code, q+2, NUL);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 }
@@ -1707,10 +1697,10 @@ void FFCSymbols::generateCode()
 		//pop off the param
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OChangeFFCScriptRegister(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//bool WasTriggered(ffc)
@@ -1733,12 +1723,11 @@ void FFCSymbols::generateCode()
 		int truelabel = ScriptParser::getUniqueLabelID();
 		code.push_back(new OGotoTrueImmediate(new LabelArgument(truelabel)));
 		code.push_back(new OSetImmediate(new VarArgument(EXP1), new LiteralArgument(0)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
 		code.push_back(new OSetImmediate(new VarArgument(EXP1), new LiteralArgument(1)));
-		LABELFRONT(truelabel);
-		RETURN();
-		LABELFRONT(label);
+		code.back()->setLabel(truelabel);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}*/
 	
@@ -1992,11 +1981,11 @@ void LinkSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
 		//pop ffc, and ignore it
-		POPREF();
+		POPREF(function, code);
 		//ffc must be this (link is not a user-accessible type)
 		code.push_back(new OWarp(new VarArgument(EXP2), new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	{
@@ -2006,10 +1995,10 @@ void LinkSymbols::generateCode()
 		//pop off the param
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OLinkWarpExRegister(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);    
 	}
 	{
@@ -2019,10 +2008,10 @@ void LinkSymbols::generateCode()
 		//pop off the param
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OLinkWarpExRegister(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);    
 	}
 	{
@@ -2032,10 +2021,10 @@ void LinkSymbols::generateCode()
 		//pop off the param
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OLinkExplodeRegister(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);        
 	}
 	   //void SetItemSlot(link, int item, int slot, int force)
@@ -2048,10 +2037,10 @@ void LinkSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
 		code.push_back(new OPopRegister(new VarArgument(INDEX)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OSetRegister(new VarArgument(SETITEMSLOT), new VarArgument(SFTEMP)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	
@@ -2062,10 +2051,10 @@ void LinkSymbols::generateCode()
 		vector<Opcode *> code;
 		//pop off the params
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OSetRegister(new VarArgument(GAMESETA), new VarArgument(EXP2)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//void SetItemB(link, int)
@@ -2075,10 +2064,10 @@ void LinkSymbols::generateCode()
 		vector<Opcode *> code;
 		//pop off the params
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OSetRegister(new VarArgument(GAMESETB), new VarArgument(EXP2)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	
@@ -2091,11 +2080,11 @@ void LinkSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
 		//pop ffc, and ignore it
-		POPREF();
+		POPREF(function, code);
 		//ffc must be this (link is not a user-accessible type)
 		code.push_back(new OPitWarp(new VarArgument(EXP2), new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//SelectAWeapon(link, int)
@@ -2106,10 +2095,10 @@ void LinkSymbols::generateCode()
 		//pop off the param
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		//pop pointer and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OSelectAWeaponRegister(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//SelectBWeapon(link, int)
@@ -2120,10 +2109,10 @@ void LinkSymbols::generateCode()
 		//pop off the param
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		//pop pointer and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OSelectBWeaponRegister(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//int GetLinkOriginaTile(link, int,int)
@@ -2135,10 +2124,10 @@ void LinkSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
 		code.push_back(new OPopRegister(new VarArgument(INDEX)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(LINKOTILE)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//int GetLinkOriginalFlip(link, int,int)
@@ -2150,10 +2139,10 @@ void LinkSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
 		code.push_back(new OPopRegister(new VarArgument(INDEX)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(LINKOFLIP)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	
@@ -2533,13 +2522,13 @@ void ScreenSymbols::generateCode()
 		//pop off the param
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		//convert from 1-index to 0-index
 		code.push_back(new OSubImmediate(new VarArgument(EXP1), new LiteralArgument(10000)));
 		code.push_back(new OLoadItemRegister(new VarArgument(EXP1)));
 		code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(REFITEM)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//item CreateItem(screen, int)
@@ -2551,11 +2540,11 @@ void ScreenSymbols::generateCode()
 		//pop off the param
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OCreateItemRegister(new VarArgument(EXP1)));
 		code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(REFITEM)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//ffc LoadFFC(screen, int)
@@ -2567,11 +2556,11 @@ void ScreenSymbols::generateCode()
 		//pop off the param
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		//code.push_back(new OSetRegister(new VarArgument(REFFFC), new VarArgument(EXP1)));
 		code.push_back(new OSubImmediate(new VarArgument(EXP1), new LiteralArgument(10000)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//npc LoadNPC(screen, int)
@@ -2582,13 +2571,13 @@ void ScreenSymbols::generateCode()
 		//pop off the param
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		//convert from 1-index to 0-index
 		code.push_back(new OSubImmediate(new VarArgument(EXP1), new LiteralArgument(10000)));
 		code.push_back(new OLoadNPCRegister(new VarArgument(EXP1)));
 		code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(REFNPC)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//npc CreateNPC(screen, int)
@@ -2600,11 +2589,11 @@ void ScreenSymbols::generateCode()
 		//pop off the param
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OCreateNPCRegister(new VarArgument(EXP1)));
 		code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(REFNPC)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//npc LoadLWeapon(screen, int)
@@ -2615,13 +2604,13 @@ void ScreenSymbols::generateCode()
 		//pop off the param
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		//convert from 1-index to 0-index
 		code.push_back(new OSubImmediate(new VarArgument(EXP1), new LiteralArgument(10000)));
 		code.push_back(new OLoadLWpnRegister(new VarArgument(EXP1)));
 		code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(REFLWPN)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//npc CreateLWeapon(screen, int)
@@ -2633,11 +2622,11 @@ void ScreenSymbols::generateCode()
 		//pop off the param
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OCreateLWpnRegister(new VarArgument(EXP1)));
 		code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(REFLWPN)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	
@@ -2650,10 +2639,10 @@ void ScreenSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
 		code.push_back(new OPopRegister(new VarArgument(INDEX)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(CREATELWPNDX)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	 
@@ -2665,13 +2654,13 @@ void ScreenSymbols::generateCode()
 		//pop off the param
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		//convert from 1-index to 0-index
 		code.push_back(new OSubImmediate(new VarArgument(EXP1), new LiteralArgument(10000)));
 		code.push_back(new OLoadEWpnRegister(new VarArgument(EXP1)));
 		code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(REFEWPN)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//npc LoadNPCByUID(screen, int)
@@ -2682,12 +2671,12 @@ void ScreenSymbols::generateCode()
 		//pop off the param
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		
 		code.push_back(new OLoadNPCBySUIDRegister(new VarArgument(EXP1)));
 		code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(REFNPC)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	
@@ -2699,11 +2688,11 @@ void ScreenSymbols::generateCode()
 		//pop off the param
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OLoadLWeaponBySUIDRegister(new VarArgument(EXP1)));
 		code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(REFLWPN)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	
@@ -2715,11 +2704,11 @@ void ScreenSymbols::generateCode()
 		//pop off the param
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OLoadEWeaponBySUIDRegister(new VarArgument(EXP1)));
 		code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(REFEWPN)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//ewpn CreateEWeapon(screen, int)
@@ -2731,11 +2720,11 @@ void ScreenSymbols::generateCode()
 		//pop off the param
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OCreateEWpnRegister(new VarArgument(EXP1)));
 		code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(REFEWPN)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//void ClearSprites(screen, int)
@@ -2747,11 +2736,11 @@ void ScreenSymbols::generateCode()
 		//pop off the param
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OClearSpritesRegister(new VarArgument(EXP1)));
 		code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(REFNPC)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//void Rectangle(screen, float, float, float, float, float, float, float, float, float, float, bool, float)
@@ -2760,9 +2749,9 @@ void ScreenSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		code.push_back(new ORectangleRegister());
-		POP_ARGS(13, NUL);
-		RETURN();
-		LABELFRONT(label);
+		POPARGS(code, 13, NUL);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		
 		function->giveCode(code);
 	}
@@ -2772,10 +2761,10 @@ void ScreenSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		code.push_back(new OCircleRegister());
-		POP_ARGS(12, NUL);
+		POPARGS(code, 12, NUL);
 		
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//void Arc(screen, float, float, float, float, float, float, float, float, float, float, float, bool, bool, float)
@@ -2784,10 +2773,10 @@ void ScreenSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		code.push_back(new OArcRegister());
-		POP_ARGS(15, NUL);
+		POPARGS(code, 15, NUL);
 		
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//void Ellipse(screen, float, float, float, float, float, bool, float, float, float)
@@ -2796,10 +2785,10 @@ void ScreenSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		code.push_back(new OEllipseRegister());
-		POP_ARGS(13, NUL);
+		POPARGS(code, 13, NUL);
 		
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//void Line(screen, float, float, float, float, float, float, float, float, float, float, float)
@@ -2808,10 +2797,10 @@ void ScreenSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		code.push_back(new OLineRegister());
-		POP_ARGS(12, NUL);
+		POPARGS(code, 12, NUL);
 		
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//void Spline(screen, float, float, float, float, float, float, float, float, float, float, float)
@@ -2820,10 +2809,10 @@ void ScreenSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		code.push_back(new OSplineRegister());
-		POP_ARGS(12, NUL);
+		POPARGS(code, 12, NUL);
 		
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//void PutPixel(screen, float, float, float, float, float, float, float, float)
@@ -2832,10 +2821,10 @@ void ScreenSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		code.push_back(new OPutPixelRegister());
-		POP_ARGS(9, NUL);
+		POPARGS(code, 9, NUL);
 		
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//void PutPixels(screen, float, float, float, float, float)
@@ -2844,10 +2833,10 @@ void ScreenSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		code.push_back(new OPutPixelArrayRegister());
-		POP_ARGS(6, NUL);
+		POPARGS(code, 6, NUL);
 		
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//void DrawTiles(screen, float, float)
@@ -2856,10 +2845,10 @@ void ScreenSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		code.push_back(new OPutTileArrayRegister());
-		POP_ARGS(3, NUL);
+		POPARGS(code, 3, NUL);
 		
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//void DrawCombos(screen, float, float)
@@ -2868,10 +2857,10 @@ void ScreenSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		code.push_back(new OFastComboArrayRegister());
-		POP_ARGS(3, NUL);
+		POPARGS(code, 3, NUL);
 		
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//void Lines(screen, float, float)
@@ -2880,10 +2869,10 @@ void ScreenSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		code.push_back(new OPutLinesArrayRegister());
-		POP_ARGS(3, NUL);
+		POPARGS(code, 3, NUL);
 		
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//void DrawCharacter(screen, float, float, float, float, float, float, float, float, float, float)
@@ -2892,10 +2881,10 @@ void ScreenSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		code.push_back(new ODrawCharRegister());
-		POP_ARGS(11, NUL);
+		POPARGS(code, 11, NUL);
 		
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//void DrawInteger(screen, float, float, float, float, float, float, float, float, float, float, float)
@@ -2904,10 +2893,10 @@ void ScreenSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		code.push_back(new ODrawIntRegister());
-		POP_ARGS(12, NUL);
+		POPARGS(code, 12, NUL);
 		
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//void DrawTile(screen, float, float, float, float, float, bool, float, float, float)
@@ -2916,10 +2905,10 @@ void ScreenSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		code.push_back(new ODrawTileRegister());
-		POP_ARGS(16, NUL);
+		POPARGS(code, 16, NUL);
 		
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//void DrawTileCloaked(screen, ...args)
@@ -2928,10 +2917,10 @@ void ScreenSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		code.push_back(new ODrawTileCloakedRegister());
-		POP_ARGS(8, NUL);
+		POPARGS(code, 8, NUL);
 		
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//void DrawCombo(screen, float, float, float, float, float, bool, float, float, float)
@@ -2940,10 +2929,10 @@ void ScreenSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		code.push_back(new ODrawComboRegister());
-		POP_ARGS(17, NUL);
+		POPARGS(code, 17, NUL);
 		
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//void DrawComboCloaked(screen, ...args)
@@ -2952,10 +2941,10 @@ void ScreenSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		code.push_back(new ODrawComboCloakedRegister());
-		POP_ARGS(8, NUL);
+		POPARGS(code, 8, NUL);
 		
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//void Quad(screen, float, float, float, float, float, float, float, float, float)
@@ -2964,10 +2953,10 @@ void ScreenSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		code.push_back(new OQuadRegister());
-		POP_ARGS(16, NUL);
+		POPARGS(code, 16, NUL);
 		
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//void Polygon(screen, float, float, float, float, float)
@@ -2977,10 +2966,10 @@ void ScreenSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		code.push_back(new OPolygonRegister());
-		POP_ARGS(6, NUL);
+		POPARGS(code, 6, NUL);
 		
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	
@@ -2990,10 +2979,10 @@ void ScreenSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		code.push_back(new OTriangleRegister());
-		POP_ARGS(14, NUL);
+		POPARGS(code, 14, NUL);
 		
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	
@@ -3003,10 +2992,10 @@ void ScreenSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		code.push_back(new OQuad3DRegister());
-		POP_ARGS(9, NUL);
+		POPARGS(code, 9, NUL);
 		
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//void Triangle3D(screen, float, float, float, float, float, float, float, float, float)
@@ -3015,10 +3004,10 @@ void ScreenSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		code.push_back(new OTriangle3DRegister());
-		POP_ARGS(9, NUL);
+		POPARGS(code, 9, NUL);
 		
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	
@@ -3028,10 +3017,10 @@ void ScreenSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		code.push_back(new OFastTileRegister());
-		POP_ARGS(7, NUL);
+		POPARGS(code, 7, NUL);
 		
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//void FastCombo(screen, float, float, float, float, float)
@@ -3040,10 +3029,10 @@ void ScreenSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		code.push_back(new OFastComboRegister());
-		POP_ARGS(7, NUL);
+		POPARGS(code, 7, NUL);
 		
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//void DrawString(screen, float, float, float, float, float, float, float, int *string)
@@ -3052,10 +3041,10 @@ void ScreenSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		code.push_back(new ODrawStringRegister());
-		POP_ARGS(10, NUL);
+		POPARGS(code, 10, NUL);
 		
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//void DrawString(screen, float, float, float, float, float, float, float, int *string)
@@ -3064,10 +3053,10 @@ void ScreenSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		code.push_back(new ODrawString2Register());
-		POP_ARGS(12, NUL);
+		POPARGS(code, 12, NUL);
 		
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//void DrawLayer(screen, float, float, float, float, float, float, float, float)
@@ -3076,10 +3065,10 @@ void ScreenSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		code.push_back(new ODrawLayerRegister());
-		POP_ARGS(9, NUL);
+		POPARGS(code, 9, NUL);
 		
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//void DrawScreen(screen, float, float, float, float, float, float)
@@ -3088,10 +3077,10 @@ void ScreenSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		code.push_back(new ODrawScreenRegister());
-		POP_ARGS(7, NUL);
+		POPARGS(code, 7, NUL);
 		
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//void DrawBitmap(screen, float, float, float, float, float, float, float, float, float, bool)
@@ -3100,10 +3089,10 @@ void ScreenSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		code.push_back(new ODrawBitmapRegister());
-		POP_ARGS(13, NUL);
+		POPARGS(code, 13, NUL);
 		
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	
@@ -3113,10 +3102,10 @@ void ScreenSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		code.push_back(new ODrawBitmapExRegister());
-		POP_ARGS(17, NUL);
+		POPARGS(code, 17, NUL);
 		
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	
@@ -3128,10 +3117,10 @@ void ScreenSymbols::generateCode()
 		code.push_back(new OSetRenderTargetRegister());
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//void Message(screen, float)
@@ -3141,10 +3130,10 @@ void ScreenSymbols::generateCode()
 		vector<Opcode *> code;
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OMessageRegister(new VarArgument(EXP2)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//bool isSolid(screen, int, int)
@@ -3156,10 +3145,10 @@ void ScreenSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
 		code.push_back(new OPopRegister(new VarArgument(INDEX)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OIsSolid(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//bool isSolidLayer(screen, int, int, int)
@@ -3172,10 +3161,10 @@ void ScreenSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
 		code.push_back(new OPopRegister(new VarArgument(INDEX)));
 		//pop pointer
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OIsSolidLayer(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//void SetSideWarp(screen, float, float, float, float)
@@ -3189,10 +3178,10 @@ void ScreenSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//void SetTileWarp(screen, float, float, float, float)
@@ -3206,10 +3195,10 @@ void ScreenSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//float LayerScreen(screen, float)
@@ -3219,10 +3208,10 @@ void ScreenSymbols::generateCode()
 		vector<Opcode *> code;
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OLayerScreenRegister(new VarArgument(EXP1),new VarArgument(EXP2)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//float LayerMap(screen, float)
@@ -3232,10 +3221,10 @@ void ScreenSymbols::generateCode()
 		vector<Opcode *> code;
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OLayerMapRegister(new VarArgument(EXP1),new VarArgument(EXP2)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//void TriggerSecrets(screen)
@@ -3243,10 +3232,10 @@ void ScreenSymbols::generateCode()
 		Function* function = getFunction("TriggerSecrets", 1);
 		int label = function->getLabel();
 		vector<Opcode *> code;
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OTriggerSecrets());
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//void ZapIn(screen)
@@ -3255,10 +3244,10 @@ void ScreenSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OZapIn());
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	  
@@ -3269,10 +3258,10 @@ void ScreenSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OZapOut());
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	
@@ -3282,10 +3271,10 @@ void ScreenSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OOpenWipe());
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 
@@ -3295,10 +3284,10 @@ void ScreenSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OWavyIn());
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 			
@@ -3308,10 +3297,10 @@ void ScreenSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OWavyOut());
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	
@@ -3322,10 +3311,10 @@ void ScreenSymbols::generateCode()
 		vector<Opcode *> code;
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OGetSideWarpDMap(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//int GetSideWarpScreen(screen, int)
@@ -3335,10 +3324,10 @@ void ScreenSymbols::generateCode()
 		vector<Opcode *> code;
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OGetSideWarpScreen(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//int GetSideWarpType(screen, int)
@@ -3348,10 +3337,10 @@ void ScreenSymbols::generateCode()
 		vector<Opcode *> code;
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OGetSideWarpType(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//int GetTileWarpDMap(screen, int)
@@ -3361,10 +3350,10 @@ void ScreenSymbols::generateCode()
 		vector<Opcode *> code;
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OGetTileWarpDMap(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//int GetTileWarpScreen(screen, int)
@@ -3374,10 +3363,10 @@ void ScreenSymbols::generateCode()
 		vector<Opcode *> code;
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OGetTileWarpScreen(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//int GetTileWarpType(screen, int)
@@ -3387,10 +3376,10 @@ void ScreenSymbols::generateCode()
 		vector<Opcode *> code;
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OGetTileWarpType(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	
@@ -3400,10 +3389,10 @@ void ScreenSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OZapIn());
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	
@@ -3413,10 +3402,10 @@ void ScreenSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OCloseWipe());
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	
@@ -3427,10 +3416,10 @@ void ScreenSymbols::generateCode()
 		vector<Opcode *> code;
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OOpenWipeShape(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	
@@ -3441,10 +3430,10 @@ void ScreenSymbols::generateCode()
 		vector<Opcode *> code;
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OCloseWipeShape(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 		  
@@ -3574,8 +3563,8 @@ void ItemSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		//Check validity
 		code.push_back(new OIsValidItem(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//void Explode(ITEM, int)
@@ -3586,10 +3575,10 @@ void ItemSymbols::generateCode()
 		//pop off the param
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OItemExplodeRegister(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	
@@ -3807,10 +3796,10 @@ void ItemclassSymbols::generateCode()
 		//pop off the param
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OGetItemName(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//void RunScript(itemclass)
@@ -3821,10 +3810,10 @@ void ItemclassSymbols::generateCode()
 		//pop off the param
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new ORunItemScript(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	
@@ -4124,11 +4113,11 @@ void GameSymbols::generateCode()
 		//pop off the param
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OLoadItemDataRegister(new VarArgument(EXP1)));
 		code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(REFITEMCLASS)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//NPCData
@@ -4139,11 +4128,11 @@ void GameSymbols::generateCode()
 		//pop off the param
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OLoadNPCDataRegister(new VarArgument(EXP1)));
 		code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(REFNPCCLASS)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	
@@ -4155,11 +4144,11 @@ void GameSymbols::generateCode()
 		//pop off the param
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OLoadDMapDataRegister(new VarArgument(EXP1)));
 		code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(REFDMAPDATA)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	
@@ -4171,11 +4160,11 @@ void GameSymbols::generateCode()
 		//pop off the param
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OLoadDropsetRegister(new VarArgument(EXP1)));
 		code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(REFDROPS)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//Messagedata
@@ -4186,11 +4175,11 @@ void GameSymbols::generateCode()
 		//pop off the param
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OLoadMessageDataRegister(new VarArgument(EXP1)));
 		code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(REFMSGDATA)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//ComboData
@@ -4201,11 +4190,11 @@ void GameSymbols::generateCode()
 		//pop off the param
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OLoadComboDataRegister(new VarArgument(EXP1)));
 		code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(REFCOMBODATA)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code); 
 	}
 
@@ -4218,10 +4207,10 @@ void GameSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
 		code.push_back(new OPopRegister(new VarArgument(INDEX)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(LOADMAPDATA)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	
@@ -4233,10 +4222,10 @@ void GameSymbols::generateCode()
 		//pop off the params
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OLoadTmpScr(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	
@@ -4248,10 +4237,10 @@ void GameSymbols::generateCode()
 		//pop off the params
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OLoadScrollScr(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	
@@ -4264,10 +4253,10 @@ void GameSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
 		code.push_back(new OPopRegister(new VarArgument(INDEX)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(CREATEBITMAP)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
    
@@ -4280,11 +4269,11 @@ void GameSymbols::generateCode()
 		//pop off the param
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OLoadSpriteDataRegister(new VarArgument(EXP1)));
 		code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(REFSPRITEDATA)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);    
 	}
 	//ShopData
@@ -4295,11 +4284,11 @@ void GameSymbols::generateCode()
 		//pop off the param
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OLoadShopDataRegister(new VarArgument(EXP1)));
 		code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(REFSHOPDATA)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);    
 	}
 	//InfoShopData
@@ -4310,11 +4299,11 @@ void GameSymbols::generateCode()
 		//pop off the param
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OLoadInfoShopDataRegister(new VarArgument(EXP1)));
 		code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(REFSHOPDATA)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);    
 	}
 	//Bitmap
@@ -4325,11 +4314,11 @@ void GameSymbols::generateCode()
 		//pop off the param
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OLoadBitmapDataRegister(new VarArgument(EXP1)));
 		code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(REFBITMAP)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);   
 	}
 	
@@ -4347,15 +4336,15 @@ void GameSymbols::generateCode()
 		code.push_back(new OMultImmediate(new VarArgument(EXP1), new LiteralArgument(1360000)));
 		code.push_back(new OAddRegister(new VarArgument(INDEX), new VarArgument(EXP1)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(SCREENSTATEDD)));
 		code.push_back(new OCompareImmediate(new VarArgument(EXP1), new LiteralArgument(0)));
 		code.push_back(new OGotoTrueImmediate(new LabelArgument(done)));
 		code.push_back(new OSetImmediate(new VarArgument(EXP1), new LiteralArgument(10000)));
 		code.push_back(new OGotoImmediate(new LabelArgument(done)));
 		code.push_back(new OReturn());
-		LABELBACK(done);
-		LABELFRONT(label);
+		code.back()->setLabel(done);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//void SetScreenState(game, int,int,int,bool)
@@ -4373,14 +4362,14 @@ void GameSymbols::generateCode()
 		code.push_back(new OMultImmediate(new VarArgument(EXP1), new LiteralArgument(1360000)));
 		code.push_back(new OAddRegister(new VarArgument(INDEX), new VarArgument(EXP1)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OCompareImmediate(new VarArgument(SFTEMP), new LiteralArgument(0)));
 		code.push_back(new OGotoTrueImmediate(new LabelArgument(done)));
 		code.push_back(new OSetImmediate(new VarArgument(SFTEMP), new LiteralArgument(10000)));
 		code.push_back(new OSetRegister(new VarArgument(SCREENSTATEDD), new VarArgument(SFTEMP)));
 		code.push_back(new OReturn());
-		LABELBACK(done);
-		LABELFRONT(label);
+		code.back()->setLabel(done);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//int GetScreenD(game, int,int)
@@ -4392,10 +4381,10 @@ void GameSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
 		code.push_back(new OPopRegister(new VarArgument(INDEX)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(SDDD)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//void SetScreenD(game, int,int,int)
@@ -4408,10 +4397,10 @@ void GameSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
 		code.push_back(new OPopRegister(new VarArgument(INDEX)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OSetRegister(new VarArgument(SDDD), new VarArgument(SFTEMP)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//int GetDMapScreenD(game, int,int,int)
@@ -4424,10 +4413,10 @@ void GameSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
 		code.push_back(new OPopRegister(new VarArgument(INDEX)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(SDDDD)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//void SetDMapScreenD(game, int,int,int,int)
@@ -4441,10 +4430,10 @@ void GameSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
 		code.push_back(new OPopRegister(new VarArgument(INDEX)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OSetRegister(new VarArgument(SDDDD), new VarArgument(SFTEMP)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//void PlaySound(game, int)
@@ -4455,10 +4444,10 @@ void GameSymbols::generateCode()
 		//pop off the param
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OPlaySoundRegister(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//void PlayMIDI(game, int)
@@ -4469,10 +4458,10 @@ void GameSymbols::generateCode()
 		//pop off the param
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OPlayMIDIRegister(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//void PlayEnhancedMusic(game, int, int)
@@ -4484,10 +4473,10 @@ void GameSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OPlayEnhancedMusic(new VarArgument(EXP2), new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//void GetDMapMusicFilename(game, int, int)
@@ -4499,10 +4488,10 @@ void GameSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OGetDMapMusicFilename(new VarArgument(EXP2), new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//int GetDMapMusicTrack(game, int)
@@ -4512,10 +4501,10 @@ void GameSymbols::generateCode()
 		vector<Opcode *> code;
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OGetDMapMusicTrack(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//void SetDMapEnhancedMusic(game, int,int,int)
@@ -4528,10 +4517,10 @@ void GameSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//int GetComboData(int,int,int)
@@ -4544,10 +4533,10 @@ void GameSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(COMBODDM)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//void SetComboData(int,int,int,int)
@@ -4561,10 +4550,10 @@ void GameSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OSetRegister(new VarArgument(COMBODDM), new VarArgument(EXP2)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//int GetComboCSet(int,int,int)
@@ -4577,10 +4566,10 @@ void GameSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(COMBOCDM)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//void SetComboCSet(int,int,int,int)
@@ -4594,10 +4583,10 @@ void GameSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OSetRegister(new VarArgument(COMBOCDM), new VarArgument(EXP2)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//int GetComboFlag(int,int,int)
@@ -4610,10 +4599,10 @@ void GameSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(COMBOFDM)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//void SetComboFlag(int,int,int,int)
@@ -4627,10 +4616,10 @@ void GameSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OSetRegister(new VarArgument(COMBOFDM), new VarArgument(EXP2)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//int GetComboType(int,int,int)
@@ -4643,10 +4632,10 @@ void GameSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(COMBOTDM)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//void SetComboType(int,int,int,int)
@@ -4660,10 +4649,10 @@ void GameSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OSetRegister(new VarArgument(COMBOTDM), new VarArgument(EXP2)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//int GetComboInherentFlag(int,int,int)
@@ -4676,10 +4665,10 @@ void GameSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(COMBOIDM)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//void SetComboInherentFlag(int,int,int,int)
@@ -4693,10 +4682,10 @@ void GameSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OSetRegister(new VarArgument(COMBOIDM), new VarArgument(EXP2)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//int GetComboCollision(int,int,int)
@@ -4709,10 +4698,10 @@ void GameSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(COMBOSDM)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//void SetComboCollision(int,int,int,int)
@@ -4726,10 +4715,10 @@ void GameSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OSetRegister(new VarArgument(COMBOSDM), new VarArgument(EXP2)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//int GetScreenFlags(game,int,int,int)
@@ -4742,10 +4731,10 @@ void GameSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OGetScreenFlags(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//int GetScreenEFlags(game,int,int,int)
@@ -4758,10 +4747,10 @@ void GameSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OGetScreenEFlags(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//void Save(game)
@@ -4770,10 +4759,10 @@ void GameSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OSave());
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//void End(game)
@@ -4782,10 +4771,10 @@ void GameSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OEnd());
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	
@@ -4795,10 +4784,10 @@ void GameSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OGameContinue());
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	
@@ -4808,10 +4797,10 @@ void GameSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OGameSaveQuit());
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	
@@ -4821,10 +4810,10 @@ void GameSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OGameSaveContinue());
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//void ShowContinueScreen(game)
@@ -4833,10 +4822,10 @@ void GameSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OShowF6Screen());
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//int ComboTile(game,int)
@@ -4846,10 +4835,10 @@ void GameSymbols::generateCode()
 		vector<Opcode *> code;
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OComboTile(new VarArgument(EXP1),new VarArgument(EXP2)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//void GetSaveName(game, int)
@@ -4860,10 +4849,10 @@ void GameSymbols::generateCode()
 		//pop off the param
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OGetSaveName(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//void GetSaveName(game, int)
@@ -4874,10 +4863,10 @@ void GameSymbols::generateCode()
 		//pop off the param
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OSetSaveName(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//GetMessage(game, int, int)
@@ -4889,10 +4878,10 @@ void GameSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OGetMessage(new VarArgument(EXP2), new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//GetDMapName(game, int, int)
@@ -4904,10 +4893,10 @@ void GameSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OGetDMapName(new VarArgument(EXP2), new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//GetDMapTitle(game, int, int)
@@ -4919,10 +4908,10 @@ void GameSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OGetDMapTitle(new VarArgument(EXP2), new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//GetDMapIntro(game, int, int)
@@ -4934,10 +4923,10 @@ void GameSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OGetDMapIntro(new VarArgument(EXP2), new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	
@@ -4949,10 +4938,10 @@ void GameSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OGreyscaleOn());
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 			
@@ -4962,10 +4951,10 @@ void GameSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OGreyscaleOff());
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	
@@ -4979,10 +4968,10 @@ void GameSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OSetMessage(new VarArgument(EXP2), new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//SetDMapName(game, int, int)
@@ -4994,10 +4983,10 @@ void GameSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OSetDMapName(new VarArgument(EXP2), new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//SetDMapTitle(game, int, int)
@@ -5009,10 +4998,10 @@ void GameSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OSetDMapTitle(new VarArgument(EXP2), new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//SetDMapIntro(game, int, int)
@@ -5024,10 +5013,10 @@ void GameSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OSetDMapIntro(new VarArgument(EXP2), new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	
@@ -5037,10 +5026,10 @@ void GameSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OShowSaveScreen(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	
@@ -5050,10 +5039,10 @@ void GameSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OShowSaveQuitScreen());
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	
@@ -5065,10 +5054,10 @@ void GameSymbols::generateCode()
 		//pop off the param
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OGetFFCScript(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	
@@ -5081,10 +5070,10 @@ void GameSymbols::generateCode()
 		//pop off the param
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OGetItemScript(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	
@@ -5096,10 +5085,10 @@ void GameSymbols::generateCode()
 		//pop off the param
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OGETNPCSCRIPT(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//int GetLWeaponScript(game, int)
@@ -5110,10 +5099,10 @@ void GameSymbols::generateCode()
 		//pop off the param
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OGETLWEAPONSCRIPT(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//int GetEWeaponScript(game, int)
@@ -5124,10 +5113,10 @@ void GameSymbols::generateCode()
 		//pop off the param
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OGETEWEAPONSCRIPT(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//int GetHeroScript(game, int)
@@ -5138,10 +5127,10 @@ void GameSymbols::generateCode()
 		//pop off the param
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OGETHEROSCRIPT(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//int GetPlayerScript(game, int)
@@ -5152,10 +5141,10 @@ void GameSymbols::generateCode()
 		//pop off the param
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OGETHEROSCRIPT(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//int GetLinkScript(game, int)
@@ -5166,10 +5155,10 @@ void GameSymbols::generateCode()
 		//pop off the param
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OGETHEROSCRIPT(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//int GetGlobalScript(game, int)
@@ -5180,10 +5169,10 @@ void GameSymbols::generateCode()
 		//pop off the param
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OGETGLOBALSCRIPT(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//int GetDMapScript(game, int)
@@ -5194,10 +5183,10 @@ void GameSymbols::generateCode()
 		//pop off the param
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OGETDMAPSCRIPT(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//int GetScreenScript(game, int)
@@ -5208,10 +5197,10 @@ void GameSymbols::generateCode()
 		//pop off the param
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OGETSCREENSCRIPT(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//int GetItemSpriteScript(game, int)
@@ -5222,10 +5211,10 @@ void GameSymbols::generateCode()
 		//pop off the param
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OGETSPRITESCRIPT(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//int GetUntypedScript(game, int)
@@ -5236,10 +5225,10 @@ void GameSymbols::generateCode()
 		//pop off the param
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OGETUNTYPEDSCRIPT(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//int GetSubscreenScript(game, int)
@@ -5250,10 +5239,10 @@ void GameSymbols::generateCode()
 		//pop off the param
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OGETSUBSCREENSCRIPT(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//int GetNPC(game, int)
@@ -5264,10 +5253,10 @@ void GameSymbols::generateCode()
 		//pop off the param
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OGETNPCBYNAME(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//int GetItem(game, int)
@@ -5278,10 +5267,10 @@ void GameSymbols::generateCode()
 		//pop off the param
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OGETITEMBYNAME(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//int GetCombo(game, int)
@@ -5292,10 +5281,10 @@ void GameSymbols::generateCode()
 		//pop off the param
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OGETCOMBOBYNAME(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//int GetDMap(game, int)
@@ -5306,10 +5295,10 @@ void GameSymbols::generateCode()
 		//pop off the param
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OGETDMAPBYNAME(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	
@@ -5323,10 +5312,10 @@ void GameSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OGetScreenEnemy(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	 //int GetScreenDoor(game,int,int,int)
@@ -5339,10 +5328,10 @@ void GameSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OGetScreenDoor(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//void SetScreenEnemy(int,int,int,int)
@@ -5356,10 +5345,10 @@ void GameSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OSetRegister(new VarArgument(SETSCREENENEMY), new VarArgument(EXP2)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//void SetScreenDoor(int,int,int,int)
@@ -5373,10 +5362,10 @@ void GameSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OSetRegister(new VarArgument(SETSCREENDOOR), new VarArgument(EXP2)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	
@@ -5390,10 +5379,10 @@ void GameSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
 		code.push_back(new OPopRegister(new VarArgument(INDEX)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OSetRegister(new VarArgument(SCREENWIDTH), new VarArgument(SFTEMP)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//int GetScreenWidth(game, int,int)
@@ -5405,10 +5394,10 @@ void GameSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
 		code.push_back(new OPopRegister(new VarArgument(INDEX)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(SCREENWIDTH)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	
@@ -5422,10 +5411,10 @@ void GameSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
 		code.push_back(new OPopRegister(new VarArgument(INDEX)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OSetRegister(new VarArgument(SCREENHEIGHT), new VarArgument(SFTEMP)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//int GetScreenHeight(game, int,int)
@@ -5437,10 +5426,10 @@ void GameSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
 		code.push_back(new OPopRegister(new VarArgument(INDEX)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(SCREENHEIGHT)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//void SetScreenViewX(game, int,int,int)
@@ -5453,10 +5442,10 @@ void GameSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
 		code.push_back(new OPopRegister(new VarArgument(INDEX)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OSetRegister(new VarArgument(SCREENVIEWX), new VarArgument(SFTEMP)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//int GetScreenViewX(game, int,int)
@@ -5468,10 +5457,10 @@ void GameSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
 		code.push_back(new OPopRegister(new VarArgument(INDEX)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(SCREENVIEWX)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	 //void SetScreenViewY(game, int,int,int)
@@ -5484,10 +5473,10 @@ void GameSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
 		code.push_back(new OPopRegister(new VarArgument(INDEX)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OSetRegister(new VarArgument(SCREENVIEWY), new VarArgument(SFTEMP)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//int GetScreenViewY(game, int,int)
@@ -5499,10 +5488,10 @@ void GameSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
 		code.push_back(new OPopRegister(new VarArgument(INDEX)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(SCREENVIEWY)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//void SetScreenGuy(game, int,int,int)
@@ -5515,10 +5504,10 @@ void GameSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
 		code.push_back(new OPopRegister(new VarArgument(INDEX)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OSetRegister(new VarArgument(SCREENGUY), new VarArgument(SFTEMP)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//int GetScreenGuy(game, int,int)
@@ -5530,10 +5519,10 @@ void GameSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
 		code.push_back(new OPopRegister(new VarArgument(INDEX)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(SCREENGUY)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//void SetScreenString(game, int,int,int)
@@ -5546,10 +5535,10 @@ void GameSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
 		code.push_back(new OPopRegister(new VarArgument(INDEX)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OSetRegister(new VarArgument(SCREENSTRING), new VarArgument(SFTEMP)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//int GetScreenString(game, int,int)
@@ -5561,10 +5550,10 @@ void GameSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
 		code.push_back(new OPopRegister(new VarArgument(INDEX)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(SCREENSTRING)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//void SetScreenRoomType(game, int,int,int)
@@ -5577,10 +5566,10 @@ void GameSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
 		code.push_back(new OPopRegister(new VarArgument(INDEX)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OSetRegister(new VarArgument(SCREENROOM), new VarArgument(SFTEMP)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//int GetScreenRoomType(game, int,int)
@@ -5592,10 +5581,10 @@ void GameSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
 		code.push_back(new OPopRegister(new VarArgument(INDEX)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(SCREENROOM)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//void SetScreenEntryX(game, int,int,int)
@@ -5608,10 +5597,10 @@ void GameSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
 		code.push_back(new OPopRegister(new VarArgument(INDEX)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OSetRegister(new VarArgument(SCREENENTX), new VarArgument(SFTEMP)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//int GetScreenEntryX(game, int,int)
@@ -5623,10 +5612,10 @@ void GameSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
 		code.push_back(new OPopRegister(new VarArgument(INDEX)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(SCREENENTX)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//void SetScreenEntryY(game, int,int,int)
@@ -5639,10 +5628,10 @@ void GameSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
 		code.push_back(new OPopRegister(new VarArgument(INDEX)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OSetRegister(new VarArgument(SCREENENTY), new VarArgument(SFTEMP)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//int GetScreenEntryY(game, int,int)
@@ -5654,10 +5643,10 @@ void GameSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
 		code.push_back(new OPopRegister(new VarArgument(INDEX)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(SCREENENTY)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	 //void SetScreenItem(game, int,int,int)
@@ -5670,10 +5659,10 @@ void GameSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
 		code.push_back(new OPopRegister(new VarArgument(INDEX)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OSetRegister(new VarArgument(SCREENITEM), new VarArgument(SFTEMP)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//int GetScreenItem(game, int,int)
@@ -5685,10 +5674,10 @@ void GameSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
 		code.push_back(new OPopRegister(new VarArgument(INDEX)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(SCREENITEM)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	 //void SetScreenUndercombo(game, int,int,int)
@@ -5701,10 +5690,10 @@ void GameSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
 		code.push_back(new OPopRegister(new VarArgument(INDEX)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OSetRegister(new VarArgument(SCREENUNDCMB), new VarArgument(SFTEMP)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//int GetScreenUndercombo(game, int,int)
@@ -5716,10 +5705,10 @@ void GameSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
 		code.push_back(new OPopRegister(new VarArgument(INDEX)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(SCREENUNDCMB)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//void SetScreenUnderCSet(game, int,int,int)
@@ -5732,10 +5721,10 @@ void GameSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
 		code.push_back(new OPopRegister(new VarArgument(INDEX)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OSetRegister(new VarArgument(SCREENUNDCST), new VarArgument(SFTEMP)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//int GetScreenUnderCSet(game, int,int)
@@ -5747,10 +5736,10 @@ void GameSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
 		code.push_back(new OPopRegister(new VarArgument(INDEX)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(SCREENUNDCST)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//void SetScreenCatchall(game, int,int,int)
@@ -5763,10 +5752,10 @@ void GameSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
 		code.push_back(new OPopRegister(new VarArgument(INDEX)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OSetRegister(new VarArgument(SCREENCATCH), new VarArgument(SFTEMP)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//int GetScreenCatchall(game, int,int)
@@ -5778,10 +5767,10 @@ void GameSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
 		code.push_back(new OPopRegister(new VarArgument(INDEX)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(SCREENCATCH)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	
@@ -5796,10 +5785,10 @@ void GameSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OSetRegister(new VarArgument(SETSCREENLAYOP), new VarArgument(EXP2)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//int GetScreenLayerOpacity(game,int,int,int)
@@ -5812,10 +5801,10 @@ void GameSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OGetScreenLayerOpacity(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 
@@ -5830,10 +5819,10 @@ void GameSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OSetRegister(new VarArgument(SETSCREENSECCMB), new VarArgument(EXP2)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//int GetScreenSecretCombo(game,int,int,int)
@@ -5846,10 +5835,10 @@ void GameSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OGetScreenSecretCombo(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 
@@ -5864,10 +5853,10 @@ void GameSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OSetRegister(new VarArgument(SETSCREENSECCST), new VarArgument(EXP2)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//int GetScreenSecretCSet(game,int,int,int)
@@ -5880,10 +5869,10 @@ void GameSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OGetScreenSecretCSet(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//void SetScreenSecretFlag(int,int,int,int)
@@ -5897,10 +5886,10 @@ void GameSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OSetRegister(new VarArgument(SETSCREENSECFLG), new VarArgument(EXP2)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//int GetScreenSecretFlag(game,int,int,int)
@@ -5913,10 +5902,10 @@ void GameSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OGetScreenSecretFlag(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 
@@ -5931,10 +5920,10 @@ void GameSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OSetRegister(new VarArgument(SETSCREENLAYMAP), new VarArgument(EXP2)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//int GetScreenLayerMap(game,int,int,int)
@@ -5947,10 +5936,10 @@ void GameSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OGetScreenLayerMap(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 
@@ -5966,10 +5955,10 @@ void GameSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OSetRegister(new VarArgument(SETSCREENLAYSCR), new VarArgument(EXP2)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//int GetScreenLayerScreen(game,int,int,int)
@@ -5982,10 +5971,10 @@ void GameSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OGetScreenLayerScreen(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 
@@ -6000,10 +5989,10 @@ void GameSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OSetRegister(new VarArgument(SETSCREENPATH), new VarArgument(EXP2)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//int GetScreenPath(game,int,int,int)
@@ -6016,10 +6005,10 @@ void GameSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OGetScreenPath(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//void SetScreenWarpReturnX(int,int,int,int)
@@ -6033,10 +6022,10 @@ void GameSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OSetRegister(new VarArgument(SETSCREENWARPRX), new VarArgument(EXP2)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//int GetScreenWarpReturnX(game,int,int,int)
@@ -6049,10 +6038,10 @@ void GameSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OGetScreenWarpReturnX(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//void SetScreenWarpReturnY(int,int,int,int)
@@ -6066,10 +6055,10 @@ void GameSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OSetRegister(new VarArgument(SETSCREENWARPRY), new VarArgument(EXP2)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	/*
@@ -6081,8 +6070,8 @@ void GameSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
 		code.push_back(new OPopRegister(new VarArgument(SFTEMP)));
 		code.push_back(new OSSetContinueScreen(new VarArgument(EXP2), new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	*/
@@ -6095,8 +6084,8 @@ void GameSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
 		code.push_back(new OPopRegister(new VarArgument(SFTEMP)));
 		code.push_back(new OSSetContinueString(new VarArgument(EXP2), new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	*/
@@ -6110,10 +6099,10 @@ void GameSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OGetScreenWarpReturnY(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//void PlayOgg(game, int, int)
@@ -6125,10 +6114,10 @@ void GameSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OPlayEnhancedMusicEx(new VarArgument(EXP2), new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//int GetOggPos(game)
@@ -6137,10 +6126,10 @@ void GameSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OGetEnhancedMusicPos(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 }
 	 //void SetOggPos(game, int)
@@ -6151,10 +6140,10 @@ void GameSymbols::generateCode()
 		//pop off the params
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OSetEnhancedMusicPos(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	
@@ -6166,10 +6155,10 @@ void GameSymbols::generateCode()
 		//pop off the params
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OSetEnhancedMusicSpeed(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	
@@ -6179,10 +6168,10 @@ void GameSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OGameReload());
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 }
@@ -6400,8 +6389,8 @@ void NPCSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		//Check validity
 		code.push_back(new OIsValidNPC(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//void GetName(npc, int)
@@ -6412,10 +6401,10 @@ void NPCSymbols::generateCode()
 		//pop off the param
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OGetNPCName(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//void Explode(npc, int)
@@ -6426,10 +6415,10 @@ void NPCSymbols::generateCode()
 		//pop off the param
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new ONPCExplodeRegister(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//void BreakShield(npc)
@@ -6441,8 +6430,8 @@ void NPCSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		//Break shield
 		code.push_back(new OBreakShield(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//bool isDead(npc)
@@ -6454,8 +6443,8 @@ void NPCSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		//Check validity
 		code.push_back(new ONPCDead(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//bool CanSlide(npc)
@@ -6467,8 +6456,8 @@ void NPCSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		//Check validity
 		code.push_back(new ONPCCanSlide(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//int Slide(npc)
@@ -6480,8 +6469,8 @@ void NPCSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		//Check validity
 		code.push_back(new ONPCSlide(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//void Remove(npc)
@@ -6490,11 +6479,11 @@ void NPCSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		//pop off the pointer
-		POPREF();
+		POPREF(function, code);
 		//Break shield
 		code.push_back(new ONPCRemove(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		 function->giveCode(code);
 	}
 	//void StopBGSFX(npc)
@@ -6506,8 +6495,8 @@ void NPCSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		//Break shield
 		code.push_back(new ONPCStopSFX(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		 function->giveCode(code);
 	}
 	//void Attack(npc)
@@ -6519,8 +6508,8 @@ void NPCSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		//Break shield
 		code.push_back(new ONPCAttack(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		 function->giveCode(code);
 	}
 	//void NewDir(int arr[])
@@ -6531,10 +6520,10 @@ void NPCSymbols::generateCode()
 		//pop off the param
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new ONPCNewDir(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//void ConstantWalk(int arr[])
@@ -6545,10 +6534,10 @@ void NPCSymbols::generateCode()
 		//pop off the param
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new ONPCConstWalk(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	
@@ -6560,10 +6549,10 @@ void NPCSymbols::generateCode()
 		//pop off the param
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new ONPCConstWalk8(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	
@@ -6575,10 +6564,10 @@ void NPCSymbols::generateCode()
 		//pop off the param
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new ONPCVarWalk(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//void VariableWalk8(int arr[])
@@ -6589,10 +6578,10 @@ void NPCSymbols::generateCode()
 		//pop off the param
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new ONPCVarWalk8(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//void HaltingWalk(int arr[])
@@ -6603,10 +6592,10 @@ void NPCSymbols::generateCode()
 		//pop off the param
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new ONPCHaltWalk(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//void HaltingWalk8(int arr[])
@@ -6617,10 +6606,10 @@ void NPCSymbols::generateCode()
 		//pop off the param
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new ONPCHaltWalk8(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//void FloatingWalk(int arr[])
@@ -6631,10 +6620,10 @@ void NPCSymbols::generateCode()
 		//pop off the param
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new ONPCFloatWalk(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//void BreathAttack(bool seeklink)
@@ -6645,10 +6634,10 @@ void NPCSymbols::generateCode()
 		//pop off the param
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new ONPCBreatheFire(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//void NewDir8(int arr[])
@@ -6659,10 +6648,10 @@ void NPCSymbols::generateCode()
 		//pop off the param
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new ONPCNewDir8(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//bool Collision(int obj_type, untyped obj_pointer)
@@ -6674,10 +6663,10 @@ void NPCSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
 		code.push_back(new OPopRegister(new VarArgument(INDEX)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(NPCCOLLISION)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//int LinedUp(int range, bool dir8)
@@ -6689,10 +6678,10 @@ void NPCSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
 		code.push_back(new OPopRegister(new VarArgument(INDEX)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(NPCLINEDUP)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//bool LinkInRange(int dist_in_pixels)
@@ -6702,10 +6691,10 @@ void NPCSymbols::generateCode()
 		vector<Opcode *> code;
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new ONPCLinkInRange(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	
@@ -6718,11 +6707,11 @@ void NPCSymbols::generateCode()
 		//pop off the param
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new ONPCAdd(new VarArgument(EXP1)));
-		REASSIGN_PTR(EXP2); //The value from ONPCAdd is placed in REFNPC, EXP1, and EXP2.
-		RETURN();
-		LABELFRONT(label);
+		REASSIGN_PTR(function, code, EXP2); //The value from ONPCAdd is placed in REFNPC, EXP1, and EXP2.
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//bool CanMove(int array[])
@@ -6732,10 +6721,10 @@ void NPCSymbols::generateCode()
 		vector<Opcode *> code;
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new ONPCCanMove(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//bool SimulateHit(int array[])
@@ -6745,10 +6734,10 @@ void NPCSymbols::generateCode()
 		vector<Opcode *> code;
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new ONPCHitWith(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//bool Knockback(int time, int dir, int spd)
@@ -6760,10 +6749,10 @@ void NPCSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new ONPCKnockback(new VarArgument(EXP1), new VarArgument(EXP2)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	
@@ -6916,8 +6905,8 @@ void LinkWeaponSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		//Check validity
 		code.push_back(new OIsValidLWpn(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//void Explode(lweapon, int)
@@ -6928,10 +6917,10 @@ void LinkWeaponSymbols::generateCode()
 		//pop off the param
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OLWeaponExplodeRegister(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//void UseSprite(lweapon, int val)
@@ -6942,10 +6931,10 @@ void LinkWeaponSymbols::generateCode()
 		//pop off the val
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		//pop off the pointer
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OUseSpriteLWpn(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	
@@ -7090,8 +7079,8 @@ void EnemyWeaponSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		//Check validity
 		code.push_back(new OIsValidEWpn(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//void Explode(eweapon, int)
@@ -7102,10 +7091,10 @@ void EnemyWeaponSymbols::generateCode()
 		//pop off the param
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OEWeaponExplodeRegister(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//void UseSprite(eweapon, int val)
@@ -7116,10 +7105,10 @@ void EnemyWeaponSymbols::generateCode()
 		//pop off the val
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		//pop off the pointer
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OUseSpriteEWpn(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	
@@ -7164,10 +7153,10 @@ void TextPtrSymbols::generateCode()
 		//pop off the string ptr
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
 		//pop off the pointer
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OStringWidth(new VarArgument(EXP2),new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//void CharWidth(char32 chr, int font)
@@ -7180,10 +7169,10 @@ void TextPtrSymbols::generateCode()
 		//pop off the character
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
 		//pop off the pointer
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OCharWidth(new VarArgument(EXP2),new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//void StringHeight(char32 ptr, int font)
@@ -7196,10 +7185,10 @@ void TextPtrSymbols::generateCode()
 		//ignore the string ptr; height is purely font-based
 		code.push_back(new OPopRegister(new VarArgument(NUL)));
 		//pop off the pointer
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OFontHeight(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//void CharHeight(char32 chr, int font)
@@ -7212,10 +7201,10 @@ void TextPtrSymbols::generateCode()
 		//ignore the character; height is purely font-based
 		code.push_back(new OPopRegister(new VarArgument(NUL)));
 		//pop off the pointer
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OFontHeight(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//void FontHeight(int font)
@@ -7226,10 +7215,10 @@ void TextPtrSymbols::generateCode()
 		//pop off the font
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		//pop off the pointer
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OFontHeight(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//void MessageWidth(int message)
@@ -7240,10 +7229,10 @@ void TextPtrSymbols::generateCode()
 		//pop off the message
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		//pop off the pointer
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OMessageWidth(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//void MessageHeight(int message)
@@ -7254,10 +7243,10 @@ void TextPtrSymbols::generateCode()
 		//pop off the message
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		//pop off the pointer
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OMessageHeight(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 }
@@ -7658,10 +7647,10 @@ void MapDataSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(INDEX)));
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OGetScreenEnemy(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//int GetDoor(game,int,int,int)
@@ -7672,10 +7661,10 @@ void MapDataSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(INDEX)));
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OGetScreenDoor(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//void SetEnemy(int,int,int,int)
@@ -7687,10 +7676,10 @@ void MapDataSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(INDEX)));
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OSetRegister(new VarArgument(SETSCREENENEMY), new VarArgument(EXP2)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//void SetDoor(int,int,int,int)
@@ -7702,10 +7691,10 @@ void MapDataSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(INDEX)));
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OSetRegister(new VarArgument(SETSCREENDOOR), new VarArgument(EXP2)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//void SetWidth(game, int,int,int)
@@ -7716,10 +7705,10 @@ void MapDataSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(SFTEMP)));
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
 		code.push_back(new OPopRegister(new VarArgument(INDEX)));
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OSetRegister(new VarArgument(SCREENWIDTH), new VarArgument(SFTEMP)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//int GetWidth(game, int,int)
@@ -7729,10 +7718,10 @@ void MapDataSymbols::generateCode()
 		vector<Opcode *> code;
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
 		code.push_back(new OPopRegister(new VarArgument(INDEX)));
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(SCREENWIDTH)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//void SetHeight(game, int,int,int)
@@ -7743,10 +7732,10 @@ void MapDataSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(SFTEMP)));
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
 		code.push_back(new OPopRegister(new VarArgument(INDEX)));
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OSetRegister(new VarArgument(SCREENHEIGHT), new VarArgument(SFTEMP)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//int GetHeight(game, int,int)
@@ -7756,10 +7745,10 @@ void MapDataSymbols::generateCode()
 		vector<Opcode *> code;
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
 		code.push_back(new OPopRegister(new VarArgument(INDEX)));
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(SCREENHEIGHT)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//void SetViewX(game, int,int,int)
@@ -7770,10 +7759,10 @@ void MapDataSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(SFTEMP)));
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
 		code.push_back(new OPopRegister(new VarArgument(INDEX)));
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OSetRegister(new VarArgument(SCREENVIEWX), new VarArgument(SFTEMP)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//int GetViewX(game, int,int)
@@ -7783,10 +7772,10 @@ void MapDataSymbols::generateCode()
 		vector<Opcode *> code;
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
 		code.push_back(new OPopRegister(new VarArgument(INDEX)));
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(SCREENVIEWX)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//void SetViewY(game, int,int,int)
@@ -7797,10 +7786,10 @@ void MapDataSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(SFTEMP)));
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
 		code.push_back(new OPopRegister(new VarArgument(INDEX)));
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OSetRegister(new VarArgument(SCREENVIEWY), new VarArgument(SFTEMP)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//int GetViewY(game, int,int)
@@ -7810,10 +7799,10 @@ void MapDataSymbols::generateCode()
 		vector<Opcode *> code;
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
 		code.push_back(new OPopRegister(new VarArgument(INDEX)));
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(SCREENVIEWY)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//void SetGuy(game, int,int,int)
@@ -7824,10 +7813,10 @@ void MapDataSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(SFTEMP)));
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
 		code.push_back(new OPopRegister(new VarArgument(INDEX)));
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OSetRegister(new VarArgument(SCREENGUY), new VarArgument(SFTEMP)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//int GetGuy(game, int,int)
@@ -7837,10 +7826,10 @@ void MapDataSymbols::generateCode()
 		vector<Opcode *> code;
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
 		code.push_back(new OPopRegister(new VarArgument(INDEX)));
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(SCREENGUY)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//void SetString(game, int,int,int)
@@ -7851,10 +7840,10 @@ void MapDataSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(SFTEMP)));
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
 		code.push_back(new OPopRegister(new VarArgument(INDEX)));
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OSetRegister(new VarArgument(SCREENSTRING), new VarArgument(SFTEMP)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//int GetString(game, int,int)
@@ -7864,10 +7853,10 @@ void MapDataSymbols::generateCode()
 		vector<Opcode *> code;
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
 		code.push_back(new OPopRegister(new VarArgument(INDEX)));
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(SCREENSTRING)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//void SetRoomType(game, int,int,int)
@@ -7878,10 +7867,10 @@ void MapDataSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(SFTEMP)));
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
 		code.push_back(new OPopRegister(new VarArgument(INDEX)));
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OSetRegister(new VarArgument(SCREENROOM), new VarArgument(SFTEMP)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//int GetRoomType(game, int,int)
@@ -7891,10 +7880,10 @@ void MapDataSymbols::generateCode()
 		vector<Opcode *> code;
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
 		code.push_back(new OPopRegister(new VarArgument(INDEX)));
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(SCREENROOM)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//void SetEntryX(game, int,int,int)
@@ -7905,10 +7894,10 @@ void MapDataSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(SFTEMP)));
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
 		code.push_back(new OPopRegister(new VarArgument(INDEX)));
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OSetRegister(new VarArgument(SCREENENTX), new VarArgument(SFTEMP)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//int GetEntryX(game, int,int)
@@ -7918,10 +7907,10 @@ void MapDataSymbols::generateCode()
 		vector<Opcode *> code;
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
 		code.push_back(new OPopRegister(new VarArgument(INDEX)));
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(SCREENENTX)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//void SetEntryY(game, int,int,int)
@@ -7932,10 +7921,10 @@ void MapDataSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(SFTEMP)));
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
 		code.push_back(new OPopRegister(new VarArgument(INDEX)));
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OSetRegister(new VarArgument(SCREENENTY), new VarArgument(SFTEMP)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//int GetEntryY(game, int,int)
@@ -7945,10 +7934,10 @@ void MapDataSymbols::generateCode()
 		vector<Opcode *> code;
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
 		code.push_back(new OPopRegister(new VarArgument(INDEX)));
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(SCREENENTY)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//void SetItem(game, int,int,int)
@@ -7959,10 +7948,10 @@ void MapDataSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(SFTEMP)));
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
 		code.push_back(new OPopRegister(new VarArgument(INDEX)));
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OSetRegister(new VarArgument(SCREENITEM), new VarArgument(SFTEMP)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//int GetItem(game, int,int)
@@ -7972,10 +7961,10 @@ void MapDataSymbols::generateCode()
 		vector<Opcode *> code;
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
 		code.push_back(new OPopRegister(new VarArgument(INDEX)));
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(SCREENITEM)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//void SetUndercombo(game, int,int,int)
@@ -7986,10 +7975,10 @@ void MapDataSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(SFTEMP)));
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
 		code.push_back(new OPopRegister(new VarArgument(INDEX)));
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OSetRegister(new VarArgument(SCREENUNDCMB), new VarArgument(SFTEMP)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//int GetUndercombo(game, int,int)
@@ -7999,10 +7988,10 @@ void MapDataSymbols::generateCode()
 		vector<Opcode *> code;
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
 		code.push_back(new OPopRegister(new VarArgument(INDEX)));
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(SCREENUNDCMB)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//void SetUnderCSet(game, int,int,int)
@@ -8013,10 +8002,10 @@ void MapDataSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(SFTEMP)));
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
 		code.push_back(new OPopRegister(new VarArgument(INDEX)));
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OSetRegister(new VarArgument(SCREENUNDCST), new VarArgument(SFTEMP)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//int GetUnderCSet(game, int,int)
@@ -8026,10 +8015,10 @@ void MapDataSymbols::generateCode()
 		vector<Opcode *> code;
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
 		code.push_back(new OPopRegister(new VarArgument(INDEX)));
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(SCREENUNDCST)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//void SetCatchall(game, int,int,int)
@@ -8040,10 +8029,10 @@ void MapDataSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(SFTEMP)));
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
 		code.push_back(new OPopRegister(new VarArgument(INDEX)));
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OSetRegister(new VarArgument(SCREENCATCH), new VarArgument(SFTEMP)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//int GetCatchall(game, int,int)
@@ -8053,10 +8042,10 @@ void MapDataSymbols::generateCode()
 		vector<Opcode *> code;
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
 		code.push_back(new OPopRegister(new VarArgument(INDEX)));
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(SCREENCATCH)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//void SetLayerOpacity(int,int,int,int)
@@ -8068,10 +8057,10 @@ void MapDataSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(INDEX)));
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OSetRegister(new VarArgument(SETSCREENLAYOP), new VarArgument(EXP2)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code); 
 	}
 	//int GetLayerOpacity(game,int,int,int)
@@ -8082,10 +8071,10 @@ void MapDataSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(INDEX)));
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OGetScreenLayerOpacity(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//void SetSecretCombo(int,int,int,int)
@@ -8097,10 +8086,10 @@ void MapDataSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(INDEX)));
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OSetRegister(new VarArgument(SETSCREENSECCMB), new VarArgument(EXP2)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code); 
 	}
 	//int GetSecretCombo(game,int,int,int)
@@ -8111,10 +8100,10 @@ void MapDataSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(INDEX)));
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OGetScreenSecretCombo(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//void SetSecretCSet(int,int,int,int)
@@ -8126,10 +8115,10 @@ void MapDataSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(INDEX)));
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OSetRegister(new VarArgument(SETSCREENSECCST), new VarArgument(EXP2)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//int GetSecretCSet(game,int,int,int)
@@ -8140,10 +8129,10 @@ void MapDataSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(INDEX)));
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OGetScreenSecretCSet(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//void SetSecretFlag(int,int,int,int)
@@ -8155,10 +8144,10 @@ void MapDataSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(INDEX)));
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OSetRegister(new VarArgument(SETSCREENSECFLG), new VarArgument(EXP2)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//int GetSecretFlag(game,int,int,int)
@@ -8169,10 +8158,10 @@ void MapDataSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(INDEX)));
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OGetScreenSecretFlag(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//void SetLayerMap(int,int,int,int)
@@ -8184,10 +8173,10 @@ void MapDataSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(INDEX)));
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OSetRegister(new VarArgument(SETSCREENLAYMAP), new VarArgument(EXP2)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//int GetLayerMap(game,int,int,int)
@@ -8198,10 +8187,10 @@ void MapDataSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(INDEX)));
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OGetScreenLayerMap(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//void SetLayerScreen(int,int,int,int)
@@ -8213,10 +8202,10 @@ void MapDataSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(INDEX)));
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OSetRegister(new VarArgument(SETSCREENLAYSCR), new VarArgument(EXP2)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//int GetLayerScreen(game,int,int,int)
@@ -8227,10 +8216,10 @@ void MapDataSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(INDEX)));
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OGetScreenLayerScreen(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 
@@ -8243,10 +8232,10 @@ void MapDataSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(INDEX)));
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OSetRegister(new VarArgument(SETSCREENPATH), new VarArgument(EXP2)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//int GetPath(game,int,int,int)
@@ -8257,10 +8246,10 @@ void MapDataSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(INDEX)));
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OGetScreenPath(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//void SetWarpReturnX(int,int,int,int)
@@ -8272,10 +8261,10 @@ void MapDataSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(INDEX)));
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OSetRegister(new VarArgument(SETSCREENWARPRX), new VarArgument(EXP2)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//int GetWarpReturnX(game,int,int,int)
@@ -8286,10 +8275,10 @@ void MapDataSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(INDEX)));
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OGetScreenWarpReturnX(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//void SetWarpReturnY(int,int,int,int)
@@ -8301,10 +8290,10 @@ void MapDataSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(INDEX)));
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OSetRegister(new VarArgument(SETSCREENWARPRY), new VarArgument(EXP2)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//int GetWarpReturnY(game,int,int,int)
@@ -8315,10 +8304,10 @@ void MapDataSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(INDEX)));
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OGetScreenWarpReturnY(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	
@@ -8336,10 +8325,10 @@ void MapDataSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
 		code.push_back(new OPopRegister(new VarArgument(INDEX)));
 		//pop pointer
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OIsSolidMapdata(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	
@@ -8353,10 +8342,10 @@ void MapDataSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
 		code.push_back(new OPopRegister(new VarArgument(INDEX)));
 		//pop pointer
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OIsSolidMapdataLayer(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 
@@ -8369,10 +8358,10 @@ void MapDataSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
 		code.push_back(new OPopRegister(new VarArgument(INDEX)));
 		//pop pointer
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(MAPDATAINTID)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	
 	}
@@ -8387,10 +8376,10 @@ void MapDataSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
 		code.push_back(new OPopRegister(new VarArgument(INDEX)));
 		//pop pointer
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OSetRegister(new VarArgument(MAPDATAINTID), new VarArgument(SFTEMP)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	
@@ -8404,10 +8393,10 @@ void MapDataSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
 		code.push_back(new OPopRegister(new VarArgument(INDEX)));
 		//pop pointer
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(MAPDATAINITA)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	
 	}
@@ -8422,10 +8411,10 @@ void MapDataSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
 		code.push_back(new OPopRegister(new VarArgument(INDEX)));
 		//pop pointer
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OSetRegister(new VarArgument(MAPDATAINITA), new VarArgument(SFTEMP)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 }
@@ -8493,10 +8482,10 @@ void InputSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OSSetDataType(new VarArgument(EXP2), new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	{
@@ -8507,10 +8496,10 @@ void InputSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OSDataType(new VarArgument(EXP1),new VarArgument(EXP2)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 }
@@ -8550,10 +8539,10 @@ void GraphicsSymbols::generateCode()
 		// Pop argument.
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
 		// Pop pointer.
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OWavyR(new VarArgument(EXP2)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	
@@ -8567,10 +8556,10 @@ void GraphicsSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OGraphicsGetpixel(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	{
@@ -8580,10 +8569,10 @@ void GraphicsSymbols::generateCode()
 		// Pop argument.
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
 		// Pop pointer.
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OZapR(new VarArgument(EXP2)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	{
@@ -8593,10 +8582,10 @@ void GraphicsSymbols::generateCode()
 		// Pop argument.
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
 		// Pop pointer.
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OGreyscaleR(new VarArgument(EXP2)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	{
@@ -8606,10 +8595,10 @@ void GraphicsSymbols::generateCode()
 		// Pop argument.
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
 		// Pop pointer.
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OMonochromeR(new VarArgument(EXP2)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 
@@ -8619,10 +8608,10 @@ void GraphicsSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		code.push_back(new OTintR());
-		POP_ARGS(4, NUL);
+		POPARGS(code, 4, NUL);
 		
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//void MonochromeHue(graphics, float, float, float, bool)
@@ -8631,10 +8620,10 @@ void GraphicsSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		code.push_back(new OMonoHueR());
-		POP_ARGS(5, NUL);
+		POPARGS(code, 5, NUL);
 		
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	
@@ -8644,9 +8633,9 @@ void GraphicsSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		code.push_back(new OClearTint());
-		POPREF(); //pop the 'this'
-		RETURN();
-		LABELFRONT(label);
+		POPREF(function, code); //pop the 'this'
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 }
@@ -8733,8 +8722,8 @@ void BitmapSymbols::generateCode()
 		//pop pointer to EXP1
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		code.push_back(new OGraphicsGetpixel(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	/*
@@ -8747,10 +8736,10 @@ void BitmapSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
 		code.push_back(new OPopRegister(new VarArgument(INDEX)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(CREATEBITMAP)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	*/
@@ -8760,9 +8749,9 @@ void BitmapSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		code.push_back(new OBMPRectangleRegister());
-		POP_ARGS(13, NUL);
-		RETURN();
-		LABELFRONT(label);
+		POPARGS(code, 13, NUL);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		
 		function->giveCode(code);
 	}
@@ -8773,10 +8762,10 @@ void BitmapSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		code.push_back(new OReadBitmap());
-		REASSIGN_PTR(EXP2);
-		POP_ARGS(3, NUL);
-		RETURN();
-		LABELFRONT(label);
+		REASSIGN_PTR(function, code, EXP2);
+		POPARGS(code, 3, NUL);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 
 	}
@@ -8787,10 +8776,10 @@ void BitmapSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		code.push_back(new OClearBitmap());
-		POP_ARGS(2, NUL);
+		POPARGS(code, 2, NUL);
 		
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 
 	}
@@ -8801,11 +8790,11 @@ void BitmapSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		code.push_back(new ORegenerateBitmap());
-		REASSIGN_PTR(EXP2);
-		POP_ARGS(4, NUL);
+		REASSIGN_PTR(function, code, EXP2);
+		POPARGS(code, 4, NUL);
 		
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 
 	}
@@ -8815,9 +8804,9 @@ void BitmapSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		code.push_back(new OWriteBitmap());
-		POP_ARGS(4, NUL);
-		RETURN();
-		LABELFRONT(label);
+		POPARGS(code, 4, NUL);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		
 		function->giveCode(code);
 	}
@@ -8827,10 +8816,10 @@ void BitmapSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		code.push_back(new OBMPCircleRegister());
-		POP_ARGS(12, NUL);
+		POPARGS(code, 12, NUL);
 		
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//void Arc(bitmap, float, float, float, float, float, float, float, float, float, float, float, bool, bool, float)
@@ -8839,10 +8828,10 @@ void BitmapSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		code.push_back(new OBMPArcRegister());
-		POP_ARGS(15, NUL);
+		POPARGS(code, 15, NUL);
 		
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//void Ellipse(bitmap, float, float, float, float, float, bool, float, float, float)
@@ -8851,10 +8840,10 @@ void BitmapSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		code.push_back(new OBMPEllipseRegister());
-		POP_ARGS(13, NUL);
+		POPARGS(code, 13, NUL);
 		
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//void Line(bitmap, float, float, float, float, float, float, float, float, float, float, float)
@@ -8863,10 +8852,10 @@ void BitmapSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		code.push_back(new OBMPLineRegister());
-		POP_ARGS(12, NUL);
+		POPARGS(code, 12, NUL);
 		
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//void Spline(bitmap, float, float, float, float, float, float, float, float, float, float, float)
@@ -8875,10 +8864,10 @@ void BitmapSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		code.push_back(new OBMPSplineRegister());
-		POP_ARGS(12, NUL);
+		POPARGS(code, 12, NUL);
 		
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//void PutPixel(bitmap, float, float, float, float, float, float, float, float)
@@ -8887,10 +8876,10 @@ void BitmapSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		code.push_back(new OBMPPutPixelRegister());
-		POP_ARGS(9, NUL);
+		POPARGS(code, 9, NUL);
 		
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//void DrawCharacter(bitmap, float, float, float, float, float, float, float, float, float, float)
@@ -8899,10 +8888,10 @@ void BitmapSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		code.push_back(new OBMPDrawCharRegister());
-		POP_ARGS(11, NUL);
+		POPARGS(code, 11, NUL);
 		
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//void DrawInteger(bitmap, float, float, float, float, float, float, float, float, float, float, float)
@@ -8911,10 +8900,10 @@ void BitmapSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		code.push_back(new OBMPDrawIntRegister());
-		POP_ARGS(12, NUL);
+		POPARGS(code, 12, NUL);
 		
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//void DrawTile(bitmap, float, float, float, float, float, bool, float, float, float)
@@ -8923,10 +8912,10 @@ void BitmapSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		code.push_back(new OBMPDrawTileRegister());
-		POP_ARGS(16, NUL);
+		POPARGS(code, 16, NUL);
 		
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//void DrawTileCloaked(bitmap, ...args)
@@ -8935,10 +8924,10 @@ void BitmapSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		code.push_back(new OBMPDrawTileCloakedRegister());
-		POP_ARGS(8, NUL);
+		POPARGS(code, 8, NUL);
 		
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//void DrawCombo(bitmap, float, float, float, float, float, bool, float, float, float)
@@ -8947,10 +8936,10 @@ void BitmapSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		code.push_back(new OBMPDrawComboRegister());
-		POP_ARGS(17, NUL);
+		POPARGS(code, 17, NUL);
 		
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//void DrawComboCloaked(bitmap, ...args)
@@ -8959,10 +8948,10 @@ void BitmapSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		code.push_back(new OBMPDrawComboCloakedRegister());
-		POP_ARGS(8, NUL);
+		POPARGS(code, 8, NUL);
 		
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//void Quad(bitmap, float, float, float, float, float, float, float, float, float, bitmap)
@@ -8971,10 +8960,10 @@ void BitmapSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		code.push_back(new OBMPQuadRegister());
-		POP_ARGS(17, NUL);
+		POPARGS(code, 17, NUL);
 		
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//void Polygon(bitmap, float, float, float, float, float)
@@ -8984,10 +8973,10 @@ void BitmapSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		code.push_back(new OBMPPolygonRegister());
-		POP_ARGS(6, NUL);
+		POPARGS(code, 6, NUL);
 		
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	
@@ -8997,10 +8986,10 @@ void BitmapSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		code.push_back(new OBMPTriangleRegister());
-		POP_ARGS(15, NUL);
+		POPARGS(code, 15, NUL);
 		
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	
@@ -9010,10 +8999,10 @@ void BitmapSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		code.push_back(new OBMPQuad3DRegister());
-		POP_ARGS(10, NUL);
+		POPARGS(code, 10, NUL);
 		
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//void Triangle3D(bitmap, float, float, float, float, float, float, float, float, float, bitmap)
@@ -9022,10 +9011,10 @@ void BitmapSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		code.push_back(new OBMPTriangle3DRegister());
-		POP_ARGS(10, NUL);
+		POPARGS(code, 10, NUL);
 		
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	
@@ -9035,10 +9024,10 @@ void BitmapSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		code.push_back(new OBMPFastTileRegister());
-		POP_ARGS(7, NUL);
+		POPARGS(code, 7, NUL);
 		
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//void FastCombo(bitmap, float, float, float, float, float)
@@ -9047,10 +9036,10 @@ void BitmapSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		code.push_back(new OBMPFastComboRegister());
-		POP_ARGS(7, NUL);
+		POPARGS(code, 7, NUL);
 		
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//void DrawString(bitmap, float, float, float, float, float, float, float, int *string)
@@ -9059,10 +9048,10 @@ void BitmapSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		code.push_back(new OBMPDrawStringRegister());
-		POP_ARGS(10, NUL);
+		POPARGS(code, 10, NUL);
 		
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//void DrawString(bitmap, float, float, float, float, float, float, float, int *string)
@@ -9071,10 +9060,10 @@ void BitmapSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		code.push_back(new OBMPDrawString2Register());
-		POP_ARGS(12, NUL);
+		POPARGS(code, 12, NUL);
 		
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//void DrawLayer(bitmap, float, float, float, float, float, float, float, float)
@@ -9083,10 +9072,10 @@ void BitmapSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		code.push_back(new OBMPDrawLayerRegister());
-		POP_ARGS(9, NUL);
+		POPARGS(code, 9, NUL);
 		
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//void DrawLayerComboIFlags(bitmap, float, float, float, float, float, float, float, float)
@@ -9095,10 +9084,10 @@ void BitmapSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		code.push_back(new OBMPDrawScreenCIFlagRegister());
-		POP_ARGS(9, NUL);
+		POPARGS(code, 9, NUL);
 		
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//void DrawLayerComboFlags(bitmap, float, float, float, float, float, float, float, float)
@@ -9107,10 +9096,10 @@ void BitmapSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		code.push_back(new OBMPDrawScreenCFlagRegister());
-		POP_ARGS(9, NUL);
+		POPARGS(code, 9, NUL);
 		
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//void DrawLayerSolid(bitmap, float, float, float, float, float, float, float, float)
@@ -9119,10 +9108,10 @@ void BitmapSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		code.push_back(new OBMPDrawScreenSolidMaskRegister());
-		POP_ARGS(9, NUL);
+		POPARGS(code, 9, NUL);
 		
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//void DrawLayerComboTypes(bitmap, float, float, float, float, float, float, float, float)
@@ -9131,10 +9120,10 @@ void BitmapSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		code.push_back(new OBMPDrawScreenCTypeRegister());
-		POP_ARGS(9, NUL);
+		POPARGS(code, 9, NUL);
 		
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	
@@ -9144,10 +9133,10 @@ void BitmapSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		code.push_back(new OBMPDrawScreenSolidityRegister());
-		POP_ARGS(9, NUL);
+		POPARGS(code, 9, NUL);
 		
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//void DrawScreen(bitmap, float, float, float, float, float, float)
@@ -9156,10 +9145,10 @@ void BitmapSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		code.push_back(new OBMPDrawScreenRegister());
-		POP_ARGS(7, NUL);
+		POPARGS(code, 7, NUL);
 		
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	
@@ -9169,10 +9158,10 @@ void BitmapSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		code.push_back(new OBMPDrawScreenSolidRegister());
-		POP_ARGS(7, NUL);
+		POPARGS(code, 7, NUL);
 		
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	
@@ -9182,10 +9171,10 @@ void BitmapSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		code.push_back(new OBMPDrawScreenSolid2Register());
-		POP_ARGS(7, NUL);
+		POPARGS(code, 7, NUL);
 		
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//void DrawScreenComboTypes(bitmap, float, float, float, float, float, float)
@@ -9194,10 +9183,10 @@ void BitmapSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		code.push_back(new OBMPDrawScreenComboTRegister());
-		POP_ARGS(7, NUL);
+		POPARGS(code, 7, NUL);
 		
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//void DrawScreenComboFlags(bitmap, float, float, float, float, float, float)
@@ -9206,10 +9195,10 @@ void BitmapSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		code.push_back(new OBMPDrawScreenComboFRegister());
-		POP_ARGS(7, NUL);
+		POPARGS(code, 7, NUL);
 		
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//void DrawScreenComboFlags(bitmap, float, float, float, float, float, float)
@@ -9218,10 +9207,10 @@ void BitmapSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		code.push_back(new OBMPDrawScreenComboIRegister());
-		POP_ARGS(7, NUL);
+		POPARGS(code, 7, NUL);
 		
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	
@@ -9232,10 +9221,10 @@ void BitmapSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		code.push_back(new OBMPDrawBitmapExRegister());
-		POP_ARGS(17, NUL);
+		POPARGS(code, 17, NUL);
 		
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//void DrawPlane(bitmap, float, float, float, float, float, float, float, float, float, float, bool)
@@ -9244,10 +9233,10 @@ void BitmapSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		code.push_back(new OBMPMode7());
-		POP_ARGS(14, NUL);
+		POPARGS(code, 14, NUL);
 		
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//void DrawBitmapEx(bitmap, float, float, float, float, float, float, float, float, float, float, bool)
@@ -9256,10 +9245,10 @@ void BitmapSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		code.push_back(new OBMPBlitTO());
-		POP_ARGS(17, NUL);
+		POPARGS(code, 17, NUL);
 		
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//void DrawBitmapEx(bitmap, float, float, float, float, float, float, float, float, float, float, bool)
@@ -9268,10 +9257,10 @@ void BitmapSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		code.push_back(new OBMPBlitTO());
-		POP_ARGS(17, NUL);
+		POPARGS(code, 17, NUL);
 		
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//bool isValid(bitmap)
@@ -9283,8 +9272,8 @@ void BitmapSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		//Check validity
 		code.push_back(new OIsValidBitmap(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//bool isAllocated(bitmap)
@@ -9296,8 +9285,8 @@ void BitmapSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		//Check validity
 		code.push_back(new OIsAllocatedBitmap(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//void ClearToColor(bitmap, layer, color)
@@ -9306,12 +9295,12 @@ void BitmapSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		code.push_back(new OBitmapClearToColor());
-		POP_ARGS(2, NUL);
+		POPARGS(code, 2, NUL);
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 
 	}
@@ -9321,10 +9310,10 @@ void BitmapSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		//pop pointer
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OBitmapFree());
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 }
@@ -9386,10 +9375,10 @@ void SpriteDataSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OSDataTile(new VarArgument(EXP1),new VarArgument(EXP2)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//GetMisc(SpriteData, int)
@@ -9401,10 +9390,10 @@ void SpriteDataSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OSDataMisc(new VarArgument(EXP1),new VarArgument(EXP2)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//GetCSets(SpriteData, int)
@@ -9416,10 +9405,10 @@ void SpriteDataSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OSDataCSets(new VarArgument(EXP1),new VarArgument(EXP2)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//GetFrames(SpriteData, int)
@@ -9431,10 +9420,10 @@ void SpriteDataSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OSDataFrames(new VarArgument(EXP1),new VarArgument(EXP2)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//GetSpeed(SpriteData, int)
@@ -9446,10 +9435,10 @@ void SpriteDataSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OSDataSpeed(new VarArgument(EXP1),new VarArgument(EXP2)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//GetType(SpriteData, int)
@@ -9461,10 +9450,10 @@ void SpriteDataSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OSDataType(new VarArgument(EXP1),new VarArgument(EXP2)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//SetTile(SpriteData, int, int)
@@ -9476,10 +9465,10 @@ void SpriteDataSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OSSetDataTile(new VarArgument(EXP2), new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//SetMisc(SpriteData, int, int)
@@ -9491,10 +9480,10 @@ void SpriteDataSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OSSetDataMisc(new VarArgument(EXP2), new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//SetCSets(SpriteData, int, int)
@@ -9506,10 +9495,10 @@ void SpriteDataSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OSSetDataCSets(new VarArgument(EXP2), new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//SetFrames(SpriteData, int, int)
@@ -9521,10 +9510,10 @@ void SpriteDataSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OSSetDataFrames(new VarArgument(EXP2), new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//SetSpeed(SpriteData, int, int)
@@ -9536,10 +9525,10 @@ void SpriteDataSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OSSetDataSpeed(new VarArgument(EXP2), new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//SetType(SpriteData, int, int)
@@ -9551,10 +9540,10 @@ void SpriteDataSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OSSetDataType(new VarArgument(EXP2), new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	*/
@@ -9818,10 +9807,10 @@ void AudioSymbols::generateCode()
 		//pop off the param
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OAdjustVolumeRegister(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//void AdjustSFXVolume(audio, int)
@@ -9832,10 +9821,10 @@ void AudioSymbols::generateCode()
 		//pop off the param
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OAdjustSFXVolumeRegister(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	
@@ -9849,10 +9838,10 @@ void AudioSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
 		code.push_back(new OPopRegister(new VarArgument(INDEX)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OSetRegister(new VarArgument(ADJUSTSFX), new VarArgument(SFTEMP)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//void PlaySound(game, int)
@@ -9863,10 +9852,10 @@ void AudioSymbols::generateCode()
 		//pop off the param
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OPlaySoundRegister(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	
@@ -9878,10 +9867,10 @@ void AudioSymbols::generateCode()
 		//pop off the param
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OEndSoundRegister(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	
@@ -9893,10 +9882,10 @@ void AudioSymbols::generateCode()
 		//pop off the param
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OPauseSoundRegister(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	
@@ -9908,10 +9897,10 @@ void AudioSymbols::generateCode()
 		//pop off the param
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OContinueSFX(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	
@@ -9923,10 +9912,10 @@ void AudioSymbols::generateCode()
 		//pop off the param
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OResumeSoundRegister(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	
@@ -9936,10 +9925,10 @@ void AudioSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OPauseMusic());
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	
@@ -9949,10 +9938,10 @@ void AudioSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OResumeMusic());
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//void PlayMIDI(game, int)
@@ -9963,10 +9952,10 @@ void AudioSymbols::generateCode()
 		//pop off the param
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OPlayMIDIRegister(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//void PlayEnhancedMusic(game, int, int)
@@ -9978,10 +9967,10 @@ void AudioSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OPlayEnhancedMusic(new VarArgument(EXP2), new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//void PlayEnhancedMusicEx(game, int, int)
@@ -9993,10 +9982,10 @@ void AudioSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OPlayEnhancedMusicEx(new VarArgument(EXP2), new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//int GetEnhancedMusicPos(game)
@@ -10005,10 +9994,10 @@ void AudioSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OGetEnhancedMusicPos(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 }
 	 //void SetEnhancedMusicPos(game, int)
@@ -10019,10 +10008,10 @@ void AudioSymbols::generateCode()
 		//pop off the params
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OSetEnhancedMusicPos(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//void SetEnhancedMusicSpeed(game, int)
@@ -10033,10 +10022,10 @@ void AudioSymbols::generateCode()
 		//pop off the params
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OSetEnhancedMusicSpeed(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 }
@@ -10122,10 +10111,10 @@ void DebugSymbols::generateCode()
 		vector<Opcode *> code;
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OGetItemDataPointer(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	
@@ -10136,10 +10125,10 @@ void DebugSymbols::generateCode()
 		vector<Opcode *> code;
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OSetItemDataPointer(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//int GetPointer(item, item)
@@ -10149,10 +10138,10 @@ void DebugSymbols::generateCode()
 		vector<Opcode *> code;
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OGetItemPointer(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	
@@ -10163,10 +10152,10 @@ void DebugSymbols::generateCode()
 		vector<Opcode *> code;
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OSetItemPointer(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}    
 	//int GetPointer(ffc, ffc)
@@ -10176,10 +10165,10 @@ void DebugSymbols::generateCode()
 		vector<Opcode *> code;
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OGetFFCPointer(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	
@@ -10190,10 +10179,10 @@ void DebugSymbols::generateCode()
 		vector<Opcode *> code;
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OSetFFCPointer(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 		  //int GetPointer(eweapon, eweapon)
@@ -10203,10 +10192,10 @@ void DebugSymbols::generateCode()
 		vector<Opcode *> code;
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OGetEWeaponPointer(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	
@@ -10217,10 +10206,10 @@ void DebugSymbols::generateCode()
 		vector<Opcode *> code;
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OSetEWeaponPointer(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	   //int GetPointer(lweapon, lweapon)
@@ -10230,10 +10219,10 @@ void DebugSymbols::generateCode()
 		vector<Opcode *> code;
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OGetLWeaponPointer(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	
@@ -10244,10 +10233,10 @@ void DebugSymbols::generateCode()
 		vector<Opcode *> code;
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OSetLWeaponPointer(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	 //int GetPointer(npc, ffc)
@@ -10257,10 +10246,10 @@ void DebugSymbols::generateCode()
 		vector<Opcode *> code;
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OGetNPCPointer(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	
@@ -10271,10 +10260,10 @@ void DebugSymbols::generateCode()
 		vector<Opcode *> code;
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OSetNPCPointer(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//int GetPointer(game, bool)
@@ -10284,10 +10273,10 @@ void DebugSymbols::generateCode()
 		vector<Opcode *> code;
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OGetBoolPointer(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	
@@ -10298,10 +10287,10 @@ void DebugSymbols::generateCode()
 		vector<Opcode *> code;
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OSetBoolPointer(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	
@@ -10314,10 +10303,10 @@ void DebugSymbols::generateCode()
 		//pop off the param
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OTriggerSecretRegister(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	
@@ -10329,10 +10318,10 @@ void DebugSymbols::generateCode()
 		//pop off the param
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OChangeFFCScriptRegister(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//void Breakpoint(debug, char)
@@ -10341,10 +10330,10 @@ void DebugSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OBreakpoint(new VarArgument(EXP2)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 }
@@ -10592,10 +10581,10 @@ void NPCDataSymbols::generateCode()
 		vector<Opcode *> code;
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new ONDataBaseTile(new VarArgument(EXP1),new VarArgument(EXP2)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	
@@ -10607,10 +10596,10 @@ void NPCDataSymbols::generateCode()
 		//pop off the param
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OGetNPCDataName(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//void GetInitDLabel(npc, int buffer[], int d)
@@ -10623,10 +10612,10 @@ void NPCDataSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OGetNPCDataInitDLabel(new VarArgument(EXP2), new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//bool MatchInitDLabel(npc, "label", d)
@@ -10638,10 +10627,10 @@ void NPCDataSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
 		code.push_back(new OPopRegister(new VarArgument(INDEX)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(NPCMATCHINITDLABEL)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	
 	}
@@ -10652,10 +10641,10 @@ void NPCDataSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new ONDataEHeight(new VarArgument(EXP1),new VarArgument(EXP2)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	
@@ -10669,10 +10658,10 @@ void NPCDataSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
 		code.push_back(new OPopRegister(new VarArgument(INDEX)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new ONDataScriptDef(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//int GetDefense(NPCData, int, int)
@@ -10684,10 +10673,10 @@ void NPCDataSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
 		code.push_back(new OPopRegister(new VarArgument(INDEX)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new ONDataDefense(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//int GetSizeFlag(NPCData, int, int)
@@ -10699,10 +10688,10 @@ void NPCDataSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
 		code.push_back(new OPopRegister(new VarArgument(INDEX)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new ONDataSizeFlag(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//int GetAttribute(NPCData, int, int)
@@ -10714,10 +10703,10 @@ void NPCDataSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
 		code.push_back(new OPopRegister(new VarArgument(INDEX)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new ONDatattributes(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	
@@ -10734,10 +10723,10 @@ void NPCDataSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
 		code.push_back(new OPopRegister(new VarArgument(INDEX)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OSetRegister(new VarArgument(SETNPCDATASCRIPTDEF), new VarArgument(SFTEMP)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	  //three inputs, no return
@@ -10752,10 +10741,10 @@ void NPCDataSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
 		code.push_back(new OPopRegister(new VarArgument(INDEX)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OSetRegister(new VarArgument(SETNPCDATADEFENSE), new VarArgument(SFTEMP)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	  //three inputs, no return
@@ -10770,10 +10759,10 @@ void NPCDataSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
 		code.push_back(new OPopRegister(new VarArgument(INDEX)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OSetRegister(new VarArgument(SETNPCDATASIZEFLAG), new VarArgument(SFTEMP)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	  //three inputs, no return
@@ -10788,10 +10777,10 @@ void NPCDataSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
 		code.push_back(new OPopRegister(new VarArgument(INDEX)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OSetRegister(new VarArgument(SETNPCDATAATTRIBUTE), new VarArgument(SFTEMP)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//GetFlags(NPCData, int)
@@ -10800,10 +10789,10 @@ void NPCDataSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new ONDataFlags(new VarArgument(EXP1),new VarArgument(EXP2)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//GetFlags2(NPCData, int)
@@ -10813,10 +10802,10 @@ void NPCDataSymbols::generateCode()
 		vector<Opcode *> code;
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new ONDataFlags2(new VarArgument(EXP1),new VarArgument(EXP2)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//GetWidth(game, int)
@@ -10825,10 +10814,10 @@ void NPCDataSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new ONDataWidth(new VarArgument(EXP1),new VarArgument(EXP2)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//GetHeight(NPCData, int)
@@ -10837,10 +10826,10 @@ void NPCDataSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new ONDataHeight(new VarArgument(EXP1),new VarArgument(EXP2)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//GetSTile(NPCData, int)
@@ -10849,10 +10838,10 @@ void NPCDataSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new ONDataTile(new VarArgument(EXP1),new VarArgument(EXP2)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//GetSWidth(NPCData, int)
@@ -10862,10 +10851,10 @@ void NPCDataSymbols::generateCode()
 		vector<Opcode *> code;
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new ONDataSWidth(new VarArgument(EXP1),new VarArgument(EXP2)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//GetSHeight(NPCData, int)
@@ -10875,10 +10864,10 @@ void NPCDataSymbols::generateCode()
 		vector<Opcode *> code;
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new ONDataSHeight(new VarArgument(EXP1),new VarArgument(EXP2)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//GetETile(NPCData, int)
@@ -10888,10 +10877,10 @@ void NPCDataSymbols::generateCode()
 		vector<Opcode *> code;
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new ONDataETile(new VarArgument(EXP1),new VarArgument(EXP2)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//GetEWidth(NPCData, int)
@@ -10901,10 +10890,10 @@ void NPCDataSymbols::generateCode()
 		vector<Opcode *> code;
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new ONDataEWidth(new VarArgument(EXP1),new VarArgument(EXP2)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//GetHP(NPCData, int)
@@ -10914,10 +10903,10 @@ void NPCDataSymbols::generateCode()
 		vector<Opcode *> code;
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new ONDataHP(new VarArgument(EXP1),new VarArgument(EXP2)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//GetFamily(NPCData, int)
@@ -10927,10 +10916,10 @@ void NPCDataSymbols::generateCode()
 		vector<Opcode *> code;
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new ONDataFamily(new VarArgument(EXP1),new VarArgument(EXP2)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//GetCSet(NPCData, int)
@@ -10940,10 +10929,10 @@ void NPCDataSymbols::generateCode()
 		vector<Opcode *> code;
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new ONDataCSet(new VarArgument(EXP1),new VarArgument(EXP2)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//SetDMapIntro(NPCData, int)
@@ -10953,10 +10942,10 @@ void NPCDataSymbols::generateCode()
 		vector<Opcode *> code;
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new ONDataAnim(new VarArgument(EXP1),new VarArgument(EXP2)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//GetEAnim(NPCData, int)
@@ -10966,10 +10955,10 @@ void NPCDataSymbols::generateCode()
 		vector<Opcode *> code;
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new ONDataEAnim(new VarArgument(EXP1),new VarArgument(EXP2)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//GetFramerate(NPCData, int)
@@ -10979,10 +10968,10 @@ void NPCDataSymbols::generateCode()
 		vector<Opcode *> code;
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new ONDataFramerate(new VarArgument(EXP1),new VarArgument(EXP2)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//GetEFramerate(NPCData, int)
@@ -10992,10 +10981,10 @@ void NPCDataSymbols::generateCode()
 		vector<Opcode *> code;
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new ONDataEFramerate(new VarArgument(EXP1),new VarArgument(EXP2)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//GetTouchDamage(NPCData,, int)
@@ -11005,10 +10994,10 @@ void NPCDataSymbols::generateCode()
 		vector<Opcode *> code;
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new ONDataTouchDamage(new VarArgument(EXP1),new VarArgument(EXP2)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//GetWeaponDamage(NPCData, int)
@@ -11018,10 +11007,10 @@ void NPCDataSymbols::generateCode()
 		vector<Opcode *> code;
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new ONDataWeaponDamage(new VarArgument(EXP1),new VarArgument(EXP2)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//GetWeapon(NPCData, int)
@@ -11031,10 +11020,10 @@ void NPCDataSymbols::generateCode()
 		vector<Opcode *> code;
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new ONDataWeapon(new VarArgument(EXP1),new VarArgument(EXP2)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//GetRandom(NPCData, int)
@@ -11044,10 +11033,10 @@ void NPCDataSymbols::generateCode()
 		vector<Opcode *> code;
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new ONDataRandom(new VarArgument(EXP1),new VarArgument(EXP2)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//GetHaltRate(NPCData, int)
@@ -11057,10 +11046,10 @@ void NPCDataSymbols::generateCode()
 		vector<Opcode *> code;
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new ONDataHalt(new VarArgument(EXP1),new VarArgument(EXP2)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//GetStep(NPCData, int)
@@ -11070,10 +11059,10 @@ void NPCDataSymbols::generateCode()
 		vector<Opcode *> code;
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new ONDataStep(new VarArgument(EXP1),new VarArgument(EXP2)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//GetHoming(NPCData, int)
@@ -11083,10 +11072,10 @@ void NPCDataSymbols::generateCode()
 		vector<Opcode *> code;
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new ONDataHoming(new VarArgument(EXP1),new VarArgument(EXP2)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//GetHunger(NPCData, int)
@@ -11096,10 +11085,10 @@ void NPCDataSymbols::generateCode()
 		vector<Opcode *> code;
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new ONDataHunger(new VarArgument(EXP1),new VarArgument(EXP2)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//GetDropset(NPCData, int)
@@ -11109,10 +11098,10 @@ void NPCDataSymbols::generateCode()
 		vector<Opcode *> code;
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new ONDataropset(new VarArgument(EXP1),new VarArgument(EXP2)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//GetBGSFX(NPCData, int)
@@ -11122,10 +11111,10 @@ void NPCDataSymbols::generateCode()
 		vector<Opcode *> code;
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new ONDataBGSound(new VarArgument(EXP1),new VarArgument(EXP2)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//GetHitSFX(NPCData, int)
@@ -11135,10 +11124,10 @@ void NPCDataSymbols::generateCode()
 		vector<Opcode *> code;
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new ONDataHitSound(new VarArgument(EXP1),new VarArgument(EXP2)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//GetDeathSFX(NPCData, int)
@@ -11148,10 +11137,10 @@ void NPCDataSymbols::generateCode()
 		vector<Opcode *> code;
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
 		//pop pointer, and ignore it
-		POPREF(); 
+		POPREF(function, code); 
 		code.push_back(new ONDataDeathSound(new VarArgument(EXP1),new VarArgument(EXP2)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//GetDrawXOffset(NPCData, int)
@@ -11161,10 +11150,10 @@ void NPCDataSymbols::generateCode()
 		vector<Opcode *> code;
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new ONDataXofs(new VarArgument(EXP1),new VarArgument(EXP2)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//GetDrawYOffset(NPCData, int)
@@ -11174,10 +11163,10 @@ void NPCDataSymbols::generateCode()
 		vector<Opcode *> code;
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new ONDataYofs(new VarArgument(EXP1),new VarArgument(EXP2)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//GetDrawZOffset(NPCData,int)
@@ -11187,10 +11176,10 @@ void NPCDataSymbols::generateCode()
 		vector<Opcode *> code;
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new ONDataZofs(new VarArgument(EXP1),new VarArgument(EXP2)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//GetHitXOffset(NPCData, int)
@@ -11200,10 +11189,10 @@ void NPCDataSymbols::generateCode()
 		vector<Opcode *> code;
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new ONDataHitXOfs(new VarArgument(EXP1),new VarArgument(EXP2)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//GetHitYOffset(NPCData, int)
@@ -11213,10 +11202,10 @@ void NPCDataSymbols::generateCode()
 		vector<Opcode *> code;
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new ONDataHYOfs(new VarArgument(EXP1),new VarArgument(EXP2)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//GetHitWidth(NPCData, int)
@@ -11226,10 +11215,10 @@ void NPCDataSymbols::generateCode()
 		vector<Opcode *> code;
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new ONDataHitWidth(new VarArgument(EXP1),new VarArgument(EXP2)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//GetHitHeight(NPCData, int)
@@ -11239,10 +11228,10 @@ void NPCDataSymbols::generateCode()
 		vector<Opcode *> code;
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new ONDataHitHeight(new VarArgument(EXP1),new VarArgument(EXP2)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//GetHitZHeight(NPCData, int)
@@ -11252,10 +11241,10 @@ void NPCDataSymbols::generateCode()
 		vector<Opcode *> code;
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new ONDataHitZ(new VarArgument(EXP1),new VarArgument(EXP2)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//GetTileWidth(NPCData, int)
@@ -11265,10 +11254,10 @@ void NPCDataSymbols::generateCode()
 		vector<Opcode *> code;
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new ONDataTileWidth(new VarArgument(EXP1),new VarArgument(EXP2)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//GetTileHeight(NPCData, int)
@@ -11278,10 +11267,10 @@ void NPCDataSymbols::generateCode()
 		vector<Opcode *> code;
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new ONDataTileHeight(new VarArgument(EXP1),new VarArgument(EXP2)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//GetWeaponSprite(NPCData, int)
@@ -11291,10 +11280,10 @@ void NPCDataSymbols::generateCode()
 		vector<Opcode *> code;
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new ONDataWeapSprite(new VarArgument(EXP1),new VarArgument(EXP2)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//SetFlags(NPCData, int, int)
@@ -11306,10 +11295,10 @@ void NPCDataSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new ONDataSetFlags(new VarArgument(EXP2), new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	 //SetTile(NPCData, int, int)
@@ -11321,10 +11310,10 @@ void NPCDataSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new ONDataSetBaseTile(new VarArgument(EXP2), new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	 //SetEHeight(NPCData, int, int)
@@ -11336,10 +11325,10 @@ void NPCDataSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new ONDataSetEHeight(new VarArgument(EXP2), new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//SetFlags2(NPCData, int, int)
@@ -11351,10 +11340,10 @@ void NPCDataSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new ONDataSetFlags2(new VarArgument(EXP2), new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//SetWidth(NPCData, int, int)
@@ -11366,10 +11355,10 @@ void NPCDataSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new ONDataSetWidth(new VarArgument(EXP2), new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//SetHeight(NPCData, int, int)
@@ -11381,10 +11370,10 @@ void NPCDataSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new ONDataSetHeight(new VarArgument(EXP2), new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//SetSTile(NPCData, int, int)
@@ -11396,10 +11385,10 @@ void NPCDataSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new ONDataSetTile(new VarArgument(EXP2), new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//SetSWidth(NPCData, int, int)
@@ -11411,10 +11400,10 @@ void NPCDataSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new ONDataSetSWidth(new VarArgument(EXP2), new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//SetSHeight(NPCData, int, int)
@@ -11426,10 +11415,10 @@ void NPCDataSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new ONDataSetSHeight(new VarArgument(EXP2), new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//SetETile(NPCData, int, int)
@@ -11441,10 +11430,10 @@ void NPCDataSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new ONDataSetETile(new VarArgument(EXP2), new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//SetEWidth(NPCData, int, int)
@@ -11456,10 +11445,10 @@ void NPCDataSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new ONDataSetEWidth(new VarArgument(EXP2), new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//SetHP(NPCData, int, int)
@@ -11471,10 +11460,10 @@ void NPCDataSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new ONDataSetHP(new VarArgument(EXP2), new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//SetFamily(NPCData, int, int)
@@ -11486,10 +11475,10 @@ void NPCDataSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new ONDataSetFamily(new VarArgument(EXP2), new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//SetCSet(NPCData, int, int)
@@ -11501,10 +11490,10 @@ void NPCDataSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new ONDataSetCSet(new VarArgument(EXP2), new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//SetDMapIntro(NPCData, int, int)
@@ -11516,10 +11505,10 @@ void NPCDataSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new ONDataSetAnim(new VarArgument(EXP2), new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 }
@@ -11717,11 +11706,11 @@ void MessageDataSymbols::generateCode()
 		int label = function->getLabel(); 
 		vector<Opcode *> code; 
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
-		LABELFRONT(label); 
-		POPREF();
+		code.front()->setLabel(label); 
+		POPREF(function, code);
 		code.push_back(new OMessageDataSetStringRegister(new VarArgument(EXP2))); 
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	
@@ -11732,10 +11721,10 @@ void MessageDataSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code; 
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
-		LABELFRONT(label); 
+		code.front()->setLabel(label); 
 		code.push_back(new OMessageDataSetStringRegister(new VarArgument(EXP2))); 
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code); 
 	}
 	*/
@@ -12031,10 +12020,10 @@ void FileSystemSymbols::generateCode()
 		//pop off the params
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		//pop pointer
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new ODirExists(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//bool FileExists(FileSystem, char32*)
@@ -12045,10 +12034,10 @@ void FileSystemSymbols::generateCode()
 		//pop off the params
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		//pop pointer
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OFileExists(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//bool Remove(FileSystem, char32*)
@@ -12059,10 +12048,10 @@ void FileSystemSymbols::generateCode()
 		//pop off the params
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		//pop pointer
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OFileSystemRemove(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 }
@@ -12118,11 +12107,11 @@ void FileSymbols::generateCode()
 		//pop off the params
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		//pop pointer
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OFileOpen(new VarArgument(EXP1)));
-		REASSIGN_PTR(EXP2);
-		RETURN();
-		LABELFRONT(label);
+		REASSIGN_PTR(function, code, EXP2);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//bool Create(file, char32*)
@@ -12133,11 +12122,11 @@ void FileSymbols::generateCode()
 		//pop off the params
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		//pop pointer
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OFileCreate(new VarArgument(EXP1)));
-		REASSIGN_PTR(EXP2);
-		RETURN();
-		LABELFRONT(label);
+		REASSIGN_PTR(function, code, EXP2);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//void Close(file)
@@ -12146,10 +12135,10 @@ void FileSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		//pop pointer
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OFileClose());
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//void Free(file)
@@ -12158,10 +12147,10 @@ void FileSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		//pop pointer
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OFileFree());
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//bool isAllocated(file)
@@ -12170,10 +12159,10 @@ void FileSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		//pop pointer
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OFileIsAllocated());
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//bool isValid(file)
@@ -12182,10 +12171,10 @@ void FileSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		//pop pointer
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OFileIsValid());
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//bool Allocate(file)
@@ -12194,11 +12183,11 @@ void FileSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		//pop pointer
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OAllocateFile());
-		REASSIGN_PTR(EXP2);
-		RETURN();
-		LABELFRONT(label);
+		REASSIGN_PTR(function, code, EXP2);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//bool Flush(file)
@@ -12207,10 +12196,10 @@ void FileSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		//pop pointer
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OFileFlush());
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//int ReadChars(file, char32*, int, int)
@@ -12222,10 +12211,10 @@ void FileSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		//pop pointer
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OFileReadChars(new VarArgument(EXP1),new VarArgument(EXP2)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//int ReadString(file, char32*)
@@ -12235,10 +12224,10 @@ void FileSymbols::generateCode()
 		vector<Opcode *> code;
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		//pop pointer
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OFileReadString(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//int ReadInts(file, char32*, int, int)
@@ -12250,10 +12239,10 @@ void FileSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		//pop pointer
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OFileReadInts(new VarArgument(EXP1),new VarArgument(EXP2)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//int WriteChars(file, char32*, int, int)
@@ -12265,10 +12254,10 @@ void FileSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		//pop pointer
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OFileWriteChars(new VarArgument(EXP1),new VarArgument(EXP2)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//int WriteString(file, char32*)
@@ -12278,10 +12267,10 @@ void FileSymbols::generateCode()
 		vector<Opcode *> code;
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		//pop pointer
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OFileWriteString(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//int WriteInts(file, char32*, int, int)
@@ -12293,10 +12282,10 @@ void FileSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		//pop pointer
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OFileWriteInts(new VarArgument(EXP1),new VarArgument(EXP2)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//char32 GetChar(file)
@@ -12305,10 +12294,10 @@ void FileSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		//pop pointer
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OFileGetChar());
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//char32 PutChar(file, char32 c)
@@ -12318,10 +12307,10 @@ void FileSymbols::generateCode()
 		vector<Opcode *> code;
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		//pop pointer
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OFilePutChar(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//char32 UngetChar(file, char32 c)
@@ -12331,10 +12320,10 @@ void FileSymbols::generateCode()
 		vector<Opcode *> code;
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		//pop pointer
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OFileUngetChar(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//bool Seek(file, int_full, bool)
@@ -12345,10 +12334,10 @@ void FileSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		//pop pointer
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OFileSeek(new VarArgument(EXP1),new VarArgument(EXP2)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//void Rewind(file)
@@ -12357,10 +12346,10 @@ void FileSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		//pop pointer
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OFileRewind());
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//void ClearError(file)
@@ -12369,10 +12358,10 @@ void FileSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		//pop pointer
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OFileClearError());
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//int OpenMode(file, char32*, char32*)
@@ -12383,11 +12372,11 @@ void FileSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		//pop pointer
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OFileOpenMode(new VarArgument(EXP1),new VarArgument(EXP2)));
-		REASSIGN_PTR(EXP2);
-		RETURN();
-		LABELFRONT(label);
+		REASSIGN_PTR(function, code, EXP2);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//int GetError(file, char32*)
@@ -12397,10 +12386,10 @@ void FileSymbols::generateCode()
 		vector<Opcode *> code;
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		//pop pointer
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OFileGetError(new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//bool Remove(file)
@@ -12409,10 +12398,10 @@ void FileSymbols::generateCode()
 		int label = function->getLabel();
 		vector<Opcode *> code;
 		//pop pointer
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OFileRemove());
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 }
@@ -12466,10 +12455,10 @@ void ModuleSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
 		code.push_back(new OPopRegister(new VarArgument(INDEX)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OSetRegister(new VarArgument(EXP1), new VarArgument(MODULEGETINT)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//int GetString(file, char32* dest, char32* section, char32* entry)
@@ -12482,10 +12471,10 @@ void ModuleSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(INDEX2)));
 		code.push_back(new OPopRegister(new VarArgument(INDEX)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OSetRegister(new VarArgument(MODULEGETSTR), new VarArgument(SFTEMP)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 	//GetItemClass(char32* dest, int ic)
@@ -12497,10 +12486,10 @@ void ModuleSymbols::generateCode()
 		code.push_back(new OPopRegister(new VarArgument(EXP1)));
 		code.push_back(new OPopRegister(new VarArgument(EXP2)));
 		//pop pointer, and ignore it
-		POPREF();
+		POPREF(function, code);
 		code.push_back(new OModuleGetIC(new VarArgument(EXP2), new VarArgument(EXP1)));
-		RETURN();
-		LABELFRONT(label);
+		RETURN(function, code);
+		code.front()->setLabel(label);
 		function->giveCode(code);
 	}
 }
