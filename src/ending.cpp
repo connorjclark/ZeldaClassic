@@ -574,7 +574,7 @@ void ending()
     }
     while(!rSbtn());
     
-    if(game->get_quest()>0 && game->get_quest()<=5)
+    if(game->get_quest()>0 && game->get_quest()<=9)
     {
         inc_quest();
         removeItemsOfFamily(game, itemsbuf, itype_ring);
@@ -617,6 +617,104 @@ void ending()
     save_savedgames();
 }
 
+
+void ending_scripted()
+{
+    
+    
+    items.clear();
+    Ewpns.clear();
+    Lwpns.clear();
+    guys.clear();
+    Sitems.clear();
+    chainlinks.clear();
+    decorations.clear();
+    clear_bitmap(msgdisplaybuf);
+    dismissmsg();
+    ALLOFF(true, true);
+    
+    //music_stop();
+    kill_sfx();
+    //sfx(WAV_ZELDA);
+    Quit=0;
+    
+    game->set_cheat(game->get_cheat() | (cheat>1)?1:0);
+    
+    draw_screen_clip_rect_x1=0;
+    draw_screen_clip_rect_x2=255;
+    draw_screen_clip_rect_y1=0;
+    draw_screen_clip_rect_y2=223;
+    //draw_screen_clip_rect_show_link=true;
+    //draw_screen_clip_rect_show_guys=false;
+   
+    for(int f=0; f<365-288; f++)
+    {
+        
+        if(f>=0 && ((f-0)%5 == 0))
+        {
+            //288  begin WIPE (8px per side per step, each 5 frames)
+            //TODO::
+            draw_screen_clip_rect_x1+=8;
+            draw_screen_clip_rect_x2-=8;
+            //draw_screen_clip_rect_show_guys=true;
+        }
+        
+        draw_screen(tmpscr);
+        advanceframe(true);
+        
+        if(Quit) return;
+    }
+    
+    clear_bitmap(msgdisplaybuf);
+    draw_screen(tmpscr);
+    advanceframe(true);
+    
+    draw_screen_clip_rect_x1=0;
+    draw_screen_clip_rect_x2=255;
+    //draw_screen_clip_rect_show_guys=false;
+    
+    clear_bitmap(scrollbuf);
+    blit(framebuf,scrollbuf,0,0,0,0,256,224);
+    endingpal();
+    
+        inc_quest();
+        removeItemsOfFamily(game, itemsbuf, itype_ring);
+        int maxring = getHighestLevelOfFamily(&zinit,itemsbuf,itype_ring);
+        
+        if(maxring != -1)
+        {
+            getitem(maxring,true);
+        }
+        
+        ringcolor(false);
+    
+    
+    
+    stop_midi();
+    
+    if(zcmusic != NULL)
+    {
+        zcmusic_stop(zcmusic);
+        zcmusic_unload_file(zcmusic);
+        zcmusic = NULL;
+    }
+    
+//  setPackfilePassword(datapwd);
+    load_quest(game);
+    strcpy(game->title,QHeader.title);
+//  setPackfilePassword(NULL);
+    saves[currgame] = *game;
+    load_game_icon_to_buffer(false,currgame);
+    load_game_icon(game,false,currgame);
+    
+    game->set_continue_dmap(zinit.start_dmap);
+    game->set_continue_scrn(0xFF);
+    game->set_cont_hearts(zinit.cont_heart);
+    game->set_hasplayed(false);
+    show_saving(scrollbuf);
+    save_savedgames();
+}
+
 void inc_quest()
 {
 	char name[9];
@@ -627,11 +725,16 @@ void inc_quest()
 	
 	int linear = get_config_int("zeldadx","linear_quest_progression",1);
 	
-	if ( linear_quest_loading )
+	if ( linear_quest_loading || game->get_quest() >= 5 )
 	{
 		int curquest = game->get_quest();
-		switch(curquest)
+		//if ( curquest == 255 ) //255 is a custom quest. We set it to 0 to roll over to 1, later. 
+		//{
+		//	curquest = 0; This would break normal quests. 
+		//}
+		/*switch(curquest)
 		{
+			
 			case 1: quest = 2; break;
 			case 2: quest = 3; break;
 			case 3: quest = 4; break;
@@ -646,6 +749,12 @@ void inc_quest()
 				break;
 			}
 		}
+		*/
+		if ( curquest + 1 < 11 ) 
+		{
+			quest = curquest + 1;
+		}
+		game->Clear();
 	}
 	else
 	{
@@ -663,18 +772,29 @@ void inc_quest()
 		if(game->get_quest()==3 && deaths == 0)
 			quest = 5;
 	
-		// Likewise, if you beat the 5th but died, go back to the 4th or move on to 6th if it exists.
-		if(game->get_quest()==5 && deaths > 0)
+		//I can;t find a better solution. If we reach five with wacky progression, just move on. -Z
+		
+		if(game->get_quest()>=5 && game->get_quest() < 10 /*&& deaths > 0*/)
 		{
-			if ( file_exists("6th.qst") )
-			{
-				quest = 6;
-			}
-			else quest = 4;
+			//if ( file_exists("6th.qst") )
+			//{
+			//	quest = 6;
+			//}
+			//else quest = 4;
+			quest = game->get_quest()+1;
 		}
+		// Likewise, if you beat the 5th but died, go back to the 4th or move on to 6thif(game->get_quest()==5 && deaths > 0)
+		//{
+		//	if ( file_exists("6th.qst") )
+		//	{
+		//		quest = 6;
+		//	}
+		//	else quest = 4;
+		//}
 	
 		/*
-		// If you beat the 3rd quest without dying skip over the easier 4th and play the 5th quest.
+		// If you beat the 3rd quest without dying skip over the eas if it exists.
+		ier 4th and play the 5th quest.
 		if(game->get_quest()==3 && deaths == 0)
 			quest = 5;
 	
@@ -715,7 +835,7 @@ void inc_quest()
 	game->set_maxlife(3*HP_PER_HEART);
 	game->set_life(3*HP_PER_HEART);
 	game->set_maxbombs(8);
-	game->set_hasplayed(true);
+	game->set_hasplayed(false); //Unless we NEED it true, custom ended quests probably want this false to start their init scripts and such.
 	
 	//now bound to modules
 	game->set_continue_dmap(moduledata.startingdmap[quest-1]);

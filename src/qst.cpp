@@ -2353,7 +2353,7 @@ int readheader(PACKFILE *f, zquestheader *Header, bool keepdata)
     if ( quest_header_zelda_version < 0x250 ) 
     {
 	emulation_patches[emu8WAYSHOTSFX] = 1;    
-	emulation_patches[emu210BOMBCHU] = 1;    
+	emulation_patches[emu210BOMBCHU] = 1;   
     }
     if ( quest_header_zelda_version == 0x250 && quest_header_zelda_build < 29 )
     {
@@ -2363,7 +2363,12 @@ int readheader(PACKFILE *f, zquestheader *Header, bool keepdata)
     {
 	emulation_patches[emuBUGGYNEXTCOMBOS] = 1;
     }
-        
+    //2.10, or older. 
+    if ( quest_header_zelda_version < 0x211 ) 
+    {
+	emulation_patches[emuOLD210WATER] = 1; 
+	emulation_patches[emu210HAMMER] = 1; 
+    }    
     
     return 0;
 }
@@ -13687,6 +13692,9 @@ const char *skip_text[skip_max]=
 
 int loadquest(const char *filename, zquestheader *Header, miscQdata *Misc, zctune *tunes, bool show_progress, bool compressed, bool encrypted, bool keepall, byte *skip_flags)
 {
+	
+    //Clear dmap editor last tile used when loading a quest in ZQU
+    DMapEditorLastMaptileUsed = 0;
     combosread=false;
     mapsread=false;
     fixffcs=false;

@@ -2269,13 +2269,30 @@ if ( quakescr >= 0 )
         {
             check_pound_block(wx,wy);
             check_pound_block(wx,wy+8);
+	    if ( emulation_patches[emu210HAMMER] )
+	    {
+		check_pound_block(wx,wy-4);    
+	    }
         }
         else if(dir==up && ((int(x)&15)==8||diagonalMovement))
         {
-            check_pound_block(wx,wy);
-            check_pound_block(wx,wy+8);
-            check_pound_block(wx+8,wy);
-            check_pound_block(wx+8,wy+8);
+            
+	    if ( emulation_patches[emu210HAMMER] )
+	    {
+		check_pound_block(wx,wy);
+		check_pound_block(wx,wy+8);
+		check_pound_block(wx,wy-4);
+		check_pound_block(wx+8,wy);
+		check_pound_block(wx+8,wy+8);
+		check_pound_block(wx+8,wy-4);
+	    }
+	    else
+	    {
+		check_pound_block(wx,wy);
+		check_pound_block(wx,wy+8);
+		check_pound_block(wx+8,wy);
+		check_pound_block(wx+8,wy+8);
+	    }
         }
         
         if(dir==down && (int(x)&15)==0)
@@ -8251,194 +8268,255 @@ LinkClass::WalkflagInfo LinkClass::walkflag(int wx,int wy,int cnt,byte d2)
             }
         }
     }
+    
+    
     else if(wf || isSideview() || get_bit(quest_rules, qr_DROWN))
     {
-        // see if it's a good spot for the ladder or for swimming
-        bool unwalkablex  = _walkflag(wx,wy,1); //will be used later for the ladder -DD
-        bool unwalkablex8 = _walkflag(x+8,wy,1);
-        
-        if(get_bit(quest_rules, qr_DROWN))
-        {
-            // Drowning changes the following attributes:
-            // * Dangerous water is also walkable, so ignore the previous
-            // definitions of unwalkablex and unwalkablex8.
-            // * Instead, prevent the ladder from being used in the
-            // one frame where Link has landed on water before drowning.
-            unwalkablex = unwalkablex8 = !iswater(MAPCOMBO(x+4,y+11));
-        }
-        
-        // check if he can swim
-        if(current_item(itype_flippers) && z==0)
-        {
-            bool wtrx  = iswater(MAPCOMBO(wx,wy));
-            bool wtrx8 = iswater(MAPCOMBO(x+8,wy));
-            //ladder ignores water combos that are now walkable thanks to flippers -DD
-            unwalkablex = unwalkablex && !wtrx;
-            unwalkablex8 = unwalkablex8 && !wtrx8;
-            
-            if(landswim >= 22)
-            {
-                ret.setHopClk(2);
-                ret.setUnwalkable(false);
-                return ret;
-            }
-            else if((d2>=left && wtrx) || (d2<=down && wtrx && wtrx8))
-            {
-                if(!diagonalMovement)
-                {
-                    ret.setHopClk(2);
-                    
-                    if(charging || spins>5)
-                    {
-                        //if Link is charging, he might be facing the wrong direction (we want him to
-                        //hop into the water, not in the facing direction)
-                        ret.setDir(d2);
-                        //moreover Link can't charge in the water -DD
-                        ret.setChargeAttack();
-                    }
-                    
-                    ret.setUnwalkable(false);
-                    return ret;
-                }
-                else if(dir==d2)
-                {
-                    ret.setIlswim(true);
-                    ladderx = 0;
-                    laddery = 0;
-                }
-            }
-        }
-        
-        // check if he can use the ladder
-        // "Allow Ladder Anywhere" is toggled by fLADDER
-        if(can_deploy_ladder())
-            // laddersetup
-        {
-            // Check if there's water to use the ladder over
-            bool wtrx = iswater(MAPCOMBO(wx,wy));
-            bool wtrx8 = iswater(MAPCOMBO(x+8,wy));
-            
-            if(wtrx || wtrx8)
-            {
-                if(isSideview())
-                {
-                    wtrx  = !_walkflag(wx, wy+8, 1) && !_walkflag(wx, wy, 1) && dir!=down;
-                    wtrx8 = !_walkflag(wx+8, wy+8, 1) && !_walkflag(wx+8, wy, 1) && dir!=down;
-                }
-                // * walk on half-water using the ladder instead of using flippers.
-                // * otherwise, walk on ladder(+hookshot) combos.
-                else if(wtrx==wtrx8 && (isstepable(MAPCOMBO(wx, wy)) || isstepable(MAPCOMBO(wx+8,wy)) || wtrx==true))
-                {
-                    //if Link could swim on a tile instead of using the ladder,
-                    //refuse to use the ladder to step over that tile. -DD
-                    wtrx  = isstepable(MAPCOMBO(wx, wy)) && unwalkablex;
-                    wtrx8 = isstepable(MAPCOMBO(wx+8,wy)) && unwalkablex8;
-                }
-            }
-            // No water; how about ladder combos?
-            else
-            {
-                int combo=combobuf[MAPCOMBO(wx, wy)].type;
-                wtrx=(combo==cLADDERONLY || combo==cLADDERHOOKSHOT);
-                combo=combobuf[MAPCOMBO(wx+8, wy)].type;
-                wtrx8=(combo==cLADDERONLY || combo==cLADDERHOOKSHOT);
-            }
-            
-            bool walkwater = get_bit(quest_rules, qr_DROWN) && !iswater(MAPCOMBO(wx,wy));
-            
-            if(diagonalMovement)
-            {
-                if(d2==dir)
-                {
-                    int c = walkwater ? 0:8;
-                    int b = walkwater ? 8:0;
-                    
-                    if(d2>=left)
-                    {
-                        // If the difference between wy and y is small enough
-                        if(abs((wy)-(int(y+c)))<=(b) && wtrx)
-                        {
-                            // Don't activate the ladder if it would be entirely
-                            // over water and Link has the flippers. This isn't
-                            // a good way to do this, but it's too risky
-                            // to make big changes to this stuff.
-                            bool deployLadder=true;
-                            int lx=wx&0xF0;
-                            if(current_item(itype_flippers) && z==0)
-                            {
-                                if(iswater(MAPCOMBO(lx, y)) && iswater(MAPCOMBO(lx+15, y)) &&
-                                  iswater(MAPCOMBO(lx, y+15)) && iswater(MAPCOMBO(lx+15, y+15)))
-                                    deployLadder=false;
-                            }
-                            if(deployLadder)
-                            {
-                                ladderx = wx&0xF0;
-                                laddery = y;
-                                ladderdir = left;
-                                ladderstart = d2;
-                                ret.setUnwalkable(laddery!=int(y));
-                                return ret;
-                            }
-                        }
-                    }
-                    else if(d2<=down)
-                    {
-                        // If the difference between wx and x is small enough
-                        if(abs((wx)-(int(x+c)))<=(b) && wtrx)
-                        {
-                            ladderx = x;
-                            laddery = wy&0xF0;
-                            ladderdir = up;
-                            ladderstart = d2;
-                            ret.setUnwalkable(ladderx!=int(x));
-                            return ret;
-                        }
-                        
-                        if(cnt==2)
-                        {
-                            if(abs((wx+8)-(int(x+c)))<=(b) && wtrx8)
-                            {
-                                ladderx = x;
-                                laddery = wy&0xF0;
-                                ladderdir = up;
-                                ladderstart = d2;
-                                ret.setUnwalkable(ladderx!=int(x));
-                                return ret;
-                            }
-                        }
-                    }
-                }
-            }
-            else
-            {
-                bool flgx  = _walkflag(wx,wy,1) && !wtrx; // Solid, and not steppable
-                bool flgx8 = _walkflag(x+8,wy,1) && !wtrx8; // Solid, and not steppable
-                
-                if((d2>=left && wtrx)
-                        // Deploy the ladder vertically even if Link is only half on water.
-                        || (d2<=down && ((wtrx && !flgx8) || (wtrx8 && !flgx))))
-                {
-                    if(((int(y)+15) < wy) || ((int(y)+8) > wy))
-                        ladderdir = up;
-                    else
-                        ladderdir = left;
-                        
-                    if(ladderdir==up)
-                    {
-                        ladderx = int(x)&0xF8;
-                        laddery = wy&0xF0;
-                    }
-                    else
-                    {
-                        ladderx = wx&0xF0;
-                        laddery = int(y)&0xF8;
-                    }
-                    
-                    ret.setUnwalkable(false);
-                    return ret;
-                }
-            }
-        }
+	/*if(emulation_patches[emuOLD210WATER] && wf)
+	{
+		{
+			// see if it's a good spot for the ladder or for swimming
+			bool wtrx  = iswater(MAPCOMBO(wx,wy));
+			bool wtrx8 = iswater(MAPCOMBO(x+8,wy));
+			bool flgx  = _walkflag(wx,wy,1) && !wtrx;
+			bool flgx8 = _walkflag(x+8,wy,1) && !wtrx8;
+
+			// check if he can swim
+			if(current_item(itype_flippers,true))
+			{
+				if((d2>=left && wtrx) || (d2<=down && wtrx && wtrx8))
+				{
+					hopclk = 16;
+					ret.setUnwalkable(false);
+					return ret;
+				}
+			}
+
+			// check if he can use the ladder
+			if(can_use_item(itype_ladder, i_ladder) && (tmpscr->flags&fLADDER || isdungeon()))
+			{
+				// add ladder combos
+				wtrx  = isstepable(MAPCOMBO(wx,wy));
+				wtrx8 = isstepable(MAPCOMBO(x+8,wy));
+				flgx  = _walkflag(wx,wy,1) && !wtrx;
+				flgx8 = _walkflag(x+8,wy,1) && !wtrx8;
+
+				if((d2>=left && wtrx) || (d2<=down && ((wtrx && !flgx8) || (wtrx8 && !flgx))) )
+				{
+					if( ((int(y)+15) < wy) || ((int(y)+8) > wy) )
+						ladderdir = up;
+					else
+						ladderdir = left;
+
+					if(ladderdir==up)
+					{
+						ladderx = int(x)&0xF8;
+						laddery = wy&0xF0;
+					}
+					else
+					{
+						ladderx = wx&0xF0;
+						laddery = int(y)&0xF8;
+					}
+					ret.setUnwalkable(false);
+					return ret;
+				}
+			}
+		}
+	    
+	}
+	else */
+	{
+		// see if it's a good spot for the ladder or for swimming
+		bool unwalkablex  = _walkflag(wx,wy,1); //will be used later for the ladder -DD
+		bool unwalkablex8 = _walkflag(x+8,wy,1);
+		
+		if(get_bit(quest_rules, qr_DROWN))
+		{
+		    // Drowning changes the following attributes:
+		    // * Dangerous water is also walkable, so ignore the previous
+		    // definitions of unwalkablex and unwalkablex8.
+		    // * Instead, prevent the ladder from being used in the
+		    // one frame where Link has landed on water before drowning.
+		    unwalkablex = unwalkablex8 = !iswater(MAPCOMBO(x+4,y+11));
+		}
+		
+		// check if he can swim
+		if(current_item(itype_flippers) && z==0)
+		{
+		    bool wtrx  = iswater(MAPCOMBO(wx,wy));
+		    bool wtrx8 = iswater(MAPCOMBO(x+8,wy));
+		    //ladder ignores water combos that are now walkable thanks to flippers -DD
+		    unwalkablex = unwalkablex && !wtrx;
+		    unwalkablex8 = unwalkablex8 && !wtrx8;
+		    
+		    if(landswim >= 22)
+		    {
+			ret.setHopClk(2);
+			ret.setUnwalkable(false);
+			return ret;
+		    }
+		    else if((d2>=left && wtrx) || (d2<=down && wtrx && wtrx8))
+		    {
+			if(!diagonalMovement)
+			{
+			    ret.setHopClk(2);
+			    
+			    if(charging || spins>5)
+			    {
+				//if Link is charging, he might be facing the wrong direction (we want him to
+				//hop into the water, not in the facing direction)
+				ret.setDir(d2);
+				//moreover Link can't charge in the water -DD
+				ret.setChargeAttack();
+			    }
+			    
+			    ret.setUnwalkable(false);
+			    return ret;
+			}
+			else if(dir==d2)
+			{
+			    ret.setIlswim(true);
+			    ladderx = 0;
+			    laddery = 0;
+			}
+		    }
+		}
+		
+		// check if he can use the ladder
+		// "Allow Ladder Anywhere" is toggled by fLADDER
+		if(can_deploy_ladder())
+		    // laddersetup
+		{
+		    // Check if there's water to use the ladder over
+		    bool wtrx = iswater(MAPCOMBO(wx,wy));
+		    bool wtrx8 = iswater(MAPCOMBO(x+8,wy));
+		    
+		    if(wtrx || wtrx8)
+		    {
+			if(isSideview())
+			{
+			    wtrx  = !_walkflag(wx, wy+8, 1) && !_walkflag(wx, wy, 1) && dir!=down;
+			    wtrx8 = !_walkflag(wx+8, wy+8, 1) && !_walkflag(wx+8, wy, 1) && dir!=down;
+			}
+			// * walk on half-water using the ladder instead of using flippers.
+			// * otherwise, walk on ladder(+hookshot) combos.
+			else if(wtrx==wtrx8 && (isstepable(MAPCOMBO(wx, wy)) || isstepable(MAPCOMBO(wx+8,wy)) || wtrx==true))
+			{
+			    //if Link could swim on a tile instead of using the ladder,
+			    //refuse to use the ladder to step over that tile. -DD
+			    if(!emulation_patches[emuOLD210WATER])
+			    {
+				wtrx  = isstepable(MAPCOMBO(wx, wy)) && unwalkablex;
+				wtrx8 = isstepable(MAPCOMBO(wx+8,wy)) && unwalkablex8;
+			    }
+			}
+		    }
+		    // No water; how about ladder combos?
+		    else
+		    {
+			int combo=combobuf[MAPCOMBO(wx, wy)].type;
+			wtrx=(combo==cLADDERONLY || combo==cLADDERHOOKSHOT);
+			combo=combobuf[MAPCOMBO(wx+8, wy)].type;
+			wtrx8=(combo==cLADDERONLY || combo==cLADDERHOOKSHOT);
+		    }
+		    
+		    bool walkwater = get_bit(quest_rules, qr_DROWN) && !iswater(MAPCOMBO(wx,wy));
+		    
+		    if(diagonalMovement)
+		    {
+			if(d2==dir)
+			{
+			    int c = walkwater ? 0:8;
+			    int b = walkwater ? 8:0;
+			    
+			    if(d2>=left)
+			    {
+				// If the difference between wy and y is small enough
+				if(abs((wy)-(int(y+c)))<=(b) && wtrx)
+				{
+				    // Don't activate the ladder if it would be entirely
+				    // over water and Link has the flippers. This isn't
+				    // a good way to do this, but it's too risky
+				    // to make big changes to this stuff.
+				    bool deployLadder=true;
+				    int lx=wx&0xF0;
+				    if(current_item(itype_flippers) && z==0)
+				    {
+					if(iswater(MAPCOMBO(lx, y)) && iswater(MAPCOMBO(lx+15, y)) &&
+					  iswater(MAPCOMBO(lx, y+15)) && iswater(MAPCOMBO(lx+15, y+15)))
+					    deployLadder=false;
+				    }
+				    if(deployLadder)
+				    {
+					ladderx = wx&0xF0;
+					laddery = y;
+					ladderdir = left;
+					ladderstart = d2;
+					ret.setUnwalkable(laddery!=int(y));
+					return ret;
+				    }
+				}
+			    }
+			    else if(d2<=down)
+			    {
+				// If the difference between wx and x is small enough
+				if(abs((wx)-(int(x+c)))<=(b) && wtrx)
+				{
+				    ladderx = x;
+				    laddery = wy&0xF0;
+				    ladderdir = up;
+				    ladderstart = d2;
+				    ret.setUnwalkable(ladderx!=int(x));
+				    return ret;
+				}
+				
+				if(cnt==2)
+				{
+				    if(abs((wx+8)-(int(x+c)))<=(b) && wtrx8)
+				    {
+					ladderx = x;
+					laddery = wy&0xF0;
+					ladderdir = up;
+					ladderstart = d2;
+					ret.setUnwalkable(ladderx!=int(x));
+					return ret;
+				    }
+				}
+			    }
+			}
+		    }
+		    else
+		    {
+			bool flgx  = _walkflag(wx,wy,1) && !wtrx; // Solid, and not steppable
+			bool flgx8 = _walkflag(x+8,wy,1) && !wtrx8; // Solid, and not steppable
+			
+			if((d2>=left && wtrx)
+				// Deploy the ladder vertically even if Link is only half on water.
+				|| (d2<=down && ((wtrx && !flgx8) || (wtrx8 && !flgx))))
+			{
+			    if(((int(y)+15) < wy) || ((int(y)+8) > wy))
+				ladderdir = up;
+			    else
+				ladderdir = left;
+				
+			    if(ladderdir==up)
+			    {
+				ladderx = int(x)&0xF8;
+				laddery = wy&0xF0;
+			    }
+			    else
+			    {
+				ladderx = wx&0xF0;
+				laddery = int(y)&0xF8;
+			    }
+			    
+			    ret.setUnwalkable(false);
+			    return ret;
+			}
+		    }
+		}
+	}
     }
     
     ret.setUnwalkable(wf);
@@ -14149,17 +14227,17 @@ void verifyAWpn()
 		//zprint2("verifyAWpn(); returning early. game->forced_awpn is: %d\n",game->forced_awpn); 
 		return;
 	}
-    if(!get_bit(quest_rules,qr_SELECTAWPN))
-    {
-        Awpn = selectSword();
-        game->awpn = 0xFF;
-    }
-    else
-    {
-        game->awpn = selectWpn_new(SEL_VERIFY_RIGHT, game->awpn, game->bwpn);
-        Awpn = Bweapon(game->awpn);
-        directItemA = directItem;
-    }
+	if(!get_bit(quest_rules,qr_SELECTAWPN))
+	{
+		Awpn = selectSword();
+		game->awpn = 0xFF;
+	}
+	else
+	{
+		game->awpn = selectWpn_new(SEL_VERIFY_RIGHT, game->awpn, game->bwpn);
+		Awpn = Bweapon(game->awpn);
+		directItemA = directItem;
+	}
 }
 
 void verifyBWpn()
@@ -14170,9 +14248,9 @@ void verifyBWpn()
 		//zprint2("verifyBWpn(); returning early. game->forced_bwpn is: %d \n",game->forced_bwpn); 
 		return;
 	}
-    game->bwpn = selectWpn_new(SEL_VERIFY_RIGHT, game->bwpn, game->awpn);;
-    Bwpn = Bweapon(game->bwpn);
-    directItemB = directItem;
+	game->bwpn = selectWpn_new(SEL_VERIFY_RIGHT, game->bwpn, game->awpn);;
+	Bwpn = Bweapon(game->bwpn);
+	directItemB = directItem;
 }
 
 void verifyBothWeapons()

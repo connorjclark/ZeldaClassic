@@ -300,6 +300,8 @@ extern bool fake_pack_writing;
 
 #define COMBOS_PER_ROW      20
 
+#define MAXTILEROWS         (TILE_ROWS_PER_PAGE*TILE_PAGES) //Last row that we can show when trying to grab tiles from  .QST file. -Z
+
 //#define MAGICDRAINRATE  2
 
 // quest stuff
@@ -752,7 +754,7 @@ enum
 { 
 	emuITEMPERSEG, emuGRIDCOLLISION, emuOLDTRIBBLES, emu190LINKSPRITES, emuCOPYSWIMSPRITES, emu210WINDROBES,
 	emu250DMAPINTOREPEAT, emuFIXTRIFORCECELLAR, emuNOFLIPFIRETRAIL, emuSWORDTRIGARECONTINUOUS, emu8WAYSHOTSFX, emu210BOMBCHU, 
-	emuEPILEPSY, emuBUGGYNEXTCOMBOS,
+	emuEPILEPSY, emuBUGGYNEXTCOMBOS, emuOLD210WATER, emu210HAMMER,
 	emuLAST
 		
 };
@@ -2501,6 +2503,7 @@ struct gamedata
     void set_item_no_flush(int id, bool value);
     inline bool get_item(int id)
     {
+	if ( ((unsigned)id) >= MAXITEMS ) return false;
         return item[id];
     }
     

@@ -53,7 +53,17 @@ ZModule zcm;
 #include "particles.h"
 #include "gamedata.h"
 #include "ffscript.h"
-#include "ConsoleLogger.h"
+#ifdef _WIN32
+	#include "ConsoleLogger.h"
+#else //Unix
+	#include <fcntl.h>
+	#include <unistd.h>
+	#include <iostream>
+	#include <sstream>
+	int pt = 0;
+	char* ptname = NULL;
+	std::ostringstream lxconsole_oss;
+#endif
 extern FFScript FFCore;
 
 #ifdef _WIN32
@@ -71,6 +81,8 @@ extern CConsoleLoggerEx zscript_coloured_console;
 
 #include "metadata/sigs/devsig.h.sig"
 #include "metadata/versionsig.h"
+
+extern byte epilepsyFlashReduction;
 
 #ifdef _MSC_VER
 #include <crtdbg.h>
@@ -103,6 +115,8 @@ char save_file_name[1024] = "zc.sav";
 //char *SAVE_FILE = (char *)"zc.sav";
 char *SAVE_FILE = NULL;
 
+int last_quest_was_BA_subscreen = 0;
+
 CScriptDrawingCommands script_drawing_commands;
 
 using std::string;
@@ -123,6 +137,8 @@ extern byte emulation_patches[emuLAST];
 extern int hangcount;
 bool is_large=false;
 char __isZQuest = 0; //Shared functionscan reference this. -Z
+int DMapEditorLastMaptileUsed = 0;
+
 
 bool standalone_mode=false;
 char *standalone_quest=NULL;
@@ -335,7 +351,7 @@ bool show_layer_0=true, show_layer_1=true, show_layer_2=true, show_layer_3=true,
      show_layer_over=true, show_layer_push=true, show_sprites=true, show_ffcs=true, show_hitboxes=false, show_walkflags=false, show_ff_scripts=false;
 
 
-bool Throttlefps, ClickToFreeze=false, Paused=false, Advance=false, ShowFPS, Showpal=false, disableClickToFreeze=false;
+bool Throttlefps, MenuOpen = false, ClickToFreeze=false, Paused=false, Advance=false, ShowFPS, Showpal=false, disableClickToFreeze=false;
 bool Playing, FrameSkip=false, TransLayers;
 bool __debug=false,debug_enabled;
 bool refreshpal,blockpath,loaded_guys,freeze_guys,
@@ -761,6 +777,14 @@ void zprint(const char * const format,...)
 		#ifdef _WIN32
 		zscript_coloured_console.cprintf((CConsoleLoggerEx::COLOR_RED | CConsoleLoggerEx::COLOR_BLUE | CConsoleLoggerEx::COLOR_INTENSITY | 
 			CConsoleLoggerEx::COLOR_BACKGROUND_BLACK),"%s",buf);
+		#else //Unix
+		{
+			
+			std::cout << "ZPrint Test\n" << std::endl;
+			printf("%s", buf);
+			
+		}
+	
 		#endif
 	}
 	
@@ -789,6 +813,9 @@ void zprint2(const char * const format,...)
 		#ifdef _WIN32
 		zscript_coloured_console.cprintf((CConsoleLoggerEx::COLOR_RED | CConsoleLoggerEx::COLOR_BLUE | CConsoleLoggerEx::COLOR_INTENSITY | 
 			CConsoleLoggerEx::COLOR_BACKGROUND_BLACK),"%s",buf);
+		#else //Unix
+			std::cout << "ZPrint Test\n" << std::endl;
+			printf("%s", buf);
 		#endif
 	}
 	
@@ -797,7 +824,7 @@ void zprint2(const char * const format,...)
 
 void Z_eventlog(const char *format,...)
 {
-    if(get_bit(quest_rules,qr_LOG) || DEVLEVEL > 0 )
+    if(get_bit(quest_rules,qr_LOG) || DEVLEVEL > 0)
     {
         char buf[2048];
         
@@ -813,9 +840,12 @@ void Z_eventlog(const char *format,...)
 	#ifdef _WIN32
 		if ( zscript_debugger ) {zscript_coloured_console.cprintf((CConsoleLoggerEx::COLOR_GREEN | CConsoleLoggerEx::COLOR_RED | CConsoleLoggerEx::COLOR_INTENSITY | 
 			CConsoleLoggerEx::COLOR_BACKGROUND_BLACK),"%s",buf); }
+		#else //Unix
+			printf("%s", buf);	
 		#endif
     }
 }
+
 
 // Yay, more extern globals.
 extern byte curScriptType;
@@ -828,36 +858,44 @@ void Z_scripterrlog(const char * const format,...)
 {
     if(get_bit(quest_rules,qr_SCRIPTERRLOG) || DEVLEVEL > 0)
     {
-       
         switch(curScriptType)
         {
-		case SCRIPT_GLOBAL:
-		    al_trace("Global script %u (%s): ", curScriptNum+1, globalmap[curScriptNum].second.c_str());
-			#ifdef _WIN32
-			if ( zscript_debugger ) {zscript_coloured_console.cprintf((CConsoleLoggerEx::COLOR_GREEN | CConsoleLoggerEx::COLOR_INTENSITY | 
-				CConsoleLoggerEx::COLOR_BACKGROUND_BLACK),"Global script %u (%s): \n", 
-				curScriptNum+1, globalmap[curScriptNum].second.c_str()); }
-			#endif
-		    break;
-		    
-		case SCRIPT_FFC:
-		    al_trace("FFC script %u (%s): ", curScriptNum, ffcmap[curScriptNum-1].second.c_str());
-		    
-			#ifdef _WIN32
-			if ( zscript_debugger ) {zscript_coloured_console.cprintf((CConsoleLoggerEx::COLOR_GREEN | CConsoleLoggerEx::COLOR_INTENSITY | 
-				CConsoleLoggerEx::COLOR_BACKGROUND_BLACK),"FFC script %u (%s): ", curScriptNum, ffcmap[curScriptNum-1].second.c_str());}
-			#endif
-		break;
-		    
-		case SCRIPT_ITEM:
-		    al_trace("Item script %u (%s): ", curScriptNum, itemmap[curScriptNum-1].second.c_str());
-			#ifdef _WIN32
-			if ( zscript_debugger ) {zscript_coloured_console.cprintf((CConsoleLoggerEx::COLOR_GREEN | CConsoleLoggerEx::COLOR_INTENSITY | 
-				CConsoleLoggerEx::COLOR_BACKGROUND_BLACK),"Item script %u (%s): ", curScriptNum, itemmap[curScriptNum-1].second.c_str());}
-			#endif
-		break;
-		default: break;
+        case SCRIPT_GLOBAL:
+            al_trace("Global script %u (%s): ", curScriptNum+1, globalmap[curScriptNum].second.c_str());
+		#ifdef _WIN32
+		if ( zscript_debugger ) {zscript_coloured_console.cprintf((CConsoleLoggerEx::COLOR_GREEN | CConsoleLoggerEx::COLOR_INTENSITY | 
+			CConsoleLoggerEx::COLOR_BACKGROUND_BLACK),"Global script %u (%s): \n", 
+			curScriptNum+1, globalmap[curScriptNum].second.c_str()); }
+		#else //Unix
+			std::cout << "Z_scripterrlog Test\n" << std::endl;
+			printf("Global script %u (%s): \n", curScriptNum+1, globalmap[curScriptNum].second.c_str());	
+		#endif
+            break;
 	
+            
+        case SCRIPT_FFC:
+            al_trace("FFC script %u (%s): ", curScriptNum, ffcmap[curScriptNum-1].second.c_str());
+	    
+		#ifdef _WIN32
+		if ( zscript_debugger ) {zscript_coloured_console.cprintf((CConsoleLoggerEx::COLOR_GREEN | CConsoleLoggerEx::COLOR_INTENSITY | 
+			CConsoleLoggerEx::COLOR_BACKGROUND_BLACK),"FFC script %u (%s): ", curScriptNum, ffcmap[curScriptNum-1].second.c_str());}
+		#else //Unix
+			std::cout << "Z_scripterrlog Test\n" << std::endl;
+			printf("FFC script %u (%s): \n", curScriptNum, ffcmap[curScriptNum-1].second.c_str());	
+		#endif    
+	break;
+            
+        case SCRIPT_ITEM:
+            al_trace("Item script %u (%s): ", curScriptNum, itemmap[curScriptNum-1].second.c_str());
+		#ifdef _WIN32
+		if ( zscript_debugger ) {zscript_coloured_console.cprintf((CConsoleLoggerEx::COLOR_GREEN | CConsoleLoggerEx::COLOR_INTENSITY | 
+			CConsoleLoggerEx::COLOR_BACKGROUND_BLACK),"Itemdata script %u (%s): ", curScriptNum, itemmap[curScriptNum-1].second.c_str());}
+		#else //Unix
+			std::cout << "Z_scripterrlog Test\n" << std::endl;
+			printf("Itemdata script %u (%s): \n", curScriptNum, itemmap[curScriptNum-1].second.c_str());	
+		#endif    
+	break;
+      
         }
         
         char buf[2048];
@@ -868,7 +906,7 @@ void Z_scripterrlog(const char * const format,...)
         va_end(ap);
         al_trace("%s",buf);
         
-	if(zconsole)
+        if(zconsole)
 	{
             printf("%s",buf);
 	}
@@ -879,6 +917,7 @@ void Z_scripterrlog(const char * const format,...)
 			CConsoleLoggerEx::COLOR_BACKGROUND_BLACK),"%s",buf);
 		#endif
 	}
+	
     }
 }
 
@@ -1273,6 +1312,7 @@ int load_quest(gamedata *g, bool report)
     }
     else
     {
+	
         if(!ret && strcmp(g->title,QHeader.title))
         {
             ret = qe_match;
@@ -1287,6 +1327,7 @@ int load_quest(gamedata *g, bool report)
     
     if(ret && report)
     {
+	zprint2("load quest ret: %d\n", ret);
         system_pal();
         char buf1[80],buf2[80];
         sprintf(buf1,"Error loading %s:",get_filename(qstpath));
@@ -1300,7 +1341,7 @@ int load_quest(gamedata *g, bool report)
         
         game_pal();
     }
-    
+    zprint2("load quest ret: %d\n", ret);
     return ret;
 }
 
@@ -1666,43 +1707,98 @@ int init_game()
     if(firstplay)
         game->set_hasplayed(1);
         
+    if(firstplay)
+    {
+	//game->awpn=0; //These may need to be a value other than 0 on init?
+	//game->bwpn=0;
+	game->forced_awpn = -1; 
+	game->forced_bwpn = -1;    
+    }
+    
     update_subscreens();
     
     load_Sitems(&QMisc);
     
 //load the previous weapons -DD
+    zprint2("last_quest_was_BA_subscreen prior to init is: %s\n", ((last_quest_was_BA_subscreen) ? "true" : "false") );
+    
     bool usesaved = (game->get_quest() == 0xFF); //What was wrong with firstplay?
     int apos = 0;
     int bpos = 0;
     
-    if(!get_bit(quest_rules,qr_SELECTAWPN))
+    if(last_quest_was_BA_subscreen) //Will always be false on initialising ZC Player, but will be changed when you load a quest.
     {
-        Awpn = selectSword();
-        apos = -1;
-        bpos = selectWpn_new(SEL_VERIFY_RIGHT, usesaved ? game->bwpn : 0xFF, -1);
+	if(!get_bit(quest_rules,qr_SELECTAWPN))
+	{
+		Awpn = selectSword();
+		apos = -1;
+		bpos = selectWpn_new(SEL_VERIFY_RIGHT, usesaved ? game->bwpn : 0xFF, -1);
+		directItem = -1;
+		directItemA = directItem; 
+	}
+	else
+	{
+		apos = selectWpn_new(SEL_VERIFY_RIGHT, usesaved ? game->awpn : 0xFF);
+		bpos = selectWpn_new(SEL_VERIFY_RIGHT, usesaved ? game->bwpn : 0xFF, apos);
+        
+		if(bpos==0xFF)
+		{
+			bpos=apos;
+			apos=-1;
+		}
+        
+		Awpn = Bweapon(apos); //Bweapon() sets directItem
+		directItemA = directItem;
+	}
+    
+	game->awpn = apos;
+	game->bwpn = bpos;
+	Bwpn = Bweapon(bpos);
+	directItemB = directItem;
+	//directItemA = directItem; 
+	//Doing this in an A+B quest will stop A-items from working on first screen of the game init/firstplay. -Z
+	//if(!get_bit(quest_rules,qr_SELECTAWPN)) directItemA = directItem; 
+	update_subscr_items();
+    
+	reset_subscr_items();
     }
-    else
+    else //old stuff from DD, use it if playing a B-Only quest after another B-Only quest
     {
-        apos = selectWpn_new(SEL_VERIFY_RIGHT, usesaved ? game->awpn : 0xFF);
-        bpos = selectWpn_new(SEL_VERIFY_RIGHT, usesaved ? game->bwpn : 0xFF, apos);
+	if(!get_bit(quest_rules,qr_SELECTAWPN))
+	{
+		Awpn = selectSword();
+		apos = -1;
+		bpos = selectWpn_new(SEL_VERIFY_RIGHT, usesaved ? game->bwpn : 0xFF, -1);
+		directItem = -1;
+		directItemA = directItem; 
+	}
+	else
+	{
+		apos = selectWpn_new(SEL_VERIFY_RIGHT, usesaved ? game->awpn : 0xFF);
+		bpos = selectWpn_new(SEL_VERIFY_RIGHT, usesaved ? game->bwpn : 0xFF, apos);
         
-        if(bpos==0xFF)
-        {
-            bpos=apos;
-            apos=-1;
-        }
+		if(bpos==0xFF)
+		{
+			bpos=apos;
+			apos=-1;
+		}
         
-        Awpn = Bweapon(apos);
-        directItemA = directItem;
+		Awpn = Bweapon(apos); //Bweapon() sets directItem
+		directItemA = directItem;
+	}
+    
+	game->awpn = apos;
+	game->bwpn = bpos;
+	Bwpn = Bweapon(bpos);
+	directItemB = directItem;
+	update_subscr_items();
+    
+	reset_subscr_items();    
+	    
     }
     
-    game->awpn = apos;
-    game->bwpn = bpos;
-    Bwpn = Bweapon(bpos);
-    directItemB = directItem;
-    update_subscr_items();
-    
-    reset_subscr_items();
+    last_quest_was_BA_subscreen = get_bit(quest_rules,qr_SELECTAWPN) ? 1 : 0;
+    zprint2("last_quest_was_BA_subscreen after init is: %s\n", ((last_quest_was_BA_subscreen) ? "true" : "false") );
     
     Link.setDontDraw(false);
     show_subscreen_dmap_dots=true;
@@ -2923,50 +3019,65 @@ bool setGraphicsMode(bool windowed)
 
 int onFullscreen()
 {
-    PALETTE oldpal;
-    get_palette(oldpal);
-    
-    show_mouse(NULL);
-    bool windowed=is_windowed_mode()!=0;
-    
-    // these will become ultra corrupted no matter what.
-    Triplebuffer.Destroy();
-    
-    bool success=setGraphicsMode(!windowed);
-    if(success)
-        fullscreen=!fullscreen;
-    else
+    if(jwin_alert3(
+			(is_windowed_mode()) ? "Fullscreen Warning" : "Change to Windowed Mode", 
+			(is_windowed_mode()) ? "Some video chipsets/drivers do not support 8-bit native fullscreen" : "Proceeding will drop from Fullscreen to Windowed Mode", 
+			(is_windowed_mode()) ? "We strongly advise saving your game before shifting from windowed to fullscreen!": "Do you wish to shift from Fullscreen to Windowed mode?",
+			(is_windowed_mode()) ? "Do you wish to continue to fullscreen mode?" : NULL,
+		 "&Yes", 
+		"&No", 
+		NULL, 
+		'y', 
+		'n', 
+		0, 
+		lfont) == 1)	
     {
-        // Try to restore the previous mode, then...
-        success=setGraphicsMode(windowed);
-        if(!success)
-        {
-            Z_message("Failed to set video mode.\n");
-            Z_message(allegro_error);
-            exit(1);
-        }
-    }
-    
-    /* ZC will crash going from fullscreen to windowed mode if triple buffer is left unchecked. -Gleeok  */
-    if(Triplebuffer.GFX_can_triple_buffer())
-    {
-        Triplebuffer.Create();
-        Z_message("Triplebuffer enabled \n");
-    }
-    else
-        Z_message("Triplebuffer disabled \n");
-    
-    //Everything set?
-    Z_message("gfx mode set at -%d %dbpp %d x %d \n", is_windowed_mode(), get_color_depth(), resx, resy);
-    
-    set_palette(oldpal);
-    gui_mouse_focus=0;
-    show_mouse(screen);
-    set_display_switch_mode(fullscreen?SWITCH_BACKAMNESIA:SWITCH_BACKGROUND);
-//	set_display_switch_callback(SWITCH_OUT, switch_out_callback);/
-//	set_display_switch_callback(SWITCH_IN,switch_in_callback);
+	    PALETTE oldpal;
+	    get_palette(oldpal);
+	    
+	    show_mouse(NULL);
+	    bool windowed=is_windowed_mode()!=0;
+	    
+	    // these will become ultra corrupted no matter what.
+	    Triplebuffer.Destroy();
+	    
+	    bool success=setGraphicsMode(!windowed);
+	    if(success)
+		fullscreen=!fullscreen;
+	    else
+	    {
+		// Try to restore the previous mode, then...
+		success=setGraphicsMode(windowed);
+		if(!success)
+		{
+		    Z_message("Failed to set video mode.\n");
+		    Z_message(allegro_error);
+		    exit(1);
+		}
+	    }
+	    
+	    /* ZC will crash going from fullscreen to windowed mode if triple buffer is left unchecked. -Gleeok  */
+	    if(Triplebuffer.GFX_can_triple_buffer())
+	    {
+		Triplebuffer.Create();
+		Z_message("Triplebuffer enabled \n");
+	    }
+	    else
+		Z_message("Triplebuffer disabled \n");
+	    
+	    //Everything set?
+	    Z_message("gfx mode set at -%d %dbpp %d x %d \n", is_windowed_mode(), get_color_depth(), resx, resy);
+	    
+	    set_palette(oldpal);
+	    gui_mouse_focus=0;
+	    show_mouse(screen);
+	    set_display_switch_mode(fullscreen?SWITCH_BACKAMNESIA:SWITCH_BACKGROUND);
+	//	set_display_switch_callback(SWITCH_OUT, switch_out_callback);/
+	//	set_display_switch_callback(SWITCH_IN,switch_in_callback);
 
-    return D_REDRAW;
+	    return D_REDRAW;
+    }
+    else return D_O_K;
 }
 
 static const char months[13][13] =
@@ -3125,6 +3236,82 @@ int main(int argc, char* argv[])
         zconsole = true;
     }
     
+#else //Unix
+
+    { // Let's try making a console for Linux -Z
+	pt = posix_openpt(O_RDWR);
+	if (pt == -1)
+	{
+		Z_error("Could not open pseudo terminal; error number: %d.\n", errno);
+		use_debug_console = 0; goto no_lx_console;
+	}
+	ptname = ptsname(pt);
+	if (!ptname)
+	{
+		Z_error("Could not get pseudo terminal device name.\n");
+		close(pt);
+		use_debug_console = 0; goto no_lx_console;
+	}
+
+	if (unlockpt(pt) == -1)
+	{
+		Z_error("Could not get pseudo terminal device name.\n");
+		close(pt);
+		use_debug_console = 0; goto no_lx_console;
+	}
+
+	lxconsole_oss << "xterm -S" << (strrchr(ptname, '/')+1) << "/" << pt << " &";
+	system(lxconsole_oss.str().c_str());
+
+	int xterm_fd = open(ptname,O_RDWR);
+	{
+		char c = 0; int tries = 10000; 
+		do 
+		{
+			read(xterm_fd, &c, 1); 
+			--tries;
+		} while (c!='\n' && tries > 0);
+	}
+
+	if (dup2(pt, 1) <0)
+	{
+		Z_error("Could not redirect standard output.\n");
+		close(pt);
+		use_debug_console = 0; goto no_lx_console;
+	}
+	if (dup2(pt, 2) <0)
+	{
+		Z_error("Could not redirect standard error output.\n");
+		close(pt);
+		use_debug_console = 0; goto no_lx_console;
+	}
+    } //this is in a block because I want it in a block. -Z
+    
+    no_lx_console:
+    {
+	    //Z_error("Could not open Linux console.\n");
+    }
+    
+    
+	std::cout << "\n       _____   ____                  __ \n";
+	std::cout << "      /__  /  / __ \\__  _____  _____/ /_\n";
+	std::cout << "        / /  / / / / / / / _ \\/ ___/ __/\n";
+	std::cout << "       / /__/ /_/ / /_/ /  __(__  ) /_ \n";
+	std::cout << "      /____/\\___\\_\\__,_/\\___/____/\\__/\n\n";
+	
+	std::cout << "Quest Data Logging & ZScript Debug Console\n";
+	std::cout << "ZConsole for Linux\n\n";
+    
+	if ( quest_header_zelda_version > 0 )
+	{
+		printf("Quest Made in ZC Version %x, Build %d\n", quest_header_zelda_version, quest_header_zelda_build);
+	}
+	else
+	{
+		printf("%s, Version %s\n", ZC_PLAYER_NAME, ZC_PLAYER_V);
+	}
+	//std::cerr << "Test cerr\n\n";
+	std::cin.ignore(1);
 #endif
     
     
@@ -3438,6 +3625,11 @@ int main(int argc, char* argv[])
     int fast_start = debug_enabled || used_switch(argc,argv,"-fast") || get_config_int("zeldadx","skiplogo",0) || (!standalone_mode && (load_save || (slot_arg && (argc>(slot_arg+1)))));
     skip_title = used_switch(argc, argv, "-notitle") > 0;
     int save_arg = used_switch(argc,argv,"-savefile");
+    
+    int checked_epilepsy = get_config_int("zeldadx","checked_epilepsy",0);
+    
+    
+    
     
     //if ( !strcmp(get_config_string("zeldadx","debug",""),"") )
     //{
@@ -3858,6 +4050,26 @@ int main(int argc, char* argv[])
         }
     }
     
+    if(!checked_epilepsy)
+    {
+	    if(jwin_alert("EPILEPSY Options",
+			  "Do you desire epilepsy protection?",
+			  "This will reduce the intensity of flashing effects",
+			  "and reduce the amplitude of way screen effects.",
+			  "No","Yes",13,27,lfont)!=1)
+	    {
+		epilepsyFlashReduction = 1;
+		set_config_int("zeldadx","checked_epilepsy",1);
+		save_game_configs();
+	    }
+	    else
+	    {
+		set_config_int("zeldadx","checked_epilepsy",1);
+		save_game_configs();
+	    }
+	    checked_epilepsy = 1;
+    }
+    
 // load saved games
     Z_message("Loading saved games... ");
     
@@ -3977,6 +4189,22 @@ int main(int argc, char* argv[])
             initZScriptGlobalRAM();
             ZScriptVersion::RunScript(SCRIPT_GLOBAL, GLOBAL_SCRIPT_END);
             ending();
+        }
+        break;
+	
+	case qINCQST:
+        {
+            Link.setDontDraw(true);
+		//Link.setCharging(0);//don't have the sword out during the ending. 
+		//Link.setSwordClk(0);
+            show_subscreen_dmap_dots=true;
+            show_subscreen_numbers=true;
+            show_subscreen_items=true;
+            show_subscreen_life=true;
+            
+            initZScriptGlobalRAM();
+            ZScriptVersion::RunScript(SCRIPT_GLOBAL, GLOBAL_SCRIPT_END);
+            ending_scripted();
         }
         break;
         

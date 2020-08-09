@@ -1,5 +1,181 @@
 ChangeLog for 2.53.1
 
+//Beta 52
+
+Added Fullsceen confirmation warning, backported from 2.55.
+	( ZoriaRPG, 25th July, 2020 )
+	
+Fixed error messages for invald GOTO type instructions.
+	( ZoriaRPG, 9th July, 2020 )
+	
+Fixed possible crash on invalid gotos from logging args order.
+	( ZoriaRPG, 7th July, 2020 )
+	
+Epilepsy Protection is now set when you launch a NEW INSTALL of ZC,
+immediately prior to loaing the player interface.
+	If the zc.cfg value 'checked_epilepsy' is not present, or is set 
+	to '0', then ZC will ask the user if they want this enabled
+	and set this config value so that it is not re-checked:
+		1. If there is no valid .sav file, then this will appear prior
+		   to the .sa file creation dialogue. 
+		2. If a .sav file exists, this will occur prior to the title
+		   screen, if the config int 'checked_epilepsy' is not present
+		   or is set to 0 in zc.cfg.
+		3. If 'checked_epilepsy' is in zc.cfg and is set to '1', then
+		   this dilogue will not open, and the user's epilepsy protection
+		   settings are used as normal.
+		4. The dialogue defaults to NO. 
+Reduced the amplitude of screen wave effects when epilepsy protection is enabled.
+	( ZoriaRPG, 17th June, 2020 )
+
+Added a ZQE hotkey for '?' that opens the version info display.
+	( ZoriaRPG, 13th June, 2020 )
+
+Added an emulation flag '2.10 Hammer Upward Reach' that extends
+	the vertical reach of the Hamer weapon by four pixels 
+	when the player is facing up. 
+	This is automatically enabled for 2.10 and earlier quests. 
+	( ZoriaRPG, 12th June, 2020 )
+
+Implemented a request from ShadowTiger, whereby when you edit a
+	DMap, and select a map tile, when you go to edit further
+	DMap map tiles within the same session, the DMap editor will
+	remember the last tile that you used. 
+	This will clear on loading any quest, but it remains static
+	while working on a quest in memory, updating each time that
+	the user selects a different tile in this editor. 
+	( ZoriaRPG, 11th June, 2020 )
+
+Header Guard for the ZScript compiler is now defaulted to off. 
+Added the following configs to ZQuest:
+	PreFillTileEditorPage = (0|1)
+	If set to 1, the page field of the Goto Page dialogue in 
+		the Tile Editor will be populated with the current page.
+	If set to 0, the page field of the Goto Page dialogue in 
+		the Tile Editor will be populated '0', as was always
+		the case in the past.
+	If unset, the default value for this config is '0'.
+	
+	PreFillComboEditorPage = (0|1)
+	If set to 1, the page field of the Goto Page dialogue in 
+		the Combo Page Editor will be populated with the current page,
+		as was always the case in the past..
+	If set to 0, the page field of the Goto Page dialogue in 
+		the Combo Page Editor will be populated '0', like the prior 
+		behaviour of the Tile Editor's Goto Page function.
+	If unset, the default value for this config is '0'.
+	
+	PreFillMapTilePage = (0|1)
+	Reserved for a feature request regarding the DMap Editor, when setting
+		Map Tile values for DMaps.
+		The desired outcome is that, if set to '1', that the DMap editor will
+		memorise the last used tile page when selecting Map Tiles.
+		The internal ZQE global variable 'DMapEditorLastMaptileUsed' is 
+		reserved for this purpose.
+	
+	( ZoriaRPG, 10th June, 2020 )
+
+Don't allow taking ZC GUI snapshot, with menu open, with wonky colours.
+	Use only the tre screen colour with shaded effect.
+ZC GUI snapshot (Shift+F12) uses correct ame colours, as long as the
+	menu isn't active.
+Added a way to detect if the system menu is open (bool MenuOpen).
+	This is enabled and disabled exclusively in System() and
+	writing to it elsewhere is **unefined**. 
+	In theory, alt+tab could call System() to force-pause ZC Player,
+	but win32.cpp cannot access System() during its callbacks.
+Allow taking a screenshot in ZC that shows the subscreen area
+	when the NOSUBSCREEN flag is enabled, by holding the
+	ALT key when taking the snapshot.
+Preserve the quest colours when taking a GUI snapshot in ZC Player
+	unless the user holds the CONTROL key when taking the snapshot.
+Fixed a crash reported by ywkls,that when trying to use the
+	tile grabber on .qst and .qsu files, where the tile 
+	grabber would allow the user to scroll outside the 
+	bounds of the .qst tile buffer. 
+	It is now clamped to MAXTILEROWS.
+	( ZoriaRPG, 6th June, 2020 )
+	
+//Beta 51
+Te old water emulation flag is now enabled whenever loading a quest 
+	oolder than 2.50. 
+	( ZoriaRPG, 4th June, 2020 )
+	
+Added 'Old 2.10 Water' emulation to ZC Player.
+	This is intended as a patch for old 2.10 quests that have
+	very-specific water combo placement where you are expected
+	to use the ladder (while you have the flippers), but the flippers
+	engage.
+	( ZoriaRPG, 26th May, 2020 )
+
+//Beta 50
+Try to properly initialise directItem and directItemA.
+	( ZoriaRPG, 23rd May, 2020 )
+	
+//Beta 49
+Slight changes to the directItem init when loading quests, that
+	now checks if the prior quest was a B+A subscreen type. 
+	( ZoriaRPG, 23rd May, 2020 )
+
+//Beta 48
+Fixed a memory leak when compiling scripts and exiting out of
+	the assign scripts dialogue with Cancel.
+	( ZoriaRPG, 16th May, 2020 )
+
+//Beta 47 
+Added sanity guard to inline bool get_item(int id).
+	( ZoriaRPG, 12th May, 2020 )
+
+//Beta 46
+Fixed possible crash and bad error message for Screen->Combo[] errors.
+
+//Beta 45
+Slight timing fix to directItemA, for B-only quests. 
+	( ZoriaRPG, 30th April, 2020 )
+
+//Beta 44
+You can now press C in the Tile Editor to copy a tile, then
+	select a range of tiles and press F to FLOODFILL paste the copied
+	tile to every position.
+In the Tile Editor, electing multiple tiles, pressing C, 
+	then selecting multiple tiles and pressing O will now overlay
+	the copied selection tot he dest selection, triming overflow.
+Mass Overlay now works properly, overlaying to each tile space, rather
+	than overlaying to the first tile and copying the result of that
+	overlay to the remaining spaces.
+	
+//Beta 43
+Make default cheat modkeys SHIFT, not CTL+SHIFT.
+	( ZoriaRPG, 26th April, 2020 )
+	
+//Beta 42: The Meaning of Life, the Universe, and Everything.
+Added a new Quest Report type: Bugged Next-> Combos.
+	This will scan a quest for any Next-> combo type that also has a secret
+	flag on it, and report that this may be erroneous. (It is legal to
+	place these flags, but they must be EXTERNALLY triggered. They no
+	longer trigger when the Next-> combo is activated.)
+Added extra sanity guards and reports to Link->Warp, PitWarp, and WarpEx.
+	( ZoriaRPG, 22nd April, 2020 )
+	
+//Beta 41
+Intermediate changes included in the 40 and 42 sections to do with Quest Reports.
+	
+//Beta 40
+Fixed a bug where finishing a custom quest advanted to 1st.qst.
+Added Game->IncrementQuest().
+Backported Rob's fixes for abc list size from 2.55.
+	( ZoriaRPG, 19th April, 2020 )
+
+//Beta 39
+Backported the Linux console from 2.55 to 2.53.1. 
+	( ZoriaRPG, 19th April, 2020 )
+
+//Beta 38
+Fixed the initialisation of forced_awpn and forced_bwpn on firstplay.
+Fixed a bug where exiting a quest with an A+B subscreen, and starting
+	to play a B-only subscreen quest preventing using the A-item.
+	( ZoriaRPG, 19th April, 2020 )
+
 //Beta 37
 Clear forced_wpn if setting an item slot from the real subscreen.
 If the user config for ZC Player speifies a custom SAVEFILE
@@ -17,6 +193,7 @@ Values set when writing Link->Equipment now write to
 		return early.
 	If a forced item is removed from inventory (with a script, or with
 		a string), then its forced value is set to -1.
+	( ZoriaRPG, 25th March, 2020 )
 
 //Beta 36
 Backport ZQ Minimap Enhancements from 2.55

@@ -28,11 +28,15 @@
 #include "parser/Compiler.h"
 #include "zc_alleg.h"
 #include "mem_debug.h"
+
 void setZScriptVersion(int) { } //bleh...
 
 char headerguard = 0;
 
-char __isZQuest = 1; //Shared functionscan reference this. -Z
+char __isZQuest = 1; //Shared functions can reference this. -Z
+
+unsigned char PreFillTileEditorPage = 0, PreFillComboEditorPage = 0, PreFillMapTilePage = 0;
+int DMapEditorLastMaptileUsed = 0;
 
 #include <png.h>
 #include <pngconf.h>
@@ -1757,6 +1761,7 @@ static MENU quest_reports_menu[] =
     { (char *)"&Item Locations",            onItemLocationReport,      NULL,                     0,            NULL   },
     { (char *)"&Script Locations",          onScriptLocationReport,    NULL,                     0,            NULL   },
     { (char *)"&What Links Here",           onWhatWarpsReport,         NULL,                     0,            NULL   },
+    { (char *)"&Bugged Next-> Combo Locations",           onBuggedNextComboLocationReport,         NULL,                     0,            NULL   },
     { (char *)"In&tegrity Check\t ",        NULL,                      integrity_check_menu,     0,            NULL   },
     {  NULL,                                NULL,                      NULL,                     0,            NULL   }
 };
@@ -1809,7 +1814,7 @@ int onZScriptCompilerSettings()
         large_dialog(zscript_parser_dlg);
         
     zscript_parser_dlg[0].dp2=lfont;
-    zscript_parser_dlg[6].d1 = get_config_int("Compiler", "HEADER_GUARD", 1);;
+    zscript_parser_dlg[6].d1 = get_config_int("Compiler", "HEADER_GUARD", 0);;
     int ret = zc_popup_dialog(zscript_parser_dlg,4);
     
     if(ret==3)
@@ -2102,6 +2107,15 @@ int onToggleShowInfo()
     return D_O_K;
 }
 
+
+void onKeySlash()
+{
+	if(key[KEY_LSHIFT] || key[KEY_RSHIFT])
+	{
+		onAbout();
+	}
+}
+
 void onSKey()
 {
 	if(key[KEY_ZC_LCONTROL] || key[KEY_ZC_RCONTROL])
@@ -2179,6 +2193,8 @@ static DIALOG dialogs[] =
     { d_keyboard_proc,   0,    0,    0,    0,    0,    0,    0,       0,       KEY_X,          0, (void *) onPreviewMode, NULL, NULL },
     { d_keyboard_proc,   0,    0,    0,    0,    0,    0,    0,       0,       KEY_Y,          0, (void *) onCompileScript, NULL, NULL },
     { d_keyboard_proc,   0,    0,    0,    0,    0,    0,    0,       0,       KEY_Z,          0, (void *) onSnapshot, NULL, NULL },
+    //slash is also question mark
+    { d_keyboard_proc,   0,    0,    0,    0,    0,    0,    0,       0,       KEY_SLASH,          0, (void *) onKeySlash, NULL, NULL },
     { d_keyboard_proc,   0,    0,    0,    0,    0,    0,    '0',     0,       0,              0, (void *) on0, NULL, NULL },
     { d_keyboard_proc,   0,    0,    0,    0,    0,    0,    '1',     0,       0,              0, (void *) on1, NULL, NULL },
     { d_keyboard_proc,   0,    0,    0,    0,    0,    0,    '2',     0,       0,              0, (void *) on2, NULL, NULL },
@@ -6723,7 +6739,7 @@ void refresh(int flags)
             rectfill(menu1,commands_window.x+2,commands_window.y+2,commands_window.x+commands_window.w-3,commands_window.y+commands_window.h-3,jwin_pal[jcBOX]);
             jwin_draw_frame(menu1,commands_list.x-2,commands_list.y-2,(commands_list.w*command_buttonwidth)+4,(commands_list.h*command_buttonheight)+4, FR_DEEP);
             rectfill(menu1,commands_list.x,commands_list.y,commands_list.x+(commands_list.w*command_buttonwidth)-1,commands_list.y+(commands_list.h*command_buttonheight)-1,jwin_pal[jcBOXFG]);
-            textprintf_ex(menu1,font,commands_list.x-2,commands_list.y-14,jwin_pal[jcBOXFG],-1,"Favorite Commands");
+            textprintf_ex(menu1,font,commands_list.x-2,commands_list.y-14,jwin_pal[jcBOXFG],-1,"Favourite Commands");
             FONT *tfont=font;
             font=pfont;
             
@@ -15320,6 +15336,7 @@ static DIALOG editdmap_dlg[] =
 
 void editdmap(int index)
 {
+    //DMapEditorLastMaptileUsed = 0;
     char levelstr[4], compassstr[4], contstr[4], tmusicstr[56], dmapnumstr[60];
     char *tmfname;
     byte gridstring[8];
@@ -15578,6 +15595,7 @@ void editdmap(int index)
         f |= editdmap_dlg[124].flags & D_SELECTED ? dmfSCRIPT4:0;
         f |= editdmap_dlg[125].flags & D_SELECTED ? dmfSCRIPT5:0;
         DMaps[index].flags = f;
+	//DMapEditorLastMaptileUsed = 0;
     }
 }
 
@@ -20728,8 +20746,16 @@ int d_maptile_proc(int msg, DIALOG *d, int)
     switch(msg)
     {
     case MSG_CLICK:
-        if(select_tile(d->d1,d->d2,1,d->fg,true, 0, true))
-            return D_REDRAW;
+	if ( PreFillMapTilePage )
+	{
+		DMapEditorLastMaptileUsed = ((select_dmap_tile(d->d1,d->d2,1,d->fg,true, 0, true))-1);
+		return D_REDRAW;
+	}
+        else
+	{
+		if(select_tile(d->d1,d->d2,1,d->fg,true, 0, true))
+		return D_REDRAW;
+	}
             
         break;
         
@@ -22740,6 +22766,10 @@ int onCompileScript()
 	
     if(is_large)
         large_dialog(compile_dlg);
+    
+    FILE *zscript = NULL;
+    FILE *tempfile = NULL;
+    ScriptsData *result = NULL;
         
     for(;;) //while(true)
     {
@@ -22751,6 +22781,15 @@ int onCompileScript()
         case 0:
         case 1:
             //Cancel
+	    if(zscript!=NULL) fclose(zscript);
+	    if(tempfile!=NULL) fclose(tempfile);
+	    if(result!=NULL) delete result;
+	    asffcscripts.clear();
+            asffcscripts.push_back("<none>");
+            asglobalscripts.clear();
+            asglobalscripts.push_back("<none>");
+            asitemscripts.clear();
+            asitemscripts.push_back("<none>");
             return D_O_K;
             
         case 2:
@@ -22772,7 +22811,7 @@ int onCompileScript()
             if(!getname("Load ZScript (.z, .zh, .zs, .zlib, etc.)", (char *)"z,zh,zs,zlib,zasm,zscript,squid" ,NULL,datapath,false))
                 break;
                 
-            FILE *zscript = fopen(temppath,"r");
+            zscript = fopen(temppath,"r");
             
             if(zscript == NULL)
             {
@@ -22805,7 +22844,7 @@ int onCompileScript()
                     break;
             }
             
-            FILE *zscript = fopen(temppath,"w");
+            zscript = fopen(temppath,"w");
             
             if(!zscript)
             {
@@ -22828,7 +22867,7 @@ int onCompileScript()
 	    
 	
 	
-            FILE *tempfile = fopen("tmp","w");
+            tempfile = fopen("tmp","w");
             
             if(!tempfile)
             {
@@ -22841,7 +22880,7 @@ int onCompileScript()
             box_start(1, "Compile Progress", lfont, sfont,true);
             gotoless_not_equal = (0 != get_bit(quest_rules, qr_GOTOLESSNOTEQUAL)); // Used by BuildVisitors.cpp
             al_trace("HEADER_GUARD: %d\n", headerguard);
-	    ScriptsData *result = ( headerguard ) ? compile_headerguards("tmp") : compile("tmp");
+	    result = ( headerguard ) ? compile_headerguards("tmp") : compile("tmp");
 	    //ScriptsData *result = compile_headerguards("tmp");
 	   
             unlink("tmp");
@@ -23008,6 +23047,22 @@ int onCompileScript()
                 case 0:
                 case 2:
                     //Cancel
+		    al_trace("Cancel\n");
+			//Do not leak memory if the user cancels out! -Z 1th May, 2020
+		    fclose(tempfile);
+		    //asffcscripts.clear();
+		    //asffcscripts.push_back("<none>");
+		    //asglobalscripts.clear();
+		    //asglobalscripts.push_back("<none>");
+		    //asitemscripts.clear();
+		    //asitemscripts.push_back("<none>");
+		    for(map<string, vector<Opcode *> >::iterator it = scripts.begin(); it != scripts.end(); it++)
+                    {
+                        for(vector<Opcode *>::iterator it2 = it->second.begin(); it2 != it->second.end(); it2++)
+                        {
+                            delete *it2;
+                        }
+                    }
                     return D_O_K;
                     
                 case 3:
@@ -25736,7 +25791,6 @@ int main(int argc,char **argv)
     chop_path(imagepath);
     chop_path(tmusicpath);
     
-    headerguard = get_config_int("Compiler","HEADER_GUARD",1);	
     MouseScroll                    = get_config_int("zquest","mouse_scroll",0);
     InvalidStatic                  = get_config_int("zquest","invalid_static",1);
     MMapCursorStyle                = get_config_int("zquest","cursorblink_style",1);
@@ -25775,6 +25829,14 @@ int main(int argc,char **argv)
 //  Frameskip                     = get_config_int("zquest","frameskip",0); //todo: this is not actually supported yet.
     RequestedFPS                  = get_config_int("zquest","fps",60);
     ForceExit                     = get_config_int("zquest","force_exit",0);
+    
+    //Combo Page, Tile Page, an Map Tile Page Autofill
+    PreFillTileEditorPage	  = get_config_int("zquest","PreFillTileEditorPage",0);
+    PreFillComboEditorPage	  = get_config_int("zquest","PreFillComboEditorPage",0);
+    PreFillMapTilePage		  =  get_config_int("zquest","PreFillMapTilePage",0);
+    
+    //ZScript Compiler Options
+    headerguard 		   = get_config_int("Compiler","HEADER_GUARD",0);	
     
     //This is too much work to fix for 2.5. :| -Gleeok
     //zqColorDepth                  = get_config_int("zquest","zq_color_depth",8);
@@ -28413,6 +28475,7 @@ command_pair commands[cmdMAX]=
     { "Report: Integrity Check",              0, (intF) onIntegrityCheckAll                                    },
     { "Save ZQuest Settings",              0, (intF) onSaveZQuestSettings                                    },
     { "Clear Quest Filepath",              0, (intF) onClearQuestFilepath                                    },
+    { "Find Buggy Next->",              0, (intF) onBuggedNextComboLocationReport                                    }
     
 
 };

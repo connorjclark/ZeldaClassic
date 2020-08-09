@@ -13,7 +13,7 @@
 #define V_ZC_FOURTH 0
 //build
 #define V_ZC_ALPHA 0
-#define V_ZC_BETA 37
+#define V_ZC_BETA 52
 #define V_ZC_GAMMA 0
 #define V_ZC_RELEASE 0
 #define V_ZC_YEAR 2020
@@ -24,7 +24,7 @@
 
 #define PROJECT_NAME "Omnius"
 #define COMPANY_NAME "Armageddon Games"
-#define ZQ_EDITOR_NAME "ZQuest Creator Editor"
+#define ZQ_EDITOR_NAME "ZQuest Creator"
 #define ZQ_EDITOR_V "2.53.1"
 #define ZQ_EDITOR_COPYRIGHT "Copyright (C) 2020"
 

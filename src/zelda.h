@@ -64,7 +64,7 @@ int onFullscreen();
 /******** Enums & Structs ********/
 /*********************************/
 
-enum { qQUIT=1, qRESET, qEXIT, qGAMEOVER, qCONT, qWON, qERROR };
+enum { qQUIT=1, qRESET, qEXIT, qGAMEOVER, qCONT, qWON, qERROR, qINCQST };
 
 // "special" walk flags
 enum
@@ -158,6 +158,7 @@ void restart_level();
 int  load_quest(gamedata *g, bool report=true);
 void show_details();
 void show_ffscript_names();
+extern int DMapEditorLastMaptileUsed;
 //int  init_palnames();
 
 int get_currdmap();
@@ -307,7 +308,7 @@ extern float avgfps;
 
 extern bool do_cheat_goto, do_cheat_light;
 extern bool blockmoving;
-extern bool Throttlefps, ClickToFreeze, Paused, Advance, ShowFPS, Showpal, Playing, FrameSkip, TransLayers, disableClickToFreeze;
+extern bool Throttlefps, ClickToFreeze, MenuOpen, Paused, Advance, ShowFPS, Showpal, Playing, FrameSkip, TransLayers, disableClickToFreeze;
 extern bool refreshpal,blockpath,__debug,loaded_guys,freeze_guys;
 extern bool loaded_enemies,drawguys,details,debug_enabled,watch;
 extern bool Udown,Ddown,Ldown,Rdown,Adown,Bdown,Sdown,Mdown,LBdown,RBdown,Pdown,Ex1down,Ex2down,Ex3down,Ex4down,AUdown,ADdown,ALdown,ARdown,F12,F11,F5,keyI, keyQ;

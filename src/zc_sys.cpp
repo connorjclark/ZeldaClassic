@@ -137,6 +137,9 @@ void do_DwmFlush()
 
 #endif // _WIN32
 
+//Temporary palettes
+//PALETTE snappal;
+
 // Dialogue largening
 void large_dialog(DIALOG *d)
 {
@@ -264,10 +267,10 @@ void load_game_configs()
     analog_movement = get_config_int(cfg_sect,"analog_movement",1);
     
      //cheat modifier keya
-    cheat_modifier_keys[0] = get_config_int(cfg_sect,"key_cheatmod_a1",KEY_ZC_LCONTROL);
-    cheat_modifier_keys[1] = get_config_int(cfg_sect,"key_cheatmod_a2",KEY_ZC_RCONTROL);
-    cheat_modifier_keys[2] = get_config_int(cfg_sect,"key_cheatmod_b1",KEY_LSHIFT);
-    cheat_modifier_keys[3] = get_config_int(cfg_sect,"key_cheatmod_b2",KEY_RSHIFT);
+    cheat_modifier_keys[0] = get_config_int(cfg_sect,"key_cheatmod_a1",KEY_LSHIFT);
+    cheat_modifier_keys[1] = get_config_int(cfg_sect,"key_cheatmod_a2",0);
+    cheat_modifier_keys[2] = get_config_int(cfg_sect,"key_cheatmod_b1",KEY_RSHIFT);
+    cheat_modifier_keys[3] = get_config_int(cfg_sect,"key_cheatmod_b2",0);
    
     if((unsigned int)joystick_index >= MAX_JOYSTICKS)
         joystick_index = 0;
@@ -3345,6 +3348,7 @@ void draw_lens_over()
 
 void draw_wavy(BITMAP *source, BITMAP *target, int amplitude, bool interpol)
 {
+    if(epilepsyFlashReduction) amplitude/=2;
     //recreating a big bitmap every frame is highly sluggish.
     static BITMAP *wavebuf = create_bitmap_ex(8,288,240-original_playing_field_offset);
     
@@ -3356,6 +3360,7 @@ void draw_wavy(BITMAP *source, BITMAP *target, int amplitude, bool interpol)
     //  int wavelength=4;
     amplitude = zc_min(2048,amplitude); // some arbitrary limit to prevent crashing
     int amp2=168;
+    if(epilepsyFlashReduction) amp2*=2;
     int i=frame%amp2;
     
     for(int j=0; j<168; j++)
@@ -3650,6 +3655,7 @@ PALETTE sys_pal;
 int onGUISnapshot()
 {
     char buf[200];
+    bool realpal=(key[KEY_ZC_LCONTROL] || key[KEY_ZC_RCONTROL]);
     int num=0;
     
     do
@@ -3666,8 +3672,44 @@ int onGUISnapshot()
     
     if(b)
     {
-        blit(screen,b,0,0,0,0,resx,resy);
-        save_bmp(buf,b,sys_pal);
+        
+	if(MenuOpen)
+	{
+		//Cannot load game's palette while GUI elements are in focus. -Z
+		//If there is a way to do this, then I have missed it.
+		/*
+		game_pal();
+		RAMpal[253] = _RGB(0,0,0);
+		RAMpal[254] = _RGB(63,63,63);
+		set_palette_range(RAMpal,0,255,false);
+		memcpy(RAMpal, snappal, sizeof(snappal));
+		create_rgb_table(&rgb_table, RAMpal, NULL);
+		create_zc_trans_table(&trans_table, RAMpal, 128, 128, 128);
+		memcpy(&trans_table2, &trans_table, sizeof(COLOR_MAP));
+		
+		for(int q=0; q<PAL_SIZE; q++)
+		{
+		    trans_table2.data[0][q] = q;
+		    trans_table2.data[q][q] = q;
+		}
+		*/
+		//ringcolor(false);
+		//get_palette(RAMpal);
+		blit(screen,b,0,0,0,0,resx,resy);
+		//al_trace("Menu Open\n");
+		//game_pal();
+		//PALETTE temppal;
+		//get_palette(temppal);
+		//system_pal();
+		save_bitmap(buf,b,sys_pal);
+		//save_bitmap(buf,b,RAMpal);
+		//save_bitmap(buf,b,snappal);
+	}	
+	else 
+	{
+		blit(screen,b,0,0,0,0,resx,resy);
+		save_bitmap(buf,b,realpal?sys_pal:RAMpal);
+	}
         destroy_bitmap(b);
     }
     
@@ -3691,7 +3733,7 @@ int onNonGUISnapshot()
     
     BITMAP *panorama = create_bitmap_ex(8,256,168);
     
-    if(tmpscr->flags3&fNOSUBSCR)
+    if(tmpscr->flags3&fNOSUBSCR && !(key[KEY_ALT]))
     {
         clear_to_color(panorama,0);
         blit(framebuf,panorama,0,playing_field_offset,0,0,256,168);
@@ -6761,8 +6803,8 @@ int onEpilepsy()
 {
 	if(jwin_alert3(
 			"Epilepsy Flash Reduction", 
-			"Enabling this will reduce flashing when picking up the quest dungeon treasure pieces.",
-			"Disabling this will restore standard flashing behaviour.",
+			"Enabling this will reduce the intensity of flashing and screen wave effects.",
+			"Disabling this will restore standard flash and wavy behaviour.",
 			"Proceed?",
 		 "&Yes", 
 		"&No", 
@@ -6774,6 +6816,7 @@ int onEpilepsy()
 	{
 	    if ( epilepsyFlashReduction ) epilepsyFlashReduction = 0;
 	    else epilepsyFlashReduction = 1;
+	    set_config_int("zeldadx","checked_epilepsy",1);
 	    save_game_configs();
 	}
     return D_O_K;
@@ -7268,6 +7311,50 @@ int buggy_next_combo_secrets_emulation()
 	
 }
 
+int old_210_water_emulation()
+{
+	if(jwin_alert3(
+			"EMULATION: Strict 2.10 Ladder/Flippers", 
+			"This action will toggle if ZC Player uses the old, v2.10 ladder/flippers.",
+			"If enabled, the ladder will deploy before swimming when facing up or down.",
+			"Proceed?",
+		 "&Yes", 
+		"&No", 
+		NULL, 
+		'y', 
+		'n', 
+		NULL, 
+		lfont) == 1)
+	{
+	    if (emulation_patches[emuOLD210WATER] ) emulation_patches[emuOLD210WATER] = 0;
+	    else emulation_patches[emuOLD210WATER] = 1;
+	}
+    return D_O_K;
+	
+}
+
+int old_210_hammer_emulation()
+{
+	if(jwin_alert3(
+			"EMULATION: 2.10 Hammer Reach", 
+			"This action will toggle extended uprward readh for hammer/post interaction.",
+			"If enabled, the hammer will have an extra four piels of reach when facing up.",
+			"Proceed?",
+		 "&Yes", 
+		"&No", 
+		NULL, 
+		'y', 
+		'n', 
+		NULL, 
+		lfont) == 1)
+	{
+	    if (emulation_patches[emu210HAMMER] ) emulation_patches[emu210HAMMER] = 0;
+	    else emulation_patches[emu210HAMMER] = 1;
+	}
+    return D_O_K;
+	
+}
+
 int v250_dmap_intro_repeat()
 {
 	if(jwin_alert3(
@@ -7579,6 +7666,8 @@ static MENU compat_patch_menu[] =
     { (char *)"&Eight Way Shot Uses Flame Sound",                     eight_way_shot_sfx_fix,                 NULL,                      0, NULL },
     { (char *)"&Bombchus Use Superbomb Blasts",                     v210_bombchus,                 NULL,                      0, NULL },
     { (char *)"Buggy ->&Next Combos",                     buggy_next_combo_secrets_emulation,                 NULL,                      0, NULL },
+    { (char *)"2.10 Water/Ladder Up/Down",                     old_210_water_emulation,                 NULL,                      0, NULL },
+    { (char *)"2.10 Hammer Upward Reach",                     old_210_hammer_emulation,                 NULL,                      0, NULL },
     //{ (char *)"Fix &Triforce Cellars",                     v210_fix_triforce_cellar,                 NULL,                      0, NULL },
     { NULL,                                 NULL,                    NULL,                      0, NULL }
 };
@@ -8754,6 +8843,7 @@ void music_stop()
 
 void System()
 {
+    //memcpy(snappal,RAMpal,sizeof(RAMpal));
     mouse_down=gui_mouse_b();
     music_pause();
     pause_all_sfx();
@@ -8784,7 +8874,7 @@ void System()
     {
         p = init_dialog(system_dlg,-1);
     }
-    
+    MenuOpen = true;
     // drop the menu on startup if menu button pressed
     if(joybtn(Mbtn)||key[KEY_ESC])
         simulate_keypress(KEY_G << 8);
@@ -8842,6 +8932,8 @@ void System()
 	//This should simply be fixed, in-source now. I'll re-enable this as an emulation flag, only if needed. 
 	//compat_patch_menu[8].flags = ( quest_header_zelda_version > 0x210 ) ? D_DISABLED : ((emulation_patches[emuFIXTRIFORCECELLAR])?D_SELECTED:0);
 	compat_patch_menu[11].flags = ((emulation_patches[emuBUGGYNEXTCOMBOS])?D_SELECTED:0);
+	compat_patch_menu[12].flags = ((emulation_patches[emuOLD210WATER])?D_SELECTED:0); //Add version < 0x250 here once this is confirmed to work. -Z
+	compat_patch_menu[13].flags = ((emulation_patches[emu210HAMMER])?D_SELECTED:0); //Add version < 0x250 here once this is confirmed to work. -Z
 	
 	//compat_patch_menu[0].flags =(zc_192b163_compatibility)?D_SELECTED:0;
 	misc_menu[12].flags =(zconsole)?D_SELECTED:0;
@@ -8923,7 +9015,7 @@ void System()
     mouse_down=gui_mouse_b();
     shutdown_dialog(p);
     show_mouse(NULL);
-    
+    MenuOpen = false;
     if(Quit)
     {
         kill_sfx();

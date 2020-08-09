@@ -20,6 +20,7 @@ FFScript FFCore;
 
 extern int directItemA;
 extern int directItemB;
+extern unsigned char script_incremented;
 
 #include "guys.h"
 #include "gamedata.h"
@@ -30,6 +31,7 @@ extern int directItemB;
 #include "zscriptversion.h"
 #include "rendertarget.h"
 #include "metadata/versionsig.h"
+#include "ending.h"
 
 extern byte monochrome_console;
 
@@ -3083,7 +3085,7 @@ public:
     
     static INLINE int checkComboPos(const long pos, const char * const str)
     {
-        return checkBounds(pos, 0, 175, str);
+        return checkBoundsPos(pos, 0, 175, str);
     }
     
     static INLINE int checkTile(const long pos, const char * const str)
@@ -3161,6 +3163,17 @@ public:
         if(n < boundlow || n > boundup)
         {
             Z_scripterrlog("Invalid value (%i) passed to '%s'\n", n, funcvar);
+            return _OutOfBounds;
+        }
+        
+        return _NoError;
+    }
+    
+    static INLINE int checkBoundsPos(const long n, const long boundlow, const long boundup, const char * const funcvar)
+    {
+        if(n < boundlow || n > boundup)
+        {
+            Z_scripterrlog("Invalid position [%i] used to read to '%s'\n", n, funcvar);
             return _OutOfBounds;
         }
         
@@ -3816,6 +3829,36 @@ long get_register(const long arg)
     
     switch(arg)
     {
+	    
+///--------------------------------------------------------
+/// Game->
+
+    case INCQST:
+    {
+	//zprint2("Incrementing Quest\n");
+	int newqst = 0;
+	if ( game->get_quest() < 255 )  //255 is a custom quest
+	{
+		newqst = (game->get_quest()+1);
+	}
+	else
+	{
+		newqst = 1;
+	}
+	//zprint2("newqst is: %d\n", newqst);
+	if ( newqst < 11 ) 
+	{
+		
+		ret = newqst * 10000;
+		Quit = qINCQST;
+		//ending();
+		
+	}
+	else ret = -10000;
+	break;
+    }
+	    
+	    
 ///----------------------------------------------------------------------------------------------------//
 //FFC Variables
     case DATA:
@@ -5490,7 +5533,6 @@ long get_register(const long arg)
 int pos = ri->d[0] / 10000; \
 if(BC::checkComboPos(pos, str) != SH::_NoError) \
 { \
-    Z_scripterrlog("Inalid pos used to read %s\n"); \
     ret = -10000; \
 } \
 else \
@@ -5498,37 +5540,36 @@ else \
 }
 
     case COMBODD:
-        GET_COMBO_VAR(data,  "Screen->ComboD") break;
+        GET_COMBO_VAR(data,  "Screen->ComboD[]") break;
         
     case COMBOCD:
-        GET_COMBO_VAR(cset,  "Screen->ComboC") break;
+        GET_COMBO_VAR(cset,  "Screen->ComboC[]") break;
         
     case COMBOFD:
-        GET_COMBO_VAR(sflag, "Screen->ComboF") break;
+        GET_COMBO_VAR(sflag, "Screen->ComboF[]") break;
         
 #define GET_COMBO_VAR_BUF(member, str) \
 { \
     int pos = ri->d[0] / 10000; \
     if(BC::checkComboPos(pos, str) != SH::_NoError) \
     { \
-        Z_scripterrlog("Inalid pos used to read %s\n"); \
-        ret = -10000; \
+	ret = -10000; \
     } \
     else \
         ret = combobuf[tmpscr->data[pos]].member * 10000; \
 }
         
     case COMBOTD:
-        GET_COMBO_VAR_BUF(type, "Screen->ComboT") break;
+        GET_COMBO_VAR_BUF(type, "Screen->ComboT[]") break;
         
     case COMBOID:
-        GET_COMBO_VAR_BUF(flag, "Screen->ComboI") break;
+        GET_COMBO_VAR_BUF(flag, "Screen->ComboI[]") break;
         
     case COMBOSD:
     {
         int pos = ri->d[0] / 10000;
         
-        if(BC::checkComboPos(pos, "Screen->ComboS") != SH::_NoError)
+        if(BC::checkComboPos(pos, "Screen->ComboS[]") != SH::_NoError)
             ret = -10000;
         else
             ret = (combobuf[tmpscr->data[pos]].walk & 0xF) * 10000;
@@ -7622,11 +7663,11 @@ if(GuyH::loadNPC(ri->guyref, str) == SH::_NoError) \
 	int val = (value/10000);
         if ( ((unsigned) pos) > 175 )
 	{
-		Z_scripterrlog("Inalid [pos] %d used to write to Screen->ComboD[]\n", pos);
+		Z_scripterrlog("Invalid [pos] %d used to write to Screen->ComboD[]\n", pos);
 	}
 	else if ( ((unsigned) val) >= MAXCOMBOS )
 	{
-		Z_scripterrlog("Inalid combo ID %d used to write to Screen->ComboD[]\n", val);
+		Z_scripterrlog("Invalid combo ID %d used to write to Screen->ComboD[]\n", val);
 	}
         else
         {
@@ -7643,11 +7684,11 @@ if(GuyH::loadNPC(ri->guyref, str) == SH::_NoError) \
         int val = (value/10000); //cset
 	if ( ((unsigned) pos) > 175 )
 	{
-		Z_scripterrlog("Inalid [pos] %d used to write to Screen->ComboC[]\n", pos);
+		Z_scripterrlog("Invalid [pos] %d used to write to Screen->ComboC[]\n", pos);
 	}
 	else if ( ((unsigned) val) >= 15 )
 	{
-		Z_scripterrlog("Inalid CSet ID %d used to write to Screen->ComboC[]\n", val);
+		Z_scripterrlog("Invalid CSet ID %d used to write to Screen->ComboC[]\n", val);
 	}
         else
         {
@@ -7664,11 +7705,11 @@ if(GuyH::loadNPC(ri->guyref, str) == SH::_NoError) \
         int val = (value/10000); //flag
 	if ( ((unsigned) pos) > 175 )
 	{
-		Z_scripterrlog("Inalid [pos] %d used to write to Screen->ComboF[]\n", pos);
+		Z_scripterrlog("Invalid [pos] %d used to write to Screen->ComboF[]\n", pos);
 	}
 	else if ( ((unsigned) val) >= 256 )
 	{
-		Z_scripterrlog("Inalid Flag ID %d used to write to Screen->ComboF[]\n", val);
+		Z_scripterrlog("Invalid Flag ID %d used to write to Screen->ComboF[]\n", val);
 	}
         
         else
@@ -7682,11 +7723,11 @@ if(GuyH::loadNPC(ri->guyref, str) == SH::_NoError) \
         int val = (value/10000); //type
 	if ( ((unsigned) pos) > 175 )
 	{
-		Z_scripterrlog("Inalid [pos] %d used to write to Screen->ComboT[]\n", pos);
+		Z_scripterrlog("Invalid [pos] %d used to write to Screen->ComboT[]\n", pos);
 	}
 	else if ( ((unsigned) val) >= 256 )
 	{
-		Z_scripterrlog("Inalid Flag ID %d used to write to Screen->ComboT[]\n", val);
+		Z_scripterrlog("Invalid Flag ID %d used to write to Screen->ComboT[]\n", val);
 	}
         else
         {
@@ -7718,11 +7759,11 @@ if(GuyH::loadNPC(ri->guyref, str) == SH::_NoError) \
         int val = (value/10000); //iflag
 	if ( ((unsigned) pos) > 175 )
 	{
-		Z_scripterrlog("Inalid [pos] %d used to write to Screen->ComboI[]\n", pos);
+		Z_scripterrlog("Invalid [pos] %d used to write to Screen->ComboI[]\n", pos);
 	}
 	else if ( ((unsigned) val) >= 256 )
 	{
-		Z_scripterrlog("Inalid Flag ID %d used to write to Screen->ComboI[]\n", val);
+		Z_scripterrlog("Invalid Flag ID %d used to write to Screen->ComboI[]\n", val);
 	}
         
         else
@@ -7736,11 +7777,11 @@ if(GuyH::loadNPC(ri->guyref, str) == SH::_NoError) \
         int val = (value/10000); //iflag
 	if ( ((unsigned) pos) > 175 )
 	{
-		Z_scripterrlog("Inalid [pos] %d used to write to Screen->ComboS[]\n", pos);
+		Z_scripterrlog("Invalid [pos] %d used to write to Screen->ComboS[]\n", pos);
 	}
 	else if ( ((unsigned) val) >= 16 )//solidity 1, 2, 4, 8 max 15
 	{
-		Z_scripterrlog("Inalid Flag ID %d used to write to Screen->ComboS[]\n", val);
+		Z_scripterrlog("Invalid Flag ID %d used to write to Screen->ComboS[]\n", val);
 	}
         else
             combobuf[tmpscr->data[pos]].walk=(val)&15;
@@ -8511,19 +8552,55 @@ void do_rshift(const bool v)
 
 void do_warp(bool v)
 {
-    tmpscr->sidewarpdmap[0] = SH::get_arg(sarg1, v) / 10000;
-    tmpscr->sidewarpscr[0]  = SH::get_arg(sarg2, v) / 10000;
-    tmpscr->sidewarptype[0] = wtIWARP;
-    Link.ffwarp = true;
+	int dmapid = SH::get_arg(sarg1, v) / 10000;
+	int screenid = SH::get_arg(sarg2, v) / 10000;
+	if ( ((unsigned)dmapid) >= MAXDMAPS ) 
+	{
+		Z_scripterrlog("Invalid DMap ID (%d) passed to Warp(). Aborting.\n", dmapid);
+		return;
+	}
+	if ( ((unsigned)screenid) >= MAPSCRS ) 
+	{
+		Z_scripterrlog("Invalid Screen ID (%d) passed to Warp(). Aborting.\n", screenid);
+		return;
+	}
+	//Extra sanity guard. 
+	if ( DMaps[dmapid].map*MAPSCRS+DMaps[dmapid].xoff+screenid >= (int)TheMaps.size() )
+	{
+		Z_scripterrlog("Invalid destination passed to Warp(). Aborting.\n");
+		return;
+	}
+	tmpscr->sidewarpdmap[0] = dmapid;
+	tmpscr->sidewarpscr[0]  = screenid;
+	tmpscr->sidewarptype[0] = wtIWARP;
+	Link.ffwarp = true;
 }
 
 void do_pitwarp(bool v)
 {
-    tmpscr->sidewarpdmap[0] = SH::get_arg(sarg1, v) / 10000;
-    tmpscr->sidewarpscr[0]  = SH::get_arg(sarg2, v) / 10000;
-    tmpscr->sidewarptype[0] = wtIWARP;
-    Link.ffwarp = true;
-    Link.ffpit = true;
+	int dmapid = SH::get_arg(sarg1, v) / 10000;
+	int screenid = SH::get_arg(sarg2, v) / 10000;
+	if ( ((unsigned)dmapid) >= MAXDMAPS ) 
+	{
+		Z_scripterrlog("Invalid DMap ID (%d) passed to PitWarp(). Aborting.\n", dmapid);
+		return;
+	}
+	if ( ((unsigned)screenid) >= MAPSCRS ) 
+	{
+		Z_scripterrlog("Invalid Screen ID (%d) passed to PitWarp(). Aborting.\n", screenid);
+		return;
+	}
+	//Extra sanity guard. 
+	if ( DMaps[dmapid].map*MAPSCRS+DMaps[dmapid].xoff+screenid >= (int)TheMaps.size() )
+	{
+		Z_scripterrlog("Invalid destination passed to Warp(). Aborting.\n");
+		return;
+	}
+	tmpscr->sidewarpdmap[0] = dmapid;
+	tmpscr->sidewarpscr[0]  = screenid;
+	tmpscr->sidewarptype[0] = wtIWARP;
+	Link.ffwarp = true;
+	Link.ffpit = true;
 }
 
 void do_breakshield()
@@ -9336,7 +9413,10 @@ void TraceScriptIDs()
 			if ( zscript_debugger ) {zscript_coloured_console.cprintf((CConsoleLoggerEx::COLOR_GREEN | CConsoleLoggerEx::COLOR_INTENSITY | 
 				CConsoleLoggerEx::COLOR_BACKGROUND_BLACK),"Global script %u (%s): ", 
 				curScriptNum+1, globalmap[curScriptNum].second.c_str()); }
+			#else //Unix
+				printf("Global script %u (%s): ", curScriptNum+1, globalmap[curScriptNum].second.c_str());	
 			#endif
+		
 		    break;
 		    
 		case SCRIPT_FFC:
@@ -9345,7 +9425,9 @@ void TraceScriptIDs()
 			#ifdef _WIN32
 			if ( zscript_debugger ) {zscript_coloured_console.cprintf((CConsoleLoggerEx::COLOR_GREEN | CConsoleLoggerEx::COLOR_INTENSITY | 
 				CConsoleLoggerEx::COLOR_BACKGROUND_BLACK),"FFC script %u (%s): ", curScriptNum, ffcmap[curScriptNum-1].second.c_str());}
-			#endif
+			#else //Unix
+				printf("FFC script %u (%s): ", curScriptNum, ffcmap[curScriptNum-1].second.c_str());
+			#endif  
 		break;
 		    
 		case SCRIPT_ITEM:
@@ -9353,7 +9435,9 @@ void TraceScriptIDs()
 			#ifdef _WIN32
 			if ( zscript_debugger ) {zscript_coloured_console.cprintf((CConsoleLoggerEx::COLOR_GREEN | CConsoleLoggerEx::COLOR_INTENSITY | 
 				CConsoleLoggerEx::COLOR_BACKGROUND_BLACK),"Item script %u (%s): ", curScriptNum, itemmap[curScriptNum-1].second.c_str());}
-			#endif
+			#else //Unix
+				printf("Itemdata script %u (%s): ", curScriptNum, itemmap[curScriptNum-1].second.c_str());
+			#endif 
 		break;
 		
 	}
@@ -9363,74 +9447,82 @@ void TraceScriptIDs()
 
 void do_trace(bool v)
 {
-    long temp = SH::get_arg(sarg1, v);
+	long temp = SH::get_arg(sarg1, v);
+	
+	char tmp[100];
+	sprintf(tmp, (temp < 0 ? "%06ld" : "%05ld"), temp);
+	string s2(tmp);
+	s2 = s2.substr(0, s2.size() - 4) + "." + s2.substr(s2.size() - 4, 4);
+	TraceScriptIDs();
+	al_trace("%s\n", s2.c_str());
     
-    char tmp[100];
-    sprintf(tmp, (temp < 0 ? "%06ld" : "%05ld"), temp);
-    string s2(tmp);
-    s2 = s2.substr(0, s2.size() - 4) + "." + s2.substr(s2.size() - 4, 4);
-    TraceScriptIDs();
-    al_trace("%s\n", s2.c_str());
-    
-    if(zconsole)
-        printf("%s\n", s2.c_str());
-    if ( zscript_debugger ) 
+	if(zconsole)
+		printf("%s\n", s2.c_str());
+	if ( zscript_debugger ) 
 	{
 		#ifdef _WIN32
 		zscript_coloured_console.cprintf((CConsoleLoggerEx::COLOR_WHITE | 
 			CConsoleLoggerEx::COLOR_BACKGROUND_BLACK),"%s\n", s2.c_str());
+		#else //Unix
+			printf("%s\n", s2.c_str());	
 		#endif
 	}
 }
 
 void do_tracebool(const bool v)
 {
-    long temp = SH::get_arg(sarg1, v);
-    TraceScriptIDs();
-    al_trace("%s\n", temp ? "true": "false");
+	long temp = SH::get_arg(sarg1, v);
+	TraceScriptIDs();
+	al_trace("%s\n", temp ? "true": "false");
     
-    if(zconsole)
-        printf("%s\n", temp ? "true": "false");
-    if ( zscript_debugger ) 
+	if(zconsole)
+		printf("%s\n", temp ? "true": "false");
+	if ( zscript_debugger ) 
 	{
 		#ifdef _WIN32
 		zscript_coloured_console.cprintf((CConsoleLoggerEx::COLOR_WHITE | 
 			CConsoleLoggerEx::COLOR_BACKGROUND_BLACK),"%s\n", temp ? "true": "false");
+		#else //Unix
+			printf("%s\n", temp ? "true": "false");	
 		#endif
 	}
 }
 
 void do_tracestring()
 {
-    long arrayptr = get_register(sarg1) / 10000;
-    string str;
-    ArrayH::getString(arrayptr, str, 512);
-    TraceScriptIDs();
-    al_trace("%s", str.c_str());
+	long arrayptr = get_register(sarg1) / 10000;
+	string str;
+	ArrayH::getString(arrayptr, str, 512);
+	TraceScriptIDs();
+	al_trace("%s", str.c_str());
     
-    if(zconsole)
-        printf("%s", str.c_str());
-    if ( zscript_debugger ) 
-    {
-	#ifdef _WIN32
-	zscript_coloured_console.cprintf((CConsoleLoggerEx::COLOR_WHITE | 
+	if(zconsole)
+		printf("%s", str.c_str());
+	if ( zscript_debugger ) 
+	{
+		#ifdef _WIN32
+		zscript_coloured_console.cprintf((CConsoleLoggerEx::COLOR_WHITE | 
 			CConsoleLoggerEx::COLOR_BACKGROUND_BLACK),"%s", str.c_str());
 
-	#endif
-    }
+		#else //Unix
+			printf("%s", str.c_str());	
+		#endif
+	}
 }
 
 void do_tracenl()
 {
-    al_trace("\n");
-    
-    if(zconsole)
-        printf("\n");
-    if ( zscript_debugger ) 
+	al_trace("\n");
+	
+	if(zconsole)
+		printf("\n");
+	if ( zscript_debugger ) 
 	{
 		#ifdef _WIN32
 		zscript_coloured_console.cprintf((CConsoleLoggerEx::COLOR_WHITE | 
 			CConsoleLoggerEx::COLOR_BACKGROUND_BLACK),"\n");
+		#else //Unix
+			printf("\n");	
 		#endif
 	}
 }
@@ -9502,7 +9594,9 @@ void do_tracetobase()
 		#ifdef _WIN32
 		zscript_coloured_console.cprintf((CConsoleLoggerEx::COLOR_WHITE | 
 			CConsoleLoggerEx::COLOR_BACKGROUND_BLACK),"%s\n", s2.c_str());
-		#endif
+		#else //Unix
+			printf("%s\n", s2.c_str());
+		#endif 
 	}
 }
 
@@ -9870,11 +9964,11 @@ int run_script(const byte type, const word script, const byte i)
 		switch(type)
 		{
 			case SCRIPT_FFC:
-				Z_scripterrlog("%s Script %s has exited.\n", script_types[type], ffcmap[i].second.c_str()); break;
+				Z_scripterrlog("%s Script %s has exited.\n", script_types[type], ffcmap[curScriptNum-1].second.c_str()); break;
 			case SCRIPT_ITEM:
-				Z_scripterrlog("%s Script %s has exited.\n", script_types[type], itemmap[i].second.c_str()); break;
+				Z_scripterrlog("%s Script %s has exited.\n", script_types[type], itemmap[curScriptNum-1].second.c_str()); break;
 			case SCRIPT_GLOBAL:
-				Z_scripterrlog("%s Script %s has exited.\n", script_types[type], globalmap[i].second.c_str()); break;
+				Z_scripterrlog("%s Script %s has exited.\n", script_types[type], globalmap[curScriptNum].second.c_str()); break;
 			default: break;					
 		}
 		break;
@@ -9891,11 +9985,11 @@ int run_script(const byte type, const word script, const byte i)
 		switch(type)
 		{
 			case SCRIPT_FFC:
-				Z_scripterrlog("%s Script %s attempted o GOTO an invalid instruction (%d).\n", sarg1, script_types[type], ffcmap[i].second.c_str()); break;
+				Z_scripterrlog("%s Script %s attempted to GOTO an invalid instruction line (%d).\nToo many instructions in this script.\n", script_types[type], ffcmap[curScriptNum-1].second.c_str(), sarg1); break;
 			case SCRIPT_ITEM:
-				Z_scripterrlog("%s Script %s attempted o GOTO an invalid instruction (%d).\n", sarg1, script_types[type], itemmap[i].second.c_str()); break;
+				Z_scripterrlog("%s Script %s attempted to GOTO an invalid instruction line (%d).\nToo many instructions in this script.\n", script_types[type], itemmap[curScriptNum-1].second.c_str(), sarg1); break;
 			case SCRIPT_GLOBAL:
-				Z_scripterrlog("%s Script %s attempted o GOTO an invalid instruction (%d).\n", sarg1, script_types[type], globalmap[i].second.c_str()); break;
+				Z_scripterrlog("%s Script %s attempted to GOTO an invalid instruction line (%d).\nToo many instructions in this script.\n", script_types[type], globalmap[curScriptNum].second.c_str(), sarg1); break;
 			
 			default: break;
 		}
@@ -9915,11 +10009,11 @@ int run_script(const byte type, const word script, const byte i)
 		switch(type)
 		{
 			case SCRIPT_FFC:
-				Z_scripterrlog("%s Script %s attempted o GOTO an invalid instruction (%d).\n", (get_register(sarg1) / 10000), script_types[type], ffcmap[i].second.c_str()); break;
+				Z_scripterrlog("%s Script %s attempted to GOTOR an invalid register line (%d).\nToo many instructions in this script.\n", script_types[type], ffcmap[curScriptNum-1].second.c_str(), (get_register(sarg1) / 10000)); break;
 			case SCRIPT_ITEM:
-				Z_scripterrlog("%s Script %s attempted o GOTO an invalid instruction (%d).\n", (get_register(sarg1) / 10000), script_types[type], itemmap[i].second.c_str()); break;
+				Z_scripterrlog("%s Script %s attempted to GOTOR an invalid register line (%d).\nToo many instructions in this script.\n", script_types[type], itemmap[curScriptNum-1].second.c_str(), (get_register(sarg1) / 10000)); break;
 			case SCRIPT_GLOBAL:
-				Z_scripterrlog("%s Script %s attempted o GOTO an invalid instruction (%d).\n", (get_register(sarg1) / 10000), script_types[type], globalmap[i].second.c_str()); break;
+				Z_scripterrlog("%s Script %s attempted to GOTOR an invalid register line (%d).\nToo many instructions in this script.\n", script_types[type], globalmap[curScriptNum].second.c_str(), (get_register(sarg1) / 10000)); break;
 			
 			default: break;
 		}
@@ -9940,11 +10034,11 @@ int run_script(const byte type, const word script, const byte i)
 			switch(type)
 			{
 				case SCRIPT_FFC:
-					Z_scripterrlog("%s Script %s attempted o GOTO an invalid instruction (%d).\n", sarg1, script_types[type], ffcmap[i].second.c_str()); break;
+					Z_scripterrlog("%s Script %s attempted to GOTOTRUE to an invalid instruction line (%d).\nToo many instructions in this script.\n", script_types[type], ffcmap[curScriptNum-1].second.c_str(), sarg1); break;
 				case SCRIPT_ITEM:
-					Z_scripterrlog("%s Script %s attempted o GOTO an invalid instruction (%d).\n", sarg1, script_types[type], itemmap[i].second.c_str()); break;
+					Z_scripterrlog("%s Script %s attempted to GOTOTRUE to an invalid instruction line (%d).\nToo many instructions in this script.\n", script_types[type], itemmap[curScriptNum-1].second.c_str(), sarg1); break;
 				case SCRIPT_GLOBAL:
-					Z_scripterrlog("%s Script %s attempted o GOTO an invalid instruction (%d).\n", sarg1, script_types[type], globalmap[i].second.c_str()); break;
+					Z_scripterrlog("%s Script %s attempted to GOTOTRUE to an invalid instruction line (%d).\nToo many instructions in this script.\n", script_types[type], globalmap[curScriptNum].second.c_str(), sarg1); break;
 				
 				default: break;
 			}
@@ -9966,11 +10060,11 @@ int run_script(const byte type, const word script, const byte i)
 			switch(type)
 			{
 				case SCRIPT_FFC:
-					Z_scripterrlog("%s Script %s attempted o GOTO an invalid instruction (%d).\n", sarg1, script_types[type], ffcmap[i].second.c_str()); break;
+					Z_scripterrlog("%s Script %s attempted to GOTOFALSE to an invalid instruction line (%d).\nToo many instructions in this script.\n", script_types[type], ffcmap[curScriptNum-1].second.c_str(), sarg1); break;
 				case SCRIPT_ITEM:
-					Z_scripterrlog("%s Script %s attempted o GOTO an invalid instruction (%d).\n", sarg1, script_types[type], itemmap[i].second.c_str()); break;
+					Z_scripterrlog("%s Script %s attempted to GOTOFALSE to an invalid instruction line (%d).\nToo many instructions in this script.\n", script_types[type], itemmap[curScriptNum-1].second.c_str(), sarg1); break;
 				case SCRIPT_GLOBAL:
-					Z_scripterrlog("%s Script %s attempted o GOTO an invalid instruction (%d).\n", sarg1, script_types[type], globalmap[i].second.c_str()); break;
+					Z_scripterrlog("%s Script %s attempted to GOTOFALSE to an invalid instruction line (%d).\nToo many instructions in this script.\n", script_types[type], globalmap[curScriptNum].second.c_str(), sarg1); break;
 				
 				default: break;
 			}
@@ -9992,11 +10086,11 @@ int run_script(const byte type, const word script, const byte i)
 			switch(type)
 			{
 				case SCRIPT_FFC:
-					Z_scripterrlog("%s Script %s attempted o GOTO an invalid instruction (%d).\n", sarg1, script_types[type], ffcmap[i].second.c_str()); break;
+					Z_scripterrlog("%s Script %s attempted to GOTOMORE to an invalid instruction line (%d).\nToo many instructions in this script.\n", script_types[type], ffcmap[curScriptNum-1].second.c_str(), sarg1); break;
 				case SCRIPT_ITEM:
-					Z_scripterrlog("%s Script %s attempted o GOTO an invalid instruction (%d).\n", sarg1, script_types[type], itemmap[i].second.c_str()); break;
+					Z_scripterrlog("%s Script %s attempted to GOTOMORE to an invalid instruction line (%d).\nToo many instructions in this script.\n", script_types[type], itemmap[curScriptNum-1].second.c_str(), sarg1); break;
 				case SCRIPT_GLOBAL:
-					Z_scripterrlog("%s Script %s attempted o GOTO an invalid instruction (%d).\n", sarg1, script_types[type], globalmap[i].second.c_str()); break;
+					Z_scripterrlog("%s Script %s attempted to GOTOMORE to an invalid instruction line (%d).\nToo many instructions in this script.\n", script_types[type], globalmap[curScriptNum].second.c_str(), sarg1); break;
 				
 				default: break;
 			}
@@ -10018,11 +10112,11 @@ int run_script(const byte type, const word script, const byte i)
 			switch(type)
 			{
 				case SCRIPT_FFC:
-					Z_scripterrlog("%s Script %s attempted o GOTO an invalid instruction (%d).\n", sarg1, script_types[type], ffcmap[i].second.c_str()); break;
+					Z_scripterrlog("%s Script %s attempted to GOTOLESS to an invalid instruction line (%d).\nToo many instructions in this script.\n", script_types[type], ffcmap[curScriptNum-1].second.c_str(), sarg1); break;
 				case SCRIPT_ITEM:
-					Z_scripterrlog("%s Script %s attempted o GOTO an invalid instruction (%d).\n", sarg1, script_types[type], itemmap[i].second.c_str()); break;
+					Z_scripterrlog("%s Script %s attempted to GOTOLESS to an invalid instruction line (%d).\nToo many instructions in this script.\n", script_types[type], itemmap[curScriptNum-1].second.c_str(), sarg1); break;
 				case SCRIPT_GLOBAL:
-					Z_scripterrlog("%s Script %s attempted o GOTO an invalid instruction (%d).\n", sarg1, script_types[type], globalmap[i].second.c_str()); break;
+					Z_scripterrlog("%s Script %s attempted to GOTOLESS to an invalid instruction line (%d).\nToo many instructions in this script.\n", script_types[type], globalmap[curScriptNum].second.c_str(), sarg1); break;
 				
 				default: break;
 			}
