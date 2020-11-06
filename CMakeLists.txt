@@ -86,6 +86,9 @@ if(${BISON_FOUND} AND ${FLEX_FOUND} AND WANT_ZSCRIPT)
 	if(MSVC)
 		set(FLEXFLAGS "--wincompat")
 	endif()
+	if(MINGW)
+		set(FLEXFLAGS "--wincompat")
+	endif()
 	FLEX_TARGET(ZScriptLexer ${CMAKE_SOURCE_DIR}/src/parser/ffscript.lpp ${CMAKE_SOURCE_DIR}/src/parser/lex.yy.cpp COMPILE_FLAGS ${FLEXFLAGS})
 	BISON_TARGET(ZScriptParser ${CMAKE_SOURCE_DIR}/src/parser/ffscript.ypp ${CMAKE_SOURCE_DIR}/src/parser/y.tab.cpp COMPILE_FLAGS -v)
 	add_flex_bison_dependency(ZScriptLexer ZScriptParser)
@@ -135,6 +138,41 @@ if(MSVC)
 		list(APPEND ZQUESTEXTRASOURCES src/precompiledzq.cpp)
 	endif()
 
+# Windows 
+# Theoretical MinGW
+# What does MinGW want for al_gif.lib as an .a file?!
+
+elseif(MINGW)
+	set(ALLEGROLIB "$<$<CONFIG:DEBUG>:${CMAKE_SOURCE_DIR}/libs/mingw/liballeg.a>$<SEMICOLON>${CMAKE_SOURCE_DIR}/libs/mingw/lpthreadGC2.a"
+				   "$<$<CONFIG:RELEASE>:${CMAKE_SOURCE_DIR}/libs/mingw/liballeg.a>$<SEMICOLON>${CMAKE_SOURCE_DIR}/libs/mingw/lpthreadGC2.a")
+				   
+
+	# This was the MSVC version of al_fig, the next line calls for the .a file
+	# set(IMAGELIBS "$<$<CONFIG:DEBUG>:${CMAKE_SOURCE_DIR}/libs/mingw/al_gif.lib$<SEMICOLON>${CMAKE_SOURCE_DIR}/libs/mingw/libpng.a$<SEMICOLON>${CMAKE_SOURCE_DIR}/libs/mingw/libz.a$<SEMICOLON>${CMAKE_SOURCE_DIR}/libs/mingw/libldpng.a$<SEMICOLON>${CMAKE_SOURCE_DIR}/libs/mingw/libjpgal.a>""$<$<CONFIG:RELEASE>:${CMAKE_SOURCE_DIR}/libs/mingw/al_gif.lib$<SEMICOLON>${CMAKE_SOURCE_DIR}/libs/mingw/libpng.lib$<SEMICOLON>${CMAKE_SOURCE_DIR}/libs/mingw/zlib.lib$<SEMICOLON>${CMAKE_SOURCE_DIR}/libs/mingw/loadpng.lib$<SEMICOLON>${CMAKE_SOURCE_DIR}/libs/mingw/libjpgal.lib>")
+	set(IMAGELIBS "$<$<CONFIG:DEBUG>:${CMAKE_SOURCE_DIR}/libs/mingw/libalgif.a$<SEMICOLON>${CMAKE_SOURCE_DIR}/libs/mingw/libpng.a$<SEMICOLON>${CMAKE_SOURCE_DIR}/libs/mingw/libz.a$<SEMICOLON>${CMAKE_SOURCE_DIR}/libs/mingw/libldpng.a$<SEMICOLON>${CMAKE_SOURCE_DIR}/libs/mingw/libjpgal.a>""$<$<CONFIG:RELEASE>:${CMAKE_SOURCE_DIR}/libs/mingw/libalgif.a$<SEMICOLON>${CMAKE_SOURCE_DIR}/libs/mingw/libpng.lib$<SEMICOLON>${CMAKE_SOURCE_DIR}/libs/mingw/zlib.lib$<SEMICOLON>${CMAKE_SOURCE_DIR}/libs/mingw/loadpng.lib$<SEMICOLON>${CMAKE_SOURCE_DIR}/libs/mingw/libjpgal.lib>")
+
+	set(SOUNDLIBS "$<$<CONFIG:DEBUG>:${CMAKE_SOURCE_DIR}/libs/mingw/libaldmb.a$<SEMICOLON>${CMAKE_SOURCE_DIR}/libs/mingw/libalmp3.a$<SEMICOLON>${CMAKE_SOURCE_DIR}/libs/mingw/libalogg.a$<SEMICOLON>${CMAKE_SOURCE_DIR}/libs/mingw/libdumb.a$<SEMICOLON>${CMAKE_SOURCE_DIR}/libs/mingw/libgme.a>"
+	              "$<$<CONFIG:RELEASE>:${CMAKE_SOURCE_DIR}/libs/mingw/libaldmb.a$<SEMICOLON>${CMAKE_SOURCE_DIR}/libs/mingw/libalmp3.a$<SEMICOLON>${CMAKE_SOURCE_DIR}/libs/mingw/libalogg.a$<SEMICOLON>${CMAKE_SOURCE_DIR}/libs/mingw/libdumb.a$<SEMICOLON>${CMAKE_SOURCE_DIR}/libs/mingw/libgme.a>")
+
+
+	add_compile_options("$<$<CONFIG:DEBUG>:/MTd>")
+	add_compile_options("$<$<CONFIG:RELEASE>:/MT>")
+	
+	# Linux needs these, not sure about MinGW
+	
+	add_compile_options("-m32")
+	SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -m32 -static-libgcc -export-dynamic")
+	SET(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -m32 -static-libgcc")
+
+	# REQUIRED or else MSVC throws internal compiler error(!)
+	# Not sure if this applies to mingw
+	add_compile_options("$<$<CONFIG:RELEASE>:/fp:fast>")
+	add_definitions(-D_CRT_SECURE_NO_WARNINGS)
+	
+	# Not sure if this applies to mingw
+	set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /NODEFAULTLIB:LIBCD /SUBSYSTEM:WINDOWS /DEBUG")
+
+
 # Linux
 
 elseif(LINUX)
@@ -171,6 +209,8 @@ target_link_libraries(zcsound ${ALLEGROLIB} ${SOUNDLIBS} ${ZCSOUNDLIBSEXTRA})
 
 if(MSVC)
 	list(APPEND ROMVIEWEXTRASOURCES rv_icon.rc)
+elseif(MINGW)
+	list(APPEND ROMVIEWEXTRASOURCES rv_icon.rc)
 elseif(LINUX)
 	list(APPEND ROMVIEWEXTRASOURCES rv_icon.c)
 	set(ROMVIEWLIBSEXTRA ${X11_LIBRARIES})
@@ -194,7 +234,8 @@ target_link_libraries(romview ${IMAGELIBS} ${ALLEGROLIB} ${SOUNDLIBS} ${ROMVIEWL
 
 if(MSVC)
 	list(APPEND ZELDAEXTRASOURCES zc_icon.rc)
-
+elseif(MINGW)
+	list(APPEND ZELDAEXTRASOURCES zc_icon.rc)
 elseif(LINUX)
 	list(APPEND ZELDAEXTRASOURCES zc_icon.c src/single_instance_unix.cpp)
 	set(ZELDALIBSEXTRA ${X11_LIBRARIES})
@@ -227,6 +268,8 @@ endif()
 
 if(MSVC)
 	list(APPEND ZQUESTEXTRASOURCES zq_icon.rc)
+elseif(MINGW)
+	list(APPEND ZQUESTEXTRASOURCES zq_icon.rc)
 elseif(LINUX)
 	list(APPEND ZQUESTEXTRASOURCES zq_icon.c src/single_instance_unix.cpp)
 	set(ZQUESTLIBSEXTRA ${X11_LIBRARIES})
@@ -248,6 +291,10 @@ if(MSVC AND USE_PCH)
 endif()
 
 if(MSVC)
+	target_compile_definitions(zcsound PRIVATE ZCM_DLL)
+	target_compile_definitions(zelda PRIVATE ZCM_DLL_IMPORT)
+	target_compile_definitions(zquest PRIVATE ZCM_DLL_IMPORT)
+elseif(MINGW)
 	target_compile_definitions(zcsound PRIVATE ZCM_DLL)
 	target_compile_definitions(zelda PRIVATE ZCM_DLL_IMPORT)
 	target_compile_definitions(zquest PRIVATE ZCM_DLL_IMPORT)
