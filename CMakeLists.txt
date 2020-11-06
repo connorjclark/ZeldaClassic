@@ -147,9 +147,9 @@ elseif(MINGW)
 				   "$<$<CONFIG:RELEASE>:${CMAKE_SOURCE_DIR}/libs/mingw/liballeg.a>$<SEMICOLON>${CMAKE_SOURCE_DIR}/libs/mingw/lpthreadGC2.a")
 				   
 
-	# This was the MSVC version of al_fig, the next line calls for the .a file
-	# set(IMAGELIBS "$<$<CONFIG:DEBUG>:${CMAKE_SOURCE_DIR}/libs/mingw/al_gif.lib$<SEMICOLON>${CMAKE_SOURCE_DIR}/libs/mingw/libpng.a$<SEMICOLON>${CMAKE_SOURCE_DIR}/libs/mingw/libz.a$<SEMICOLON>${CMAKE_SOURCE_DIR}/libs/mingw/libldpng.a$<SEMICOLON>${CMAKE_SOURCE_DIR}/libs/mingw/libjpgal.a>""$<$<CONFIG:RELEASE>:${CMAKE_SOURCE_DIR}/libs/mingw/al_gif.lib$<SEMICOLON>${CMAKE_SOURCE_DIR}/libs/mingw/libpng.lib$<SEMICOLON>${CMAKE_SOURCE_DIR}/libs/mingw/zlib.lib$<SEMICOLON>${CMAKE_SOURCE_DIR}/libs/mingw/loadpng.lib$<SEMICOLON>${CMAKE_SOURCE_DIR}/libs/mingw/libjpgal.lib>")
-	set(IMAGELIBS "$<$<CONFIG:DEBUG>:${CMAKE_SOURCE_DIR}/libs/mingw/libalgif.a$<SEMICOLON>${CMAKE_SOURCE_DIR}/libs/mingw/libpng.a$<SEMICOLON>${CMAKE_SOURCE_DIR}/libs/mingw/libz.a$<SEMICOLON>${CMAKE_SOURCE_DIR}/libs/mingw/libldpng.a$<SEMICOLON>${CMAKE_SOURCE_DIR}/libs/mingw/libjpgal.a>""$<$<CONFIG:RELEASE>:${CMAKE_SOURCE_DIR}/libs/mingw/libalgif.a$<SEMICOLON>${CMAKE_SOURCE_DIR}/libs/mingw/libpng.lib$<SEMICOLON>${CMAKE_SOURCE_DIR}/libs/mingw/zlib.lib$<SEMICOLON>${CMAKE_SOURCE_DIR}/libs/mingw/loadpng.lib$<SEMICOLON>${CMAKE_SOURCE_DIR}/libs/mingw/libjpgal.lib>")
+	# Note: libalgif is absent at this time!
+	set(IMAGELIBS "$<$<CONFIG:DEBUG>:${CMAKE_SOURCE_DIR}/libs/mingw/libalgif.a$<SEMICOLON>${CMAKE_SOURCE_DIR}/libs/mingw/libpng.a$<SEMICOLON>${CMAKE_SOURCE_DIR}/libs/mingw/libz.a$<SEMICOLON>${CMAKE_SOURCE_DIR}/libs/mingw/libldpng.a$<SEMICOLON>${CMAKE_SOURCE_DIR}/libs/mingw/libjpgal.a>"
+	              "$<$<CONFIG:RELEASE>:${CMAKE_SOURCE_DIR}/libs/mingw/libalgif.a$<SEMICOLON>${CMAKE_SOURCE_DIR}/libs/mingw/libpng.a$<SEMICOLON>${CMAKE_SOURCE_DIR}/libs/mingw/libz.a$<SEMICOLON>${CMAKE_SOURCE_DIR}/libs/mingw/libldpng.a$<SEMICOLON>${CMAKE_SOURCE_DIR}/libs/mingw/libjpgal.a>")
 
 	set(SOUNDLIBS "$<$<CONFIG:DEBUG>:${CMAKE_SOURCE_DIR}/libs/mingw/libaldmb.a$<SEMICOLON>${CMAKE_SOURCE_DIR}/libs/mingw/libalmp3.a$<SEMICOLON>${CMAKE_SOURCE_DIR}/libs/mingw/libalogg.a$<SEMICOLON>${CMAKE_SOURCE_DIR}/libs/mingw/libdumb.a$<SEMICOLON>${CMAKE_SOURCE_DIR}/libs/mingw/libgme.a>"
 	              "$<$<CONFIG:RELEASE>:${CMAKE_SOURCE_DIR}/libs/mingw/libaldmb.a$<SEMICOLON>${CMAKE_SOURCE_DIR}/libs/mingw/libalmp3.a$<SEMICOLON>${CMAKE_SOURCE_DIR}/libs/mingw/libalogg.a$<SEMICOLON>${CMAKE_SOURCE_DIR}/libs/mingw/libdumb.a$<SEMICOLON>${CMAKE_SOURCE_DIR}/libs/mingw/libgme.a>")
