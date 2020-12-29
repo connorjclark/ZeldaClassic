@@ -588,7 +588,36 @@ void do_circler(BITMAP *bmp, int *sdci, int xoffset, int yoffset)
     drawing_mode(DRAW_MODE_SOLID, NULL, 0, 0);
 }
 
-
+void floodfillInside(BITMAP* bmp, int color)
+{
+	int fx = -1, fy = -1;
+	for(int y = 0; y < 512; ++y)
+	{
+		bool foundOne = false;
+		bool foundEmptyAgain = false;
+		for(int x = 0; x < 512; ++x)
+		{
+			if(getpixel(prim_bmp,x,y)!=0)
+			{
+				if(foundOne)
+				{
+					if(foundEmptyAgain)
+					{
+						fx = x-1;
+						fy = y;
+						y = 512; break;
+					}
+				}
+				else foundOne = true;
+			}
+			else if(foundOne) foundEmptyAgain = true;
+		}
+	}
+	if(fx > -1)
+	{
+		floodfill(prim_bmp, fx, fy, color);
+	}
+}
 void do_arcr(BITMAP *bmp, int *sdci, int xoffset, int yoffset)
 {
     //sdci[1]=layer
@@ -663,7 +692,14 @@ void do_arcr(BITMAP *bmp, int *sdci, int xoffset, int yoffset)
             arc(prim_bmp, cx+xoffset, cy+yoffset, sa, ea, int(r), color);
             line(prim_bmp, cx+xoffset, cy+yoffset, cx+xoffset+fixtoi(fixcos(-sa)*r), cy+yoffset+fixtoi(fixsin(-sa)*r), color);
             line(prim_bmp, cx+xoffset, cy+yoffset, cx+xoffset+fixtoi(fixcos(-ea)*r), cy+yoffset+fixtoi(fixsin(-ea)*r), color);
-            floodfill(prim_bmp, zc_max(0,fx)+xoffset, zc_max(0,fy)+yoffset, color);
+			if(get_bit(quest_rules, qr_BROKEN_ARC_FLOODFILL))
+			{
+				floodfill(prim_bmp, zc_max(0,fx)+xoffset, zc_max(0,fy)+yoffset, color);
+			}
+			else
+			{
+				floodfillInside(prim_bmp, color);
+			}
             
             if(sdci[14]/10000<=127) //translucent
             {

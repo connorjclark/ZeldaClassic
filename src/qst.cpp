@@ -3194,6 +3194,10 @@ int readrules(PACKFILE *f, zquestheader *Header, bool keepdata)
 	{
 		set_bit(quest_rules,qr_BROKEN_OVERWORLD_MINIMAP,1);
 	}
+	if ( tempheader.zelda_version < 0x255 || (tempheader.zelda_version == 0x255 && tempheader.build < 54) )
+	{
+		set_bit(quest_rules,qr_BROKEN_ARC_FLOODFILL,1);
+	}
 	
 	//always set
 	set_bit(quest_rules,qr_ANIMATECUSTOMWEAPONS,0);
