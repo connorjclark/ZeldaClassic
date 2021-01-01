@@ -26,10 +26,15 @@
 #include "gamedata.h"
 #include "zsys.h"
 #include "script_drawing.h"
+#include "zfix.h"
 
 int isFullScreen();
 int onFullscreen();
 
+#if DEVLEVEL > 0
+extern bool dev_logging;
+extern bool dev_debug;
+#endif
 
 #define  MAXMIDIS     ZC_MIDI_COUNT+MAXCUSTOMTUNES
 
@@ -65,7 +70,7 @@ int onFullscreen();
 /******** Enums & Structs ********/
 /*********************************/
 
-enum { qQUIT=1, qRESET, qEXIT, qGAMEOVER, qCONT, qSAVE, qSAVECONT, qWON, qERROR };
+enum { qQUIT=1, qRESET, qEXIT, qGAMEOVER, qCONT, qSAVE, qSAVECONT, qWON, qRELOAD, qERROR, qINCQST, qLAST };
 
 // "special" walk flags
 enum
@@ -119,9 +124,9 @@ void addLwpn(int x,int y,int z,int id,int type,int power,int dir, int parentid);
 void addLwpnEx(int x,int y,int z,int id,int type,int power,int dir, int parentitem, int parentid, byte script_gen);
 void ALLOFF(bool messagesToo = true, bool decorationsToo = true);
 void centerLink();
-fix  LinkX();
-fix  LinkY();
-fix  LinkZ();
+zfix  LinkX();
+zfix  LinkY();
+zfix  LinkZ();
 int  LinkHClk();
 int  LinkNayrusLoveShieldClk();
 int  LinkHoverClk();
@@ -134,10 +139,10 @@ void setSwordClk(int newclk);
 void setItemClk(int newclk);
 int  LinkLStep();
 void LinkCheckItems();
-fix  LinkModifiedX();
-fix  LinkModifiedY();
-fix  GuyX(int j);
-fix  GuyY(int j);
+zfix  LinkModifiedX();
+zfix  LinkModifiedY();
+zfix  GuyX(int j);
+zfix  GuyY(int j);
 int  GuyID(int j);
 int  GuyMisc(int j);
 void StunGuy(int j,int stun);
@@ -145,11 +150,13 @@ bool  GuySuperman(int j);
 int  GuyCount();
 int  LinkDir();
 void add_grenade(int wx, int wy, int wz, int size, int parentid);
-fix distance(int x1, int y1, int x2, int y2);
+zfix distance(int x1, int y1, int x2, int y2);
 bool getClock();
 void setClock(bool state);
 void CatchBrang();;
 int LinkAction();
+
+extern int DMapEditorLastMaptileUsed;
 
 void do_dcounters();
 void game_loop();
@@ -168,7 +175,7 @@ void init_dmap();
 int  init_game();
 int  cont_game();
 void restart_level();
-int  load_quest(gamedata *g, bool report=true);
+int  load_quest(gamedata *g, bool report=true, byte printmetadata = 0);
 void show_details();
 void show_ffscript_names();
 //int  init_palnames();
@@ -228,15 +235,15 @@ enum { 	SAVESC_BACKGROUND, 		SAVESC_TEXT, 			SAVESC_USETILE,
 	SAVESC_CURSOR_CSET, 		SAVESC_CUR_SOUND,  		SAVESC_TEXT_CONTINUE_COLOUR, 
 	SAVESC_TEXT_SAVE_COLOUR, 	SAVESC_TEXT_RETRY_COLOUR, 	SAVESC_TEXT_CONTINUE_FLASH, 
 	SAVESC_TEXT_SAVE_FLASH, 	SAVESC_TEXT_RETRY_FLASH,	SAVESC_MIDI,
-	SAVESC_CUR_FLIP, 		SAVSC_TEXT_DONTSAVE_COLOUR, 	SAVESC_TEXT_SAVEQUIT_COLOUR, 
-	SAVESC_TEXT_SAVE2_COLOUR, 	SAVESC_TEXT_QUIT_COLOUR, 	SAVSC_TEXT_DONTSAVE_FLASH,
+	SAVESC_CUR_FLIP, 		    SAVESC_TEXT_DONTSAVE_COLOUR, 	SAVESC_TEXT_SAVEQUIT_COLOUR, 
+	SAVESC_TEXT_SAVE2_COLOUR, 	SAVESC_TEXT_QUIT_COLOUR, 	SAVESC_TEXT_DONTSAVE_FLASH,
 	SAVESC_TEXT_SAVEQUIT_FLASH,	SAVESC_TEXT_SAVE2_FLASH, 	SAVESC_TEXT_QUIT_FLASH,
 	SAVESC_EXTRA1, 			SAVESC_EXTRA2,			SAVESC_EXTRA3,			
 	SAVESC_LAST	};
 
 extern long SaveScreenSettings[24]; //BG, Text, Cursor CSet, MIDI
 //Save Screen text. 
-enum { SAVESC_CONTINUE, SAVESC_SAVE, SAVESC_RETRY, SAVESC_STRING_MISC1, SAVESC_STRING_MISC2, SAVESC_STRING_MISC3 };
+enum { SAVESC_CONTINUE, SAVESC_SAVE, SAVESC_RETRY, SAVESC_DONTSAVE, SAVESC_SAVEQUIT, SAVESC_SAVE2, SAVESC_QUIT, SAVESC_END };
 extern char SaveScreenText[7][32]; //(char *) "CONTINUE", (char *) "SAVE", (char*) "RETRY" , 
 					//DON'T SAVE, SAVE AND QUIT, SAVE, QUIT
 extern void SetSaveScreenSetting(int indx, int value);
@@ -274,6 +281,7 @@ extern int lens_hint_weapon[MAXWPNS][5];                    //aclk, aframe, dir,
 extern int strike_hint_counter;
 extern int strike_hint_timer;
 extern int strike_hint;
+extern signed char pause_in_background_menu_init;
 
 extern RGB_MAP rgb_table;
 extern COLOR_MAP trans_table, trans_table2;
@@ -397,7 +405,7 @@ extern float avgfps;
 
 extern bool do_cheat_goto, do_cheat_light;
 extern bool blockmoving;
-extern bool Throttlefps, ClickToFreeze, Paused, Advance, ShowFPS, Showpal, Playing, FrameSkip, TransLayers, disableClickToFreeze;
+extern bool Throttlefps, MenuOpen, ClickToFreeze, Paused, Advance, ShowFPS, Showpal, Playing, FrameSkip, TransLayers, disableClickToFreeze;
 extern bool refreshpal,blockpath,__debug,loaded_guys,freeze_guys;
 extern bool loaded_enemies,drawguys,details,debug_enabled,watch;
 extern bool Udown,Ddown,Ldown,Rdown,Adown,Bdown,Sdown,Mdown,LBdown,RBdown,Pdown,Ex1down,Ex2down,Ex3down,Ex4down,AUdown,ADdown,ALdown,ARdown,F12,F11,F5,keyI, keyQ;
@@ -451,10 +459,10 @@ struct ScriptOwner
 	void clear();
 };
 
-#define MAX_ZCARRAY_SIZE	4096
+#define NUM_ZSCRIPT_ARRAYS	4096
 typedef ZCArray<long> ZScriptArray;
-extern ZScriptArray localRAM[MAX_ZCARRAY_SIZE];
-extern ScriptOwner arrayOwner[MAX_ZCARRAY_SIZE];
+extern ZScriptArray localRAM[NUM_ZSCRIPT_ARRAYS];
+extern ScriptOwner arrayOwner[NUM_ZSCRIPT_ARRAYS];
 
 dword getNumGlobalArrays();
 

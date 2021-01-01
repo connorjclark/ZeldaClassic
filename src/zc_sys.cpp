@@ -68,14 +68,21 @@ extern ZModule zcm;
 extern zcmodule moduledata;
 extern sprite_list  guys, items, Ewpns, Lwpns, Sitems, chainlinks, decorations, particles;
 extern int loadlast;
+extern word passive_subscreen_doscript;
+extern bool passive_subscreen_waitdraw;
 byte disable_direct_updating;
 byte use_dwm_flush;
 byte use_save_indicator;
 byte midi_patch_fix;
 bool midi_paused=false;
+int paused_midi_pos = 0;
+byte midi_suspended = 0;
+byte callback_switchin = 0;
 byte zc_192b163_warp_compatibility;
 char modulepath[2048];
 byte epilepsyFlashReduction;
+signed char pause_in_background_menu_init = 0;
+byte pause_in_background = 0;
 
 extern bool kb_typing_mode; //script only, for disbaling key presses affecting Link, etc. 
 extern int cheat_modifier_keys[4]; //two options each, default either control and either shift
@@ -86,20 +93,21 @@ extern int cheat_modifier_keys[4]; //two options each, default either control an
 static const char *ZC_str = "Zelda Classic";
 extern char save_file_name[1024];
 #ifdef ALLEGRO_DOS
-static  const char *qst_dir_name = "dos_qst_dir";
+const char *qst_dir_name = "dos_qst_dir";
 #elif defined(ALLEGRO_WINDOWS)
-static  const char *qst_dir_name = "win_qst_dir";
+const char *qst_dir_name = "win_qst_dir";
 static  const char *qst_module_name = "current_module";
 #elif defined(ALLEGRO_LINUX)
-static  const char *qst_dir_name = "linux_qst_dir";
+const char *qst_dir_name = "linux_qst_dir";
 static  const char *qst_module_name = "current_module";
 #elif defined(ALLEGRO_MACOSX)
-static  const char *qst_dir_name = "macosx_qst_dir";
+const char *qst_dir_name = "macosx_qst_dir";
 static  const char *qst_module_name = "current_module";
 #endif
 #ifdef ALLEGRO_LINUX
 static  const char *samplepath = "samplesoundset/patches.dat";
 #endif
+char qst_files_path[2048];
 
 #ifdef _MSC_VER
 #define getcwd _getcwd
@@ -270,10 +278,10 @@ void load_game_configs()
     analog_movement = (get_config_int(cfg_sect,"analog_movement",1));
    
     //cheat modifier keya
-    cheat_modifier_keys[0] = get_config_int(cfg_sect,"key_cheatmod_a1",KEY_ZC_LCONTROL);
-    cheat_modifier_keys[1] = get_config_int(cfg_sect,"key_cheatmod_a2",KEY_ZC_RCONTROL);
-    cheat_modifier_keys[2] = get_config_int(cfg_sect,"key_cheatmod_b1",KEY_LSHIFT);
-    cheat_modifier_keys[3] = get_config_int(cfg_sect,"key_cheatmod_b2",KEY_RSHIFT);
+    cheat_modifier_keys[0] = get_config_int(cfg_sect,"key_cheatmod_a1",KEY_LSHIFT);
+    cheat_modifier_keys[1] = get_config_int(cfg_sect,"key_cheatmod_a2",0);
+    cheat_modifier_keys[2] = get_config_int(cfg_sect,"key_cheatmod_b1",KEY_RSHIFT);
+    cheat_modifier_keys[3] = get_config_int(cfg_sect,"key_cheatmod_b2",0);
    
     if((unsigned int)joystick_index >= MAX_JOYSTICKS)
         joystick_index = 0;
@@ -331,6 +339,8 @@ void load_game_configs()
     NESquit = get_config_int(cfg_sect,"fastquit",0)!=0;
     ClickToFreeze = get_config_int(cfg_sect,"clicktofreeze",1)!=0;
     title_version = get_config_int(cfg_sect,"title",2);
+	abc_patternmatch = get_config_int(cfg_sect, "lister_pattern_matching", 1);
+	pause_in_background = get_config_int(cfg_sect, "pause_in_background", 0);
    
     //default - scale x2, 640 x 480
     resx = get_config_int(cfg_sect,"resx",640);
@@ -381,6 +391,11 @@ void load_game_configs()
     // And this one fixes patches unloading on some MIDI setups
     midi_patch_fix = (byte) get_config_int("zeldadx","midi_patch_fix",1);
 	monochrome_console = (byte) get_config_int("CONSOLE","monochrome_debuggers",0);
+#else //UNIX
+    use_debug_console = (byte) get_config_int(cfg_sect,"debug_console",0);
+    zasm_debugger = (byte) get_config_int("CONSOLE","print_ZASM",0);
+    zscript_debugger = (byte) get_config_int("CONSOLE","ZScript_Debugger",0);
+    monochrome_console = (byte) get_config_int("CONSOLE","monochrome_debuggers",0);
 #endif
    
 #ifdef ALLEGRO_MACOSX
@@ -413,6 +428,7 @@ void load_game_configs()
     fullscreen = get_config_int(cfg_sect,"fullscreen",1);
     use_save_indicator = get_config_int(cfg_sect,"save_indicator",0);
     zc_192b163_warp_compatibility = get_config_int(cfg_sect,"zc_192b163_warp_compatibility",0);
+    moduledata.ignore = get_config_int(cfg_sect,"ignore_module_quests",0);
 }
 
 void save_game_configs()
@@ -499,6 +515,9 @@ void save_game_configs()
     set_config_int(cfg_sect,"fastquit",(int)NESquit);
     set_config_int(cfg_sect,"clicktofreeze", (int)ClickToFreeze);
     set_config_int(cfg_sect,"title",title_version);
+    //set_config_int(cfg_sect,"lister_pattern_matching",abc_patternmatch);  //Enable once there is a GUI way to toggle this. 
+   
+    
    
     set_config_int(cfg_sect,"resx",resx);
     set_config_int(cfg_sect,"resy",resy);
@@ -547,6 +566,8 @@ void save_game_configs()
    
     set_config_int(cfg_sect,"save_indicator",use_save_indicator);
     set_config_int(cfg_sect,"zc_192b163_warp_compatibility",zc_192b163_warp_compatibility);
+    set_config_int(cfg_sect,"ignore_module_quests",moduledata.ignore);
+    
    
     flush_config_file();
 }
@@ -1757,6 +1778,7 @@ void close_black_opening(int x, int y, bool wait, int shape)
 	}
     if(wait)
     {
+		FFCore.warpScriptCheck();
         for(int i=0; i<66; i++)
         {
             draw_screen(tmpscr);
@@ -1799,6 +1821,7 @@ void open_black_opening(int x, int y, bool wait, int shape)
 	}
     if(wait)
     {
+		FFCore.warpScriptCheck();
         for(int i=0; i<66; i++)
         {
             draw_screen(tmpscr);
@@ -2526,6 +2549,8 @@ void draw_lens_under(BITMAP *dest, bool layer)
                 case mfENEMY7:
                 case mfENEMY8:
                 case mfENEMY9:
+                case mfNOENEMYSPAWN:
+                case mdENEMYALL:
                 case mfSINGLE:
                 case mfSINGLE16:
                 case mfNOENEMY:
@@ -2599,8 +2624,6 @@ void draw_lens_under(BITMAP *dest, bool layer)
 		case 160:
 		case 161:
 		case 162:
-		case 163:
-		case 164:
 		case 165:
 		case 166:
 		case 167:
@@ -3619,7 +3642,7 @@ void draw_wavy(BITMAP *source, BITMAP *target, int amplitude, bool interpol)
 {
     //recreating a big bitmap every frame is highly sluggish.
     static BITMAP *wavebuf = create_bitmap_ex(8,288,240-original_playing_field_offset);
-    
+    if(epilepsyFlashReduction) amplitude/=2;
     clear_to_color(wavebuf, BLACK);
     blit(source,wavebuf,0,original_playing_field_offset,16,0,256,224-original_playing_field_offset);
     
@@ -3628,6 +3651,7 @@ void draw_wavy(BITMAP *source, BITMAP *target, int amplitude, bool interpol)
     //  int wavelength=4;
     amplitude = zc_min(2048,amplitude); // some arbitrary limit to prevent crashing
     int amp2=168;
+    if(epilepsyFlashReduction) amp2*=2;
     int i=frame%amp2;
     
     for(int j=0; j<168; j++)
@@ -3935,6 +3959,7 @@ int onGUISnapshot()
 {
     char buf[200];
     int num=0;
+    bool realpal=(key[KEY_ZC_LCONTROL] || key[KEY_ZC_RCONTROL]);
     
     do
     {
@@ -3950,8 +3975,43 @@ int onGUISnapshot()
     
     if(b)
     {
-        blit(screen,b,0,0,0,0,resx,resy);
-        save_bmp(buf,b,sys_pal);
+        if(MenuOpen)
+	{
+		//Cannot load game's palette while GUI elements are in focus. -Z
+		//If there is a way to do this, then I have missed it.
+		/*
+		game_pal();
+		RAMpal[253] = _RGB(0,0,0);
+		RAMpal[254] = _RGB(63,63,63);
+		set_palette_range(RAMpal,0,255,false);
+		memcpy(RAMpal, snappal, sizeof(snappal));
+		create_rgb_table(&rgb_table, RAMpal, NULL);
+		create_zc_trans_table(&trans_table, RAMpal, 128, 128, 128);
+		memcpy(&trans_table2, &trans_table, sizeof(COLOR_MAP));
+		
+		for(int q=0; q<PAL_SIZE; q++)
+		{
+		    trans_table2.data[0][q] = q;
+		    trans_table2.data[q][q] = q;
+		}
+		*/
+		//ringcolor(false);
+		//get_palette(RAMpal);
+		blit(screen,b,0,0,0,0,resx,resy);
+		//al_trace("Menu Open\n");
+		//game_pal();
+		//PALETTE temppal;
+		//get_palette(temppal);
+		//system_pal();
+		save_bitmap(buf,b,sys_pal);
+		//save_bitmap(buf,b,RAMpal);
+		//save_bitmap(buf,b,snappal);
+	}	
+	else 
+	{
+		blit(screen,b,0,0,0,0,resx,resy);
+		save_bitmap(buf,b,realpal?sys_pal:RAMpal);
+	}
         destroy_bitmap(b);
     }
     
@@ -3992,7 +4052,7 @@ int onNonGUISnapshot()
     destroy_bitmap(panorama);
     return D_O_K;
     */
-     if(tmpscr->flags3&fNOSUBSCR)
+    if(tmpscr->flags3&fNOSUBSCR && !(key[KEY_ALT]))
     {
         clear_to_color(panorama,0);
         blit(framebuf,panorama,0,playing_field_offset,0,0,256,168);
@@ -4867,8 +4927,10 @@ bool CheatModifierKeys()
     return false;
 }
 
-// 99*360 + 59*60
-#define MAXTIME  21405240
+//99:05:54, for some reason?
+#define OLDMAXTIME  21405240
+//9000:00:00, the highest even-thousand hour fitting within 32b signed. This is 375 *DAYS*.
+#define MAXTIME     1944000000
 
 void advanceframe(bool allowwavy, bool sfxcleanup, bool allowF6Script)
 {
@@ -4908,7 +4970,7 @@ void advanceframe(bool allowwavy, bool sfxcleanup, bool allowF6Script)
     if(Quit)
         return;
         
-    if(Playing && game->get_time()<MAXTIME)
+    if(Playing && game->get_time()<(get_bit(quest_rules,qr_GREATER_MAX_TIME) ? MAXTIME : OLDMAXTIME))
         game->change_time(1);
         
     Advance=false;
@@ -4961,6 +5023,7 @@ void zapout()
 
 void zapin()
 {
+	FFCore.warpScriptCheck();
     draw_screen(tmpscr);
     set_clip_rect(scrollbuf, 0, 0, scrollbuf->w, scrollbuf->h);
     //put_passive_subscr(framebuf,&QMisc,0,passive_subscreen_offset,false,sspUP);
@@ -5119,6 +5182,7 @@ void blackscr(int fcnt,bool showsubscr)
     reset_pal_cycling();
     script_drawing_commands.Clear();
     
+	FFCore.warpScriptCheck();
     while(fcnt>0)
     {
         clear_bitmap(framebuf);
@@ -5126,7 +5190,11 @@ void blackscr(int fcnt,bool showsubscr)
         if(showsubscr)
         {
             put_passive_subscr(framebuf,&QMisc,0,passive_subscreen_offset,false,sspUP);
-        }
+			if(get_bit(quest_rules, qr_SCRIPTDRAWSINWARPS) || (get_bit(quest_rules, qr_PASSIVE_SUBSCRIPT_RUNS_WHEN_GAME_IS_FROZEN)))
+			{
+				do_script_draws(framebuf, tmpscr, 0, playing_field_offset);
+			}
+		}
         
         syskeys();
         advanceframe(true);
@@ -5159,6 +5227,7 @@ void openscreen(int shape)
     
     int x=128;
     
+	FFCore.warpScriptCheck();
     for(int i=0; i<80; i++)
     {
         draw_screen(tmpscr);
@@ -5218,6 +5287,7 @@ void closescreen(int shape)
     
     int x=128;
     
+	FFCore.warpScriptCheck();
     for(int i=79; i>=0; --i)
     {
         draw_screen(tmpscr);
@@ -6078,18 +6148,18 @@ static DIALOG keyboard_control_dlg[] =
     { jwin_text_proc,      175,  86,   160,  8,    vc(0),   vc(11),  0,       0,         0,        0, (void *) "Right", NULL,  NULL },
     // 61
     { jwin_text_proc,      92-26,   101,  60,   8,    vc(7),   vc(11),  0,       0,         0,        0,       str_leftmod1, NULL,  NULL },
-    { jwin_text_proc,      92-26,   129,  60,   8,    vc(7),   vc(11),  0,       0,         0,        0,       str_leftmod2, NULL,  NULL },
-    { jwin_text_proc,      237-4-22,101,  60,   8,    vc(7),   vc(11),  0,       0,         0,        0,       str_rightmod1, NULL,  NULL },
+    { jwin_text_proc,      92-26,   129,  60,   8,    vc(7),   vc(11),  0,       0,         0,        0,       str_rightmod1, NULL,  NULL },
+    { jwin_text_proc,      237-4-22,101,  60,   8,    vc(7),   vc(11),  0,       0,         0,        0,       str_leftmod2, NULL,  NULL },
     { jwin_text_proc,      237-4-22,129,  60,   8,    vc(7),   vc(11),  0,       0,         0,        0,       str_rightmod2, NULL,  NULL },
 	// 65
     { d_kbutton_proc,      22,   100,  40,   21,   vc(14),  vc(1),   0,       0,         0,        0, (void *) "Main",     NULL, &cheat_modifier_keys[0]},
-    { d_kbutton_proc,      22,   128,  40,   21,   vc(14),  vc(1),   0,       0,         0,        0, (void *) "Second",     NULL, &cheat_modifier_keys[1]},
-    { d_kbutton_proc,      167,  100,  40,   21,   vc(14),  vc(1),   0,       0,         0,        0, (void *) "Main", NULL, &cheat_modifier_keys[2]},
+    { d_kbutton_proc,      22,   128,  40,   21,   vc(14),  vc(1),   0,       0,         0,        0, (void *) "Second",     NULL, &cheat_modifier_keys[2]},
+    { d_kbutton_proc,      167,  100,  40,   21,   vc(14),  vc(1),   0,       0,         0,        0, (void *) "Main", NULL, &cheat_modifier_keys[1]},
     { d_kbutton_proc,      167,  128,  40,   21,   vc(14),  vc(1),   0,       0,         0,        0, (void *) "Second",     NULL, &cheat_modifier_keys[3]},
     // 69
     { d_k_clearbutton_proc,      22+91,  100,  40,   21,   vc(14),  vc(1),   0,       0,         0,        0, (void *) "Clear",     NULL, &cheat_modifier_keys[0]},
-    { d_k_clearbutton_proc,      22+91,  128,  40,   21,   vc(14),  vc(1),   0,       0,         0,        0, (void *) "Clear",     NULL, &cheat_modifier_keys[1]},
-    { d_k_clearbutton_proc,      167+91, 100,  40,   21,   vc(14),  vc(1),   0,       0,         0,        0, (void *) "Clear",   NULL, &cheat_modifier_keys[2]},
+    { d_k_clearbutton_proc,      22+91,  128,  40,   21,   vc(14),  vc(1),   0,       0,         0,        0, (void *) "Clear",     NULL, &cheat_modifier_keys[2]},
+    { d_k_clearbutton_proc,      167+91, 100,  40,   21,   vc(14),  vc(1),   0,       0,         0,        0, (void *) "Clear",   NULL, &cheat_modifier_keys[1]},
     { d_k_clearbutton_proc,      167+91, 128,  40,   21,   vc(14),  vc(1),   0,       0,         0,        0, (void *) "Clear",     NULL, &cheat_modifier_keys[3]},
 	// 73
 	{ NULL,                 0,    0,    0,    0,   0,       0,       0,       0,          0,             0,       NULL,                           NULL,  NULL }
@@ -6377,6 +6447,28 @@ bool zc_getname_nogo(const char *prompt,const char *ext,EXT_LIST *list,const cha
     return ret!=0;
 }
 
+int onIgnore_Module()
+{
+	if(jwin_alert3(
+			"Ignore Module", 
+			"If enabled, new save slots always prompt to load a custom quest, ignoring module quests.",
+			"If disabled, then you will need to manually load custom quests (default).",
+			"Proceed?",
+		 "&Yes", 
+		"&No", 
+		NULL, 
+		'y', 
+		'n', 
+		NULL, 
+		lfont) == 1)
+	{
+	    if (moduledata.ignore) moduledata.ignore = 0;
+	    else moduledata.ignore = 1;
+	}
+	return D_O_K;
+	
+}
+
 //The Dialogue that loads a ZMOD Module File
 int zc_load_zmod_module_file()
 {
@@ -6546,6 +6638,7 @@ static MENU zcmodule_menu[] =
 {
     { (char *)"&Load Module...",        zc_load_zmod_module_file,           NULL,                     0,            NULL   },
     { (char *)"&About Module",        onAbout_ZCP_Module,           NULL,                     0,            NULL   },
+    { (char *)"&Ignore",        onIgnore_Module,           NULL,                     0,            NULL   },
     //divider
    
     {  NULL,                                NULL,                      NULL,                     0,            NULL   }
@@ -6932,8 +7025,8 @@ int onMIDICredits()
     if(listening)
         music_stop();
         
-    zc_free(text);
-    zc_free(zmi);
+    if(text) zc_free(text);
+    if(zmi) zc_free(zmi);
     return D_O_K;
 }
 
@@ -7100,6 +7193,97 @@ int onVidMode()
 //Added an extra statement, so that if the key is cleared to 0, the cleared
 //keybinding status need not be unique. -Z ( 1st April, 2019 )
 
+enum uKey
+{
+	ukey_a, ukey_b, ukey_s, ukey_l, ukey_r, ukey_p, ukey_ex1, ukey_ex2, ukey_ex3, ukey_ex4,
+	ukey_du, ukey_dd, ukey_dl, ukey_dr, ukey_mod1a, ukey_mod1b, ukey_mod2a, ukey_mod2b,
+	num_ukey
+};
+
+static void load_ukeys(int* arr)
+{
+	arr[ukey_a] = Akey;
+	arr[ukey_b] = Bkey;
+	arr[ukey_s] = Skey;
+	arr[ukey_l] = Lkey;
+	arr[ukey_r] = Rkey;
+	arr[ukey_p] = Pkey;
+	arr[ukey_ex1] = Exkey1;
+	arr[ukey_ex2] = Exkey2;
+	arr[ukey_ex3] = Exkey3;
+	arr[ukey_ex4] = Exkey4;
+	arr[ukey_du] = DUkey;
+	arr[ukey_dd] = DDkey;
+	arr[ukey_dl] = DLkey;
+	arr[ukey_dr] = DRkey;
+	arr[ukey_mod1a] = cheat_modifier_keys[0];
+	arr[ukey_mod1b] = cheat_modifier_keys[1];
+	arr[ukey_mod2a] = cheat_modifier_keys[2];
+	arr[ukey_mod2b] = cheat_modifier_keys[3];
+};
+
+static std::string get_ukey_name(int k)
+{
+	switch(k)
+	{
+		case ukey_a:
+			return "A";
+			break;
+		case ukey_b:
+			return "B";
+			break;
+		case ukey_s:
+			return "Start";
+			break;
+		case ukey_l:
+			return "L";
+			break;
+		case ukey_r:
+			return "R";
+			break;
+		case ukey_p:
+			return "Map";
+			break;
+		case ukey_ex1:
+			return "Ex1";
+			break;
+		case ukey_ex2:
+			return "Ex2";
+			break;
+		case ukey_ex3:
+			return "Ex3";
+			break;
+		case ukey_ex4:
+			return "Ex4";
+			break;
+		case ukey_du:
+			return "Up";
+			break;
+		case ukey_dd:
+			return "Down";
+			break;
+		case ukey_dl:
+			return "Left";
+			break;
+		case ukey_dr:
+			return "Right";
+			break;
+		case ukey_mod1a:
+			return "Cheat Mod L1";
+			break;
+		case ukey_mod1b:
+			return "Cheat Mod L2";
+			break;
+		case ukey_mod2a:
+			return "Cheat Mod R1";
+			break;
+		case ukey_mod2b:
+			return "Cheat Mod R2";
+			break;
+	}
+	return "";
+}
+
 int onKeyboard()
 {
 	int a = Akey;
@@ -7134,6 +7318,36 @@ int onKeyboard()
 		
 		if(ret==3) // OK
 		{
+			int ukeys[num_ukey];
+			load_ukeys(ukeys);
+			std::vector<std::string> uniqueError;
+			for(int q = 0; q < num_ukey; ++q)
+			{
+				for(int p = q+1; p < num_ukey; ++p)
+				{
+					if(ukeys[q] == ukeys[p] && ukeys[q] != 0)
+					{
+						char buf[64];
+						sprintf(buf, "'%s' conflicts with '%s'", get_ukey_name(q).c_str(), get_ukey_name(p).c_str());
+						std::string str(buf);
+						uniqueError.push_back(str);
+					}
+				}
+			}
+			if(uniqueError.size() == 0)
+				done = true;
+			else
+			{
+				box_start(1, "Duplicate Keys", lfont, sfont, false, keyboard_control_dlg[0].w,keyboard_control_dlg[0].h, 2);
+				box_out("Cannot have duplicate keybinds!"); box_eol();
+				for(std::vector<std::string>::iterator it = uniqueError.begin();
+					it != uniqueError.end(); ++it)
+				{
+					box_out((*it).c_str()); box_eol();
+				}
+				box_end(true);
+			}
+			/* Old uniqueness check
 			std::map<int,bool> *keyhash = new std::map<int,bool>();
 			bool unique = true;
 			addToHash(A,unique,keyhash);
@@ -7222,6 +7436,7 @@ int onKeyboard()
 				done=true;
 			else
 				jwin_alert("Error", "Key bindings must be unique!", "", "", "OK",NULL,'o',0,lfont);
+			*/
 		}
 		else // Cancel
 		{
@@ -7529,8 +7744,8 @@ int onEpilepsy()
 {
 	if(jwin_alert3(
 			"Epilepsy Flash Reduction", 
-			"Enabling this will reduce flashing when picking up the quest dungeon treasure pieces.",
-			"Disabling this will restore standard flashing behaviour.",
+			"Enabling this will reduce the intensity of flashing and screen wave effects.",
+			"Disabling this will restore standard flash and wavy behaviour.",
 			"Proceed?",
 		 "&Yes", 
 		"&No", 
@@ -7542,6 +7757,7 @@ int onEpilepsy()
 	{
 	    if ( epilepsyFlashReduction ) epilepsyFlashReduction = 0;
 	    else epilepsyFlashReduction = 1;
+	    set_config_int("zeldadx","checked_epilepsy",1);
 	    save_game_configs();
 	}
     return D_O_K;
@@ -7708,7 +7924,7 @@ static DIALOG cheat_dlg[] =
 
 int onCheat()
 {
-    if(!zcheats.flags && !get_debug())
+    if(!zcheats.flags && !get_debug() && DEVLEVEL < 2)
         return D_O_K;
         
     str_a[0]=0;
@@ -8056,6 +8272,27 @@ int v250_dmap_intro_repeat()
     return D_O_K;
 }
 
+int old_210_water_emulation()
+{
+	if(jwin_alert3(
+			"EMULATION: Strict 2.10 Ladder/Flippers", 
+			"This action will toggle if ZC Player uses the old, v2.10 ladder/flippers.",
+			"If enabled, the ladder will deploy before swimming when facing up or down.",
+			"Proceed?",
+		 "&Yes", 
+		"&No", 
+		NULL, 
+		'y', 
+		'n', 
+		NULL, 
+		lfont) == 1)
+	{
+	    if (FFCore.emulation[emuOLD210WATER] ) FFCore.emulation[emuOLD210WATER] = 0;
+	    else FFCore.emulation[emuOLD210WATER] = 1;
+	}
+    return D_O_K;
+	
+}
 
 int buggy_next_combo_secrets_emulation()
 {
@@ -8363,6 +8600,7 @@ static MENU compat_patch_menu[] =
     { (char *)"&Eight Way Shot Uses Flame Sound",                     eight_way_shot_sfx_fix,                 NULL,                      0, NULL },
     { (char *)"&Bombchus Use Superbomb Blasts",                     v210_bombchus,                 NULL,                      0, NULL },
     { (char *)"Buggy ->&Next Combos",                     buggy_next_combo_secrets_emulation,                 NULL,                      0, NULL },
+    { (char *)"2.10 Water/Ladder Up/Down",                     old_210_water_emulation,                 NULL,                      0, NULL },
     //{ (char *)"Fix &Triforce Cellars",                     v210_fix_triforce_cellar,                 NULL,                      0, NULL },
     { NULL,                                 NULL,                    NULL,                      0, NULL }
 };
@@ -8449,17 +8687,118 @@ static MENU fixes_menu[] =
     { NULL,                                 NULL,                    NULL,                      0, NULL }
 };
 
+#if DEVLEVEL > 0
+int devLogging();
+int devDebug();
+#if DEVLEVEL > 1
+int setCheat();
+#endif //DEVLEVEL > 1
+static MENU dev_menu[] =
+{
+	{ (char *)"&Force Error Log",           devLogging,              NULL,             D_SELECTED, NULL },
+	{ (char *)"&Extra Debug Log",           devDebug,                NULL,             D_SELECTED, NULL },
+	#if DEVLEVEL > 1
+	{ (char *)"",                           NULL,                    NULL,             0,          NULL },
+	{ (char *)"Set &Cheat",                 setCheat,                NULL,             0,          NULL },
+	#endif //DEVLEVEL > 1
+	{ NULL,                                 NULL,                    NULL,             0,          NULL }
+};
+int devLogging()
+{
+	dev_logging = !dev_logging;
+	dev_menu[0].flags = dev_logging ? D_SELECTED : 0;
+	return D_O_K;
+}
+int devDebug()
+{
+	dev_debug = !dev_debug;
+	dev_menu[1].flags = dev_debug ? D_SELECTED : 0;
+	return D_O_K;
+}
+#if DEVLEVEL > 1
+int setCheat()
+{
+	cheat = (vbound(getnumber("Cheat Level",cheat), 0, 4));
+	return D_O_K;
+}
+#endif //DEVLEVEL > 1
+#endif //DEVLEVEL > 0
 
-MENU the_menu[] =
+/* NOTICE: zelda.cpp uses memcpy on the following MENU arrays using hardcoded
+	literal values:
+		memcpy(the_player_menu, the_player_menu_zc_on_left, sizeof(MENU)*(DEVLEVEL>0 ? 9 : 8) );
+		memcpy(the_player_menu2, the_player_menu_zc_on_left2, sizeof(MENU)*(DEVLEVEL>0 ? 8 : 7));  
+	If you add entries to these arrays, be sure to update these lines in zelda.cpp with the new sizes!
+*/
+
+MENU the_player_menu[] =
 {
     { (char *)"&Game",                      NULL,                    game_menu,                 0, NULL },
     { (char *)"&Settings",                  NULL,                    settings_menu,             0, NULL },
     { (char *)"&Cheat",                     NULL,                    cheat_menu,                0, NULL },
-    { (char *)"&Emulation",                      NULL,                    compat_patch_menu,                 0, NULL },
-    { (char *)"M&odules",                      NULL,                    zcmodule_menu,                 0, NULL },
-    { (char *)"&Fixes",                      NULL,                    fixes_menu,                 0, NULL },
-    { (char *)"&Misc",                      NULL,                    misc_menu,                 0, NULL },
+    { (char *)"&Emulation",                 NULL,                    compat_patch_menu,         0, NULL },
+    { (char *)"&Modules",                   NULL,                    zcmodule_menu,             0, NULL },
+    { (char *)"&Fixes",                     NULL,                    fixes_menu,                0, NULL },
+    #if DEVLEVEL > 0
+    { (char *)"&ZC",                      NULL,                    misc_menu,                 0, NULL },
+    { (char *)"&Dev",                       NULL,                    dev_menu,                  0, NULL },
     { NULL,                                 NULL,                    NULL,                      0, NULL }
+    #else
+    { (char *)"&ZC",                      NULL,                    misc_menu,                 0, NULL },
+    { NULL,                                 NULL,                    NULL,                      0, NULL }
+    #endif
+};
+
+MENU the_player_menu_zc_on_left[] =
+{
+    { (char *)"&ZC",                      NULL,                    misc_menu,                 0, NULL },
+    { (char *)"&Game",                      NULL,                    game_menu,                 0, NULL },
+    { (char *)"&Settings",                  NULL,                    settings_menu,             0, NULL },
+    { (char *)"&Cheat",                     NULL,                    cheat_menu,                0, NULL },
+    { (char *)"&Emulation",                 NULL,                    compat_patch_menu,         0, NULL },
+    { (char *)"&Modules",                   NULL,                    zcmodule_menu,             0, NULL },
+    { (char *)"&Fixes",                     NULL,                    fixes_menu,                0, NULL },
+    #if DEVLEVEL > 0
+    { (char *)"&Dev",                       NULL,                    dev_menu,                  0, NULL },
+    { NULL,                                 NULL,                    NULL,                      0, NULL }
+    #else
+    { NULL,                                 NULL,                    NULL,                      0, NULL }
+    #endif
+};
+
+MENU the_player_menu2[] =
+{
+    { (char *)"&Game",                      NULL,                    game_menu,                 0, NULL },
+    { (char *)"&Settings",                  NULL,                    settings_menu,             0, NULL },
+    { (char *)"&Emulation",                 NULL,                    compat_patch_menu,         0, NULL },
+    { (char *)"M&odules",                   NULL,                    zcmodule_menu,             0, NULL },
+    { (char *)"&Fixes",                     NULL,                    fixes_menu,                0, NULL },
+    
+    #if DEVLEVEL > 0
+    { (char *)"&ZC",                      NULL,                    misc_menu,                 0, NULL },
+    { (char *)"&Dev",                       NULL,                    dev_menu,                  0, NULL },
+    { NULL,                                 NULL,                    NULL,                      0, NULL }
+    #else
+    { (char *)"&ZC",                      NULL,                    misc_menu,                 0, NULL },
+    { NULL,                                 NULL,                    NULL,                      0, NULL }
+    #endif
+    
+};
+
+MENU the_player_menu_zc_on_left2[] =
+{
+    { (char *)"&ZC",                      NULL,                    misc_menu,                 0, NULL },
+    { (char *)"&Game",                      NULL,                    game_menu,                 0, NULL },
+    { (char *)"&Settings",                  NULL,                    settings_menu,             0, NULL },
+    { (char *)"&Emulation",                 NULL,                    compat_patch_menu,         0, NULL },
+    { (char *)"M&odules",                   NULL,                    zcmodule_menu,             0, NULL },
+    { (char *)"&Fixes",                     NULL,                    fixes_menu,                0, NULL },
+    #if DEVLEVEL > 0
+    { (char *)"&Dev",                       NULL,                    dev_menu,                  0, NULL },
+    { NULL,                                 NULL,                    NULL,                      0, NULL }
+    #else
+    { NULL,                                 NULL,                    NULL,                      0, NULL }
+    #endif
 };
 
 int onMIDIPatch()
@@ -8486,17 +8825,6 @@ int onMIDIPatch()
 	save_game_configs();
     return D_O_K;
 }
-
-MENU the_menu2[] =
-{
-    { (char *)"&Game",                      NULL,                    game_menu,                 0, NULL },
-    { (char *)"&Settings",                  NULL,                    settings_menu,             0, NULL },
-    { (char *)"&Emulation",                      NULL,                    compat_patch_menu,                 0, NULL },
-    { (char *)"M&odules",                      NULL,                    zcmodule_menu,                 0, NULL },
-    { (char *)"&Fixes",                      NULL,                    fixes_menu,                 0, NULL },
-    { (char *)"&Misc",                      NULL,                    misc_menu,                 0, NULL },
-    { NULL,                                 NULL,                    NULL,                      0, NULL }
-};
 
 int onKeyboardEntry()
 {
@@ -8532,7 +8860,7 @@ void fix_menu()
 static DIALOG system_dlg[] =
 {
     /* (dialog proc)     (x)   (y)   (w)   (h)   (fg)  (bg)  (key)    (flags)  (d1)      (d2)     (dp) */
-    { jwin_menu_proc,    0,    0,    0,    0,    0,    0,    0,       D_USER,  0,        0, (void *) the_menu, NULL,  NULL },
+    { jwin_menu_proc,    0,    0,    0,    0,    0,    0,    0,       D_USER,  0,        0, (void *) the_player_menu, NULL,  NULL },
     { d_keyboard_proc,   0,    0,    0,    0,    0,    0,    0,       0,       KEY_F1,   0, (void *) onVsync, NULL,  NULL },
     { d_keyboard_proc,   0,    0,    0,    0,    0,    0,    0,       0,       KEY_F2,   0, (void *) onShowFPS, NULL,  NULL },
     { d_keyboard_proc,   0,    0,    0,    0,    0,    0,    0,       0,       KEY_F6,   0, (void *) onTryQuitMenu, NULL,  NULL },
@@ -8552,7 +8880,7 @@ static DIALOG system_dlg[] =
 static DIALOG system_dlg2[] =
 {
     /* (dialog proc)     (x)   (y)   (w)   (h)   (fg)  (bg)  (key)    (flags)  (d1)      (d2)     (dp) */
-    { jwin_menu_proc,    0,    0,    0,    0,    0,    0,    0,       D_USER,  0,        0, (void *) the_menu2, NULL,  NULL },
+    { jwin_menu_proc,    0,    0,    0,    0,    0,    0,    0,       D_USER,  0,        0, (void *) the_player_menu2, NULL,  NULL },
     { d_keyboard_proc,   0,    0,    0,    0,    0,    0,    0,       0,       KEY_F1,   0, (void *) onVsync, NULL,  NULL },
     { d_keyboard_proc,   0,    0,    0,    0,    0,    0,    0,       0,       KEY_F2,   0, (void *) onShowFPS, NULL,  NULL },
     { d_keyboard_proc,   0,    0,    0,    0,    0,    0,    0,       0,       KEY_F6,   0, (void *) onTryQuitMenu, NULL,  NULL },
@@ -9405,46 +9733,32 @@ void system_pal2()
 #ifdef _WIN32
 void switch_out_callback()
 {
-	if(midi_patch_fix==0 || currmidi==0)
+	if(midi_patch_fix==0 || currmidi==0 || pause_in_background) //pause in background has its own handling, only on switch-in
         return;
-        
-    bool was_paused=midi_paused;
-    long pos=midi_pos;
-    int digi_vol, midi_vol;
+
 	
-	get_volume(&digi_vol, &midi_vol);
-    stop_midi();
-    jukebox(currmidi);
-	set_volume(digi_vol, midi_vol);
-    midi_seek(pos);
-    
-    if(was_paused)
-    {
-        midi_pause();
-        midi_paused=true;
-    }
+	paused_midi_pos = midi_pos;
+	stop_midi();
+	midi_paused=true;
+	midi_suspended = midissuspHALTED;
 }
 
 void switch_in_callback()
 {
+	if(pause_in_background)
+	{
+		callback_switchin = 1;
+		return;
+	}
+	
 	if(midi_patch_fix==0 || currmidi==0)
         return;
-        
-    bool was_paused=midi_paused;
-    long pos=midi_pos;
-    int digi_vol, midi_vol;
 	
-	get_volume(&digi_vol, &midi_vol);
-    stop_midi();
-    jukebox(currmidi);
-	set_volume(digi_vol, midi_vol);
-    midi_seek(pos);
-    
-    if(was_paused)
-    {
-        midi_pause();
-        midi_paused=true;
-    }
+	else
+	{
+		callback_switchin = 1;
+		midi_suspended = midissuspRESUME;
+	}
 }
 #else // Not Windows
 void switch_out_callback()
@@ -9498,7 +9812,7 @@ void System()
     mouse_down=gui_mouse_b();
     music_pause();
     pause_all_sfx();
-    
+    MenuOpen = true;
     system_pal();
     //  FONT *oldfont=font;
     //  font=tfont;
@@ -9506,6 +9820,9 @@ void System()
     misc_menu[2].flags =(isFullScreen()==1)?D_SELECTED:0;
     
     game_menu[4].flags = getsaveslot() > -1 ? 0 : D_DISABLED;
+	#if DEVLEVEL > 1
+	dev_menu[3].flags = Playing ? 0 : D_DISABLED;
+	#endif
     game_menu[5].flags =
         misc_menu[5].flags = Playing ? 0 : D_DISABLED;
     misc_menu[7].flags = !Playing ? 0 : D_DISABLED;
@@ -9515,7 +9832,7 @@ void System()
     
     DIALOG_PLAYER *p;
     
-    if(!Playing || (!zcheats.flags && !get_debug()))
+    if(!Playing || (!zcheats.flags && !get_debug() && DEVLEVEL < 2))
     {
         p = init_dialog(system_dlg2,-1);
     }
@@ -9584,11 +9901,13 @@ void System()
 	//Fix Triforce Cellar in 2.10 aND EARLIER QUESTS. 
 	//This should simply be fixed, in-source now. I'll re-enable this as an emulation flag, only if needed. 
 	//compat_patch_menu[8].flags = ( FFCore.getQuestHeaderInfo(vZelda) > 0x210 ) ? D_DISABLED : ((FFCore.emulation[emuFIXTRIFORCECELLAR])?D_SELECTED:0);
+	compat_patch_menu[12].flags = ((FFCore.emulation[emuOLD210WATER])?D_SELECTED:0); //Add version < 0x250 here once this is confirmed to work. -Z
 	
 	//compat_patch_menu[0].flags =(zc_192b163_compatibility)?D_SELECTED:0;
 	misc_menu[12].flags =(zconsole)?D_SELECTED:0;
 	misc_menu[13].flags =(zasm_debugger)?D_SELECTED:0;
 	misc_menu[14].flags =(zscript_debugger)?D_SELECTED:0;
+	zcmodule_menu[2].flags = ((moduledata.ignore)?D_SELECTED:0);
         
         /*
           if(!Playing || (!zcheats.flags && !debug))
@@ -9664,7 +9983,7 @@ void System()
     mouse_down=gui_mouse_b();
     shutdown_dialog(p);
     show_mouse(NULL);
-    
+    MenuOpen = false;
     if(Quit)
     {
         kill_sfx();
@@ -10954,7 +11273,7 @@ bool zc_disablekey(int k, bool val)
 void zc_putpixel(int layer, int x, int y, int cset, int color, int timer)
 {
     timer=timer;
-    particles.add(new particle(fix(x), fix(y), layer, cset, color));
+    particles.add(new particle(zfix(x), zfix(y), layer, cset, color));
 }
 
 // these are here so that copy_dialog won't choke when compiling zelda

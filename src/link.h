@@ -32,6 +32,7 @@
 #include "sprite.h"
 #include "zc_custom.h"
 #include "subscr.h"
+#include "zfix.h"
 
 extern movingblock mblock2;                                 //mblock[4]?
 extern sprite_list  guys, items, Ewpns, Lwpns, Sitems, chainlinks, decorations;
@@ -48,7 +49,9 @@ enum actiontype
     climbcoverbottom, dying, drowning, 
 	climbing, //not used -Z.
     // Fake actiontypes: used by ZScripts
-    ischarging, isspinning, isdiving, gameover, hookshotout, stunned, ispushing
+    ischarging, isspinning, isdiving, gameover, hookshotout, stunned, ispushing,
+	// New 2.55 ActionTypes
+	falling
 };
 
 typedef struct tilesequence
@@ -69,6 +72,10 @@ typedef struct tilesequence
 #define PASSAGEWAY 2
 #define GUYCAVE 3
 #define STAIRCAVE 4
+
+#define HOV_INF 0x01
+#define HOV_OUT 0x02
+#define HOV_PITFALL_OUT 0x04
 
 class LinkClass : public sprite
 {
@@ -222,10 +229,10 @@ public:
 	ladderdir, // direction of ladder
 	lastdir[4], // used in Maze Path screens
 	ladderstart, // starting direction of ladder...?
-	inlikelike, // 1 = Like Like. 2 = Taking damage while trapped
-	link_is_stunned, stundir; //scripted stun from weapons; possibly for later eweapon effects in the future. 
-    int shiftdir; // shift direction when walking into corners of solid combos
-    int sdir; // scrolling direction
+	inlikelike; // 1 = Like Like. 2 = Taking damage while trapped
+    int shiftdir, // shift direction when walking into corners of solid combos
+    link_is_stunned, //scripted stun clock from weapons; possibly for later eweapon effects in the future. 
+    sdir; // scrolling direction
     int hopdir;  // direction to hop out of water (diagonal movement only)
     int holddir;
     int landswim; // incremental time spent swimming against land
@@ -234,15 +241,19 @@ public:
     actiontype action, tempaction; // current action, cached action.
     int hshandle_id, hshead_id;
     byte conveyor_flags;
-    fix climb_cover_x, climb_cover_y;
-    fix entry_x, entry_y; // When drowning, re-create Link here
-    fix falling_oldy; // Used by the Stomp Boots in sideview
+	byte raftclk; // for slow rafting movement
+    zfix climb_cover_x, climb_cover_y;
+    zfix entry_x, entry_y; // When drowning, re-create Link here
+    zfix falling_oldy; // Used by the Stomp Boots in sideview
     byte dontdraw;
     byte warp_sound;
     bool diagonalMovement;
     bool bigHitbox;
 	int steprate;
     byte defence[wMax];
+	
+	bool can_pitfall(bool ignore_hover = false);
+	
     void check_slash_block(weapon *w);
     void check_slash_block_layer2(int bx, int by, weapon *w, int layer);
     void check_pound_block(weapon *w);
@@ -259,10 +270,17 @@ public:
 	long misc_internal_link_flags;// Flags to hold data temporarily for misc handling
 	int last_cane_of_byrna_item_id;
 	bool on_sideview_ladder;
+	byte hoverflags;
+	long extra_jump_count;
     // Methods below here.
+	bool isStanding(bool forJump = false);
     void explode(int type);
     int getTileModifier();
     void setTileModifier(int ntemod);
+	bool try_hover();
+	int check_pitslide(bool ignore_hover = false);
+	bool pitslide();
+	void pitfall();
     void movelink();
     void move(int d, int forceRate = -1);
 	void moveOld(int d2);
@@ -294,13 +312,13 @@ public:
     bool can_attack();
     void do_rafting();
     void do_hopping();
-    WalkflagInfo walkflag(fix fx,fix fy,int cnt,byte d);
+    WalkflagInfo walkflag(zfix fx,zfix fy,int cnt,byte d);
     WalkflagInfo walkflag(int wx,int wy,int cnt,byte d);
     WalkflagInfo walkflagMBlock(int wx,int wy);
     bool edge_of_dmap(int side);
     bool checkmaze(mapscr *scr, bool sound);
     bool maze_enabled_sizewarp(int scrolldir);
-    
+    bool HasHeavyBoots();
     int get_scroll_step(int scrolldir);
     int get_scroll_delay(int scrolldir);
     void run_scrolling_script(int scrolldir, int cx, int sx, int sy, bool end_frames, bool waitdraw);
@@ -370,30 +388,30 @@ public:
     void Drown();
     int getEaten();
     void setEaten(int i);
-    fix  getX();
-    fix  getY();
-    fix  getZ();
-    fix  getFall();
-    fix  getXOfs();
-    fix  getYOfs();
+    zfix  getX();
+    zfix  getY();
+    zfix  getZ();
+    zfix  getFall();
+    zfix  getXOfs();
+    zfix  getYOfs();
     void setXOfs(int newxofs);
     void setYOfs(int newyofs);
     int  getHXOfs();
     int  getHYOfs();
     int  getHXSz();
     int  getHYSz();
-    fix  getClimbCoverX();
-    fix  getClimbCoverY();
+    zfix  getClimbCoverX();
+    zfix  getClimbCoverY();
     int  getLadderX();
     int  getLadderY();
     void setX(int new_x);
     void setY(int new_y);
     void setZ(int new_Z);
     
-    void setXdbl(double new_x);
-    void setYdbl(double new_y);
-    void setZdbl(double new_Z);
-    void setFall(fix new_fall);
+    void setXfix(zfix new_x);
+    void setYfix(zfix new_y);
+    void setZfix(zfix new_Z);
+    void setFall(zfix new_fall);
     void setClimbCoverX(int new_x);
     void setClimbCoverY(int new_y);
     int  getLStep();
@@ -406,8 +424,8 @@ public:
     int  getItemClk();
     void  setSwordClk(int newclk);
     void  setItemClk(int newclk);
-    fix  getModifiedX();
-    fix  getModifiedY();
+    zfix  getModifiedX();
+    zfix  getModifiedY();
     int  getDir();
     void setDir(int new_dir);
     int  getHitDir();

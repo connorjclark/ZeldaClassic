@@ -56,9 +56,20 @@
 #include "ffscript.h"
 #include "ffasm.h"
 #include "qst.h"
+#include "util.h"
+using namespace util;
 extern FFScript FFCore; //the core script engine.
+extern byte epilepsyFlashReduction;
 #ifdef _WIN32
 	#include "ConsoleLogger.h"
+#else //Unix
+	#include <fcntl.h>
+	#include <unistd.h>
+	#include <iostream>
+	#include <sstream>
+	int pt = 0;
+	char* ptname = NULL;
+	std::ostringstream lxconsole_oss;
 #endif
 extern ZModule zcm; //modules
 extern zcmodule moduledata;
@@ -71,6 +82,8 @@ extern byte dmapscriptInitialised;
 
 extern char zc_builddate[80];
 extern char zc_aboutstr[80];
+
+int DMapEditorLastMaptileUsed = 0;
 
 #include "init.h"
 #include <assert.h>
@@ -96,20 +109,25 @@ FILE _iob[] = { *stdin, *stdout, *stderr };
 extern "C" FILE * __cdecl __iob_func(void) { return _iob; }
 #endif
 
+#if DEVLEVEL > 0
+bool dev_logging = true;
+bool dev_debug = true;
+#endif
+
 ZCMUSIC *zcmusic = NULL;
 zinitdata zinit;
 int colordepth;
 int db=0;
 //zinitdata  zinit;
 int detail_int[10];                                         //temporary holder for things you want to detail
-int lens_hint_item[MAXITEMS][2];                            //aclk, aframe
-int lens_hint_weapon[MAXWPNS][5];                           //aclk, aframe, dir, x, y
+int lens_hint_item[MAXITEMS][2]= {{0,0},{0,0}};                            //aclk, aframe
+int lens_hint_weapon[MAXWPNS][5] = {{0,0},{0,0}};                           //aclk, aframe, dir, x, y
 int cheat_modifier_keys[4]; //two options each, default either control and either shift
 int strike_hint_counter=0;
-byte __isZQuest = 0; //shared functions can use this. -
+unsigned char __isZQuest = 0; //shared functions can use this. -
 int strike_hint_timer=0;
-int strike_hint;
-int slot_arg, slot_arg2;
+int strike_hint = 0;
+int slot_arg = 0, slot_arg2 = 0;
 char save_file_name[1024] = "zc.sav";
 //char *SAVE_FILE = (char *)"zc.sav";
 char *SAVE_FILE = NULL;
@@ -119,7 +137,7 @@ CScriptDrawingCommands script_drawing_commands;
 using std::string;
 using std::pair;
 
-int zq_screen_w, zq_screen_h;
+int zq_screen_w = 0, zq_screen_h = 0;
 int passive_subscreen_height=56;
 int original_playing_field_offset=56;
 int playing_field_offset=original_playing_field_offset;
@@ -137,10 +155,12 @@ bool standalone_mode=false;
 char *standalone_quest=NULL;
 bool skip_title=false;
 
-int favorite_combos[MAXFAVORITECOMBOS];
-int favorite_comboaliases[MAXFAVORITECOMBOALIASES];
+int favorite_combos[MAXFAVORITECOMBOS] = {0};
+int favorite_comboaliases[MAXFAVORITECOMBOALIASES]= {0};
 
 void playLevelMusic();
+
+int last_quest_was_BA_subscreen = 0; //Used during init when loading a quest. 
 
 //Prevent restarting during ending sequence from creating a rect clip
 int draw_screen_clip_rect_x1=0;
@@ -151,9 +171,15 @@ int draw_screen_clip_rect_y2=223;
 extern int script_link_sprite; 
 extern int script_link_cset; 
 extern int script_link_flip; 
+int zc_menu_on_left = 0;
 
 volatile int logic_counter=0;
 bool trip=false;
+extern byte midi_suspended;
+extern byte callback_switchin;
+extern bool midi_paused;
+extern int paused_midi_pos;
+extern byte midi_patch_fix;
 void update_logic_counter()
 {
     ++logic_counter;
@@ -285,30 +311,30 @@ bool blank_tile_quarters_table[NEWMAXTILES*4];              //keeps track of bla
 */
 bool ewind_restart=false;
 
-word     msgclk, msgstr,
-         msgpos,	// screen position of the next character.
-         msgptr,	// position within the string of the next character. <MSGSIZE.
-         msgcolour,	// colour to use for the displayed text.
-         msgspeed,	// delay between each character (5 = default).
-         msg_w,
-         msg_h,
-         msg_count,
-         cursor_x,
-         cursor_y,
+word     msgclk = 0, msgstr = 0,
+         msgpos = 0,	// screen position of the next character.
+         msgptr = 0,	// position within the string of the next character. <MSGSIZE.
+         msgcolour = 0,	// colour to use for the displayed text.
+         msgspeed = 0,	// delay between each character (5 = default).
+         msg_w = 0,
+         msg_h = 0,
+         msg_count = 0,
+         cursor_x = 0,
+         cursor_y = 0,
          msg_xpos=0,
          msg_ypos=0,
          msgorig=0;
-byte msg_margins[4];
+byte msg_margins[4] = {0};
 int prt_tile=0;
 byte prt_cset=0, prt_x=0, prt_y=0, prt_tw=0, prt_th=0;
 bool msg_onscreen = false, msg_active = false, msgspace = false;
 BITMAP   *msg_txt_bmp_buf = NULL, *msg_bg_bmp_buf = NULL, *msg_portrait_bmp_buf = NULL;
 FONT	 *msgfont;
 word     door_combo_set_count;
-word     introclk, intropos, dmapmsgclk, linkedmsgclk;
-short    lensclk;
-int     lensid; // Lens's item id. -1 if lens is off.
-int    Bpos;
+word     introclk  = 0, intropos = 0, dmapmsgclk = 0, linkedmsgclk = 0;
+short    lensclk = 0;
+int     lensid = 0; // Lens's item id. -1 if lens is off.
+int    Bpos = 0;
 byte screengrid[22]={0};
 byte screengrid_layer[2][22]={0};
 byte ffcgrid[4]={0};
@@ -316,47 +342,47 @@ bool halt=false;
 bool screenscrolling=false;
 bool close_button_quit=false;
 PALETTE tempbombpal;
-bool usebombpal;
+bool usebombpal = false;
 
-int readsize, writesize;
+int readsize = 0, writesize = 0;
 bool fake_pack_writing=false;
 combo_alias combo_aliases[MAXCOMBOALIASES];  //Temporarily here so ZC can compile. All memory from this is freed after loading the quest file.
 
-SAMPLE customsfxdata[WAV_COUNT];
-unsigned char customsfxflag[WAV_COUNT>>3];
+SAMPLE customsfxdata[WAV_COUNT] = {0};
+unsigned char customsfxflag[WAV_COUNT>>3]  = {0};
 int sfxdat=1;
 BITMAP *hw_screen;
-int zqwin_scale;
+int zqwin_scale = 0;
 
-int jwin_pal[jcMAX];
+int jwin_pal[jcMAX] = {0};
 int gui_colorset=0;
-int fullscreen;
+int fullscreen = 0;
 byte frame_rest_suggest=0,forceExit=0,zc_vsync=0;
 byte disable_triplebuffer=0,can_triplebuffer_in_windowed_mode=0;
 byte zc_color_depth=8;
 byte use_debug_console=0, console_on_top = 0, use_win32_proc=1, zasm_debugger = 0, zscript_debugger = 0; //windows-build configs
 int homescr,currscr,frame=0,currmap=0,dlevel,warpscr,worldscr,scrolling_scr=0,scrolling_map=0;
 int newscr_clk=0,opendoors=0,currdmap=0,fadeclk=-1,currgame=0,listpos=0;
-int lastentrance=0,lastentrance_dmap=0,prices[3],loadside, Bwpn, Awpn;
-int digi_volume,midi_volume,sfx_volume,emusic_volume,currmidi,hasitem,whistleclk,pan_style,vol_mute;
-int digi_volume_buf,midi_volume_buf,sfx_volume_buf,emusic_volume_buf;
+int lastentrance=0,lastentrance_dmap=0,prices[3]= {0},loadside = 0, Bwpn = 0, Awpn = 0;
+int digi_volume = 0,midi_volume = 0,sfx_volume = 0,emusic_volume = 0,currmidi = 0,hasitem = 0,whistleclk = 0,pan_style = 0,vol_mute = 0;
+int digi_volume_buf = 0,midi_volume_buf = 0,sfx_volume_buf = 0,emusic_volume_buf = 0;
 bool analog_movement=true;
-int joystick_index=0,Akey,Bkey,Skey,Lkey,Rkey,Pkey,Exkey1,Exkey2,Exkey3,Exkey4,Abtn,Bbtn,Sbtn,Mbtn,Lbtn,Rbtn,Pbtn,Exbtn1,Exbtn2,Exbtn3,Exbtn4,Quit=0;
+int joystick_index=0,Akey = 0,Bkey = 0,Skey = 0,Lkey = 0,Rkey = 0,Pkey = 0,Exkey1 = 0,Exkey2 = 0,Exkey3 = 0,Exkey4 = 0,Abtn = 0,Bbtn = 0,Sbtn = 0,Mbtn = 0,Lbtn = 0,Rbtn = 0,Pbtn = 0,Exbtn1 = 0,Exbtn2 = 0,Exbtn3 = 0,Exbtn4 = 0,Quit=0;
 unsigned long GameFlags=0;
-int js_stick_1_x_stick, js_stick_1_x_axis, js_stick_1_x_offset;
-int js_stick_1_y_stick, js_stick_1_y_axis, js_stick_1_y_offset;
-int js_stick_2_x_stick, js_stick_2_x_axis, js_stick_2_x_offset;
-int js_stick_2_y_stick, js_stick_2_y_axis, js_stick_2_y_offset;
-int DUkey, DDkey, DLkey, DRkey, DUbtn, DDbtn, DLbtn, DRbtn, ss_after, ss_speed, ss_density, ss_enable;
-int hs_startx, hs_starty, hs_xdist, hs_ydist, clockclk, clock_zoras[eMAXGUYS];
-int cheat_goto_dmap=0, cheat_goto_screen=0, currcset;
-int gfc, gfc2, pitx, pity, refill_what, refill_why, heart_beep_timer=0, new_enemy_tile_start=1580;
-int nets=1580, magicitem=-1,nayruitem=-1, title_version, magiccastclk, quakeclk=0, wavy=0, castx, casty, df_x, df_y, nl1_x, nl1_y, nl2_x, nl2_y;
+int js_stick_1_x_stick = 0, js_stick_1_x_axis = 0, js_stick_1_x_offset = 0;
+int js_stick_1_y_stick = 0, js_stick_1_y_axis = 0, js_stick_1_y_offset = 0;
+int js_stick_2_x_stick = 0, js_stick_2_x_axis = 0, js_stick_2_x_offset = 0;
+int js_stick_2_y_stick = 0, js_stick_2_y_axis = 0, js_stick_2_y_offset = 0;
+int DUkey = 0, DDkey = 0, DLkey = 0, DRkey = 0, DUbtn = 0, DDbtn = 0, DLbtn = 0, DRbtn = 0, ss_after = 0, ss_speed = 0, ss_density = 0, ss_enable = 0;
+int hs_startx = 0, hs_starty = 0, hs_xdist = 0, hs_ydist = 0, clockclk = 0, clock_zoras[eMAXGUYS]={0};
+int cheat_goto_dmap=0, cheat_goto_screen=0, currcset = 0;
+int gfc = 0, gfc2 = 0, pitx = 0, pity = 0, refill_what = 0, refill_why = 0, heart_beep_timer=0, new_enemy_tile_start=1580;
+int nets=1580, magicitem=-1,nayruitem=-1, title_version = 0, magiccastclk = 0, quakeclk=0, wavy=0, castx = 0, casty = 0, df_x = 0, df_y = 0, nl1_x = 0, nl1_y = 0, nl2_x = 0, nl2_y = 0;
 int magicdrainclk=0, conveyclk=3, memrequested=0;
 float avgfps=0;
 dword fps_secs=0;
 bool do_cheat_goto=false, do_cheat_light=false;
-int checkx, checky;
+int checkx = 0, checky = 0;
 int loadlast=0;
 int skipcont=0;
 int skipicon=0;
@@ -369,32 +395,32 @@ bool show_layer_0=true, show_layer_1=true, show_layer_2=true, show_layer_3=true,
      show_layer_over=true, show_layer_push=true, show_sprites=true, show_ffcs=true, show_hitboxes=false, show_walkflags=false, show_ff_scripts=false;
 
 
-bool Throttlefps, ClickToFreeze=false, Paused=false, Advance=false, ShowFPS, Showpal=false, disableClickToFreeze=false;
-bool Playing, FrameSkip=false, TransLayers;
-bool __debug=false,debug_enabled;
-bool refreshpal,blockpath,loaded_guys,freeze_guys,
-     loaded_enemies,drawguys,details=false,watch;
-bool darkroom=false,naturaldark=false,BSZ;                         //,NEWSUBSCR;
-bool Udown,Ddown,Ldown,Rdown,Adown,Bdown,Sdown,Mdown,LBdown,RBdown,Pdown,Ex1down,Ex2down,Ex3down,Ex4down,AUdown,ADdown,ALdown,ARdown,F12,F11, F5,keyI, keyQ,
-     SystemKeys=true,NESquit,volkeys,useCD=false,boughtsomething=false,
+bool Throttlefps = true, MenuOpen = false, ClickToFreeze=false, Paused=false, Advance=false, ShowFPS = true, Showpal=false, disableClickToFreeze=false;
+bool Playing, FrameSkip=false, TransLayers = true;
+bool __debug=false,debug_enabled = false;
+bool refreshpal,blockpath = false,loaded_guys= false,freeze_guys= false,
+     loaded_enemies= false,drawguys= false,details=false,watch= false;
+bool darkroom=false,naturaldark=false,BSZ= false;                         //,NEWSUBSCR;
+bool Udown= false,Ddown= false,Ldown= false,Rdown= false,Adown= false,Bdown= false,Sdown= false,Mdown= false,LBdown= false,RBdown= false,Pdown= false,Ex1down= false,Ex2down= false,Ex3down= false,Ex4down= false,AUdown= false,ADdown= false,ALdown= false,ARdown= false,F12= false,F11= false, F5= false,keyI= false, keyQ= false,
+     SystemKeys=true,NESquit= false,volkeys= false,useCD=false,boughtsomething=false,
      fixed_door=false, hookshot_used=false, hookshot_frozen=false,
      pull_link=false, add_chainlink=false, del_chainlink=false, hs_fix=false,
      cheat_superman=false, gofast=false, checklink=true, didpit=false, heart_beep=true,
-     pausenow=false, castnext=false, add_df1asparkle, add_df1bsparkle, add_nl1asparkle, add_nl1bsparkle, add_nl2asparkle, add_nl2bsparkle,
-     is_on_conveyor, activated_timed_warp=false;
+     pausenow=false, castnext=false, add_df1asparkle= false, add_df1bsparkle= false, add_nl1asparkle= false, add_nl1bsparkle= false, add_nl2asparkle= false, add_nl2bsparkle= false,
+     is_on_conveyor= false, activated_timed_warp=false;
 
-byte COOLSCROLL;
+byte COOLSCROLL = 0;
 
 int  add_asparkle=0, add_bsparkle=0;
 int SnapshotFormat, NameEntryMode=0;
 
-char   zeldadat_sig[52];
-char   sfxdat_sig[52];
-char   fontsdat_sig[52];
-char   cheat_goto_dmap_str[4];
-char   cheat_goto_screen_str[3];
-short  visited[6];
-byte   guygrid[176];
+char   zeldadat_sig[52]={0};
+char   sfxdat_sig[52]={0};
+char   fontsdat_sig[52]={0};
+char   cheat_goto_dmap_str[4]={0};
+char   cheat_goto_screen_str[3]={0};
+short  visited[6]={0};
+byte   guygrid[176]={0};
 mapscr tmpscr[2];
 mapscr tmpscr2[6];
 mapscr tmpscr3[6];
@@ -434,8 +460,8 @@ void ScriptOwner::clear()
 
 //ZScript array storage
 std::vector<ZScriptArray> globalRAM;
-ZScriptArray localRAM[MAX_ZCARRAY_SIZE];
-ScriptOwner arrayOwner[MAX_ZCARRAY_SIZE];
+ZScriptArray localRAM[NUM_ZSCRIPT_ARRAYS];
+ScriptOwner arrayOwner[NUM_ZSCRIPT_ARRAYS];
 
 //script bitmap drawing
 ZScriptDrawingRenderTarget* zscriptDrawingRenderTarget;
@@ -451,7 +477,7 @@ void setZScriptVersion(int s_version)
 
 void initZScriptArrayRAM(bool firstplay)
 {
-    for(word i = 0; i < MAX_ZCARRAY_SIZE; i++)
+    for(word i = 0; i < NUM_ZSCRIPT_ARRAYS; i++)
     {
         localRAM[i].Clear();
         arrayOwner[i].clear();
@@ -530,18 +556,20 @@ dword getNumGlobalArrays()
 //movingblock mblock2; //mblock[4]?
 //LinkClass   Link;
 
-int resx,resy,scrx,scry;
-bool sbig;                                                  // big screen
-bool sbig2;													// bigger screen
+int resx= 0,resy= 0,scrx= 0,scry= 0;
+bool sbig=false;                                                  // big screen
+bool sbig2=false;													// bigger screen
 int screen_scale = 2; //default = 2 (640x480)
-bool scanlines;                                             //do scanlines if sbig==1
+bool scanlines=false; 
+extern byte pause_in_background;
+extern signed char pause_in_background_menu_init;//do scanlines if sbig==1
 bool toogam=false;
 bool ignoreSideview=false;
 
 int cheat = (DEVLEVEL > 1) ? 4 : 0;                         // 0 = none; 1,2,3,4 = cheat level
 
-int mouse_down;                                             // used to hold the last reading of 'gui_mouse_b()' status
-int idle_count, active_count;
+int mouse_down=0;                                             // used to hold the last reading of 'gui_mouse_b()' status
+int idle_count=0, active_count=0;
 
 
 // quest file data
@@ -550,16 +578,16 @@ byte                quest_rules[QUESTRULES_NEW_SIZE];
 byte                extra_rules[EXTRARULES_SIZE];
 byte                midi_flags[MIDIFLAGS_SIZE];
 byte                music_flags[MUSICFLAGS_SIZE];
-word                map_count;
+word                map_count=0;
 MsgStr              *MsgStrings;
-int					msg_strings_size;
+int					msg_strings_size=0;
 DoorComboSet        *DoorComboSets;
 dmap                *DMaps;
 miscQdata           QMisc;
 std::vector<mapscr> TheMaps;
 zcmap               *ZCMaps;
 byte                *quest_file;
-dword               quest_map_pos[MAPSCRS*MAXMAPS2];
+dword               quest_map_pos[MAPSCRS*MAXMAPS2]={0};
 
 char     *qstpath=NULL;
 char     *qstdir=NULL;
@@ -570,13 +598,19 @@ volatile int framecnt=0;
 volatile int myvsync=0;
 
 
-//enum { SAVESC_BACKGROUND, SAVESC_TEXT, SAVESC_USETILE, SAVESC_CURSOR_CSET, SAVESC_CUR_SOUND,  
-//SAVESC_TEXT_CONTINUE_COLOUR, SAVESC_TEXT_SAVE_COLOUR, SAVESC_TEXT_RETRY_COLOUR, SAVESC_MIDI
-//SAVESC_CUR_FLIP, SAVSC_TEXT_DONTSAVE_COLOUR, SAVESC_TEXT_SAVEQUIT_COLOUR, SAVESC_TEXT_SAVE2_COLOUR, 
-//	SAVESC_TEXT_QUIT_COLOUR, SAVESC_EXTRA1, SAVESC_EXTRA2};
+/*
+enum { 	SAVESC_BACKGROUND, 		SAVESC_TEXT, 			SAVESC_USETILE, 	
+	SAVESC_CURSOR_CSET, 		SAVESC_CUR_SOUND,  		SAVESC_TEXT_CONTINUE_COLOUR, 
+	SAVESC_TEXT_SAVE_COLOUR, 	SAVESC_TEXT_RETRY_COLOUR, 	SAVESC_TEXT_CONTINUE_FLASH, 
+	SAVESC_TEXT_SAVE_FLASH, 	SAVESC_TEXT_RETRY_FLASH,	SAVESC_MIDI,
+	SAVESC_CUR_FLIP, 		    SAVESC_TEXT_DONTSAVE_COLOUR, 	SAVESC_TEXT_SAVEQUIT_COLOUR, 
+	SAVESC_TEXT_SAVE2_COLOUR, 	SAVESC_TEXT_QUIT_COLOUR, 	SAVESC_TEXT_DONTSAVE_FLASH,
+	SAVESC_TEXT_SAVEQUIT_FLASH,	SAVESC_TEXT_SAVE2_FLASH, 	SAVESC_TEXT_QUIT_FLASH,
+	SAVESC_EXTRA1, 			SAVESC_EXTRA2,			SAVESC_EXTRA3,			
+	SAVESC_LAST	}; */
 #define SAVESC_DEF_TILE 2
 long SaveScreenSettings[24] = {
-	BLACK, 			WHITE, 			SAVESC_DEF_TILE, 
+	0, 			1, 			SAVESC_DEF_TILE, 
 	1, 			WAV_CHINK,	 	QMisc.colors.msgtext,
 	QMisc.colors.msgtext,	QMisc.colors.msgtext,	QMisc.colors.caption,
 	QMisc.colors.caption,	QMisc.colors.caption,	ZC_MIDI_GAMEOVER,
@@ -585,6 +619,34 @@ long SaveScreenSettings[24] = {
 	QMisc.colors.caption,	QMisc.colors.caption,	QMisc.colors.caption,
 	0, 			0, 			0 }; //BG, Text, Cursor CSet, Sound, UseTile, Misc
 char SaveScreenText[7][32]={"CONTINUE", "SAVE", "RETRY", "DON'T SAVE", "SAVE AND QUIT", "SAVE", "QUIT" };
+
+void ResetSaveScreenSettings()
+{
+	SaveScreenSettings[SAVESC_TEXT_CONTINUE_COLOUR] = QMisc.colors.msgtext; 
+	SaveScreenSettings[SAVESC_TEXT_SAVE_COLOUR] = QMisc.colors.msgtext; 
+	SaveScreenSettings[SAVESC_TEXT_RETRY_COLOUR] = QMisc.colors.msgtext; 
+	SaveScreenSettings[SAVESC_TEXT_CONTINUE_FLASH] = QMisc.colors.caption; 
+	SaveScreenSettings[SAVESC_TEXT_SAVE_FLASH] = QMisc.colors.caption; 
+	SaveScreenSettings[SAVESC_TEXT_RETRY_FLASH] = QMisc.colors.caption;
+	SaveScreenSettings[SAVESC_MIDI] = ZC_MIDI_GAMEOVER;
+	SaveScreenSettings[SAVESC_BACKGROUND] = BLACK;
+	SaveScreenSettings[SAVESC_TEXT] = WHITE;
+	SaveScreenSettings[SAVESC_USETILE] = SAVESC_DEF_TILE;
+	SaveScreenSettings[SAVESC_CURSOR_CSET] = 1;
+	SaveScreenSettings[SAVESC_CUR_SOUND] =  WAV_CHINK;
+	SaveScreenSettings[SAVESC_CUR_FLIP] = 0;
+	SaveScreenSettings[SAVESC_TEXT_DONTSAVE_COLOUR] = QMisc.colors.msgtext;
+	SaveScreenSettings[SAVESC_TEXT_SAVEQUIT_COLOUR] = QMisc.colors.msgtext;
+	SaveScreenSettings[SAVESC_TEXT_SAVE2_COLOUR] = QMisc.colors.msgtext;
+	SaveScreenSettings[SAVESC_TEXT_QUIT_COLOUR] = QMisc.colors.msgtext;
+	SaveScreenSettings[SAVESC_TEXT_DONTSAVE_FLASH] = QMisc.colors.caption;
+	SaveScreenSettings[SAVESC_TEXT_SAVEQUIT_FLASH] = QMisc.colors.caption;
+	SaveScreenSettings[SAVESC_TEXT_SAVE2_FLASH] = QMisc.colors.caption;
+	SaveScreenSettings[SAVESC_TEXT_QUIT_FLASH] = QMisc.colors.caption;
+	SaveScreenSettings[SAVESC_EXTRA1] = 0;
+	SaveScreenSettings[SAVESC_EXTRA2] = 0;
+	SaveScreenSettings[SAVESC_EXTRA3] = 0;
+}
 
 void SetSaveScreenSetting(int indx, int value)
 {
@@ -623,6 +685,36 @@ void SetSaveScreenSetting(int indx, int value)
 		case SAVESC_TEXT_RETRY_FLASH:
 			SaveScreenSettings[SAVESC_TEXT_RETRY_FLASH] = vbound(value,0,255);
 			break;
+		case SAVESC_MIDI:
+			SaveScreenSettings[SAVESC_MIDI] = vbound(value,0,255);
+			break;
+		case SAVESC_CUR_FLIP:
+			SaveScreenSettings[SAVESC_CUR_FLIP] = vbound(value,0,3);
+			break;
+		case SAVESC_TEXT_DONTSAVE_COLOUR:
+			SaveScreenSettings[SAVESC_TEXT_DONTSAVE_COLOUR] = vbound(value,0,255);
+			break;
+		case SAVESC_TEXT_SAVEQUIT_COLOUR:
+			SaveScreenSettings[SAVESC_TEXT_SAVEQUIT_COLOUR] = vbound(value,0,255);
+			break;
+		case SAVESC_TEXT_SAVE2_COLOUR:
+			SaveScreenSettings[SAVESC_TEXT_SAVE2_COLOUR] = vbound(value,0,255);
+			break;
+		case SAVESC_TEXT_QUIT_COLOUR:
+			SaveScreenSettings[SAVESC_TEXT_QUIT_COLOUR] = vbound(value,0,255);
+			break;
+		case SAVESC_TEXT_DONTSAVE_FLASH:
+			SaveScreenSettings[SAVESC_TEXT_DONTSAVE_FLASH] = vbound(value,0,255);
+			break;
+		case SAVESC_TEXT_SAVEQUIT_FLASH:
+			SaveScreenSettings[SAVESC_TEXT_SAVEQUIT_FLASH] = vbound(value,0,255);
+			break;
+		case SAVESC_TEXT_SAVE2_FLASH:
+			SaveScreenSettings[SAVESC_TEXT_SAVE2_FLASH] = vbound(value,0,255);
+			break;
+		case SAVESC_TEXT_QUIT_FLASH:
+			SaveScreenSettings[SAVESC_TEXT_QUIT_FLASH] = vbound(value,0,255);
+			break;
 		default: break;
 	}
 }
@@ -630,6 +722,7 @@ void SetSaveScreenSetting(int indx, int value)
 
 void ChangeSubscreenText(int index, const char *f)
 {
+	index = vbound(index, 0, SAVESC_END-1);
 	strncpy(SaveScreenText[index], f, 31);
 	SaveScreenText[index][32]='\0';
 }
@@ -901,8 +994,9 @@ void msg_bg(MsgStr const& msg)
 	}
 	else
 	{
+		int add = (get_bit(quest_rules,qr_STRING_FRAME_OLD_WIDTH_HEIGHT)!=0 ? 2 : 0);
         frame2x2(msg_bg_bmp_buf,&QMisc,0,0,msg.tile,msg.cset,
-                 (msg.w>>3)+2,(msg.h>>3)+2,0,true,0);
+                 (msg.w>>3)+add,(msg.h>>3)+add,0,true,0);
 	}
 }
 void msg_prt()
@@ -1098,7 +1192,9 @@ void hit_close_button()
 extern byte curScriptType;
 extern word curScriptNum;
 
+#ifdef _WIN32
 extern CConsoleLoggerEx zscript_coloured_console;
+#endif
 
 void Z_eventlog(const char *format,...)
 {
@@ -1118,6 +1214,9 @@ void Z_eventlog(const char *format,...)
 	#ifdef _WIN32
 		if ( zscript_debugger ) {zscript_coloured_console.cprintf((CConsoleLoggerEx::COLOR_GREEN | CConsoleLoggerEx::COLOR_RED | CConsoleLoggerEx::COLOR_INTENSITY | 
 			CConsoleLoggerEx::COLOR_BACKGROUND_BLACK),"%s",buf); }
+		#else //Unix
+			std::cout << "Z_scripterrlog Test\n";
+			printf("%s", buf);	
 		#endif
     }
 }
@@ -1134,6 +1233,9 @@ void Z_scripterrlog(const char * const format,...)
 		if ( zscript_debugger ) {zscript_coloured_console.cprintf((CConsoleLoggerEx::COLOR_GREEN | CConsoleLoggerEx::COLOR_INTENSITY | 
 			CConsoleLoggerEx::COLOR_BACKGROUND_BLACK),"Global script %u (%s): \n", 
 			curScriptNum+1, globalmap[curScriptNum].scriptname.c_str()); }
+		#else //Unix
+			std::cout << "Z_scripterrlog Test\n" << std::endl;
+			printf("Global script %u (%s): \n", curScriptNum+1, globalmap[curScriptNum].scriptname.c_str());	
 		#endif
             break;
 	
@@ -1142,7 +1244,10 @@ void Z_scripterrlog(const char * const format,...)
 		#ifdef _WIN32
 		if ( zscript_debugger ) { zscript_coloured_console.cprintf((CConsoleLoggerEx::COLOR_GREEN | CConsoleLoggerEx::COLOR_INTENSITY | 
 			CConsoleLoggerEx::COLOR_BACKGROUND_BLACK),"Link script %u (%s): \n", curScriptNum, linkmap[curScriptNum-1].scriptname.c_str()); }
-		#endif    
+		#else //Unix
+			std::cout << "Z_scripterrlog Test\n" << std::endl;
+			printf("Link script %u (%s): \n", curScriptNum, linkmap[curScriptNum-1].scriptname.c_str());	
+		#endif 
 	break;
 	
 	case SCRIPT_LWPN:
@@ -1150,7 +1255,10 @@ void Z_scripterrlog(const char * const format,...)
 		#ifdef _WIN32
 		if ( zscript_debugger ) {zscript_coloured_console.cprintf((CConsoleLoggerEx::COLOR_GREEN | CConsoleLoggerEx::COLOR_INTENSITY | 
 			CConsoleLoggerEx::COLOR_BACKGROUND_BLACK),"LWeapon script %u (%s): \n", curScriptNum, lwpnmap[curScriptNum-1].scriptname.c_str());}
-		#endif    
+		#else //Unix
+			std::cout << "Z_scripterrlog Test\n" << std::endl;
+			printf("LWeapon script %u (%s): \n", curScriptNum, lwpnmap[curScriptNum-1].scriptname.c_str());	
+		#endif     
 	break;
 	
 	case SCRIPT_EWPN:
@@ -1158,7 +1266,10 @@ void Z_scripterrlog(const char * const format,...)
 		#ifdef _WIN32
 		if ( zscript_debugger ) { zscript_coloured_console.cprintf((CConsoleLoggerEx::COLOR_GREEN | CConsoleLoggerEx::COLOR_INTENSITY | 
 			CConsoleLoggerEx::COLOR_BACKGROUND_BLACK),"EWeapon script %u (%s): \n", curScriptNum, ewpnmap[curScriptNum-1].scriptname.c_str());}
-		#endif    
+		#else //Unix
+			std::cout << "Z_scripterrlog Test\n" << std::endl;
+			printf("EWeapon script %u (%s): \n", curScriptNum, ewpnmap[curScriptNum-1].scriptname.c_str());	
+		#endif        
 	break;
 	
 	case SCRIPT_NPC:
@@ -1166,7 +1277,10 @@ void Z_scripterrlog(const char * const format,...)
 		#ifdef _WIN32
 		if ( zscript_debugger ) {zscript_coloured_console.cprintf((CConsoleLoggerEx::COLOR_GREEN | CConsoleLoggerEx::COLOR_INTENSITY | 
 			CConsoleLoggerEx::COLOR_BACKGROUND_BLACK),"NPC script %u (%s): \n", curScriptNum, npcmap[curScriptNum-1].scriptname.c_str());}
-		#endif    
+		#else //Unix
+			std::cout << "Z_scripterrlog Test\n" << std::endl;
+			printf("NPC script %u (%s): \n", curScriptNum, npcmap[curScriptNum-1].scriptname.c_str());	
+		#endif       
 	break;
             
         case SCRIPT_FFC:
@@ -1175,15 +1289,21 @@ void Z_scripterrlog(const char * const format,...)
 		#ifdef _WIN32
 		if ( zscript_debugger ) {zscript_coloured_console.cprintf((CConsoleLoggerEx::COLOR_GREEN | CConsoleLoggerEx::COLOR_INTENSITY | 
 			CConsoleLoggerEx::COLOR_BACKGROUND_BLACK),"FFC script %u (%s): ", curScriptNum, ffcmap[curScriptNum-1].scriptname.c_str());}
-		#endif
+		#else //Unix
+			std::cout << "Z_scripterrlog Test\n" << std::endl;
+			printf("FFC script %u (%s): \n", curScriptNum, ffcmap[curScriptNum-1].scriptname.c_str());	
+		#endif    
 	break;
             
         case SCRIPT_ITEM:
             al_trace("Item script %u (%s): ", curScriptNum, itemmap[curScriptNum-1].scriptname.c_str());
 		#ifdef _WIN32
 		if ( zscript_debugger ) {zscript_coloured_console.cprintf((CConsoleLoggerEx::COLOR_GREEN | CConsoleLoggerEx::COLOR_INTENSITY | 
-			CConsoleLoggerEx::COLOR_BACKGROUND_BLACK),"Item script %u (%s): ", curScriptNum, itemmap[curScriptNum-1].scriptname.c_str());}
-		#endif
+			CConsoleLoggerEx::COLOR_BACKGROUND_BLACK),"Itemdata script %u (%s): ", curScriptNum, itemmap[curScriptNum-1].scriptname.c_str());}
+		#else //Unix
+			std::cout << "Z_scripterrlog Test\n" << std::endl;
+			printf("Itemdata script %u (%s): \n", curScriptNum, itemmap[curScriptNum-1].scriptname.c_str());	
+		#endif    
 	break;
         
 	case SCRIPT_DMAP:
@@ -1192,7 +1312,10 @@ void Z_scripterrlog(const char * const format,...)
 		#ifdef _WIN32
 		if ( zscript_debugger ) {zscript_coloured_console.cprintf((CConsoleLoggerEx::COLOR_GREEN | CConsoleLoggerEx::COLOR_INTENSITY | 
 			CConsoleLoggerEx::COLOR_BACKGROUND_BLACK),"DMap script %u (%s): ", curScriptNum, dmapmap[curScriptNum-1].scriptname.c_str());}
-		#endif
+		#else //Unix
+			std::cout << "Z_scripterrlog Test\n" << std::endl;
+			printf("DMap script %u (%s): \n", curScriptNum, dmapmap[curScriptNum-1].scriptname.c_str());	
+		#endif    
 	break;
 	
 	case SCRIPT_ITEMSPRITE:
@@ -1200,7 +1323,10 @@ void Z_scripterrlog(const char * const format,...)
 		#ifdef _WIN32
 		if ( zscript_debugger ) {zscript_coloured_console.cprintf((CConsoleLoggerEx::COLOR_GREEN | CConsoleLoggerEx::COLOR_INTENSITY | 
 			CConsoleLoggerEx::COLOR_BACKGROUND_BLACK),"itemsprite script %u (%s): ", curScriptNum, itemspritemap[curScriptNum-1].scriptname.c_str());}
-		#endif
+		#else //Unix
+			std::cout << "Z_scripterrlog Test\n" << std::endl;
+			printf("itemsprite script %u (%s): \n", curScriptNum, itemspritemap[curScriptNum-1].scriptname.c_str());	
+		#endif    
 	break;
         
 	case SCRIPT_SCREEN:
@@ -1208,7 +1334,10 @@ void Z_scripterrlog(const char * const format,...)
 		#ifdef _WIN32
 		if ( zscript_debugger ) {zscript_coloured_console.cprintf((CConsoleLoggerEx::COLOR_GREEN | CConsoleLoggerEx::COLOR_INTENSITY | 
 			CConsoleLoggerEx::COLOR_BACKGROUND_BLACK),"Screen script %u (%s): ", curScriptNum, screenmap[curScriptNum-1].scriptname.c_str());}
-		#endif
+		#else //Unix
+			std::cout << "Z_scripterrlog Test\n" << std::endl;
+			printf("Screen script %u (%s): \n", curScriptNum, screenmap[curScriptNum-1].scriptname.c_str());	
+		#endif   
 	break;
 	
 	case SCRIPT_SUBSCREEN:
@@ -1216,15 +1345,21 @@ void Z_scripterrlog(const char * const format,...)
 		#ifdef _WIN32
 		if ( zscript_debugger ) {zscript_coloured_console.cprintf((CConsoleLoggerEx::COLOR_GREEN | CConsoleLoggerEx::COLOR_INTENSITY | 
 			CConsoleLoggerEx::COLOR_BACKGROUND_BLACK),"Subscreen script %u (%s): ", curScriptNum, itemmap[curScriptNum-1].scriptname.c_str());}
-		#endif
+		#else //Unix
+			std::cout << "Z_scripterrlog Test\n" << std::endl;
+			printf("Subscreen script %u (%s): \n", curScriptNum, screenmap[curScriptNum-1].scriptname.c_str());	
+		#endif   
 	break;
 	
 	case SCRIPT_COMBO:
             al_trace("Subscreen script %u (%s): ", curScriptNum, comboscriptmap[curScriptNum-1].scriptname.c_str());
 		#ifdef _WIN32
 		if ( zscript_debugger ) {zscript_coloured_console.cprintf((CConsoleLoggerEx::COLOR_GREEN | CConsoleLoggerEx::COLOR_INTENSITY | 
-			CConsoleLoggerEx::COLOR_BACKGROUND_BLACK),"Subscreen script %u (%s): ", curScriptNum, itemmap[curScriptNum-1].scriptname.c_str());}
-		#endif
+			CConsoleLoggerEx::COLOR_BACKGROUND_BLACK),"Combo script %u (%s): ", curScriptNum, comboscriptmap[curScriptNum-1].scriptname.c_str());}
+		#else //Unix
+			std::cout << "Z_scripterrlog Test\n" << std::endl;
+			printf("Combo script %u (%s): \n", curScriptNum, comboscriptmap[curScriptNum-1].scriptname.c_str());	
+		#endif   
 	break;
         }
         
@@ -1273,6 +1408,14 @@ void zprint(const char * const format,...)
 		#ifdef _WIN32
 		zscript_coloured_console.cprintf((CConsoleLoggerEx::COLOR_RED | CConsoleLoggerEx::COLOR_BLUE | CConsoleLoggerEx::COLOR_INTENSITY | 
 			CConsoleLoggerEx::COLOR_BACKGROUND_BLACK),"%s",buf);
+		#else //Unix
+		{
+			
+			std::cout << "ZPrint Test\n" << std::endl;
+			printf("%s", buf);
+			
+		}
+	
 		#endif
 	}
 	
@@ -1301,6 +1444,9 @@ void zprint2(const char * const format,...)
 		#ifdef _WIN32
 		zscript_coloured_console.cprintf((CConsoleLoggerEx::COLOR_RED | CConsoleLoggerEx::COLOR_BLUE | CConsoleLoggerEx::COLOR_INTENSITY | 
 			CConsoleLoggerEx::COLOR_BACKGROUND_BLACK),"%s",buf);
+		#else //Unix
+			std::cout << "ZPrint Test\n" << std::endl;
+			printf("%s", buf);
 		#endif
 	}
 	
@@ -1326,19 +1472,23 @@ LinkClass   Link;
 #include "ending.h"
 
 #include "zc_sys.h"
+//extern MENU the_player_menu;
+//extern MENU the_player_menu_zc_on_left;
+//extern MENU the_player_menu2;
+//extern MENU the_player_menu_zc_on_left2;
 //extern byte refresh_select_screen;
 
 // Wait... this is only used by ffscript.cpp!?
 void addLwpn(int x,int y,int z,int id,int type,int power,int dir, int parentid)
 {
-    Lwpns.add(new weapon((fix)x,(fix)y,(fix)z,id,type,power,dir,-1,parentid));
+    Lwpns.add(new weapon((zfix)x,(zfix)y,(zfix)z,id,type,power,dir,-1,parentid));
 }
 
 
 void addLwpnEx(int x,int y,int z,int id,int type,int power,int dir, int parentitem, int parentid, byte script_gen)
 {
-	//weapon::weapon(fix X,fix Y,fix Z,int Id,int Type,int pow,int Dir, int Parentitem, int prntid, byte script_gen, bool isDummy)
-    Lwpns.add(new weapon((fix)x,(fix)y,(fix)z,id,type,power,dir,parentitem,parentid,false,1));
+	//weapon::weapon(zfix X,zfix Y,zfix Z,int Id,int Type,int pow,int Dir, int Parentitem, int prntid, byte script_gen, bool isDummy)
+    Lwpns.add(new weapon((zfix)x,(zfix)y,(zfix)z,id,type,power,dir,parentitem,parentid,false,1));
 	
 }
 
@@ -1429,15 +1579,15 @@ void centerLink()
     Link.setX(120);
     Link.setY(80);
 }
-fix  LinkX()
+zfix  LinkX()
 {
     return Link.getX();
 }
-fix  LinkY()
+zfix  LinkY()
 {
     return Link.getY();
 }
-fix  LinkZ()
+zfix  LinkZ()
 {
     return Link.getZ();
 }
@@ -1489,11 +1639,11 @@ byte LinkGetDontDraw()
 {
     return Link.getDontDraw();
 }
-fix  GuyX(int j)
+zfix  GuyX(int j)
 {
     return guys.getX(j);
 }
-fix  GuyY(int j)
+zfix  GuyY(int j)
 {
     return guys.getY(j);
 }
@@ -1530,11 +1680,11 @@ void StunGuy(int j,int stun)
     }
 }
 
-fix LinkModifiedX()
+zfix LinkModifiedX()
 {
     return Link.getModifiedX();
 }
-fix LinkModifiedY()
+zfix LinkModifiedY()
 {
     return Link.getModifiedY();
 }
@@ -1546,13 +1696,13 @@ void add_grenade(int wx, int wy, int wz, int size, int parentid)
 {
     if(size)
     {
-        Lwpns.add(new weapon((fix)wx,(fix)wy,(fix)wz,wSBomb,0,16*DAMAGE_MULTIPLIER,LinkDir(),
+        Lwpns.add(new weapon((zfix)wx,(zfix)wy,(zfix)wz,wSBomb,0,16*DAMAGE_MULTIPLIER,LinkDir(),
                              -1, parentid));
         Lwpns.spr(Lwpns.Count()-1)->id=wSBomb;
     }
     else
     {
-        Lwpns.add(new weapon((fix)wx,(fix)wy,(fix)wz,wBomb,0,4*DAMAGE_MULTIPLIER,LinkDir(),
+        Lwpns.add(new weapon((zfix)wx,(zfix)wy,(zfix)wz,wBomb,0,4*DAMAGE_MULTIPLIER,LinkDir(),
                              -1, parentid));
         Lwpns.spr(Lwpns.Count()-1)->id=wBomb;
     }
@@ -1561,10 +1711,10 @@ void add_grenade(int wx, int wy, int wz, int size, int parentid)
     Lwpns.spr(Lwpns.Count()-1)->misc=50;
 }
 
-fix distance(int x1, int y1, int x2, int y2)
+zfix distance(int x1, int y1, int x2, int y2)
 
 {
-    return (fix)sqrt(pow((double)abs(x1-x2),2)+pow((double)abs(y1-y2),2));
+    return (zfix)sqrt(pow((double)abs(x1-x2),2)+pow((double)abs(y1-y2),2));
 }
 
 bool getClock()
@@ -1584,7 +1734,7 @@ void CatchBrang()
 /***** Main Game Code *****/
 /**************************/
 
-int load_quest(gamedata *g, bool report)
+int load_quest(gamedata *g, bool report, byte printmetadata)
 {
     chop_path(qstpath);
     char *tempdir=(char *)"";
@@ -1708,7 +1858,8 @@ int load_quest(gamedata *g, bool report)
         skip_flags[i]=0;
     }
     
-    int ret = loadquest(qstpath,&QHeader,&QMisc,tunes+ZC_MIDI_COUNT,false,true,true,true,skip_flags);
+    int ret = loadquest(qstpath,&QHeader,&QMisc,tunes+ZC_MIDI_COUNT,false,true,true,true,skip_flags,printmetadata);
+	//zprint2("qstpath: '%s', qstdir(cfg): '%s', standalone_quest: '%s'\n",qstpath,get_config_string("zeldadx",qst_dir_name,""),standalone_quest?standalone_quest:"");
     //setPackfilePassword(NULL);
     
     if(!g->title[0] || g->get_hasplayed() == 0)
@@ -1771,7 +1922,6 @@ void init_dmap()
 int init_game()
 {
 	
-	
   //port250QuestRules();	
     srand(time(0));
     //introclk=intropos=msgclk=msgpos=dmapmsgclk=0;
@@ -1801,6 +1951,7 @@ int init_game()
     gofast=false;
     FFCore.init();
     FFCore.user_bitmaps_init();
+    FFCore.user_files_init();
     cheat=0;
     wavy=quakeclk=0;
     show_layer_0=show_layer_1=show_layer_2=show_layer_3=show_layer_4=show_layer_5=show_layer_6=true;
@@ -1810,12 +1961,6 @@ int init_game()
     if ( zscriptDrawingRenderTarget ) zscriptDrawingRenderTarget->SetCurrentRenderTarget(-1); //clear the last set Rendertarget between games
     //zscriptDrawingRenderTarget = new ZScriptDrawingRenderTarget();
     
-	SaveScreenSettings[SAVESC_TEXT_CONTINUE_COLOUR] = QMisc.colors.msgtext; 
-	SaveScreenSettings[SAVESC_TEXT_SAVE_COLOUR] = QMisc.colors.msgtext; 
-	SaveScreenSettings[SAVESC_TEXT_RETRY_COLOUR] = QMisc.colors.msgtext; 
-	SaveScreenSettings[SAVESC_TEXT_CONTINUE_FLASH] = QMisc.colors.caption; 
-	SaveScreenSettings[SAVESC_TEXT_SAVE_FLASH] = QMisc.colors.caption; 
-	SaveScreenSettings[SAVESC_TEXT_RETRY_FLASH] = QMisc.colors.caption; 
     
     for(int x = 0; x < MAXITEMS; x++)
     {
@@ -1844,6 +1989,7 @@ int init_game()
     game->Copy(saves[currgame]);
     flushItemCache();
     
+	ResetSaveScreenSettings();
     
 //Load the quest
     //setPackfilePassword(datapwd);
@@ -2005,7 +2151,20 @@ int init_game()
     }
     
     skip_keycheats:
-    
+    //Calculate the quest's script-file-storage path -V
+	{
+		memset(qst_files_path, sizeof(qst_files_path), 0);
+		string str(qstpath);
+		size_t pos = str.find_last_of("/\\");
+		if(pos==string::npos) pos=0;
+		else ++pos;
+		size_t dotpos = str.find_last_of(".");
+		sprintf(qst_files_path,"%sFiles/%s/",get_config_string("zeldadx", qst_dir_name, "./"),str.substr(pos, dotpos-pos).c_str());
+		regulate_path(qst_files_path);
+		// zprint2("Calculated path: '%s'\n",qst_files_path);
+		// zprint2("Path creating... %s\n",create_path(qst_files_path)?"Success!":"Failure!");
+	}
+	
     bool firstplay = (game->get_hasplayed() == 0);
     
     BSZ = get_bit(quest_rules,qr_BSZELDA)!=0;
@@ -2026,7 +2185,7 @@ int init_game()
     {
         game->set_continue_dmap(zinit.start_dmap);
         resetItems(game,&zinit,true);
-	if ( FFCore.getQuestHeaderInfo(vZelda) < 0x190 ) { game->set_maxbombs(8); al_trace("Starting bombs set to %d for a quest made in ZC %x\n", game->get_maxbombs(), FFCore.getQuestHeaderInfo(vZelda)); }
+	if ( FFCore.getQuestHeaderInfo(vZelda) < 0x190 ) { game->set_maxbombs(8); al_trace("Starting bombs set to %d for a quest made in ZC %x\n", game->get_maxbombs(), (unsigned)FFCore.getQuestHeaderInfo(vZelda)); }
     }
     
     previous_DMap = currdmap = warpscr = worldscr=game->get_continue_dmap();
@@ -2110,6 +2269,140 @@ int init_game()
     }
 */
     global_wait=0;
+    
+    //show quest metadata when loading it
+	{
+		
+		zprint2("\n");
+		zprint2("[ZQUEST CREATOR METADATA]\n");
+		if ( FFCore.quest_format[qQuestNumber] > 0 ) zprint2("Quest Number %d of this Module\n", FFCore.quest_format[qQuestNumber]);
+		if ( QHeader.new_version_id_main > 0 )
+		{
+			zprint2("Last saved in ZC Editor Version: (%d,%d,%d,%d) ", QHeader.new_version_id_main,QHeader.new_version_id_second,QHeader.new_version_id_third,QHeader.new_version_id_fourth);
+		}
+		else
+		{
+			switch ( QHeader.zelda_version )
+			{
+				case 0x255:
+				{
+					switch(QHeader.build)
+					{
+						default:
+						zprint2("Last saved in ZC Editor Version: 2.55.0, Alpha Build ID: %d\n", QHeader.build); break;	
+					}
+					break;
+				}
+				case 0x254:
+				{
+					switch(QHeader.build)
+					{
+						default:
+						zprint2("Last saved in ZC Editor Version: 2.54.0, Alpha Build ID: %d\n", QHeader.build); break;	
+					}
+					break;
+				}
+				case 0x250:
+				{
+					switch(QHeader.build)
+					{
+						case 19:
+							zprint2("Last saved in ZC Editor Version: 2.50.0, Gamma 1\n"); break;
+						case 20:
+							zprint2("Last saved in ZC Editor Version: 2.50.0, Gamma 2\n"); break;
+						case 21:
+							zprint2("Last saved in ZC Editor Version: 2.50.0, Gamma 3\n"); break;
+						case 22:
+							zprint2("Last saved in ZC Editor Version: 2.50.0, Gamma 4\n"); break;
+						case 23:
+							zprint2("Last saved in ZC Editor Version: 2.50.0, Gamma 5\n"); break;
+						case 24:
+							zprint2("Last saved in ZC Editor Version: 2.50.0, Release\n"); break;
+						case 25:
+							zprint2("Last saved in ZC Editor Version: 2.50.1, Gamma 1\n"); break;
+						case 26:
+							zprint2("Last saved in ZC Editor Version: 2.50.1, Gamma 2\n"); break;
+						case 27: 
+							zprint2("Last saved in ZC Editor Version: 2.50.1, Gamma 3\n"); break;
+						case 28:
+							zprint2("Last saved in ZC Editor Version: 2.50.1, Release\n"); break;
+						case 29:
+							zprint2("Last saved in ZC Editor Version: 2.50.2, Release\n"); break;
+						case 30:
+							zprint2("Last saved in ZC Editor Version: 2.50.3, Gamma 1\n"); break;
+						case 31:
+							zprint2("Last saved in ZC Editor Version: 2.53.0, Prior to Gamma 3\n"); break;
+						case 32:
+							zprint2("Last saved in ZC Editor Version: 2.53.0\n"); break;
+						case 33:
+							zprint2("Last saved in ZC Editor Version: 2.53.1\n"); break;
+						default:
+							zprint2("Last saved in ZC Editor Version: %x, Build %d\n", QHeader.zelda_version,QHeader.build); break;
+			
+					}
+					break;
+				}
+				
+				case 0x211:
+				{
+					zprint2("Last saved in ZC Editor Version: 2.11, Beta %d\n", QHeader.build); break;
+				}
+				case 0x210:
+				{
+					zprint2("Last saved in ZC Editor Version: 2.10.x\n"); 
+					if ( QHeader.build ) zprint2("Beta/Build %d\n", QHeader.build); 
+					break;
+				}
+				case 0x193:
+				{
+					zprint2("Last saved in ZC Editor Version: 1.93, Beta %d\n", QHeader.build); break;
+				}
+				case 0x192:
+				{
+					zprint2("Last saved in ZC Editor Version: 1.92, Beta %d\n", QHeader.build); break;
+				}
+				case 0x190:
+				{
+					zprint2("Last saved in ZC Editor Version: 1.90, Beta/Build %d\n", QHeader.build); break;
+				}
+				case 0x184:
+				{
+					zprint2("Last saved in ZC Editor Version: 1.84, Beta/Build %d\n", QHeader.build); break;
+				}
+				case 0x183:
+				{
+					zprint2("Last saved in ZC Editor Version: 1.83, Beta/Build %d\n", QHeader.build); break;
+				}
+				case 0x180:
+				{
+					zprint2("Last saved in ZC Editor Version: 1.80, Beta/Build %d\n", QHeader.build); break;
+				}
+				default:
+				{
+					zprint2("Last saved in ZC Editor Version: %x, Beta %d\n", QHeader.zelda_version,QHeader.build); break;
+				}
+				
+			}
+		}
+		if ( QHeader.new_version_id_alpha ) { zprint2("Alpha %d\n", QHeader.new_version_id_alpha); }
+		else if ( QHeader.new_version_id_beta ) { zprint2("Beta %d\n", QHeader.new_version_id_beta); }
+		else if ( QHeader.new_version_id_gamma ) { zprint2("Gamma %d\n", QHeader.new_version_id_gamma); }
+		else if ( QHeader.new_version_id_release ) { zprint2("Release %d\n\n", QHeader.new_version_id_release); }
+		else
+		{
+			//no specific mnetadata - Can wededuce it?
+			
+			
+		}
+		if ( QHeader.made_in_module_name[0] ) zprint2("Created with ZC Module: %s\n\n", QHeader.made_in_module_name);
+		if ( QHeader.new_version_devsig[0] ) zprint2("Developr Signoff by: %s, (ID: %d)\n", QHeader.new_version_devsig, QHeader.developerid);
+		if ( QHeader.new_version_compilername[0] ) zprint2("Compiled with: %s, (ID: %d)\n", QHeader.new_version_compilername, QHeader.compilerid);
+		if ( QHeader.new_version_compilerversion[0] ) zprint2("Compiler Version: %s, (%d,%d,%d,%d)\n", QHeader.new_version_compilerversion,QHeader.compilerversionnumber_first,QHeader.compilerversionnumber_second,QHeader.compilerversionnumber_third,QHeader.compilerversionnumber_fourth);
+		if ( QHeader.product_name[0] ) zprint2("Project ID: %s\n", QHeader.product_name);
+		if ( QHeader.new_version_id_date_day ) zprint2("\nEditor Built at date and time: %d-%d-%d at @ %s %s\n\n", QHeader.new_version_id_date_day, QHeader.new_version_id_date_month, QHeader.new_version_id_date_year, QHeader.build_timestamp, QHeader.build_timezone);
+		//al_trace("(Autogenerated) Editor Built at date and time: %s @ %s\n\n", QHeader.build_datestamp, );
+	}
+    
     FFCore.init(); ///Initialise new ffscript engine core. 
     if(!firstplay && !get_bit(quest_rules, qr_OLD_INIT_SCRIPT_TIMING))
 	{
@@ -2174,44 +2467,100 @@ int init_game()
     
     if(firstplay)
         game->set_hasplayed(1);
+    
+    if(firstplay)
+    {
+	game->awpn=0;
+	game->bwpn=0;
+	game->forced_awpn = -1; 
+	game->forced_bwpn = -1;    
+    }
         
     update_subscreens();
     
     load_Sitems(&QMisc);
     
 //load the previous weapons -DD
+    zprint2("last_quest_was_BA_subscreen prior to init is: %s\n", ((last_quest_was_BA_subscreen) ? "true" : "false") );
+    
     bool usesaved = (game->get_quest() == 0xFF); //What was wrong with firstplay?
     int apos = 0;
     int bpos = 0;
     
-    if(!get_bit(quest_rules,qr_SELECTAWPN))
+    if(last_quest_was_BA_subscreen) //Will always be false on initialising ZC Player, but will be changed when you load a quest.
     {
-        Awpn = selectSword();
-        apos = -1;
-        bpos = selectWpn_new(SEL_VERIFY_RIGHT, usesaved ? game->bwpn : 0xFF, -1);
+	if(!get_bit(quest_rules,qr_SELECTAWPN))
+	{
+		Awpn = selectSword();
+		apos = -1;
+		bpos = selectWpn_new(SEL_VERIFY_RIGHT, usesaved ? game->bwpn : 0xFF, -1);
+		directItem = -1;
+		directItemA = directItem; 
+	}
+	else
+	{
+		apos = selectWpn_new(SEL_VERIFY_RIGHT, usesaved ? game->awpn : 0xFF);
+		bpos = selectWpn_new(SEL_VERIFY_RIGHT, usesaved ? game->bwpn : 0xFF, apos);
+        
+		if(bpos==0xFF)
+		{
+			bpos=apos;
+			apos=-1;
+		}
+        
+		Awpn = Bweapon(apos); //Bweapon() sets directItem
+		directItemA = directItem;
+	}
+    
+	game->awpn = apos;
+	game->bwpn = bpos;
+	Bwpn = Bweapon(bpos);
+	directItemB = directItem;
+	//directItemA = directItem; 
+	//Doing this in an A+B quest will stop A-items from working on first screen of the game init/firstplay. -Z
+	//if(!get_bit(quest_rules,qr_SELECTAWPN)) directItemA = directItem; 
+	update_subscr_items();
+    
+	reset_subscr_items();
     }
-    else
+    else //old stuff from DD, use it if playing a B-Only quest after another B-Only quest
     {
-        apos = selectWpn_new(SEL_VERIFY_RIGHT, usesaved ? game->awpn : 0xFF);
-        bpos = selectWpn_new(SEL_VERIFY_RIGHT, usesaved ? game->bwpn : 0xFF, apos);
+	if(!get_bit(quest_rules,qr_SELECTAWPN))
+	{
+		Awpn = selectSword();
+		apos = -1;
+		bpos = selectWpn_new(SEL_VERIFY_RIGHT, usesaved ? game->bwpn : 0xFF, -1);
+		directItem = -1;
+		directItemA = directItem; 
+	}
+	else
+	{
+		apos = selectWpn_new(SEL_VERIFY_RIGHT, usesaved ? game->awpn : 0xFF);
+		bpos = selectWpn_new(SEL_VERIFY_RIGHT, usesaved ? game->bwpn : 0xFF, apos);
         
-        if(bpos==0xFF)
-        {
-            bpos=apos;
-            apos=-1;
-        }
+		if(bpos==0xFF)
+		{
+			bpos=apos;
+			apos=-1;
+		}
         
-        Awpn = Bweapon(apos);
-        directItemA = directItem;
+		Awpn = Bweapon(apos); //Bweapon() sets directItem
+		directItemA = directItem;
+	}
+    
+	game->awpn = apos;
+	game->bwpn = bpos;
+	Bwpn = Bweapon(bpos);
+	directItemB = directItem;
+	update_subscr_items();
+    
+	reset_subscr_items();    
+	    
     }
     
-    game->awpn = apos;
-    game->bwpn = bpos;
-    Bwpn = Bweapon(bpos);
-    directItemB = directItem;
-    update_subscr_items();
+    last_quest_was_BA_subscreen = get_bit(quest_rules,qr_SELECTAWPN) ? 1 : 0;
+    zprint2("last_quest_was_BA_subscreen after init is: %s\n", ((last_quest_was_BA_subscreen) ? "true" : "false") );
     
-    reset_subscr_items();
     
     
     show_subscreen_dmap_dots=true;
@@ -2616,7 +2965,7 @@ void do_magic_casting()
         
         if(magiccastclk==64)
         {
-            Lwpns.add(new weapon((fix)LinkX(),(fix)(-32),(fix)LinkZ(),wPhantom,pDINSFIREROCKETRETURN,0,down, magicitem, Link.getUID()));
+            Lwpns.add(new weapon((zfix)LinkX(),(zfix)(-32),(zfix)LinkZ(),wPhantom,pDINSFIREROCKETRETURN,0,down, magicitem, Link.getUID()));
             weapon *w1 = (weapon*)(Lwpns.spr(Lwpns.Count()-1));
             w1->step=4;
             //          Link.tile=29;
@@ -2647,8 +2996,8 @@ void do_magic_casting()
             for(int flamecounter=((-1)*(flamemax/2))+1; flamecounter<=((flamemax/2)+1); flamecounter++)
             {
 		    //din't fire level fix to go here
-                //Lwpns.add(new weapon((fix)LinkX(),(fix)LinkY(),(fix)LinkZ(),wFire,3,itemsbuf[magicitem].power*DAMAGE_MULTIPLIER,
-                Lwpns.add(new weapon((fix)LinkX(),(fix)LinkY(),(fix)LinkZ(),wFire,itemsbuf[magicitem].fam_type,itemsbuf[magicitem].power*DAMAGE_MULTIPLIER,
+                //Lwpns.add(new weapon((zfix)LinkX(),(zfix)LinkY(),(zfix)LinkZ(),wFire,3,itemsbuf[magicitem].power*DAMAGE_MULTIPLIER,
+                Lwpns.add(new weapon((zfix)LinkX(),(zfix)LinkY(),(zfix)LinkZ(),wFire,itemsbuf[magicitem].fam_type,itemsbuf[magicitem].power*DAMAGE_MULTIPLIER,
                                      isSideViewGravity() ? (flamecounter<flamemax ? left : right) : 0, magicitem, Link.getUID()));
                 weapon *w = (weapon*)(Lwpns.spr(Lwpns.Count()-1));
 		    w->linked_parent = itemsbuf[magicitem].family;
@@ -2779,10 +3128,10 @@ void do_magic_casting()
         // See also Link.cpp, LinkClass::checkhit().
         if(magiccastclk==0)
         {
-            Lwpns.add(new weapon(LinkX(),LinkY(),(fix)0,wPhantom,pNAYRUSLOVEROCKET1,0,left, magicitem, Link.getUID()));
+            Lwpns.add(new weapon(LinkX(),LinkY(),(zfix)0,wPhantom,pNAYRUSLOVEROCKET1,0,left, magicitem, Link.getUID()));
             weapon *w1 = (weapon*)(Lwpns.spr(Lwpns.Count()-1));
             w1->step=4;
-            Lwpns.add(new weapon(LinkX(),LinkY(),(fix)0,wPhantom,pNAYRUSLOVEROCKET2,0,right, magicitem, Link.getUID()));
+            Lwpns.add(new weapon(LinkX(),LinkY(),(zfix)0,wPhantom,pNAYRUSLOVEROCKET2,0,right, magicitem, Link.getUID()));
             w1 = (weapon*)(Lwpns.spr(Lwpns.Count()-1));
             w1->step=4;
             //          Link.tile=(BSZ)?32:29;
@@ -2807,10 +3156,10 @@ void do_magic_casting()
             }
             
             int d=zc_max(LinkX(),256-LinkX())+32;
-            Lwpns.add(new weapon((fix)(LinkX()-d),(fix)LinkY(),(fix)LinkZ(),wPhantom,pNAYRUSLOVEROCKETRETURN1,0,right, magicitem,Link.getUID()));
+            Lwpns.add(new weapon((zfix)(LinkX()-d),(zfix)LinkY(),(zfix)LinkZ(),wPhantom,pNAYRUSLOVEROCKETRETURN1,0,right, magicitem,Link.getUID()));
             weapon *w1 = (weapon*)(Lwpns.spr(Lwpns.Count()-1));
             w1->step=4;
-            Lwpns.add(new weapon((fix)(LinkX()+d),(fix)LinkY(),(fix)LinkZ(),wPhantom,pNAYRUSLOVEROCKETRETURN2,0,left, magicitem,Link.getUID()));
+            Lwpns.add(new weapon((zfix)(LinkX()+d),(zfix)LinkY(),(zfix)LinkZ(),wPhantom,pNAYRUSLOVEROCKETRETURN2,0,left, magicitem,Link.getUID()));
             w1 = (weapon*)(Lwpns.spr(Lwpns.Count()-1));
             w1->step=4;
             //          Link.tile=29;
@@ -2910,12 +3259,12 @@ void update_hookshot()
                 if(abs(hs_dx)>=hs_xdist+8)
                 {
                     hs_xdist=abs(hs_x-hs_startx);
-                    chainlinks.add(new weapon((fix)hs_x, (fix)hs_y, (fix)hs_z,wHSChain, 0,0,Link.getDir(), parentitem,Link.getUID()));
+                    chainlinks.add(new weapon((zfix)hs_x, (zfix)hs_y, (zfix)hs_z,wHSChain, 0,0,Link.getDir(), parentitem,Link.getUID()));
                 }
                 else if(abs(hs_dy)>=hs_ydist+8)
                 {
                     hs_ydist=abs(hs_y-hs_starty);
-                    chainlinks.add(new weapon((fix)hs_x, (fix)hs_y, (fix)hs_z,wHSChain, 0,0,Link.getDir(), parentitem,Link.getUID()));
+                    chainlinks.add(new weapon((zfix)hs_x, (zfix)hs_y, (zfix)hs_z,wHSChain, 0,0,Link.getDir(), parentitem,Link.getUID()));
                 }
             }                                                     //stretching chain
             else
@@ -3113,6 +3462,64 @@ void game_loop()
 		//that a script can read it before Waitdraw(). --I want it to go stale at the end of a frame.
 		//I suppose I will need to do this inside the script engine, and not the game_loop() ? -Z
 	
+    if((pause_in_background && callback_switchin && midi_patch_fix))
+    {
+	
+	if(currmidi!=0)
+	{
+		
+		if(callback_switchin == 2) 
+		{
+			if ( currmidi != 0 )
+			{
+				int digi_vol, midi_vol;
+			
+				get_volume(&digi_vol, &midi_vol);
+				stop_midi();
+				jukebox(currmidi);
+				set_volume(digi_vol, midi_vol);
+				midi_seek(paused_midi_pos);
+				
+				
+				
+			}
+			midi_paused=false;
+			midi_suspended = midissuspNONE;
+			callback_switchin = 0;
+		}
+		if(callback_switchin == 1) 
+		{
+			paused_midi_pos = midi_pos;
+			midi_paused=true;
+			stop_midi();
+			++callback_switchin;
+		}
+	}
+	else //no MIDI playing
+	{
+		callback_switchin = 0;
+	}
+    }
+    
+    else if(midi_suspended==midissuspRESUME )
+    {
+	if ( currmidi != 0 )
+	{
+		
+		int digi_vol, midi_vol;
+	
+		get_volume(&digi_vol, &midi_vol);
+		stop_midi();
+		jukebox(currmidi);
+		set_volume(digi_vol, midi_vol);
+		midi_seek(paused_midi_pos);
+		
+		
+	}
+	midi_paused=false;
+	midi_suspended = midissuspNONE;
+	    
+    }
 	
 	//  walkflagx=0; walkflagy=0;
 	runDrunkRNG();
@@ -3190,6 +3597,11 @@ void game_loop()
     {
         ZScriptVersion::RunScript(SCRIPT_PASSIVESUBSCREEN, DMaps[currdmap].passive_sub_script,currdmap);
     }
+    if ( !FFCore.system_suspend[susptCOMBOSCRIPTS] && FFCore.getQuestHeaderInfo(vZelda) >= 0x255 )
+    {
+	FFCore.combo_script_engine(false);    
+    }
+    
     
     if(!freeze && !freezemsg)
     {
@@ -3248,6 +3660,8 @@ void game_loop()
 		    {
 			if(!Quit)
 			{
+			    //set a B item hack
+			    //Bwpn = Bweapon(Bpos);
 			    Quit = qGAMEOVER;
 			}
 			
@@ -3341,15 +3755,11 @@ void game_loop()
 		passive_subscreen_waitdraw = false;
 	}
     
+    
     if ( !FFCore.system_suspend[susptSCREENSCRIPTS] && tmpscr->script != 0 && tmpscr->doscript && tmpscr->screen_waitdraw && FFCore.getQuestHeaderInfo(vZelda) >= 0x255 )
     {
 	ZScriptVersion::RunScript(SCRIPT_SCREEN, tmpscr->script, 0);  
 	tmpscr->screen_waitdraw = 0;	    
-    }
-    
-    if ( !FFCore.system_suspend[susptCOMBOSCRIPTS] && FFCore.getQuestHeaderInfo(vZelda) >= 0x255 )
-    {
-	FFCore.combo_script_engine(false);    
     }
     
     for ( int q = 0; q < 32; ++q )
@@ -3364,6 +3774,11 @@ void game_loop()
 			tmpscr->ffcswaitdraw &= ~(1<<q);
 		}
 	}
+    }
+    
+    if ( !FFCore.system_suspend[susptCOMBOSCRIPTS] && FFCore.getQuestHeaderInfo(vZelda) >= 0x255 )
+    {
+	FFCore.combo_script_engine_waitdraw(false);    
     }
     
     //Waitdraw for item scripts. 
@@ -4038,7 +4453,8 @@ int onFullscreen()
 	    set_palette(oldpal);
 	    gui_mouse_focus=0;
 	    show_mouse(screen);
-	    set_display_switch_mode(fullscreen?SWITCH_BACKAMNESIA:SWITCH_BACKGROUND);
+	    int switch_type = pause_in_background ? SWITCH_PAUSE : SWITCH_BACKGROUND;
+	    set_display_switch_mode(fullscreen?SWITCH_BACKAMNESIA:switch_type);
 	//	set_display_switch_callback(SWITCH_OUT, switch_out_callback);/
 	//	set_display_switch_callback(SWITCH_IN,switch_in_callback);
 
@@ -4167,26 +4583,7 @@ int main(int argc, char* argv[])
             exit(1);
         }
         
-        int len=strlen(standalone_quest);
-        
-        for(int i=0; i<len; i++)
-        {
-#ifdef _ALLEGRO_WINDOWS
-        
-            if(standalone_quest[i]=='/')
-            {
-                standalone_quest[i]='\\';
-            }
-            
-#else
-            
-            if(standalone_quest[i]=='\\')
-            {
-                standalone_quest[i]='/';
-            }
-            
-#endif
-        }
+		regulate_path(standalone_quest);
     }
     
     //turn on MSVC memory checks
@@ -4210,6 +4607,8 @@ int main(int argc, char* argv[])
     }
     
 #endif
+    
+    
     
     PopulateInitDialog();
     //FFScript::init();
@@ -4282,6 +4681,13 @@ int main(int argc, char* argv[])
     }
 #endif
     
+    //ZC Menu Position
+    zc_menu_on_left = get_config_int("zeldadx","zc_menu_on_left",0);
+    if ( zc_menu_on_left )
+    {
+	memcpy(the_player_menu, the_player_menu_zc_on_left, sizeof(MENU)*(DEVLEVEL>0 ? 9 : 8) );
+	memcpy(the_player_menu2, the_player_menu_zc_on_left2, sizeof(MENU)*(DEVLEVEL>0 ? 8 : 7));    
+    }
     
     //Set up MODULES: This must occur before trying to load the default quests, as the 
     //data for quest names and so forth is set by the MODULE file!
@@ -4306,7 +4712,89 @@ int main(int argc, char* argv[])
     {
 	FFCore.ZScriptConsole(true);
     }
+
+#else //Unix
+
+    if(zscript_debugger)
+    { // Let's try making a console for Linux -Z
+	int termflags = 0;
+	termflags |= O_RDWR; //Open the device for both reading and writing.
+	//termflags |= O_NOCTTY; //Do not make this device the controlling terminal for the process.
+	pt = posix_openpt(termflags);
+	if (pt == -1)
+	{
+		Z_error("Could not open pseudo terminal; error number: %d.\n", errno);
+		use_debug_console = 0; goto no_lx_console;
+	}
+	ptname = ptsname(pt);
+	if (!ptname)
+	{
+		Z_error("Could not get pseudo terminal device name.\n");
+		close(pt);
+		use_debug_console = 0; goto no_lx_console;
+	}
+
+	if (unlockpt(pt) == -1)
+	{
+		Z_error("Could not get pseudo terminal device name.\n");
+		close(pt);
+		use_debug_console = 0; goto no_lx_console;
+	}
+
+	lxconsole_oss << "xterm -S" << (strrchr(ptname, '/')+1) << "/" << pt << " &";
+	system(lxconsole_oss.str().c_str());
+
+	int xterm_fd = open(ptname,termflags); //This also needs the O_NOCTTY flag. See: https://man7.org/linux/man-pages/man3/open.3p.html
+	{
+		char c = 0; int tries = 10000; 
+		do 
+		{
+			read(xterm_fd, &c, 1); 
+			--tries;
+		} while (c!='\n' && tries > 0);
+	}
+
+	if (dup2(pt, 1) <0)
+	{
+		Z_error("Could not redirect standard output.\n");
+		close(pt);
+		use_debug_console = 0; goto no_lx_console;
+	}
+	if (dup2(pt, 2) <0)
+	{
+		Z_error("Could not redirect standard error output.\n");
+		close(pt);
+		use_debug_console = 0; goto no_lx_console;
+	}
+    } //this is in a block because I want it in a block. -Z
+    else
+    {
+	al_trace("Linux console disabled by user.\n");
+    }
     
+    no_lx_console:
+    {
+	    //Z_error("Could not open Linux console.\n");
+    }
+    
+    
+	std::cout << "\n       _____   ____                  __ \n";
+	std::cout << "      /__  /  / __ \\__  _____  _____/ /_\n";
+	std::cout << "        / /  / / / / / / / _ \\/ ___/ __/\n";
+	std::cout << "       / /__/ /_/ / /_/ /  __(__  ) /_ \n";
+	std::cout << "      /____/\\___\\_\\__,_/\\___/____/\\__/\n\n";
+	
+	std::cout << "Quest Data Logging & ZScript Debug Console\n";
+	std::cout << "ZConsole for Linux\n\n";
+    
+	if ( FFCore.getQuestHeaderInfo(vZelda) > 0 )
+	{
+		printf("Quest Made in ZC Version %x, Build %d\n", FFCore.getQuestHeaderInfo(vZelda), FFCore.getQuestHeaderInfo(vBuild));
+	}
+	else
+	{
+		printf("%s, Version %s\n", ZC_PLAYER_NAME, ZC_PLAYER_V);
+	}
 #endif
     
     if(install_timer() < 0)
@@ -4558,6 +5046,7 @@ int main(int argc, char* argv[])
     skip_title = used_switch(argc, argv, "-notitle") > 0;
     int save_arg = used_switch(argc,argv,"-savefile");
     
+    int checked_epilepsy = get_config_int("zeldadx","checked_epilepsy",0);
     /*
     if ( !strcmp(get_config_string("zeldadx","debug",""),"") )
     {
@@ -4579,26 +5068,7 @@ int main(int argc, char* argv[])
         SAVE_FILE = (char *)zc_malloc(2048);
         sprintf(SAVE_FILE, "%s", argv[save_arg+1]);
         
-        int len=strlen(SAVE_FILE);
-        
-        for(int i=0; i<len; i++)
-        {
-#ifdef _ALLEGRO_WINDOWS
-        
-            if(SAVE_FILE[i]=='/')
-            {
-                SAVE_FILE[i]='\\';
-            }
-            
-#else
-            
-            if(SAVE_FILE[i]=='\\')
-            {
-                SAVE_FILE[i]='/';
-            }
-            
-#endif
-        }
+		regulate_path(SAVE_FILE);
     }
     
     
@@ -4895,14 +5365,54 @@ int main(int argc, char* argv[])
         can_triplebuffer_in_windowed_mode = 1;
         Z_message("used switch: -triplebuffer\n");
     }
-    
+	
     const int wait_ms_on_set_graphics = 20; //formerly 250. -Gleeok
     
     // quick quit
     if(used_switch(argc,argv,"-q"))
     {
         printf("-q switch used, quitting program.\n");
-        goto quick_quit;
+        //restore user volume settings
+	if ( FFCore.coreflags&FFCORE_SCRIPTED_MIDI_VOLUME )
+	{
+		master_volume(-1,((long)FFCore.usr_midi_volume));
+	}
+	if ( FFCore.coreflags&FFCORE_SCRIPTED_DIGI_VOLUME )
+	{
+		master_volume((long)(FFCore.usr_digi_volume),1);
+	}
+	if ( FFCore.coreflags&FFCORE_SCRIPTED_MUSIC_VOLUME )
+	{
+		emusic_volume = (long)FFCore.usr_music_volume;
+	}
+	if ( FFCore.coreflags&FFCORE_SCRIPTED_SFX_VOLUME )
+	{
+		sfx_volume = (long)FFCore.usr_sfx_volume;
+	}
+	if ( FFCore.coreflags&FFCORE_SCRIPTED_PANSTYLE )
+	{
+		pan_style = (long)FFCore.usr_panstyle;
+	}
+	show_saving(screen);
+	save_savedgames();
+	save_game_configs();
+	Triplebuffer.Destroy();
+	set_gfx_mode(GFX_TEXT,80,25,0,0);
+	    //rest(250); // ???
+	    //  if(useCD)
+	    //    cd_exit();
+	quit_game();
+	Z_message("Armageddon Games web site: http://www.armageddongames.com\n");
+	Z_message("Zelda Classic web site: http://www.zeldaclassic.com\n");
+	Z_message("Zelda Classic wiki: http://www.shardstorm.com/ZCwiki/\n");
+	    
+	__zc_debug_malloc_free_print_memory_leaks(); //this won't do anything without debug_malloc_logging defined.
+	skipcont = 0;
+	if(forceExit) //fix for the allegro at_exit() hang.
+		exit(0);
+		
+	allegro_exit();
+	return 0;
     }
     
     // set video mode
@@ -5000,8 +5510,8 @@ int main(int argc, char* argv[])
     }
     
     sbig = (screen_scale > 1);
-    set_display_switch_mode(is_windowed_mode()?SWITCH_BACKGROUND:SWITCH_BACKAMNESIA);
-    zq_screen_w = resx;
+    int switch_type = pause_in_background ? SWITCH_PAUSE : SWITCH_BACKGROUND;
+    set_display_switch_mode(is_windowed_mode()?SWITCH_PAUSE:switch_type);zq_screen_w = resx;
     zq_screen_h = resy;
     
     real_screen = screen;
@@ -5039,15 +5549,38 @@ int main(int argc, char* argv[])
         }
     }
     
+    if(!checked_epilepsy)
+    {
+	    if(jwin_alert("EPILEPSY Options",
+			  "Do you desire epilepsy protection?",
+			  "This will reduce the intensity of flashing effects",
+			  "and reduce the amplitude of way screen effects.",
+			  "No","Yes",13,27,lfont)!=1)
+	    {
+		epilepsyFlashReduction = 1;
+		set_config_int("zeldadx","checked_epilepsy",1);
+		save_game_configs();
+	    }
+	    else
+	    {
+		set_config_int("zeldadx","checked_epilepsy",1);
+		save_game_configs();
+	    }
+	    checked_epilepsy = 1;
+    }
+    
+    //set switching/focus mode -Z
+    set_display_switch_mode(is_windowed_mode()?(pause_in_background ? SWITCH_PAUSE : SWITCH_BACKGROUND):SWITCH_BACKAMNESIA);
+    
 // load saved games
     Z_message("Loading saved games... ");
-    
+    zprint2("Loading Saved Games\n");
     if(load_savedgames() != 0)
     {
         Z_error("Insufficient memory");
         quit_game();
     }
-    
+    zprint2("Finished Loading Saved Games\n");
     Z_message("OK\n");
     
 #ifdef _WIN32
@@ -5136,10 +5669,16 @@ int main(int argc, char* argv[])
 		switch(Quit)
 		{
 			case qSAVE:
-			case qSAVECONT:
-			case qCONT:
+			
 			case qQUIT:
 			case qGAMEOVER:
+			case qRELOAD:
+				//set a B item hack
+				//Bwpn = Bweapon(Bpos);
+				//game->bwpn = Bpos;
+				//directItemB = directItem;
+			case qCONT:
+			case qSAVECONT:
 			{
 				playing_field_offset=56; // Fixes an issue with Link being drawn wrong when quakeclk>0
 				show_subscreen_dmap_dots=true;
@@ -5220,6 +5759,22 @@ int main(int argc, char* argv[])
 				ending();
 			}
 			break;
+			
+			case qINCQST:
+			{
+				Link.setDontDraw(true);
+				//Link.setCharging(0);//don't have the sword out during the ending. 
+				//Link.setSwordClk(0);
+				show_subscreen_dmap_dots=true;
+				show_subscreen_numbers=true;
+				show_subscreen_items=true;
+				show_subscreen_life=true;
+		
+				initZScriptGlobalRAM();
+				ZScriptVersion::RunScript(SCRIPT_GLOBAL, GLOBAL_SCRIPT_END);
+				ending_scripted();
+			}
+			break;
 		}
         FFCore.deallocateAllArrays(SCRIPT_GLOBAL, GLOBAL_SCRIPT_END);
 		//Restore original palette before exiting for any reason!
@@ -5230,6 +5785,8 @@ int main(int argc, char* argv[])
 		{
 			memset(disabledKeys, 0, sizeof(disabledKeys));
 			memset(disable_control, 0, sizeof(disable_control));
+			FFCore.user_files_init(); //Clear open FILE*!
+			FFCore.user_bitmaps_init(); //Clear open bitmaps
 		}
 		//Deallocate ALL ZScript arrays on ANY exit.
 		FFCore.deallocateAllArrays();
@@ -5244,7 +5801,6 @@ int main(int argc, char* argv[])
     music_stop();
     kill_sfx();
     
-quick_quit:
     //restore user volume settings
 	if ( FFCore.coreflags&FFCORE_SCRIPTED_MIDI_VOLUME )
 	{

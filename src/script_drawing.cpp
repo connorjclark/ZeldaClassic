@@ -13,6 +13,9 @@
 #include "tiles.h"
 #include "zelda.h"
 #include "ffscript.h"
+#include "util.h"
+#include "subscr.h"
+using namespace util;
 extern FFScript FFCore;
 extern ZModule zcm;
 extern refInfo *ri;
@@ -49,12 +52,6 @@ template<class T> inline
 fixed radians_to_fixed(T d)
 {
     return ftofix(RadtoFix(d));
-}
-
-inline bool file_exists(const char *filename) 
-{
-	std::ifstream ifile(filename);
-	return (bool)ifile;
 }
 
 BITMAP* ScriptDrawingBitmapPool::_parent_bmp = 0;
@@ -2178,6 +2175,62 @@ void do_drawstringr(BITMAP *bmp, int i, int *sdci, int xoffset, int yoffset)
         {
             textout_ex(bmp, font, str->c_str(), x+xoffset, y+yoffset, color, bg_color);
         }
+    }
+}
+
+void do_drawstringr2(BITMAP *bmp, int i, int *sdci, int xoffset, int yoffset)
+{
+    //sdci[1]=layer
+    //sdci[2]=x
+    //sdci[3]=y
+    //sdci[4]=font
+    //sdci[5]=color
+    //sdci[6]=bg color
+    //sdci[7]=format_option
+    //sdci[8]=string
+    //sdci[9]=opacity
+	//sdci[10]=shadowtype
+	//sdci[11]=shadow_color
+    
+    std::string* str = (std::string*)script_drawing_commands[i].GetPtr();
+    
+    if(!str)
+    {
+        al_trace("String pointer is null! Internal error. \n");
+        return;
+    }
+    
+    int x=sdci[2]/10000;
+    int y=sdci[3]/10000;
+    FONT* font=get_zc_font(sdci[4]/10000);
+    int color=sdci[5]/10000;
+    int bg_color=sdci[6]/10000; //-1 = transparent
+    int format_type=sdci[7]/10000;
+    int opacity=sdci[9]/10000;
+	int textstyle = sdci[10]/10000;
+	int shadow_color = sdci[11]/10000;
+    //sdci[8] not needed :)
+    
+    //safe check
+    if(bg_color < -1) bg_color = -1;
+    
+    if(opacity < 128)
+    {
+        int width=zc_min(text_length(font, str->c_str()), 512);
+        BITMAP *pbmp = create_sub_bitmap(prim_bmp, 0, 0, width, text_height(font));
+        clear_bitmap(pbmp);
+		textout_styled_aligned_ex(pbmp, font, str->c_str(), 0, 0, textstyle, sstaLEFT, color, shadow_color, bg_color);
+        textout_ex(pbmp, font, str->c_str(), 0, 0, color, bg_color);
+        if(format_type == 2)   // right-sided text
+            x-=width;
+        else if(format_type == 1)   // centered text
+            x-=width/2;
+        draw_trans_sprite(bmp, pbmp, x+xoffset, y+yoffset);
+        destroy_bitmap(pbmp);
+    }
+    else // no opacity
+    {
+        textout_styled_aligned_ex(bmp, font, str->c_str(), x+xoffset, y+yoffset, textstyle, format_type, color, shadow_color, bg_color);
     }
 }
 
@@ -5530,6 +5583,72 @@ void bmp_do_drawstringr(BITMAP *bmp, int i, int *sdci, int xoffset, int yoffset)
     }
 }
 
+void bmp_do_drawstringr2(BITMAP *bmp, int i, int *sdci, int xoffset, int yoffset)
+{
+    //sdci[1]=layer
+    //sdci[2]=x
+    //sdci[3]=y
+    //sdci[4]=font
+    //sdci[5]=color
+    //sdci[6]=bg color
+    //sdci[7]=format_option
+    //sdci[8]=string
+    //sdci[9]=opacity
+	//sdci[10]=shadowtype
+	//sdci[11]=shadow_color
+	//sdci[17] Bitmap Pointer
+    if ( sdci[17] <= 0 )
+    {
+	Z_scripterrlog("bitmap->DrawString() wanted to write to an invalid bitmap id: %d. Aborting.\n", sdci[17]);
+	return;
+    }
+	
+	BITMAP *refbmp = FFCore.GetScriptBitmap(sdci[17]-10);
+	if ( refbmp == NULL ) return;
+    
+    if ( (sdci[17]-10) != -2 && (sdci[17]-10) != -1 ) yoffset = 0; //Don't crop. 
+    
+    std::string* str = (std::string*)script_drawing_commands[i].GetPtr();
+    
+    if(!str)
+    {
+        al_trace("String pointer is null! Internal error. \n");
+        return;
+    }
+    
+    int x=sdci[2]/10000;
+    int y=sdci[3]/10000;
+    FONT* font=get_zc_font(sdci[4]/10000);
+    int color=sdci[5]/10000;
+    int bg_color=sdci[6]/10000; //-1 = transparent
+    int format_type=sdci[7]/10000;
+    int opacity=sdci[9]/10000;
+	int textstyle = sdci[10]/10000;
+	int shadow_color = sdci[11]/10000;
+    //sdci[8] not needed :)
+    
+    //safe check
+    if(bg_color < -1) bg_color = -1;
+    
+    if(opacity < 128)
+    {
+        int width=zc_min(text_length(font, str->c_str()), 512);
+        BITMAP *pbmp = create_sub_bitmap(prim_bmp, 0, 0, width, text_height(font));
+        clear_bitmap(pbmp);
+        textout_styled_aligned_ex(pbmp, font, str->c_str(), 0, 0, textstyle, sstaLEFT, color, shadow_color, bg_color);
+        if(format_type == 2)   // right-sided text
+            x-=width;
+        else if(format_type == 1)   // centered text
+            x-=width/2;
+        draw_trans_sprite(refbmp, pbmp, x+xoffset, y+yoffset);
+        destroy_bitmap(pbmp);
+    }
+    else // no opacity
+    {
+        textout_styled_aligned_ex(refbmp, font, str->c_str(), x+xoffset, y+yoffset, textstyle, format_type, color, shadow_color, bg_color);
+    }
+}
+
 void bmp_do_clearr(BITMAP *bmp, int *sdci, int xoffset, int yoffset)
 {
     //sdci[1]=layer
@@ -5608,12 +5727,11 @@ void bmp_do_readr(BITMAP *bmp, int i, int *sdci, int xoffset, int yoffset)
 	//Z_scripterrlog("bitmap->Read() pointer is: %d\n", sdci[17]);
     if ( sdci[17] <= 0 )
     {
-	Z_scripterrlog("bitmap->Read() wanted to use to an invalid bitmap id: %d. Aborting.\n", sdci[17]);
-	return;
+		Z_scripterrlog("bitmap->Read() wanted to use to an invalid bitmap id: %d. Aborting.\n", sdci[17]);
+		return;
     }
 	int bitid = sdci[17] - 10; 
-	if ( scb.script_created_bitmaps[bitid].u_bmp )
-		destroy_bitmap(scb.script_created_bitmaps[bitid].u_bmp);
+	scb.script_created_bitmaps[bitid].destroy();
     
     std::string* str = (std::string*)script_drawing_commands[i].GetPtr();
     
@@ -5631,7 +5749,7 @@ void bmp_do_readr(BITMAP *bmp, int i, int *sdci, int xoffset, int yoffset)
    // Z_scripterrlog("Trying to read filename %s\n", cptr);
     PALETTE tempPal;
     get_palette(tempPal);
-    if ( file_exists(str->c_str()) )
+    if ( checkPath(str->c_str(), false) )
     {
 	    scb.script_created_bitmaps[bitid].u_bmp = load_bitmap(str->c_str(), tempPal);
 	    scb.script_created_bitmaps[bitid].width = scb.script_created_bitmaps[bitid].u_bmp->w;
@@ -5644,7 +5762,7 @@ void bmp_do_readr(BITMAP *bmp, int i, int *sdci, int xoffset, int yoffset)
 	    }
 	    else 
 	    {
-		    Z_scripterrlog("Read image file %s\n",str->c_str());
+		    zprint("Read image file %s\n",str->c_str());
 	    }
     }
     else
@@ -5681,6 +5799,7 @@ void bmp_do_writer(BITMAP *bmp, int i, int *sdci, int xoffset, int yoffset)
     if ( !scb.script_created_bitmaps[bitid].u_bmp ) 
     {
 	    Z_scripterrlog("Tried to write from an invalid bitmap pointer %d. Aborting. \n", sdci[17]);
+		return;
     }
     
     bool overwrite = (sdci[3] != 0);
@@ -5705,12 +5824,26 @@ void bmp_do_writer(BITMAP *bmp, int i, int *sdci, int xoffset, int yoffset)
 	{
 		Z_scripterrlog("No extension, or invalid extension provided for writing bitmap file %s. Could not write the file.\nValid types are .png, .gif, .pcx, .tgx, and .bmp. Aborting.\n",str->c_str());
 	}
-	else if ( overwrite || (!file_exists(str->c_str())) )
+	else if ( overwrite || (!checkPath(str->c_str(), false)) )
 	{
-		save_bitmap(str->c_str(), scb.script_created_bitmaps[bitid].u_bmp, RAMpal);
-		Z_scripterrlog("Wrote image file %s\n",str->c_str());
+		if(create_path(str->c_str()))
+		{
+			save_bitmap(str->c_str(), scb.script_created_bitmaps[bitid].u_bmp, RAMpal);
+			if(checkPath(str->c_str(), false))
+			{
+				zprint("Wrote image file %s\n",str->c_str());
+			}
+			else
+			{
+				Z_scripterrlog("Failed to create file '%s'\n",str->c_str());
+			}
+		}
+		else
+		{
+			Z_scripterrlog("Cannot write file '%s' because the directory does not exist, and could not be created.\n", str->c_str());
+		}
 	}
-	else Z_scripterrlog("Cannot write file %s because the file already exists in the specified path.\n", str->c_str());
+	else Z_scripterrlog("Cannot write file '%s' because the file already exists in the specified path.\n", str->c_str());
 }
 
 
@@ -10700,6 +10833,12 @@ void do_primitives(BITMAP *targetBitmap, int type, mapscr* theScreen, int xoff, 
         }
         break;
         
+        case DRAWSTRINGR2:
+        {
+            do_drawstringr2(bmp, i, sdci, xoffset, yoffset);
+        }
+        break;
+        
         case QUADR:
         {
             do_drawquadr(bmp, sdci, xoffset, yoffset);
@@ -10771,6 +10910,7 @@ void do_primitives(BITMAP *targetBitmap, int type, mapscr* theScreen, int xoff, 
 	case 	BMPDRAWCHARR: bmp_do_drawcharr(bmp, sdci, xoffset, yoffset); break;
 	case 	BMPDRAWINTR: bmp_do_drawintr(bmp, sdci, xoffset, yoffset); break;
 	case 	BMPDRAWSTRINGR: bmp_do_drawstringr(bmp, i, sdci, xoffset, yoffset); break;
+	case 	BMPDRAWSTRINGR2: bmp_do_drawstringr2(bmp, i, sdci, xoffset, yoffset); break;
 	case 	BMPQUADR: bmp_do_drawquadr(bmp, sdci, xoffset, yoffset); break;
 	case 	BMPQUAD3DR: bmp_do_drawquad3dr(bmp, i, sdci, xoffset, yoffset); break;
 		
@@ -10808,3 +10948,29 @@ void do_primitives(BITMAP *targetBitmap, int type, mapscr* theScreen, int xoff, 
     color_map=&trans_table;
 }
 
+void CScriptDrawingCommands::Clear()
+{
+	scb.update();
+	if(commands.empty())
+		return;
+	
+	//only clear what was used.
+	memset((void*)&commands[0], 0, count * sizeof(CScriptDrawingCommandVars));
+	count = 0;
+	
+	draw_container.Clear();
+}
+
+void do_script_draws(BITMAP *targetBitmap, mapscr* theScreen, int xoff, int yoff, bool hideLayer7)
+{
+	if(theScreen->flags7&fLAYER3BG || DMaps[currdmap].flags&dmfLAYER3BG ) do_primitives(targetBitmap, 3, theScreen, xoff, yoff);
+	if(theScreen->flags7&fLAYER2BG || DMaps[currdmap].flags&dmfLAYER2BG ) do_primitives(targetBitmap, 2, theScreen, xoff, yoff);
+	do_primitives(targetBitmap, 0, theScreen, xoff, yoff);
+	do_primitives(targetBitmap, 1, theScreen, xoff, yoff);
+	if(!(theScreen->flags7&fLAYER2BG || DMaps[currdmap].flags&dmfLAYER2BG )) do_primitives(targetBitmap, 2, theScreen, xoff, yoff);
+	if(!(theScreen->flags7&fLAYER3BG || DMaps[currdmap].flags&dmfLAYER3BG )) do_primitives(targetBitmap, 3, theScreen, xoff, yoff);
+	do_primitives(targetBitmap, 4, theScreen, xoff, yoff);
+	do_primitives(targetBitmap, 5, theScreen, xoff, yoff);
+	do_primitives(targetBitmap, 6, theScreen, xoff, yoff);
+	if(!hideLayer7) do_primitives(targetBitmap, 7, theScreen, xoff, yoff);
+}

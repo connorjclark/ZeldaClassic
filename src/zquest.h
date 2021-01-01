@@ -10,6 +10,7 @@
 #include "sprite.h"
 #include "gamedata.h"
 #include "parser/parserDefs.h"
+#include "zfix.h"
 
 #define  INTERNAL_VERSION  0xA721
 
@@ -47,6 +48,9 @@ extern bool disable_saving, OverwriteProtection;
 extern int zq_scale, TileProtection;
 
 void setZScriptVersion(int); //Intentionally does nothing >_<
+
+extern unsigned char PreFillTileEditorPage, PreFillComboEditorPage, PreFillMapTilePage;
+extern int DMapEditorLastMaptileUsed;
 
 enum
 {
@@ -150,7 +154,7 @@ extern bool combo_cols;
 extern int alignment_arrow_timer;
 extern int  Flip,Combo,CSet,First[3];
 extern int  Flags,Flag,menutype;
-extern int MouseScroll, SavePaths, CycleOn, InvalidStatic;
+extern int MouseScroll, SavePaths, CycleOn, InvalidStatic, NoScreenPreview;
 extern int Frameskip, RequestedFPS, zqColorDepth, zqUseWin32Proc;
 extern bool Vsync, ShowFPS;
 extern int ComboBrush;                                      //show the brush instead of the normal mouse
@@ -253,12 +257,12 @@ extern bool blank_tile_quarters_table[NEWMAXTILES*4];       //keeps track of bla
 */
 extern char   fontsdat_sig[52];
 
-extern byte console_is_open;
+extern unsigned char console_is_open;
 
 // qst.cc helpers
 bool bad_version(int ver);
-fix LinkModifiedX();
-fix LinkModifiedY();
+zfix LinkModifiedX();
+zfix LinkModifiedY();
 
 extern MENU colors_menu[];
 
@@ -532,6 +536,8 @@ int onImportEWPNScript();
 int onImportGScript();
 int onCompileScript();
 int onSlotAssign();
+int onExportZASM();
+int onImportZASM();
 
 
 typedef struct item_struct
@@ -553,7 +559,7 @@ extern weapon_struct biw[wMAX];
 typedef std::pair<std::string, int> script_struct;
 void build_biitems_list();
 void build_bidcomboscripts_list();
-extern script_struct biitems[NUMSCRIPTFFC]; //item script
+extern script_struct biitems[NUMSCRIPTITEM]; //item script
 extern int biitems_cnt;
 
 
@@ -648,9 +654,9 @@ enum
     cmdPasteGuy,
     cmdHeader,
     cmdHelp,
-    cmdImportFFScript,
-    cmdImportGScript,
-    cmdImportItemScript,
+    cmdImportZASM,
+	cmdImportGScript, //Deprecated
+	cmdImportItemScript, //Deprecated
     cmdImport_Combos,
     cmdImport_DMaps,
     cmdImport_ZGP,
@@ -758,7 +764,14 @@ enum
     cmdIntegrityCheck,
     cmdSaveZQuestSettings,
     cmdOnClearQuestFilepath,
-    cmdOnScriptRules,
+    cmdFindBuggyNext,
+    cmdZScriptRules,
+    cmdExportZASM,
+    cmdHeroRules,
+    cmdZScriptCompilerRules,
+    cmdWeaponRules,
+    cmdScreenScript,
+    cmdZQSNapshot,
     cmdMAX
 };
 

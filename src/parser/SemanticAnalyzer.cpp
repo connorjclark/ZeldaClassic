@@ -94,10 +94,10 @@ void SemanticAnalyzer::analyzeFunctionInternals(Function& function)
 			case ZVARTYPEID_VOID:
 				break;
 			default:
-				DataType const& thisType = *scope->getTypeStore().getType(thisTypeId);
-				DataType const& constType = *thisType.getConstType();
+				DataType const* thisType = scope->getTypeStore().getType(thisTypeId);
+				DataType const* constType = thisType->getConstType();
 				function.thisVar =
-					BuiltinVariable::create(functionScope, constType != NULL ? constType : thisType, "this", this);
+					BuiltinVariable::create(functionScope, constType != NULL ? *constType : *thisType, "this", this);
 		}
 	}
 
@@ -196,12 +196,35 @@ void SemanticAnalyzer::caseStmtIfElse(ASTStmtIfElse& host, void*)
 	checkCast(*host.condition->getReadType(scope, this), DataType::UNTYPED, &host);
 }
 
-void SemanticAnalyzer::caseStmtSwitch(ASTStmtSwitch& host, void*)
+void SemanticAnalyzer::caseStmtSwitch(ASTStmtSwitch& host, void* param)
 {
+	bool found_int = false, found_str = false;
+	for (vector<ASTSwitchCases*>::iterator it = host.cases.begin(); it != host.cases.end(); ++it)
+	{
+		ASTSwitchCases* cases = *it;
+		if(cases->str_cases.size())
+			found_str = true;
+		if(cases->cases.size())
+			found_int = true;
+	}
+	if(found_int && found_str) //Error
+	{
+		handleError(CompileError::MixedSwitch(&host));
+		return;
+	}
+	else if(found_str)
+	{
+		host.isString = true;
+		for (vector<ASTSwitchCases*>::iterator it = host.cases.begin(); it != host.cases.end(); ++it)
+		{
+			visit(host, (*it)->str_cases, param);
+		}
+	}
+	
 	RecursiveVisitor::caseStmtSwitch(host);
 	if (breakRecursion(host)) return;
 
-	checkCast(*host.key->getReadType(scope, this), DataType::FLOAT, &host);
+	checkCast(*host.key->getReadType(scope, this), host.isString ? DataType::CHAR : DataType::FLOAT, &host);
 }
 
 void SemanticAnalyzer::caseRange(ASTRange& host, void*)
@@ -685,6 +708,30 @@ void SemanticAnalyzer::caseImportDecl(ASTImportDecl& host, void*)
 	}
 }
 
+void SemanticAnalyzer::caseImportCondDecl(ASTImportCondDecl& host, void* param)
+{
+	RecursiveVisitor::caseImportCondDecl(host, param);
+}
+
+void SemanticAnalyzer::caseAssert(ASTAssert& host, void* param)
+{
+	visit(host.expr.get(), param);
+    if (breakRecursion(host)) return;
+	long val = *(host.expr->getCompileTimeValue(this, scope));
+	if(val == 0)
+	{
+		ASTString* str = host.msg.get();
+		if(str)
+		{
+			handleError(CompileError::AssertFail(&host, str->getValue().c_str()));
+		}
+		else
+		{
+			handleError(CompileError::AssertFail(&host, ""));
+		}
+	}
+}
+
 // Expressions
 
 void SemanticAnalyzer::caseExprConst(ASTExprConst& host, void*)
@@ -927,7 +974,75 @@ void SemanticAnalyzer::caseExprCall(ASTExprCall& host, void* param)
 		else if (castCount == bestCastCount)
 			bestFunctions.push_back(&function);
 	}
-
+	// We may have failed, though namespaces may resolve the issue. Check for namespace closeness.
+	if(bestFunctions.size() > 1)
+	{
+		std::map<Function*, Scope*> bestNSs;
+		std::map<Function*, Scope*> bestScripts;
+		for (vector<Function*>::const_iterator it = bestFunctions.begin();
+		     it != bestFunctions.end(); ++it)
+		{
+			Scope* ns = NULL;
+			Scope* scr = NULL;
+			for(Scope* current = (*it)->internalScope; current; current = current->getParent())
+			{
+				if(!scr && current->isScript())
+				{
+					scr = current;
+				}
+				if(current->isNamespace())
+				{
+					ns = current;
+					break;
+				}
+			}
+			bestNSs[*it] = ns;
+			bestScripts[*it] = scr;
+		}
+		Function* bestFound = NULL;
+		for(Scope* current = scope; current; current = current->getParent())
+		{
+			if(current->isScript())
+			{
+				for (vector<Function*>::const_iterator it = bestFunctions.begin();
+				     it != bestFunctions.end(); ++it)
+				{
+					if(current == bestScripts[*it])
+					{
+						if(bestFound)
+						{
+							bestFound = NULL;
+							current = NULL;
+							break;
+						}
+						else bestFound = *it;
+					}
+				}
+			}
+			else if(current->isNamespace())
+			{
+				for (vector<Function*>::const_iterator it = bestFunctions.begin();
+				     it != bestFunctions.end(); ++it)
+				{
+					if(current == bestNSs[*it])
+					{
+						if(bestFound)
+						{
+							bestFound = NULL;
+							current = NULL;
+							break;
+						}
+						else bestFound = *it;
+					}
+				}
+			}
+		}
+		if(bestFound) //Found a singular best; override the prior calculations, and salvage the call! -V
+		{
+			bestFunctions.clear();
+			bestFunctions.push_back(bestFound);
+		}
+	}
 	// We failed.
 	if (bestFunctions.size() != 1)
 	{
@@ -1273,6 +1388,9 @@ void SemanticAnalyzer::caseOptionValue(ASTOptionValue& host, void*)
 	else
 		handleError(CompileError::UnknownOption(&host, host.name));*/
 }
+
+void SemanticAnalyzer::caseIsIncluded(ASTIsIncluded& host, void*)
+{}
 
 void SemanticAnalyzer::checkCast(
 		DataType const& sourceType, DataType const& targetType, AST* node, bool twoWay)

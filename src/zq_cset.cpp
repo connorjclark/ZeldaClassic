@@ -1011,7 +1011,6 @@ static DIALOG cycle_dlg[] =
     { jwin_button_proc,     90,   176,  61,   21,   jwin_pal[jcBOXFG],  jwin_pal[jcBOX],  13,      D_EXIT,     0,             0, (void *) "OK", NULL, NULL },
     { jwin_button_proc,     170,  176,  61,   21,   jwin_pal[jcBOXFG],  jwin_pal[jcBOX],  27,      D_EXIT,     0,             0, (void *) "Cancel", NULL, NULL },
     { jwin_text_proc,       152,  72,   96,   8,    jwin_pal[jcBOXFG],  jwin_pal[jcBOX],  0,       0,          0,             0, (void *) "1   2   3", NULL, NULL },
-    { jwin_text_proc,       152,  72,   96,   8,    jwin_pal[jcBOXFG],  jwin_pal[jcBOX],  0,       0,          0,             0, (void *) "1   2   3", NULL, NULL },
     { jwin_text_proc,       88,   88,   56,   8,    jwin_pal[jcBOXFG],  jwin_pal[jcBOX],  0,       0,          0,             0, (void *) "CSet:", NULL, NULL },
     { jwin_text_proc,       88,   104,  56,   8,    jwin_pal[jcBOXFG],  jwin_pal[jcBOX],  0,       0,          0,             0, (void *) "First:", NULL, NULL },
     { jwin_text_proc,       88,   120,  56,   8,    jwin_pal[jcBOXFG],  jwin_pal[jcBOX],  0,       0,          0,             0, (void *) "Last:", NULL, NULL },
@@ -1442,7 +1441,7 @@ int EditColors(const char *caption,int first,int count,byte *label)
         }
         
         colors_dlg[3+i].dp=buf[i];
-        colors_dlg[3+i].y=int(((i<<3)*((is_large && colors_dlg[0].d1)?1.5:1))+colors_dlg[0].y+36*((is_large && colors_dlg[0].d1)?1.5:1));
+        colors_dlg[3+i].y=colors_dlg[0].y+int(((i<<3)+36-(is_large?3:0))*((is_large && colors_dlg[0].d1)?1.5:1));
         //sniggles
         //    colors_dlg[3+i].fg=rc[label[i+count]];
     }
@@ -1556,7 +1555,7 @@ int EditColors(const char *caption,int first,int count,byte *label)
         }
 	if ( ret == 43 )
 	{
-		if(getname("Export Subscreen (.sub)",".png",NULL,datapath,false))
+		if(getname("Save Palette (.png)","png",NULL,datapath,false))
 		{
 			//bool cancel;
 			//char buf[80],buf2[80],

@@ -47,6 +47,8 @@
 #include "zq_subscr.h"
 #include "mem_debug.h"
 #include "ffscript.h"
+#include "util.h"
+using namespace util;
 extern FFScript FFCore;
 
 extern ZModule zcm;
@@ -1120,8 +1122,21 @@ void put_walkflags(BITMAP *dest,int x,int y,word cmbdat,int layer)
         int tx=((i&2)<<2)+x;
         int ty=((i&1)<<3)+y;
         
-        if(layer==0 && combo_class_buf[c.type].water!=0 && get_bit(quest_rules, qr_DROWN))
-            rectfill(dest,tx,ty,tx+7,ty+7,vc(9));
+        if(combo_class_buf[c.type].water!=0)
+	{
+		
+		if (layer==0 && get_bit(quest_rules, qr_DROWN))
+		{
+			rectfill(dest,tx,ty,tx+7,ty+7,vc(9));
+			//al_trace("water, drown\n");
+		}
+		else
+		{
+			rectfill(dest,tx,ty,tx+7,ty+7,vc(11));
+			//al_trace("water, no drown\n");
+		}
+	
+	}
             
         if(c.walk&(1<<i))
         {
@@ -6328,7 +6343,7 @@ int writeheader(PACKFILE *f, zquestheader *Header)
 	char tempcompilerversion[256];
 	memset(tempcompilerversion, 0, 256); 
 	#ifdef _MSC_VER
-		itoa(_MSC_VER,tempcompilerversion,10);
+		zc_itoa(_MSC_VER,tempcompilerversion,10);
 	#else
 		strcpy(tempcompilerversion, COMPILER_VERSION);
 	#endif
@@ -7545,7 +7560,14 @@ int writemisc(PACKFILE *f, zquestheader *Header, miscQdata *Misc)
 	//V_MISC >= 11
 	if(!p_iputl(Misc->zscript_last_compiled_version,f))
                      new_return(23);
-        
+		
+		//V_MISC >= 12
+		for(int q = 0; q < sprMAX; ++q)
+		{
+			if(!p_putc(Misc->sprites[q],f))
+				new_return(24);
+		}
+		
         if(writecycle==0)
         {
             section_size=writesize;
@@ -10321,7 +10343,8 @@ int writeguys(PACKFILE *f, zquestheader *Header)
 			new_return(98);
 		}
 	    }
-		
+			if(!p_putc(guysbuf[i].moveflags,f))
+				new_return(99);
         }
         
         if(writecycle==0)
@@ -10523,7 +10546,7 @@ int writelinksprites(PACKFILE *f, zquestheader *Header)
         
         for(int i=0; i<2; i++)
         {
-            for(int j=0; j<2; j++)
+            for(int j=0; j<spr_holdmax; j++)
             {
                 if(!p_iputl(holdspr[i][j][spr_tile],f))
                 {
@@ -10582,7 +10605,226 @@ int writelinksprites(PACKFILE *f, zquestheader *Header)
         {
             new_return(14);
         }
-        
+		
+		//{ V_LINKSPRITES >= 7
+		for(int q = 0; q < 4; ++q)
+		{
+			if(!p_iputl(frozenspr[q][spr_tile],f))
+				new_return(15);
+			if(!p_putc((byte)frozenspr[q][spr_flip],f))
+				new_return(15);
+			if(!p_putc((byte)frozenspr[q][spr_extend],f))
+				new_return(15);
+		}
+		for(int q = 0; q < 4; ++q)
+		{
+			if(!p_iputl(frozen_waterspr[q][spr_tile],f))
+				new_return(15);
+			if(!p_putc((byte)frozen_waterspr[q][spr_flip],f))
+				new_return(15);
+			if(!p_putc((byte)frozen_waterspr[q][spr_extend],f))
+				new_return(15);
+		}
+		for(int q = 0; q < 4; ++q)
+		{
+			if(!p_iputl(onfirespr[q][spr_tile],f))
+				new_return(15);
+			if(!p_putc((byte)onfirespr[q][spr_flip],f))
+				new_return(15);
+			if(!p_putc((byte)onfirespr[q][spr_extend],f))
+				new_return(15);
+		}
+		for(int q = 0; q < 4; ++q)
+		{
+			if(!p_iputl(onfire_waterspr[q][spr_tile],f))
+				new_return(15);
+			if(!p_putc((byte)onfire_waterspr[q][spr_flip],f))
+				new_return(15);
+			if(!p_putc((byte)onfire_waterspr[q][spr_extend],f))
+				new_return(15);
+		}
+		for(int q = 0; q < 4; ++q)
+		{
+			if(!p_iputl(diggingspr[q][spr_tile],f))
+				new_return(15);
+			if(!p_putc((byte)diggingspr[q][spr_flip],f))
+				new_return(15);
+			if(!p_putc((byte)diggingspr[q][spr_extend],f))
+				new_return(15);
+		}
+		for(int q = 0; q < 4; ++q)
+		{
+			if(!p_iputl(usingrodspr[q][spr_tile],f))
+				new_return(15);
+			if(!p_putc((byte)usingrodspr[q][spr_flip],f))
+				new_return(15);
+			if(!p_putc((byte)usingrodspr[q][spr_extend],f))
+				new_return(15);
+		}
+		for(int q = 0; q < 4; ++q)
+		{
+			if(!p_iputl(usingcanespr[q][spr_tile],f))
+				new_return(15);
+			if(!p_putc((byte)usingcanespr[q][spr_flip],f))
+				new_return(15);
+			if(!p_putc((byte)usingcanespr[q][spr_extend],f))
+				new_return(15);
+		}
+		for(int q = 0; q < 4; ++q)
+		{
+			if(!p_iputl(pushingspr[q][spr_tile],f))
+				new_return(15);
+			if(!p_putc((byte)pushingspr[q][spr_flip],f))
+				new_return(15);
+			if(!p_putc((byte)pushingspr[q][spr_extend],f))
+				new_return(15);
+		}
+		for(int q = 0; q < 4; ++q)
+		{
+			if(!p_iputl(liftingspr[q][spr_tile],f))
+				new_return(15);
+			if(!p_putc((byte)liftingspr[q][spr_flip],f))
+				new_return(15);
+			if(!p_putc((byte)liftingspr[q][spr_extend],f))
+				new_return(15);
+		}
+		for(int q = 0; q < 4; ++q)
+		{
+			if(!p_iputl(liftingheavyspr[q][spr_tile],f))
+				new_return(15);
+			if(!p_putc((byte)liftingheavyspr[q][spr_flip],f))
+				new_return(15);
+			if(!p_putc((byte)liftingheavyspr[q][spr_extend],f))
+				new_return(15);
+		}
+		for(int q = 0; q < 4; ++q)
+		{
+			if(!p_iputl(stunnedspr[q][spr_tile],f))
+				new_return(15);
+			if(!p_putc((byte)stunnedspr[q][spr_flip],f))
+				new_return(15);
+			if(!p_putc((byte)stunnedspr[q][spr_extend],f))
+				new_return(15);
+		}
+		for(int q = 0; q < 4; ++q)
+		{
+			if(!p_iputl(stunned_waterspr[q][spr_tile],f))
+				new_return(15);
+			if(!p_putc((byte)stunned_waterspr[q][spr_flip],f))
+				new_return(15);
+			if(!p_putc((byte)stunned_waterspr[q][spr_extend],f))
+				new_return(15);
+		}
+		for(int q = 0; q < 4; ++q)
+		{
+			if(!p_iputl(drowningspr[q][spr_tile],f))
+				new_return(15);
+			if(!p_putc((byte)drowningspr[q][spr_flip],f))
+				new_return(15);
+			if(!p_putc((byte)drowningspr[q][spr_extend],f))
+				new_return(15);
+		}
+		for(int q = 0; q < 4; ++q)
+		{
+			if(!p_iputl(drowning_lavaspr[q][spr_tile],f))
+				new_return(15);
+			if(!p_putc((byte)drowning_lavaspr[q][spr_flip],f))
+				new_return(15);
+			if(!p_putc((byte)drowning_lavaspr[q][spr_extend],f))
+				new_return(15);
+		}
+		for(int q = 0; q < 4; ++q)
+		{
+			if(!p_iputl(fallingspr[q][spr_tile],f))
+				new_return(15);
+			if(!p_putc((byte)fallingspr[q][spr_flip],f))
+				new_return(15);
+			if(!p_putc((byte)fallingspr[q][spr_extend],f))
+				new_return(15);
+		}
+		for(int q = 0; q < 4; ++q)
+		{
+			if(!p_iputl(shockedspr[q][spr_tile],f))
+				new_return(15);
+			if(!p_putc((byte)shockedspr[q][spr_flip],f))
+				new_return(15);
+			if(!p_putc((byte)shockedspr[q][spr_extend],f))
+				new_return(15);
+		}
+		for(int q = 0; q < 4; ++q)
+		{
+			if(!p_iputl(shocked_waterspr[q][spr_tile],f))
+				new_return(15);
+			if(!p_putc((byte)shocked_waterspr[q][spr_flip],f))
+				new_return(15);
+			if(!p_putc((byte)shocked_waterspr[q][spr_extend],f))
+				new_return(15);
+		}
+		for(int q = 0; q < 4; ++q)
+		{
+			if(!p_iputl(pullswordspr[q][spr_tile],f))
+				new_return(15);
+			if(!p_putc((byte)pullswordspr[q][spr_flip],f))
+				new_return(15);
+			if(!p_putc((byte)pullswordspr[q][spr_extend],f))
+				new_return(15);
+		}
+		for(int q = 0; q < 4; ++q)
+		{
+			if(!p_iputl(readingspr[q][spr_tile],f))
+				new_return(15);
+			if(!p_putc((byte)readingspr[q][spr_flip],f))
+				new_return(15);
+			if(!p_putc((byte)readingspr[q][spr_extend],f))
+				new_return(15);
+		}
+		for(int q = 0; q < 4; ++q)
+		{
+			if(!p_iputl(slash180spr[q][spr_tile],f))
+				new_return(15);
+			if(!p_putc((byte)slash180spr[q][spr_flip],f))
+				new_return(15);
+			if(!p_putc((byte)slash180spr[q][spr_extend],f))
+				new_return(15);
+		}
+		for(int q = 0; q < 4; ++q)
+		{
+			if(!p_iputl(slashZ4spr[q][spr_tile],f))
+				new_return(15);
+			if(!p_putc((byte)slashZ4spr[q][spr_flip],f))
+				new_return(15);
+			if(!p_putc((byte)slashZ4spr[q][spr_extend],f))
+				new_return(15);
+		}
+		for(int q = 0; q < 4; ++q)
+		{
+			if(!p_iputl(dashspr[q][spr_tile],f))
+				new_return(15);
+			if(!p_putc((byte)dashspr[q][spr_flip],f))
+				new_return(15);
+			if(!p_putc((byte)dashspr[q][spr_extend],f))
+				new_return(15);
+		}
+		for(int q = 0; q < 4; ++q)
+		{
+			if(!p_iputl(bonkspr[q][spr_tile],f))
+				new_return(15);
+			if(!p_putc((byte)bonkspr[q][spr_flip],f))
+				new_return(15);
+			if(!p_putc((byte)bonkspr[q][spr_extend],f))
+				new_return(15);
+		}
+		for(int q = 0; q < 3; ++q) //Not directions; number of medallion sprs
+		{
+			if(!p_iputl(medallionsprs[q][spr_tile],f))
+				new_return(15);
+			if(!p_putc((byte)medallionsprs[q][spr_flip],f))
+				new_return(15);
+			if(!p_putc((byte)medallionsprs[q][spr_extend],f))
+				new_return(15);
+		}
+		//}
+		
         if(writecycle==0)
         {
             section_size=writesize;
@@ -10887,6 +11129,7 @@ int writeffscript(PACKFILE *f, zquestheader *Header)
     dword section_version  = V_FFSCRIPT;
     dword section_cversion = CV_FFSCRIPT;
     dword section_size     = 0;
+	dword zasmmeta_version = METADATA_V;
     byte numscripts        = 0;
     numscripts = numscripts; //to avoid unused variables warnings
     
@@ -10907,6 +11150,11 @@ int writeffscript(PACKFILE *f, zquestheader *Header)
         new_return(3);
     }
     
+    if(!p_iputw(zasmmeta_version,f))
+    {
+        new_return(4);
+    }
+    
     for(int writecycle=0; writecycle<2; ++writecycle)
     {
         fake_pack_writing=(writecycle==0);
@@ -10914,7 +11162,7 @@ int writeffscript(PACKFILE *f, zquestheader *Header)
         //section size
         if(!p_iputl(section_size,f))
         {
-            new_return(4);
+            new_return(5);
         }
         
         writesize=0;
@@ -11578,12 +11826,28 @@ int write_one_ffscript(PACKFILE *f, zquestheader *Header, int i, script_data **s
 		new_return(17);
 	}
 	
+	for(int c = 0; c < 33; ++c)
+	{
+		if(!p_putc((*script)->meta.script_name[c],f))
+		{
+			new_return(18);
+		}
+	}
+	
+	for(int c = 0; c < 33; ++c)
+	{
+		if(!p_putc((*script)->meta.author[c],f))
+		{
+			new_return(19);
+		}
+	}
+	
     for(int j=0; j<num_commands; j++)
     {
         
         if(!p_iputw((*script)->zasm[j].command,f))
         {
-            new_return(18);
+            new_return(20);
         }
         
         if((*script)->zasm[j].command==0xFFFF)
@@ -11595,12 +11859,12 @@ int write_one_ffscript(PACKFILE *f, zquestheader *Header, int i, script_data **s
 		//al_trace("Current FFScript XCommand Being Written: %d\n", (*script)->zasm[j].command);
             if(!p_iputl((*script)->zasm[j].arg1,f))
             {
-                new_return(19);
+                new_return(21);
             }
             
             if(!p_iputl((*script)->zasm[j].arg2,f))
             {
-                new_return(20);
+                new_return(22);
             }
         }
     }

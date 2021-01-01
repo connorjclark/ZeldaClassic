@@ -40,6 +40,8 @@ namespace ZScript
 		void caseScript(ASTScript& host, void* = NULL);
 		void caseNamespace(ASTNamespace& host, void* = NULL);
 		void caseImportDecl(ASTImportDecl& host, void* = NULL);
+		void caseImportCondDecl(ASTImportCondDecl& host, void* = NULL);
+		void caseAssert(ASTAssert& host, void* = NULL);
 		// Expressions
 		void caseExprConst(ASTExprConst& host, void* = NULL);
 		void caseVarInitializer(ASTExprVarInitializer& host, void* param = NULL);
@@ -80,6 +82,7 @@ namespace ZScript
 		void caseStringLiteral(ASTStringLiteral& host, void* = NULL);
 		void caseArrayLiteral(ASTArrayLiteral& host, void* = NULL);
 		void caseOptionValue(ASTOptionValue& host, void* = NULL);
+		void caseIsIncluded(ASTIsIncluded& host, void* = NULL);
 
 	private:
 		ZScript::Program& program;

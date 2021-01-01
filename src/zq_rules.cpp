@@ -181,7 +181,7 @@ static DIALOG comborules_dlg[] =
     { jwin_check_proc,      10, 33+60,  185,    9,    vc(14),   vc(1),      0,      0,          1,             0, (void *) "Custom Combos Work on Layers 1 and 2", NULL, NULL },
     { jwin_check_proc,      10, 33+70,  185,    9,    vc(14),   vc(1),      0,      0,          1,             0, (void *) "Slash Combos Work on Layers 1 and 2", NULL, NULL },
     { jwin_check_proc,      10, 33+80,  185,    9,    vc(14),   vc(1),      0,      0,          1,             0, (void *) "New Combo Animation", NULL, NULL },
-  
+    
     { NULL,                  0,    0,     0,    0,    0,        0,          0,      0,          0,             0,       NULL, NULL, NULL }
 };
 
@@ -233,7 +233,7 @@ static int weapon_eweapon_rules_tab[] =
 
 static int weapon_lweapon_rules_tab[] =
 {
-	//6
+	9,
     -1
 };
 
@@ -269,13 +269,14 @@ static DIALOG weaponrules_dlg[] =
     { jwin_check_proc,      10, 33+10,  185,    9,    vc(14),   vc(1),      0,      0,          1,             0, (void *) "npc->Weapon Uses Unique Sprites for Custom EWeapons", NULL, NULL },
     { jwin_check_proc,      10, 33+10,  185,    9,    vc(14),   vc(1),      0,      0,          1,             0, (void *) "Angular Reflected Weapons", NULL, NULL },
     { jwin_check_proc,      10, 33+20,  185,    9,    vc(14),   vc(1),      0,      0,          1,             0, (void *) "Mirrors Use Weapon Centre for Collision", NULL, NULL },
+    { jwin_check_proc,      10, 33+10,  185,    9,    vc(14),   vc(1),      0,      0,          1,             0, (void *) "Weapons Cannot Stunlock Enemies", NULL, NULL },
     // { d_dummy_proc,      10, 33+30,  185,    9,    vc(14),   vc(1),      0,      0,          1,             0, (void *) " ", NULL, NULL },
     { NULL,                  0,    0,     0,    0,    0,        0,          0,      0,          0,             0,       NULL, NULL, NULL }
 };
 
 static int weaponrules[] =
 {
-   qr_SCRIPT_WEAPONS_UNIQUE_SPRITES, qr_ANGULAR_REFLECTED_WEAPONS, qr_MIRRORS_USE_WEAPON_CENTRE,
+   qr_SCRIPT_WEAPONS_UNIQUE_SPRITES, qr_ANGULAR_REFLECTED_WEAPONS, qr_MIRRORS_USE_WEAPON_CENTRE, qr_NO_STUNLOCK,
     -1
 };
 
@@ -439,6 +440,7 @@ static DIALOG itemrules_dlg[] =
 	{ jwin_check_proc,      10, 21+130, 185,    9,    vc(14),   vc(1),      0,      0,          1,             0, (void *) "Broken Magic Book Costs", NULL, NULL },
 	{ jwin_check_proc,      10, 21+140, 185,    9,    vc(14),   vc(1),      0,      0,          1,             0, (void *) "Reroll Useless Drops", NULL, NULL },
 	{ jwin_check_proc,      10, 21+150, 185,    9,    vc(14),   vc(1),      0,      0,          1,             0, (void *) "Items Ignore Sideview Platforms", NULL, NULL },
+	//{ jwin_check_proc,      10, 21+160, 185,    9,    vc(14),   vc(1),      0,      0,          1,             0, (void *) "Weapons Cannot Stunlock Enemies", NULL, NULL },
    
 	
 	{ NULL,                  0,    0,     0,    0,    0,        0,          0,      0,          0,             0,       NULL, NULL, NULL }
@@ -679,7 +681,7 @@ static int miscrules1_list[] =
 
 static int miscrules2_list[] =
 {
-    22,23,24,25,26,27,28,29,30,-1
+    22,23,24,25,26,27,28,29,30,31,32,33,34,-1
 };
 
 static TABPANEL miscrules_tabs[] =
@@ -729,6 +731,10 @@ static DIALOG miscrules_dlg[] =
     { jwin_check_proc,      10, 33+70,  185,    9,    vc(14),   vc(1),      0,      0,          1,             0, (void *) "No L/R Inventory Shifting", NULL, NULL },
     { jwin_check_proc,      10, 33+80,  185,    9,    vc(14),   vc(1),      0,      0,          1,             0, (void *) "Ex3 and Ex4 Shift A-Button Items", NULL, NULL },
     { jwin_check_proc,      10, 33+90,  185,    9,    vc(14),   vc(1),      0,      0,          1,             0, (void *) "Disable Fast Mode (Uncap)", NULL, NULL },
+    { jwin_check_proc,      10, 33+100, 185,    9,    vc(14),   vc(1),      0,      0,          1,             0, (void *) "Allow permanent secrets on Dungeon-type dmaps", NULL, NULL },
+    { jwin_check_proc,      10, 33+110, 185,    9,    vc(14),   vc(1),      0,      0,          1,             0, (void *) "No Scrolling Screen While In Air", NULL, NULL },
+    { jwin_check_proc,      10, 33+120, 185,    9,    vc(14),   vc(1),      0,      0,          1,             0, (void *) "Instant Respawn On Death", NULL, NULL },
+    { jwin_check_proc,      10, 33+130, 185,    9,    vc(14),   vc(1),      0,      0,          1,             0, (void *) "Higher Maximum Playtime", NULL, NULL },
     { NULL,                  0,    0,     0,    0,    0,        0,          0,      0,          0,             0,       NULL, NULL, NULL }
 };
 
@@ -739,8 +745,8 @@ static int miscrules[] =
     qr_NOCONTINUE, qr_NOGUYFIRES, qr_NOGUYPOOF, qr_LOG, qr_SCRIPTERRLOG, qr_SHOPCHEAT, 
 	qr_NOGANONINTRO,qr_NEVERDISABLEAMMOONSUBSCREEN, qr_SIDEVIEWTRIFORCECELLAR,
 	qr_EPILEPSY, qr_NO_L_R_BUTTON_INVENTORY_SWAP, qr_USE_EX1_EX2_INVENTORYSWAP,
-	qr_NOFASTMODE,
-
+	qr_NOFASTMODE, qr_DUNGEON_DMAPS_PERM_SECRETS, qr_NO_SCROLL_WHILE_IN_AIR, qr_INSTANT_RESPAWN,
+	qr_GREATER_MAX_TIME,
 	-1
 };
 
@@ -778,7 +784,7 @@ static int compatrules1_list[] =
 
 static int compatrules2_list[] =
 {
-	22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, -1
+	22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, -1
 };
 
 static TABPANEL compatrules_tabs[] =
@@ -797,7 +803,8 @@ static int compatrules[] =
    qr_OLDINFMAGIC, qr_BITMAPOFFSETFIX, qr_OLDSPRITEDRAWS, qr_OLD_F6, qr_BROKEN_ASKIP_Y_FRAMES,
    qr_ENEMY_BROKEN_TOP_HALF_SOLIDITY, qr_OLD_SIDEVIEW_CEILING_COLLISON, qr_0AFRAME_ITEMS_IGNORE_AFRAME_CHANGES,
    qr_OLD_ENEMY_KNOCKBACK_COLLISION, qr_WEAPONSMOVEOFFSCREEN, qr_CHECKSCRIPTWEAPONOFFSCREENCLIP,
-   qr_SHORTDGNWALK,qr_OLD_STRING_EDITOR_MARGINS,
+   qr_SHORTDGNWALK,qr_OLD_STRING_EDITOR_MARGINS,qr_STRING_FRAME_OLD_WIDTH_HEIGHT,qr_IDIOTICSHASHNEXTSECRETBUGSUPPORT,
+   qr_BROKEN_OVERWORLD_MINIMAP,
 	-1 
 };
 
@@ -847,7 +854,11 @@ static DIALOG compatrules_dlg[] =
 	{ jwin_check_proc,      10, 13+130, 185,    9,    vc(14),   vc(1),      0,      0,          1,             0,        (void *) "Check Clip for Custom / Script Type Weapons on Screen Edge", NULL, NULL },
 	{ jwin_check_proc,      10, 13+140, 185,    9,    vc(14),   vc(1),      0,      0,          1,             0,        (void *) "1.92 Diagonal Walk Speed", NULL, NULL },
 	{ jwin_check_proc,      10, 13+150, 185,    9,    vc(14),   vc(1),      0,      0,          1,             0,        (void *) "Old String Margins", NULL, NULL },
-    { NULL,                  0,    0,     0,    0,    0,        0,          0,      0,          0,             0,        NULL, NULL, NULL }
+	{ jwin_check_proc,      10, 13+160, 185,    9,    vc(14),   vc(1),      0,      0,          1,             0,        (void *) "Old String Frame Width/Height", NULL, NULL },
+	{ jwin_check_proc,      10, 13+170, 185,    9,    vc(14),   vc(1),      0,      0,          1,             0,        (void *) "Bugged ->Next Combos", NULL, NULL },
+    // 35
+	{ jwin_check_proc,      10, 13+180, 185,    9,    vc(14),   vc(1),      0,      0,          1,             0,        (void *) "Overworld Minimap Ignores Map Item", NULL, NULL },
+	{ NULL,                  0,    0,     0,    0,    0,        0,          0,      0,          0,             0,        NULL, NULL, NULL }
 };
 
 int onCompatRules()

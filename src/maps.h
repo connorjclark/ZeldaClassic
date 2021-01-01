@@ -19,6 +19,7 @@ void clear_dmap(word i);
 void clear_dmaps();
 int count_dmaps();
 int isdungeon(int dmap = -1, int scr = -1);
+bool canPermSecret(int dmap = -1, int scr = -1);
 int MAPCOMBO(int x,int y);
 int MAPFFCOMBO(int x,int y);
 int MAPCSET(int x,int y);
@@ -27,6 +28,10 @@ int MAPCOMBOFLAG(int x,int y);
 int MAPFFCOMBOFLAG(int x,int y);
 int COMBOTYPE(int x,int y);
 int FFCOMBOTYPE(int x, int y);
+int FFORCOMBO(int x, int y);
+int FFORCOMBOTYPE(int x, int y);
+int FFORCOMBO_L(int layer, int x, int y);
+int FFORCOMBOTYPE_L(int layer, int x, int y);
 int MAPCOMBO2(int layer,int x,int y);
 int MAPCSET2(int layer,int x,int y);
 int MAPFLAG2(int layer,int x,int y);
@@ -54,6 +59,10 @@ bool isSVPlatform(int x, int y);
 bool checkSVLadderPlatform(int x, int y);
 bool iswater(int combo);
 bool iswater_type(int type);
+bool ispitfall(int combo);
+bool ispitfall_type(int type);
+bool ispitfall(int x, int y);
+int getpitfall(int x, int y);
 bool isGrassType(int type);
 bool isFlowersType(int type);
 bool isBushType(int type);
@@ -85,6 +94,7 @@ void do_layer(BITMAP *bmp, int type, mapscr* layer, int x, int y, int tempscreen
 void put_walkflags(BITMAP *dest,int x,int y,int xofs,int yofs, word cmbdat,int lyr);
 void do_walkflags(BITMAP *dest,mapscr* layer,int x, int y, int tempscreen);
 void do_primitives(BITMAP *bmp, int type, mapscr *layer, int x, int y);
+void do_script_draws(BITMAP *bmp, mapscr *layer, int x, int y, bool hideLayer7 = false);
 void draw_screen(mapscr* this_screen, bool showlink=true);
 /*
   INLINE void do_scrolling_layer(int type, mapscr* layer, int x, int y, bool scrolling, int tempscreen)

@@ -164,6 +164,11 @@ int isdungeon(int dmap, int scr) // The arg is only used by loadscr2 and loadscr
     return 0;
 }
 
+bool canPermSecret(int dmap, int scr)
+{
+	return (!isdungeon(dmap, scr) || get_bit(quest_rules,qr_DUNGEON_DMAPS_PERM_SECRETS));
+}
+
 int MAPCOMBO(int x,int y)
 {
     //extend combos outwards if out of bounds -DD
@@ -306,6 +311,38 @@ int COMBOTYPE(int x,int y)
 int FFCOMBOTYPE(int x,int y)
 {
     return combobuf[MAPFFCOMBO(x,y)].type;
+}
+
+int FFORCOMBO(int x, int y)
+{
+	for(int i=0; i<32; i++)
+    {
+        if(ffcIsAt(i, x, y))
+            return tmpscr->ffdata[i];
+    }
+	
+	return MAPCOMBO(x,y);
+}
+
+int FFORCOMBOTYPE(int x, int y)
+{
+	return combobuf[FFORCOMBO(x,y)].type;
+}
+
+int FFORCOMBO_L(int layer, int x, int y)
+{
+	for(int i=0; i<32; i++)
+    {
+        if(ffcIsAt(i, x, y))
+            return tmpscr->ffdata[i];
+    }
+	
+	return layer ? MAPCOMBOL(layer, x, y) : MAPCOMBO(x,y);
+}
+
+int FFORCOMBOTYPE_L(int layer, int x, int y)
+{
+	return combobuf[FFORCOMBO_L(layer,x,y)].type;
 }
 
 int MAPCOMBOFLAG(int x,int y)
@@ -858,6 +895,38 @@ bool iswater(int combo)
     return iswater_type(combobuf[combo].type) && !DRIEDLAKE;
 }
 
+bool ispitfall_type(int type)
+{
+	return combo_class_buf[type].pit != 0;
+}
+
+bool ispitfall(int combo)
+{
+    return ispitfall_type(combobuf[combo].type);
+}
+
+bool ispitfall(int x, int y)
+{
+	if(int c = MAPFFCOMBO(x,y))
+		return ispitfall(c);
+	return ispitfall(MAPCOMBO(x,y)) || ispitfall(MAPCOMBOL(1,x,y)) || ispitfall(MAPCOMBOL(2,x,y));
+}
+
+int getpitfall(int x, int y) //Return the highest-layer active pit combo at the given position
+{
+	if(int c = MAPFFCOMBO(x,y))
+	{
+		return ispitfall(c) ? c : 0;
+	}
+	int c = MAPCOMBOL(2,x,y);
+	if(ispitfall(c)) return c;
+	c = MAPCOMBOL(1,x,y);
+	if(ispitfall(c)) return c;
+	c = MAPCOMBO(x,y);
+	if(ispitfall(c)) return c;
+	return 0;
+}
+
 bool isSVLadder(int x, int y)
 {
 	if(x<0 || x>255 || y<0 || y>175)
@@ -895,7 +964,16 @@ bool checkSVLadderPlatform(int x, int y)
 
 bool isstepable(int combo)                                  //can use ladder on it
 {
-    return (combo_class_buf[combobuf[combo].type].ladder_pass!=0);
+    if(combo_class_buf[combobuf[combo].type].ladder_pass) return true;
+	if(combo_class_buf[combobuf[combo].type].pit)
+	{
+		if(combobuf[combo].usrflags&cflag4)
+		{
+			int ldrid = current_item_id(itype_ladder);
+			return (ldrid > -1 && itemsbuf[ldrid].flags & ITEM_FLAG1);
+		}
+	}
+	return false;
 }
 
 bool ishookshottable(int bx, int by)
@@ -1890,7 +1968,7 @@ bool findentrance(int x, int y, int flag, bool setflag)
         }
     }
     
-    if(setflag && !isdungeon())
+    if(setflag && canPermSecret())
         if(!(tmpscr->flags5&fTEMPSECRETS))
             setmapflag(mSECRET);
             
@@ -2858,9 +2936,13 @@ void put_walkflags(BITMAP *dest,int x,int y,int xofs,int yofs, word cmbdat,int l
         int tx=((i&2)<<2)+xx;
         int ty=((i&1)<<3)+yy;
         
-        if(lyr==0 && iswater(cmbdat)!=0 && get_bit(quest_rules, qr_DROWN))
-            rectfill(dest,tx,ty,tx+7,ty+7,makecol(85,85,255));
-            
+        if ( iswater(cmbdat)!=0 )
+	{
+		if(lyr==0 && get_bit(quest_rules, qr_DROWN))
+			rectfill(dest,tx,ty,tx+7,ty+7,makecol(85,85,255));
+		else rectfill(dest,tx,ty,tx+7,ty+7,makecol(0,0,255));
+	}
+	
         if(c.walk&(1<<i) && !(iswater_type(c.type) && DRIEDLAKE))  // Check for dried lake (watertype && not water)
         {
             if(c.type==cLADDERHOOKSHOT && isstepable(cmbdat) && ishookshottable(xx,yy))
@@ -3345,7 +3427,7 @@ void draw_screen(mapscr* this_screen, bool showlink)
     set_clip_rect(framebuf,0,0,256,224);
     
     //Jumping Link and jumping enemies are drawn on this layer.
-    if(Link.getZ() > (fix)zinit.jump_link_layer_threshold)
+    if(Link.getZ() > (zfix)zinit.jump_link_layer_threshold)
     {
         decorations.draw2(framebuf,false);
         Link.draw(framebuf);
@@ -3353,7 +3435,7 @@ void draw_screen(mapscr* this_screen, bool showlink)
         
         for(int i=0; i<Lwpns.Count(); i++)
         {
-            if(Lwpns.spr(i)->z > (fix)zinit.jump_link_layer_threshold)
+            if(Lwpns.spr(i)->z > (zfix)zinit.jump_link_layer_threshold)
             {
                 Lwpns.spr(i)->draw(framebuf);
             }
@@ -3364,7 +3446,7 @@ void draw_screen(mapscr* this_screen, bool showlink)
     
     if(!get_bit(quest_rules,qr_ENEMIESZAXIS)) for(int i=0; i<guys.Count(); i++)
         {
-            if((isflier(guys.spr(i)->id)) || guys.spr(i)->z > (fix)zinit.jump_link_layer_threshold)
+            if((isflier(guys.spr(i)->id)) || guys.spr(i)->z > (zfix)zinit.jump_link_layer_threshold)
             {
                 guys.spr(i)->draw(framebuf);
             }
@@ -4156,7 +4238,7 @@ void loadscr(int tmp,int destdmap, int scr,int ldir,bool overlay=false)
         }
     }
     
-    if(!isdungeon(destdmap,scr)/*||TheMaps[(currmap*MAPSCRS)+currscr].flags6&fTRIGGERFPERM*/)
+    if(canPermSecret(destdmap,scr)/*||TheMaps[(currmap*MAPSCRS)+currscr].flags6&fTRIGGERFPERM*/)
     {
         if(game->maps[(currmap*MAPSCRSNORMAL)+scr]&mSECRET)               // if special stuff done before
         {
@@ -4328,7 +4410,7 @@ void loadscr2(int tmp,int scr,int)
         }
     }
     
-    if(!isdungeon(scr))
+    if(canPermSecret(-1,scr))
     {
         if(game->maps[(currmap*MAPSCRSNORMAL)+scr]&mSECRET)               // if special stuff done before
         {

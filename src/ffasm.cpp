@@ -25,23 +25,6 @@ using namespace util;
 using std::string;
 using std::ostringstream;
 
-#ifdef ALLEGRO_MACOSX
-#define strnicmp strncasecmp
-#endif
-
-#ifdef ALLEGRO_MACOSX
-#define strnicmp strncasecmp
-#endif
-
-#ifdef ALLEGRO_LINUX
-#define strnicmp strncasecmp
-#endif
-
-#ifdef _MSC_VER
-#define stricmp _stricmp
-#define strnicmp _strnicmp
-#endif
-
 extern char *datapath, *temppath;
 
 script_command command_list[NUMCOMMANDS+1]=
@@ -932,8 +915,59 @@ script_command command_list[NUMCOMMANDS+1]=
 	{ "TOINTEGER",           1,   0,   0,   0},
 	{ "FLOOR",           1,   0,   0,   0},
 	{ "CEILING",           1,   0,   0,   0},
-//	{ "GETCONFIGINT",                2,   0,   0,   0},
-//	{ "SETCONFIGINT",                2,   0,   0,   0},
+	
+	{ "FILECLOSE",           0,   0,   0,   0},
+	{ "FILEFREE",           0,   0,   0,   0},
+	{ "FILEISALLOCATED",           0,   0,   0,   0},
+	{ "FILEISVALID",           0,   0,   0,   0},
+	{ "FILEALLOCATE",           0,   0,   0,   0},
+	{ "FILEFLUSH",           0,   0,   0,   0},
+	{ "FILEGETCHAR",           0,   0,   0,   0},
+	{ "FILEREWIND",           0,   0,   0,   0},
+	{ "FILECLEARERR",           0,   0,   0,   0},
+	
+	{ "FILEOPEN",           1,   0,   0,   0},
+	{ "FILECREATE",           1,   0,   0,   0},
+	{ "FILEREADSTR",           1,   0,   0,   0},
+	{ "FILEWRITESTR",           1,   0,   0,   0},
+	{ "FILEPUTCHAR",           1,   0,   0,   0},
+	{ "FILEUNGETCHAR",           1,   0,   0,   0},
+	
+	{ "FILEREADCHARS",           2,   0,   0,   0},
+	{ "FILEREADINTS",           2,   0,   0,   0},
+	{ "FILEWRITECHARS",           2,   0,   0,   0},
+	{ "FILEWRITEINTS",           2,   0,   0,   0},
+	{ "FILESEEK",           2,   0,   0,   0},
+	{ "FILEOPENMODE",           2,   0,   0,   0},
+	{ "FILEGETERROR",           1,   0,   0,   0},
+	
+	{ "BITMAPFREE",           0,   0,   0,   0},
+	
+	{ "POPARGS",           2,   0,   1,   0},
+	{ "GAMERELOAD",           0,   0,   0,   0},
+	
+	{ "READPODARRAYR",           2,   0,   0,   0},
+	{ "READPODARRAYV",           2,   0,   1,   0},
+	{ "WRITEPODARRAYRR",           2,   0,   0,   0},
+	{ "WRITEPODARRAYRV",           2,   0,   1,   0},
+	{ "WRITEPODARRAYVR",           2,   1,   0,   0},
+	{ "WRITEPODARRAYVV",           2,   1,   1,   0},
+	
+	{ "PRINTFV",           1,   1,   0,   0},
+	{ "SPRINTFV",           1,   1,   0,   0},
+	
+	{ "STRCMPR",           2,   0,   0,   0},
+	{ "STRICMPR",           2,   0,   0,   0},
+	{ "STRINGICOMPARE",		       1,   0,   0,   0},
+	{ "STRINGNICOMPARE",		       1,   0,   0,   0},
+	
+	{ "FILEREMOVE",		       0,   0,   0,   0},
+	{ "FILESYSREMOVE",		       1,   0,   0,   0},
+	
+	{ "DRAWSTRINGR2",		       0,   0,   0,   0},
+	{ "BMPDRAWSTRINGR2",		       0,   0,   0,   0},
+	
+	{ "MODULEGETIC",             2,   0,   0,   0},
 	{ "",                    0,   0,   0,   0}
 };
 
@@ -2077,6 +2111,39 @@ script_variable variable_list[]=
 	{ "MESSAGEDATAPORTWID", MESSAGEDATAPORTWID, 0, 0 },
 	{ "MESSAGEDATAPORTHEI", MESSAGEDATAPORTHEI, 0, 0 },
 	{ "MESSAGEDATAFLAGSARR", MESSAGEDATAFLAGSARR, 0, 0 },
+	{ "FILEPOS", FILEPOS, 0, 0 },
+	{ "FILEEOF", FILEEOF, 0, 0 },
+	{ "FILEERR", FILEERR, 0, 0 },
+	{ "MESSAGEDATATEXTWID", MESSAGEDATATEXTWID, 0, 0 },
+	{ "MESSAGEDATATEXTHEI", MESSAGEDATATEXTHEI, 0, 0 },
+	{ "SWITCHKEY", SWITCHKEY, 0, 0 },
+	{ "INCQST", INCQST, 0, 0 },
+	{ "HEROJUMPCOUNT", HEROJUMPCOUNT, 0, 0 },
+	{ "HEROPULLDIR", HEROPULLDIR, 0, 0 },
+	{ "HEROPULLCLK", HEROPULLCLK, 0, 0 },
+	{ "HEROFALLCLK", HEROFALLCLK, 0, 0 },
+	{ "HEROFALLCMB", HEROFALLCMB, 0, 0 },
+	{ "HEROMOVEFLAGS", HEROMOVEFLAGS, 0, 0 },
+	{ "ITEMFALLCLK", ITEMFALLCLK, 0, 0 },
+	{ "ITEMFALLCMB", ITEMFALLCMB, 0, 0 },
+	{ "ITEMMOVEFLAGS", ITEMMOVEFLAGS, 0, 0 },
+	{ "LWPNFALLCLK", LWPNFALLCLK, 0, 0 },
+	{ "LWPNFALLCMB", LWPNFALLCMB, 0, 0 },
+	{ "LWPNMOVEFLAGS", LWPNMOVEFLAGS, 0, 0 },
+	{ "EWPNFALLCLK", EWPNFALLCLK, 0, 0 },
+	{ "EWPNFALLCMB", EWPNFALLCMB, 0, 0 },
+	{ "EWPNMOVEFLAGS", EWPNMOVEFLAGS, 0, 0 },
+	{ "NPCFALLCLK", NPCFALLCLK, 0, 0 },
+	{ "NPCFALLCMB", NPCFALLCMB, 0, 0 },
+	{ "NPCMOVEFLAGS", NPCMOVEFLAGS, 0, 0 },
+	{ "ISBLANKTILE", ISBLANKTILE, 0, 0 },
+	{ "LWPNSPECIAL", LWPNSPECIAL, 0, 0 },
+	{ "DMAPDATAASUBSCRIPT", DMAPDATAASUBSCRIPT, 0, 0 },
+	{ "DMAPDATAPSUBSCRIPT", DMAPDATAPSUBSCRIPT, 0, 0 },
+	{ "DMAPDATASUBINITD", DMAPDATASUBINITD, 0, 0 },
+	{ "MODULEGETINT", MODULEGETINT, 0, 0 },
+	{ "MODULEGETSTR", MODULEGETSTR, 0, 0 },
+	{ "NPCORIGINALHP", NPCORIGINALHP, 0, 0 },
 	{ " ",                       -1,             0,             0 }
 };
 
@@ -2121,7 +2188,8 @@ long ffparse(char *string)
 		ret-=atoi(ptr);
 	else ret+=atoi(ptr);
 	
-	zc_free(tempstring1);
+	if(tempstring1) //may be safer
+		zc_free(tempstring1);
 	return ret;
 }
 
@@ -2237,7 +2305,9 @@ string get_meta(zasm_meta const& meta)
 	oss << "#ZASM_VERSION = " << meta.zasm_v
 		<< "\n#METADATA_VERSION = " << meta.meta_v
 		<< "\n#FFSCRIPT_VERSION = " << meta.ffscript_v
-		<< "\n#SCRIPT_TYPE = " << get_script_name(meta.script_type)
+		<< "\n#SCRIPT_NAME = " << meta.script_name
+		<< "\n#AUTHOR = " << meta.author
+		<< "\n#SCRIPT_TYPE = " << get_script_name(meta.script_type).c_str()
 		<< "\n#AUTO_GEN = " << ((meta.flags & ZMETA_AUTOGEN) ? "TRUE" : "FALSE")
 		<< "\n#COMPILER_V1 = " << meta.compiler_v1
 		<< "\n#COMPILER_V2 = " << meta.compiler_v2
@@ -2272,7 +2342,16 @@ bool parse_meta(zasm_meta& meta, const char *buffer)
 	string cmd = line.substr(0, space_pos); //The command portion
 	size_t end_space_pos = line.find_first_not_of(" \t=", space_pos);
 	if(end_space_pos == string::npos) return false;
-	string val = line.substr(end_space_pos); //The value portion
+	size_t semi = line.find_first_of(";",end_space_pos);
+	string val = line.substr(end_space_pos, (semi == string::npos ? semi : semi-end_space_pos-1)); //The value portion
+	size_t endpos = val.find_last_not_of(" \t\r\n\0");
+	if(endpos != string::npos) ++endpos;
+	val = val.substr(0, endpos); //trim trailing whitespace
+	
+	if(val.size() > 32)
+	{
+		val = val.substr(0,32); //Limit to 32 chars, so doesn't overflow
+	}
 	
 	if(cmd == "#ZASM_VERSION")
 	{
@@ -2290,6 +2369,15 @@ bool parse_meta(zasm_meta& meta, const char *buffer)
 	{
 		upperstr(val);
 		meta.script_type = get_script_type(val);
+	}
+	else if(cmd == "#SCRIPT_NAME")
+	{
+		replchar(val, ' ', '_');
+		strcpy(meta.script_name, val.c_str());
+	}
+	else if(cmd == "#AUTHOR")
+	{
+		strcpy(meta.author, val.c_str());
 	}
 	else if(cmd == "#AUTO_GEN")
 	{
@@ -2325,76 +2413,43 @@ bool parse_meta(zasm_meta& meta, const char *buffer)
 	}
 	else if(cmd == "#PARAM_NAME_1")
 	{
+		replchar(val, ' ', '_');
 		strcpy(meta.run_idens[0], val.c_str());
-		/*int ind = 0;
-		for(; ind < val.size() && ind < 33; ++ind)
-		{
-			meta.run_idens[0][ind] = val.at(ind);
-		}
-		meta.run_idens[0][ind] = 0;*/
 	}
 	else if(cmd == "#PARAM_NAME_2")
 	{
-		int ind = 0;
-		for(; ind < val.size() && ind < 33; ++ind)
-		{
-			meta.run_idens[1][ind] = val.at(ind);
-		}
-		meta.run_idens[1][ind] = 0;
+		replchar(val, ' ', '_');
+		strcpy(meta.run_idens[1], val.c_str());
 	}
 	else if(cmd == "#PARAM_NAME_3")
 	{
-		int ind = 0;
-		for(; ind < val.size() && ind < 33; ++ind)
-		{
-			meta.run_idens[2][ind] = val.at(ind);
-		}
-		meta.run_idens[2][ind] = 0;
+		replchar(val, ' ', '_');
+		strcpy(meta.run_idens[2], val.c_str());
 	}
 	else if(cmd == "#PARAM_NAME_4")
 	{
-		int ind = 0;
-		for(; ind < val.size() && ind < 33; ++ind)
-		{
-			meta.run_idens[3][ind] = val.at(ind);
-		}
-		meta.run_idens[3][ind] = 0;
+		replchar(val, ' ', '_');
+		strcpy(meta.run_idens[3], val.c_str());
 	}
 	else if(cmd == "#PARAM_NAME_5")
 	{
-		int ind = 0;
-		for(; ind < val.size() && ind < 33; ++ind)
-		{
-			meta.run_idens[4][ind] = val.at(ind);
-		}
-		meta.run_idens[4][ind] = 0;
+		replchar(val, ' ', '_');
+		strcpy(meta.run_idens[4], val.c_str());
 	}
 	else if(cmd == "#PARAM_NAME_6")
 	{
-		int ind = 0;
-		for(; ind < val.size() && ind < 33; ++ind)
-		{
-			meta.run_idens[5][ind] = val.at(ind);
-		}
-		meta.run_idens[5][ind] = 0;
+		replchar(val, ' ', '_');
+		strcpy(meta.run_idens[5], val.c_str());
 	}
 	else if(cmd == "#PARAM_NAME_7")
 	{
-		int ind = 0;
-		for(; ind < val.size() && ind < 33; ++ind)
-		{
-			meta.run_idens[6][ind] = val.at(ind);
-		}
-		meta.run_idens[6][ind] = 0;
+		replchar(val, ' ', '_');
+		strcpy(meta.run_idens[6], val.c_str());
 	}
 	else if(cmd == "#PARAM_NAME_8")
 	{
-		int ind = 0;
-		for(; ind < val.size() && ind < 33; ++ind)
-		{
-			meta.run_idens[7][ind] = val.at(ind);
-		}
-		meta.run_idens[7][ind] = 0;
+		replchar(val, ' ', '_');
+		strcpy(meta.run_idens[7], val.c_str());
 	}
 	else if(cmd == "#PARAM_TYPE_1")
 	{
@@ -2443,8 +2498,12 @@ bool parse_meta(zasm_meta& meta, const char *buffer)
 
 int parse_script_file(script_data **script, const char *path, bool report_success)
 {
-	saved=false;
 	FILE *fscript = fopen(path,"rb");
+	return parse_script_file(script, fscript, report_success);
+}
+int parse_script_file(script_data **script, FILE* fscript, bool report_success)
+{
+	saved=false;
 	char *buffer = new char[0x400];
 	char *combuf = new char[0x100];
 	char *arg1buf = new char[0x100];

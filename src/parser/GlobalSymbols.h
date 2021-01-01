@@ -44,8 +44,9 @@ public:
 
 protected:
     AccessorTable *table;
-	LibrarySymbols() : refVar(0) {}
+	LibrarySymbols() : refVar(0), hasPrefixType(true) {}
     int refVar;
+	bool hasPrefixType;
 
 	ZScript::Function* getFunction(string const& name, int numParams) const;
 
@@ -605,6 +606,21 @@ protected:
 private:
     static SubscreenDataSymbols singleton;
     SubscreenDataSymbols();
+    void generateCode();
+};
+
+//Filesystem->
+class ModuleSymbols : public LibrarySymbols
+{
+public:
+    static ModuleSymbols &getInst()
+    {
+        return singleton;
+    }
+protected:
+private:
+    static ModuleSymbols singleton;
+    ModuleSymbols();
     void generateCode();
 };
 

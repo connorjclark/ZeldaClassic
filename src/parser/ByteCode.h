@@ -1201,8 +1201,44 @@
 #define MESSAGEDATAPORTWID		1129
 #define MESSAGEDATAPORTHEI		1130
 #define MESSAGEDATAFLAGSARR		1131
+#define FILEPOS					1132
+#define FILEEOF					1133
+#define FILEERR					1134
+#define MESSAGEDATATEXTWID					1135
+#define MESSAGEDATATEXTHEI					1136
+#define SWITCHKEY				1137
+#define INCQST				1138
+#define HEROJUMPCOUNT				1139
 
-#define LAST_BYTECODE 		1132
+#define HEROPULLDIR				1140
+#define HEROPULLCLK				1141
+#define HEROFALLCLK				1142
+#define HEROFALLCMB				1143
+#define HEROMOVEFLAGS			1144
+#define ITEMFALLCLK				1145
+#define ITEMFALLCMB				1146
+#define ITEMMOVEFLAGS			1147
+#define LWPNFALLCLK				1148
+#define LWPNFALLCMB				1149
+#define LWPNMOVEFLAGS			1150
+#define EWPNFALLCLK				1151
+#define EWPNFALLCMB				1152
+#define EWPNMOVEFLAGS			1153
+#define NPCFALLCLK				1154
+#define NPCFALLCMB				1155
+#define NPCMOVEFLAGS			1156
+#define ISBLANKTILE			1157
+#define LWPNSPECIAL			1158
+
+#define DMAPDATAASUBSCRIPT			1159
+#define DMAPDATAPSUBSCRIPT			1160
+#define DMAPDATASUBINITD			1161
+#define MODULEGETINT				1162
+#define MODULEGETSTR				1163
+#define NPCORIGINALHP				1164
+
+
+#define LAST_BYTECODE 		1165
 
 //} END OF BYTECODE
 
@@ -1491,6 +1527,72 @@ namespace ZScript
 		}
 	};
 
+	class OReadPODArrayR : public BinaryOpcode
+	{
+	public:
+		OReadPODArrayR(Argument *A, Argument *B) : BinaryOpcode(A,B) {}
+		std::string toString();
+		Opcode *clone()
+		{
+			return new OReadPODArrayR(a->clone(),b->clone());
+		}
+	};
+
+	class OReadPODArrayI : public BinaryOpcode
+	{
+	public:
+		OReadPODArrayI(Argument *A, Argument *B) : BinaryOpcode(A,B) {}
+		std::string toString();
+		Opcode *clone()
+		{
+			return new OReadPODArrayI(a->clone(),b->clone());
+		}
+	};
+
+	class OWritePODArrayRR : public BinaryOpcode
+	{
+	public:
+		OWritePODArrayRR(Argument *A, Argument *B) : BinaryOpcode(A,B) {}
+		std::string toString();
+		Opcode *clone()
+		{
+			return new OWritePODArrayRR(a->clone(),b->clone());
+		}
+	};
+
+	class OWritePODArrayRI : public BinaryOpcode
+	{
+	public:
+		OWritePODArrayRI(Argument *A, Argument *B) : BinaryOpcode(A,B) {}
+		std::string toString();
+		Opcode *clone()
+		{
+			return new OWritePODArrayRI(a->clone(),b->clone());
+		}
+	};
+
+	class OWritePODArrayIR : public BinaryOpcode
+	{
+	public:
+		OWritePODArrayIR(Argument *A, Argument *B) : BinaryOpcode(A,B) {}
+		std::string toString();
+		Opcode *clone()
+		{
+			return new OWritePODArrayIR(a->clone(),b->clone());
+		}
+	};
+
+	class OWritePODArrayII : public BinaryOpcode
+	{
+	public:
+		OWritePODArrayII(Argument *A, Argument *B) : BinaryOpcode(A,B) {}
+		std::string toString();
+		Opcode *clone()
+		{
+			return new OWritePODArrayII(a->clone(),b->clone());
+		}
+	};
+
 	class OAddImmediate : public BinaryOpcode
 	{
 	public:
@@ -1598,6 +1700,28 @@ namespace ZScript
 		Opcode *clone()
 		{
 			return new OCompareRegister(a->clone(),b->clone());
+		}
+	};
+
+	class OInternalStringCompare : public BinaryOpcode
+	{
+	public:
+		OInternalStringCompare(Argument *A, Argument *B) : BinaryOpcode(A,B) {}
+		std::string toString();
+		Opcode *clone()
+		{
+			return new OInternalStringCompare(a->clone(),b->clone());
+		}
+	};
+
+	class OInternalInsensitiveStringCompare : public BinaryOpcode
+	{
+	public:
+		OInternalInsensitiveStringCompare(Argument *A, Argument *B) : BinaryOpcode(A,B) {}
+		std::string toString();
+		Opcode *clone()
+		{
+			return new OInternalInsensitiveStringCompare(a->clone(),b->clone());
 		}
 	};
 
@@ -1741,6 +1865,17 @@ namespace ZScript
 		}
 	};
 
+	class OPopArgsRegister : public BinaryOpcode
+	{
+	public:
+		OPopArgsRegister(Argument *A, Argument *B) : BinaryOpcode(A,B) {}
+		std::string toString();
+		Opcode *clone()
+		{
+			return new OPopArgsRegister(a->clone(),b->clone());
+		}
+	};
+
 	class OLoadIndirect : public BinaryOpcode
 	{
 	public:
@@ -1844,6 +1979,28 @@ namespace ZScript
 		Opcode *clone()
 		{
 			return new OTrace6Register(a->clone());
+		}
+	};
+	
+	class OPrintfImmediate : public UnaryOpcode
+	{
+	public:
+		OPrintfImmediate(Argument *A) : UnaryOpcode(A) {}
+		std::string toString();
+		Opcode *clone()
+		{
+			return new OPrintfImmediate(a->clone());
+		}
+	};
+
+	class OSPrintfImmediate : public UnaryOpcode
+	{
+	public:
+		OSPrintfImmediate(Argument *A) : UnaryOpcode(A) {}
+		std::string toString();
+		Opcode *clone()
+		{
+			return new OSPrintfImmediate(a->clone());
 		}
 	};
 
@@ -3746,6 +3903,16 @@ namespace ZScript
 		}
 	};
 
+	class ODrawString2Register : public Opcode
+	{
+	public:
+		std::string toString();
+		Opcode *clone()
+		{
+			return new ODrawString2Register();
+		}
+	};
+
 	class ODrawLayerRegister : public Opcode
 	{
 	public:
@@ -4009,6 +4176,16 @@ namespace ZScript
 		Opcode *clone()
 		{
 			return new OEnd();
+		}
+	};
+
+	class OGameReload : public Opcode
+	{
+	public:
+		std::string toString();
+		Opcode *clone()
+		{
+			return new OGameReload();
 		}
 	};
 	
@@ -7430,6 +7607,15 @@ namespace ZScript
 			return new OBMPDrawStringRegister();
 		}
 	};
+	class OBMPDrawString2Register : public Opcode
+	{
+	public:
+		std::string toString();
+		Opcode *clone()
+		{
+			return new OBMPDrawString2Register();
+		}
+	};
 	class OBMPFastComboRegister : public Opcode
 	{
 	public:
@@ -7972,6 +8158,16 @@ namespace ZScript
 		}
 	};
 	
+	class OBitmapFree : public Opcode
+	{
+	public:
+		std::string toString();
+		Opcode *clone()
+		{
+			return new OBitmapFree();
+		}
+	};
+	
 	class OBMPDrawScreenSolidRegister : public Opcode
 	{
 	public:
@@ -8139,6 +8335,26 @@ namespace ZScript
 		Opcode *clone()
 		{
 			return new OStrNCmp(a->clone());
+		}
+	};
+	class OStrICmp : public UnaryOpcode
+	{
+	public:
+		OStrICmp(Argument *A) : UnaryOpcode(A) {}
+		std::string toString();
+		Opcode *clone()
+		{
+			return new OStrICmp(a->clone());
+		}
+	};
+	class OStrNICmp : public UnaryOpcode
+	{
+	public:
+		OStrNICmp(Argument *A) : UnaryOpcode(A) {}
+		std::string toString();
+		Opcode *clone()
+		{
+			return new OStrNICmp(a->clone());
 		}
 	};
 	
@@ -8664,6 +8880,271 @@ namespace ZScript
 		Opcode *clone()
 		{
 			return new OFileExists(a->clone());
+		}
+	};
+	
+	class OFileSystemRemove : public UnaryOpcode
+	{
+	public:
+		OFileSystemRemove(Argument *A) : UnaryOpcode(A) {}
+		std::string toString();
+		Opcode *clone()
+		{
+			return new OFileSystemRemove(a->clone());
+		}
+	};
+	
+	class OFileClose : public Opcode
+	{
+	public:
+		std::string toString();
+		Opcode *clone()
+		{
+			return new OFileClose();
+		}
+	};
+	
+	class OFileFree : public Opcode
+	{
+	public:
+		std::string toString();
+		Opcode *clone()
+		{
+			return new OFileFree();
+		}
+	};
+	
+	class OFileIsAllocated : public Opcode
+	{
+	public:
+		std::string toString();
+		Opcode *clone()
+		{
+			return new OFileIsAllocated();
+		}
+	};
+	
+	class OFileIsValid : public Opcode
+	{
+	public:
+		std::string toString();
+		Opcode *clone()
+		{
+			return new OFileIsValid();
+		}
+	};
+	
+	class OAllocateFile : public Opcode
+	{
+	public:
+		std::string toString();
+		Opcode *clone()
+		{
+			return new OAllocateFile();
+		}
+	};
+	
+	class OFileFlush : public Opcode
+	{
+	public:
+		std::string toString();
+		Opcode *clone()
+		{
+			return new OFileFlush();
+		}
+	};
+	
+	class OFileGetChar : public Opcode
+	{
+	public:
+		std::string toString();
+		Opcode *clone()
+		{
+			return new OFileGetChar();
+		}
+	};
+	
+	class OFileRewind : public Opcode
+	{
+	public:
+		std::string toString();
+		Opcode *clone()
+		{
+			return new OFileRewind();
+		}
+	};
+	
+	class OFileClearError : public Opcode
+	{
+	public:
+		std::string toString();
+		Opcode *clone()
+		{
+			return new OFileClearError();
+		}
+	};
+	
+	class OFileOpen : public UnaryOpcode
+	{
+	public:
+		OFileOpen(Argument *A) : UnaryOpcode(A) {}
+		std::string toString();
+		Opcode *clone()
+		{
+			return new OFileOpen(a->clone());
+		}
+	};
+	
+	class OFileCreate : public UnaryOpcode
+	{
+	public:
+		OFileCreate(Argument *A) : UnaryOpcode(A) {}
+		std::string toString();
+		Opcode *clone()
+		{
+			return new OFileCreate(a->clone());
+		}
+	};
+	
+	class OFileReadString : public UnaryOpcode
+	{
+	public:
+		OFileReadString(Argument *A) : UnaryOpcode(A) {}
+		std::string toString();
+		Opcode *clone()
+		{
+			return new OFileReadString(a->clone());
+		}
+	};
+	
+	class OFileWriteString : public UnaryOpcode
+	{
+	public:
+		OFileWriteString(Argument *A) : UnaryOpcode(A) {}
+		std::string toString();
+		Opcode *clone()
+		{
+			return new OFileWriteString(a->clone());
+		}
+	};
+	
+	class OFilePutChar : public UnaryOpcode
+	{
+	public:
+		OFilePutChar(Argument *A) : UnaryOpcode(A) {}
+		std::string toString();
+		Opcode *clone()
+		{
+			return new OFilePutChar(a->clone());
+		}
+	};
+	
+	class OFileUngetChar : public UnaryOpcode
+	{
+	public:
+		OFileUngetChar(Argument *A) : UnaryOpcode(A) {}
+		std::string toString();
+		Opcode *clone()
+		{
+			return new OFileUngetChar(a->clone());
+		}
+	};
+	
+	class OFileGetError : public UnaryOpcode
+	{
+	public:
+		OFileGetError(Argument *A) : UnaryOpcode(A) {}
+		std::string toString();
+		Opcode *clone()
+		{
+			return new OFileGetError(a->clone());
+		}
+	};
+	
+	class OFileRemove : public Opcode
+	{
+	public:
+		std::string toString();
+		Opcode *clone()
+		{
+			return new OFileRemove();
+		}
+	};
+	
+	class OFileReadChars : public BinaryOpcode
+	{
+	public:
+		OFileReadChars(Argument *A, Argument *B) : BinaryOpcode(A,B) {}
+		std::string toString();
+		Opcode *clone()
+		{
+			return new OFileReadChars(a->clone(), b->clone());
+		}
+	};
+	
+	class OFileReadInts : public BinaryOpcode
+	{
+	public:
+		OFileReadInts(Argument *A, Argument *B) : BinaryOpcode(A,B) {}
+		std::string toString();
+		Opcode *clone()
+		{
+			return new OFileReadInts(a->clone(), b->clone());
+		}
+	};
+	
+	class OFileWriteChars : public BinaryOpcode
+	{
+	public:
+		OFileWriteChars(Argument *A, Argument *B) : BinaryOpcode(A,B) {}
+		std::string toString();
+		Opcode *clone()
+		{
+			return new OFileWriteChars(a->clone(), b->clone());
+		}
+	};
+	
+	class OFileWriteInts : public BinaryOpcode
+	{
+	public:
+		OFileWriteInts(Argument *A, Argument *B) : BinaryOpcode(A,B) {}
+		std::string toString();
+		Opcode *clone()
+		{
+			return new OFileWriteInts(a->clone(), b->clone());
+		}
+	};
+	
+	class OFileSeek : public BinaryOpcode
+	{
+	public:
+		OFileSeek(Argument *A, Argument *B) : BinaryOpcode(A,B) {}
+		std::string toString();
+		Opcode *clone()
+		{
+			return new OFileSeek(a->clone(), b->clone());
+		}
+	};
+	
+	class OFileOpenMode : public BinaryOpcode
+	{
+	public:
+		OFileOpenMode(Argument *A, Argument *B) : BinaryOpcode(A,B) {}
+		std::string toString();
+		Opcode *clone()
+		{
+			return new OFileOpenMode(a->clone(), b->clone());
+		}
+	};
+	
+	class OModuleGetIC : public BinaryOpcode
+	{
+	public:
+		OModuleGetIC(Argument *A, Argument *B) : BinaryOpcode(A,B) {}
+		std::string toString();
+		Opcode *clone()
+		{
+			return new OModuleGetIC(a->clone(), b->clone());
 		}
 	};
 }

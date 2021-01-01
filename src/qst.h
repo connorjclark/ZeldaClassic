@@ -19,9 +19,6 @@
 #include "ffscript.h"
 extern FFScript ffengine;
 
-#define SCRIPT_FORMAT_DEFAULT	0
-#define SCRIPT_FORMAT_INVALID	1
-#define SCRIPT_FORMAT_ZASM		2
 struct script_slot_data
 {
 	std::string slotname;
@@ -35,6 +32,16 @@ struct script_slot_data
 		char temp[128];
 		sprintf(temp, getFormatStr()->c_str(), slotname.c_str(), scriptname.c_str());
 		output = temp;
+	}
+	
+	void updateName(std::string newname)
+	{
+		if(newname.at(0) == '+' || newname.at(0) == '=')
+		{
+			scriptname = newname.substr(2);
+		}
+		else scriptname = newname;
+		update();
 	}
 	
 	void clear()
@@ -57,7 +64,17 @@ struct script_slot_data
 	
 	bool isDisassembled()
 	{
+		return (format == SCRIPT_FORMAT_DISASSEMBLED);
+	}
+	
+	bool isImportedZASM()
+	{
 		return (format == SCRIPT_FORMAT_ZASM);
+	}
+	
+	bool isZASM()
+	{
+		return (isDisassembled() || isImportedZASM());
 	}
 	
 	std::string const* getFormatStr()
@@ -68,6 +85,8 @@ struct script_slot_data
 				return &DEFAULT_FORMAT;
 			case SCRIPT_FORMAT_INVALID:
 				return &INVALID_FORMAT;
+			case SCRIPT_FORMAT_DISASSEMBLED:
+				return &DISASSEMBLED_FORMAT;
 			case SCRIPT_FORMAT_ZASM:
 				return &ZASM_FORMAT;
 		}
@@ -77,6 +96,7 @@ struct script_slot_data
 	static const std::string DEFAULT_FORMAT;
 	static const std::string INVALID_FORMAT;
 	static const std::string ZASM_FORMAT;
+	static const std::string DISASSEMBLED_FORMAT;
 };
 
 extern std::map<int, script_slot_data > ffcmap;
@@ -172,7 +192,7 @@ void portCandleRules();
 void portBombRules();
 
 int loadquest(const char *filename, zquestheader *Header,
-              miscQdata *Misc, zctune *tunes, bool show_progress, bool compressed, bool encrypted, bool keepall, byte *skip_flags);
+              miscQdata *Misc, zctune *tunes, bool show_progress, bool compressed, bool encrypted, bool keepall, byte *skip_flags, byte printmetadata = 1);
 
 char *byte_conversion(int number, int format);
 char *byte_conversion2(int number1, int number2, int format1, int format2);
@@ -219,7 +239,7 @@ int readinitdata(PACKFILE *f, zquestheader *Header, bool keepdata);
 int readsubscreens(PACKFILE *f, zquestheader *Header, bool keepdata);
 int read_one_subscreen(PACKFILE *f, zquestheader *Header, bool keepdata, int i, word s_version, word s_cversion);
 int readffscript(PACKFILE *f, zquestheader *Header, bool keepdata);
-int read_one_ffscript(PACKFILE *f, zquestheader *Header, bool keepdata, int i, word s_version, word s_cversion, script_data **script);
+int read_one_ffscript(PACKFILE *f, zquestheader *Header, bool keepdata, int i, word s_version, word s_cversion, script_data **script, word zmeta_version);
 int readsfx(PACKFILE *f, zquestheader *Header, bool keepdata);
 int readitemdropsets(PACKFILE *f, word version, word build, bool keepdata);
 int readfavorites(PACKFILE *f, int, word, bool keepdata);

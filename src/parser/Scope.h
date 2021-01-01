@@ -481,7 +481,7 @@ namespace ZScript
 		bool registerFunction(Function* function);
 		
 		bool checkImport(ASTImportDecl* node, int headerGuard, CompileErrorHandler* errorHandler);
-		
+		bool isImported(std::string const& path);
 	private:
 		mutable optional<int> stackSize_;
 
@@ -575,6 +575,7 @@ namespace ZScript
 		ZCLASSID_FILESYSTEM,
 		ZCLASSID_SUBSCREENDATA,
 		ZCLASSID_FILE,
+		ZCLASSID_MODULE,
 		ZCLASSID_END
 	};
 

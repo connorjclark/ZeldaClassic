@@ -29,6 +29,7 @@ namespace ZScript
 		virtual void caseStmtIf(ASTStmtIf &host, void *param);
 		virtual void caseStmtIfElse(ASTStmtIfElse &host, void *param);
 		virtual void caseStmtSwitch(ASTStmtSwitch &host, void* param);
+		void caseStmtStrSwitch(ASTStmtSwitch &host, void* param);
 		virtual void caseStmtFor(ASTStmtFor &host, void *param);
 		virtual void caseStmtWhile(ASTStmtWhile &host, void *param);
 		virtual void caseStmtDo(ASTStmtDo &host, void *param);
@@ -83,6 +84,7 @@ namespace ZScript
 		virtual void caseStringLiteral(ASTStringLiteral& host, void* param);
 		virtual void caseArrayLiteral(ASTArrayLiteral& host, void* param);
 		virtual void caseOptionValue(ASTOptionValue& host, void* param);
+		virtual void caseIsIncluded(ASTIsIncluded& host, void* param);
 		// Types
 		void caseDataType(ASTDataType& host, void* param) {}
 

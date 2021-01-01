@@ -12,7 +12,7 @@
 //alpha id
 #define V_ZC_FOURTH 0
 //build
-#define V_ZC_ALPHA 52
+#define V_ZC_ALPHA 86
 #define V_ZC_BETA 0
 #define V_ZC_GAMMA 0
 #define V_ZC_RELEASE 0
@@ -24,7 +24,7 @@
 
 #define PROJECT_NAME "AEternal"
 #define COMPANY_NAME "Armageddon Games"
-#define ZQ_EDITOR_NAME "ZQuest Creator Editor"
+#define ZQ_EDITOR_NAME "ZQuest Creator"
 #define ZQ_EDITOR_V "2.55"
 #define ZQ_EDITOR_COPYRIGHT "Copyright (C) 2020"
 

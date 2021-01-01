@@ -44,7 +44,7 @@
 extern FFScript FFCore;
 extern ZModule zcm;
 extern zcmodule moduledata;
-extern byte __isZQuest;
+extern unsigned char __isZQuest;
 extern sprite_list  guys, items, Ewpns, Lwpns, Sitems, chainlinks, decorations, particles;
 //FFSCript   FFEngine;
 
@@ -104,7 +104,8 @@ bool fixpolsvoice=false;
 
 const std::string script_slot_data::DEFAULT_FORMAT = "%s %s";
 const std::string script_slot_data::INVALID_FORMAT = "%s --%s";
-const std::string script_slot_data::ZASM_FORMAT = "%s ++%s";
+const std::string script_slot_data::DISASSEMBLED_FORMAT = "%s ++%s";
+const std::string script_slot_data::ZASM_FORMAT = "%s ==%s";
 
 char qstdat_string[2048] = { 0 };
 
@@ -2919,6 +2920,27 @@ int readrules(PACKFILE *f, zquestheader *Header, bool keepdata)
             set_bit(quest_rules, qr_BROKENSTATUES, 1);
     }
     
+    if ( (tempheader.zelda_version == 0x250 && tempheader.build < 33) || tempheader.zelda_version == 0x254 || (tempheader.zelda_version == 0x255 && tempheader.build < 50) )
+    {
+	FFCore.emulation[emuBUGGYNEXTCOMBOS] = 1;
+	set_bit(quest_rules, qr_IDIOTICSHASHNEXTSECRETBUGSUPPORT, 1);
+    }
+    
+    if ( (tempheader.zelda_version < 0x211) ) //2.10 water and ladder interaction
+    {
+	FFCore.emulation[emuOLD210WATER] = 1;
+    }
+    
+    if ( (tempheader.zelda_version < 0x255 ) || (tempheader.zelda_version == 0x255 &&  tempheader.build < 51 ) ) //2.10 water and ladder interaction
+    {
+	set_bit(quest_rules,qr_STEP_IS_FLOAT,0);
+    }
+    
+    if ( tempheader.zelda_version < 0x250 ) 
+    {
+	FFCore.emulation[emu8WAYSHOTSFX] = 1;    
+    }
+    
     if(s_version < 3)
     {
         set_bit(quest_rules, qr_HOLDNOSTOPMUSIC, 1);
@@ -3050,7 +3072,7 @@ int readrules(PACKFILE *f, zquestheader *Header, bool keepdata)
 	set_bit(quest_rules, qr_SCRIPTDRAWSINWARPS, 0);  	    
 	set_bit(quest_rules, qr_DYINGENEMYESDONTHURTLINK, 0);  	    
 	set_bit(quest_rules, qr_OUTOFBOUNDSENEMIES, 0);  
-	set_bit(quest_rules, qr_LINKXY_IS_FLOAT, 0);
+	set_bit(quest_rules, qr_SPRITEXY_IS_FLOAT, 0);
     }
     
     
@@ -3069,7 +3091,7 @@ int readrules(PACKFILE *f, zquestheader *Header, bool keepdata)
 	set_bit(quest_rules,qr_PARSER_BOOL_TRUE_DECIMAL,1);
 	set_bit(quest_rules,qr_PARSER_TRUE_INT_SIZE,0);
 	set_bit(quest_rules,qr_PARSER_FORCE_INLINE,0);
-	set_bit(quest_rules,qr_32BIT_BINARY,0);
+	set_bit(quest_rules,qr_PARSER_BINARY_32BIT,0);
 	if ( get_bit(quest_rules, qr_SELECTAWPN) ) 
 	{
 		set_bit(quest_rules,qr_NO_L_R_BUTTON_INVENTORY_SWAP,1); 
@@ -3108,6 +3130,10 @@ int readrules(PACKFILE *f, zquestheader *Header, bool keepdata)
     {
 	  set_bit(quest_rules, qr_SETENEMYWEAPONSPRITESONWPNCHANGE, 1);  
     }
+	if( tempheader.zelda_version < 0x255 || ( tempheader.zelda_version == 0x255 && tempheader.build < 52 ) )
+	{
+		set_bit(quest_rules, qr_OLD_PRINTF_ARGS, 1);
+	}
     if ( tempheader.zelda_version < 0x254 )
     {
 	    set_bit(quest_rules, qr_250WRITEEDEFSCRIPT, 1);  
@@ -3155,6 +3181,18 @@ int readrules(PACKFILE *f, zquestheader *Header, bool keepdata)
     if ( tempheader.zelda_version < 0x255 || (tempheader.zelda_version == 0x255 && tempheader.build < 47) )
 	{
 		set_bit(quest_rules,qr_OLD_F6,1);
+	}
+	if ( tempheader.zelda_version < 0x255 || (tempheader.zelda_version == 0x255 && tempheader.build < 49) )
+	{
+		set_bit(quest_rules,qr_NO_OVERWRITING_HOPPING,1);
+	}
+	if ( tempheader.zelda_version < 0x255 || (tempheader.zelda_version == 0x255 && tempheader.build < 50) )
+	{
+		set_bit(quest_rules,qr_STRING_FRAME_OLD_WIDTH_HEIGHT,1);
+	}
+	if ( tempheader.zelda_version < 0x255 || (tempheader.zelda_version == 0x255 && tempheader.build < 53) )
+	{
+		set_bit(quest_rules,qr_BROKEN_OVERWORLD_MINIMAP,1);
 	}
 	
 	//always set
@@ -5629,6 +5667,22 @@ int readmisc(PACKFILE *f, zquestheader *Header, miscQdata *Misc, bool keepdata)
    
     FFCore.quest_format[vLastCompile] = temp_misc.zscript_last_compiled_version;
     
+	if(s_version >= 12)
+	{
+		byte spr;
+		for(int q = 0; q < sprMAX; ++q)
+		{
+			if(!p_getc(&spr,f,true))
+				return qe_invalid;
+			temp_misc.sprites[q] = spr;
+		}
+	}
+	else
+	{
+		memset(&(temp_misc.sprites), 0, sizeof(temp_misc.sprites));
+		//temp_misc.sprites[sprFALL] = ;
+	}
+	
     if(keepdata==true)
     {
         memcpy(Misc, &temp_misc, sizeof(temp_misc));
@@ -7322,6 +7376,14 @@ int readitems(PACKFILE *f, word version, word build, bool keepdata, bool zgpmode
 			}
 		}
 		
+		if( s_version < 46 )
+		{
+			if(tempitem.family == itype_raft)
+			{
+				tempitem.misc1 = 1; //Rafting speed modifier; default 1. Negative slows, positive speeds.
+			}
+		}
+		
 		if(tempitem.fam_type==0)  // Always do this
 			tempitem.fam_type=1;
 			
@@ -7843,6 +7905,7 @@ int init_combo_classes()
 
 int readlinksprites2(PACKFILE *f, int v_linksprites, int cv_linksprites, bool keepdata)
 {
+	assert(v_linksprites < 6);
     //these are here to bypass compiler warnings about unused arguments
     cv_linksprites=cv_linksprites;
     
@@ -8064,9 +8127,10 @@ int readlinksprites2(PACKFILE *f, int v_linksprites, int cv_linksprites, bool ke
         
         if(v_linksprites>0)
         {
+			int num_holdsprs = (v_linksprites > 6 ? 3 : 2);
             for(int i=0; i<2; i++)
             {
-                for(int j=0; j<2; j++)
+                for(int j=0; j<num_holdsprs; j++)
                 {
                     if(!p_igetw(&tile,f,keepdata))
                     {
@@ -8191,6 +8255,42 @@ int readlinksprites2(PACKFILE *f, int v_linksprites, int cv_linksprites, bool ke
                 zinit.link_swim_speed=(byte)dummy_byte;
             }
         }
+		
+		if(keepdata)
+		{
+			memset(frozenspr, 0, sizeof(frozenspr));
+			memset(frozen_waterspr, 0, sizeof(frozen_waterspr));
+			memset(onfirespr, 0, sizeof(onfirespr));
+			memset(onfire_waterspr, 0, sizeof(onfire_waterspr));
+			memset(diggingspr, 0, sizeof(diggingspr));
+			memset(usingrodspr, 0, sizeof(usingrodspr));
+			memset(usingcanespr, 0, sizeof(usingcanespr));
+			memset(pushingspr, 0, sizeof(pushingspr));
+			memset(liftingspr, 0, sizeof(liftingspr));
+			memset(liftingheavyspr, 0, sizeof(liftingheavyspr));
+			memset(stunnedspr, 0, sizeof(stunnedspr));
+			memset(stunned_waterspr, 0, sizeof(stunned_waterspr));
+			memset(fallingspr, 0, sizeof(fallingspr));
+			memset(shockedspr, 0, sizeof(shockedspr));
+			memset(shocked_waterspr, 0, sizeof(shocked_waterspr));
+			memset(pullswordspr, 0, sizeof(pullswordspr));
+			memset(readingspr, 0, sizeof(readingspr));
+			memset(slash180spr, 0, sizeof(slash180spr));
+			memset(slashZ4spr, 0, sizeof(slashZ4spr));
+			memset(dashspr, 0, sizeof(dashspr));
+			memset(bonkspr, 0, sizeof(bonkspr));
+			memset(medallionsprs, 0, sizeof(medallionsprs));
+			memset(holdspr[0][2], 0, sizeof(holdspr[0][2])); //Sword hold (Land)
+			memset(holdspr[1][2], 0, sizeof(holdspr[1][2])); //Sword hold (Water)
+			for(int q = 0; q < 4; ++q)
+			{
+				for(int p = 0; p < 3; ++p)
+				{
+					drowningspr[q][p] = divespr[q][p];
+					drowning_lavaspr[q][p] = divespr[q][p];
+				}
+			}
+		}
     }
     
     return 0;
@@ -8421,9 +8521,10 @@ int readlinksprites3(PACKFILE *f, int v_linksprites, int cv_linksprites, bool ke
         
         if(v_linksprites>0)
         {
+			int num_holdsprs = (v_linksprites > 6 ? 3 : 2);
             for(int i=0; i<2; i++)
             {
-                for(int j=0; j<2; j++)
+                for(int j=0; j<num_holdsprs; j++)
                 {
                     if(!p_igetl(&tile,f,keepdata))
                     {
@@ -8548,6 +8649,496 @@ int readlinksprites3(PACKFILE *f, int v_linksprites, int cv_linksprites, bool ke
                 zinit.link_swim_speed=(byte)dummy_byte;
             }
         }
+		
+		if(v_linksprites>6)
+		{
+			for(int q = 0; q < 4; ++q)
+			{
+				if(!p_igetl(&tile,f,keepdata))
+					return qe_invalid;
+				
+				if(!p_getc(&flip,f,keepdata))
+					return qe_invalid;
+				
+				if(!p_getc(&extend,f,keepdata))
+					return qe_invalid;
+				
+				if(keepdata)
+				{
+					frozenspr[q][spr_tile] = (int)tile;
+					frozenspr[q][spr_flip] = (int)flip;
+					frozenspr[q][spr_extend] = (int)extend;
+				}
+			}
+			for(int q = 0; q < 4; ++q)
+			{
+				if(!p_igetl(&tile,f,keepdata))
+					return qe_invalid;
+				
+				if(!p_getc(&flip,f,keepdata))
+					return qe_invalid;
+				
+				if(!p_getc(&extend,f,keepdata))
+					return qe_invalid;
+				
+				if(keepdata)
+				{
+					frozen_waterspr[q][spr_tile] = (int)tile;
+					frozen_waterspr[q][spr_flip] = (int)flip;
+					frozen_waterspr[q][spr_extend] = (int)extend;
+				}
+			}
+			
+			for(int q = 0; q < 4; ++q)
+			{
+				if(!p_igetl(&tile,f,keepdata))
+					return qe_invalid;
+				
+				if(!p_getc(&flip,f,keepdata))
+					return qe_invalid;
+				
+				if(!p_getc(&extend,f,keepdata))
+					return qe_invalid;
+				
+				if(keepdata)
+				{
+					onfirespr[q][spr_tile] = (int)tile;
+					onfirespr[q][spr_flip] = (int)flip;
+					onfirespr[q][spr_extend] = (int)extend;
+				}
+			}
+			for(int q = 0; q < 4; ++q)
+			{
+				if(!p_igetl(&tile,f,keepdata))
+					return qe_invalid;
+				
+				if(!p_getc(&flip,f,keepdata))
+					return qe_invalid;
+				
+				if(!p_getc(&extend,f,keepdata))
+					return qe_invalid;
+				
+				if(keepdata)
+				{
+					onfire_waterspr[q][spr_tile] = (int)tile;
+					onfire_waterspr[q][spr_flip] = (int)flip;
+					onfire_waterspr[q][spr_extend] = (int)extend;
+				}
+			}
+			
+			for(int q = 0; q < 4; ++q)
+			{
+				if(!p_igetl(&tile,f,keepdata))
+					return qe_invalid;
+				
+				if(!p_getc(&flip,f,keepdata))
+					return qe_invalid;
+				
+				if(!p_getc(&extend,f,keepdata))
+					return qe_invalid;
+				
+				if(keepdata)
+				{
+					diggingspr[q][spr_tile] = (int)tile;
+					diggingspr[q][spr_flip] = (int)flip;
+					diggingspr[q][spr_extend] = (int)extend;
+				}
+			}
+			
+			for(int q = 0; q < 4; ++q)
+			{
+				if(!p_igetl(&tile,f,keepdata))
+					return qe_invalid;
+				
+				if(!p_getc(&flip,f,keepdata))
+					return qe_invalid;
+				
+				if(!p_getc(&extend,f,keepdata))
+					return qe_invalid;
+				
+				if(keepdata)
+				{
+					usingrodspr[q][spr_tile] = (int)tile;
+					usingrodspr[q][spr_flip] = (int)flip;
+					usingrodspr[q][spr_extend] = (int)extend;
+				}
+			}
+			
+			for(int q = 0; q < 4; ++q)
+			{
+				if(!p_igetl(&tile,f,keepdata))
+					return qe_invalid;
+				
+				if(!p_getc(&flip,f,keepdata))
+					return qe_invalid;
+				
+				if(!p_getc(&extend,f,keepdata))
+					return qe_invalid;
+				
+				if(keepdata)
+				{
+					usingcanespr[q][spr_tile] = (int)tile;
+					usingcanespr[q][spr_flip] = (int)flip;
+					usingcanespr[q][spr_extend] = (int)extend;
+				}
+			}
+			
+			for(int q = 0; q < 4; ++q)
+			{
+				if(!p_igetl(&tile,f,keepdata))
+					return qe_invalid;
+				
+				if(!p_getc(&flip,f,keepdata))
+					return qe_invalid;
+				
+				if(!p_getc(&extend,f,keepdata))
+					return qe_invalid;
+				
+				if(keepdata)
+				{
+					pushingspr[q][spr_tile] = (int)tile;
+					pushingspr[q][spr_flip] = (int)flip;
+					pushingspr[q][spr_extend] = (int)extend;
+				}
+			}
+			
+			for(int q = 0; q < 4; ++q)
+			{
+				if(!p_igetl(&tile,f,keepdata))
+					return qe_invalid;
+				
+				if(!p_getc(&flip,f,keepdata))
+					return qe_invalid;
+				
+				if(!p_getc(&extend,f,keepdata))
+					return qe_invalid;
+				
+				if(keepdata)
+				{
+					liftingspr[q][spr_tile] = (int)tile;
+					liftingspr[q][spr_flip] = (int)flip;
+					liftingspr[q][spr_extend] = (int)extend;
+				}
+			}
+			
+			for(int q = 0; q < 4; ++q)
+			{
+				if(!p_igetl(&tile,f,keepdata))
+					return qe_invalid;
+				
+				if(!p_getc(&flip,f,keepdata))
+					return qe_invalid;
+				
+				if(!p_getc(&extend,f,keepdata))
+					return qe_invalid;
+				
+				if(keepdata)
+				{
+					liftingheavyspr[q][spr_tile] = (int)tile;
+					liftingheavyspr[q][spr_flip] = (int)flip;
+					liftingheavyspr[q][spr_extend] = (int)extend;
+				}
+			}
+			
+			for(int q = 0; q < 4; ++q)
+			{
+				if(!p_igetl(&tile,f,keepdata))
+					return qe_invalid;
+				
+				if(!p_getc(&flip,f,keepdata))
+					return qe_invalid;
+				
+				if(!p_getc(&extend,f,keepdata))
+					return qe_invalid;
+				
+				if(keepdata)
+				{
+					stunnedspr[q][spr_tile] = (int)tile;
+					stunnedspr[q][spr_flip] = (int)flip;
+					stunnedspr[q][spr_extend] = (int)extend;
+				}
+			}
+			for(int q = 0; q < 4; ++q)
+			{
+				if(!p_igetl(&tile,f,keepdata))
+					return qe_invalid;
+				
+				if(!p_getc(&flip,f,keepdata))
+					return qe_invalid;
+				
+				if(!p_getc(&extend,f,keepdata))
+					return qe_invalid;
+				
+				if(keepdata)
+				{
+					stunned_waterspr[q][spr_tile] = (int)tile;
+					stunned_waterspr[q][spr_flip] = (int)flip;
+					stunned_waterspr[q][spr_extend] = (int)extend;
+				}
+			}
+			
+			for(int q = 0; q < 4; ++q)
+			{
+				if(!p_igetl(&tile,f,keepdata))
+					return qe_invalid;
+				
+				if(!p_getc(&flip,f,keepdata))
+					return qe_invalid;
+				
+				if(!p_getc(&extend,f,keepdata))
+					return qe_invalid;
+				
+				if(keepdata)
+				{
+					drowningspr[q][spr_tile] = (int)tile;
+					drowningspr[q][spr_flip] = (int)flip;
+					drowningspr[q][spr_extend] = (int)extend;
+				}
+			}
+			
+			for(int q = 0; q < 4; ++q)
+			{
+				if(!p_igetl(&tile,f,keepdata))
+					return qe_invalid;
+				
+				if(!p_getc(&flip,f,keepdata))
+					return qe_invalid;
+				
+				if(!p_getc(&extend,f,keepdata))
+					return qe_invalid;
+				
+				if(keepdata)
+				{
+					drowning_lavaspr[q][spr_tile] = (int)tile;
+					drowning_lavaspr[q][spr_flip] = (int)flip;
+					drowning_lavaspr[q][spr_extend] = (int)extend;
+				}
+			}
+			
+			for(int q = 0; q < 4; ++q)
+			{
+				if(!p_igetl(&tile,f,keepdata))
+					return qe_invalid;
+				
+				if(!p_getc(&flip,f,keepdata))
+					return qe_invalid;
+				
+				if(!p_getc(&extend,f,keepdata))
+					return qe_invalid;
+				
+				if(keepdata)
+				{
+					fallingspr[q][spr_tile] = (int)tile;
+					fallingspr[q][spr_flip] = (int)flip;
+					fallingspr[q][spr_extend] = (int)extend;
+				}
+			}
+			
+			for(int q = 0; q < 4; ++q)
+			{
+				if(!p_igetl(&tile,f,keepdata))
+					return qe_invalid;
+				
+				if(!p_getc(&flip,f,keepdata))
+					return qe_invalid;
+				
+				if(!p_getc(&extend,f,keepdata))
+					return qe_invalid;
+				
+				if(keepdata)
+				{
+					shockedspr[q][spr_tile] = (int)tile;
+					shockedspr[q][spr_flip] = (int)flip;
+					shockedspr[q][spr_extend] = (int)extend;
+				}
+			}
+			for(int q = 0; q < 4; ++q)
+			{
+				if(!p_igetl(&tile,f,keepdata))
+					return qe_invalid;
+				
+				if(!p_getc(&flip,f,keepdata))
+					return qe_invalid;
+				
+				if(!p_getc(&extend,f,keepdata))
+					return qe_invalid;
+				
+				if(keepdata)
+				{
+					shocked_waterspr[q][spr_tile] = (int)tile;
+					shocked_waterspr[q][spr_flip] = (int)flip;
+					shocked_waterspr[q][spr_extend] = (int)extend;
+				}
+			}
+			
+			for(int q = 0; q < 4; ++q)
+			{
+				if(!p_igetl(&tile,f,keepdata))
+					return qe_invalid;
+				
+				if(!p_getc(&flip,f,keepdata))
+					return qe_invalid;
+				
+				if(!p_getc(&extend,f,keepdata))
+					return qe_invalid;
+				
+				if(keepdata)
+				{
+					pullswordspr[q][spr_tile] = (int)tile;
+					pullswordspr[q][spr_flip] = (int)flip;
+					pullswordspr[q][spr_extend] = (int)extend;
+				}
+			}
+			
+			for(int q = 0; q < 4; ++q)
+			{
+				if(!p_igetl(&tile,f,keepdata))
+					return qe_invalid;
+				
+				if(!p_getc(&flip,f,keepdata))
+					return qe_invalid;
+				
+				if(!p_getc(&extend,f,keepdata))
+					return qe_invalid;
+				
+				if(keepdata)
+				{
+					readingspr[q][spr_tile] = (int)tile;
+					readingspr[q][spr_flip] = (int)flip;
+					readingspr[q][spr_extend] = (int)extend;
+				}
+			}
+			
+			for(int q = 0; q < 4; ++q)
+			{
+				if(!p_igetl(&tile,f,keepdata))
+					return qe_invalid;
+				
+				if(!p_getc(&flip,f,keepdata))
+					return qe_invalid;
+				
+				if(!p_getc(&extend,f,keepdata))
+					return qe_invalid;
+				
+				if(keepdata)
+				{
+					slash180spr[q][spr_tile] = (int)tile;
+					slash180spr[q][spr_flip] = (int)flip;
+					slash180spr[q][spr_extend] = (int)extend;
+				}
+			}
+			
+			for(int q = 0; q < 4; ++q)
+			{
+				if(!p_igetl(&tile,f,keepdata))
+					return qe_invalid;
+				
+				if(!p_getc(&flip,f,keepdata))
+					return qe_invalid;
+				
+				if(!p_getc(&extend,f,keepdata))
+					return qe_invalid;
+				
+				if(keepdata)
+				{
+					slashZ4spr[q][spr_tile] = (int)tile;
+					slashZ4spr[q][spr_flip] = (int)flip;
+					slashZ4spr[q][spr_extend] = (int)extend;
+				}
+			}
+			
+			for(int q = 0; q < 4; ++q)
+			{
+				if(!p_igetl(&tile,f,keepdata))
+					return qe_invalid;
+				
+				if(!p_getc(&flip,f,keepdata))
+					return qe_invalid;
+				
+				if(!p_getc(&extend,f,keepdata))
+					return qe_invalid;
+				
+				if(keepdata)
+				{
+					dashspr[q][spr_tile] = (int)tile;
+					dashspr[q][spr_flip] = (int)flip;
+					dashspr[q][spr_extend] = (int)extend;
+				}
+			}
+			
+			for(int q = 0; q < 4; ++q)
+			{
+				if(!p_igetl(&tile,f,keepdata))
+					return qe_invalid;
+				
+				if(!p_getc(&flip,f,keepdata))
+					return qe_invalid;
+				
+				if(!p_getc(&extend,f,keepdata))
+					return qe_invalid;
+				
+				if(keepdata)
+				{
+					bonkspr[q][spr_tile] = (int)tile;
+					bonkspr[q][spr_flip] = (int)flip;
+					bonkspr[q][spr_extend] = (int)extend;
+				}
+			}
+			
+			for(int q = 0; q < 3; ++q) //Not directions; number of medallion sprs
+			{
+				if(!p_igetl(&tile,f,keepdata))
+					return qe_invalid;
+				
+				if(!p_getc(&flip,f,keepdata))
+					return qe_invalid;
+				
+				if(!p_getc(&extend,f,keepdata))
+					return qe_invalid;
+				
+				if(keepdata)
+				{
+					medallionsprs[q][spr_tile] = (int)tile;
+					medallionsprs[q][spr_flip] = (int)flip;
+					medallionsprs[q][spr_extend] = (int)extend;
+				}
+			}
+		}
+		else if(keepdata)
+		{
+			memset(frozenspr, 0, sizeof(frozenspr));
+			memset(frozen_waterspr, 0, sizeof(frozen_waterspr));
+			memset(onfirespr, 0, sizeof(onfirespr));
+			memset(onfire_waterspr, 0, sizeof(onfire_waterspr));
+			memset(diggingspr, 0, sizeof(diggingspr));
+			memset(usingrodspr, 0, sizeof(usingrodspr));
+			memset(usingcanespr, 0, sizeof(usingcanespr));
+			memset(pushingspr, 0, sizeof(pushingspr));
+			memset(liftingspr, 0, sizeof(liftingspr));
+			memset(liftingheavyspr, 0, sizeof(liftingheavyspr));
+			memset(stunnedspr, 0, sizeof(stunnedspr));
+			memset(stunned_waterspr, 0, sizeof(stunned_waterspr));
+			memset(fallingspr, 0, sizeof(fallingspr));
+			memset(shockedspr, 0, sizeof(shockedspr));
+			memset(shocked_waterspr, 0, sizeof(shocked_waterspr));
+			memset(pullswordspr, 0, sizeof(pullswordspr));
+			memset(readingspr, 0, sizeof(readingspr));
+			memset(slash180spr, 0, sizeof(slash180spr));
+			memset(slashZ4spr, 0, sizeof(slashZ4spr));
+			memset(dashspr, 0, sizeof(dashspr));
+			memset(bonkspr, 0, sizeof(bonkspr));
+			memset(medallionsprs, 0, sizeof(medallionsprs));
+			memset(holdspr[0][2], 0, sizeof(holdspr[0][2])); //Sword hold (Land)
+			memset(holdspr[1][2], 0, sizeof(holdspr[1][2])); //Sword hold (Water)
+			for(int q = 0; q < 4; ++q)
+			{
+				for(int p = 0; p < 3; ++p)
+				{
+					drowningspr[q][p] = divespr[q][p];
+					drowning_lavaspr[q][p] = divespr[q][p];
+				}
+			}
+		}
     }
     
     return 0;
@@ -9618,7 +10209,7 @@ extern script_data *comboscripts[NUMSCRIPTSCOMBODATA];
 int readffscript(PACKFILE *f, zquestheader *Header, bool keepdata)
 {
     int dummy;
-    word s_version=0, s_cversion=0;
+    word s_version=0, s_cversion=0, zmeta_version=0;
     byte numscripts=0;
     numscripts=numscripts; //to avoid unused variables warnings
     int ret;
@@ -9635,6 +10226,14 @@ int readffscript(PACKFILE *f, zquestheader *Header, bool keepdata)
     {
         return qe_invalid;
     }
+	
+	if(s_version >= 18)
+	{
+		if(!p_igetw(&zmeta_version,f,true))
+		{
+			return qe_invalid;
+		}
+	}
     
     //al_trace("Scripts version %d\n", s_version);
     //section size
@@ -9648,12 +10247,12 @@ int readffscript(PACKFILE *f, zquestheader *Header, bool keepdata)
     temp_ffscript_version = s_version;
     //miscQdata *the_misc;
     if ( FFCore.quest_format[vLastCompile] < 13 ) FFCore.quest_format[vLastCompile] = s_version;
-    al_trace("Loaded scripts last compiled in ZScript version: %d\n", (FFCore.quest_format[vLastCompile]));
+    al_trace("Loaded scripts last compiled in ZScript version: %ld\n", (FFCore.quest_format[vLastCompile]));
     
     //finally...  section data
     for(int i = 0; i < ((s_version < 2) ? NUMSCRIPTFFCOLD : NUMSCRIPTFFC); i++)
     {
-        ret = read_one_ffscript(f, Header, keepdata, i, s_version, s_cversion, &ffscripts[i]);
+        ret = read_one_ffscript(f, Header, keepdata, i, s_version, s_cversion, &ffscripts[i], zmeta_version);
         
         if(ret != 0) return qe_invalid;
     }
@@ -9662,21 +10261,21 @@ int readffscript(PACKFILE *f, zquestheader *Header, bool keepdata)
     {
         for(int i = 0; i < NUMSCRIPTITEM; i++)
         {
-            ret = read_one_ffscript(f, Header, keepdata, i, s_version, s_cversion, &itemscripts[i]);
+            ret = read_one_ffscript(f, Header, keepdata, i, s_version, s_cversion, &itemscripts[i], zmeta_version);
             
             if(ret != 0) return qe_invalid;
         }
         
         for(int i = 0; i < NUMSCRIPTGUYS; i++)
         {
-            ret = read_one_ffscript(f, Header, keepdata, i, s_version, s_cversion, &guyscripts[i]);
+            ret = read_one_ffscript(f, Header, keepdata, i, s_version, s_cversion, &guyscripts[i], zmeta_version);
             
             if(ret != 0) return qe_invalid;
         }
         
         for(int i = 0; i < NUMSCRIPTWEAPONS; i++)
         {
-            ret = read_one_ffscript(f, Header, keepdata, i, s_version, s_cversion, &wpnscripts[i]);
+            ret = read_one_ffscript(f, Header, keepdata, i, s_version, s_cversion, &wpnscripts[i], zmeta_version);
             
             if(ret != 0) return qe_invalid;
         }
@@ -9684,64 +10283,103 @@ int readffscript(PACKFILE *f, zquestheader *Header, bool keepdata)
 	
         for(int i = 0; i < NUMSCRIPTSCREEN; i++)
         {
-            ret = read_one_ffscript(f, Header, keepdata, i, s_version, s_cversion, &screenscripts[i]);
+            ret = read_one_ffscript(f, Header, keepdata, i, s_version, s_cversion, &screenscripts[i], zmeta_version);
             
             if(ret != 0) return qe_invalid;
         }
 	
-        if(s_version > 13)
+		if(s_version > 16)
 		{
-            for(int i = 0; i < NUMSCRIPTGLOBAL; ++i)
-            {
-                ret = read_one_ffscript(f, Header, keepdata, i, s_version, s_cversion, &globalscripts[i]);
-                
-                if(ret != 0) return qe_invalid;
-            }
+			for(int i = 0; i < NUMSCRIPTGLOBAL; ++i)
+			{
+				ret = read_one_ffscript(f, Header, keepdata, i, s_version, s_cversion, &globalscripts[i], zmeta_version);
+				
+				if(ret != 0) return qe_invalid;
+			}
+		}
+		else if(s_version > 13)
+		{
+			for(int i = 0; i < NUMSCRIPTGLOBAL255OLD; ++i)
+			{
+				ret = read_one_ffscript(f, Header, keepdata, i, s_version, s_cversion, &globalscripts[i], zmeta_version);
+				
+				if(ret != 0) return qe_invalid;
+			}
+			
+			if(globalscripts[GLOBAL_SCRIPT_ONSAVE] != NULL)
+				delete globalscripts[GLOBAL_SCRIPT_ONSAVE];
+				
+			globalscripts[GLOBAL_SCRIPT_ONSAVE] = new script_data();
 		}
 		else if(s_version > 4)
-        {
-            for(int i = 0; i < NUMSCRIPTGLOBAL253; ++i)
-            {
-                ret = read_one_ffscript(f, Header, keepdata, i, s_version, s_cversion, &globalscripts[i]);
-                
-                if(ret != 0) return qe_invalid;
-            }
-            
-            if(globalscripts[GLOBAL_SCRIPT_ONLAUNCH] != NULL)
-                delete globalscripts[GLOBAL_SCRIPT_ONLAUNCH];
-                
-            globalscripts[GLOBAL_SCRIPT_ONLAUNCH] = new script_data();
-            
-            if(globalscripts[GLOBAL_SCRIPT_ONCONTGAME] != NULL)
-                delete globalscripts[GLOBAL_SCRIPT_ONCONTGAME];
-                
-            globalscripts[GLOBAL_SCRIPT_ONCONTGAME] = new script_data();
-            
-            if(globalscripts[GLOBAL_SCRIPT_F6] != NULL)
-                delete globalscripts[GLOBAL_SCRIPT_F6];
-                
-            globalscripts[GLOBAL_SCRIPT_F6] = new script_data();
-        }
-        else
-        {
-            for(int i = 0; i < NUMSCRIPTGLOBALOLD; i++)
-            {
-                ret = read_one_ffscript(f, Header, keepdata, i, s_version, s_cversion, &globalscripts[i]);
-                
-                if(ret != 0) return qe_invalid;
-            }
-            
-            if(globalscripts[GLOBAL_SCRIPT_ONSAVELOAD] != NULL)
-                delete globalscripts[GLOBAL_SCRIPT_ONSAVELOAD];
-                
-            globalscripts[GLOBAL_SCRIPT_ONSAVELOAD] = new script_data();
-        }
+		{
+			for(int i = 0; i < NUMSCRIPTGLOBAL253; ++i)
+			{
+				ret = read_one_ffscript(f, Header, keepdata, i, s_version, s_cversion, &globalscripts[i], zmeta_version);
+				
+				if(ret != 0) return qe_invalid;
+			}
+			
+			if(globalscripts[GLOBAL_SCRIPT_ONLAUNCH] != NULL)
+				delete globalscripts[GLOBAL_SCRIPT_ONLAUNCH];
+				
+			globalscripts[GLOBAL_SCRIPT_ONLAUNCH] = new script_data();
+			
+			if(globalscripts[GLOBAL_SCRIPT_ONCONTGAME] != NULL)
+				delete globalscripts[GLOBAL_SCRIPT_ONCONTGAME];
+				
+			globalscripts[GLOBAL_SCRIPT_ONCONTGAME] = new script_data();
+			
+			if(globalscripts[GLOBAL_SCRIPT_F6] != NULL)
+				delete globalscripts[GLOBAL_SCRIPT_F6];
+				
+			globalscripts[GLOBAL_SCRIPT_F6] = new script_data();
+			
+			if(globalscripts[GLOBAL_SCRIPT_ONSAVE] != NULL)
+				delete globalscripts[GLOBAL_SCRIPT_ONSAVE];
+				
+			globalscripts[GLOBAL_SCRIPT_ONSAVE] = new script_data();
+		}
+		else
+		{
+			for(int i = 0; i < NUMSCRIPTGLOBALOLD; i++)
+			{
+				ret = read_one_ffscript(f, Header, keepdata, i, s_version, s_cversion, &globalscripts[i], zmeta_version);
+				
+				if(ret != 0) return qe_invalid;
+			}
+			
+			if(globalscripts[GLOBAL_SCRIPT_ONSAVELOAD] != NULL)
+				delete globalscripts[GLOBAL_SCRIPT_ONSAVELOAD];
+				
+			globalscripts[GLOBAL_SCRIPT_ONSAVELOAD] = new script_data();
+			
+			if(globalscripts[GLOBAL_SCRIPT_ONLAUNCH] != NULL)
+				delete globalscripts[GLOBAL_SCRIPT_ONLAUNCH];
+				
+			globalscripts[GLOBAL_SCRIPT_ONLAUNCH] = new script_data();
+			
+			if(globalscripts[GLOBAL_SCRIPT_ONCONTGAME] != NULL)
+				delete globalscripts[GLOBAL_SCRIPT_ONCONTGAME];
+				
+			globalscripts[GLOBAL_SCRIPT_ONCONTGAME] = new script_data();
+			
+			if(globalscripts[GLOBAL_SCRIPT_F6] != NULL)
+				delete globalscripts[GLOBAL_SCRIPT_F6];
+				
+			globalscripts[GLOBAL_SCRIPT_F6] = new script_data();
+			
+			if(globalscripts[GLOBAL_SCRIPT_ONSAVE] != NULL)
+				delete globalscripts[GLOBAL_SCRIPT_ONSAVE];
+				
+			globalscripts[GLOBAL_SCRIPT_ONSAVE] = new script_data();
+		}
         
 	if(s_version > 10) //expanded the number of Link scripts to 5. 
         {
 		for(int i = 0; i < NUMSCRIPTLINK; i++)
 		{
-		    ret = read_one_ffscript(f, Header, keepdata, i, s_version, s_cversion, &linkscripts[i]);
+		    ret = read_one_ffscript(f, Header, keepdata, i, s_version, s_cversion, &linkscripts[i], zmeta_version);
 		    
 		    if(ret != 0) return qe_invalid;
 		}
@@ -9750,7 +10388,7 @@ int readffscript(PACKFILE *f, zquestheader *Header, bool keepdata)
 	{
 		for(int i = 0; i < NUMSCRIPTLINKOLD; i++)
 		{
-		    ret = read_one_ffscript(f, Header, keepdata, i, s_version, s_cversion, &linkscripts[i]);
+		    ret = read_one_ffscript(f, Header, keepdata, i, s_version, s_cversion, &linkscripts[i], zmeta_version);
 		    
 		    if(ret != 0) return qe_invalid;
 		}
@@ -9769,13 +10407,13 @@ int readffscript(PACKFILE *f, zquestheader *Header, bool keepdata)
             
             for(int i = 0; i < NUMSCRIPTWEAPONS; i++)
             {
-                ret = read_one_ffscript(f, Header, keepdata, i, s_version, s_cversion, &ewpnscripts[i]);
+                ret = read_one_ffscript(f, Header, keepdata, i, s_version, s_cversion, &ewpnscripts[i], zmeta_version);
                 
                 if(ret != 0) return qe_invalid;
             }
             for(int i = 0; i < NUMSCRIPTSDMAP; i++)
             {
-                ret = read_one_ffscript(f, Header, keepdata, i, s_version, s_cversion, &dmapscripts[i]);
+                ret = read_one_ffscript(f, Header, keepdata, i, s_version, s_cversion, &dmapscripts[i], zmeta_version);
             
                 if(ret != 0) return qe_invalid;
             }
@@ -9786,19 +10424,19 @@ int readffscript(PACKFILE *f, zquestheader *Header, bool keepdata)
             
             for(int i = 0; i < NUMSCRIPTWEAPONS; i++)
             {
-                ret = read_one_ffscript(f, Header, keepdata, i, s_version, s_cversion, &lwpnscripts[i]);
+                ret = read_one_ffscript(f, Header, keepdata, i, s_version, s_cversion, &lwpnscripts[i], zmeta_version);
                 
                 if(ret != 0) return qe_invalid;
             }
 	    for(int i = 0; i < NUMSCRIPTWEAPONS; i++)
             {
-                ret = read_one_ffscript(f, Header, keepdata, i, s_version, s_cversion, &ewpnscripts[i]);
+                ret = read_one_ffscript(f, Header, keepdata, i, s_version, s_cversion, &ewpnscripts[i], zmeta_version);
                 
                 if(ret != 0) return qe_invalid;
             }
             for(int i = 0; i < NUMSCRIPTSDMAP; i++)
             {
-                ret = read_one_ffscript(f, Header, keepdata, i, s_version, s_cversion, &dmapscripts[i]);
+                ret = read_one_ffscript(f, Header, keepdata, i, s_version, s_cversion, &dmapscripts[i], zmeta_version);
             
                 if(ret != 0) return qe_invalid;
             }
@@ -9808,7 +10446,7 @@ int readffscript(PACKFILE *f, zquestheader *Header, bool keepdata)
 	{
 		for(int i = 0; i < NUMSCRIPTSITEMSPRITE; i++)
 		{
-			ret = read_one_ffscript(f, Header, keepdata, i, s_version, s_cversion, &itemspritescripts[i]);
+			ret = read_one_ffscript(f, Header, keepdata, i, s_version, s_cversion, &itemspritescripts[i], zmeta_version);
                 
 			if(ret != 0) return qe_invalid;
 		}
@@ -9818,7 +10456,7 @@ int readffscript(PACKFILE *f, zquestheader *Header, bool keepdata)
 	{
 		for(int i = 0; i < NUMSCRIPTSCOMBODATA; i++)
 		{
-			ret = read_one_ffscript(f, Header, keepdata, i, s_version, s_cversion, &comboscripts[i]);
+			ret = read_one_ffscript(f, Header, keepdata, i, s_version, s_cversion, &comboscripts[i], zmeta_version);
                 
 			if(ret != 0) return qe_invalid;
 		}
@@ -10234,7 +10872,7 @@ void reset_scripts()
     }
 }
 
-int read_one_ffscript(PACKFILE *f, zquestheader *, bool keepdata, int , word s_version, word , script_data **script)
+int read_one_ffscript(PACKFILE *f, zquestheader *, bool keepdata, int , word s_version, word , script_data **script, word zmeta_version)
 {
 
     //Please also update loadquest() when modifying this method -DD
@@ -10322,6 +10960,25 @@ int read_one_ffscript(PACKFILE *f, zquestheader *, bool keepdata, int , word s_v
 		if(!p_igetw(&(temp_meta.compiler_v4),f,true))
 		{
 			return qe_invalid;
+		}
+		
+		if(zmeta_version >= 2)
+		{
+			for(int c = 0; c < 33; ++c)
+			{
+				if(!p_getc(&(temp_meta.script_name[c]),f,true))
+				{
+					return qe_invalid;
+				}
+			}
+			
+			for(int c = 0; c < 33; ++c)
+			{
+				if(!p_getc(&(temp_meta.author[c]),f,true))
+				{
+					return qe_invalid;
+				}
+			}
 		}
 		
 		if(keepdata)
@@ -12208,6 +12865,53 @@ int readguys(PACKFILE *f, zquestheader *Header, bool keepdata)
 		}
 	    }
             
+			if(guyversion >= 42)
+			{
+				if(!p_getc(&(tempguy.moveflags),f,keepdata))
+				{
+					return qe_invalid;
+				}
+			}
+			else
+			{
+				switch(tempguy.family)
+				{
+					//No gravity; floats over pits
+					case eeTEK: case eePEAHAT: case eeROCK: case eeTRAP:
+					case eePROJECTILE: case eeSPINTILE: case eeKEESE: case eeFIRE:
+					//Special (bosses, etc)
+					case eeFAIRY: case eeGUY: case eeNONE: case eeZORA:
+					case eeAQUA: case eeDIG: case eeGHOMA: case eeGANON:
+					case eePATRA: case eeGLEEOK: case eeMOLD: case eeMANHAN:
+						tempguy.moveflags = FLAG_CAN_PITWALK;
+						break;
+					//No gravity, but falls in pits
+					case eeLEV:
+						tempguy.moveflags = FLAG_CAN_PITFALL;
+						break;
+					//Bosses that respect pits
+					case eeDONGO:
+						tempguy.moveflags = FLAG_OBEYS_GRAV;
+						break;
+					case eeLANM:
+						tempguy.moveflags = 0;
+						break;
+					//Gravity, floats over pits
+					case eeWIZZ: case eeWALLM: case eeGHINI:
+						tempguy.moveflags = FLAG_OBEYS_GRAV | FLAG_CAN_PITWALK;
+						break;
+					//Gravity and falls in pits
+					case eeWALK: case eeOTHER:
+					case eeSCRIPT01: case eeSCRIPT02: case eeSCRIPT03: case eeSCRIPT04: case eeSCRIPT05:
+					case eeSCRIPT06: case eeSCRIPT07: case eeSCRIPT08: case eeSCRIPT09: case eeSCRIPT10:
+					case eeSCRIPT11: case eeSCRIPT12: case eeSCRIPT13: case eeSCRIPT14: case eeSCRIPT15:
+					case eeSCRIPT16: case eeSCRIPT17: case eeSCRIPT18: case eeSCRIPT19: case eeSCRIPT20:
+					case eeFFRIENDLY01: case eeFFRIENDLY02: case eeFFRIENDLY03: case eeFFRIENDLY04: case eeFFRIENDLY05:
+					case eeFFRIENDLY06: case eeFFRIENDLY07: case eeFFRIENDLY08: case eeFFRIENDLY09: case eeFFRIENDLY10:
+						tempguy.moveflags = FLAG_OBEYS_GRAV | FLAG_CAN_PITFALL;
+				}
+			}
+			
             if(keepdata)
             {
                 guysbuf[i] = tempguy;
@@ -12815,6 +13519,12 @@ int readmapscreen(PACKFILE *f, zquestheader *Header, mapscr *temp_mapscr, zcmap 
                 temp_mapscr->enemy[k]+=10;
             }
         }
+	//don't read in any invalid data
+	if ( ((unsigned)temp_mapscr->enemy[k]) > MAXGUYS )
+	{
+		al_trace("Tried to read an invalid enemy ID (%d) for tmpscr->enemy[%d]. This has been cleared to 0.\n", temp_mapscr->enemy[k], k);
+		temp_mapscr->enemy[k] = 0;
+	}
     }
     
     if(!p_getc(&(temp_mapscr->pattern),f,true))
@@ -16960,8 +17670,10 @@ void portBombRules()
 	
 }
 
-int loadquest(const char *filename, zquestheader *Header, miscQdata *Misc, zctune *tunes, bool show_progress, bool compressed, bool encrypted, bool keepall, byte *skip_flags)
+int loadquest(const char *filename, zquestheader *Header, miscQdata *Misc, zctune *tunes, bool show_progress, bool compressed, bool encrypted, bool keepall, byte *skip_flags, byte printmetadata)
 {
+	
+    DMapEditorLastMaptileUsed = 0;
     combosread=false;
     mapsread=false;
     fixffcs=false;
@@ -16973,7 +17685,7 @@ int loadquest(const char *filename, zquestheader *Header, miscQdata *Misc, zctun
     }
     
     //  show_progress=true;
-    char tmpfilename[32];
+    char tmpfilename[32] = {0};
     temp_name(tmpfilename);
 //  char percent_done[30];
     bool catchup=false;
@@ -17086,7 +17798,7 @@ int loadquest(const char *filename, zquestheader *Header, miscQdata *Misc, zctun
     
     //header
     box_out("Reading Header...");
-    ret=readheader(f, &tempheader, true, 1);
+    ret=readheader(f, &tempheader, true, printmetadata);
     checkstatus(ret);
     box_out("okay.");
     box_eol();
