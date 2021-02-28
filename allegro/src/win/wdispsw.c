@@ -111,6 +111,8 @@ void _win_switch_in(void)
 
    _TRACE(PREFIX_I "switch in\n");
 
+   _enter_gfx_critical();
+
    _win_app_foreground = TRUE;
 
    key_dinput_acquire();
@@ -132,6 +134,7 @@ void _win_switch_in(void)
    }
 
    _switch_in();
+   _exit_gfx_critical();
 }
 
 
@@ -144,6 +147,10 @@ void _win_switch_out(void)
    int mode;
 
    _TRACE(PREFIX_I "switch out\n");
+
+   _enter_gfx_critical();
+
+   _switch_out();
 
    _win_app_foreground = FALSE;
 
@@ -168,8 +175,8 @@ void _win_switch_out(void)
       if ((HINSTANCE)GetWindowLong(GetForegroundWindow(), GWL_HINSTANCE) != allegro_inst)
 	 SetThreadPriority(allegro_thread, THREAD_PRIORITY_LOWEST); 
    }
-
-   _switch_out();
+      
+   _exit_gfx_critical();
 }
 
 

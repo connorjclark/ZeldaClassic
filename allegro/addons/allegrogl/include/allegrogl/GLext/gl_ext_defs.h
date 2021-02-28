@@ -1,5 +1,8 @@
 /* <Core> */
 
+typedef long long          int64_t;
+typedef unsigned long long uint64_t;
+
 #ifndef GL_VERSION_1_2
 #define GL_VERSION_1_2 1
 #define AGL_VERSION_1_2

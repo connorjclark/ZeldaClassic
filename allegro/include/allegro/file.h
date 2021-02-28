@@ -25,6 +25,9 @@
    extern "C" {
 #endif
 
+	   typedef long long          int64_t;
+	   typedef unsigned long long uint64_t;
+
 AL_FUNC(char *, fix_filename_case, (char *path));
 AL_FUNC(char *, fix_filename_slashes, (char *path));
 AL_FUNC(char *, canonicalize_filename, (char *dest, AL_CONST char *filename, int size));

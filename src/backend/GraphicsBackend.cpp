@@ -62,7 +62,11 @@ GraphicsBackend::GraphicsBackend() :
 	curmode_(-1),
 	virtualw_(1),
 	virtualh_(1),
-	switchdelay_(1)
+	switchdelay_(1),
+	screenTexture_(NULL),
+	screenTextureH_(0),
+	screenTextureW_(0),
+	extString(NULL)
 {	
 }
 
@@ -157,25 +161,49 @@ bool GraphicsBackend::showBackBuffer()
 	Backend::palette->selectPalette();
 
 	screen = hw_screen_;
+	BITMAP *src = NULL;
 	if (native_)
 	{
 		set_color_conversion(COLORCONV_TOTAL);
 		blit(backbuffer_, convertbuffer_, 0, 0, 0, 0, virtualScreenW(), virtualScreenH());
 		stretch_blit(convertbuffer_, nativebuffer_, 0, 0, virtualScreenW(), virtualScreenH(), 0, 0, SCREEN_W, SCREEN_H);
-		allegro_gl_set_allegro_mode();
-		blit(nativebuffer_, hw_screen_, 0, 0, 0, 0, SCREEN_W, SCREEN_H);
-		allegro_gl_unset_allegro_mode();
+		src = nativebuffer_;
 	}
 	else
 	{
 		set_color_conversion(COLORCONV_TOTAL);
 		blit(backbuffer_, convertbuffer_, 0, 0, 0, 0, virtualScreenW(), virtualScreenH());
-		allegro_gl_set_allegro_mode();
-		stretch_blit(convertbuffer_, hw_screen_, 0, 0, virtualScreenW(), virtualScreenH(), 0, 0, SCREEN_W, SCREEN_H);
-		allegro_gl_unset_allegro_mode();
+		src = convertbuffer_;
 	}
-	screen = backbuffer_;
+	//std::vector<GLubyte> srcData;// (virtualw_ * virtualh_ * 4, 0);
+	GLubyte *srcData = new GLubyte[virtualw_ * virtualh_ * 4];
+	for (int i = 0; i < src->h; i++)
+	{
+		//srcData.insert(srcData.end(), (GLubyte*)src->line[i], (GLubyte*)src->line[i]+(src->w*4));
+		memcpy(srcData + (i*virtualw_ * 4), src->line[i], virtualw_ * 4);
+	}
+
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+
+	glEnable(GL_TEXTURE_2D);
+	glBindTexture(GL_TEXTURE_2D, screenTexture_);
+	glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, virtualw_, virtualh_, GL_RGBA, GL_UNSIGNED_BYTE, src->line[0]);
+
+	delete srcData;
+
+	glDisable(GL_BLEND);
+
+	glBegin(GL_QUADS);
+	glColor4ub(255, 128, 255, 255);
+	float temp = 1.0f * virtualw_ / screenTextureW_;
+	float temp2 = 1.0f * virtualh_ / screenTextureH_;
+	glTexCoord2f(0.0f, 0.0f);									glVertex3f(0.0f, 0.0f, 0.0f);
+	glTexCoord2f(temp, 0.0f);									glVertex3f(virtualw_ * 1.0f, 0.0f, 0.0f);
+	glTexCoord2f(temp, temp2);									glVertex3f(virtualw_ * 1.0f, virtualh_ * 1.0f, 0.0f);
+	glTexCoord2f(0.0f, temp2);									glVertex3f(0.0f, virtualh_ * 1.0f, 0.0f);
+	glEnd();
 	allegro_gl_flip();
+	screen = backbuffer_;
 	Backend::mouse->unrenderCursor(backbuffer_);
 	frames_this_second++;
 	return true;
@@ -347,6 +375,9 @@ bool GraphicsBackend::trySettingVideoMode()
 		return false;
 	}
 
+	//Get OpenGL extensions list
+	extString = glGetString(GL_EXTENSIONS);
+
 	screenw_ = SCREEN_W;
 	screenh_ = SCREEN_H;
 
@@ -398,7 +429,7 @@ bool GraphicsBackend::trySettingVideoMode()
 		virtualh_ = virtualmodes_[newmode].second;
 		destroy_bitmap(backbuffer_);
 		backbuffer_ = create_bitmap_ex(8, virtualw_, virtualh_);
-		convertbuffer_ = create_bitmap_ex(depth, virtualw_, virtualh_);
+		convertbuffer_ = create_bitmap_ex(32, virtualw_, virtualh_);
 		clear_to_color(backbuffer_, 0);
 		clear_to_color(convertbuffer_, 0);
 	}
@@ -407,8 +438,39 @@ bool GraphicsBackend::trySettingVideoMode()
 		if (nativebuffer_)
 			destroy_bitmap(nativebuffer_);
 
-		nativebuffer_ = create_bitmap_ex(depth, SCREEN_W, SCREEN_H);
+		nativebuffer_ = create_bitmap_ex(32, SCREEN_W, SCREEN_H);
 	}
+
+	//Initialize the OpenGL state to support 2D drawing
+	glMatrixMode(GL_PROJECTION); //Projection matrix
+	glLoadIdentity(); //Clear it
+	glOrtho(0.0f, virtualw_ * 1.0f, virtualh_ * 1.0f, 0.0f, -100.0f, 100.0f); //Translate the projection viewport to match the virtual screen size.
+	glMatrixMode(GL_MODELVIEW); //Model-view matrix
+	glLoadIdentity(); //Clear it
+
+	//Disable a bunch of stuff we don't need so we can display the screen properly.
+	glDisable(GL_CULL_FACE);
+	glDisable(GL_DEPTH_TEST);
+	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+
+	//Create and initialize texture to represent the screen. AllegroGL seems to use glDrawPixelsfor screen drawing which is not really satisfactory
+	screenTextureW_ = 2048;
+	screenTextureH_ = 2048;
+	while (screenTextureW_ > virtualw_ && screenTextureW_ > 1) screenTextureW_ /= 2;
+	while (screenTextureH_ > virtualh_ && screenTextureH_ > 1) screenTextureH_ /= 2;
+	screenTextureW_ *= 2;
+	screenTextureH_ *= 2;
+
+	glGenTextures(1, &screenTexture_);
+	glBindTexture(GL_TEXTURE_2D, screenTexture_);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+
+	//Clear texture to 0 color
+	std::vector<GLubyte> empty(screenTextureW_ * screenTextureH_ * 4, 0);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, screenTextureW_, screenTextureH_, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
 
 	screen = backbuffer_;
 	showBackBuffer();

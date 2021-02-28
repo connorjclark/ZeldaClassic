@@ -4,6 +4,7 @@
 #include <vector>
 #include <string>
 #include "allegro/palette.h"
+#include <alleggl.h>
 
 struct BITMAP;
 
@@ -309,10 +310,16 @@ private:
 
 	bool trySettingVideoMode();
 
+	//Internal OpenGL helper functions
+
 	BITMAP *hw_screen_;
 	BITMAP *backbuffer_;
 	BITMAP *nativebuffer_;
 	BITMAP *convertbuffer_;
+
+	GLuint screenTexture_;
+	GLfloat screenTextureH_;
+	GLfloat screenTextureW_;
 
 	bool initialized_;
 	int screenw_, screenh_;
@@ -324,6 +331,8 @@ private:
 	int virtualw_, virtualh_;
 
 	int switchdelay_;
+
+	const GLubyte *extString;
 	
 	static int fps_;
 
