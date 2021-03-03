@@ -39,6 +39,11 @@
   *      See readme.txt for copyright information.
   */
 
+//glibc 2.28 and later require this: -Z
+#ifdef __GNUG__
+	#define ALLEGRO_NO_FIX_ALIASES
+#endif
+
 #include "precompiled.h" //always first
 
 #include <string.h>

@@ -19,7 +19,9 @@
 //1.09  //Added screen change tracking and compass beep
 //1.10  //Added ffc script ScreenGuyMusic and fuction: bool __classic_zh_ScreenGuyAlive()
 //1.11  //Added arg for BossExplode ffc for enemy ID override as D7
-//1.12  //Changed import to #include
+//1.12  //Changed import to #include, updated changeroomguy ffc to ignore fires.
+//1.13  //Fixed typo in changeroomguy ffc. 
+//1.14  //Added script CollectHeartContainer for a set of four automated messages.
 #include "ffcscript.zh"
 #include "stdExtra.zh"
 #include "ghost.zh"
@@ -35,12 +37,12 @@ const int __classic_zh_LASTMAP 		= 4;
 const int __classic_zh_LASTSCR 		= 5;
 
 //Version Information; time is in GMT
-const float __classic_zh_VERSION 	= 1.11;
-const int __classic_zh_YEAR 		= 2019;
-const int __classic_zh_MONTH 		= 10;
-const int __classic_zh_DAY 		= 8;
-const int __classic_zh_HOUR 		= 0;
-const int __classic_zh_MINUTE 		= 26;
+const float __classic_zh_VERSION 	= 1.13;
+const int __classic_zh_YEAR 		= 2030;
+const int __classic_zh_MONTH 		= 9;
+const int __classic_zh_DAY 		= 6;
+const int __classic_zh_HOUR 		= 3;
+const int __classic_zh_MINUTE 		= 56;
 
 
 const int __classic_zh_ITEM_Z2LANTERN 			= 149;
@@ -142,6 +144,14 @@ item script ItemSound
 	void run(int s)
 	{
 		Game->PlaySound(s);
+	}
+}
+
+item script CollectHeartContainer
+{
+	void run(int m)
+	{
+		Screen->Message(m+Game->Generic[GEN_HEARTPIECES]);
 	}
 }
 
@@ -350,10 +360,13 @@ ffc script ChangeRoomGuy
 			npc g = Screen->LoadNPC(q);
 			if ( g->Type == NPCT_GUY )
 			{
-				g->OriginalTile = t;
-				if ( cs > 0 ) 
-					g->CSet = cs;
-				break;
+				if ( g->ID != NPC_FIRE )
+				{
+					g->OriginalTile = t;
+					if ( cs > 0 ) 
+						g->CSet = cs;
+					break;
+				}
 			}
 		}
 	}

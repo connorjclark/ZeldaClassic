@@ -7,13 +7,13 @@
 
 
 #define V_ZC_FIRST 2
-#define V_ZC_SECOND 53
+#define V_ZC_SECOND 55
 #define V_ZC_THIRD 1
 //alpha id
 #define V_ZC_FOURTH 0
 //build
 #define V_ZC_ALPHA 0
-#define V_ZC_BETA 52
+#define V_ZC_BETA 55
 #define V_ZC_GAMMA 0
 #define V_ZC_RELEASE 0
 #define V_ZC_YEAR 2020

@@ -1,7 +1,49 @@
 ChangeLog for 2.53.1
 
-//Beta 52
+//Beta 55
+Updated allegro to v4.4.4
+Added a special colour (teal) to water combos when drowning is off
+	when viewing combo solidity. 
+	( ZoriaRPG, 16th October, 2020 )
 
+//Beta 54
+Fix Linux Console
+	( ZoriaRPG, 19th September, 2020 )
+
+//Beta 53
+
+<Classic.zh 1.13> Fixed an identifier error that prevented compiling.
+	( ZoriaRPG, 6th September, 2020 )
+	
+Add forced NULL terminator to pointers passed to TraceS(),
+	to prevent crashes in the event that the user passes
+	an ZScript client array w/o a NULL terminator.
+	( ZoriaRPG, 6th September, 2020 )
+
+Added 'Snap to Grid' to FFC Right Click contextual menu.
+	( ZoriaRPG, 5th September, 2020 )
+	
+Raised max deaths count from 999 to 65535. 
+	Requested by zcfan27330 on AGN as he hit 999 deaths in Gleeok's 6th.
+	( ZoriaRPG, 4th September, 2020 )
+
+//Beta 52
+	
+Added Quest->Rules->Pick Ruleset to ZQ menus.
+	( ZoriaRPG, 2nd September, 2020 )
+	
+Updated classic.zh to v 1.12. The 'ChangeRoomGuy' script now
+	ignores NPC_FIRE.
+	( ZoriaRPG, 14th August, 2020 )
+	
+<std 1.5013> 
+	Added sanity guard on SetLayerCombo/GetLayerCombo functions.
+	These now check to ensure that the layer is configured.
+	( ZoriaRPG, 7th August, 2020 )
+	
+Rewrote the MIDI Patch Fix to work properly on modern (Post-XP) Windows.
+	( ZoriaRPG, 2nd August, 2020 )
+	
 Added Fullsceen confirmation warning, backported from 2.55.
 	( ZoriaRPG, 25th July, 2020 )
 	

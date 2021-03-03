@@ -24,6 +24,7 @@
 #include <assert.h>
 #include <time.h>
 #include <vector>
+#include <fstream>
 
 #include "parser/Compiler.h"
 #include "zc_alleg.h"
@@ -1673,6 +1674,8 @@ static MENU rules_menu[] =
     { (char *)"&NES Fixes ",                onFixesRules,              NULL,                     0,            NULL   },
     { (char *)"&Other",                     onMiscRules,               NULL,                     0,            NULL   },
     { (char *)"&Backward compatibility",    onCompatRules,             NULL,                     0,            NULL   },
+    { (char *)"",                           NULL,                      NULL,                     0,            NULL   },
+    { (char *)"&Pick Ruleset",    PickRuleset,             NULL,                     0,            NULL   },
     {  NULL,                                NULL,                      NULL,                     0,            NULL   }
 };
 
@@ -1926,7 +1929,7 @@ static MENU etc_menu[] =
 	{ (char *)"",                           NULL,                      NULL,                     0,            NULL   },
 	{ (char *)"&View Pic...",               onViewPic,                 NULL,                     0,            NULL   },
 	{ (char *)"",                           NULL,                      NULL,                     0,            NULL   },
-	{ (char *)"Ambient Music",        NULL,                      tunes_menu,               0,            NULL   },
+	{ (char *)"Ambient Music   ",        NULL,                      tunes_menu,               0,            NULL   },
 	{ (char *)"&Play music",                playMusic,                 NULL,                     0,            NULL   },
 	{ (char *)"&Change track",              changeTrack,               NULL,                     0,            NULL   },
 	{ (char *)"&Stop tunes",                stopMusic,                 NULL,                     0,            NULL   },
@@ -8973,6 +8976,7 @@ static MENU draw_ffc_rc_menu[] =
     { (char *)"Paste FFC data",           NULL,  NULL,              0, NULL },
     { (char *)"Edit FFC",            NULL,  NULL,              0, NULL },
     { (char *)"Clear FFC",           NULL,  NULL,              0, NULL },
+    { (char *)"Snap to Grid",           NULL,  NULL,              0, NULL },
     { NULL,                          NULL,  NULL,              0, NULL }
 };
 
@@ -10091,6 +10095,20 @@ void domouse()
                             }
                             
                             break;
+			    case 4: //snap to grid
+			    {
+				int oldffx = Map.CurrScr()->ffx[i]/10000;
+				int oldffy = Map.CurrScr()->ffy[i]/10000;
+				int pos = COMBOPOS(oldffx,oldffy);
+				int newffy = COMBOY(pos)*10000;
+				int newffx = COMBOX(pos)*10000;
+				Map.CurrScr()->ffx[i] = newffx;
+				Map.CurrScr()->ffy[i] = newffy;
+				//Map.CurrScr()->ffx[i] = (Map.CurrScr()->ffx[i]-(Map.CurrScr()->ffx[i] % 16));
+				//Map.CurrScr()->ffy[i] = (Map.CurrScr()->ffy[i]-(Map.CurrScr()->ffy[i] % 16));
+				saved = false;
+				break;
+			    }
                         }
                         
                         clickedffc = true;
@@ -20401,17 +20419,17 @@ int onHeader()
         
         header_dlg[0].h-=18;
 	
-	header_dlg[4].flags |= D_DISABLED;
-	header_dlg[5].flags |= D_DISABLED;
+	//header_dlg[4].flags |= D_DISABLED;
+	//header_dlg[5].flags |= D_DISABLED;
         //header_dlg[4].proc=d_dummy_proc;
         //header_dlg[5].proc=d_dummy_proc;
     }
     
-    if ( key[KEY_LSHIFT]||key[KEY_RSHIFT] )
-    {
-	header_dlg[4].flags &= ~D_DISABLED;
-	header_dlg[5].flags &= ~D_DISABLED;    
-    }
+    //if ( key[KEY_LSHIFT]||key[KEY_RSHIFT] )
+    //{
+	//header_dlg[4].flags &= ~D_DISABLED;
+	//header_dlg[5].flags &= ~D_DISABLED;    
+    //}
     
     jwin_center_dialog(header_dlg);
     
@@ -23617,6 +23635,7 @@ static DIALOG sfx_edit_dlg[] =
     { jwin_edit_proc,     36,    25,   154,    16,  vc(12),  vc(1),    0,       0,         36,             0,       NULL, NULL, NULL },
     { jwin_text_proc,     8,    30,     16,  8,    vc(11),  vc(1),  0,       0,          0,             0, (void *) "Name:", NULL, NULL },
     { d_timer_proc,         0,    0,     0,    0,    0,       0,       0,       0,          0,          0,         NULL, NULL, NULL },
+    { jwin_button_proc,      70,    51,   61,    21,  vc(14),              vc(1),                 0,       D_EXIT,     0,             0, (void *) "Save", NULL, NULL },
     { NULL,                 0,    0,    0,    0,   0,       0,       0,       0,          0,             0,       NULL,                           NULL,  NULL }
 };
 
@@ -23837,6 +23856,62 @@ int onSelectSFX()
     return D_O_K;
 }
 
+bool saveWAV(int slot, const char *filename)
+{
+    if (slot < 1 || slot >= 511 )
+        return false;
+
+    if (customsfxdata[slot].data == NULL)
+	return false;
+    
+    std::ofstream ofs(filename, std::ios::binary);
+    if (!ofs)
+        return false;
+    ofs.write("RIFF",4);
+    int32_t samplerate = customsfxdata[slot].freq;
+    int16_t channels = customsfxdata[slot].stereo ? 2 : 1;
+    int32_t datalen = customsfxdata[slot].len*channels*customsfxdata[slot].bits / 8;
+    int32_t size = 36 + datalen;
+    ofs.write((char *)&size, 4);
+    ofs.write("WAVE", 4);
+    ofs.write("fmt ", 4);
+    int32_t fmtlen = 16;
+    ofs.write((char *)&fmtlen, 4);
+    int16_t type = 1;
+    ofs.write((char *)&type, 2);
+    ofs.write((char *)&channels, 2);
+    ofs.write((char *)&samplerate, 4);
+    int32_t bytespersec = samplerate*channels*customsfxdata[slot].bits / 8; 
+    ofs.write((char *)&bytespersec, 4);
+    int16_t blockalign = channels*customsfxdata[slot].bits / 8;
+    ofs.write((char *)&blockalign, 2);
+    int16_t bitspersample = customsfxdata[slot].bits;
+    ofs.write((char *)&bitspersample, 2);
+    ofs.write("data", 4);
+    ofs.write((char *)&datalen, 4);
+    if (bitspersample == 8)
+    {
+        for (int i = 0; i < (int)customsfxdata[slot].len*channels; i++)
+        {
+            char data = ((char *)customsfxdata[slot].data)[i];
+            data ^= 0x80;
+            ofs.write(&data, 1);
+        }
+    }
+    else if (bitspersample == 16)
+    {
+        for (int i = 0; i < (int)customsfxdata[slot].len*channels; i++)
+        {
+            int16_t data = ((int16_t *)customsfxdata[slot].data)[i];
+            data ^= 0x8000;
+            ofs.write((char *)&data, 2);
+        }
+    }
+    else
+        return false;
+    return !!ofs;
+} 
+
 int onEditSFX(int index)
 {
     kill_sfx();
@@ -23865,92 +23940,132 @@ int onEditSFX(int index)
         
         switch(ret)
         {
-        case 1:
-            saved= false;
-            kill_sfx();
-            change_sfx(&customsfxdata[index],&templist[index]);
-            set_bit(customsfxflag,index-1,tempflag);
-            strcpy(sfx_string[index], name);
-            
-        case 2:
-        case 0:
-            // Fall Through
-            kill_sfx();
-            
-            for(int i=1; i<WAV_COUNT; i++)
-            {
-                if(templist[i].data != NULL)
-                {
-                    zc_free(templist[i].data);
-                    templist[i].data = NULL;
-                }
-            }
-            
-            break;
-            
-        case 3:
-            if(getname("Open .WAV file", "wav", NULL,temppath, true))
-            {
-                SAMPLE * temp_sample;
-                
-                if((temp_sample = load_wav(temppath))==NULL)
-                {
-                    jwin_alert("Error","Could not open file",temppath,NULL,"OK",NULL,13,27,lfont);
-                }
-                else
-                {
-                    char sfxtitle[36];
-                    char *t = get_filename(temppath);
-                    int j;
-                    
-                    for(j=0; j<35 && t[j]!=0 && t[j]!='.'; j++)
-                    {
-                        sfxtitle[j]=t[j];
-                    }
-                    
-                    sfxtitle[j]=0;
-                    strcpy(name,sfxtitle);
-                    kill_sfx();
-                    change_sfx(&templist[index], temp_sample);
-                    destroy_sample(temp_sample);
-                    tempflag = 1;
-                }
-            }
-            
-            break;
-            
-        case 4:
-        {
-            kill_sfx();
-            
-            if(templist[index].data != NULL)
-            {
-                sfx(index, 128, false,true);
-            }
-        }
-        break;
-        
-        case 5:
-            kill_sfx();
-            break;
-            
-        case 6:
-            kill_sfx();
-            
-            if(index < WAV_COUNT)
-            {
-                SAMPLE *temp_sample = (SAMPLE *)sfxdata[zc_min(index,Z35)].dat;
-                change_sfx(&templist[index], temp_sample);
-                tempflag = 0;
-                sprintf(name,"s%03d", index);
-                
-                if(index <Z35)
-                {
-                    strcpy(name, old_sfx_string[index-1]);
-                }
-            }
-            
-            break;
+		case 1:
+		    saved= false;
+		    kill_sfx();
+		    change_sfx(&customsfxdata[index],&templist[index]);
+		    set_bit(customsfxflag,index-1,tempflag);
+		    strcpy(sfx_string[index], name);
+		    
+		case 2:
+		case 0:
+		    // Fall Through
+		    kill_sfx();
+		    
+		    for(int i=1; i<WAV_COUNT; i++)
+		    {
+			if(templist[i].data != NULL)
+			{
+			    zc_free(templist[i].data);
+			    templist[i].data = NULL;
+			}
+		    }
+		    
+		    break;
+		    
+		case 3:
+		    if(getname("Open .WAV file", "wav", NULL,temppath, true))
+		    {
+			SAMPLE * temp_sample;
+			
+			if((temp_sample = load_wav(temppath))==NULL)
+			{
+			    jwin_alert("Error","Could not open file",temppath,NULL,"OK",NULL,13,27,lfont);
+			}
+			else
+			{
+			    char sfxtitle[36];
+			    char *t = get_filename(temppath);
+			    int j;
+			    
+			    for(j=0; j<35 && t[j]!=0 && t[j]!='.'; j++)
+			    {
+				sfxtitle[j]=t[j];
+			    }
+			    
+			    sfxtitle[j]=0;
+			    strcpy(name,sfxtitle);
+			    kill_sfx();
+			    change_sfx(&templist[index], temp_sample);
+			    destroy_sample(temp_sample);
+			    tempflag = 1;
+			}
+		    }
+		    
+		    break;
+		    
+		case 4:
+		{
+		    kill_sfx();
+		    
+		    if(templist[index].data != NULL)
+		    {
+			sfx(index, 128, false,true);
+		    }
+		}
+		break;
+		
+		case 5:
+		    kill_sfx();
+		    break;
+		    
+		case 6:
+		    kill_sfx();
+		    
+		    if(index < WAV_COUNT)
+		    {
+			SAMPLE *temp_sample = (SAMPLE *)sfxdata[zc_min(index,Z35)].dat;
+			change_sfx(&templist[index], temp_sample);
+			tempflag = 0;
+			sprintf(name,"s%03d", index);
+			
+			if(index <Z35)
+			{
+			    strcpy(name, old_sfx_string[index-1]);
+			}
+		    }
+		    
+		    break;
+	    
+		case 10:
+		{
+			memset(temppath, 0, sizeof(temppath));
+			char tempname[36];
+			strcpy(tempname,sfx_string[index]);
+			//change spaces to dashes for f/s safety
+			for ( int q = 0; q < 36; ++q )
+			{
+				if(tempname[q] == 32 || tempname[q] == 47 || tempname[q] == 92 ) //SPACE, Bslash, Fslash
+					tempname[q] = 45; //becomes hyphen
+			}
+			
+			strcpy(temppath,tempname);
+			
+			tempname[35] = 0;
+			//save
+			if(templist[index].data != NULL)
+			{
+				if (getname("Save .WAV file", "wav", NULL, temppath, true))
+				{
+					if(!saveWAV(index, temppath))
+					{
+						jwin_alert("Error!", "Could not write file", temppath, NULL, "OK", NULL, 13, 27, lfont);
+					}
+					else 
+					{
+						jwin_alert("Success!", "Saved WAV file", temppath, NULL, "OK", NULL, 13, 27, lfont);
+						
+					}
+				}
+				
+			}
+			else 
+			{
+				jwin_alert("Error!", "Cannot save an enpty slot!", NULL, NULL, "OK", NULL, 13, 27, lfont);
+				
+			}		
+			break;
+		}
         }
     }
     while(ret>2);

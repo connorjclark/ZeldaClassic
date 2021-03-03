@@ -3,6 +3,11 @@
 
 //! ritate_sprite_trans doesn't seem to be supported by or allegro header !?
 
+//glibc 2.28 and later require this: -Z
+#ifdef __GNUG__
+	#define ALLEGRO_NO_FIX_ALIASES
+#endif
+
 #include "precompiled.h" //always first
 
 #include <allegro.h>

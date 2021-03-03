@@ -137,6 +137,7 @@ extern byte emulation_patches[emuLAST];
 extern int hangcount;
 bool is_large=false;
 char __isZQuest = 0; //Shared functionscan reference this. -Z
+int switch_type = 0; //Init here to avoid Linux building error in g++.
 int DMapEditorLastMaptileUsed = 0;
 
 
@@ -157,6 +158,11 @@ int draw_screen_clip_rect_y2=223;
 
 volatile int logic_counter=0;
 bool trip=false;
+extern byte midi_suspended;
+extern byte callback_switchin;
+extern bool midi_paused;
+extern int paused_midi_pos;
+extern byte midi_patch_fix;
 void update_logic_counter()
 {
     ++logic_counter;
@@ -485,6 +491,8 @@ bool sbig;                                                  // big screen
 bool sbig2;													// bigger screen
 int screen_scale = 2; //default = 2 (640x480)
 bool scanlines;                                             //do scanlines if sbig==1
+extern byte pause_in_background;
+extern signed char pause_in_background_menu_init;
 bool toogam=false;
 bool ignoreSideview=false;
 
@@ -2632,7 +2640,87 @@ void do_dcounters()
 
 void game_loop()
 {
-
+	//zprint2("pause_in_background: %d\n", pause_in_background);
+	//zprint2("frame: %d\n", frame);
+	//zprint2("pause_in_background: %d\n", pause_in_background);
+	//zprint2("midi_patch_fix: %d\n", midi_patch_fix);
+	//zprint2("callback_switchin is: %d\n", callback_switchin);
+	
+    if((pause_in_background && callback_switchin && midi_patch_fix))
+    {
+	
+	if(currmidi!=0)
+	{
+		
+		if(callback_switchin == 2) 
+		{
+			if ( currmidi != 0 )
+			{
+				int digi_vol, midi_vol;
+			
+				get_volume(&digi_vol, &midi_vol);
+				stop_midi();
+				jukebox(currmidi);
+				set_volume(digi_vol, midi_vol);
+				midi_seek(paused_midi_pos);
+				
+				
+				
+			}
+			midi_paused=false;
+			midi_suspended = midissuspNONE;
+			callback_switchin = 0;
+		}
+		if(callback_switchin == 1) 
+		{
+			paused_midi_pos = midi_pos;
+			midi_paused=true;
+			stop_midi();
+			++callback_switchin;
+		}
+	}
+	else //no MIDI playing
+	{
+		callback_switchin = 0;
+	}
+    }
+    
+    else if(midi_suspended==midissuspRESUME )
+    {
+	if ( currmidi != 0 )
+	{
+		
+		int digi_vol, midi_vol;
+	
+		get_volume(&digi_vol, &midi_vol);
+		stop_midi();
+		jukebox(currmidi);
+		set_volume(digi_vol, midi_vol);
+		midi_seek(paused_midi_pos);
+		
+		
+	}
+	midi_paused=false;
+	midi_suspended = midissuspNONE;
+	    
+    }
+	/*zprint2("pause_in_background_menu_init is: %d",pause_in_background_menu_init);
+	switch(pause_in_background_menu_init) //disable
+	{
+		case 2:
+		zprint2("changing mode to SWITCH_BACKGROUND\n");
+		pause_in_background = 0;
+		set_display_switch_mode(is_windowed_mode()?SWITCH_BACKGROUND:SWITCH_BACKAMNESIA);
+		pause_in_background_menu_init = 0;
+		break;
+		case 1:
+		zprint2("changing mode to SWITCH_PAUSE\n");
+		pause_in_background = 1;
+		set_display_switch_mode(is_windowed_mode()?SWITCH_PAUSE:SWITCH_BACKAMNESIA);
+		pause_in_background_menu_init = 0;
+		break;
+	}
+    */
     //  walkflagx=0; walkflagy=0;
     if(fadeclk>=0)
     {
@@ -3071,7 +3159,8 @@ int onFullscreen()
 	    set_palette(oldpal);
 	    gui_mouse_focus=0;
 	    show_mouse(screen);
-	    set_display_switch_mode(fullscreen?SWITCH_BACKAMNESIA:SWITCH_BACKGROUND);
+	    switch_type = pause_in_background ? SWITCH_PAUSE : SWITCH_BACKGROUND;
+	    set_display_switch_mode(fullscreen?SWITCH_BACKAMNESIA:switch_type);
 	//	set_display_switch_callback(SWITCH_OUT, switch_out_callback);/
 	//	set_display_switch_callback(SWITCH_IN,switch_in_callback);
 
@@ -3235,83 +3324,6 @@ int main(int argc, char* argv[])
         DebugConsole::Open();
         zconsole = true;
     }
-    
-#else //Unix
-
-    { // Let's try making a console for Linux -Z
-	pt = posix_openpt(O_RDWR);
-	if (pt == -1)
-	{
-		Z_error("Could not open pseudo terminal; error number: %d.\n", errno);
-		use_debug_console = 0; goto no_lx_console;
-	}
-	ptname = ptsname(pt);
-	if (!ptname)
-	{
-		Z_error("Could not get pseudo terminal device name.\n");
-		close(pt);
-		use_debug_console = 0; goto no_lx_console;
-	}
-
-	if (unlockpt(pt) == -1)
-	{
-		Z_error("Could not get pseudo terminal device name.\n");
-		close(pt);
-		use_debug_console = 0; goto no_lx_console;
-	}
-
-	lxconsole_oss << "xterm -S" << (strrchr(ptname, '/')+1) << "/" << pt << " &";
-	system(lxconsole_oss.str().c_str());
-
-	int xterm_fd = open(ptname,O_RDWR);
-	{
-		char c = 0; int tries = 10000; 
-		do 
-		{
-			read(xterm_fd, &c, 1); 
-			--tries;
-		} while (c!='\n' && tries > 0);
-	}
-
-	if (dup2(pt, 1) <0)
-	{
-		Z_error("Could not redirect standard output.\n");
-		close(pt);
-		use_debug_console = 0; goto no_lx_console;
-	}
-	if (dup2(pt, 2) <0)
-	{
-		Z_error("Could not redirect standard error output.\n");
-		close(pt);
-		use_debug_console = 0; goto no_lx_console;
-	}
-    } //this is in a block because I want it in a block. -Z
-    
-    no_lx_console:
-    {
-	    //Z_error("Could not open Linux console.\n");
-    }
-    
-    
-	std::cout << "\n       _____   ____                  __ \n";
-	std::cout << "      /__  /  / __ \\__  _____  _____/ /_\n";
-	std::cout << "        / /  / / / / / / / _ \\/ ___/ __/\n";
-	std::cout << "       / /__/ /_/ / /_/ /  __(__  ) /_ \n";
-	std::cout << "      /____/\\___\\_\\__,_/\\___/____/\\__/\n\n";
-	
-	std::cout << "Quest Data Logging & ZScript Debug Console\n";
-	std::cout << "ZConsole for Linux\n\n";
-    
-	if ( quest_header_zelda_version > 0 )
-	{
-		printf("Quest Made in ZC Version %x, Build %d\n", quest_header_zelda_version, quest_header_zelda_build);
-	}
-	else
-	{
-		printf("%s, Version %s\n", ZC_PLAYER_NAME, ZC_PLAYER_V);
-	}
-	//std::cerr << "Test cerr\n\n";
-	std::cin.ignore(1);
 #endif
     
     
@@ -3399,7 +3411,89 @@ int main(int argc, char* argv[])
     {
 	FFCore.ZScriptConsole(true);
     }
+
+#else //Unix
+
+    if(zscript_debugger)
+    { // Let's try making a console for Linux -Z
+	int termflags = 0;
+	termflags |= O_RDWR; //Open the device for both reading and writing.
+	//termflags |= O_NOCTTY; //Do not make this device the controlling terminal for the process.
+	pt = posix_openpt(termflags);
+	if (pt == -1)
+	{
+		Z_error("Could not open pseudo terminal; error number: %d.\n", errno);
+		use_debug_console = 0; goto no_lx_console;
+	}
+	ptname = ptsname(pt);
+	if (!ptname)
+	{
+		Z_error("Could not get pseudo terminal device name.\n");
+		close(pt);
+		use_debug_console = 0; goto no_lx_console;
+	}
+
+	if (unlockpt(pt) == -1)
+	{
+		Z_error("Could not get pseudo terminal device name.\n");
+		close(pt);
+		use_debug_console = 0; goto no_lx_console;
+	}
+
+	lxconsole_oss << "xterm -S" << (strrchr(ptname, '/')+1) << "/" << pt << " &";
+	system(lxconsole_oss.str().c_str());
+
+	int xterm_fd = open(ptname,termflags); //This also needs the O_NOCTTY flag. See: https://man7.org/linux/man-pages/man3/open.3p.html
+	{
+		char c = 0; int tries = 10000; 
+		do 
+		{
+			read(xterm_fd, &c, 1); 
+			--tries;
+		} while (c!='\n' && tries > 0);
+	}
+
+	if (dup2(pt, 1) <0)
+	{
+		Z_error("Could not redirect standard output.\n");
+		close(pt);
+		use_debug_console = 0; goto no_lx_console;
+	}
+	if (dup2(pt, 2) <0)
+	{
+		Z_error("Could not redirect standard error output.\n");
+		close(pt);
+		use_debug_console = 0; goto no_lx_console;
+	}
+    } //this is in a block because I want it in a block. -Z
+    else
+    {
+	al_trace("Linux console disabled by user.\n");
+    }
     
+    no_lx_console:
+    {
+	    //Z_error("Could not open Linux console.\n");
+    }
+    
+    
+	std::cout << "\n       _____   ____                  __ \n";
+	std::cout << "      /__  /  / __ \\__  _____  _____/ /_\n";
+	std::cout << "        / /  / / / / / / / _ \\/ ___/ __/\n";
+	std::cout << "       / /__/ /_/ / /_/ /  __(__  ) /_ \n";
+	std::cout << "      /____/\\___\\_\\__,_/\\___/____/\\__/\n\n";
+	
+	std::cout << "Quest Data Logging & ZScript Debug Console\n";
+	std::cout << "ZConsole for Linux\n\n";
+    
+	//if ( FFCore.getQuestHeaderInfo(vZelda) > 0 )
+	//{
+	//	printf("Quest Made in ZC Version %x, Build %d\n", FFCore.getQuestHeaderInfo(vZelda), FFCore.getQuestHeaderInfo(vBuild));
+	//}
+	//else
+	{
+		printf("%s, Version %s\n", ZC_PLAYER_NAME, ZC_PLAYER_V);
+	}
 #endif
     
     if(install_timer() < 0)
@@ -3627,7 +3721,6 @@ int main(int argc, char* argv[])
     int save_arg = used_switch(argc,argv,"-savefile");
     
     int checked_epilepsy = get_config_int("zeldadx","checked_epilepsy",0);
-    
     
     
     
@@ -4011,7 +4104,8 @@ int main(int argc, char* argv[])
     }
     
     sbig = (screen_scale > 1);
-    set_display_switch_mode(is_windowed_mode()?SWITCH_BACKGROUND:SWITCH_BACKAMNESIA);
+    switch_type = pause_in_background ? SWITCH_PAUSE : SWITCH_BACKGROUND;
+    set_display_switch_mode(is_windowed_mode()?SWITCH_PAUSE:switch_type);
     zq_screen_w = resx;
     zq_screen_h = resy;
     
@@ -4069,6 +4163,9 @@ int main(int argc, char* argv[])
 	    }
 	    checked_epilepsy = 1;
     }
+    
+    //set switching/focus mode -Z
+    set_display_switch_mode(is_windowed_mode()?(pause_in_background ? SWITCH_PAUSE : SWITCH_BACKGROUND):SWITCH_BACKAMNESIA);
     
 // load saved games
     Z_message("Loading saved games... ");
