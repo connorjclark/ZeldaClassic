@@ -27319,9 +27319,14 @@ bool ZModule::init(bool d) //bool default
 		//zcm path
 		set_config_file(moduledata.module_name); //Switch to the module to load its config properties.
 		//al_trace("Module name set to %s\n",moduledata.module_name);
+
+		set_config_string("METADATA", "title", "set value");
+		string s = get_config_string("METADATA", "title", "Not Read");
+		printf("s: %s\n", s.c_str());
 		
 		//Metadata
 		strcpy(moduledata.moduletitle,get_config_string("METADATA","title",""));
+		printf("TITLE: %s\n", moduledata.moduletitle);
 		strcpy(moduledata.moduleauthor,get_config_string("METADATA","author",""));
 		strcpy(moduledata.moduleinfo0,get_config_string("METADATA","info_0",""));
 		strcpy(moduledata.moduleinfo1,get_config_string("METADATA","info_1",""));

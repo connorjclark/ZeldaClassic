@@ -233,7 +233,7 @@ extern zcmap               *ZCMaps;
 extern dmap                *DMaps;
 extern MsgStr              *MsgStrings;
 extern int				   msg_strings_size;
-extern DoorComboSet        *DoorComboSets;
+extern DoorComboSet        DoorComboSets[MAXDOORCOMBOSETS];
 extern class zctune        *customtunes;
 //extern emusic            *enhancedMusic;
 extern ZCHEATS             zcheats;

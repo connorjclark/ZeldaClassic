@@ -49,7 +49,10 @@ SYSTEM_DRIVER *system_driver = NULL;
 
 
 /* error value, which will work even with DLL linkage */
-int *allegro_errno = NULL;
+// int *allegro_errno = NULL;
+// https://stackoverflow.com/questions/6085531/c-segfault-when-dereferencing-a-pointer-for-cout
+int allegro_errno_ = 0;
+int* allegro_errno = &allegro_errno_;
 
 
 /* flag for how many times we have been initialised */
@@ -363,12 +366,17 @@ static int _install_allegro(int system_id, int *errno_ptr, int (*atexit_ptr)(voi
    /* initialise the system driver */
    usetc(allegro_error, 0);
 
+   printf("allegroinit system_id %d \n", system_id);
+
+   printf("allegroinit _system_driver_list \n");
    for (i=0; _system_driver_list[i].driver; i++) {
+      printf("allegroinit _system_driver_list %d \n", i);
       if ((_system_driver_list[i].id == system_id) ||
 	  ((_system_driver_list[i].autodetect) && (system_id == SYSTEM_AUTODETECT))) {
 	 system_driver = _system_driver_list[i].driver;
 	 system_driver->name = system_driver->desc = get_config_text(system_driver->ascii_name);
 	 if (system_driver->init() != 0) {
+       printf("allegroinit _system_driver_list :( \n");
 	    system_driver = NULL;
 	    if (system_id != SYSTEM_AUTODETECT)
 	       break;
@@ -422,6 +430,7 @@ static int _install_allegro(int system_id, int *errno_ptr, int (*atexit_ptr)(voi
 int _install_allegro_version_check(int system_id, int *errno_ptr,
    int (*atexit_ptr)(void (*func)(void)), int version)
 {
+   printf("HMM\n");
    int r = _install_allegro(system_id, errno_ptr, atexit_ptr);
 
    int build_wip = version & 255;
@@ -433,6 +442,7 @@ int _install_allegro_version_check(int system_id, int *errno_ptr,
       /* failed */
       return r;
    }
+   printf("HMM 2\n");
 
 #if ALLEGRO_SUB_VERSION & 1
    /* This is a WIP runtime, so enforce strict compatibility. */
@@ -446,7 +456,9 @@ int _install_allegro_version_check(int system_id, int *errno_ptr,
       (ALLEGRO_WIP_VERSION >= build_wip);
 #endif
 
+   printf("HMM 3\n");
    if (!version_ok) {
+      printf("HMM 4\n");
       uszprintf(allegro_error, ALLEGRO_ERROR_SIZE, get_config_text(
          "The detected dynamic Allegro library (%d.%d.%d) is "
          "not compatible with this program (%d.%d.%d)."),
@@ -664,6 +676,7 @@ void al_trace(AL_CONST char *msg, ...)
       fflush(trace_file);
    }
 
+   printf(buf);
    errno = olderr;
 }
 

@@ -67,7 +67,7 @@ extern int                 link_animation_speed; //lower is faster animation
 extern std::vector<mapscr> TheMaps;
 extern zcmap               *ZCMaps;
 extern MsgStr              *MsgStrings;
-extern DoorComboSet        *DoorComboSets;
+extern DoorComboSet        DoorComboSets[MAXDOORCOMBOSETS];
 extern dmap                *DMaps;
 extern newcombo            *combobuf;
 extern byte                *colordata;
@@ -730,7 +730,7 @@ PACKFILE *open_quest_file(int *open_error, const char *filename, char *deletefil
 		box_out("Decrypting...");
 		box_save_x();
 		ret = decode_file_007(filename, tmpfilename, ENC_STR, ENC_METHOD_MAX-1, strstr(filename, ".dat#")!=NULL, passwd);
-        
+
 		if(ret)
 		{
 			switch(ret)
@@ -1236,11 +1236,11 @@ int get_qst_buffers()
     memset(MsgStrings, 0, sizeof(MsgStr)*msg_strings_size);
     Z_message("OK\n");                                        // Allocating string buffer...
     
-    memrequested+=(sizeof(DoorComboSet)*MAXDOORCOMBOSETS);
-    Z_message("Allocating door combo buffer (%s)... ", byte_conversion2(sizeof(DoorComboSet)*MAXDOORCOMBOSETS,memrequested,-1,-1));
+    // memrequested+=(sizeof(DoorComboSet)*MAXDOORCOMBOSETS);
+    // Z_message("Allocating door combo buffer (%s)... ", byte_conversion2(sizeof(DoorComboSet)*MAXDOORCOMBOSETS,memrequested,-1,-1));
     
-    if((DoorComboSets=(DoorComboSet*)zc_malloc(sizeof(DoorComboSet)*MAXDOORCOMBOSETS))==NULL)
-        return 0;
+    // if((DoorComboSets=(DoorComboSet*)zc_malloc(sizeof(DoorComboSet)*MAXDOORCOMBOSETS))==NULL)
+    //     return 0;
         
     Z_message("OK\n");                                        // Allocating door combo buffer...
     
@@ -1385,7 +1385,7 @@ void del_qst_buffers()
     
     if(MsgStrings) zc_free(MsgStrings);
     
-    if(DoorComboSets) zc_free(DoorComboSets);
+    // if(DoorComboSets) zc_free(DoorComboSets);
     
     if(DMaps) zc_free(DMaps);
     
@@ -11312,25 +11312,26 @@ void setupsfx()
             i=Z35;
         }
         
-        SAMPLE *temp_sample = (SAMPLE *)sfxdata[i].dat;
+        // TODO(wasm): need allegro_init first.
+//         SAMPLE *temp_sample = (SAMPLE *)sfxdata[i].dat;
         
-        if(customsfxdata[j].data!=NULL)
-        {
-//    delete [] customsfxdata[j].data;
-            zc_free(customsfxdata[j].data);
-        }
+//         if(customsfxdata[j].data!=NULL)
+//         {
+// //    delete [] customsfxdata[j].data;
+//             zc_free(customsfxdata[j].data);
+//         }
         
-//    customsfxdata[j].data = new byte[(temp_sample->bits==8?1:2)*temp_sample->len];
-        customsfxdata[j].data = calloc((temp_sample->bits==8?1:2)*(temp_sample->stereo == 0 ? 1 : 2)*temp_sample->len,1);
-        customsfxdata[j].bits = temp_sample->bits;
-        customsfxdata[j].stereo = temp_sample->stereo;
-        customsfxdata[j].freq = temp_sample->freq;
-        customsfxdata[j].priority = temp_sample->priority;
-        customsfxdata[j].len = temp_sample->len;
-        customsfxdata[j].loop_start = temp_sample->loop_start;
-        customsfxdata[j].loop_end = temp_sample->loop_end;
-        customsfxdata[j].param = temp_sample->param;
-        memcpy(customsfxdata[j].data, (temp_sample->data), (temp_sample->bits==8?1:2)*(temp_sample->stereo==0 ? 1 : 2)*temp_sample->len);
+// //    customsfxdata[j].data = new byte[(temp_sample->bits==8?1:2)*temp_sample->len];
+//         customsfxdata[j].data = calloc((temp_sample->bits==8?1:2)*(temp_sample->stereo == 0 ? 1 : 2)*temp_sample->len,1);
+//         customsfxdata[j].bits = temp_sample->bits;
+//         customsfxdata[j].stereo = temp_sample->stereo;
+//         customsfxdata[j].freq = temp_sample->freq;
+//         customsfxdata[j].priority = temp_sample->priority;
+//         customsfxdata[j].len = temp_sample->len;
+//         customsfxdata[j].loop_start = temp_sample->loop_start;
+//         customsfxdata[j].loop_end = temp_sample->loop_end;
+//         customsfxdata[j].param = temp_sample->param;
+//         memcpy(customsfxdata[j].data, (temp_sample->data), (temp_sample->bits==8?1:2)*(temp_sample->stereo==0 ? 1 : 2)*temp_sample->len);
         i=j;
     }
 }
@@ -17667,8 +17668,7 @@ void portBombRules()
 }
 
 int loadquest(const char *filename, zquestheader *Header, miscQdata *Misc, zctune *tunes, bool show_progress, bool compressed, bool encrypted, bool keepall, byte *skip_flags, byte printmetadata)
-{
-	
+{	
     DMapEditorLastMaptileUsed = 0;
     combosread=false;
     mapsread=false;
@@ -17775,7 +17775,8 @@ int loadquest(const char *filename, zquestheader *Header, miscQdata *Misc, zctun
             itemspritemap[i].clear();
         }
         
-        reset_scripts();
+        // TODO(wasm)
+        // reset_scripts();
     }
     
     zquestheader tempheader;

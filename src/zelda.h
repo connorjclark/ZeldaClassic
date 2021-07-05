@@ -496,7 +496,7 @@ extern byte                music_flags[MUSICFLAGS_SIZE];
 extern word                map_count;
 extern MsgStr              *MsgStrings;
 extern int				   msg_strings_size;
-extern DoorComboSet        *DoorComboSets;
+extern DoorComboSet        DoorComboSets[MAXDOORCOMBOSETS];
 extern dmap                *DMaps;
 extern miscQdata           QMisc;
 extern std::vector<mapscr> TheMaps;

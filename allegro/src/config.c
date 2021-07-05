@@ -385,6 +385,7 @@ static void set_config(CONFIG **config, AL_CONST char *data, int length, AL_CONS
    CONFIG_ENTRY **prev, *p;
    char *name, *val;
    int ret, pos;
+   printf("CONFIG setconfig: %s\n", filename);
 
    init_config(FALSE);
 
@@ -452,6 +453,7 @@ static void load_config_file(CONFIG **config, AL_CONST char *filename, AL_CONST 
 {
    char *tmp, *tmp2;
    uint64_t length;
+   printf("CONFIG file: %s\n", filename);
 
    if (*config) {
       destroy_config(*config);
@@ -465,6 +467,7 @@ static void load_config_file(CONFIG **config, AL_CONST char *filename, AL_CONST 
    }
 
    length = file_size_ex(filename);
+   printf("CONFIG filesize: %d\n", length);
 
    if (length > 0) {
       PACKFILE *f = pack_fopen(filename, F_READ);

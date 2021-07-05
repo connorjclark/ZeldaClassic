@@ -330,7 +330,7 @@ void Z_error(const char *format,...)
     vsprintf(buf, format, ap);
     va_end(ap);
     
-#if defined(ALLEGRO_DOS ) || defined(ALLEGRO_MAXOSX)
+#if defined(ALLEGRO_DOS ) || defined(ALLEGRO_MAXOSX) || defined(__EMSCRIPTEN__)
     printf("%s\n",buf);
 #endif
     al_trace("%s\n",buf);
@@ -346,7 +346,7 @@ void Z_message(const char *format,...)
     vsprintf(buf, format, ap);
     va_end(ap);
     
-#if defined(ALLEGRO_DOS ) || defined(ALLEGRO_MAXOSX)
+#if defined(ALLEGRO_DOS ) || defined(ALLEGRO_MAXOSX) || defined(__EMSCRIPTEN__)
     printf("%s",buf);
 #endif
     al_trace("%s",buf);

@@ -48,14 +48,14 @@ extern FFScript FFCore;
 //MSVC does not provide a log2 funcion in <cmath>
 // adjust version number as needed. MSVC 2015 (1900) does *not* need these functions
 #if _MSC_VER < 1900
-double log2(double n)
-{
-    return log(n) / log(2.0);
-}
-float log2(float n)
-{
-    return log(n) / log(2.f);
-}
+// double log2(double n)
+// {
+//     return log(n) / log(2.0);
+// }
+// float log2(float n)
+// {
+//     return log(n) / log(2.f);
+// }
 #endif
 
 

@@ -96,6 +96,10 @@ makefile.inc
 /allegro/Makefile
 /allegro/cmake_install.cmake
 CmakeCache.*
+/Makefile
 
 # Bison
 /src/parser/y.output
+
+# WASM
+*.wasm.map

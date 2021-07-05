@@ -54,6 +54,7 @@ Ensure you have CMake 3.5+ install and execute the following commands:
 ```
 cd build
 cmake ..
+cd ..
 make
 ```
 

@@ -1,3 +1,4 @@
+#include "zdefs.h"
 
 //triggerflags[0], only 18 bits are available to ZScript
 #define ctrigSWORD 		0x01

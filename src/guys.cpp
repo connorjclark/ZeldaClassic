@@ -9,7 +9,7 @@
 //--------------------------------------------------------
 
 #include "precompiled.h" //always first
-
+#include <emscripten.h>
 #include <string.h>
 #include <stdio.h>
 #include "zc_alleg.h"
@@ -18718,6 +18718,7 @@ int addchild(int x,int y,int z,int id,int clk, int parent_scriptUID)
 }
 
 // Returns number of enemies/segments created
+EMSCRIPTEN_KEEPALIVE
 int addenemy(int x,int y,int z,int id,int clk)
 {
 	//zprint2("addenemy id is: %d\n", (id&0xFFF));

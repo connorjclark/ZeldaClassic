@@ -75,11 +75,11 @@ set(COMPAT_VERSION 4.4.0)
 set(ALLEGRO_DLL_SHORTVER 44)
 
 # Search in the `cmake' directory for additional CMake modules.
-list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake)
+list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
 # Search for C header files in these directories.
-include_directories(${CMAKE_SOURCE_DIR}/include)
-include_directories(${CMAKE_BINARY_DIR}/include)
+# include_directories(${CMAKE_SOURCE_DIR}/include)
+# include_directories(${CMAKE_BINARY_DIR}/include)
 
 # Put libraries into `lib'.
 set(LIBRARY_OUTPUT_PATH ${CMAKE_BINARY_DIR}/lib)
@@ -89,6 +89,10 @@ include(FileList)
 
 # Our own CMake macros and functions.
 include(Common)
+
+add_library(alleg ${ALLEGRO_SRC_FILES})
+target_include_directories(alleg PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
+# target_include_directories(alleg PUBLIC ${CMAKE_BINARY_DIR}/include)
 
 #-----------------------------------------------------------------------------#
 #
@@ -428,7 +432,7 @@ endif(WANT_LINUX_CONSOLE AND CMAKE_SYSTEM_NAME STREQUAL Linux)
 
 if(UNIX)
     configure_file(
-        ${CMAKE_SOURCE_DIR}/include/allegro/platform/alunixac.h.cmake
-        ${CMAKE_SOURCE_DIR}/extra/alunixac.h
+        ${CMAKE_CURRENT_SOURCE_DIR}/include/allegro/platform/alunixac.h.cmake
+        ${CMAKE_CURRENT_SOURCE_DIR}/extra/alunixac.h
         )
 endif(UNIX)

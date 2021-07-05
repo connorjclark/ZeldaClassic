@@ -580,7 +580,7 @@ byte                music_flags[MUSICFLAGS_SIZE];
 word                map_count=0;
 MsgStr              *MsgStrings;
 int					msg_strings_size=0;
-DoorComboSet        *DoorComboSets;
+DoorComboSet        DoorComboSets[MAXDOORCOMBOSETS];
 dmap                *DMaps;
 miscQdata           QMisc;
 std::vector<mapscr> TheMaps;

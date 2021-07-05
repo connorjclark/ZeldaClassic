@@ -4,7 +4,7 @@
 
 // Grab GLIBC constants used below.
 #  ifdef ALLEGRO_UNIX
-#    include <features.h>
+//#    include <features.h>
 #  endif
 
 // As far as I can tell, this glibc version introduces fadd etc. that
