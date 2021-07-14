@@ -80,8 +80,35 @@ endforeach()
 # Build the ZScript parser
 #############################################################
 
-find_package(BISON QUIET)
-find_package(FLEX QUIET)
+# On macOS, search Homebrew for keg-only versions of Bison and Flex. Xcode does
+# not provide new enough versions for us to use.
+# Sourc: https://stackoverflow.com/a/59567896/2788187
+if (CMAKE_HOST_SYSTEM_NAME MATCHES "Darwin")
+    execute_process(
+        COMMAND brew --prefix bison 
+        RESULT_VARIABLE BREW_BISON
+        OUTPUT_VARIABLE BREW_BISON_PREFIX
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+    )
+    if (BREW_BISON EQUAL 0 AND EXISTS "${BREW_BISON_PREFIX}")
+        message(STATUS "Found Bison keg installed by Homebrew at ${BREW_BISON_PREFIX}")
+        set(BISON_EXECUTABLE "${BREW_BISON_PREFIX}/bin/bison")
+    endif()
+
+    execute_process(
+        COMMAND brew --prefix flex 
+        RESULT_VARIABLE BREW_FLEX
+        OUTPUT_VARIABLE BREW_FLEX_PREFIX
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+    )
+    if (BREW_FLEX EQUAL 0 AND EXISTS "${BREW_FLEX_PREFIX}")
+        message(STATUS "Found Flex keg installed by Homebrew at ${BREW_FLEX_PREFIX}")
+        set(FLEX_EXECUTABLE "${BREW_FLEX_PREFIX}/bin/flex")
+    endif()
+endif()
+
+find_package(BISON 2.5)
+find_package(FLEX 2.5)
 
 if(${BISON_FOUND} AND ${FLEX_FOUND} AND WANT_ZSCRIPT)
 	if(MSVC)
@@ -90,11 +117,11 @@ if(${BISON_FOUND} AND ${FLEX_FOUND} AND WANT_ZSCRIPT)
 	FLEX_TARGET(ZScriptLexer ${CMAKE_SOURCE_DIR}/src/parser/ffscript.lpp ${CMAKE_SOURCE_DIR}/src/parser/lex.yy.cpp COMPILE_FLAGS ${FLEXFLAGS})
 	BISON_TARGET(ZScriptParser ${CMAKE_SOURCE_DIR}/src/parser/ffscript.ypp ${CMAKE_SOURCE_DIR}/src/parser/y.tab.cpp COMPILE_FLAGS -v)
 	add_flex_bison_dependency(ZScriptLexer ZScriptParser)
+	add_executable(zscript src/parser/ZScript_main.cpp ${ZQUEST_ZSCRIPT_SOURCES} ${BISON_ZScriptParser_OUTPUTS} ${FLEX_ZScriptLexer_OUTPUTS})
 else()
 	message(WARNING "Flex and Bison not found. ZQuest will be compiled without the ZScript parser.")
 	set(ZQUEST_ZSCRIPT_SOURCES ${ZQUEST_ZSCRIPT_SOURCES_NOPARSER})
 endif()
-
 
 #############################################################
 # Global settings for the different platforms
@@ -161,6 +188,11 @@ elseif(LINUX)
 	SET(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -m32 -static-libgcc")
 endif()
 
+
+# OSX
+if (APPLE)
+	add_definitions(-DALLEGRO_LITTLE_ENDIAN)
+endif()
 
 #############################################################
 # Sound Library
