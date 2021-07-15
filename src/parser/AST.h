@@ -19,6 +19,47 @@ namespace ZScript
 #include <map>
 #include <memory>
 #include <string>
+
+// Override some of the YYL* types to include a comment field.
+// TODO: can we do this parsing w/o this bit?
+typedef struct YYLTYPE YYLTYPE;
+struct YYLTYPE
+{
+  int first_line;
+  int first_column;
+  int last_line;
+  int last_column;
+  const char* comment;
+};
+# define YYLTYPE_IS_DECLARED 1
+# define YYLTYPE_IS_TRIVIAL 0
+
+/* YYLLOC_DEFAULT -- Set CURRENT to span from RHS[1] to RHS[N].
+   If N is 0, then set CURRENT to the empty location which ends
+   the previous symbol: RHS[0] (always defined).  */
+
+#ifndef YYLLOC_DEFAULT
+# define YYLLOC_DEFAULT(Current, Rhs, N)                                \
+    do                                                                  \
+      if (N)                                                            \
+        {                                                               \
+          (Current).first_line   = YYRHSLOC (Rhs, 1).first_line;        \
+          (Current).first_column = YYRHSLOC (Rhs, 1).first_column;      \
+          (Current).last_line    = YYRHSLOC (Rhs, N).last_line;         \
+          (Current).last_column  = YYRHSLOC (Rhs, N).last_column;       \
+          (Current).comment      = YYRHSLOC (Rhs, 1).comment;           \
+        }                                                               \
+      else                                                              \
+        {                                                               \
+          (Current).first_line   = (Current).last_line   =              \
+            YYRHSLOC (Rhs, 0).last_line;                                \
+          (Current).first_column = (Current).last_column =              \
+            YYRHSLOC (Rhs, 0).last_column;                              \
+		  (Current).comment = YYRHSLOC (Rhs, 0).comment;                \
+        }                                                               \
+    while (0)
+#endif
+
 #include "y.tab.hpp"
 #include "Compiler.h"
 #include "CompileOption.h"
@@ -56,6 +97,7 @@ namespace ZScript
 	class ASTAnnotation;
 	class ASTAnnotationList;
 	class ASTSetOption;
+	class ASTComment;
 	// Statements
 	class ASTStmt; // virtual
 	class ASTBlock;
@@ -155,6 +197,7 @@ namespace ZScript
 		int first_column;
 		int last_column;
 		std::string fname;
+		std::string comment;
 
 		LocationData()
 			: first_line(-1), last_line(-1),
@@ -165,8 +208,14 @@ namespace ZScript
 		LocationData(YYLTYPE loc)
 			: first_line(loc.first_line), last_line(loc.last_line),
 			  first_column(loc.first_column), last_column(loc.last_column),
-			  fname(curfilename)
-		{}
+			  fname(curfilename), comment("testme ast.h")
+		{
+			// printf("%s\n", loc.comment);
+			// std::stringstream s;
+			// s << "num is: " << loc.num;
+			// comment = s.str();
+			comment = loc.comment;
+		}
 
 		std::string asString() const;
 	};
@@ -341,6 +390,20 @@ namespace ZScript
 
 		std::string getValue() const {return str;}
 	private:
+		std::string str;
+	};
+
+	class ASTComment : public AST
+	{
+	public:
+		ASTComment(const char* str,
+		          LocationData const& location = LocationData::NONE);
+		ASTComment(std::string const& str,
+		          LocationData const& location = LocationData::NONE);
+		ASTComment* clone() const {return new ASTComment(*this);}
+
+		void execute(ASTVisitor& visitor, void* param = NULL);
+
 		std::string str;
 	};
 

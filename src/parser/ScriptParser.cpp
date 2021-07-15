@@ -47,7 +47,7 @@ void ScriptParser::initialize()
 	CompileOption::initialize();
 }
 
-unique_ptr<ScriptsData> ZScript::compile(string const& filename)
+unique_ptr<ScriptsData> ZScript::compile(string const& filename, bool print_debug_info)
 {
     ScriptParser::initialize();
 
@@ -108,6 +108,71 @@ unique_ptr<ScriptsData> ZScript::compile(string const& filename)
     
 	box_out("Success!");
 	box_eol();
+
+	if (print_debug_info)
+	{
+		// auto errors = program.getErrors();
+		// for (int i = 0; i < errors.size(); i++) {
+		//     printf("%s \n", errors[i]->toString().c_str());
+		// }
+
+		// auto functions = ZScript::getFunctions(program);
+		// for (int i = 0; i < functions.size(); i++) {
+		//     printf("%s \n", functions[i]->name.c_str());
+		// }
+		// printf("======== \n");
+
+		// printf("getUserGlobalFunctions ======== \n");
+		// auto functions = program.getUserGlobalFunctions();
+		// for (int i = 0; i < functions.size(); i++) {
+		//     printf("%s \n", functions[i]->name.c_str());
+		// }
+		// printf("======== \n");
+
+		// printf("getUserFunctions ======== \n");
+		// functions = program.getUserFunctions();
+		// for (int i = 0; i < functions.size(); i++) {
+		//     printf("%s \n", functions[i]->name.c_str());
+		// }
+		// printf("======== \n");
+
+		// printf("getInternalFunctions ======== \n");
+		// functions = program.getInternalFunctions();
+		// for (int i = 0; i < functions.size(); i++) {
+		//     printf("%s \n", functions[i]->name.c_str());
+		// }
+		// printf("======== \n");
+
+		// auto scripts = program.scripts;
+		// for (int i = 0; i < scripts.size(); i++) {
+		// 	auto script = scripts[i];
+		// 	printf("%s =========== \n", script->getName().c_str());
+		// 	auto& scope = script->getScope();
+		// 	auto datums = scope.getLocalData();
+		// 	for (int i = 0; i < datums.size(); i++) {
+		// 		if (auto name = datums[i]->getName()) {
+		// 			printf("%s \n", (*name).c_str());
+		// 		}
+		// 	}
+		// }
+
+		auto datums = program.getScope().getLocalData();
+		for (int i = 0; i < datums.size(); i++) {
+			if (auto name = datums[i]->getName()) {
+				auto node = datums[i]->getNode();
+				if (node) {
+					const char* fname = node->location.fname.c_str();
+					if (strcmp(fname, "tmp") == 0) fname = "input";
+					if (strlen(node->location.comment.c_str())) {
+						printf("%s [%s] (%s) \n", (*name).c_str(), fname, node->location.comment.c_str());
+
+					}
+				} else {
+					// printf("%s \n", (*name).c_str());
+				}
+			}
+		}
+	}
 
 	return unique_ptr<ScriptsData>(result.release());
 }

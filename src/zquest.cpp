@@ -25789,7 +25789,7 @@ int onCompileScript()
 			box_start(1, "Compile Progress", lfont, sfont,true);
 			gotoless_not_equal = (0 != get_bit(quest_rules, qr_GOTOLESSNOTEQUAL)); // Used by BuildVisitors.cpp
 			clock_t start_compile_time = clock();
-			boost::movelib::unique_ptr<ZScript::ScriptsData> result(ZScript::compile("tmp"));
+			boost::movelib::unique_ptr<ZScript::ScriptsData> result(ZScript::compile("tmp", false));
 			clock_t end_compile_time = clock();
 			char buf[256] = {0};
 			sprintf(buf, "Compile took %lf seconds (%ld cycles)", (end_compile_time - start_compile_time)/((double)CLOCKS_PER_SEC),end_compile_time - start_compile_time);

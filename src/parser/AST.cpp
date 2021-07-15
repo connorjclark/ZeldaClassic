@@ -401,6 +401,21 @@ void ASTString::execute(ASTVisitor& visitor, void* param)
 	visitor.caseString(*this, param);
 }
 
+// ASTComment
+
+ASTComment::ASTComment(const char* str, LocationData const& location)
+	: AST(location), str(static_cast<string>(str))
+{}
+
+ASTComment::ASTComment(string const& str, LocationData const& location)
+	: AST(location), str(str)
+{}
+
+void ASTComment::execute(ASTVisitor& visitor, void* param)
+{
+
+}
+
 // ASTAnnotation
 
 ASTAnnotation::ASTAnnotation(ASTString* first, ASTString* second, LocationData const& location)

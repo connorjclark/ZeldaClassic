@@ -124,7 +124,7 @@ namespace ZScript
 		std::map<std::string, ScriptType> scriptTypes;
 	};
 
-	boost::movelib::unique_ptr<ScriptsData> compile(std::string const& filename);
+	boost::movelib::unique_ptr<ScriptsData> compile(std::string const& filename, bool print_debug_info);
 
 	class ScriptParser
 	{

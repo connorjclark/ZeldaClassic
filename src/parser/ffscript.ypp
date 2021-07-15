@@ -223,6 +223,7 @@ extern YYLTYPE noloc;
 %token NUMBER
 %token LONGNUMBER
 %token SCRIPTSTRUCT
+%token COMMENT
 
 %%
 
@@ -242,6 +243,7 @@ Global_List :
 		root->options.push_back(option);
 		if (root->hasDeclarations())
 			yymsg("WARNING: Options should come before everything else.");}
+	// | Global_List Comment {$$ = $1;}
 	| {root.reset(new ASTFile(noloc));}
 	;
 
@@ -264,6 +266,14 @@ Global_Statement :
 		declaration->compileErrorCatches.push_back(errorId);
 		$$ = declaration;}
 	;
+
+Comment :
+	COMMENT {
+		ASTComment* comment = (ASTComment*)$1;
+		// printf("comment: %s \n", comment->str.c->str());
+		$$ = comment;
+		// $$ = new ASTString("test me 2", @$);
+	};
 
 ////////////////////////////////////////////////////////////////
 // Namespace Declaration
@@ -372,6 +382,7 @@ Namespace_Statement :
 	| DataEnum SEMICOLON {$$ = $1;}
 	| Using SEMICOLON {$$ = $1;}
 	| Statement_Assert SEMICOLON {$$ = $1;}
+	// | Comment {$$ = $1;}
 	| EXPECTERROR LPAREN Expression_Constant RPAREN Namespace_Statement {
 		ASTExprConst* errorId = (ASTExprConst*)$3;
 		ASTDecl* declaration = (ASTDecl*)$5;
@@ -896,6 +907,7 @@ Statement :
 	| Using SEMICOLON {$$ = $1;}
 	// Normal Statements
 	| Expression SEMICOLON {$$ = $1;}
+	// | Comment {$$ = $1;}
 	| Statement_Block {$$ = $1;}
 	| Statement_If {$$ = $1;}
 	| Statement_Switch {$$ = $1;}
@@ -1488,7 +1500,8 @@ Expr_17 : Expr_16 {$$ = $1;}
 	| Expr_16 ORASSIGN Expr_17 {SHORTCUT(ASTExprOr, $$, $1, $3, @$, @3)}
 		 ;
 
-Expression : Expr_17 {$$ = $1;};
+Expression : Expr_17 {$$ = $1;}
+	;
 
 Expression_Constant :
 	Expression {

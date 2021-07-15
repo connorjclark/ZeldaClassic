@@ -7,6 +7,7 @@
 %option never-interactive
 
 %x COMMENT
+%x COMMENT_LOOKAHEAD
 %x STRING
 %x IMPORTING
 %x IMPORTSTR
@@ -18,9 +19,12 @@
 #include "AST.h"
 #include "../zsyssimple.h"
 #include "y.tab.hpp"
-YYLTYPE noloc = {0,0,0,0};
+YYLTYPE noloc = {0,0,0,0,""};
 int yyrow, yycol;
 int doImportStr = 0;
+// todo explain comment parsing
+ZScript::AST *cur_comment_reciever = NULL;
+int clookahead_col;
 
 enum {st_none, st_case};
 int special_state = st_none;
@@ -37,15 +41,25 @@ using namespace ZScript;
 
 int srow, scol;
 std::ostringstream qstr;
+std::ostringstream cstr;
 
-#define NEWLINE ++yyrow; yycol = 1; doImportStr = 0
+#define NEWLINE \
+++yyrow; yycol = 1; \
+doImportStr = 0; \
+if (cur_comment_reciever) { \
+	printf("name: %s\n", cur_comment_reciever->location.fname.c_str()); \
+	printf("found: %s\n", cstr.str().c_str()); \
+	cur_comment_reciever = NULL; \
+}
+
 #define ADVANCE yycol += yyleng
 
 #define UPDATE_YYLLOC \
 yylloc.first_line = yylloc.last_line = yyrow; \
 yylloc.first_column = yycol; \
 yycol += yyleng; \
-yylloc.last_column = yycol
+yylloc.last_column = yycol; \
+yylloc.comment = _strdup("");
 
 // Return token.
 #define TOKEN(NAME) UPDATE_YYLLOC; return TOK_##NAME
@@ -269,7 +283,11 @@ appx_equal	TOKEN( APPXEQUAL );
 
  /* Line Comments */
 "//".*		/* hit end of file */
-"//".*\n	NEWLINE;
+"//".*\n	{
+	// skip first two characters and drop the newline
+	cstr.write(yytext + 2, yyleng - 3);
+	NEWLINE;
+}
 
  /* Block Comments */
 "/*"[^*\n]*			{
@@ -277,13 +295,20 @@ appx_equal	TOKEN( APPXEQUAL );
 	scol = yycol;
 	ADVANCE; 
 	BEGIN( COMMENT );
-} 
+	// skip first two characters
+	cstr.write(yytext + 2, yyleng - 2);
+}
 <COMMENT>{
-	[^*\n]*			ADVANCE;
-	[^*\n]*\n		NEWLINE;
-	"*"+[^*/\n]*		ADVANCE;
-	"*"+[^*/\n]*\n		NEWLINE;
-	"*"+"/"			ADVANCE; BEGIN( INITIAL );
+	[^*\n]*			 ADVANCE; cstr << yytext;
+	[^*\n]*\n		 NEWLINE; cstr << yytext;
+	"*"+[^*/\n]*     ADVANCE; cstr << yytext;
+	"*"+[^*/\n]*\n	 NEWLINE; cstr << yytext;
+	"*/"			{
+		ADVANCE;
+		yytext[yyleng - 2] = 0; /* Remove the last 2 characters. */
+		cstr << yytext;
+		BEGIN( INITIAL );
+	}
 	<<EOF>>			{
 		yymsg("WARNING: Comment does not end.", srow, scol);
 		TERMINATE;
@@ -443,7 +468,74 @@ appx_equal	TOKEN( APPXEQUAL );
 
  /* Identifier */
 [_a-zA-Z][_a-zA-Z0-9]*	{
-	VALUE( IDENTIFIER, ASTString(yytext, yylloc) );
+	yylloc.first_line = yylloc.last_line = yyrow;
+	yylloc.first_column = yycol;
+	yycol += yyleng;
+	yylloc.last_column = yycol;
+	/* yylloc.comment = _strdup(cstr.str().c_str());
+	cstr.str(""); */
+	yylval = new ASTString(yytext, yylloc);
+	printf("ident: %s \n", yytext);
+	clookahead_col = yycol;
+	/* clookahead_fpos = lseek(yyin, 0, SEEK_CUR); */
+	BEGIN( COMMENT_LOOKAHEAD );
+
+
+
+	/* std::ostringstream lstr;
+	char c;
+	for (;;) {
+		c = input();
+		if (c == EOF) break;
+		if (c == '\n') break;
+		if (c == '\\') break;
+	} */
+
+	/* return TOK_IDENTIFIER; */
+}
+
+<COMMENT_LOOKAHEAD>{
+	[^\/\n]*     printf("COMMENT_LOOKAHEAD: advance %s \n", yytext); ADVANCE;
+	\n |
+	<<EOF>> {
+		BEGIN( INITIAL );
+		printf("COMMENT_LOOKAHEAD: newline or EOF %s \n", yytext);
+
+		// No comment found after this identifier, but there may have been one preceding it.
+		yylloc.comment = _strdup(cstr.str().c_str());
+		cstr.str("");
+
+		// Reset to just after the identifier.
+		printf("clookahead_col - yycol: %d\n", clookahead_col - yycol);
+		printf("yyleng: %d\n", yyleng);
+		printf("move back: %d\n", clookahead_col - yycol - yyleng);
+		fseek(yyin, clookahead_col - yycol - yyleng, SEEK_CUR);
+		yyrestart(yyin);
+		yycol = yylloc.first_column = yylloc.last_column = clookahead_col;
+
+		return TOK_IDENTIFIER;
+	}
+	"//".* {
+		BEGIN( INITIAL );
+
+		// Comment found on this line after the identifier.
+		// Add to `cstr` (which may already have text from preciding comments).
+		cstr << yytext;
+		yylloc.comment = _strdup(cstr.str().c_str());
+		cstr.str("");
+
+		printf("comment: %s\n", yylloc.comment);
+
+		// Reset to just after the identifier.
+		printf("clookahead_col - yycol: %d\n", clookahead_col - yycol);
+		printf("yyleng: %d\n", yyleng);
+		printf("move back: %d\n", clookahead_col - yycol - yyleng);
+		fseek(yyin, clookahead_col - yycol - yyleng, SEEK_CUR);
+		yyrestart(yyin);
+		yycol = yylloc.first_column = yylloc.last_column = clookahead_col;
+
+		return TOK_IDENTIFIER;
+	}
 }
 
  /* Numbers */
@@ -560,4 +652,5 @@ void resetLexer() {
 	yycol = 1;
 	doImportStr = 0;
 	special_state = st_none;
+	cur_comment_reciever = NULL;
 }

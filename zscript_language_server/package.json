@@ -1,0 +1,71 @@
+{
+	"name": "zscript-language-server",
+	"description": "A language server for Zelda Classic's ZScript",
+	"author": "Zelda Classic Authors",
+	"version": "1.0.0",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/ArmageddonGames/ZeldaClassic"
+	},
+	"publisher": "ArmageddonGames",
+	"categories": [],
+	"keywords": [
+		"multi-root ready"
+	],
+	"engines": {
+		"vscode": "^1.43.0"
+	},
+	"activationEvents": [
+		"onLanguage:zscript"
+	],
+	"main": "./client/out/extension",
+	"contributes": {
+		"languages": [{
+			"id": "zscript",
+			"extensions": [ ".zs", ".zh" ],
+			"aliases": [ "ZScript" ]
+		}],
+		"grammars": [{
+			"language": "zscript",
+			"scopeName": "source.zscript",
+			"path": "./zscript.tmLanguage.json"
+		}],
+		"configuration": {
+			"type": "object",
+			"title": "ZScript",
+			"properties": {
+				"zscriptLanguageServer.zeldaClassicDirectory": {
+					"scope": "resource",
+					"type": "string",
+					"description": "Path to the Zelda Classic directory, which contains the zscript binary."
+				},
+				"zscriptLanguageServer.trace.server": {
+					"scope": "window",
+					"type": "string",
+					"enum": [
+						"off",
+						"messages",
+						"verbose"
+					],
+					"default": "off",
+					"description": "Traces the communication between VS Code and the language server."
+				}
+			}
+		}
+	},
+	"scripts": {
+		"vscode:prepublish": "yarn compile",
+		"compile": "tsc -b",
+		"watch": "tsc -b -w",
+		"postinstall": "cd client && yarn install && cd ../server && yarn install && cd .."
+	},
+	"devDependencies": {
+		"@types/mocha": "^8.2.2",
+		"@types/node": "^12.12.0",
+		"@typescript-eslint/eslint-plugin": "^4.23.0",
+		"@typescript-eslint/parser": "^4.23.0",
+		"eslint": "^7.26.0",
+		"mocha": "^8.3.2",
+		"typescript": "^4.3.2"
+	}
+}
