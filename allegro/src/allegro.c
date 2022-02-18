@@ -371,10 +371,13 @@ static int _install_allegro(int system_id, int *errno_ptr, int (*atexit_ptr)(voi
    printf("allegroinit _system_driver_list \n");
    for (i=0; _system_driver_list[i].driver; i++) {
       printf("allegroinit _system_driver_list %d \n", i);
+      printf("allegroinit _system_driver_list id %d \n", _system_driver_list[i].id);
+      printf("allegroinit _system_driver_list autodetect %d \n", _system_driver_list[i].autodetect);
       if ((_system_driver_list[i].id == system_id) ||
 	  ((_system_driver_list[i].autodetect) && (system_id == SYSTEM_AUTODETECT))) {
 	 system_driver = _system_driver_list[i].driver;
 	 system_driver->name = system_driver->desc = get_config_text(system_driver->ascii_name);
+    printf("allegroinit name %s \n", system_driver->name);
 	 if (system_driver->init() != 0) {
        printf("allegroinit _system_driver_list :( \n");
 	    system_driver = NULL;
@@ -385,6 +388,10 @@ static int _install_allegro(int system_id, int *errno_ptr, int (*atexit_ptr)(voi
 	    break;
       }
    }
+
+   // TODO wasm
+   if (!system_driver)
+      system_driver = &system_none;
 
    if (!system_driver)
       return -1;

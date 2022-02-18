@@ -22,7 +22,7 @@
 
 #include "allegro.h"
 #include "allegro/internal/aintern.h"
-
+#include <stdio.h>
 
 
 typedef struct CONFIG_ENTRY

@@ -157,6 +157,10 @@ int _unix_find_resource(char *dest, AL_CONST char *resource, int size)
  */
 void _unix_read_os_type(void)
 {
+   // TODO wasm
+   os_type = OSTYPE_LINUX;
+   return;
+
    #ifdef ALLEGRO_HAVE_SYS_UTSNAME_H
 
       struct utsname utsn;

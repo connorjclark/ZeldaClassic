@@ -68,7 +68,8 @@ SYSTEM_DRIVER system_linux =
    "Linux console",
    sys_linux_init,
    sys_linux_exit,
-   _unix_get_executable_name,
+	 // TODO wasm
+   NULL, // _unix_get_executable_name,
    _unix_find_resource,
    NULL, /* set_window_title */
    NULL, /* set_close_button_callback */
@@ -165,6 +166,7 @@ static void __al_linux_bgman_exit (void)
  */
 static int sys_linux_init (void)
 {
+	printf("sys_linux_init \n");
 	/* Get OS type */
 	_unix_read_os_type();
 	if (os_type != OSTYPE_LINUX) return -1; /* FWIW */

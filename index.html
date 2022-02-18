@@ -3,7 +3,13 @@
     <script src="build/wasm/zc.js"></script>
     <script>
       async function main() {
-        const zc = await Module();
+        const zc = await Module({
+          locateFile: function(path, prefix) {
+            if (path.endsWith(".data")) return "build/wasm/" + path;
+            // otherwise, use the default, the prefix (JS file's dir) + the path
+            return prefix + path;
+          },
+        });
         window.zc = zc;
 
         const questFilePath = '/test_data/bs/2.5/NewBS 3.1 - 1st Quest.qst';

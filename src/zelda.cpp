@@ -4441,6 +4441,8 @@ static std::string dayextension(int dy)
 
 int main(int argc, char* argv[])
 {
+    return 0; // TODO wasm
+
     bool onlyInstance=true;
 	memset(itemscriptInitialised, 0, sizeof(itemscriptInitialised));
 //	refresh_select_screen = 0;

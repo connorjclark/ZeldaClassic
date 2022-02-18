@@ -34,27 +34,15 @@ endfunction(enable_unity_build)
 # Header and source file lists
 #############################################################
 
-# include_directories(./allegro/include)
-# include_directories(./include/lpng1212)
-# include_directories(./include/zlib123)
-# include_directories(./include/loadpng)
-# include_directories(./include/jpgalleg-2.5)
-# include_directories(./include/dumb)
-# include_directories(./include/alogg)
-# include_directories(./include/almp3)
-# include_directories(./include/gme)
-
-foreach(target zelda zquest)
-	# target_include_directories(${target} ./allegro/include)
-	# target_include_directories(${target} ./include/lpng1212)
-	# target_include_directories(${target} ./include/zlib123)
-	# target_include_directories(${target} ./include/loadpng)
-	# target_include_directories(${target} ./include/jpgalleg-2.5)
-	# target_include_directories(${target} ./include/dumb)
-	# target_include_directories(${target} ./include/alogg)
-	# target_include_directories(${target} ./include/almp3)
-	# target_include_directories(${target} ./include/gme)
-endforeach()
+include_directories(./allegro/include)
+include_directories(./include/lpng1212)
+include_directories(./include/zlib123)
+include_directories(./include/loadpng)
+include_directories(./include/jpgalleg-2.5)
+include_directories(./include/dumb)
+include_directories(./include/alogg)
+include_directories(./include/almp3)
+include_directories(./include/gme)
 
 set(ZCSOUNDSOURCES
 	src/zcmusic.cpp
@@ -147,40 +135,6 @@ if(MSVC)
 		list(APPEND ZQUESTEXTRASOURCES src/precompiledzq.cpp)
 	endif()
 
-# OSX
-
-elseif(APPLE)
-	add_definitions(-DALLEGRO_MACOSX)
-	# link_directories(/usr/lib/i386-linux-gnu)
-	# link_directories(./libs/osx)
-	set(ALLEGROLIB alleg)
-	add_definitions(-DALLEGRO_UNIX)
-	# add_definitions(-DALLEGRO_LINUX) # Mistakenly used in the source.
-	execute_process(COMMAND "${CMAKE_SOURCE_DIR}/allegro/configure --enable-static=yes --enable-shared=no --enable-ossdigi=no --enable-ossmidi=no --enable-esddigi=no --enable-artsdigi=no --enable-sgialdigi=no --enable-jackdigi=no --enable-xwin-dga2=no --enable-vga=no --enable-svgalib=no" WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}/allegro")
-
-	add_compile_options("-fdeclspec")
-	add_subdirectory(allegro)
-
-	set(IMAGELIBS algif ldpng jpgal png z)
-	set(SOUNDLIBS aldmb almp3 alogg dumb gme)
-	set(X11_LIBRARIES X11 Xext Xcursor Xxf86vm pthread Xpm dl)
-
-	# add_compile_options("-m32")
-	# SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -m32 -export-dynamic")
-	# SET(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -m32")
-
-	include (ExternalProject)
-	ExternalProject_Add(
-    project_aldmb
-    GIT_REPOSITORY https://github.com/kode54/dumb.git
-    GIT_TAG 2.0.3
-		CMAKE_ARGS -DALLEGRO_INCLUDE_DIR=${CMAKE_CURRENT_SOURCE_DIR}/allegro/include -DBUILD_ALLEGRO4=ON -DBUILD_EXAMPLES=OFF -DALLEGRO_UNIX
-	)
-
-	ExternalProject_Get_Property(project_aldmb install_dir)
-	add_library(aldmb STATIC IMPORTED)
-	add_dependencies(aldmb project_aldmb)
-
 # Linux
 
 elseif(LINUX)
@@ -209,8 +163,7 @@ if(MSVC AND (MSVC_VERSION GREATER 1600))
 	set(ZCSOUNDLIBSEXTRA legacy_stdio_definitions)
 endif()
 add_library(zcsound SHARED ${ZCSOUNDSOURCES})
-# target_link_libraries(zcsound LINK_PUBLIC allegro)
-target_link_libraries(zcsound LINK_PUBLIC ${ALLEGROLIB} ${SOUNDLIBS} ${ZCSOUNDLIBSEXTRA})
+target_link_libraries(zcsound ${ALLEGROLIB} ${SOUNDLIBS} ${ZCSOUNDLIBSEXTRA})
 
 #############################################################
 # Romview
@@ -256,9 +209,10 @@ endif()
 
 add_executable(zelda ${ZELDA_CORE_SOURCES} ${ZELDA_GUI_SOURCES} ${ZELDA_SPRITE_SOURCES} ${ZELDA_SUBSCREEN_SOURCES} ${ZELDA_SCRIPTING_SOURCES} ${ZELDAEXTRASOURCES} ${ZELDA_MODULES})
 
-target_link_libraries(zelda zcsound winmm ${IMAGELIBS} ${ALLEGROLIB} ${ZELDALIBSEXTRA})
 if(WIN32)
-	target_link_libraries(zelda winmm)
+	target_link_libraries(zelda zcsound winmm ${IMAGELIBS} ${ALLEGROLIB} ${ZELDALIBSEXTRA})
+elseif(LINUX)
+	target_link_libraries(zelda zcsound ${IMAGELIBS} ${ALLEGROLIB} ${ZELDALIBSEXTRA})
 endif()
 
 
@@ -300,12 +254,8 @@ if(MSVC)
 endif()
 
 
-include_directories(./allegro/include)
-include_directories(./include/lpng1212)
-include_directories(./include/zlib123)
-include_directories(./include/loadpng)
-include_directories(./include/jpgalleg-2.5)
-include_directories(./include/dumb)
-include_directories(./include/alogg)
-include_directories(./include/almp3)
-include_directories(./include/gme)
+if(EMSCRIPTEN)
+	add_executable(zquest_wasm src/wasm_read_main.cpp ${ZQUEST_CORE_SOURCES} ${ZQUEST_GUI_SOURCES} ${ZQUEST_MISC_SOURCES} ${ZQUEST_ZSCRIPT_SOURCES} ${ZQUESTEXTRASOURCES} ${BISON_ZScriptParser_OUTPUTS} ${FLEX_ZScriptLexer_OUTPUTS} ${ZQUEST_MODULES})
+	# target_link_libraries(zquest_wasm zcsound ${IMAGELIBS} ${ALLEGROLIB} ${ZQUESTLIBSEXTRA})
+	target_link_libraries(zquest_wasm ${ALLEGROLIB})
+endif()
