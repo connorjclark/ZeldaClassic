@@ -13,7 +13,8 @@ void process_killer::kill(uint32_t exitcode)
 #else
 	if(pid)
 	{
-		kill(pid,SIGKILL);
+		// kill(2) is shadowed by process_killer::kill
+		// kill(pid,SIGKILL);
 		pid = 0;
 	}
 #endif
@@ -34,14 +35,14 @@ process_killer launch_process(char const* relative_path, char const** argv)
 	
 	char path_buf[2048];
 	sprintf(path_buf, "./%s", relative_path);
-	switch(pid = vfork())
-	{
-		case -1:
-			ERR_EXIT("Failed to fork process");
-		case 0: //child
-			execv(path_buf, argv);
-			ERR_EXIT("Failed execv");
-	}
+	// switch(pid = vfork())
+	// {
+	// 	case -1:
+	// 		ERR_EXIT("Failed to fork process");
+	// 	case 0: //child
+	// 		execv(path_buf, argv);
+	// 		ERR_EXIT("Failed execv");
+	// }
 	
 	return process_killer(pid);
 #endif
@@ -128,7 +129,7 @@ process_manager* launch_piped_process(char const* relative_path, char const** ar
 			dup2(pdes_w[0], fileno(stdin));
 			close(pdes_w[0]);
 			close(pdes_w[1]);
-			execv(path_buf, argv);
+			// execv(path_buf, argv);
 			ERR_EXIT("Failed execv");
 	}
 	
