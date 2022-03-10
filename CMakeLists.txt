@@ -19,6 +19,8 @@ if(UNIX AND NOT APPLE)
 	set(LINUX TRUE)
 endif()
 
+add_compile_options("-m32")
+
 function(enable_unity_build UB_SUFFIX SOURCE_VARIABLE_NAME)
   set(files ${${SOURCE_VARIABLE_NAME}})
   # Generate a unique filename for the unity build translation unit
@@ -233,7 +235,6 @@ elseif(LINUX)
 	set(SOUNDLIBS aldmb almp3 alogg dumb gme asound)
 	set(X11_LIBRARIES X11 Xext Xcursor Xxf86vm pthread Xpm dl)
 
-	add_compile_options("-m32")
 	SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -m32 -static-libgcc -export-dynamic")
 	SET(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -m32 -static-libgcc")
 endif()
