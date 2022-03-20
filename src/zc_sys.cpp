@@ -334,6 +334,9 @@ void load_game_configs()
     zcmusic_bufsz = vbound(zc_get_config(cfg_sect,"zcmusic_bufsz",64),1,128);
     volkeys = zc_get_config(cfg_sect,"volkeys",0)!=0;
     zc_vsync = zc_get_config(cfg_sect,"vsync",0);
+    #ifdef __EMSCRIPTEN__
+        // zc_vsync = true;
+    #endif
     Throttlefps = zc_get_config(cfg_sect,"throttlefps",1)!=0;
     TransLayers = zc_get_config(cfg_sect,"translayers",1)!=0;
     SnapshotFormat = zc_get_config(cfg_sect,"snapshot_format",3);
@@ -4597,6 +4600,10 @@ static void restoreInput()
 */
 void syskeys()
 {
+// #ifdef __EMSCRIPTEN__
+//     return;
+// #endif
+
 	  //Saffith's method of separating system and game key bindings. Can't do this!!
     //backupAndClearInput(); //This caused input to become randomly 'stuck'. -Z
     
@@ -4609,14 +4616,17 @@ void syskeys()
     }
     
     poll_joystick();
+    // return; // no crassh
     
     if(rMbtn() || (gui_mouse_b() && !mouse_down && ClickToFreeze &&!disableClickToFreeze))
     {
         oldtitle_version=title_version;
         System();
     }
+    // return; // no crash
     
     mouse_down=gui_mouse_b();
+    // return; // no crash
     
     if(zc_readkey(KEY_F1))
     {
@@ -4631,6 +4641,8 @@ void syskeys()
             logic_counter=0;
         }
     }
+
+    // return; // no crash
     
     //  if(zc_readkey(KEY_F1))    Vsync=!Vsync;
     /*
@@ -4665,6 +4677,7 @@ void syskeys()
 #endif
     if(rF5()&&(Playing && currscr<128 && DMaps[currdmap].flags&dmfVIEWMAP))    onSaveMapPic();
     
+    // return; // no crash
     if(rF12())
     {
         onSnapshot();
@@ -4779,6 +4792,7 @@ void syskeys()
         if(zc_readkey(KEY_END))  master_volume(digi_volume==255?248:digi_volume-8,-1);
     }
     
+    // return; // no crash
     if(!get_debug() || !SystemKeys)
         goto bottom;
         
@@ -9171,6 +9185,10 @@ void set_zcmusicspeed(int32_t speed)
 
 void jukebox(int32_t index,int32_t loop)
 {
+#ifdef __EMSCRIPTEN__
+    return;
+#endif
+
     music_stop();
     
     if(index<0)         index=MAXMIDIS-1;

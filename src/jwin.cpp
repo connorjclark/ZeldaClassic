@@ -4912,6 +4912,7 @@ int32_t jwin_menu_proc(int32_t msg, DIALOG *d, int32_t c)
         
         do
         {
+            rest(0);
         }
         while(gui_mouse_b());
         
@@ -5304,6 +5305,7 @@ int32_t jwin_alert3(const char *title, const char *s1, const char *s2, const cha
     
     do
     {
+        rest(0);
     }
     while(gui_mouse_b());
     
@@ -5331,6 +5333,10 @@ int32_t jwin_alert3(const char *title, const char *s1, const char *s2, const cha
   */
 int32_t jwin_alert(const char *title, const char *s1, const char *s2, const char *s3, const char *b1, const char *b2, int32_t c1, int32_t c2, FONT *title_font)
 {
+#ifdef __EMSCRIPTEN__
+    // return 1;
+#endif
+
     int32_t ret;
     
     ret = jwin_alert3(title, s1, s2, s3, b1, b2, NULL, c1, c2, 0, title_font);
@@ -7152,7 +7158,12 @@ int32_t displayed_tabs_width(GUI::TabPanel *panel, int32_t first_tab, int32_t ma
     
     return w+1;
 }
-INLINE int32_t is_in_rect(int32_t x,int32_t y,int32_t rx1,int32_t ry1,int32_t rx2,int32_t ry2);
+
+INLINE int32_t is_in_rect(int32_t x,int32_t y,int32_t rx1,int32_t ry1,int32_t rx2,int32_t ry2)
+{
+    return x>=rx1 && x<=rx2 && y>=ry1 && y<=ry2;
+}
+
 int32_t new_tab_proc(int32_t msg, DIALOG *d, int32_t c)
 {
 	assert(d->flags&D_NEW_GUI);

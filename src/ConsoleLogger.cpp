@@ -471,6 +471,8 @@ int32_t CConsoleLoggerEx::_cprint(int32_t attributes,const char *lpszText,int32_
 }
 //}
 #else
+
+#include <cstdio>
 //{Unix
 
 //////////////////////////////////////////////////////////////////////
@@ -548,7 +550,7 @@ int32_t CConsoleLogger::printf(const char *format,...)
 	
 	va_end(argList);
 	
-	printf("%s",tmp);
+	::printf("%s",tmp);
 	return ret;
 }
 

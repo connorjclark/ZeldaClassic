@@ -22,8 +22,6 @@
 // local edit
 #include "a5alleg.h"
 
-void all_render_screen(void);
-
 #define ALLEGRO_LEGACY_PIXEL_FORMAT_8888  0
 #define ALLEGRO_LEGACY_PIXEL_FORMAT_OTHER 1
 
@@ -207,7 +205,8 @@ static BITMAP * a5_display_init(int w, int h, int vw, int vh, int color_depth)
         _a5_display_height = h;
         _a5_screen_thread = al_create_thread(_a5_display_thread, NULL);
         al_start_thread(_a5_screen_thread);
-        while(!_a5_display_creation_done);
+        // local edit
+        while(!_a5_display_creation_done) rest(0);
       }
       else
       {
