@@ -37,7 +37,7 @@ void read_compile_data(io_manager* reader, map<string, ZScript::ScriptTypeID>& s
 	scripts.clear();
 	if(!reader) return;
 	size_t stypes_sz, scripts_sz;
-	size_t dummy;
+	uint32_t dummy;
 	ZScript::ScriptTypeID _id;
 	char buf[512] = {0};
 	char buf2[512] = {0};

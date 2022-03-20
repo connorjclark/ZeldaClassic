@@ -471,6 +471,8 @@ int32_t CConsoleLoggerEx::_cprint(int32_t attributes,const char *lpszText,int32_
 }
 //}
 #else
+
+#include <cstdio>
 //{Unix
 
 //////////////////////////////////////////////////////////////////////

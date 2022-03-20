@@ -114,6 +114,10 @@ extern CConsoleLoggerEx coloured_console;
 #define getcwd _getcwd
 #endif
 
+// #ifdef __EMSCRIPTEN__
+// #include <emscripten/emscripten.h>
+// #endif
+
 // MSVC fix
 #if _MSC_VER >= 1900
 FILE _iob[] = { *stdin, *stdout, *stderr };
@@ -210,6 +214,11 @@ void throttleFPS()
 {
 #ifdef _WIN32           // TEMPORARY!! -Trying to narrow down a win10 bug that affects performance.
     timeBeginPeriod(1); // Basically, jist is that other programs can affect the FPS of ZC in weird ways. (making it better for example... go figure)
+#endif
+
+#ifdef __EMSCRIPTEN__
+	rest(0);
+	return;
 #endif
     
     if( (Throttlefps ^ (zc_getkey(KEY_TILDE)!=0)) || get_bit(quest_rules, qr_NOFASTMODE) )
@@ -608,6 +617,10 @@ bool update_hw_pal = false;
 PALETTE* hw_palette = NULL;
 void update_hw_screen(bool force)
 {
+#ifdef __EMSCRIPTEN__
+	// force = true;
+#endif __EMSCRIPTEN__
+
 	//if(!hw_screen) return;
 	if(force || (!is_sys_pal && !Throttlefps) || myvsync)
 	{
@@ -618,6 +631,9 @@ void update_hw_screen(bool force)
 			update_hw_pal = false;
 		}
 		myvsync=0;
+#ifdef __EMSCRIPTEN__
+		all_render_screen();
+#endif
 	}
 }
 
@@ -4491,12 +4507,18 @@ int32_t main(int32_t argc, char* argv[])
 		Z_error_fatal("Failed Init!");
 		quit_game();
 	}
+
+#ifdef __EMSCRIPTEN__
+	all_disable_threaded_display();
+#endif
 	
 	three_finger_flag=false;
 	
+#ifndef __EMSCRIPTEN__
 	register_bitmap_file_type("GIF",  load_gif, save_gif);
 	jpgalleg_init();
 	loadpng_init();
+#endif
 	
 	// set and load game configurations
 	set_config_file("zc.cfg");
@@ -4512,13 +4534,13 @@ int32_t main(int32_t argc, char* argv[])
 	}
 	
 #ifndef ALLEGRO_MACOSX // Should be done on Mac, too, but I haven't gotten that working
-	if(!is_only_instance("zc.lck"))
-	{
-		if(used_switch(argc, argv, "-multiple") || zc_get_config("zeldadx","multiple_instances",0))
-			onlyInstance=false;
-		else
-			exit(1);
-	}
+	// if(!is_only_instance("zc.lck"))
+	// {
+	// 	if(used_switch(argc, argv, "-multiple") || zc_get_config("zeldadx","multiple_instances",0))
+	// 		onlyInstance=false;
+	// 	else
+	// 		exit(1);
+	// }
 #endif
 	
 	//Set up MODULES: This must occur before trying to load the default quests, as the 
@@ -4652,10 +4674,16 @@ int32_t main(int32_t argc, char* argv[])
 	}
 	
 	//set_keyboard_rate(1000,160);
-	
+
+#ifndef __EMSCRIPTEN__
 	LOCK_VARIABLE(logic_counter);
 	LOCK_FUNCTION(update_logic_counter);
-	install_int_ex(update_logic_counter, BPS_TO_TIMER(60));
+	if (install_int_ex(update_logic_counter, BPS_TO_TIMER(60)) < 0)
+	{
+		Z_error_fatal("Could not install timer.\n");
+		quit_game();
+	}
+#endif
 	
 #ifdef _SCRIPT_COUNTER
 	LOCK_VARIABLE(script_counter);
@@ -5048,6 +5076,7 @@ int32_t main(int32_t argc, char* argv[])
 	}
 	else
 	{
+#ifndef __EMSCRIPTEN__
 		if(install_sound(DIGI_AUTODETECT,MIDI_AUTODETECT,NULL))
 		{
 			//      Z_error_fatal(allegro_error);
@@ -5057,6 +5086,7 @@ int32_t main(int32_t argc, char* argv[])
 		{
 			Z_message("OK\n");
 		}
+#endif
 	}
 	
 	Z_init_sound();
@@ -5279,6 +5309,10 @@ int32_t main(int32_t argc, char* argv[])
 			return 0;
 		}
 	}
+
+#ifdef __EMSCRIPTEN__
+	checked_epilepsy = true;
+#endif
 	
 	if(!checked_epilepsy)
 	{
