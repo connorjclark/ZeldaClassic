@@ -2286,7 +2286,11 @@ newdata:
 	
 	if(standalone_mode)
 		goto init;
-		
+
+	#ifdef __EMSCRIPTEN__
+		goto init;
+	#endif
+
 	if(jwin_alert("Can't Find Saved Game File",
 				  "The save file could not be found.",
 				  "Create a new file from scratch?",

@@ -45,6 +45,9 @@ endfunction(enable_unity_build)
 add_definitions(-DALLEGRO_NO_MAGIC_MAIN)
 add_definitions(-DALLEGRO_KCM_AUDIO_SRC)
 option(SHARED "" ON)
+# set(BUILD_SHARED_LIBS ${SHARED})
+# TODO: work this out.
+set(CMAKE_BUILD_TYPE Release)
 
 # This oddity is only because the dependant projects allegro and allegro-legacy will
 # override CMAKE_CONFIGURATION_TYPES with the value of CMAKE_BUILD_TYPE. In order to produce
@@ -99,6 +102,7 @@ add_library(allegro_with_legacy INTERFACE)
 target_include_directories(allegro_with_legacy INTERFACE ${allegro5_SOURCE_DIR}/include ${allegro5_BINARY_DIR}/include)
 target_include_directories(allegro_with_legacy INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/allegro-legacy/include ${CMAKE_CURRENT_BINARY_DIR}/allegro-legacy/include)
 target_link_libraries(allegro_with_legacy INTERFACE allegro-legacy allegro_main)
+# target_compile_definitions(allegro_with_legacy INTERFACE ALLEGRO_LEGACY_STATICLINK)
 
 #############################################################
 # Header and source file lists
@@ -118,11 +122,19 @@ if(MSVC)
   include_directories(./src/msvcCompat)
 endif()
 
-set(ZCSOUNDSOURCES
-	src/zcmusic.cpp
-	src/zcmusicd.cpp
-	src/alleg_compat.cpp
-)
+if (EMSCRIPTEN)
+	set(ZCSOUNDSOURCES
+		src/zcmusic_fake.cpp
+		src/zcmusicd.cpp
+		src/alleg_compat.cpp
+	)
+else()
+	set(ZCSOUNDSOURCES
+		src/zcmusic.cpp
+		src/zcmusicd.cpp
+		src/alleg_compat.cpp
+	)
+endif()
 
 set(ROMVIEW_MODULES
 	${CMAKE_SOURCE_DIR}/modules/romview/RomviewCore.txt
@@ -225,7 +237,19 @@ if(MSVC)
 		list(APPEND ZQUESTEXTRASOURCES src/precompiledzq.cpp)
 	endif()
 
-# Linux
+elseif(EMSCRIPTEN)
+	# link_directories(/usr/lib/i386-linux-gnu)
+	add_definitions(-DALLEGRO_LINUX) # Mistakenly used in the source.
+
+	# TODO: figure out media libraries. probably replace this with w/e SDL offers.
+	# set(IMAGELIBS algif ldpng jpgal png z)
+	# set(SOUNDLIBS aldmb almp3 alogg dumb gme asound)
+	# set(X11_LIBRARIES X11 Xext Xcursor Xxf86vm pthread Xpm dl)
+
+	add_compile_options("-m32")
+	SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -m32 -static-libgcc -export-dynamic")
+	SET(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -m32 -static-libgcc")
+
 elseif(LINUX)
 	link_directories(/usr/lib/i386-linux-gnu)
 	link_directories(./libs/linux)
@@ -299,6 +323,7 @@ if(WIN32)
 elseif(LINUX)
 	target_link_libraries(zelda zcsound ${IMAGELIBS} ${ZELDALIBSEXTRA})
 endif()
+target_link_libraries(zelda allegro_with_legacy)
 
 
 if(MSVC AND USE_PCH)
