@@ -59,14 +59,7 @@ static void * a5_sound_thread_proc(ALLEGRO_THREAD * thread, void * data)
     while(!al_get_thread_should_stop(thread))
     {
         al_init_timeout(&timeout, 0.1);
-#ifdef __EMSCRIPTEN__
-        // For some unknown reason, the call to _al_cond_timedwait done by al_wait_for_event_until
-        // eventually results in a deadlock on the queue mutex. So instead of doing a timed blocking event
-        // loop, just grab the next one (if any).
-        if(al_get_next_event(queue, &event))
-#else
         if(al_wait_for_event_until(queue, &event, &timeout))
-#endif
         {
             switch(event.type)
             {
