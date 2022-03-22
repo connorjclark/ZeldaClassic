@@ -6,8 +6,8 @@ on:
   pull_request: # run on all PRs, not just PRs to a particular branch
 
 jobs:
-  compile:
-    runs-on: windows-2022
+  compile-windows:
+    runs-on: windows-latest
 
     steps:
     - uses: ilammy/msvc-dev-cmd@v1
@@ -26,3 +26,26 @@ jobs:
     - run: cmake . -A win32
     - run: cmake --build . --config Release --verbose --target zquest
     - run: cmake --build . --config Release --verbose --target zelda
+    - run: cmake --build . --config Release --verbose --target zlauncher
+
+compile-ubuntu:
+    runs-on: ubuntu-latest
+
+    steps:
+    # - uses: ilammy/msvc-dev-cmd@v1
+    #   with:
+    #     arch: win32
+
+    - name: git clone
+      uses: actions/checkout@v2
+
+    # - name: Install Dependencies
+    #   uses: crazy-max/ghaction-chocolatey@v1
+    #   with:
+    #     args: install .github/dependencies.config -y
+
+    - run: cp src/metadata/*.h.sig src/metadata/sigs/
+    - run: cmake . -DCMAKE_BUILD_TYPE=Release
+    - run: cmake --build . --verbose --target zquest
+    - run: cmake --build . --verbose --target zelda
+    - run: cmake --build . --verbose --target zlauncher
