@@ -8,6 +8,8 @@ set(UNITY_BUILD FALSE CACHE BOOL "Unity build")
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+set(CMAKE_DEBUG_POSTFIX -debug)
+
 # This allows outputs to be run where they are by putting their libaries in
 # the same folder. 
 set (CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
@@ -42,6 +44,14 @@ add_definitions(-DALLEGRO_NO_MAGIC_MAIN)
 add_definitions(-DALLEGRO_KCM_AUDIO_SRC)
 option(SHARED "" ON)
 
+# This oddity is only because the dependant projects allegro and allegro-legacy will
+# override CMAKE_CONFIGURATION_TYPES with the value of CMAKE_BUILD_TYPE. In order to produce
+# a multi-configuration that can build both Debug and Release, this is necessary. Restrict to windows
+# so that single-configuration build types aren't affected.
+if(WIN32)
+	set(CMAKE_BUILD_TYPE "${CMAKE_CONFIGURATION_TYPES}")
+endif()
+
 include(FetchContent)
 FetchContent_Declare(
   allegro5
@@ -55,8 +65,7 @@ if(NOT allegro5_POPULATED)
 	set(WANT_EXAMPLES OFF)
 	set(WANT_DEMO OFF)
 	set(WANT_DOCS OFF)
-	set(CMAKE_BUILD_TYPE Debug)
-  add_subdirectory(${allegro5_SOURCE_DIR} ${allegro5_BINARY_DIR} EXCLUDE_FROM_ALL)
+	add_subdirectory(${allegro5_SOURCE_DIR} ${allegro5_BINARY_DIR} EXCLUDE_FROM_ALL)
 endif()
 
 # These include files are typically copied into the correct places via allegro's install
@@ -82,7 +91,6 @@ file(COPY ${allegro5_SOURCE_DIR}/addons/acodec/allegro5/allegro_acodec.h
 
 include_directories(${allegro5_SOURCE_DIR}/include)
 include_directories(${allegro5_BINARY_DIR}/include)
-set(CMAKE_BUILD_TYPE Debug)
 add_subdirectory(allegro-legacy EXCLUDE_FROM_ALL)
 
 add_library(allegro_with_legacy INTERFACE)
