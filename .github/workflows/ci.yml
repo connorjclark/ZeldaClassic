@@ -2,12 +2,12 @@ name: CI
 
 on:
   push:
-    branches: [2.55-master]
+    # branches: [2.55-master]
   pull_request: # run on all PRs, not just PRs to a particular branch
 
 jobs:
   compile:
-    runs-on: windows-2019
+    runs-on: windows-2022
 
     steps:
     - uses: ilammy/msvc-dev-cmd@v1
