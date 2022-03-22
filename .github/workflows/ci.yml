@@ -39,10 +39,8 @@ jobs:
     - name: git clone
       uses: actions/checkout@v2
 
-    # - name: Install Dependencies
-    #   uses: crazy-max/ghaction-chocolatey@v1
-    #   with:
-    #     args: install .github/dependencies.config -y
+    - name: Install Dependencies
+      run: sudo apt-get update && sudo apt-get install flex bison libglu1-mesa-dev freeglut3-dev mesa-common-dev
 
     - run: cp src/metadata/*.h.sig src/metadata/sigs/
     - run: cmake . -DCMAKE_BUILD_TYPE=Release
