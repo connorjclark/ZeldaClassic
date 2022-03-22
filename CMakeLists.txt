@@ -8,6 +8,8 @@ set(UNITY_BUILD FALSE CACHE BOOL "Unity build")
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+set(CMAKE_DEBUG_POSTFIX -debug)
+
 # This allows outputs to be run where they are by putting their libaries in
 # the same folder. 
 set (CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
@@ -42,6 +44,14 @@ add_definitions(-DALLEGRO_NO_MAGIC_MAIN)
 add_definitions(-DALLEGRO_KCM_AUDIO_SRC)
 option(SHARED "" ON)
 
+# This oddity is only because the dependant projects allegro and allegro-legacy will
+# override CMAKE_CONFIGURATION_TYPES with the value of CMAKE_BUILD_TYPE. In order to produce
+# a multi-configuration that can build both Debug and Release, this is necessary. Restrict to windows
+# so that single-configuration build types aren't affected.
+if(WIN32)
+	set(CMAKE_BUILD_TYPE "${CMAKE_CONFIGURATION_TYPES}")
+endif()
+
 include(FetchContent)
 FetchContent_Declare(
   allegro5
@@ -55,8 +65,7 @@ if(NOT allegro5_POPULATED)
 	set(WANT_EXAMPLES OFF)
 	set(WANT_DEMO OFF)
 	set(WANT_DOCS OFF)
-	set(CMAKE_BUILD_TYPE Debug)
-  add_subdirectory(${allegro5_SOURCE_DIR} ${allegro5_BINARY_DIR} EXCLUDE_FROM_ALL)
+	add_subdirectory(${allegro5_SOURCE_DIR} ${allegro5_BINARY_DIR} EXCLUDE_FROM_ALL)
 endif()
 
 # These include files are typically copied into the correct places via allegro's install
@@ -82,7 +91,6 @@ file(COPY ${allegro5_SOURCE_DIR}/addons/acodec/allegro5/allegro_acodec.h
 
 include_directories(${allegro5_SOURCE_DIR}/include)
 include_directories(${allegro5_BINARY_DIR}/include)
-set(CMAKE_BUILD_TYPE Debug)
 add_subdirectory(allegro-legacy EXCLUDE_FROM_ALL)
 
 add_library(allegro_with_legacy INTERFACE)
@@ -284,6 +292,7 @@ endif()
 
 add_executable(zelda ${ZELDA_CORE_SOURCES} ${ZELDA_GUI_SOURCES} ${ZELDA_SPRITE_SOURCES} ${ZELDA_SUBSCREEN_SOURCES} ${ZELDA_SCRIPTING_SOURCES} ${ZELDAEXTRASOURCES} ${ZELDA_MODULES})
 target_compile_definitions(zelda PRIVATE IS_PLAYER)
+set_target_properties(zelda PROPERTIES DEBUG_POSTFIX ${CMAKE_DEBUG_POSTFIX})
 
 if(WIN32)
 	target_link_libraries(zelda zcsound winmm ${IMAGELIBS} ${ZELDALIBSEXTRA})
@@ -327,6 +336,7 @@ if(Boost_FOUND)
     add_executable(zquest ${ZQUEST_CORE_SOURCES} ${ZQUEST_GUI_SOURCES} ${ZQUEST_MISC_SOURCES} ${ZQUESTEXTRASOURCES} ${ZQUEST_MODULES})
 
 	target_link_libraries(zquest PUBLIC zcsound ${IMAGELIBS} ${ZQUESTLIBSEXTRA})
+	set_target_properties(zquest PROPERTIES DEBUG_POSTFIX ${CMAKE_DEBUG_POSTFIX})
 
 	if(MSVC AND USE_PCH)
 		set_target_properties(zquest PROPERTIES COMPILE_FLAGS "/Yuprecompiled.h /FIprecompiled.h /Fp\"${ZQPrecompiledBinary}\"" OBJECT_DEPENDS "${ZQPrecompiledBinary}")
@@ -353,6 +363,7 @@ if(${BISON_FOUND} AND ${FLEX_FOUND})
 	add_executable(zscript ${ZSCRIPT_CORE_SOURCES} ${PARSER_SOURCES} ${BISON_ZScriptParser_OUTPUTS} ${FLEX_ZScriptLexer_OUTPUTS} ${ZSCRIPT_MODULES})
 	target_link_libraries(zscript allegro_with_legacy ${ZSCRIPTLIBSEXTRA})
 	target_compile_definitions(zscript PRIVATE IS_PARSER)
+	set_target_properties(zscript PROPERTIES DEBUG_POSTFIX ${CMAKE_DEBUG_POSTFIX})
 endif()
 
 #############################################################
@@ -370,6 +381,7 @@ endif()
 add_executable(zlauncher ${LAUNCHER_SOURCES} ${LAUNCHER_GUI_SOURCES} ${LAUNCHEREXTRASOURCES})
 target_link_libraries(zlauncher allegro_with_legacy ${LAUNCHERLIBSEXTRA})
 target_compile_definitions(zlauncher PRIVATE IS_LAUNCHER)
+set_target_properties(zlauncher PROPERTIES DEBUG_POSTFIX ${CMAKE_DEBUG_POSTFIX})
 
 #############################################################
 # Allegro 5 Example
