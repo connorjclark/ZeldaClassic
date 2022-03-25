@@ -106,6 +106,10 @@ makefile.inc
 /allegro/cmake_install.cmake
 CmakeCache.*
 cmake_install.cmake
+_deps
+allegro-legacy/include/allegro/platform/alplatf.h
+allegro-legacy/lib
+*.dir
 
 # Bison
 /src/parser/y.output

@@ -31,6 +31,9 @@ copy /y "%rel%\zquest.exe" "%nb%\zquest.exe" >>%log%
 copy /y "%rel%\zscript.exe" "%nb%\zscript.exe" >>%log%
 copy /y "%rel%\zlauncher.exe" "%nb%\zlauncher.exe" >>%log%
 copy /y "%rel%\zcsound.dll" "%nb%\zcsound.dll" >>%log%
+copy /y "%rel%\alleg44.dll" "%nb%\alleg44.dll" >>%log%
+copy /y "%rel%\allegro-5.2.dll" "%nb%\allegro-5.2.dll" >>%log%
+copy /y "%rel%\allegro_audio-5.2.dll" "%nb%\allegro_audio-5.2.dll" >>%log%
 
 echo Copying 'changelog.txt'...
 echo Copying 'changelog.txt'...>>%log%
