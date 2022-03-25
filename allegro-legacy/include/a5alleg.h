@@ -31,6 +31,10 @@ AL_LEGACY_FUNC(void, all_render_a5_bitmap, (BITMAP * bp, ALLEGRO_BITMAP * a5bp))
 AL_LEGACY_FUNC(void, all_render_screen, (void));
 AL_LEGACY_FUNC(void, all_disable_threaded_display, (void));
 
+// local edit
+AL_LEGACY_FUNC(void, all_lock_screen, (void));
+AL_LEGACY_FUNC(void, all_unlock_screen, (void));
+
 #ifdef __cplusplus
 }
 #endif
