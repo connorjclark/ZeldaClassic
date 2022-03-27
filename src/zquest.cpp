@@ -70,6 +70,7 @@ void setZScriptVersion(int32_t) { } //bleh...
 #include "colors.h"
 #include "qst.h"
 #include "zsys.h"
+#include "play_midi.h"
 #include "zcmusic.h"
 
 #include "midi.h"
@@ -4354,7 +4355,7 @@ int32_t playMusic()
             return D_O_K;
         }
         
-        stop_midi();
+        zc_stop_midi();
         
         if(zcmusic != NULL)
         {
@@ -4368,7 +4369,7 @@ int32_t playMusic()
             packfile_password("");
             if((song=load_midi(midipath))!=NULL)
             {
-                if(play_midi(song,true)==0)
+                if(zc_play_midi(song,true)==0)
                 {
                     etc_menu[8].flags =
                         commands[cmdPlayTune].flags = 0;
@@ -4485,7 +4486,7 @@ int32_t playTune19()
 
 int32_t playTune(int32_t pos)
 {
-    stop_midi();
+    zc_stop_midi();
     
     if(zcmusic != NULL)
     {
@@ -4494,7 +4495,7 @@ int32_t playTune(int32_t pos)
         zcmusic = NULL;
     }
     
-    if(play_midi((MIDI*)zcdata[THETRAVELSOFLINK_MID].dat,true)==0)
+    if(zc_play_midi((MIDI*)zcdata[THETRAVELSOFLINK_MID].dat,true)==0)
     {
         midi_seek(pos);
         
@@ -4513,7 +4514,7 @@ int32_t playTune(int32_t pos)
 
 int32_t stopMusic()
 {
-    stop_midi();
+    zc_stop_midi();
     
     if(zcmusic != NULL)
     {
@@ -17824,7 +17825,7 @@ void edit_tune(int32_t i)
         case 9:
             if(getname("Load tune","mid;nsf",NULL,temppath,true))
             {
-                stop_midi();
+                zc_stop_midi();
                 
                 if(data!=NULL && data!=customtunes[i].data)
                 {
@@ -17856,18 +17857,18 @@ void edit_tune(int32_t i)
             break;
             
         case 10:
-            stop_midi();
+            zc_stop_midi();
             break;
             
         case 12:
             if(midi_pos>0)
             {
                 int32_t pos=midi_pos;
-                stop_midi();
+                zc_stop_midi();
                 midi_loop_end = -1;
                 midi_loop_start = -1;
-                play_midi((MIDI*)data,loop);
-                set_volume(-1,volume);
+                zc_play_midi((MIDI*)data,loop);
+                zc_set_volume(-1,volume);
                 midi_loop_end = loop_end;
                 midi_loop_start = loop_start;
                 
@@ -17894,11 +17895,11 @@ void edit_tune(int32_t i)
             if(midi_pos>0)
             {
                 int32_t pos=midi_pos;
-                stop_midi();
+                zc_stop_midi();
                 midi_loop_end = -1;
                 midi_loop_start = -1;
-                play_midi((MIDI*)data,loop);
-                set_volume(-1,volume);
+                zc_play_midi((MIDI*)data,loop);
+                zc_set_volume(-1,volume);
                 midi_loop_end = loop_end;
                 midi_loop_start = loop_start;
                 
@@ -17925,11 +17926,11 @@ void edit_tune(int32_t i)
         case 11:
         {
             int32_t pos=midi_pos;
-            stop_midi();
+            zc_stop_midi();
             midi_loop_end = -1;
             midi_loop_start = -1;
-            play_midi((MIDI*)data,loop);
-            set_volume(-1,volume);
+            zc_play_midi((MIDI*)data,loop);
+            zc_set_volume(-1,volume);
             midi_seek(pos<0?start:pos);
             midi_loop_end = loop_end;
             midi_loop_start = loop_start;
@@ -17939,7 +17940,7 @@ void edit_tune(int32_t i)
     }
     while(ret<26&&ret!=0);
     
-    stop_midi();
+    zc_stop_midi();
     
     if(ret==27)
     {
@@ -26856,7 +26857,7 @@ bool do_slots(map<string, disassembled_script_data> &scripts)
 					sfx_voice[compile_finish_sample]=allocate_voice((SAMPLE*)sfxdata[compile_finish_sample].dat);
 					else sfx_voice[compile_finish_sample]=allocate_voice(&customsfxdata[compile_finish_sample]);
 					voice_set_volume(sfx_voice[compile_finish_sample], compile_audio_volume);
-					//set_volume(255,-1);
+					//zc_set_volume(255,-1);
 					//kill_sfx();
 					voice_start(sfx_voice[compile_finish_sample]);
 				}
@@ -28318,8 +28319,8 @@ bool saveWAV(int32_t slot, const char *filename)
 int32_t onEditSFX(int32_t index)
 {
 	kill_sfx();
-	stop_midi();
-	set_volume(255,-1);
+	zc_stop_midi();
+	zc_set_volume(255,-1);
 	int32_t ret;
 	sfx_edit_dlg[0].dp2=lfont;
 	uint8_t tempflag;
@@ -29630,7 +29631,7 @@ void custom_vsync()
 void switch_out()
 {
     zcmusic_pause(zcmusic, ZCM_PAUSE);
-    midi_pause();
+    zc_midi_pause();
 }
 
 void switch_in()
@@ -29653,7 +29654,7 @@ void switch_in()
     
     screen=ts;
     zcmusic_pause(zcmusic, ZCM_RESUME);
-    midi_resume();
+    zc_midi_resume();
 }
 
 void Z_eventlog(const char *format,...)
@@ -31762,7 +31763,7 @@ void quit_game()
     last_timed_save[0]=0;
     save_config_file();
     set_palette(black_palette);
-    stop_midi();
+    zc_stop_midi();
     //if(scrtmp) {destroy_bitmap(screen); screen = hw_screen;}
     
     remove_locked_params_on_exit();
@@ -31948,7 +31949,7 @@ void quit_game2()
     last_timed_save[0]=0;
     save_config_file();
     set_palette(black_palette);
-    stop_midi();
+    zc_stop_midi();
     //if(scrtmp) {destroy_bitmap(screen); screen = hw_screen;}
     
     remove_locked_params_on_exit();

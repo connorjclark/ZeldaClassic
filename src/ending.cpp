@@ -20,6 +20,7 @@
 #include "ending.h"
 #include "zelda.h"
 #include "zsys.h"
+#include "play_midi.h"
 #include "sprite.h"
 #include "items.h"
 #include "pal.h"
@@ -598,7 +599,7 @@ void ending()
 	
 	
 	
-	stop_midi();
+	zc_stop_midi();
 	//restore user volume if it was changed by script
 	if ( FFCore.coreflags&FFCORE_SCRIPTED_MIDI_VOLUME )
 	{
@@ -720,7 +721,7 @@ void ending_scripted()
         }
         
         ringcolor(false);
-	stop_midi();
+	zc_stop_midi();
 	//restore user volume if it was changed by script
 	if ( FFCore.coreflags&FFCORE_SCRIPTED_MIDI_VOLUME )
 	{
