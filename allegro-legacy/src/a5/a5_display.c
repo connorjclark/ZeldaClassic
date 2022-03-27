@@ -55,11 +55,23 @@ static ALLEGRO_MUTEX *screen_mutex;
 //             when holding the mouse down.
 void all_lock_screen(void)
 {
+#ifdef __EMSCRIPTEN__
+  // Currently all rendering happens on the main thread for emscripten, so no
+  // need to lock. Also, "fake recursive mutexes" are currently disabled so this
+  // would cause the main thread to deadlock itself!
+  return;
+#endif
   al_lock_mutex(screen_mutex);
 }
 
 void all_unlock_screen(void)
 {
+#ifdef __EMSCRIPTEN__
+  // Currently all rendering happens on the main thread for emscripten, so no
+  // need to lock. Also, "fake recursive mutexes" are currently disabled so this
+  // would cause the main thread to deadlock itself!
+  return;
+#endif
   al_unlock_mutex(screen_mutex);
 }
 // end local edit

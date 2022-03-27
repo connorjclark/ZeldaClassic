@@ -1004,6 +1004,7 @@ int32_t jwin_file_select_ex(AL_CONST char *message, char *path, AL_CONST char *e
     
     do
     {
+        rest(0);
     }
     while(gui_mouse_b());
     
@@ -1210,6 +1211,7 @@ int32_t jwin_dfile_select_ex(AL_CONST char *message, char *path, AL_CONST char *
     
     do
     {
+        rest(0);
     }
     while(gui_mouse_b());
     
@@ -1427,6 +1429,7 @@ int32_t jwin_file_browse_ex(AL_CONST char *message, char *path, EXT_LIST *list, 
     
     do
     {
+        rest(0);
     }
     while(gui_mouse_b());
     
