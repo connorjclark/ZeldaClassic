@@ -7383,6 +7383,9 @@ void refresh(int32_t flags)
     
     unscare_mouse();
     SCRFIX();
+#ifdef __EMSCRIPTEN__
+    all_render_screen();
+#endif
 }
 
 void select_scr()
@@ -29619,7 +29622,11 @@ void custom_vsync()
     {
         blit(screen, hw_screen, 0, 0, 0, 0, screen->w, screen->h);
     }
-    
+
+#ifdef __EMSCRIPTEN__
+    all_render_screen();
+#endif
+
     myvsync=0;
     
     if(Vsync)
@@ -29936,13 +29943,21 @@ int32_t main(int32_t argc,char **argv)
 	allegro_init();
 	three_finger_flag=false;
 	register_bitmap_file_type("GIF",  load_gif, save_gif);
+#ifndef __EMSCRIPTEN__
 	jpgalleg_init();
 	loadpng_init();
-	
+#endif
+
+#ifdef __EMSCRIPTEN__
+	all_disable_threaded_display();
+#endif
+
 	//set_config_file("ag.cfg");
 	set_config_file("zquest.cfg");
+#ifndef __EMSCRIPTEN__
 	if(zc_get_config("zquest","open_debug_console",0) || DEVLEVEL)
 		initConsole();
+#endif
 	if(install_timer() < 0)
 	{
 		Z_error_fatal(allegro_error);
@@ -31065,8 +31080,10 @@ int32_t main(int32_t argc,char **argv)
 		allegro_init();
 		three_finger_flag=false;
 		register_bitmap_file_type("GIF",  load_gif, save_gif);
+#ifndef __EMSCRIPTEN__
 		jpgalleg_init();
 		loadpng_init();
+#endif
 		
 		//set_config_file("ag.cfg");
 		set_config_file("zquest.cfg");
@@ -33835,6 +33852,9 @@ void update_hw_screen(bool force)
 			update_hw_pal=false;
 		}
 		myvsync=0;
+#ifdef __EMSCRIPTEN__
+		all_render_screen();
+#endif
 	}
 }
 
