@@ -5,6 +5,7 @@ set(ZELDA_GUI_SOURCES
 # Add or remove files here
 ################################
 src/zsys.cpp
+src/play_midi.cpp
 src/aglogo.cpp
 src/colors.cpp
 src/debug.cpp

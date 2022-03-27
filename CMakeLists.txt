@@ -101,7 +101,7 @@ add_subdirectory(allegro-legacy EXCLUDE_FROM_ALL)
 add_library(allegro_with_legacy INTERFACE)
 target_include_directories(allegro_with_legacy INTERFACE ${allegro5_SOURCE_DIR}/include ${allegro5_BINARY_DIR}/include)
 target_include_directories(allegro_with_legacy INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/allegro-legacy/include ${CMAKE_CURRENT_BINARY_DIR}/allegro-legacy/include)
-target_link_libraries(allegro_with_legacy INTERFACE allegro-legacy allegro_main)
+target_link_libraries(allegro_with_legacy INTERFACE allegro-legacy)
 # target_compile_definitions(allegro_with_legacy INTERFACE ALLEGRO_LEGACY_STATICLINK)
 
 #############################################################
