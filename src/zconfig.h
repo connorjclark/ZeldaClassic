@@ -6,7 +6,11 @@
 #elif defined IS_LAUNCHER
 #define STANDARD_CFG "zcl.cfg"
 #elif defined IS_PLAYER
-#define STANDARD_CFG "zc.cfg"
+  #ifdef __EMSCRIPTEN__
+  #define STANDARD_CFG "/persist/zc.cfg"
+  #else
+  #define STANDARD_CFG "zc.cfg"
+  #endif
 #elif defined IS_PARSER
 #define STANDARD_CFG "zscript.cfg"
 #else
