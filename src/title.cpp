@@ -35,7 +35,7 @@
 #include "ffscript.h"
 
 #ifdef __EMSCRIPTEN__
-#include <emscripten/emscripten.h>
+#include "emscripten_utils.h"
 #endif
 
 #ifdef _MSC_VER
@@ -2691,9 +2691,7 @@ int32_t save_savedgames()
 	zc_free(iname);
 
 #ifdef __EMSCRIPTEN__
-	EM_ASM({
-		FS.syncfs(false, () => {});
-	});
+	sync_fs_em();
 #endif
 
 	return ret;
