@@ -335,9 +335,6 @@ void load_game_configs()
     zcmusic_bufsz = vbound(zc_get_config(cfg_sect,"zcmusic_bufsz",64),1,128);
     volkeys = zc_get_config(cfg_sect,"volkeys",0)!=0;
     zc_vsync = zc_get_config(cfg_sect,"vsync",0);
-    #ifdef __EMSCRIPTEN__
-        // zc_vsync = true;
-    #endif
     Throttlefps = zc_get_config(cfg_sect,"throttlefps",1)!=0;
     TransLayers = zc_get_config(cfg_sect,"translayers",1)!=0;
     SnapshotFormat = zc_get_config(cfg_sect,"snapshot_format",3);

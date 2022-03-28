@@ -115,9 +115,9 @@ extern CConsoleLoggerEx coloured_console;
 #define getcwd _getcwd
 #endif
 
-// #ifdef __EMSCRIPTEN__
-// #include <emscripten/emscripten.h>
-// #endif
+#ifdef __EMSCRIPTEN__
+#include <emscripten/emscripten.h>
+#endif
 
 // MSVC fix
 #if _MSC_VER >= 1900
@@ -4482,6 +4482,32 @@ int32_t onFullscreen()
     else return D_O_K;
 }
 
+#ifdef __EMSCRIPTEN__
+// Initialize the filesystem with 0-byte files for every quest.
+EM_ASYNC_JS(void, init_filesystem_em, (), {
+	const response = await fetch("https://hoten.cc/quest-maker/play/quest-manifest.json");
+	const quests = await response.json();
+	FS.mkdir('/_quests');
+
+	window.ZC = {
+		pathToUrl: {},
+	};
+	for (let i = 0; i < quests.length; i++) {
+		const quest = quests[i];
+		if (!quest.urls.length) continue;
+
+		const url = quest.urls[0];
+		const urlSplit = url.split('/');
+		const filename = urlSplit[urlSplit.length - 1];
+		const path = `/_quests/${i}-${filename}`;
+		FS.writeFile(path, '');
+		// UHHHH why does this result in an error during linking (acorn parse error) ???
+		// window.ZC.pathToUrl[path] = `https://hoten.cc/quest-maker/play/${url}`;
+		window.ZC.pathToUrl[path] = 'https://hoten.cc/quest-maker/play/' + url;
+	}
+});
+#endif
+
 int32_t main(int32_t argc, char* argv[])
 {
 	bool onlyInstance=true;
@@ -4579,6 +4605,7 @@ int32_t main(int32_t argc, char* argv[])
 
 #ifdef __EMSCRIPTEN__
 	all_disable_threaded_display();
+	init_filesystem_em();
 #endif
 	
 	three_finger_flag=false;
