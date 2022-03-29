@@ -116,6 +116,7 @@ extern CConsoleLoggerEx coloured_console;
 #endif
 
 #ifdef __EMSCRIPTEN__
+#include <emscripten.h>
 #include "emscripten_utils.h"
 #endif
 
@@ -4501,6 +4502,9 @@ int32_t main(int32_t argc, char* argv[])
 	}
 
 #ifdef __EMSCRIPTEN__
+	EM_ASM({
+		Module.setStatus('Initializing Runtime ...');
+	});
 	all_disable_threaded_display();
 	init_fs_em();
 #endif
@@ -5428,7 +5432,12 @@ int32_t main(int32_t argc, char* argv[])
 	}
 	
 #endif
-	
+
+#ifdef __EMSCRIPTEN__
+	EM_ASM({
+		Module.setStatus('Ready');
+	});
+#endif
 	
 	if(zqtesting_mode)
 	{
