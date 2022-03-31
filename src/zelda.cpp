@@ -606,6 +606,9 @@ char     *qstpath=NULL;
 char     *qstdir=NULL;
 gamedata *saves=NULL;
 
+// if set, the titlescreen will automatically create a new save with this quest.
+std::string load_qstpath;
+
 volatile int32_t lastfps=0;
 volatile int32_t framecnt=0;
 volatile int32_t myvsync=0;
@@ -5390,6 +5393,41 @@ int32_t main(int32_t argc, char* argv[])
 		}
 		zprint2("Finished Loading Saved Games\n");
 	}
+
+#ifdef __EMSCRIPTEN__
+	QueryParams params = get_query_params();
+
+	// This will either quick load the first save file for this quest,
+	// or if that doesn't exist prompt the player for a save file name
+	// and then load the quest.
+	if (!params.quest.empty())
+	{
+		std::string qstpath_to_load = std::string("_quests/").append(params.quest);
+
+		int save_index = -1;
+		for (int i = 0; i < MAXSAVES; i++)
+		{
+			if (!saves[i].get_quest()) continue;
+
+			if (qstpath_to_load == saves[i].qstpath)
+			{
+				save_index = i;
+				break;
+			}
+		}
+
+		if (save_index == -1)
+		{
+			load_qstpath = qstpath_to_load;
+		}
+		else
+		{
+			load_save = save_index + 1;
+		}
+		fast_start = true;
+	}
+#endif
+
 #ifdef _WIN32
 	// Nothing for them to do on other platforms
 	set_display_switch_callback(SWITCH_IN,switch_in_callback);
@@ -5469,6 +5507,7 @@ int32_t main(int32_t argc, char* argv[])
 		else titlescreen(load_save);
 		
 		load_save=0;
+		load_qstpath="";
 		setup_combo_animations();
 		setup_combo_animations2();
 		
