@@ -926,6 +926,7 @@ bool grab_dataset(int32_t dataset)
     while(gui_mouse_b())
     {
         /* do nothing */
+				rest(1);
     }
     
     scare_mouse();
@@ -1541,6 +1542,7 @@ int32_t EditColors(const char *caption,int32_t first,int32_t count,byte *label)
     while(gui_mouse_b())
     {
         /* do nothing */
+				rest(1);
     }
     
     clear_to_color(screen,vc(0));

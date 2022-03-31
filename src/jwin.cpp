@@ -4856,7 +4856,7 @@ int32_t jwin_do_menu(MENU *menu, int32_t x, int32_t y)
     
     do
     {
-        rest(0);
+        rest(1);
     }
     while(gui_mouse_b());
     
@@ -4916,7 +4916,7 @@ int32_t jwin_menu_proc(int32_t msg, DIALOG *d, int32_t c)
         
         do
         {
-            rest(0);
+            rest(1);
         }
         while(gui_mouse_b());
         
@@ -5309,7 +5309,7 @@ int32_t jwin_alert3(const char *title, const char *s1, const char *s2, const cha
     
     do
     {
-        rest(0);
+        rest(1);
     }
     while(gui_mouse_b());
     
@@ -5567,7 +5567,7 @@ int32_t jwin_auto_alert3(const char *title, const char *s1, int32_t lenlim, int3
     
     do
     {
-        rest(0);
+        rest(1);
     }
     while(gui_mouse_b());
     
