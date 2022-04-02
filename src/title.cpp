@@ -4119,6 +4119,7 @@ static void select_game(bool skip = false)
 			strcpy(qstpath, load_qstpath.c_str());
 			chosecustomquest = true;
 			load_custom_game(currgame);
+			save_savedgames();
 			break;
 		}
 		
