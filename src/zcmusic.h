@@ -15,6 +15,10 @@
 #endif
 #include <cstdint>
 
+#ifdef __EMSCRIPTEN__
+#include <SDL2/SDL_mixer.h>
+#endif
+
 #ifdef __cplusplus
 extern "C"
 {
@@ -48,6 +52,9 @@ typedef struct ZCMUSICBASE
     int32_t position;                                           // Only needed to sync Triforce jingle
     char filename[256];
     int32_t track;
+#ifdef __EMSCRIPTEN__
+    Mix_Music* mus;
+#endif
 } ZCMUSIC;
 
 ZCM_EXTERN ZCMUSIC const * zcmusic_load_file(char *filename);

@@ -124,7 +124,7 @@ endif()
 
 if (EMSCRIPTEN)
 	set(ZCSOUNDSOURCES
-		src/zcmusic_fake.cpp
+		src/zcmusic_sdl.cpp
 		src/zcmusicd.cpp
 		src/alleg_compat.cpp
 	)
