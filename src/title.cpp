@@ -2746,7 +2746,7 @@ int32_t save_savedgames()
 	zc_free(iname);
 
 #ifdef __EMSCRIPTEN__
-	sync_fs_em();
+	em_sync_fs();
 #endif
 
 	return ret;
