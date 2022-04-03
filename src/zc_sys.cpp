@@ -575,7 +575,7 @@ void save_game_configs()
    
     flush_config_file();
 #ifdef __EMSCRIPTEN__
-	sync_fs_em();
+	em_sync_fs();
 #endif
 }
 
