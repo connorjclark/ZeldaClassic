@@ -30482,6 +30482,7 @@ void FFScript::init()
 	ScrollingData[SCROLLDATA_NY] = 0;
 	ScrollingData[SCROLLDATA_OX] = 0;
 	ScrollingData[SCROLLDATA_OY] = 0;
+	user_rng_init();
 }
 
 
