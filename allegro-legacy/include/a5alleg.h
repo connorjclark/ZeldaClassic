@@ -34,6 +34,7 @@ AL_LEGACY_FUNC(void, all_disable_threaded_display, (void));
 // local edit
 AL_LEGACY_FUNC(void, all_lock_screen, (void));
 AL_LEGACY_FUNC(void, all_unlock_screen, (void));
+AL_LEGACY_FUNC(void, a5_keyboard_queue_register_event_source, (ALLEGRO_EVENT_SOURCE *));
 
 #ifdef __cplusplus
 }
