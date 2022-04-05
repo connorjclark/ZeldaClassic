@@ -23,19 +23,14 @@
 #define _A5_KEYBOARD_BUFFER_SIZE 256
 
 static ALLEGRO_THREAD * a5_keyboard_thread = NULL;
+static ALLEGRO_EVENT_QUEUE * queue = NULL;
 static int a5_keyboard_keycode_map[256];
 
 static void * a5_keyboard_thread_proc(ALLEGRO_THREAD * thread, void * data)
 {
-    ALLEGRO_EVENT_QUEUE * queue;
     ALLEGRO_EVENT event;
     ALLEGRO_TIMEOUT timeout;
 
-    queue = al_create_event_queue();
-    if(!queue)
-    {
-        return NULL;
-    }
     al_register_event_source(queue, al_get_keyboard_event_source());
     while(!al_get_thread_should_stop(thread))
     {
@@ -99,6 +94,12 @@ static int a5_keyboard_init(void)
     a5_keyboard_keycode_map[ALLEGRO_KEY_NUMLOCK] = KEY_NUMLOCK;
     a5_keyboard_keycode_map[ALLEGRO_KEY_CAPSLOCK] = KEY_CAPSLOCK;
 
+    queue = al_create_event_queue();
+    if(!queue)
+    {
+        return NULL;
+    }
+
     a5_keyboard_thread = al_create_thread(a5_keyboard_thread_proc, NULL);
     al_start_thread(a5_keyboard_thread);
 
@@ -136,6 +137,12 @@ static void a5_keyboard_set_leds(int flags)
     {
         al_set_keyboard_leds(a5_flags);
     }
+}
+
+// local edit
+void a5_keyboard_queue_register_event_source(ALLEGRO_EVENT_SOURCE * evtsrc)
+{
+    al_register_event_source(queue, evtsrc);
 }
 
 KEYBOARD_DRIVER keyboard_allegro_5 = {
