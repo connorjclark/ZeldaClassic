@@ -9620,6 +9620,7 @@ int32_t next_press_key()
         for(int32_t i=0; i<127; i++)
             if(key[i]!=k[i])
                 return i;
+        rest(0);
     }
     
     //	return (readkey()>>8);
@@ -9657,6 +9658,7 @@ int32_t next_press_btn()
         }
         
         if(done) break;
+        rest(0);
     }
     
     //now, we need to wait for them to press any button
@@ -9680,6 +9682,7 @@ int32_t next_press_btn()
         {
             if(joybtn(i)) return i;
         }
+        rest(0);
     }
 }
 
