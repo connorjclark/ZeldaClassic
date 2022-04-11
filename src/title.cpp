@@ -3328,6 +3328,17 @@ static bool register_name()
 		}
 		else
 		{
+#ifdef __EMSCRIPTEN__
+			// Allow gamepad to submit name.
+			poll_joystick();
+			load_control_state();
+			if(rSbtn())
+			{
+				done = true;
+				break;
+			}
+#endif
+
 			if(keypressed())
 			{
 				int32_t k=readkey();
