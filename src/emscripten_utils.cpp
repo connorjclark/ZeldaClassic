@@ -102,7 +102,7 @@ bool em_is_mobile() {
 
 void em_open_test_mode(const char* qstpath, int dmap, int scr, int retsquare) {
 	EM_ASM({
-		if (0x80 < scr) return;
+		if (0x80 < $2) return;
 
 		const qstpath = UTF8ToString($0);
 		const url = new URL(ZC_Constants.zeldaUrl, location.href);
