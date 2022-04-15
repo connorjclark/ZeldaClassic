@@ -101,6 +101,10 @@ void setZScriptVersion(int32_t) { } //bleh...
 #pragma comment(lib, "psapi.lib") // Needed to avoid linker issues. -Z
 #endif
 
+#ifdef __EMSCRIPTEN__
+#include <emscripten/emscripten.h>
+#endif
+
 //SDL_Surface *sdl_screen;
 
 #ifdef ALLEGRO_DOS
@@ -30865,6 +30869,8 @@ int32_t main(int32_t argc,char **argv)
 	em_mark_ready_status();
 #endif
 
+#ifndef __EMSCRIPTEN__
+
 #if V_ZC_ALPHA
 	char *curcontrol = getBetaControlString();
 	const char *oldcontrol = get_config_string("zquest", "beta_warning", "");
@@ -30891,6 +30897,8 @@ int32_t main(int32_t argc,char **argv)
 
 	
 	delete[] curcontrol;
+#endif
+
 #endif
 	
 	// A bit of festivity
@@ -31006,9 +31014,28 @@ int32_t main(int32_t argc,char **argv)
 	get_palette(RAMpal);
 	
 	rgb_map = &zq_rgb_table;
-	
+
 	Map.setCurrMap(zinit.last_map);
 	Map.setCurrScr(zinit.last_screen);
+#ifdef __EMSCRIPTEN__
+	{
+		int qs_map = EM_ASM_INT({
+			return new URL(location.href).searchParams.get('map') ?? -1;
+			// const value = new URL(location.href).searchParams.get('map');
+			// return value === null ? -1 : value;
+		});
+		int qs_screen = EM_ASM_INT({
+			return new URL(location.href).searchParams.get('screen') ?? -1;
+			// const value = new URL(location.href).searchParams.get('screen');
+			// return value === null ? -1 : value;
+		});
+		if (qs_map != -1 && qs_screen != -1) {
+			Map.setCurrMap(qs_map);
+			Map.setCurrScr(qs_screen);
+		}
+	}
+#endif
+
 	//  setup_combo_animations();
 	refresh(rALL);
 	brush_width_menu[0].flags=D_SELECTED;
@@ -33355,3 +33382,39 @@ void update_hw_screen(bool force)
 	}
 }
 
+#ifdef __EMSCRIPTEN__
+extern "C" void open_test_mode()
+{
+	int dmap = -1;
+	int32_t pal = Map.getcolor();
+	for(auto q = 0; q < MAXDMAPS; ++q)
+	{
+		if(DMaps[q].map == Map.getCurrMap())
+		{
+			if(pal == DMaps[q].color)
+			{
+				dmap = q;
+				break;
+			}
+			if(dmap < 0)
+				dmap = q;
+		}
+	}
+	if(dmap < 0) dmap = 0;
+
+	em_open_test_mode(filepath, dmap, Map.getCurrScr(), -1);
+}
+
+extern "C" void get_shareable_url()
+{
+	EM_ASM({
+		const qstpath = UTF8ToString($0);
+		const url = new URL(location.href);
+		url.search = '';
+		url.searchParams.set('quest', qstpath.replace('/_quests/', ''));
+		url.searchParams.set('map', $1);
+		url.searchParams.set('screen', $2);
+		ZC.url = url.toString();
+	}, filepath, Map.getCurrMap(), Map.getCurrScr());
+}
+#endif

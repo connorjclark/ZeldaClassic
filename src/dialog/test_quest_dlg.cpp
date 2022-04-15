@@ -4,6 +4,10 @@
 #include "zq_class.h"
 #include <gui/builder.h>
 
+#ifdef __EMSCRIPTEN__
+#include "emscripten_utils.h"
+#endif
+
 int32_t onSave();
 int32_t onSaveAs();
 extern char *filepath;
@@ -146,6 +150,9 @@ bool TestQstDialog::handleMessage(const GUI::DialogMessage<message>& msg)
 	{
 		case message::OK:
 		{
+#ifdef __EMSCRIPTEN__
+			em_open_test_mode(filepath, test_start_dmap, test_start_screen, test_ret_sqr);
+#else
 			if(!fileexists("zelda.exe"))
 			{
 				InfoDialog("Error", "'zelda.exe' not found!").show();
@@ -155,6 +162,7 @@ bool TestQstDialog::handleMessage(const GUI::DialogMessage<message>& msg)
 			char buf[2048] = {0};
 			sprintf(buf, "zelda.exe -test \"%s\" %d %d %d", filepath, test_start_dmap, test_start_screen, test_ret_sqr);
 			test_killer = launch_process(buf);
+#endif
 		}
 		return true;
 		
