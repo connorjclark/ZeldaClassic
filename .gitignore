@@ -119,4 +119,5 @@ output/_auto/buildpack_log.txt
 output/_auto/buildpack
 output/_auto/extrapack_log.txt
 output/_auto/extrapack
+output/_auto/buildpack_zq
 output/_auto/*.zip
