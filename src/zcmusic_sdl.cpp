@@ -3,6 +3,7 @@
 #include "zsys.h"
 #include "zc_malloc.h"
 #include <SDL2/SDL_mixer.h>
+#include <gme.h>
 
 #ifdef __EMSCRIPTEN__
 #include "emscripten_utils.h"
@@ -127,6 +128,14 @@ int32_t zcmusic_get_tracks(ZCMUSIC *zcm) {
   int result = Mix_GetNumTracks(zcm->mus);
   if (result == -1) return 0;
   return result;
+}
+std::string zcmusic_get_track_name(ZCMUSIC *zcm, int track) {
+  if (zcm == NULL)
+    return "";
+
+  gme_info_t *musInfo = (gme_info_t *)Mix_GetTrackInfo(zcm->mus, track);
+  if (!musInfo) return "";
+  return musInfo->song;
 }
 int32_t zcmusic_change_track(ZCMUSIC *zcm, int32_t tracknum) {
   Mix_StartTrack(tracknum);
