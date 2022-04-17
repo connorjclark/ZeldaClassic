@@ -133,9 +133,10 @@ std::string zcmusic_get_track_name(ZCMUSIC *zcm, int track) {
   if (zcm == NULL)
     return "";
 
-  gme_info_t *musInfo = (gme_info_t *)Mix_GetTrackInfo(zcm->mus, track);
-  if (!musInfo) return "";
-  return musInfo->song;
+  // gme_info_t *musInfo = (gme_info_t *)Mix_GetTrackInfo(zcm->mus, track);
+  // if (!musInfo) return "";
+  // return musInfo->song;
+  return "";
 }
 int32_t zcmusic_change_track(ZCMUSIC *zcm, int32_t tracknum) {
   Mix_StartTrack(tracknum);
