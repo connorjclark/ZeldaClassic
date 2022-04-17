@@ -947,6 +947,12 @@ error:
         
         return 0;
     }
+
+    std::string zcmusic_get_track_name(ZCMUSIC *zcm, int track) {
+    {
+        return "";
+    }
+    
     int32_t zcmusic_get_curpos(ZCMUSIC* zcm)
     {
 	if(zcm == NULL) return 0;

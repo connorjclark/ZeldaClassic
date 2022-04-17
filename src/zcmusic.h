@@ -14,6 +14,7 @@
 #define ZCM_EXTERN extern
 #endif
 #include <cstdint>
+#include <string>
 
 #ifdef __EMSCRIPTEN__
 #include <SDL2/SDL_mixer.h>
@@ -65,6 +66,7 @@ ZCM_EXTERN bool zcmusic_stop(ZCMUSIC* zcm);
 ZCM_EXTERN void zcmusic_unload_file(ZCMUSIC* &zcm);
 ZCM_EXTERN int32_t zcmusic_get_tracks(ZCMUSIC* zcm);
 ZCM_EXTERN int32_t zcmusic_change_track(ZCMUSIC* zcm, int32_t tracknum);
+ZCM_EXTERN std::string zcmusic_get_track_name(ZCMUSIC* zcm, int32_t tracknum);
 ZCM_EXTERN int32_t zcmusic_get_curpos(ZCMUSIC* zcm);
 ZCM_EXTERN void zcmusic_set_curpos(ZCMUSIC* zcm, int32_t value);
 ZCM_EXTERN void zcmusic_set_speed(ZCMUSIC* zcm, int32_t value);
