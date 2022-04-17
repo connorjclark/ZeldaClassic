@@ -3365,7 +3365,7 @@ void game_loop()
 						zc_stop_midi();
 						jukebox(currmidi);
 						zc_set_volume(digi_vol, midi_vol);
-						midi_seek(paused_midi_pos);
+						zc_midi_seek(paused_midi_pos);
 					}
 					midi_paused=false;
 					midi_suspended = midissuspNONE;
@@ -3394,7 +3394,7 @@ void game_loop()
 				zc_stop_midi();
 				jukebox(currmidi);
 				zc_set_volume(digi_vol, midi_vol);
-				midi_seek(paused_midi_pos);
+				zc_midi_seek(paused_midi_pos);
 			}
 			midi_paused=false;
 			midi_suspended = midissuspNONE;
