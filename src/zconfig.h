@@ -2,12 +2,16 @@
 #define ZC_ZCONFIG_H
 
 #ifdef IS_ZQUEST
-#define STANDARD_CFG "zquest.cfg"
+  #ifdef __EMSCRIPTEN__
+  #define STANDARD_CFG "/local/zquest.cfg"
+  #else
+  #define STANDARD_CFG "zquest.cfg"
+  #endif
 #elif defined IS_LAUNCHER
 #define STANDARD_CFG "zcl.cfg"
 #elif defined IS_PLAYER
   #ifdef __EMSCRIPTEN__
-  #define STANDARD_CFG "/persist/zc.cfg"
+  #define STANDARD_CFG "/local/zc.cfg"
   #else
   #define STANDARD_CFG "zc.cfg"
   #endif

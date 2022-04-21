@@ -48,6 +48,11 @@
 #include "mem_debug.h"
 #include "ffscript.h"
 #include "util.h"
+
+#ifdef __EMSCRIPTEN__
+#include "emscripten_utils.h"
+#endif
+
 using namespace util;
 extern FFScript FFCore;
 
@@ -13981,6 +13986,10 @@ int32_t save_quest(const char *filename, bool timed_save)
 		
 		delete_file(tmpfilename);
 	}
+
+#ifdef __EMSCRIPTEN__
+	em_sync_fs();
+#endif
 	
 	return ret;
 }
