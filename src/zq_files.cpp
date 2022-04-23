@@ -30,6 +30,10 @@
 #include "zq_custom.h"
 #include "zc_malloc.h"
 
+#ifdef __EMSCRIPTEN__
+#include "emscripten_utils.h"
+#endif
+
 #ifdef _MSC_VER
 #define getcwd _getcwd
 #define stricmp _stricmp
@@ -894,7 +898,7 @@ int32_t onSaveAs()
         return D_O_K;
     }
 #ifdef __EMSCRIPTEN__
-		if(!getname("Save Quest As (.qst)","qst",NULL,"/local/",true))
+		if(!getname("Save Quest As (.qst)","qst",NULL,get_initial_file_dialog_folder().c_str(),true))
         return D_O_K;
 #else
 		if(!getname("Save Quest As (.qst)","qst",NULL,filepath,true))
@@ -1036,7 +1040,7 @@ int32_t onOpen()
 	};
 	
 #ifdef __EMSCRIPTEN__
-		if(!getname("Load File",NULL,list,"/local/",true))
+		if(!getname("Load File",NULL,list,get_initial_file_dialog_folder().c_str(),true))
 			return D_O_K;
 #else
 		if(!getname("Load File",NULL,list,filepath,true))
