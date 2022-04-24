@@ -3,7 +3,7 @@
 
 #ifdef IS_ZQUEST
   #ifdef __EMSCRIPTEN__
-  #define STANDARD_CFG "/local/browser/zquest.cfg"
+  #define STANDARD_CFG "/local/zquest.cfg"
   #else
   #define STANDARD_CFG "zquest.cfg"
   #endif
@@ -11,7 +11,7 @@
 #define STANDARD_CFG "zcl.cfg"
 #elif defined IS_PLAYER
   #ifdef __EMSCRIPTEN__
-  #define STANDARD_CFG "/local/browser/zc.cfg"
+  #define STANDARD_CFG "/local/zc.cfg"
   #else
   #define STANDARD_CFG "zc.cfg"
   #endif
