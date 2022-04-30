@@ -906,7 +906,7 @@ bool do_layer_button_reset(int32_t x,int32_t y,int32_t w,int32_t h,const char *t
 				update_hw_screen();
 			}
 		}
-		
+		rest(1);
 	}
 	
 	if(over)
@@ -14985,6 +14985,7 @@ int32_t select_tile(int32_t &tile,int32_t &flip,int32_t type,int32_t &cs,bool ed
 	while(gui_mouse_b())
 	{
 		/* do nothing */
+		rest(1);
 	}
 	
 	bool bdown=false;
@@ -16317,7 +16318,7 @@ REDRAW:
 	while(gui_mouse_b())
 	{
 		/* do nothing */
-	}
+	}rest(1)
 	
 	comeback();
 	register_blank_tiles();
@@ -17984,7 +17985,7 @@ REDRAW:
 	{
 		/* do nothing */
 	}
-	
+	rest(1)
 	comeback();
 	setup_combo_animations();
 	setup_combo_animations2();

@@ -656,7 +656,9 @@ bool edit_dataset(int32_t dataset)
 	edit_cset_dlg[11].dp = (void*)bufg;
 	edit_cset_dlg[12].dp = (void*)bufb;
 	
-	while(gui_mouse_b()) {} //Do nothing
+	while(gui_mouse_b()) {
+		rest(1);
+	} //Do nothing
 	edit_cset_dlg[0].dp2 = lfont;
 	int32_t ret = zc_popup_dialog(edit_cset_dlg,3);
 	al_trace("DLG RETURN VAL -------------------------- %d", ret);
@@ -674,7 +676,9 @@ bool edit_dataset(int32_t dataset)
 	
 	set_palette(RAMpal);
 	rectfill(screen, 0, 0, screen->w, screen->h, BLACK);
-	while(gui_mouse_b()) {} //Do nothing
+	while(gui_mouse_b()) {
+		rest(1);
+	} //Do nothing
 	font = old;
 	return ret==4;
 }
