@@ -161,7 +161,12 @@ cmake --build . -t $TARGETS
 "$(dirname $(which emcc))"/tools/file_packager.py zc.data \
   --no-node \
   --preload "../../output/_auto/buildpack@/" \
-  --preload "../../timidity/zc.cfg@/etc/timidity.cfg" \
+  --preload "../../timidity/zc.cfg@/etc/zc.cfg" \
+  --preload "../../timidity/ultra.cfg@/etc/ultra.cfg" \
+  --preload "../../timidity/ppl160.cfg@/etc/ppl160.cfg" \
+  --preload "../../timidity/freepats.cfg@/etc/freepats.cfg" \
+  --preload "../../timidity/soundfont-pats/oot.cfg@/etc/oot.cfg" \
+  --preload "../../timidity/soundfont-pats/2MGM.cfg@/etc/2MGM.cfg" \
   --use-preload-cache \
   --js-output=zc.data.js
 
