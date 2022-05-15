@@ -5,9 +5,11 @@
 #include <SDL2/SDL_mixer.h>
 #endif
 
+#ifdef __EMSCRIPTEN__
 MIDI *current_midi = NULL;
 Mix_Music *current_mus = NULL;
 bool has_opened_audio;
+#endif
 
 void on_music_finished()
 {
@@ -16,6 +18,7 @@ void on_music_finished()
 
 int play_midi_em(MIDI *midi, int32_t loop)
 {
+#ifdef __EMSCRIPTEN__
   if (!midi)
   {
     if (current_mus)
@@ -71,6 +74,9 @@ int play_midi_em(MIDI *midi, int32_t loop)
   midi_pos = 1;
   current_midi = midi;
   return 0;
+#else
+  return 0;
+#endif
 }
 
 int zc_play_midi(MIDI *midi, int loop)

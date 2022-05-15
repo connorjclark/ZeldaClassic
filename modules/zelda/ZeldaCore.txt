@@ -16,7 +16,6 @@ src/init.cpp
 src/win32.cpp
 src/alleg_compat.cpp
 src/util.cpp
-src/emscripten_utils.cpp
 src/drawing.cpp
 src/random.cpp
 src/module.cpp
@@ -30,3 +29,6 @@ src/zconfig.cpp
 ## End of Zelda Core module
 )
 
+if(EMSCRIPTEN)
+  list(APPEND ZELDA_CORE_SOURCES src/emscripten_utils.cpp)
+endif()

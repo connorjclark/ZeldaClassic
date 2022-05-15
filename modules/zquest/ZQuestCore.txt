@@ -21,7 +21,6 @@ src/zc_custom.cpp
 src/init.cpp
 src/alleg_compat.cpp
 src/util.cpp
-src/emscripten_utils.cpp
 src/random.cpp
 src/module.cpp
 src/fonts.cpp
@@ -34,3 +33,6 @@ src/zconfig.cpp
 ## End of ZQuest Core module
 )
 
+if(EMSCRIPTEN)
+  list(APPEND ZELDA_CORE_SOURCES src/emscripten_utils.cpp)
+endif()
