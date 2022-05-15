@@ -34,5 +34,5 @@ src/zconfig.cpp
 )
 
 if(EMSCRIPTEN)
-  list(APPEND ZELDA_CORE_SOURCES src/emscripten_utils.cpp)
+  list(APPEND ZQUEST_CORE_SOURCES src/emscripten_utils.cpp)
 endif()

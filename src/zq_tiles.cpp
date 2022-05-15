@@ -16318,7 +16318,8 @@ REDRAW:
 	while(gui_mouse_b())
 	{
 		/* do nothing */
-	}rest(1)
+		rest(1);
+	}
 	
 	comeback();
 	register_blank_tiles();
@@ -17984,8 +17985,8 @@ REDRAW:
 	while(gui_mouse_b())
 	{
 		/* do nothing */
+		rest(1);
 	}
-	rest(1)
 	comeback();
 	setup_combo_animations();
 	setup_combo_animations2();

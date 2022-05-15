@@ -44,6 +44,7 @@ endfunction(enable_unity_build)
 
 add_definitions(-DALLEGRO_NO_MAGIC_MAIN)
 add_definitions(-DALLEGRO_KCM_AUDIO_SRC)
+add_definitions(-DALLEGRO_UNSTABLE)
 option(SHARED "" ON)
 # set(BUILD_SHARED_LIBS ${SHARED})
 # TODO: work this out.
@@ -61,15 +62,15 @@ include(FetchContent)
 FetchContent_Declare(
   allegro5
   GIT_REPOSITORY https://github.com/liballeg/allegro5.git
-  GIT_TAG        5.2.7.0
+  GIT_TAG        fbb3f0c9cb62fe19bba58e8a3fa7892196070fc8
 )
 FetchContent_GetProperties(allegro5)
 if(NOT allegro5_POPULATED)
   FetchContent_Populate(allegro5)
-	set(WANT_TESTS OFF)
-	set(WANT_EXAMPLES OFF)
-	set(WANT_DEMO OFF)
-	set(WANT_DOCS OFF)
+	option(WANT_TESTS OFF)
+	option(WANT_EXAMPLES OFF)
+	option(WANT_DEMO OFF)
+	option(WANT_DOCS OFF)
 	add_subdirectory(${allegro5_SOURCE_DIR} ${allegro5_BINARY_DIR} EXCLUDE_FROM_ALL)
 endif()
 

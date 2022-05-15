@@ -13,6 +13,10 @@ EMCC_VERSION=3.1.9
 emsdk install $EMCC_VERSION
 emsdk activate $EMCC_VERSION
 
+cd web
+npm install
+cd -
+
 cd output/_auto
 ./buildpack.sh
 rm -f buildpack/{zelda,zquest,zlauncher,zscript}
