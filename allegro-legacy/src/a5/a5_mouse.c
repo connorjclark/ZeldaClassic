@@ -40,8 +40,9 @@ static void * a5_mouse_thread_proc(ALLEGRO_THREAD * thread, void * data)
     al_register_event_source(queue, al_get_touch_input_event_source());
     while(!al_get_thread_should_stop(thread))
     {
-        al_init_timeout(&timeout, 0.1);
-        if(al_wait_for_event_until(queue, &event, &timeout))
+        // al_init_timeout(&timeout, 0.1);
+        al_wait_for_event(queue, &event);
+        if(true)
         {
             switch(event.type)
             {
