@@ -200,7 +200,7 @@ static BITMAP * a5_display_init(int w, int h, int vw, int vh, int color_depth)
     BITMAP * bp;
     ALLEGRO_STATE old_state;
     int pixel_format;
-    _a5_disable_threaded_display = true;
+    // _a5_disable_threaded_display = true;
 
     bp = create_bitmap(w, h);
     if(bp)
@@ -213,9 +213,7 @@ static BITMAP * a5_display_init(int w, int h, int vw, int vh, int color_depth)
         _a5_screen_thread = al_create_thread(_a5_display_thread, NULL);
         al_start_thread(_a5_screen_thread);
 
-        printf("while 1\n");
         while(!_a5_display_creation_done);
-        printf("while 2\n");
       }
       else
       {
