@@ -618,7 +618,7 @@ void update_hw_screen(bool force)
 			update_hw_pal = false;
 		}
 		myvsync=0;
-		all_render_screen();
+		// all_render_screen();
 	}
 }
 
@@ -4508,7 +4508,7 @@ int main(int argc, char **argv)
 		save_game_configs();
 	}
 	
-#ifndef ALLEGRO_MACOSX // Should be done on Mac, too, but I haven't gotten that working
+#ifndef __APPLE__ // Should be done on Mac, too, but I haven't gotten that working
 	if(!is_only_instance("zc.lck"))
 	{
 		if(used_switch(argc, argv, "-multiple") || zc_get_config("zeldadx","multiple_instances",0))

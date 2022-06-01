@@ -42,6 +42,9 @@ if(NOT APPLE)
 	add_definitions(-DALLEGRO_NO_MAGIC_MAIN)
 endif()
 add_definitions(-DALLEGRO_KCM_AUDIO_SRC)
+# Needed to build on Mac, otherwise get this error:
+#    aintern_bitmap.h:154:33: error: unknown type name 'ALLEGRO_BITMAP_WRAP'
+add_definitions(-DALLEGRO_UNSTABLE)
 set(CMAKE_BUILD_TYPE Release)
 option(SHARED "" ON)
 
@@ -49,7 +52,7 @@ include(FetchContent)
 FetchContent_Declare(
   allegro5
   GIT_REPOSITORY https://github.com/liballeg/allegro5.git
-  GIT_TAG        fbb3f0c9cb62fe19bba58e8a3fa7892196070fc8
+  GIT_TAG        74edb77851bd7e1820bed115e3ec1397aa2142ae
 )
 FetchContent_GetProperties(allegro5)
 if(NOT allegro5_POPULATED)
