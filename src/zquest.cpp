@@ -29616,7 +29616,7 @@ void custom_vsync()
         blit(screen, hw_screen, 0, 0, 0, 0, screen->w, screen->h);
     }
     
-    myvsync=0;
+    // myvsync=0;
     
     if(Vsync)
     {
