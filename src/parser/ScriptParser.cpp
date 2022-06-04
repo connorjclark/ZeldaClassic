@@ -55,7 +55,7 @@ unique_ptr<ScriptsData> ZScript::compile(string const& filename)
 	zscript_had_warn_err = false;
 	ScriptParser::initialize();
 	
-	zconsole_info("Pass 1: Parsing");
+	zconsole_info("%s", "Pass 1: Parsing");
 
 	unique_ptr<ASTFile> root(parseFile(filename));
 	if (!root.get())
@@ -64,7 +64,7 @@ unique_ptr<ScriptsData> ZScript::compile(string const& filename)
 		return nullptr;
 	}
 
-	zconsole_info("Pass 2: Preprocessing");
+	zconsole_info("%s", "Pass 2: Preprocessing");
 
 	if (!ScriptParser::preprocess(root.get(), ScriptParser::recursionLimit))
 		return nullptr;
@@ -74,12 +74,12 @@ unique_ptr<ScriptsData> ZScript::compile(string const& filename)
 	if (handler.hasError())
 		return nullptr;
 
-	zconsole_info("Pass 3: Registration");
+	zconsole_info("%s", "Pass 3: Registration");
 
 	RegistrationVisitor regVisitor(program);
 	if(regVisitor.hasFailed()) return nullptr;
 
-	zconsole_info("Pass 4: Analyzing Code");
+	zconsole_info("%s", "Pass 4: Analyzing Code");
 
 	SemanticAnalyzer semanticAnalyzer(program);
 	if (semanticAnalyzer.hasFailed() || regVisitor.hasFailed())
@@ -92,19 +92,19 @@ unique_ptr<ScriptsData> ZScript::compile(string const& filename)
 		return nullptr;
 	}
 
-	zconsole_info("Pass 5: Generating object code");
+	zconsole_info("%s", "Pass 5: Generating object code");
 
 	unique_ptr<IntermediateData> id(ScriptParser::generateOCode(fd));
 	if (!id.get())
 		return nullptr;
 	
-	zconsole_info("Pass 6: Assembling");
+	zconsole_info("%s", "Pass 6: Assembling");
 
 	ScriptParser::assemble(id.get());
 
 	unique_ptr<ScriptsData> result(new ScriptsData(program));
 
-	zconsole_info("Success!");
+	zconsole_info("%s", "Success!");
 
 	return unique_ptr<ScriptsData>(result.release());
 }
