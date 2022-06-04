@@ -14,6 +14,16 @@ static uint32_t __dummy_;
 #undef NOGDI
 #endif
 
+#ifdef __APPLE__
+	#define ZELDA_FILE "zelda"
+	#define ZQUEST_FILE "zquest"
+	#define ZSCRIPT_FILE "zscript"
+#else
+	#define ZELDA_FILE "zelda.exe"
+	#define ZQUEST_FILE "zquest.exe"
+	#define ZSCRIPT_FILE "zscript.exe"
+#endif
+
 struct process_killer
 {
 	#ifdef _WIN32
@@ -223,8 +233,8 @@ struct child_process_handler : public io_manager
 	#endif
 };
 
-process_killer launch_process(char const* relative_path, char const** argv = NULL);
-process_manager* launch_piped_process(char const* relative_path, char const** argv = NULL);
+process_killer launch_process(char const* file, const char *argv[] = NULL);
+process_manager* launch_piped_process(char const* file, const char *argv[] = NULL);
 
 #endif
 
