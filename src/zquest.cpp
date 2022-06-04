@@ -24983,7 +24983,7 @@ int32_t onCompileScript()
 				parser_console.Create("ZScript Parser Output", 600, 200, NULL, "ZConsole.exe");
 				parser_console.cls(CConsoleLoggerEx::COLOR_BACKGROUND_BLACK);
 				parser_console.gotoxy(0,0);
-				zconsole_info("External ZScript Parser\n");
+				zconsole_info("%s", "External ZScript Parser\n");
 			}
 			else
 			{

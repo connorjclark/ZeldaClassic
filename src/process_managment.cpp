@@ -144,8 +144,8 @@ process_manager* launch_piped_process(char const* file, const char *argv[])
 			ERR_EXIT("Failed execv", pm);
 	}
 	
-	pm->read_handle = (FILE*)(pdes_r[0]);
-	pm->write_handle = (FILE*)(pdes_w[1]);
+	pm->read_handle = pdes_r[0];
+	pm->write_handle = pdes_w[1];
 	close(pdes_r[1]);
 	close(pdes_w[0]);
 	pm->pk.init(pid);
