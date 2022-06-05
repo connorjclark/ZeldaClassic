@@ -44,6 +44,7 @@
 #include "pal.h"
 #include "aglogo.h"
 #include "zsys.h"
+#include "zapp.h"
 #include "qst.h"
 #include "matrix.h"
 #include "jwin.h"
@@ -4394,6 +4395,8 @@ int32_t onFullscreen()
 
 int main(int argc, char **argv)
 {
+	common_main_setup(argc, argv);
+
 	bool onlyInstance=true;
 	memset(itemscriptInitialised, 0, sizeof(itemscriptInitialised));
 //	refresh_select_screen = 0;
