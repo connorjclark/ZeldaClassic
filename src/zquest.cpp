@@ -24949,8 +24949,13 @@ int32_t onCompileScript()
 			#endif
 			//need elseif for linux here! -Z
 			//Compile!
-			FILE *tempfile = fopen("tmp","w");
-			
+			char tmpfilename[64];
+			std::tmpnam(tmpfilename);
+			FILE *tempfile = fopen(tmpfilename,"w");
+
+			char consolefilename[64];
+			std::tmpnam(consolefilename);
+
 			if(!tempfile)
 			{
 				jwin_alert("Error","Unable to create a temporary file in current directory!",NULL,NULL,"O&K",NULL,'k',0,lfont);
@@ -24988,7 +24993,7 @@ int32_t onCompileScript()
 #ifndef _WIN32
 				ZSCRIPT_FILE,
 #endif
-                "-input", "tmp", "-linked", NULL, NULL};
+                "-input", tmpfilename, "-console", consolefilename, "-linked", NULL, NULL};
 			if(zc_get_config("Compiler","noclose_compile_console",0))
 				argv[3] = "-noclose";
 			process_manager* pm = launch_piped_process(ZSCRIPT_FILE, argv);
@@ -25003,7 +25008,7 @@ int32_t onCompileScript()
 			int syncthing = 0;
 			pm->read(&syncthing, sizeof(int32_t));
 
-			FILE *console=fopen("tmp3", "r");
+			FILE *console = fopen(consolefilename, "r");
 			char buf4[512];
 			bool hasWarnErr = false;
 			if (console) 
@@ -26319,7 +26324,7 @@ bool do_slots(map<string, disassembled_script_data> &scripts)
 				{
 					if(it->second.hasScriptData())
 					{
-						tempfile = fopen("tmp","w");
+						tempfile = std::tmpfile();
 						
 						if(!tempfile)
 						{
@@ -26348,8 +26353,9 @@ bool do_slots(map<string, disassembled_script_data> &scripts)
 							}
 						}
 						
+						fseek(tempfile, 0, SEEK_SET);
+						parse_script_file(&ffscripts[it->first+1],tempfile,false);
 						fclose(tempfile);
-						parse_script_file(&ffscripts[it->first+1],"tmp",false);
 						if(it->second.isDisassembled()) ffscripts[it->first+1]->meta.setFlag(ZMETA_DISASSEMBLED);
 						else if(it->second.isImportedZASM()) ffscripts[it->first+1]->meta.setFlag(ZMETA_IMPORTED);
 					}
@@ -26364,7 +26370,7 @@ bool do_slots(map<string, disassembled_script_data> &scripts)
 				{
 					if(it->second.hasScriptData())
 					{
-						tempfile = fopen("tmp","w");
+						tempfile = std::tmpfile();
 						
 						if(!tempfile)
 						{
@@ -26392,8 +26398,10 @@ bool do_slots(map<string, disassembled_script_data> &scripts)
 								al_trace("%s",theline.c_str());
 							}
 						}
+						
+						fseek(tempfile, 0, SEEK_SET);
+						parse_script_file(&globalscripts[it->first],tempfile,false);
 						fclose(tempfile);
-						parse_script_file(&globalscripts[it->first],"tmp",false);
 						if(it->second.isDisassembled()) globalscripts[it->first]->meta.setFlag(ZMETA_DISASSEMBLED);
 						else if(it->second.isImportedZASM()) globalscripts[it->first]->meta.setFlag(ZMETA_IMPORTED);
 					}
@@ -26408,7 +26416,7 @@ bool do_slots(map<string, disassembled_script_data> &scripts)
 				{
 					if(it->second.hasScriptData())
 					{
-						tempfile = fopen("tmp","w");
+						tempfile = std::tmpfile();
 						
 						if(!tempfile)
 						{
@@ -26436,8 +26444,10 @@ bool do_slots(map<string, disassembled_script_data> &scripts)
 								al_trace("%s",theline.c_str());
 							}
 						}
+						
+						fseek(tempfile, 0, SEEK_SET);
+						parse_script_file(&itemscripts[it->first+1],tempfile,false);
 						fclose(tempfile);
-						parse_script_file(&itemscripts[it->first+1],"tmp",false);
 						if(it->second.isDisassembled()) itemscripts[it->first+1]->meta.setFlag(ZMETA_DISASSEMBLED);
 						else if(it->second.isImportedZASM()) itemscripts[it->first+1]->meta.setFlag(ZMETA_IMPORTED);
 					}
@@ -26451,7 +26461,7 @@ bool do_slots(map<string, disassembled_script_data> &scripts)
 				{
 					if(it->second.hasScriptData())
 					{
-						tempfile = fopen("tmp","w");
+						tempfile = std::tmpfile();
 						
 						if(!tempfile)
 						{
@@ -26479,8 +26489,10 @@ bool do_slots(map<string, disassembled_script_data> &scripts)
 								al_trace("%s",theline.c_str());
 							}
 						}
+						
+						fseek(tempfile, 0, SEEK_SET);
+						parse_script_file(&guyscripts[it->first+1],tempfile,false);
 						fclose(tempfile);
-						parse_script_file(&guyscripts[it->first+1],"tmp",false);
 						if(it->second.isDisassembled()) guyscripts[it->first+1]->meta.setFlag(ZMETA_DISASSEMBLED);
 						else if(it->second.isImportedZASM()) guyscripts[it->first+1]->meta.setFlag(ZMETA_IMPORTED);
 					}
@@ -26494,7 +26506,7 @@ bool do_slots(map<string, disassembled_script_data> &scripts)
 				{
 					if(it->second.hasScriptData())
 					{
-						tempfile = fopen("tmp","w");
+						tempfile = std::tmpfile();
 						
 						if(!tempfile)
 						{
@@ -26522,8 +26534,10 @@ bool do_slots(map<string, disassembled_script_data> &scripts)
 								al_trace("%s",theline.c_str());
 							}
 						}
+						
+						fseek(tempfile, 0, SEEK_SET);
+						parse_script_file(&lwpnscripts[it->first+1],tempfile,false);
 						fclose(tempfile);
-						parse_script_file(&lwpnscripts[it->first+1],"tmp",false);
 						if(it->second.isDisassembled()) lwpnscripts[it->first+1]->meta.setFlag(ZMETA_DISASSEMBLED);
 						else if(it->second.isImportedZASM()) lwpnscripts[it->first+1]->meta.setFlag(ZMETA_IMPORTED);
 					}
@@ -26537,7 +26551,7 @@ bool do_slots(map<string, disassembled_script_data> &scripts)
 				{
 					if(it->second.hasScriptData())
 					{
-						tempfile = fopen("tmp","w");
+						tempfile = std::tmpfile();
 						
 						if(!tempfile)
 						{
@@ -26565,8 +26579,10 @@ bool do_slots(map<string, disassembled_script_data> &scripts)
 								al_trace("%s",theline.c_str());
 							}
 						}
+						
+						fseek(tempfile, 0, SEEK_SET);
+						parse_script_file(&ewpnscripts[it->first+1],tempfile,false);
 						fclose(tempfile);
-						parse_script_file(&ewpnscripts[it->first+1],"tmp",false);
 						if(it->second.isDisassembled()) ewpnscripts[it->first+1]->meta.setFlag(ZMETA_DISASSEMBLED);
 						else if(it->second.isImportedZASM()) ewpnscripts[it->first+1]->meta.setFlag(ZMETA_IMPORTED);
 					}
@@ -26580,7 +26596,7 @@ bool do_slots(map<string, disassembled_script_data> &scripts)
 				{
 					if(it->second.hasScriptData())
 					{
-						tempfile = fopen("tmp","w");
+						tempfile = std::tmpfile();
 						
 						if(!tempfile)
 						{
@@ -26608,8 +26624,10 @@ bool do_slots(map<string, disassembled_script_data> &scripts)
 								al_trace("%s",theline.c_str());
 							}
 						}
+						
+						fseek(tempfile, 0, SEEK_SET);
+						parse_script_file(&playerscripts[it->first+1],tempfile,false);
 						fclose(tempfile);
-						parse_script_file(&playerscripts[it->first+1],"tmp",false);
 						if(it->second.isDisassembled()) playerscripts[it->first+1]->meta.setFlag(ZMETA_DISASSEMBLED);
 						else if(it->second.isImportedZASM()) playerscripts[it->first+1]->meta.setFlag(ZMETA_IMPORTED);
 					}
@@ -26623,7 +26641,7 @@ bool do_slots(map<string, disassembled_script_data> &scripts)
 				{
 					if(it->second.hasScriptData())
 					{
-						tempfile = fopen("tmp","w");
+						tempfile = std::tmpfile();
 						
 						if(!tempfile)
 						{
@@ -26651,8 +26669,10 @@ bool do_slots(map<string, disassembled_script_data> &scripts)
 								al_trace("%s",theline.c_str());
 							}
 						}
+						
+						fseek(tempfile, 0, SEEK_SET);
+						parse_script_file(&dmapscripts[it->first+1],tempfile,false);
 						fclose(tempfile);
-						parse_script_file(&dmapscripts[it->first+1],"tmp",false);
 						if(it->second.isDisassembled()) dmapscripts[it->first+1]->meta.setFlag(ZMETA_DISASSEMBLED);
 						else if(it->second.isImportedZASM()) dmapscripts[it->first+1]->meta.setFlag(ZMETA_IMPORTED);
 					}
@@ -26666,7 +26686,7 @@ bool do_slots(map<string, disassembled_script_data> &scripts)
 				{
 					if(it->second.hasScriptData())
 					{
-						tempfile = fopen("tmp","w");
+						tempfile = std::tmpfile();
 						
 						if(!tempfile)
 						{
@@ -26694,8 +26714,10 @@ bool do_slots(map<string, disassembled_script_data> &scripts)
 								al_trace("%s",theline.c_str());
 							}
 						}
+						
+						fseek(tempfile, 0, SEEK_SET);
+						parse_script_file(&screenscripts[it->first+1],tempfile,false);
 						fclose(tempfile);
-						parse_script_file(&screenscripts[it->first+1],"tmp",false);
 						if(it->second.isDisassembled()) screenscripts[it->first+1]->meta.setFlag(ZMETA_DISASSEMBLED);
 						else if(it->second.isImportedZASM()) screenscripts[it->first+1]->meta.setFlag(ZMETA_IMPORTED);
 					}
@@ -26709,7 +26731,7 @@ bool do_slots(map<string, disassembled_script_data> &scripts)
 				{
 					if(it->second.hasScriptData())
 					{
-						tempfile = fopen("tmp","w");
+						tempfile = std::tmpfile();
 						
 						if(!tempfile)
 						{
@@ -26738,8 +26760,9 @@ bool do_slots(map<string, disassembled_script_data> &scripts)
 							}
 						}
 						
+						fseek(tempfile, 0, SEEK_SET);
+						parse_script_file(&itemspritescripts[it->first+1],tempfile,false);
 						fclose(tempfile);
-						parse_script_file(&itemspritescripts[it->first+1],"tmp",false);
 						if(it->second.isDisassembled()) itemspritescripts[it->first+1]->meta.setFlag(ZMETA_DISASSEMBLED);
 						else if(it->second.isImportedZASM()) itemspritescripts[it->first+1]->meta.setFlag(ZMETA_IMPORTED);
 					}
@@ -26754,7 +26777,7 @@ bool do_slots(map<string, disassembled_script_data> &scripts)
 				{
 					if(it->second.hasScriptData())
 					{
-						tempfile = fopen("tmp","w");
+						tempfile = std::tmpfile();
 						
 						if(!tempfile)
 						{
@@ -26783,8 +26806,9 @@ bool do_slots(map<string, disassembled_script_data> &scripts)
 							}
 						}
 						
+						fseek(tempfile, 0, SEEK_SET);
+						parse_script_file(&comboscripts[it->first+1],tempfile,false);
 						fclose(tempfile);
-						parse_script_file(&comboscripts[it->first+1],"tmp",false);
 						if(it->second.isDisassembled()) comboscripts[it->first+1]->meta.setFlag(ZMETA_DISASSEMBLED);
 						else if(it->second.isImportedZASM()) comboscripts[it->first+1]->meta.setFlag(ZMETA_IMPORTED);
 					}
@@ -26798,7 +26822,7 @@ bool do_slots(map<string, disassembled_script_data> &scripts)
 				{
 					if(it->second.hasScriptData())
 					{
-						tempfile = fopen("tmp","w");
+						tempfile = std::tmpfile();
 						
 						if(!tempfile)
 						{
@@ -26827,8 +26851,9 @@ bool do_slots(map<string, disassembled_script_data> &scripts)
 							}
 						}
 						
+						fseek(tempfile, 0, SEEK_SET);
+						parse_script_file(&genericscripts[it->first+1],tempfile,false);
 						fclose(tempfile);
-						parse_script_file(&genericscripts[it->first+1],"tmp",false);
 						if(it->second.isDisassembled()) genericscripts[it->first+1]->meta.setFlag(ZMETA_DISASSEMBLED);
 						else if(it->second.isImportedZASM()) genericscripts[it->first+1]->meta.setFlag(ZMETA_IMPORTED);
 					}
@@ -26838,7 +26863,7 @@ bool do_slots(map<string, disassembled_script_data> &scripts)
 						genericscripts[it->first+1] = new script_data();
 					}
 				}
-				unlink("tmp");
+
 				clock_t end_assign_time = clock();
 				al_trace("Assign Slots took %lf seconds (%ld cycles)\n", (end_assign_time-start_assign_time)/(double)CLOCKS_PER_SEC,end_assign_time-start_assign_time);
 				char buf[256] = {0};
