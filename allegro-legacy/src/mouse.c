@@ -21,6 +21,8 @@
 
 #include "allegro.h"
 #include "allegro/internal/aintern.h"
+// local edit
+#include "a5alleg.h"
 
 
 

@@ -20,6 +20,8 @@
 
 #include "allegro.h"
 #include "allegro/internal/aintern.h"
+// local edit
+#include "a5alleg.h"
 
 extern void blit_end(void);   /* for LOCK_FUNCTION; defined in blit.c */
 
@@ -672,7 +674,6 @@ static int _set_gfx_mode(int card, int w, int h, int v_w, int v_h, int allow_con
       gfx_driver = NULL;
       screen = NULL;
       gfx_capabilities = 0;
-      printf("??? 1\n");
    }
 
    /* We probably don't want to do this because it makes

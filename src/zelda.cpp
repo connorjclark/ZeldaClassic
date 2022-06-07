@@ -4336,7 +4336,8 @@ int32_t isFullScreen()
 bool setGraphicsMode(bool windowed)
 {
     int32_t type=windowed ? GFX_AUTODETECT_WINDOWED : GFX_AUTODETECT_FULLSCREEN;
-    return set_gfx_mode(type, resx, resy, 0, 0)==0;
+    bool result = set_gfx_mode(type, resx, resy, 0, 0)==0;
+    return result;
 }
 
 int32_t onFullscreen()
@@ -5128,25 +5129,19 @@ int main(int argc, char **argv)
 		resy = atoi(argv[res_arg+2]);
 		bool old_sbig = (argc>(res_arg+3))? stricmp(argv[res_arg+3],"big")==0 : 0;
 		bool old_sbig2 = (argc>(res_arg+3))? stricmp(argv[res_arg+3],"big2")==0 : 0;
-		
-		//mode = GFX_AUTODETECT;
-		printf("????\n");
 	}
 
-	printf("x y %d %d\n", resx, resy);
-
-	GFX_MODE_LIST *gfx_list = get_gfx_mode_list(GFX_ALLEGRO_5);
-	if (gfx_list) {
-		// (resx == 0 || resy == 0) && 
-		if (gfx_list->num_modes > 0) {
-			// resx = gfx_list->mode[gfx_list->num_modes - 1].width;
-			// resy = gfx_list->mode[gfx_list->num_modes - 1].height;
-		}
-		for (int i = 0; i < gfx_list->num_modes; i++) {
-			// printf("%d %d %d\n", gfx_list->mode[i].width, gfx_list->mode[i].height, gfx_list->mode[i].bpp);
-		}
-	}
-	printf("x y %d %d\n", resx, resy);
+	// GFX_MODE_LIST *gfx_list = get_gfx_mode_list(GFX_ALLEGRO_5);
+	// if (gfx_list) {
+	// 	// (resx == 0 || resy == 0) && 
+	// 	if (gfx_list->num_modes > 0) {
+	// 		// resx = gfx_list->mode[gfx_list->num_modes - 1].width;
+	// 		// resy = gfx_list->mode[gfx_list->num_modes - 1].height;
+	// 	}
+	// 	for (int i = 0; i < gfx_list->num_modes; i++) {
+	// 		// printf("%d %d %d\n", gfx_list->mode[i].width, gfx_list->mode[i].height, gfx_list->mode[i].bpp);
+	// 	}
+	// }
 	
 	if(resx>=640 && resy>=480)
 	{
@@ -5168,12 +5163,6 @@ int main(int argc, char **argv)
 		tempmode=GFX_AUTODETECT_WINDOWED;
 	}
 
-	if (tempmode == GFX_AUTODETECT_FULLSCREEN) {
-		al_set_new_display_flags(ALLEGRO_FULLSCREEN_WINDOW);
-	}
-	printf("al_set_new_display_flags\n");
-	// al_set_new_display_flags(ALLEGRO_FULLSCREEN_WINDOW);
-	// tempmode = GFX_ALLEGRO_5;
 	
 	//set scale
 	if(resx < 256) resx = 256;
