@@ -38,4 +38,8 @@ AL_LEGACY_FUNC(void, all_set_fullscreen_flag, (bool fullscreen));
 }
 #endif
 
+#ifdef __cplusplus
+}
+#endif
+
 #endif /* ifndef A5_ALLEGRO_LEGACY_H */

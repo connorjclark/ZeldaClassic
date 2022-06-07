@@ -618,6 +618,7 @@ void update_hw_screen(bool force)
 			update_hw_pal = false;
 		}
 		myvsync=0;
+		all_render_screen();
 	}
 }
 
@@ -5129,7 +5130,23 @@ int main(int argc, char **argv)
 		bool old_sbig2 = (argc>(res_arg+3))? stricmp(argv[res_arg+3],"big2")==0 : 0;
 		
 		//mode = GFX_AUTODETECT;
+		printf("????\n");
 	}
+
+	printf("x y %d %d\n", resx, resy);
+
+	GFX_MODE_LIST *gfx_list = get_gfx_mode_list(GFX_ALLEGRO_5);
+	if (gfx_list) {
+		// (resx == 0 || resy == 0) && 
+		if (gfx_list->num_modes > 0) {
+			// resx = gfx_list->mode[gfx_list->num_modes - 1].width;
+			// resy = gfx_list->mode[gfx_list->num_modes - 1].height;
+		}
+		for (int i = 0; i < gfx_list->num_modes; i++) {
+			// printf("%d %d %d\n", gfx_list->mode[i].width, gfx_list->mode[i].height, gfx_list->mode[i].bpp);
+		}
+	}
+	printf("x y %d %d\n", resx, resy);
 	
 	if(resx>=640 && resy>=480)
 	{
@@ -5150,6 +5167,13 @@ int main(int argc, char **argv)
 		al_trace("Used switch: -windowed\n");
 		tempmode=GFX_AUTODETECT_WINDOWED;
 	}
+
+	if (tempmode == GFX_AUTODETECT_FULLSCREEN) {
+		al_set_new_display_flags(ALLEGRO_FULLSCREEN_WINDOW);
+	}
+	printf("al_set_new_display_flags\n");
+	// al_set_new_display_flags(ALLEGRO_FULLSCREEN_WINDOW);
+	// tempmode = GFX_ALLEGRO_5;
 	
 	//set scale
 	if(resx < 256) resx = 256;
@@ -5218,6 +5242,7 @@ int main(int argc, char **argv)
 	sbig = (screen_scale > 1);
 	switch_type = pause_in_background ? SWITCH_PAUSE : SWITCH_BACKGROUND;
 	set_display_switch_mode(is_windowed_mode()?SWITCH_PAUSE:switch_type);
+	printf("ok2\n");
 	zq_screen_w = resx;
 	zq_screen_h = resy;
 	

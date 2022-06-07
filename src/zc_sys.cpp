@@ -750,10 +750,12 @@ void load_mouse()
 // sets the video mode and initializes the palette and mouse sprite
 bool game_vid_mode(int32_t mode,int32_t wait)
 {
+    printf("ok .... 0\n");
     if(set_gfx_mode(mode,resx,resy,0,0)!=0)
     {
         return false;
     }
+    printf("ok .... 1\n");
     
     scrx = (resx-320)>>1;
     scry = (resy-240)>>1;
