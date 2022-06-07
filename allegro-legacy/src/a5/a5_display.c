@@ -51,6 +51,7 @@ static bool _a5_setup_screen(int w, int h)
   int pixel_format;
   if (_a5_display_fullscreen) al_set_new_display_flags(ALLEGRO_FULLSCREEN);
   _a5_display = al_create_display(w, h);
+  printf("_a5_setup_screen 2\n");
   if(!_a5_display)
   {
     goto fail;
@@ -199,6 +200,7 @@ static BITMAP * a5_display_init(int w, int h, int vw, int vh, int color_depth)
     BITMAP * bp;
     ALLEGRO_STATE old_state;
     int pixel_format;
+    _a5_disable_threaded_display = true;
 
     bp = create_bitmap(w, h);
     if(bp)
@@ -210,7 +212,10 @@ static BITMAP * a5_display_init(int w, int h, int vw, int vh, int color_depth)
         _a5_display_height = h;
         _a5_screen_thread = al_create_thread(_a5_display_thread, NULL);
         al_start_thread(_a5_screen_thread);
+
+        printf("while 1\n");
         while(!_a5_display_creation_done);
+        printf("while 2\n");
       }
       else
       {
@@ -605,7 +610,7 @@ GFX_DRIVER display_allegro_5 = {
    NULL,                              // AL_LEGACY_METHOD(void, save_state, (void));
    NULL,                              // AL_LEGACY_METHOD(void, restore_state, (void));
    NULL,                              // AL_LEGACY_METHOD(void, set_blender_mode, (int mode, int r, int g, int b, int a));
-   NULL, //be_gfx_bwindowscreen_fetch_mode_list,// AL_LEGACY_METHOD(int, fetch_mode_list, (void));
+   NULL,                   // AL_LEGACY_METHOD(GFX_MODE_LIST *, fetch_mode_list, (void));
    0, 0,                              // int w, h;  /* physical (not virtual!) screen size */
    TRUE,                              // int linear;  /* true if video memory is linear */
    0,                                 // long bank_size;  /* bank size, in bytes */

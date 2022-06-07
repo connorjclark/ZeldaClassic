@@ -242,6 +242,11 @@ elseif(LINUX)
 	add_compile_options("-m32")
 	SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -m32 -static-libgcc -export-dynamic")
 	SET(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -m32 -static-libgcc")
+elseif(APPLE)
+	# set(SOUNDLIBS ${CMAKE_SOURCE_DIR}/libs/osx/libdumb.a ${CMAKE_SOURCE_DIR}/libs/osx/libalogg.a)
+	# link_directories(./libs/osx)
+	# set(SOUNDLIBS dumb aldmb alogg gme almp3 alspc)
+	# add_compile_options("-m32")
 endif()
 
 #############################################################

@@ -672,6 +672,7 @@ static int _set_gfx_mode(int card, int w, int h, int v_w, int v_h, int allow_con
       gfx_driver = NULL;
       screen = NULL;
       gfx_capabilities = 0;
+      printf("??? 1\n");
    }
 
    /* We probably don't want to do this because it makes
