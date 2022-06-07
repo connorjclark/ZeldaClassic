@@ -646,7 +646,7 @@ bool zqwin_set_scale(int32_t scale, bool defer)
     old_scale = zqwin_scale;
 
     all_set_scale(scale);
-    
+
 #ifndef ROMVIEW_SCALE
     zqwin_scale = (scale > 1) ? scale : 1;
 #ifndef COMPILE_FOR_LINUX
