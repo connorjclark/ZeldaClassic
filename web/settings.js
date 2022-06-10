@@ -15,6 +15,7 @@ const configuredMountPromise = new Promise(resolve => {
 });
 
 export async function configureMount() {
+  debugger;
   let type = 'fs';
 
   attachedDirHandle = await kv.get('attached-dir');

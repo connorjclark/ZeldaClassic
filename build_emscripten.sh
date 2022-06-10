@@ -64,14 +64,36 @@ function build_js {
   ESBUILD_ARGS=()
   if ! [[ "$DEBUG" ]]; then
     ESBUILD_ARGS+=(
-      --minify
+      # --minify
     )
   fi
   npx esbuild --bundle ../../web/main.js --outfile=main.js --sourcemap ${ESBUILD_ARGS[@]}
   cp ../../web/styles.css .
 }
 
-# build_js && exit 0
+
+"$(dirname $(which emcc))"/tools/file_packager.py zc.data \
+  --no-node \
+  --preload "../../output/_auto/buildpack@/" \
+  --preload "../../timidity/zc.cfg@/etc/zc.cfg" \
+  --preload "../../timidity/ultra.cfg@/etc/ultra.cfg" \
+  --preload "../../timidity/ppl160.cfg@/etc/ppl160.cfg" \
+  --preload "../../timidity/freepats.cfg@/etc/freepats.cfg" \
+  --preload "../../timidity/soundfont-pats/oot.cfg@/etc/oot.cfg" \
+  --preload "../../timidity/soundfont-pats/2MGM.cfg@/etc/2MGM.cfg" \
+  --use-preload-cache \
+  --js-output=zc.data.js
+
+# Zquest also uses zc.data
+"$(dirname $(which emcc))"/tools/file_packager.py zq.data \
+  --no-node \
+  --preload "../../output/_auto/buildpack_zq@/" \
+  --use-preload-cache \
+  --js-output=zq.data.js
+
+
+
+build_js && exit 0
 
 # Wish I knew how to remove this.
 EMCC_CACHE_DIR="$(dirname $(which emcc))/cache"
@@ -90,10 +112,13 @@ EMCC_FLAGS=(
   -I "$EMCC_CACHE_INCLUDE_DIR/AL"
 )
 LINKER_FLAGS=(
-  --shell-file="../../web/index.html"
   --shared-memory
   -s EXPORTED_FUNCTIONS=_main,_create_synthetic_key_event,_get_shareable_url,_open_test_mode
   -s EXPORTED_RUNTIME_METHODS=cwrap
+  -s EXTRA_EXPORTED_RUNTIME_METHODS="['FS','MEMFS','PATH']"
+  -s MODULARIZE=1
+  -s EXPORT_NAME="createZeldaClassicModule"
+  -s EXPORT_ES6=1
   -s FORCE_FILESYSTEM=1
   -s ASYNCIFY=1
   -s FULL_ES2=1
@@ -155,7 +180,7 @@ emcmake cmake ../.. \
   -D CMAKE_C_FLAGS="${EMCC_FLAGS[*]} ${EMCC_AND_LINKER_FLAGS[*]}" \
   -D CMAKE_CXX_FLAGS="${EMCC_FLAGS[*]} ${EMCC_AND_LINKER_FLAGS[*]} -D_NPASS" \
   -D CMAKE_EXE_LINKER_FLAGS="${LINKER_FLAGS[*]} ${EMCC_AND_LINKER_FLAGS[*]}" \
-  -D CMAKE_EXECUTABLE_SUFFIX_CXX=".html"
+  -D CMAKE_EXECUTABLE_SUFFIX_CXX=".js"
 
 sh ../../patches/apply.sh
 
@@ -163,6 +188,7 @@ TARGETS="${@:-zelda zquest}"
 cmake --build . -t $TARGETS
 
 "$(dirname $(which emcc))"/tools/file_packager.py zc.data \
+  --export-name="createZeldaClassicModule" \
   --no-node \
   --preload "../../output/_auto/buildpack@/" \
   --preload "../../timidity/zc.cfg@/etc/zc.cfg" \
@@ -176,6 +202,7 @@ cmake --build . -t $TARGETS
 
 # Zquest also uses zc.data
 "$(dirname $(which emcc))"/tools/file_packager.py zq.data \
+  --export-name="createZeldaClassicModule" \
   --no-node \
   --preload "../../output/_auto/buildpack_zq@/" \
   --use-preload-cache \
@@ -205,13 +232,15 @@ function insert_css {
   mv tmp.html "$1"
 }
 
-if [ -f zelda.html ]; then
+if [ -f zelda.js ]; then
+  cp ../../web/index.html zelda.html
   sed -i -e 's/__TARGET__/zelda/' zelda.html
   sed -i -e 's|__DATA__|<script src="zc.data.js"></script>|' zelda.html
   set_files zelda.html
   insert_css zelda.html
 fi
-if [ -f zquest.html ]; then
+if [ -f zquest.js ]; then
+  cp ../../web/index.html zquest.html
   sed -i -e 's/__TARGET__/zquest/' zquest.html
   sed -i -e 's|__DATA__|<script src="zc.data.js"></script><script src="zq.data.js"></script>|' zquest.html
   set_files zquest.html

@@ -14,13 +14,13 @@ window.ZC = {
   async fetch(url, opts) {
     const response = await fetchWithProgress(url, opts, (received, total, done) => {
       if (done) {
-        Module.setStatus('Ready');
+        ZC.setStatus('Ready');
       } else if (received && total) {
-        Module.setStatus(`Fetching file (${formatBytes(received, total)})`, received / total);
+        ZC.setStatus(`Fetching file (${formatBytes(received, total)})`, received / total);
       } else if (received) {
-        Module.setStatus(`Fetching file (${formatBytes(received)})`);
+        ZC.setStatus(`Fetching file (${formatBytes(received)})`);
       } else {
-        Module.setStatus('Fetching file');
+        ZC.setStatus('Fetching file');
       }
     });
 
@@ -56,6 +56,50 @@ window.ZC = {
     }));
   },
   configureMount,
+  setStatus: function (text, percentProgress = null) {
+    const statusElement = document.getElementById('status');
+    const progressElement = document.getElementById('progress');
+
+    // `.data.js` emscripten generated script passes progress like this:
+    //   Downloading data... (x/y)
+    // And there's no way to configure that, so just parse it.
+    if (text.startsWith('Downloading data... (')) {
+      const [, x, y] = text.match(/(\d+)\/(\d+)/);
+      text = `Downloading data... (${formatBytes(x, y, 'MB')})`;
+      percentProgress = x / y;
+    }
+
+    if (!text || text === 'Running...') return;
+    if (!ZC.setStatus.last) ZC.setStatus.last = { time: Date.now(), text: '' };
+
+    if (text === 'Ready') {
+      progressElement.value = null;
+      progressElement.max = null;
+      progressElement.hidden = true;
+      statusElement.hidden = true;
+      return;
+    }
+
+    statusElement.hidden = false;
+
+    if (text === ZC.setStatus.last.text) return;
+
+    const now = Date.now();
+    if (percentProgress && now - ZC.setStatus.last.time < 30) return; // if this is a progress update, skip it if too soon
+
+    ZC.setStatus.last.time = now;
+    ZC.setStatus.last.text = text;
+    if (percentProgress !== null && percentProgress > 0) {
+      progressElement.value = percentProgress;
+      progressElement.max = 1;
+      progressElement.hidden = false;
+    } else {
+      progressElement.value = null;
+      progressElement.max = null;
+      progressElement.hidden = true;
+    }
+    statusElement.innerHTML = text;
+  },
 };
 
 async function main() {
@@ -63,9 +107,6 @@ async function main() {
   const args = [];
 
   try {
-    const statusElement = document.getElementById('status');
-    const progressElement = document.getElementById('progress');
-
     let questPath = params.get('quest');
     if (questPath) {
       questPath = questPath.startsWith('local/') ?
@@ -83,12 +124,20 @@ async function main() {
       }
     }
 
+    const createZeldaClassicModule = (await import('./zquest.js')).default;
+
     // window.Module = await initModule({
-    window.Module = {
+    await createZeldaClassicModule({
       arguments: args,
       canvas: document.querySelector('canvas'),
-      instantiateWasm,
-      onRuntimeInitialized: () => {
+      // instantiateWasm,
+      onRuntimeInitialized() {
+        // TODO: remove
+        window.Module = this;
+        window.FS = this.FS;
+        window.MEMFS = this.MEMFS;
+        window.PATH = this.PATH;
+
         if (TARGET === 'zelda') setupTouchControls();
         else {
           // TODO: better way to hide touch controls (just don't render them?)
@@ -96,59 +145,21 @@ async function main() {
             el.classList.toggle('hidden', true);
           }
         }
-        setupCopyUrl();
+        setupCopyUrl(this);
         setupSettingsPanel();
-        if (TARGET === 'zquest') setupOpenTestMode();
-      },
-      setStatus: function (text, percentProgress = null) {
-        // `.data.js` emscripten generated script passes progress like this:
-        //   Downloading data... (x/y)
-        // And there's no way to configure that, so just parse it.
-        if (text.startsWith('Downloading data... (')) {
-          const [, x, y] = text.match(/(\d+)\/(\d+)/);
-          text = `Downloading data... (${formatBytes(x, y, 'MB')})`;
-          percentProgress = x / y;
-        }
-
-        if (!text || text === 'Running...') return;
-        if (!Module.setStatus.last) Module.setStatus.last = { time: Date.now(), text: '' };
-
-        if (text === 'Ready') {
-          progressElement.value = null;
-          progressElement.max = null;
-          progressElement.hidden = true;
-          statusElement.hidden = true;
-          return;
-        }
-
-        statusElement.hidden = false;
-
-        if (text === Module.setStatus.last.text) return;
-        const now = Date.now();
-        if (percentProgress && now - Module.setStatus.last.time < 30) return; // if this is a progress update, skip it if too soon
-        Module.setStatus.last.time = now;
-        Module.setStatus.last.text = text;
-        if (percentProgress !== null && percentProgress > 0) {
-          progressElement.value = percentProgress;
-          progressElement.max = 1;
-          progressElement.hidden = false;
-        } else {
-          progressElement.value = null;
-          progressElement.max = null;
-          progressElement.hidden = true;
-        }
-        statusElement.innerHTML = text;
+        if (TARGET === 'zquest') setupOpenTestMode(this);
       },
       expectedDataFileDownloads: 0,
       totalDependencies: 0,
-      monitorRunDependencies: function (left) {
-        Module.totalDependencies = Math.max(Module.totalDependencies, left);
-        if (Module.totalDependencies === 1) return;
+      monitorRunDependencies(left) {
+        console.log({left});
+        // Module.totalDependencies = Math.max(Module.totalDependencies, left);
+        // if (Module.totalDependencies === 1) return;
 
-        const progress = (Module.totalDependencies - left) / (Module.totalDependencies);
-        Module.setStatus(left ? `Preparing... (${Module.totalDependencies - left}/${Module.totalDependencies})` : '', progress);
-      }
-    };
+        // const progress = (Module.totalDependencies - left) / (Module.totalDependencies);
+        // ZC.setStatus(left ? `Preparing... (${Module.totalDependencies - left}/${Module.totalDependencies})` : '', progress);
+      },
+    });
 
     window.addEventListener('resize', resize);
     resize();
@@ -221,7 +232,7 @@ function instantiateWasm(info, receiveInstance) {
     receiveInstance(result["instance"], result["module"]);
   }
 
-  if (!wasmBinary && typeof WebAssembly.instantiateStreaming == "function" && !isDataURI(wasmBinaryFile) && !isFileURI(wasmBinaryFile) && typeof fetch == "function") {
+  if (typeof WebAssembly.instantiateStreaming == "function" && !isDataURI(wasmBinaryFile) && !isFileURI(wasmBinaryFile) && typeof fetch == "function") {
     return ZC.fetch(wasmBinaryFile, {
       credentials: "same-origin"
     }).then(function (response) {
@@ -500,22 +511,22 @@ function setupTouchControls() {
   }
 }
 
-function setupCopyUrl() {
+function setupCopyUrl(zeldaClassicModule) {
   const el = document.querySelector('.button--copyurl');
   el.classList.remove('hidden');
 
-  const getShareableUrl = Module.cwrap('get_shareable_url', 'string', []);
+  const getShareableUrl = zeldaClassicModule.cwrap('get_shareable_url', 'string', []);
   el.addEventListener('click', () => {
     getShareableUrl();
     if (ZC.url) navigator.clipboard.writeText(ZC.url);
   });
 }
 
-function setupOpenTestMode() {
+function setupOpenTestMode(zeldaClassicModule) {
   const el = document.querySelector('.button--open-testmode');
   el.classList.remove('hidden');
 
-  const openTestMode = Module.cwrap('open_test_mode', null, []);
+  const openTestMode = zeldaClassicModule.cwrap('open_test_mode', null, []);
   el.addEventListener('click', () => {
     openTestMode();
   });

@@ -98,13 +98,13 @@ QueryParams get_query_params() {
 
 void em_mark_initializing_status() {
 	EM_ASM({
-		Module.setStatus('Initializing Runtime ...');
+		ZC.setStatus('Initializing Runtime ...');
 	});
 }
 
 void em_mark_ready_status() {
 	EM_ASM({
-		Module.setStatus('Ready');
+		ZC.setStatus('Ready');
 	});
 }
 
