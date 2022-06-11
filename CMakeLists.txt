@@ -494,10 +494,18 @@ set_property(TARGET zquest zelda PROPERTY VS_DEBUGGER_WORKING_DIRECTORY "$(Proje
 # Misc.
 #############################################################
 
-if(WIN32)
-	target_compile_definitions(zcsound PRIVATE __STDC_LIMIT_MACROS)
-	target_compile_definitions(zelda PRIVATE __STDC_LIMIT_MACROS)
-	target_compile_definitions(zlauncher PRIVATE __STDC_LIMIT_MACROS)
-	target_compile_definitions(zquest PRIVATE __STDC_LIMIT_MACROS)
-	target_compile_definitions(zscript PRIVATE __STDC_LIMIT_MACROS)
-endif()
+set(zc_targets zquest zelda zlauncher zcsound zscript)
+set(zc_warnings -Werror=format)
+
+foreach(target IN LISTS zc_targets)
+	if(WIN32)
+		target_compile_definitions(${target} PRIVATE __STDC_LIMIT_MACROS)
+	endif()
+
+	string(REGEX MATCH "MSVC" CMAKE_COMPILER_IS_MSVC "${CMAKE_C_COMPILER_ID}")
+	if(NOT CMAKE_COMPILER_IS_MSVC)
+		# Uncomment to autofix. Only works for clang.
+		target_compile_options(${target} PRIVATE -ferror-limit=10000 -Wno-everything ${zc_warnings} "SHELL:-Xclang -fix-what-you-can" "SHELL:-Xclang -fixit-recompile")
+		target_compile_options(${target} PRIVATE ${zc_warnings})
+	endif()
+endforeach()
