@@ -20,6 +20,8 @@
 
 #include "allegro.h"
 #include "allegro/internal/aintern.h"
+// local edit
+#include "a5alleg.h"
 
 extern void blit_end(void);   /* for LOCK_FUNCTION; defined in blit.c */
 
