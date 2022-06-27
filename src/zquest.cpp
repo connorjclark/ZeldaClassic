@@ -48,6 +48,7 @@ void setZScriptVersion(int32_t) { } //bleh...
 
 #include <loadpng.h>
 #include <jpgalleg.h>
+#include <gif.h>
 
 #include "dialog/cheat_codes.h"
 #include "dialog/room.h"
@@ -59,8 +60,6 @@ void setZScriptVersion(int32_t) { } //bleh...
 #include "dialog/ffc_editor.h"
 
 #include "gui.h"
-#include "load_gif.h"
-#include "save_gif.h"
 #include "editbox.h"
 #include "zq_misc.h"
 #include "zq_tiles.h"                                       // tile and combo code
@@ -29958,9 +29957,8 @@ int32_t main(int32_t argc,char **argv)
 	
 	allegro_init();
 	three_finger_flag=false;
-	
-    // TODO: build these plugins from source
-	register_bitmap_file_type("GIF",  load_gif, save_gif);
+
+	algif_init();
 #if !defined(__APPLE__) && !defined(_WIN64)
 	jpgalleg_init();
 	loadpng_init();
@@ -31086,7 +31084,7 @@ int32_t main(int32_t argc,char **argv)
 		allegro_init();
 		three_finger_flag=false;
 
-		register_bitmap_file_type("GIF",  load_gif, save_gif);
+		algif_init();
 #if !defined(__APPLE__) && !defined(_WIN64)
 		jpgalleg_init();
 		loadpng_init();

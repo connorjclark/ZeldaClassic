@@ -29,6 +29,7 @@
 
 #include <loadpng.h>
 #include <jpgalleg.h>
+#include <gif.h>
 
 #include "metadata/sigs/devsig.h.sig"
 
@@ -49,8 +50,6 @@
 #include "matrix.h"
 #include "jwin.h"
 #include "jwinfsel.h"
-#include "save_gif.h"
-#include "load_gif.h" // not really needed; we're just saving GIF files in ZC.
 #include "fontsdat.h"
 #include "particles.h"
 #include "gamedata.h"
@@ -4487,8 +4486,7 @@ int main(int argc, char **argv)
 	
 	three_finger_flag=false;
 	
-	// TODO: build these plugins from source
-	register_bitmap_file_type("GIF",  load_gif, save_gif);
+	algif_init();
 #if !defined(__APPLE__) && !defined(_WIN64)
 	jpgalleg_init();
 	loadpng_init();
