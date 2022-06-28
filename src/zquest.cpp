@@ -47,7 +47,7 @@ void setZScriptVersion(int32_t) { } //bleh...
 #include <pngconf.h>
 
 #include <loadpng.h>
-#include <jpgalleg.h>
+#include <aljpg.h>
 #include <gif.h>
 
 #include "dialog/cheat_codes.h"
@@ -29958,9 +29958,15 @@ int32_t main(int32_t argc,char **argv)
 	allegro_init();
 	three_finger_flag=false;
 
+	if(!al_init_image_addon())
+	{
+		Z_error_fatal("Failed al_init_image_addon");
+		quit_game();
+	}
+
 	algif_init();
+	aljpg_init();
 #if !defined(__APPLE__) && !defined(_WIN64)
-	jpgalleg_init();
 	loadpng_init();
 #endif
 	
@@ -31085,8 +31091,8 @@ int32_t main(int32_t argc,char **argv)
 		three_finger_flag=false;
 
 		algif_init();
+		aljpg_init();
 #if !defined(__APPLE__) && !defined(_WIN64)
-		jpgalleg_init();
 		loadpng_init();
 #endif
 		
