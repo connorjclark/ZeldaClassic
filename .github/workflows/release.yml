@@ -28,11 +28,18 @@ jobs:
     # Prevent forks from running this job.
     # if: (github.event_name == 'schedule' && github.repository == 'ArmageddonGames/ZeldaClassic') || (github.event_name != 'schedule')
     runs-on: windows-2022
+    strategy:
+      matrix:
+        arrays: [
+          {arch: x64, name: Windows x64},
+          {arch: win32, name: Windows x86},
+        ]
+      fail-fast: false
 
     steps:
     - uses: ilammy/msvc-dev-cmd@v1
       with:
-        arch: win32
+        arch: ${{ matrix.arrays.arch }}
 
     - name: git clone
       uses: actions/checkout@v2
@@ -43,10 +50,11 @@ jobs:
         args: install .github/dependencies.config -y
 
     - run: cp src/metadata/*.h.sig src/metadata/sigs/
-    - run: cmake . -A win32
+    - run: cmake . -A ${{ matrix.arrays.arch }}
     - run: cmake --build . --config Release
     - run: echo y | ./buildpack.bat
       working-directory: output/_auto
+    - run: mv output/_auto/buildpack.zip "output/_auto/Zelda Classic ${{ matrix.arrays.name }}.zip"
 
     - name: Get current time
       uses: josStorer/get-current-time@v2
@@ -58,7 +66,7 @@ jobs:
       with:
         name: 2.55 Nightly ${{ steps.current-time.outputs.formattedTime }}
         tag_name: nightly-${{ steps.current-time.outputs.formattedTime }}
-        files: output/_auto/buildpack.zip
+        files: "output/_auto/Zelda Classic ${{ matrix.arrays.name }}.zip"
         prerelease: true
         fail_on_unmatched_files: true
         generate_release_notes: true
