@@ -157,7 +157,6 @@ static int _a5_timer_install_int(void (*proc)(void), long speed)
         if(proc == a5_timer_data[i]->timer_proc)
         {
             al_set_timer_speed(a5_timer_data[i]->timer, a5_get_timer_speed(speed));
-            al_unlock_mutex(timers_mutex);
             return 0;
         }
     }
