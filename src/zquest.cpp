@@ -28944,6 +28944,10 @@ void doHelp(int32_t bg,int32_t fg)
 
 int32_t onHelp()
 {
+    
+    int* a = NULL;
+    a[12313] = 323;
+    
     restore_mouse();
     doHelp(vc(15),vc(0));
     return D_O_K;

@@ -552,6 +552,7 @@ target_link_libraries(al5_example PUBLIC allegro_with_legacy allegro_font allegr
 #############################################################
 
 set(zc_targets zquest zelda zlauncher zcsound zscript zconsolelogger)
+set(zc_apps zquest zelda zlauncher)
 
 if (WIN32)
 	set_property(TARGET ${zc_targets} PROPERTY VS_DEBUGGER_WORKING_DIRECTORY "$(ProjectDir)$(Configuration)")
@@ -566,41 +567,37 @@ endif()
 # Misc.
 #############################################################
 
-# find_library(BREAKPAD_LIBRARY NAMES breakpad_client)
+if(WIN32)
+	# find_library(BREAKPAD_LIBRARY NAMES breakpad_client)
+	FetchContent_Declare(
+		breakpad_external
+		GIT_REPOSITORY https://github.com/google/breakpad.git
+		GIT_TAG        c161459d7e94d7ef5840ba90aa26a4d5f955c976
+	)
+	FetchContent_MakeAvailable(breakpad_external)
+	file(GLOB breakpad_source_files
+		"${breakpad_external_SOURCE_DIR}/src/client/windows/crash_generation/crash_generation_client.cc"
+		"${breakpad_external_SOURCE_DIR}/src/client/windows/handler/exception_handler.cc"
+		"${breakpad_external_SOURCE_DIR}/src/client/windows/sender/crash_report_sender.cc"
+		"${breakpad_external_SOURCE_DIR}/src/common/windows/http_upload.cc"
+		"${breakpad_external_SOURCE_DIR}/src/common/windows/guid_string.cc"
 
+		"${breakpad_external_SOURCE_DIR}/src/client/windows/sender/crash_report_sender.cc"
+		
+		
+		# "${breakpad_external_SOURCE_DIR}/src/common/convert_UTF.c"
+		"${breakpad_external_SOURCE_DIR}/src/common/md5.cc"
+		# "${breakpad_external_SOURCE_DIR}/src/common/string_conversion.cc"
+	)
+	add_library(breakpad STATIC ${breakpad_source_files})
+	target_include_directories(breakpad PUBLIC
+		"${breakpad_external_SOURCE_DIR}/src"
+	)
+	target_compile_options(breakpad PRIVATE "/DUNICODE")
+	target_link_libraries(breakpad PUBLIC Wininet)
 
-
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
-FetchContent_Declare(
-	breakpad_external
-	GIT_REPOSITORY https://github.com/google/breakpad.git
-	GIT_TAG        main
-)
-FetchContent_MakeAvailable(breakpad_external)
-file(GLOB breakpad_source_files
-	"${breakpad_external_SOURCE_DIR}/src/client/windows/crash_generation/crash_generation_client.cc"
-	"${breakpad_external_SOURCE_DIR}/src/client/windows/handler/exception_handler.cc"
-	"${breakpad_external_SOURCE_DIR}/src/client/windows/sender/crash_report_sender.cc"
-	"${breakpad_external_SOURCE_DIR}/src/common/windows/http_upload.cc"
-
-	"${breakpad_external_SOURCE_DIR}/src/client/windows/sender/crash_report_sender.cc"
-	
-	
-	"${breakpad_external_SOURCE_DIR}/src/common/convert_UTF.c"
-	"${breakpad_external_SOURCE_DIR}/src/common/md5.cc"
-	"${breakpad_external_SOURCE_DIR}/src/common/string_conversion.cc"
-)
-add_library(breakpad SHARED ${breakpad_source_files})
-target_include_directories(breakpad PRIVATE
-	"${breakpad_external_SOURCE_DIR}/src"
-)
-set(BREAKPAD_LIBRARY breakpad)
-
-
-
-
-
-
+	set(BREAKPAD_LIBRARY breakpad)
+endif()
 
 
 set(zc_warnings
@@ -612,9 +609,8 @@ if (WIN32)
 endif()
 foreach(target IN LISTS zc_targets)
 	if(WIN32 AND BREAKPAD_LIBRARY)
-		target_compile_definitions(${target} PRIVATE __STDC_LIMIT_MACROS)
-		target_compile_definitions(${target} PRIVATE HAS_BREAKPAD)
-		target_link_libraries(${target} PUBLIC ${BREAKPAD_LIBRARY})
+		# target_compile_definitions(${target} PRIVATE HAS_BREAKPAD)
+		# target_link_libraries(${target} PUBLIC ${BREAKPAD_LIBRARY})
 	endif()
 
 	if(WIN32)
@@ -627,5 +623,12 @@ foreach(target IN LISTS zc_targets)
 	endif()
 	if(NOT CMAKE_COMPILER_IS_MSVC)
 		target_compile_options(${target} PRIVATE ${zc_warnings})
+	endif()
+endforeach()
+
+foreach(target IN LISTS zc_apps)
+	if(BREAKPAD_LIBRARY)
+		target_compile_definitions(${target} PRIVATE HAS_BREAKPAD)
+		target_link_libraries(${target} PUBLIC ${BREAKPAD_LIBRARY})
 	endif()
 endforeach()

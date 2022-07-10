@@ -6,8 +6,8 @@
 #endif
 
 #ifdef HAS_BREAKPAD
-#include "crash_report_sender.h"
-#include "exception_handler.h"
+#include "client/windows/sender/crash_report_sender.h"
+#include "client/windows/handler/exception_handler.h"
 
 bool minidump_callback(const wchar_t* dump_path, const wchar_t* minidump_id, void* context, EXCEPTION_POINTERS* exinfo, MDRawAssertionInfo* assertion, bool succeeded)
 {
@@ -40,6 +40,13 @@ bool is_in_osx_application_bundle()
 #endif
 }
 
+void crash(int b)
+{
+//   volatile int* a = (int*)(NULL);
+//   *a = 1;
+    int a = 1/ b;
+}
+
 void common_main_setup(int argc, char **argv)
 {
     // This allows for opening a binary from Finder and having ZC be in its expected
@@ -56,4 +63,24 @@ void common_main_setup(int argc, char **argv)
         L"_dump_path_", 0, minidump_callback, 0,
         google_breakpad::ExceptionHandler::HANDLER_ALL, MiniDumpNormal, L"", 0);
 #endif
+    // https://stackoverflow.com/questions/45733174/breakpad-exception-handler-not-used-in-a-dll-on-windows
+    // __try 
+    // {
+    //     crash();
+    // }
+    // __except( true )
+    // { 
+    //     delete pHandler;
+    // }
+
+    try 
+    {
+        crash(0);
+    }
+    catch(std::exception &ex)
+    { 
+        delete pHandler;
+    }
+
+
 }
