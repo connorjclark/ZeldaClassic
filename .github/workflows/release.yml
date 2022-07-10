@@ -104,7 +104,11 @@ jobs:
       uses: crazy-max/ghaction-chocolatey@v1
       with:
         args: install .github/dependencies.config -y
-    - run: sh .github/workflows/install-breakpad.sh
+      
+    - uses: actions/setup-python@v4
+      with:
+        python-version: '3.x'
+    - run: bash .github/workflows/install-breakpad.sh
 
     - run: bash .github/workflows/configure-signatures.sh win ${{ inputs.versiontype }} ${{ inputs.full_release }} ${{ inputs.number }}
     - run: cmake . -A ${{ matrix.arrays.arch }}
@@ -122,6 +126,8 @@ jobs:
         prerelease: ${{ !inputs.full_release }}
         fail_on_unmatched_files: true
         generate_release_notes: true
+    
+    - run: bash .github/workflows/upload-to-raygun.sh
 
   release-mac:
     needs:
