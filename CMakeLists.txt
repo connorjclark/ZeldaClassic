@@ -37,11 +37,14 @@ function(enable_unity_build UB_SUFFIX SOURCE_VARIABLE_NAME)
   FILE(APPEND ${unit_build_file} "#include \"${CMAKE_SOURCE_DIR}/src/precompiled.h\"\n")
   # Add include statement for each translation unit
   foreach(source_file ${files} )
-    FILE( APPEND ${unit_build_file} "#include <${CMAKE_CURRENT_SOURCE_DIR}/${source_file}>\n")
+	FILE( APPEND ${unit_build_file} "#include <${CMAKE_CURRENT_SOURCE_DIR}/${source_file}>\n")
   endforeach(source_file)
   # Complement list of translation units with the name of ub
   set(${SOURCE_VARIABLE_NAME} ${${SOURCE_VARIABLE_NAME}} ${unit_build_file} PARENT_SCOPE)
 endfunction(enable_unity_build)
+
+# Needed for `git apply`.
+find_package(Git REQUIRED)
 
 #############################################################
 # Allegro
@@ -563,6 +566,8 @@ endif()
 # Misc.
 #############################################################
 
+find_library(BREAKPAD_LIBRARY NAMES breakpad_client)
+
 set(zc_warnings
 	-Werror=format
 )
@@ -571,6 +576,12 @@ if (WIN32)
 	list(APPEND zc_targets zconsole)
 endif()
 foreach(target IN LISTS zc_targets)
+	if(WIN32 AND BREAKPAD_LIBRARY)
+		target_compile_definitions(${target} PRIVATE __STDC_LIMIT_MACROS)
+		target_compile_definitions(${target} PRIVATE HAS_BREAKPAD)
+		target_link_libraries(${target} ${BREAKPAD_LIBRARY})
+	endif()
+
 	if(WIN32)
 		target_compile_definitions(${target} PRIVATE __STDC_LIMIT_MACROS)
 	endif()

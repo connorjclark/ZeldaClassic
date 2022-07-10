@@ -104,6 +104,7 @@ jobs:
       uses: crazy-max/ghaction-chocolatey@v1
       with:
         args: install .github/dependencies.config -y
+    - run: sh .github/workflows/install-breakpad.sh
 
     - run: bash .github/workflows/configure-signatures.sh win ${{ inputs.versiontype }} ${{ inputs.full_release }} ${{ inputs.number }}
     - run: cmake . -A ${{ matrix.arrays.arch }}
