@@ -4,7 +4,7 @@ set -euxo pipefail
 
 git clone https://chromium.googlesource.com/chromium/tools/depot_tools.git depot_tools
 
-mkdir breakpad2 && cd breakpad2
+mkdir breakpad && cd breakpad
 cmd.exe /c '..\depot_tools\fetch breakpad'
 echo "0---"
 ls
@@ -18,7 +18,7 @@ ls src/client/windows/
 
 # echo $(which msbuild)
 pwd
-cmd.exe /c 'msbuild src\client\windows\breakpad_client.sln -t:rebuild -verbosity:diag -property:Configuration=Release -property:PlatformToolset=v143'
+cmd.exe /c 'msbuild src\client\windows\breakpad_client.sln -tv:16.0 -t:rebuild -verbosity:diag -property:Configuration=Release'
 ls
 
 # ./configure && make

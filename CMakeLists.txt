@@ -286,7 +286,7 @@ endif()
 
 add_library(zconsolelogger STATIC src/zconsole/ConsoleLogger.cpp src/util.cpp src/process_managment.cpp)
 target_include_directories(zconsolelogger INTERFACE src/zconsole)
-target_link_libraries(zconsolelogger allegro_with_legacy)
+target_link_libraries(zconsolelogger PUBLIC allegro_with_legacy)
 
 #############################################################
 # Sound Library
@@ -444,16 +444,16 @@ endif()
 
 add_executable(zelda ${ZELDA_CORE_SOURCES} ${ZELDA_GUI_SOURCES} ${ZELDA_SPRITE_SOURCES} ${ZELDA_SUBSCREEN_SOURCES} ${ZELDA_SCRIPTING_SOURCES} ${ZELDAEXTRASOURCES} ${ZELDA_MODULES})
 target_compile_definitions(zelda PRIVATE IS_PLAYER)
-target_link_libraries(zelda allegro_with_legacy)
+target_link_libraries(zelda PUBLIC allegro_with_legacy)
 
 if(WIN32)
-	target_link_libraries(zelda zconsolelogger zcsound winmm ${IMAGELIBS} ${ZELDALIBSEXTRA})
+	target_link_libraries(zelda PUBLIC zconsolelogger zcsound winmm ${IMAGELIBS} ${ZELDALIBSEXTRA})
 elseif(LINUX)
-	target_link_libraries(zelda zconsolelogger zcsound ${IMAGELIBS} ${ZELDALIBSEXTRA})
+	target_link_libraries(zelda PUBLIC zconsolelogger zcsound ${IMAGELIBS} ${ZELDALIBSEXTRA})
 elseif(APPLE)
-	target_link_libraries(zelda zconsolelogger zcsound ${IMAGELIBS} ${ZELDALIBSEXTRA})
+	target_link_libraries(zelda PUBLIC zconsolelogger zcsound ${IMAGELIBS} ${ZELDALIBSEXTRA})
 endif()
-target_link_libraries(zelda allegro_with_legacy)
+target_link_libraries(zelda PUBLIC allegro_with_legacy)
 
 if(MSVC AND USE_PCH)
 	set_target_properties(zelda PROPERTIES COMPILE_FLAGS "/Yuprecompiled.h /FIprecompiled.h /Fp\"${ZCPrecompiledBinary}\"" OBJECT_DEPENDS "${ZCPrecompiledBinary}")
@@ -518,7 +518,7 @@ endif()
 
 if(${BISON_FOUND} AND ${FLEX_FOUND})
 	add_executable(zscript ${ZSCRIPT_CORE_SOURCES} ${PARSER_SOURCES} ${BISON_ZScriptParser_OUTPUTS} ${FLEX_ZScriptLexer_OUTPUTS} ${ZSCRIPT_MODULES})
-	target_link_libraries(zscript allegro_with_legacy zconsolelogger ${ZSCRIPTLIBSEXTRA})
+	target_link_libraries(zscript PUBLIC allegro_with_legacy zconsolelogger ${ZSCRIPTLIBSEXTRA})
 	target_compile_definitions(zscript PRIVATE IS_PARSER)
 endif()
 
@@ -535,7 +535,7 @@ elseif(LINUX)
 endif()
 
 add_executable(zlauncher ${LAUNCHER_SOURCES} ${LAUNCHER_GUI_SOURCES} ${LAUNCHEREXTRASOURCES})
-target_link_libraries(zlauncher allegro_with_legacy zconsolelogger ${LAUNCHERLIBSEXTRA})
+target_link_libraries(zlauncher PUBLIC allegro_with_legacy zconsolelogger ${LAUNCHERLIBSEXTRA})
 target_compile_definitions(zlauncher PRIVATE IS_LAUNCHER)
 
 #############################################################
@@ -566,7 +566,42 @@ endif()
 # Misc.
 #############################################################
 
-find_library(BREAKPAD_LIBRARY NAMES breakpad_client)
+# find_library(BREAKPAD_LIBRARY NAMES breakpad_client)
+
+
+
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
+FetchContent_Declare(
+	breakpad_external
+	GIT_REPOSITORY https://github.com/google/breakpad.git
+	GIT_TAG        main
+)
+FetchContent_MakeAvailable(breakpad_external)
+file(GLOB breakpad_source_files
+	"${breakpad_external_SOURCE_DIR}/src/client/windows/crash_generation/crash_generation_client.cc"
+	"${breakpad_external_SOURCE_DIR}/src/client/windows/handler/exception_handler.cc"
+	"${breakpad_external_SOURCE_DIR}/src/client/windows/sender/crash_report_sender.cc"
+	"${breakpad_external_SOURCE_DIR}/src/common/windows/http_upload.cc"
+
+	"${breakpad_external_SOURCE_DIR}/src/client/windows/sender/crash_report_sender.cc"
+	
+	
+	"${breakpad_external_SOURCE_DIR}/src/common/convert_UTF.c"
+	"${breakpad_external_SOURCE_DIR}/src/common/md5.cc"
+	"${breakpad_external_SOURCE_DIR}/src/common/string_conversion.cc"
+)
+add_library(breakpad SHARED ${breakpad_source_files})
+target_include_directories(breakpad PRIVATE
+	"${breakpad_external_SOURCE_DIR}/src"
+)
+set(BREAKPAD_LIBRARY breakpad)
+
+
+
+
+
+
+
 
 set(zc_warnings
 	-Werror=format
@@ -579,7 +614,7 @@ foreach(target IN LISTS zc_targets)
 	if(WIN32 AND BREAKPAD_LIBRARY)
 		target_compile_definitions(${target} PRIVATE __STDC_LIMIT_MACROS)
 		target_compile_definitions(${target} PRIVATE HAS_BREAKPAD)
-		target_link_libraries(${target} ${BREAKPAD_LIBRARY})
+		target_link_libraries(${target} PUBLIC ${BREAKPAD_LIBRARY})
 	endif()
 
 	if(WIN32)
