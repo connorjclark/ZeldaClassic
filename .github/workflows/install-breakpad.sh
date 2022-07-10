@@ -2,7 +2,7 @@
 
 set -euxo pipefail
 
-# git clone https://chromium.googlesource.com/chromium/tools/depot_tools.git depot_tools
+git clone https://chromium.googlesource.com/chromium/tools/depot_tools.git depot_tools
 
 mkdir breakpad && cd breakpad
 cmd.exe /c '..\depot_tools\fetch breakpad'
