@@ -4,7 +4,9 @@ set -euxo pipefail
 
 git clone https://chromium.googlesource.com/chromium/tools/depot_tools.git depot_tools
 export PATH=$PATH:$PWD/depot_tools
-set DEPOT_TOOLS_UPDATE=1
+
+# Why is depot_tool's python locater so busted?
+cp $(which python3) depot_tools
 
 mkdir breakpad && cd breakpad
 fetch breakpad
