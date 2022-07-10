@@ -3,13 +3,13 @@
 set -euxo pipefail
 
 git clone https://chromium.googlesource.com/chromium/tools/depot_tools.git depot_tools
-export PATH=$PWD/depot_tools:$PATH
-
-# Why is depot_tool's python locater so busted?
-# cp $(which python3) depot_tools/python3.exe
 
 mkdir breakpad && cd breakpad
-fetch breakpad
-cd src
-./configure && make
-make install
+cmd.exe /c '..\depot_tools\fetch breakpad'
+cmd.exe /c '..\depot_tools\python2-bin\python2 .\src\tools\gyp\gyp_main.py src\client\windows\breakpad_client.gyp'
+
+msbuild src/client/windows/build_all.vcproj -t:rebuild -verbosity:diag -property:Configuration=Release
+ls
+
+# ./configure && make
+# make install
