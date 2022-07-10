@@ -17,9 +17,9 @@ ls
 echo "3---"
 ls src/client/windows/
 
-echo $(which msbuild)
+# echo $(which msbuild)
 pwd
-msbuild src/client/windows/build_all.vcproj -t:rebuild -verbosity:diag -property:Configuration=Release
+cmd.exe /c 'msbuild src\client\windows\build_all.vcproj -t:rebuild -verbosity:diag -property:Configuration=Release'
 ls
 
 # ./configure && make
