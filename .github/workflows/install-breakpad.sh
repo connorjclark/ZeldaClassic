@@ -18,7 +18,7 @@ ls src/client/windows/
 
 # echo $(which msbuild)
 pwd
-cmd.exe /c 'msbuild src\client\windows\breakpad_client.sln /p:PlatformToolset=v143 -t:rebuild -verbosity:diag -property:Configuration=Release'
+cmd.exe /c 'msbuild src\client\windows\breakpad_client.sln -t:rebuild -verbosity:diag -property:Configuration=Release -property:PlatformToolset=v143'
 ls
 
 # ./configure && make
