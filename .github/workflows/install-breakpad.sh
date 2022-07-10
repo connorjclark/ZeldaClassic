@@ -19,7 +19,7 @@ ls src/client/windows/
 
 # echo $(which msbuild)
 pwd
-cmd.exe /c 'msbuild src\client\windows\build_all.vcproj -t:rebuild -verbosity:diag -property:Configuration=Release'
+cmd.exe /c 'msbuild src\client\windows\breakpad_client.sln -t:rebuild -verbosity:diag -property:Configuration=Release'
 ls
 
 # ./configure && make
