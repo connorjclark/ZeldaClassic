@@ -6,7 +6,7 @@ git clone https://chromium.googlesource.com/chromium/tools/depot_tools.git depot
 export PATH=$PATH:$PWD/depot_tools
 
 # Why is depot_tool's python locater so busted?
-cp $(which python3) depot_tools
+cp $(which python3) depot_tools/python3.exe
 
 mkdir breakpad && cd breakpad
 fetch breakpad
