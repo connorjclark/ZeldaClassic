@@ -568,35 +568,42 @@ endif()
 #############################################################
 
 if(WIN32)
-	# find_library(BREAKPAD_LIBRARY NAMES breakpad_client)
-	FetchContent_Declare(
-		breakpad_external
-		GIT_REPOSITORY https://github.com/google/breakpad.git
-		GIT_TAG        c161459d7e94d7ef5840ba90aa26a4d5f955c976
-	)
-	FetchContent_MakeAvailable(breakpad_external)
-	file(GLOB breakpad_source_files
-		"${breakpad_external_SOURCE_DIR}/src/client/windows/crash_generation/crash_generation_client.cc"
-		"${breakpad_external_SOURCE_DIR}/src/client/windows/handler/exception_handler.cc"
-		"${breakpad_external_SOURCE_DIR}/src/client/windows/sender/crash_report_sender.cc"
-		"${breakpad_external_SOURCE_DIR}/src/common/windows/http_upload.cc"
-		"${breakpad_external_SOURCE_DIR}/src/common/windows/guid_string.cc"
+	# add_library(crashpad INTERFACE)
+	# set(CRASHPAD_DIR c:/Users/cjamc/code/ZeldaClassic/build/tmp/crashpad/crashpad)
+	# target_link_libraries(crashpad INTERFACE
+	# 	"${CRASHPAD_DIR}/out/Default/obj/client/common.lib"
+	# 	"${CRASHPAD_DIR}/out/Default/obj/client/client.lib"
+	# 	"${CRASHPAD_DIR}/out/Default/obj/util/util.lib"
+	# 	"${CRASHPAD_DIR}/out/Default/obj/third_party/mini_chromium/mini_chromium/base/base.lib"
+	# )
+	# target_include_directories(crashpad INTERFACE
+	# 	"${CRASHPAD_DIR}"
+	# 	"${CRASHPAD_DIR}/out/Default/gen"
+	# 	"${CRASHPAD_DIR}/third_party/mini_chromium/mini_chromium"
+	# )
+	# # target_compile_options(crashpad INTERFACE "/DUNICODE")
 
-		"${breakpad_external_SOURCE_DIR}/src/client/windows/sender/crash_report_sender.cc"
-		
-		
-		# "${breakpad_external_SOURCE_DIR}/src/common/convert_UTF.c"
-		"${breakpad_external_SOURCE_DIR}/src/common/md5.cc"
-		# "${breakpad_external_SOURCE_DIR}/src/common/string_conversion.cc"
-	)
-	add_library(breakpad STATIC ${breakpad_source_files})
-	target_include_directories(breakpad PUBLIC
-		"${breakpad_external_SOURCE_DIR}/src"
-	)
-	target_compile_options(breakpad PRIVATE "/DUNICODE")
-	target_link_libraries(breakpad PUBLIC Wininet)
+	# configure_file(${CRASHPAD_DIR}/out/Default/crashpad_handler.exe
+    # 	${CMAKE_CURRENT_BINARY_DIR} COPYONLY)
+	# set(CRASHPAD_LIBRARY crashpad)
 
-	set(BREAKPAD_LIBRARY breakpad)
+	#  ----------
+
+	# include(FetchContent)
+	# FetchContent_Declare(
+	# 	crashpad_cmake
+	# 	GIT_REPOSITORY https://github.com/TheAssemblyArmada/crashpad-cmake.git
+	# 	GIT_TAG        80573adcc845071401c73c99eaec7fd9847d45fb
+	# )
+	# FetchContent_MakeAvailable(crashpad_cmake)
+	# set(CRASHPAD_LIBRARY crashpad_client)
+
+	#  -------
+
+
+	set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
+	include(SetupCrashpad)
+	set(CRASHPAD_LIBRARY crashpad)
 endif()
 
 
@@ -608,7 +615,7 @@ if (WIN32)
 	list(APPEND zc_targets zconsole)
 endif()
 foreach(target IN LISTS zc_targets)
-	if(WIN32 AND BREAKPAD_LIBRARY)
+	if(WIN32 AND CRASHPAD_LIBRARY)
 		# target_compile_definitions(${target} PRIVATE HAS_BREAKPAD)
 		# target_link_libraries(${target} PUBLIC ${BREAKPAD_LIBRARY})
 	endif()
@@ -627,8 +634,8 @@ foreach(target IN LISTS zc_targets)
 endforeach()
 
 foreach(target IN LISTS zc_apps)
-	if(BREAKPAD_LIBRARY)
-		target_compile_definitions(${target} PRIVATE HAS_BREAKPAD)
-		target_link_libraries(${target} PUBLIC ${BREAKPAD_LIBRARY})
+	if(CRASHPAD_LIBRARY)
+		target_compile_definitions(${target} PRIVATE HAS_CRASHPAD)
+		target_link_libraries(${target} PRIVATE ${CRASHPAD_LIBRARY})
 	endif()
 endforeach()
