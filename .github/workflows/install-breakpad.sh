@@ -2,13 +2,20 @@
 
 set -euxo pipefail
 
-# git clone https://chromium.googlesource.com/chromium/tools/depot_tools.git depot_tools
-setx path "%path%;$PWD\depot_tools"
+if ! command -v fetch &> /dev/null
+then
+  git clone https://chromium.googlesource.com/chromium/tools/depot_tools.git depot_tools
+  setx path "%path%;$PWD\depot_tools"
+fi
+
+GN_TARGET_CPU=x86
+GN_IS_DEBUG=false
+GN_WIN_LINK_FLAG=/MT
 
 mkdir crashpad && cd crashpad
 fetch crashpad
 cd crashpad
-gn gen out/Default
+gn gen out/Default --args="target_cpu=\"${GN_TARGET_CPU}\" is_debug=${GN_IS_DEBUG} extra_cflags=\"${GN_WIN_LINK_FLAG}\""
 ninja -C out/Default
 
 # https://stackoverflow.com/questions/26191004/how-do-i-integrate-google-crashpad-with-my-application

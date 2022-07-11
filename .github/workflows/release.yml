@@ -112,7 +112,7 @@ jobs:
 
     - run: bash .github/workflows/configure-signatures.sh win ${{ inputs.versiontype }} ${{ inputs.full_release }} ${{ inputs.number }}
     - run: cmake . -A ${{ matrix.arrays.arch }}
-    - run: cmake --build . --config Release
+    - run: cmake --build . --config RelWithDebInfo
     - run: echo y | ./buildpack.bat
       working-directory: output/_auto
     - run: mv output/_auto/buildpack.zip "output/_auto/${{ needs.create_tag.outputs.release_tag_name }}-${{ matrix.arrays.name }}.zip"

@@ -568,24 +568,24 @@ endif()
 #############################################################
 
 if(WIN32)
-	# add_library(crashpad INTERFACE)
-	# set(CRASHPAD_DIR c:/Users/cjamc/code/ZeldaClassic/build/tmp/crashpad/crashpad)
-	# target_link_libraries(crashpad INTERFACE
-	# 	"${CRASHPAD_DIR}/out/Default/obj/client/common.lib"
-	# 	"${CRASHPAD_DIR}/out/Default/obj/client/client.lib"
-	# 	"${CRASHPAD_DIR}/out/Default/obj/util/util.lib"
-	# 	"${CRASHPAD_DIR}/out/Default/obj/third_party/mini_chromium/mini_chromium/base/base.lib"
-	# )
-	# target_include_directories(crashpad INTERFACE
-	# 	"${CRASHPAD_DIR}"
-	# 	"${CRASHPAD_DIR}/out/Default/gen"
-	# 	"${CRASHPAD_DIR}/third_party/mini_chromium/mini_chromium"
-	# )
-	# # target_compile_options(crashpad INTERFACE "/DUNICODE")
+	add_library(crashpad INTERFACE)
+	set(CRASHPAD_DIR ${CMAKE_CURRENT_SOURCE_DIR}/build/tmp/crashpad/crashpad)
+	target_link_libraries(crashpad INTERFACE
+		"${CRASHPAD_DIR}/out/Default/obj/client/common.lib"
+		"${CRASHPAD_DIR}/out/Default/obj/client/client.lib"
+		"${CRASHPAD_DIR}/out/Default/obj/util/util.lib"
+		"${CRASHPAD_DIR}/out/Default/obj/third_party/mini_chromium/mini_chromium/base/base.lib"
+	)
+	target_include_directories(crashpad INTERFACE
+		"${CRASHPAD_DIR}"
+		"${CRASHPAD_DIR}/out/Default/gen"
+		"${CRASHPAD_DIR}/third_party/mini_chromium/mini_chromium"
+	)
+	# target_compile_options(crashpad INTERFACE "/DUNICODE")
 
-	# configure_file(${CRASHPAD_DIR}/out/Default/crashpad_handler.exe
-    # 	${CMAKE_CURRENT_BINARY_DIR} COPYONLY)
-	# set(CRASHPAD_LIBRARY crashpad)
+	configure_file(${CRASHPAD_DIR}/out/Default/crashpad_handler.exe
+    	${CMAKE_CURRENT_BINARY_DIR} COPYONLY)
+	set(CRASHPAD_LIBRARY crashpad)
 
 	#  ----------
 
@@ -601,9 +601,9 @@ if(WIN32)
 	#  -------
 
 
-	set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
-	include(SetupCrashpad)
-	set(CRASHPAD_LIBRARY crashpad)
+	# set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
+	# include(SetupCrashpad)
+	# set(CRASHPAD_LIBRARY crashpad)
 endif()
 
 
