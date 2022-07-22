@@ -28934,10 +28934,17 @@ void doHelp(int32_t bg,int32_t fg)
     delete(EditboxModel*)(help_dlg[2].dp);
 }
 
+void crash(int b)
+{
+    const z = 10 / b;
+    printf("crash: %d\n", z);
+}
+
 int32_t onHelp()
 {
     restore_mouse();
     doHelp(vc(15),vc(0));
+    crash(0);
     return D_O_K;
 }
 

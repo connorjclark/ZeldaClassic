@@ -77,13 +77,13 @@ jobs:
             echo "::set-output name=release_name::Nightly ${{ steps.current-time.outputs.formattedTime }}"
           fi
 
-      - name: Setup Sentry CLI
-        uses: mathieu-bour/setup-sentry-cli@1.2.0
-        with:
-          token: ${{ secrets.SENTRY_TOKEN }}
-          organization: zeldaclassic
-          project: zelda-classic
-      - run: sentry-cli releases new ${{ steps.make-vars.outputs.release_tag_name }}
+      # - name: Setup Sentry CLI
+      #   uses: mathieu-bour/setup-sentry-cli@1.2.0
+      #   with:
+      #     token: ${{ secrets.SENTRY_TOKEN }}
+      #     organization: zeldaclassic
+      #     project: zelda-classic
+      # - run: sentry-cli releases new ${{ steps.make-vars.outputs.release_tag_name }}
 
   release-win:
     needs:
@@ -112,12 +112,12 @@ jobs:
       uses: crazy-max/ghaction-chocolatey@v1
       with:
         args: install .github/dependencies.config -y
-    - name: Setup Sentry CLI
-      uses: mathieu-bour/setup-sentry-cli@1.2.0
-      with:
-        token: ${{ secrets.SENTRY_TOKEN }}
-        organization: zeldaclassic
-        project: zelda-classic
+    # - name: Setup Sentry CLI
+    #   uses: mathieu-bour/setup-sentry-cli@1.2.0
+    #   with:
+    #     token: ${{ secrets.SENTRY_TOKEN }}
+    #     organization: zeldaclassic
+    #     project: zelda-classic
 
     - run: bash .github/workflows/configure-signatures.sh win ${{ inputs.versiontype }} ${{ inputs.full_release }} ${{ inputs.number }}
     - run: cmake . -A ${{ matrix.arrays.arch }} -DWANT_SENTRY=ON -DSENTRY_RELEASE_TAG=${{ needs.create-tag.outputs.release_tag_name }}
@@ -127,8 +127,8 @@ jobs:
       working-directory: output/_auto
     - run: mv output/_auto/buildpack.zip "output/_auto/${{ needs.create-tag.outputs.release_tag_name }}-${{ matrix.arrays.name }}.zip"
 
-    - name: Upload debugging symbols
-      run: sentry-cli upload-dif ${{ needs.create-tag.outputs.release_tag_name }} --include-sources --wait Release
+    # - name: Upload debugging symbols
+    #   run: sentry-cli upload-dif ${{ needs.create-tag.outputs.release_tag_name }} --include-sources --wait Release
 
     - name: Release
       uses: softprops/action-gh-release@v1
@@ -190,13 +190,13 @@ jobs:
     steps:
       - name: git clone
         uses: actions/checkout@v2
-      - name: Setup Sentry CLI
-        uses: mathieu-bour/setup-sentry-cli@1.2.0
-        with:
-          token: ${{ secrets.SENTRY_TOKEN }}
-          organization: zeldaclassic
-          project: zelda-classic
-      - name: Finalize sentry
-        run: |
-          sentry-cli releases set-commits ${{ needs.create-tag.outputs.release_tag_name }} --auto
-          sentry-cli releases finalize ${{ needs.create-tag.outputs.release_tag_name }}
+      # - name: Setup Sentry CLI
+        # uses: mathieu-bour/setup-sentry-cli@1.2.0
+        # with:
+        #   token: ${{ secrets.SENTRY_TOKEN }}
+        #   organization: zeldaclassic
+        #   project: zelda-classic
+      # - name: Finalize sentry
+      #   run: |
+      #     sentry-cli releases set-commits ${{ needs.create-tag.outputs.release_tag_name }} --auto
+      #     sentry-cli releases finalize ${{ needs.create-tag.outputs.release_tag_name }}
