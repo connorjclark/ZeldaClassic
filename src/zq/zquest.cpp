@@ -28936,7 +28936,7 @@ void doHelp(int32_t bg,int32_t fg)
 
 void crash(int b)
 {
-    const z = 10 / b;
+    int z = 10 / b;
     printf("crash: %d\n", z);
 }
 
