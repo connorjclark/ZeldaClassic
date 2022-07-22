@@ -127,8 +127,8 @@ jobs:
       working-directory: output/_auto
     - run: mv output/_auto/buildpack.zip "output/_auto/${{ needs.create-tag.outputs.release_tag_name }}-${{ matrix.arrays.name }}.zip"
 
-    # - name: Upload debugging symbols
-    #   run: sentry-cli upload-dif ${{ needs.create-tag.outputs.release_tag_name }} --include-sources --wait Release
+    - name: Upload debugging symbols
+      run: sentry-cli upload-dif ${{ needs.create-tag.outputs.release_tag_name }} --include-sources --wait Release
 
     - name: Release
       uses: softprops/action-gh-release@v1
