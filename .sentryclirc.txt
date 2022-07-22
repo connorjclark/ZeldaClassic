@@ -1,0 +1,2 @@
+[dif]
+max_item_size = 5242880
