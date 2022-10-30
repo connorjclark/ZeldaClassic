@@ -33474,12 +33474,6 @@ void FFScript::clearRunningItemScripts()
 }
 
 
-bool FFScript::newScriptEngine()
-{
-	advanceframe(true);
-	return false;
-}
-
 void FFScript::warpScriptCheck()
 {
 	if(get_bit(quest_rules, qr_SCRIPTDRAWSINWARPS))
