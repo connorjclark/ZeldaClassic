@@ -88,7 +88,7 @@ static bool _a5_setup_screen(int w, int h)
     goto fail;
   }
   al_store_state(&old_state, ALLEGRO_STATE_NEW_BITMAP_PARAMETERS);
-  al_set_new_bitmap_flags(ALLEGRO_NO_PRESERVE_TEXTURE);
+  al_set_new_bitmap_flags(ALLEGRO_NO_PRESERVE_TEXTURE | ALLEGRO_MAG_LINEAR | ALLEGRO_MIN_LINEAR);
 
   _a5_screen = al_create_bitmap(w, h);
   al_restore_state(&old_state);
