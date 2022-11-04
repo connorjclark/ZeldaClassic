@@ -86,6 +86,7 @@ inline double Sin(double x)
 	if (replay_is_active())
 	{
 		// x needs to be converted from radians -> angles -> sin1 domain
+		x = std::fmod(x, 2*PI);
 		x = x * (180/PI * 32768.0/360.0);
 		return sin1(x) * Q15;
 	}
@@ -97,6 +98,7 @@ inline double Cos(double x)
 {
 	if (replay_is_active())
 	{
+		x = std::fmod(x, 2*PI);
 		x = x * (180/PI * 32768.0/360.0);
 		return cos1(x) * Q15;
 	}
@@ -108,6 +110,7 @@ inline double Tan(double x)
 {
 	if (replay_is_active())
 	{
+		x = std::fmod(x, 2*PI);
 		x = x * (180/PI * 32768.0/360.0);
 		return (sin1(x) * Q15) / (cos1(x) * Q15);
 	}
