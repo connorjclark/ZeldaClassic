@@ -499,7 +499,6 @@ int32_t FlashWarpSquare = -1, FlashWarpClk = 0; // flash the destination warp re
 uint8_t ViewLayer3BG = 0, ViewLayer2BG = 0; 
 int32_t window_width, window_height;
 bool Vsync = false, ShowFPS = false, SaveDragResize = false, DragAspect = false, SaveWinPos=false;
-int32_t LastWidth = 0, LastHeight = 0;
 int32_t ComboBrush = 0;                                             //show the brush instead of the normal mouse
 int32_t ComboBrushPause = 0;                                        //temporarily disable the combo brush
 int32_t BrushPosition = 0;                                          //top left, middle, bottom right, etc.
@@ -31773,7 +31772,7 @@ int32_t main(int32_t argc,char **argv)
 		double hscale = gethorizontalscale(); 
 		int window_width_temp = window_width*hscale;
 		int window_height_temp = window_height*vscale;
-		// al_resize_display(all_get_display(), window_width_temp, window_height_temp);
+		al_resize_display(all_get_display(), window_width_temp, window_height_temp);
 		
 		int new_x = zc_get_config("zquest","window_x",0);
 		int new_y = zc_get_config("zquest","window_y",0);
@@ -31781,8 +31780,6 @@ int32_t main(int32_t argc,char **argv)
 		// else al_set_window_position(all_get_display(), center_x - window_width_temp / 2, center_y - window_height_temp / 2);
 	}
 #endif
-	LastWidth = al_get_display_width(all_get_display());
-	LastHeight = al_get_display_height(all_get_display());
 
 	//check and log RTC date and time
 	for (int32_t q = 0; q < curTimeLAST; q++) 
@@ -32172,7 +32169,6 @@ int32_t main(int32_t argc,char **argv)
 		}
 		
 #endif
-		doAspectResize();
 		check_autosave();
 		/*
 		if (!is_large) 
@@ -34146,35 +34142,6 @@ void doDarkroomCircle(int32_t cx, int32_t cy, byte glowRad,BITMAP* dest,BITMAP* 
 }
 void doDarkroomCone(int32_t sx, int32_t sy, byte glowRad, int32_t dir, BITMAP* dest,BITMAP* transdest){}
 
-void doAspectResize()
-{
-	if (DragAspect)
-	{
-		if (LastWidth == 0 || LastHeight == 0)
-		{
-			LastWidth = al_get_display_width(all_get_display());
-			LastHeight = al_get_display_height(all_get_display());
-		}
-		if (LastWidth != al_get_display_width(all_get_display()) || LastHeight != al_get_display_height(all_get_display()))
-		{
-			bool widthfirst = true;
-			
-			if (abs(LastWidth - al_get_display_width(all_get_display())) < abs(LastHeight - al_get_display_height(all_get_display()))) widthfirst = false;
-			
-			if (widthfirst)
-			{
-				al_resize_display(all_get_display(), al_get_display_width(all_get_display()), al_get_display_width(all_get_display())*0.75);
-			}
-			else
-			{
-				al_resize_display(all_get_display(), al_get_display_height(all_get_display())/0.75, al_get_display_height(all_get_display()));
-			}
-		}
-		LastWidth = al_get_display_width(all_get_display());
-		LastHeight = al_get_display_height(all_get_display());
-	}
-}
-
 static RenderTreeItem rti_root;
 static RenderTreeItem rti_screen;
 
@@ -34249,7 +34216,6 @@ static void render_zq()
 bool update_hw_pal = false;
 void update_hw_screen(bool force)
 {
-	// doAspectResize();
 	if(force || myvsync)
 	{
 		zc_process_mouse_events();

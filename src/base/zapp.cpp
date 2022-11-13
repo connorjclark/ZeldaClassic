@@ -73,24 +73,47 @@ void zc_install_display_event_handler()
 	// 	al_register_event_source(display_event_queue, al_get_display_event_source(all_get_display()));
 	// }
 }
+
+extern bool DragAspect;
+static void doAspectResize()
+{
+	if (!DragAspect)
+		return;
+
+	static int prev_width = 0, prev_height = 0;
+
+	if (prev_width == 0 || prev_height == 0)
+	{
+		prev_width = al_get_display_width(all_get_display());
+		prev_height = al_get_display_height(all_get_display());
+	}
+
+	if (prev_width != al_get_display_width(all_get_display()) || prev_height != al_get_display_height(all_get_display()))
+	{
+		bool width_first = true;
+		
+		if (abs(prev_width - al_get_display_width(all_get_display())) < abs(prev_height - al_get_display_height(all_get_display()))) width_first = false;
+		
+		if (width_first)
+		{
+			al_resize_display(all_get_display(), al_get_display_width(all_get_display()), al_get_display_width(all_get_display())*0.75);
+		}
+		else
+		{
+			al_resize_display(all_get_display(), al_get_display_height(all_get_display())/0.75, al_get_display_height(all_get_display()));
+		}
+	}
+
+	prev_width = al_get_display_width(all_get_display());
+	prev_height = al_get_display_height(all_get_display());
+}
+
 void zc_process_display_events()
 {
 	all_process_display_events();
-	//all_process_display_event(); // ....
 
-	// if (!display_event_queue)
-	// 	return;
-
-	// ALLEGRO_EVENT event;
-	// while (!al_is_event_queue_empty(display_event_queue))
-	// {
-	// 	al_get_next_event(display_event_queue, &event);
-	// 	all_process_display_event(&event);
-	// 	switch (event.type)
-	// 	{
-		
-	// 	}
-	// }
+	// TODO: should do this only in response to a resize event
+	doAspectResize();
 }
 
 static ALLEGRO_EVENT_QUEUE *evq = nullptr;
