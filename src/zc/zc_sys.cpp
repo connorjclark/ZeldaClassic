@@ -169,6 +169,183 @@ void do_DwmFlush()
 
 #endif // _WIN32
 
+// Rendering.
+RenderTreeItem rti_root;
+RenderTreeItem rti_game;
+RenderTreeItem rti_menu;
+// TODO: change this to `screen_gui` and just render out the screen bmp
+RenderTreeItem rti_gui;
+
+static int zc_gui_mouse_x()
+{
+	if (rti_gui.visible)
+	{
+		return rti_gui.translate_mouse_x(mouse_x);
+	}
+	else if (rti_menu.visible)
+	{
+		return rti_menu.translate_mouse_x(mouse_x);
+	}
+	else
+	{
+		return rti_game.translate_mouse_x(mouse_x);
+	}
+}
+
+static int zc_gui_mouse_y()
+{
+	if (rti_gui.visible)
+	{
+		return rti_gui.translate_mouse_y(mouse_y);
+	}
+	else if (rti_menu.visible)
+	{
+		return rti_menu.translate_mouse_y(mouse_y);
+	}
+	else
+	{
+		return rti_game.translate_mouse_x(mouse_y);
+	}
+}
+
+static void init_render_tree()
+{
+	if (!rti_root.children.empty())
+		return;
+
+	if (zc_get_config("zeldadx", "scaling_mode", 0) == 1)
+		all_set_bitmap_flags(ALLEGRO_NO_PRESERVE_TEXTURE | ALLEGRO_MAG_LINEAR | ALLEGRO_MIN_LINEAR);
+	else
+		al_set_new_bitmap_flags(ALLEGRO_NO_PRESERVE_TEXTURE);
+	rti_game.bitmap = al_create_bitmap(framebuf->w, framebuf->h);
+
+	al_set_new_bitmap_flags(ALLEGRO_NO_PRESERVE_TEXTURE);
+	rti_menu.bitmap = al_create_bitmap(menu_bmp->w, menu_bmp->h);
+
+	al_set_new_bitmap_flags(ALLEGRO_NO_PRESERVE_TEXTURE);
+	rti_gui.bitmap = al_create_bitmap(gui_bmp->w, gui_bmp->h);
+
+	rti_root.children.push_back(&rti_game);
+	rti_root.children.push_back(&rti_menu);
+	rti_root.children.push_back(&rti_gui);
+
+	gui_mouse_x = zc_gui_mouse_x;
+	gui_mouse_y = zc_gui_mouse_y;
+}
+
+static void configure_render_tree()
+{
+	rti_root.transform.x = 0;
+	rti_root.transform.y = 0;
+	rti_root.transform.scale = 1;
+	rti_root.visible = true;
+
+	{
+		static bool scaling_force_integer = zc_get_config("zeldadx", "scaling_force_integer", 1);
+		
+		int w = al_get_bitmap_width(rti_game.bitmap);
+		int h = al_get_bitmap_height(rti_game.bitmap);
+		float scale = std::min((float)resx/w, (float)resy/h);
+		if (scaling_force_integer)
+			scale = std::max((int) scale, 1);
+		rti_game.transform.x = (resx - w*scale) / 2 / scale;
+		rti_game.transform.y = (resy - h*scale) / 2 / scale;
+		rti_game.transform.scale = scale;
+		rti_game.visible = true;
+	}
+
+	{
+		int w = al_get_bitmap_width(rti_menu.bitmap);
+		int h = al_get_bitmap_height(rti_menu.bitmap);
+		float scale = std::min((float)resx / w, (float)resy / h);
+		rti_menu.transform.x = 0;
+		rti_menu.transform.y = 0;
+		rti_menu.transform.scale = scale;
+		rti_menu.visible = MenuOpen;
+	}
+
+	{
+		int w = al_get_bitmap_width(rti_gui.bitmap);
+		int h = al_get_bitmap_height(rti_gui.bitmap);
+		float scale = std::min((float)resx/w, (float)resy/h);
+		rti_gui.transform.x = (resx - w*scale) / 2 / scale;
+		rti_gui.transform.y = (resy - h*scale) / 2 / scale;
+		rti_gui.transform.scale = scale;
+		rti_gui.visible = (dialog_count >= 1 && !active_dialog) || dialog_count >= 2 || screen == gui_bmp;
+		if (rti_gui.visible)
+			rti_menu.visible = false;
+	}
+
+	bool freeze_game_bitmap = rti_menu.visible || rti_gui.visible;
+	if (freeze_game_bitmap)
+	{
+		static ALLEGRO_COLOR tint = al_premul_rgba_f(0.4, 0.4, 0.8, 0.8);
+		rti_game.tint = &tint;
+	}
+	else
+	{
+		all_render_a5_bitmap(framebuf, rti_game.bitmap);
+		rti_game.tint = nullptr;
+	}
+
+	if (rti_menu.visible)
+		all_render_a5_bitmap(menu_bmp, rti_menu.bitmap);
+	if (rti_gui.visible)
+		all_render_a5_bitmap(gui_bmp, rti_gui.bitmap);
+}
+
+static void render_debug_text(ALLEGRO_FONT* font, std::string text, int x, int y, int scale)
+{
+	int w = al_get_text_width(font, text.c_str());
+	int h = al_get_font_line_height(font);
+
+	al_set_new_bitmap_flags(ALLEGRO_NO_PRESERVE_TEXTURE);
+	ALLEGRO_BITMAP* text_bitmap = al_create_bitmap(resx, 8);
+	al_set_target_bitmap(text_bitmap);
+	al_clear_to_color(al_map_rgba(0, 0, 0, 0));
+	al_draw_filled_rectangle(0, 0, w, h, al_map_rgba_f(0, 0, 0, 0.6));
+	al_draw_text(font, al_map_rgb_f(1,1,1), 0, 0, 0, text.c_str());
+
+	al_set_target_backbuffer(all_get_display());
+	al_draw_scaled_bitmap(text_bitmap,
+		0, 0,
+		al_get_bitmap_width(text_bitmap), al_get_bitmap_height(text_bitmap),
+		x, y,
+		al_get_bitmap_width(text_bitmap) * scale, al_get_bitmap_height(text_bitmap) * scale,
+		0
+	);
+	al_destroy_bitmap(text_bitmap);
+}
+
+void render_zc()
+{
+	init_render_tree();
+	configure_render_tree();
+	render_tree_layout(&rti_root, nullptr);
+
+	al_set_target_backbuffer(all_get_display());
+	al_clear_to_color(al_map_rgb_f(0, 0, 0));
+	render_tree_draw(&rti_root);
+
+	static ALLEGRO_FONT* font = al_create_builtin_font();
+	static int font_scale = 5;
+	int font_height = al_get_font_line_height(font);
+	int debug_text_y = resy - font_scale*font_height - 5;
+	if (Paused)
+	{
+		render_debug_text(font, "PAUSED", 5, debug_text_y, font_scale);
+		debug_text_y -= font_scale*font_height + 3;
+	}
+
+	if (ShowFPS)
+	{
+		render_debug_text(font, fmt::format("fps: {}", (int)lastfps), 5, debug_text_y, font_scale);
+		debug_text_y -= font_scale*font_height + 3;
+	}
+
+    al_flip_display();
+}
+
 // Dialogue largening
 void large_dialog(DIALOG *d)
 {
@@ -685,7 +862,7 @@ void show_paused(BITMAP *target)
 void show_fps(BITMAP *target)
 {
 	char buf[50];
-	
+
 	//  text_mode(-1);
 	sprintf(buf,"%2d/60",lastfps);
 	
@@ -3947,16 +4124,21 @@ void updatescr(bool allowwavy, bool record_gfx)
 	
 	//TODO: Optimize blit 'overcalls' -Gleeok
 	BITMAP *source = nosubscr ? panorama : wavybuf;
-		
+
+	// TODO: skip this blit somehow
+	blit(source,framebuf,0,0,0,0,256,224);
+	// TODO: delete below code
+
 	static BITMAP *scanlinesbmp=NULL;
 	
-	if(resx != SCREEN_W || resy != SCREEN_H)
-	{
-		Z_message("Conflicting variables warning: screen_scale %i, resx %i, resy %i, w %i, h %i\n", screen_scale, resx, resy, SCREEN_W, SCREEN_H);
-		resx = SCREEN_W;
-		resy = SCREEN_H;
-		screen_scale = zc_max(zc_min(resx / 320, resy / 240), 1);
-	}
+	// if(resx != SCREEN_W || resy != SCREEN_H)
+	// {
+	// 	Z_message("Conflicting variables warning: screen_scale %i, resx %i, resy %i, w %i, h %i\n", screen_scale, resx, resy, SCREEN_W, SCREEN_H);
+	// 	resx = SCREEN_W;
+	// 	resy = SCREEN_H;
+	// 	screen_scale = zc_max(zc_min(resx / 320, resy / 240), 1);
+	// }
+	screen_scale = 1; // TODO
 	
 	if(!sbig && screen_scale > 1)
 		sbig = true;
@@ -3967,45 +4149,44 @@ void updatescr(bool allowwavy, bool record_gfx)
 	const int32_t mx = scale_mul * 128;
 	const int32_t my = scale_mul * 112;
 	
-	if(sbig)
-	{
-		if(scanlines)
-		{
-			if(!scanlinesbmp)
-				scanlinesbmp = create_bitmap_ex(8, sx, sy);
+	// if(sbig)
+	// {
+	// 	if(scanlines)
+	// 	{
+	// 		if(!scanlinesbmp)
+	// 			scanlinesbmp = create_bitmap_ex(8, sx, sy);
 				
-			stretch_blit(source, scanlinesbmp, 0, 0, 256, 224, 0, 0, sx, sy);
+	// 		stretch_blit(source, scanlinesbmp, 0, 0, 256, 224, 0, 0, sx, sy);
 			
-			for(int32_t i=0; i<224; ++i)
-				_allegro_hline(scanlinesbmp, 0, (i*screen_scale)+1, sx, BLACK);
+	// 		for(int32_t i=0; i<224; ++i)
+	// 			_allegro_hline(scanlinesbmp, 0, (i*screen_scale)+1, sx, BLACK);
 				
-			blit(scanlinesbmp, screen, 0, 0, scrx+32-mx, scry+8-my, sx, sy);
-		}
-		else
-		{
-			stretch_blit(source, screen, 0, 0, 256, 224, scrx+32-mx, scry+8-my, sx, sy);
-		}
+	// 		blit(scanlinesbmp, screen, 0, 0, scrx+32-mx, scry+8-my, sx, sy);
+	// 	}
+	// 	else
+	// 	{
+	// 		stretch_blit(source, screen, 0, 0, 256, 224, scrx+32-mx, scry+8-my, sx, sy);
+	// 		// blit(source,screen,0,0,0,0,256,224);
+	// 	}
 		
-		if(quakeclk>0)
-			rectfill(screen, // I don't know if these are right...
-					 scrx+32 - mx, //x1
-					 scry+8 - my + sy, //y1
-					 scrx+32 - mx + sx, //x2
-					 scry+8 - my + sy + (16 * scale_mul), //y2
-					 BLACK);
+	// 	if(quakeclk>0)
+	// 		rectfill(screen, // I don't know if these are right...
+	// 				 scrx+32 - mx, //x1
+	// 				 scry+8 - my + sy, //y1
+	// 				 scrx+32 - mx + sx, //x2
+	// 				 scry+8 - my + sy + (16 * scale_mul), //y2
+	// 				 BLACK);
 					 
-		//stretch_blit(nosubscr?panorama:wavybuf,screen,0,0,256,224,scrx+32-128,scry+8-112,512,448);
-		//if(quakeclk>0) rectfill(screen,scrx+32-128,scry+8-112+448,scrx+32-128+512,scry+8-112+456,0);
-	}
-	else
-	{
-		blit(source,screen,0,0,scrx+32,scry+8,256,224);
+	// 	//stretch_blit(nosubscr?panorama:wavybuf,screen,0,0,256,224,scrx+32-128,scry+8-112,512,448);
+	// 	//if(quakeclk>0) rectfill(screen,scrx+32-128,scry+8-112+448,scrx+32-128+512,scry+8-112+456,0);
+	// }
+	// else
+	// {
+	// 	blit(source,screen,0,0,scrx+32,scry+8,256,224);
+	// 	// stretch_blit(source, screen, 0, 0, 256, 224, scrx+32, scry+8, resx, resy);
 		
-		if(quakeclk>0) rectfill(screen,scrx+32,scry+8+224,scrx+32+256,scry+8+232,BLACK);
-	}
-	
-	if(ShowFPS)// &&(frame&1))
-		show_fps(screen);
+	// 	if(quakeclk>0) rectfill(screen,scrx+32,scry+8+224,scrx+32+256,scry+8+232,BLACK);
+	// }
 	
 	show_replay_controls(screen);
 		
@@ -4018,8 +4199,6 @@ void updatescr(bool allowwavy, bool record_gfx)
 	}
 	
 	//if(panorama!=NULL) destroy_bitmap(panorama);
-	
-	++framecnt;
 	
 	update_hw_screen();
 }
@@ -5628,20 +5807,6 @@ int32_t onVolKeys()
 int32_t onShowFPS()
 {
 	ShowFPS = !ShowFPS;
-	scare_mouse();
-	
-	if(ShowFPS)
-		show_fps(screen);
-		
-	if(sbig)
-		stretch_blit(fps_undo,screen,0,0,64,16,scrx+40-120,scry+216+96,128,32);
-	else
-		blit(fps_undo,screen,0,0,scrx+40,scry+216,64,16);
-		
-	if(Paused)
-		show_paused(screen);
-		
-	unscare_mouse();
 	save_game_configs();
 	return D_O_K;
 }
@@ -6887,22 +7052,27 @@ int32_t onCredits()
 	RLE_SPRITE *rle = (RLE_SPRITE*)(data[RLE_CREDITS].dat);
 	RGB *pal = (RGB*)(data[PAL_CREDITS].dat);
 	PALETTE tmppal;
-	
-	clear_bitmap(win);
+
+	const int transparent_index = 1;
+	all_set_transparent_palette_index(transparent_index);
+
+	clear_to_color(win, transparent_index);
 	draw_rle_sprite(win,rle,0,0);
 	credits_dlg[0].dp2=lfont;
 	credits_dlg[1].fg = jwin_pal[jcDISABLED_FG];
 	credits_dlg[2].dp = win;
+
 	set_palette_range(black_palette,0,127,false);
 	
 	DIALOG_PLAYER *p = init_dialog(credits_dlg,3);
+
+	BITMAP* old_screen = screen;
+	clear_to_color(gui_bmp, transparent_index);
+	screen = gui_bmp;
 	
 	while(update_dialog(p))
 	{
 		throttleFPS();
-#ifdef __EMSCRIPTEN__
-		all_render_screen();
-#endif
 		++c;
 		l = zc_max((c>>1)-30,0);
 		
@@ -6928,11 +7098,21 @@ int32_t onCredits()
 			SCRFIX();
 			ol=l;
 		}
+
+		update_hw_screen();
 	}
+
+	screen = old_screen;
+	system_pal();
 	
 	shutdown_dialog(p);
 	destroy_bitmap(win);
 	comeback();
+
+	clear_bitmap(screen);
+	all_set_transparent_palette_index(0);
+	update_hw_screen();
+
 	return D_O_K;
 }
 
@@ -8512,13 +8692,10 @@ void system_pal()
 	hw_palette = &pal;
 	update_hw_pal = true;
 	
-	if(sbig)
-		stretch_blit(tmp_scr,screen,0,0,320,240,scrx-(160*(screen_scale-1)),scry-(120*(screen_scale-1)),screen_scale*320,screen_scale*240);
-	else
-		blit(tmp_scr,screen,0,0,scrx,scry,320,240);
-		
-	if(ShowFPS)
-		show_fps(screen);
+	// if(sbig)
+	// 	stretch_blit(tmp_scr,screen,0,0,320,240,scrx-(160*(screen_scale-1)),scry-(120*(screen_scale-1)),screen_scale*320,screen_scale*240);
+	// else
+	// 	blit(tmp_scr,screen,0,0,scrx,scry,320,240);
 		
 	if(Paused)
 		show_paused(screen);
@@ -8744,9 +8921,6 @@ void system_pal2()
 	else
 		blit(tmp_scr,screen,0,0,scrx,scry,320,240);
 		
-	if(ShowFPS)
-		show_fps(screen);
-		
 	if(Paused)
 		show_paused(screen);
 		
@@ -8881,14 +9055,46 @@ void System()
 	
 	DIALOG_PLAYER *p;
 	
-	if(!Playing || (!zcheats.flags && !get_debug() && DEVLEVEL < 2 && !zqtesting_mode))
-	{
-		p = init_dialog(system_dlg2,-1);
-	}
-	else
-	{
+	// if(!Playing || (!zcheats.flags && !get_debug() && DEVLEVEL < 2 && !zqtesting_mode))
+	// {
+	// 	memcpy(dlg_copy, (void*)system_dlg2, 10*sizeof(DIALOG));
+	// 	p = init_dialog(dlg_copy,-1);
+	// }
+	// else
+	// {
+	// 	memcpy(dlg_copy, (void*)system_dlg, 10*sizeof(DIALOG));
+	// 	p = init_dialog(dlg_copy,-1);
+	// }
+
+	// gui_set_screen(gui_bmp);
+	clear_bitmap(menu_bmp);
+	BITMAP* oldscreen = screen;
+	screen = menu_bmp;
+
+	// FONT* gui_scaled_font = extract_font_range(font, -1, -1);
+	// gui_scaled_font->height *= 2;
+	// FONT_MONO_DATA* mf = (FONT_MONO_DATA*)(gui_scaled_font->data);
+    // while(mf) {
+	// 	for(int i = mf->begin; i < mf->end; i++) {
+    //     	FONT_GLYPH* g = mf->glyphs[i - mf->begin];
+    //     	// g->w *= 2;
+	// 		// g->h *= 2;
+	// 		g->w += 2;
+	// 		g->h += 2;
+	// 	}
+    //     mf = mf->next;
+    // }
+	// FONT* old_font = font;
+	// font = gui_scaled_font;
+
+	// if(!Playing || (!zcheats.flags && !get_debug() && DEVLEVEL < 2 && !zqtesting_mode))
+	// {
+		// p = init_dialog(system_dlg2,-1);
+	// }
+	// else
+	// {
 		p = init_dialog(system_dlg,-1);
-	}
+	// }
 	
 	// drop the menu on startup if menu button pressed
 	if(joybtn(Mbtn)||zc_getrawkey(KEY_ESC))
@@ -8997,6 +9203,8 @@ void System()
 		update_hw_screen();
 	}
 	while(update_dialog(p));
+
+	screen = oldscreen;
 	
 	//  font=oldfont;
 	mouse_down=gui_mouse_b();
@@ -9031,8 +9239,8 @@ void fix_dialog(DIALOG *d)
 {
 	for(; d->proc != NULL; d++)
 	{
-		d->x += scrx;
-		d->y += scry;
+		// d->x += scrx;
+		// d->y += scry;
 	}
 }
 
@@ -9065,18 +9273,18 @@ void fix_dialogs()
 	jwin_center_dialog(sound_dlg);
 	jwin_center_dialog(triforce_dlg);
 	
-	digi_dp[1] += scrx;
-	digi_dp[2] += scry;
-	midi_dp[1] += scrx;
-	midi_dp[2] += scry;
-	pan_dp[1]  += scrx;
-	pan_dp[2]  += scry;
-	emus_dp[1]  += scrx;
-	emus_dp[2]  += scry;
-	buf_dp[1]  += scrx;
-	buf_dp[2]  += scry;
-	sfx_dp[1]  += scrx;
-	sfx_dp[2]  += scry;
+	// digi_dp[1] += scrx;
+	// digi_dp[2] += scry;
+	// midi_dp[1] += scrx;
+	// midi_dp[2] += scry;
+	// pan_dp[1]  += scrx;
+	// pan_dp[2]  += scry;
+	// emus_dp[1]  += scrx;
+	// emus_dp[2]  += scry;
+	// buf_dp[1]  += scrx;
+	// buf_dp[2]  += scry;
+	// sfx_dp[1]  += scrx;
+	// sfx_dp[2]  += scry;
 }
 
 /*****************************/

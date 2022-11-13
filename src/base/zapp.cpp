@@ -64,6 +64,35 @@ App get_app_id()
     return app_id;
 }
 
+static ALLEGRO_EVENT_QUEUE *display_event_queue = nullptr;
+void zc_install_display_event_handler()
+{
+	// if (!display_event_queue)
+	// {
+	// 	display_event_queue = al_create_event_queue();
+	// 	al_register_event_source(display_event_queue, al_get_display_event_source(all_get_display()));
+	// }
+}
+void zc_process_display_events()
+{
+	all_process_display_events();
+	//all_process_display_event(); // ....
+
+	// if (!display_event_queue)
+	// 	return;
+
+	// ALLEGRO_EVENT event;
+	// while (!al_is_event_queue_empty(display_event_queue))
+	// {
+	// 	al_get_next_event(display_event_queue, &event);
+	// 	all_process_display_event(&event);
+	// 	switch (event.type)
+	// 	{
+		
+	// 	}
+	// }
+}
+
 static ALLEGRO_EVENT_QUEUE *evq = nullptr;
 void zc_install_mouse_event_handler()
 {
@@ -83,43 +112,43 @@ void zc_process_mouse_events()
 	{
 		switch (event.type)
 		{
-		case ALLEGRO_EVENT_MOUSE_AXES:
-		{
-			int mouse_x = event.mouse.x;
-			int mouse_y = event.mouse.y;
+		// case ALLEGRO_EVENT_MOUSE_AXES:
+		// {
+		// 	int mouse_x = event.mouse.x;
+		// 	int mouse_y = event.mouse.y;
 
-			int native_width, native_height, display_width, display_height, offset_x, offset_y;
-			double scale;
-			all_get_display_transform(&native_width, &native_height, &display_width, &display_height, &offset_x, &offset_y, &scale);
+		// 	int native_width, native_height, display_width, display_height, offset_x, offset_y;
+		// 	double scale;
+		// 	all_get_display_transform(&native_width, &native_height, &display_width, &display_height, &offset_x, &offset_y, &scale);
 
-			// Show OS cursor when hovering over letterboxing.
-			if (mouse_on_screen() && !(gfx_capabilities & GFX_HW_CURSOR))
-			{
-				static bool is_within_letterbox_prev = !false;
-				bool is_within_letterbox = !all_get_fullscreen_flag() &&
-					(mouse_x < offset_x || mouse_y < offset_y ||
-					mouse_x >= display_width - offset_x || mouse_y >= display_height - offset_y);
+		// 	// Show OS cursor when hovering over letterboxing.
+		// 	if (mouse_on_screen() && !(gfx_capabilities & GFX_HW_CURSOR))
+		// 	{
+		// 		static bool is_within_letterbox_prev = !false;
+		// 		bool is_within_letterbox = !all_get_fullscreen_flag() &&
+		// 			(mouse_x < offset_x || mouse_y < offset_y ||
+		// 			mouse_x >= display_width - offset_x || mouse_y >= display_height - offset_y);
 				
-				if (is_within_letterbox_prev == is_within_letterbox)
-				{
-					break;
-				}
-				else if (is_within_letterbox)
-				{
-					enable_hardware_cursor();
-					if (app_id == App::zquest)
-						show_mouse(NULL);
-				}
-				else
-				{
-					disable_hardware_cursor();
-					if (app_id == App::zquest)
-						show_mouse(screen);
-				}
-				is_within_letterbox_prev = is_within_letterbox;
-			}
-			break;
-		}
+		// 		if (is_within_letterbox_prev == is_within_letterbox)
+		// 		{
+		// 			break;
+		// 		}
+		// 		else if (is_within_letterbox)
+		// 		{
+		// 			enable_hardware_cursor();
+		// 			if (app_id == App::zquest)
+		// 				show_mouse(NULL);
+		// 		}
+		// 		else
+		// 		{
+		// 			disable_hardware_cursor();
+		// 			if (app_id == App::zquest)
+		// 				show_mouse(screen);
+		// 		}
+		// 		is_within_letterbox_prev = is_within_letterbox;
+		// 	}
+		// 	break;
+		// }
 		}
 	}
 }

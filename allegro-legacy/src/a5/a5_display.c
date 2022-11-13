@@ -114,11 +114,12 @@ static bool _a5_setup_screen(int w, int h)
   //     al_hide_mouse_cursor(_a5_display);
   // }
 
-  pixel_format = al_get_bitmap_format(_a5_screen);
-  if(pixel_format == ALLEGRO_PIXEL_FORMAT_ARGB_8888 || pixel_format == ALLEGRO_PIXEL_FORMAT_ABGR_8888 || pixel_format == ALLEGRO_PIXEL_FORMAT_RGBA_8888 || pixel_format == ALLEGRO_PIXEL_FORMAT_ABGR_8888_LE)
-  {
-    _a5_screen_format = ALLEGRO_LEGACY_PIXEL_FORMAT_8888;
-  }
+  _a5_screen_format = al_get_bitmap_format(_a5_screen);
+  // if(pixel_format == ALLEGRO_PIXEL_FORMAT_ARGB_8888 || pixel_format == ALLEGRO_PIXEL_FORMAT_ABGR_8888 || pixel_format == ALLEGRO_PIXEL_FORMAT_RGBA_8888 || pixel_format == ALLEGRO_PIXEL_FORMAT_ABGR_8888_LE)
+  // {
+  //   _a5_screen_format = ALLEGRO_LEGACY_PIXEL_FORMAT_8888;
+  // }
+  // _a5_screen_format = pixel_format;
   return true;
 
   fail:
@@ -152,36 +153,13 @@ static void _a5_destroy_screen(void)
   _a5_display = NULL;
 }
 
-static void * _a5_display_thread(ALLEGRO_THREAD * thread, void * data)
+void all_process_display_events()
 {
   ALLEGRO_EVENT event;
-  float refresh_rate = 60.0;
 
-  if(!_a5_setup_screen(_a5_display_width, _a5_display_height))
+  while (!al_is_event_queue_empty(_a5_display_thread_event_queue))
   {
-    return NULL;
-  }
-  if(_refresh_rate_request > 0)
-  {
-    refresh_rate = _refresh_rate_request;
-  }
-  _a5_display_thread_timer = al_create_timer(1.0 / refresh_rate);
-  if(!_a5_display_thread_timer)
-  {
-    goto fail;
-  }
-  _a5_display_thread_event_queue = al_create_event_queue();
-  if(!_a5_display_thread_event_queue)
-  {
-    goto fail;
-  }
-  al_register_event_source(_a5_display_thread_event_queue, al_get_display_event_source(_a5_display));
-  al_register_event_source(_a5_display_thread_event_queue, al_get_timer_event_source(_a5_display_thread_timer));
-  al_start_timer(_a5_display_thread_timer);
-  _a5_display_creation_done = 1;
-  while(!al_get_thread_should_stop(_a5_screen_thread))
-  {
-    al_wait_for_event(_a5_display_thread_event_queue, &event);
+    al_get_next_event(_a5_display_thread_event_queue, &event);
     switch(event.type)
     {
       case ALLEGRO_EVENT_DISPLAY_CLOSE:
@@ -195,14 +173,37 @@ static void * _a5_display_thread(ALLEGRO_THREAD * thread, void * data)
       // local edit
       case ALLEGRO_EVENT_DISPLAY_RESIZE:
       {
-        al_acknowledge_resize(_a5_display);
+        if(_a5_screen && _a5_disable_threaded_display)
+        {
+          // all_lock_screen();
+
+          gfx_driver->w = event.display.width;
+          gfx_driver->h = event.display.height;
+
+          // if (!_a5_disable_threaded_display)
+          // {
+            // al_destroy_bitmap(_a5_screen);
+            // _a5_display_width = event.display.width;
+            // _a5_display_height = event.display.height;
+            // _a5_screen = al_create_bitmap(event.display.width, event.display.height);
+          // }
+
+          // acquire_screen();
+          // destroy_bitmap(screen);
+          // screen = create_bitmap_ex(8, event.display.width, event.display.height);
+          // clear_bitmap(screen);
+          // release_screen();
+
+          // all_unlock_screen();
+        }
+        al_acknowledge_resize(event.display.source);
         break;
       }
       case ALLEGRO_EVENT_DISPLAY_SWITCH_IN:
       {
         _switch_in();
 
-#ifdef _WIN32
+  #ifdef _WIN32
         // Window is sometimes blurry after minimizing, but blur goes away if the display is refreshed. A noop resize is the
         // simplest way to refresh the display.
         // Could not actually repro the blurry bug on my machine - Connor.
@@ -211,7 +212,7 @@ static void * _a5_display_thread(ALLEGRO_THREAD * thread, void * data)
           int h = al_get_display_height(_a5_display);
           al_resize_display(_a5_display, w, h);
         }
-#endif
+  #endif
         break;
       }
       case ALLEGRO_EVENT_DISPLAY_SWITCH_OUT:
@@ -221,6 +222,52 @@ static void * _a5_display_thread(ALLEGRO_THREAD * thread, void * data)
         break;
       }
     }
+  }
+}
+
+static bool _setup()
+{
+    float refresh_rate = 60.0;
+
+    if(!_a5_setup_screen(_a5_display_width, _a5_display_height))
+    {
+      return false;
+    }
+    if(_refresh_rate_request > 0)
+    {
+      refresh_rate = _refresh_rate_request;
+    }
+    _a5_display_thread_timer = al_create_timer(1.0 / refresh_rate);
+    if(!_a5_display_thread_timer)
+    {
+      return false;
+    }
+    _a5_display_thread_event_queue = al_create_event_queue();
+    if(!_a5_display_thread_event_queue)
+    {
+      return false;
+    }
+    al_register_event_source(_a5_display_thread_event_queue, al_get_display_event_source(_a5_display));
+    al_register_event_source(_a5_display_thread_event_queue, al_get_timer_event_source(_a5_display_thread_timer));
+    al_start_timer(_a5_display_thread_timer);
+
+    return true;
+}
+
+static void * _a5_display_thread(ALLEGRO_THREAD * thread, void * data)
+{
+  ALLEGRO_EVENT event;
+
+  if(!_setup())
+  {
+    return NULL;
+  }
+
+  _a5_display_creation_done = 1;
+  while(!al_get_thread_should_stop(_a5_screen_thread))
+  {
+    al_wait_for_event(_a5_display_thread_event_queue, NULL);
+    all_process_display_events();
     if(al_event_queue_is_empty(_a5_display_thread_event_queue))
     {
       all_render_screen();
@@ -264,30 +311,31 @@ static BITMAP * a5_display_init(int w, int h, int vw, int vh, int color_depth)
     screen_mutex = al_create_mutex_recursive();
 
     bp = create_bitmap(w, h);
-    if(bp)
+    if (!bp)
+      return NULL;
+
+    _a5_display_width = w;
+    _a5_display_height = h;
+
+    if(!_a5_disable_threaded_display)
     {
-      if(!_a5_disable_threaded_display)
-      {
-        _a5_display_creation_done = 0;
-        _a5_display_width = w;
-        _a5_display_height = h;
-        _a5_screen_thread = al_create_thread(_a5_display_thread, NULL);
-        al_start_thread(_a5_screen_thread);
-        // local edit
-        while(!_a5_display_creation_done) rest(1);
-      }
-      else
-      {
-        if(!_a5_setup_screen(w, h))
-        {
-          return NULL;
-        }
-      }
-      gfx_driver->w = bp->w;
-      gfx_driver->h = bp->h;
-      return bp;
+      _a5_display_creation_done = 0;
+      _a5_screen_thread = al_create_thread(_a5_display_thread, NULL);
+      al_start_thread(_a5_screen_thread);
+      // local edit
+      while(!_a5_display_creation_done) rest(1);
     }
-    return NULL;
+    else
+    {
+      if(!_setup())
+      {
+        return NULL;
+      }
+    }
+    gfx_driver->w = bp->w;
+    gfx_driver->h = bp->h;
+
+    return bp;
 }
 
 static void a5_display_exit(BITMAP * bp)
@@ -322,34 +370,50 @@ static void a5_display_vsync(void)
   }
 }
 
+// -1 to disable
+static int transparent_palette_index = -1;
+void all_set_transparent_palette_index(int index)
+{
+  transparent_palette_index = index;
+}
+
 static void a5_palette_from_a4_palette(const PALETTE a4_palette, ALLEGRO_COLOR * a5_palette, int from, int to)
 {
     int i;
-    unsigned char r, g, b;
+    unsigned char r, g, b, a;
 
     if(a4_palette)
     {
         for(i = from; i <= to; i++)
         {
-            a5_palette[i] = al_map_rgba_f((float)a4_palette[i].r / 63.0, (float)a4_palette[i].g / 63.0, (float)a4_palette[i].b / 63.0, 1.0);
+            a5_palette[i] = al_map_rgba_f((float)a4_palette[i].r / 63.0, (float)a4_palette[i].g / 63.0, (float)a4_palette[i].b / 63.0, i == 0 ? 0 : 1);
 
             /* create palette of pre-packed pixels for various pixel formats */
             al_unmap_rgb(a5_palette[i], &r, &g, &b);
-            if(al_get_bitmap_format(_a5_screen) == ALLEGRO_PIXEL_FORMAT_ABGR_8888)
+
+            a = 255;
+
+            // local edit - treat index 0 as transparent.
+            if (i == transparent_palette_index)
             {
-                _a5_screen_palette_a5[i] = r | (g << 8) | (b << 16) | (255 << 24);
+              r = g = b = a = 0;
             }
-            else if(al_get_bitmap_format(_a5_screen) == ALLEGRO_PIXEL_FORMAT_ABGR_8888_LE)
+
+            if(_a5_screen_format == ALLEGRO_PIXEL_FORMAT_ABGR_8888)
             {
-                _a5_screen_palette_a5[i] = r | (g << 8) | (b << 16) | (255 << 24);
+                _a5_screen_palette_a5[i] = r | (g << 8) | (b << 16) | (a << 24);
             }
-            else if(al_get_bitmap_format(_a5_screen) == ALLEGRO_PIXEL_FORMAT_ARGB_8888)
+            else if(_a5_screen_format == ALLEGRO_PIXEL_FORMAT_ABGR_8888_LE)
             {
-                _a5_screen_palette_a5[i] = b | (g << 8) | (r << 16) | (255 << 24);
+                _a5_screen_palette_a5[i] = r | (g << 8) | (b << 16) | (a << 24);
             }
-            else if(al_get_bitmap_format(_a5_screen) == ALLEGRO_PIXEL_FORMAT_RGBA_8888)
+            else if(_a5_screen_format == ALLEGRO_PIXEL_FORMAT_ARGB_8888)
             {
-                _a5_screen_palette_a5[i] = 255 | (b << 8) | (g << 16) | (r << 24);
+                _a5_screen_palette_a5[i] = b | (g << 8) | (r << 16) | (a << 24);
+            }
+            else if(_a5_screen_format == ALLEGRO_PIXEL_FORMAT_RGBA_8888)
+            {
+                _a5_screen_palette_a5[i] = a | (b << 8) | (g << 16) | (r << 24);
             }
         }
     }
@@ -581,7 +645,7 @@ void all_render_a5_bitmap(BITMAP * bp, ALLEGRO_BITMAP * a5bp)
     int depth;
 
     depth = bitmap_color_depth(bp);
-    if(depth == 8 && _a5_screen_format == ALLEGRO_LEGACY_PIXEL_FORMAT_8888)
+    if(depth == 8 && (_a5_screen_format == ALLEGRO_PIXEL_FORMAT_ARGB_8888 || _a5_screen_format == ALLEGRO_PIXEL_FORMAT_ABGR_8888 || _a5_screen_format == ALLEGRO_PIXEL_FORMAT_RGBA_8888 || _a5_screen_format == ALLEGRO_PIXEL_FORMAT_ABGR_8888_LE))
     {
         render_8_8888(bp, a5bp);
     }

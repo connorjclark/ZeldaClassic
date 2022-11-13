@@ -63,6 +63,7 @@ void setZScriptVersion(int32_t) { } //bleh...
 #include "zquest.h"
 #include "zquestdat.h"
 #include "ffasm.h"
+#include <fmt/format.h>
 
 // the following are used by both zelda.cc and zquest.cc
 #include "base/zdefs.h"
@@ -368,7 +369,7 @@ COLOR_MAP trans_table, trans_table2;
 char *datafile_str;
 DATAFILE *zcdata=NULL, *fontsdata=NULL, *sfxdata=NULL;
 MIDI *song=NULL;
-BITMAP *menu1, *menu3, *mapscreenbmp, *tmp_scr, *screen2, *mouse_bmp[MOUSE_BMP_MAX][4], *mouse_bmp_1x[MOUSE_BMP_MAX][4], *icon_bmp[ICON_BMP_MAX][4], *select_bmp[2], *dmapbmp_small, *dmapbmp_large;
+BITMAP *menu1, *menu3, *mapscreenbmp, *gui_bmp, *tmp_scr, *screen2, *mouse_bmp[MOUSE_BMP_MAX][4], *mouse_bmp_1x[MOUSE_BMP_MAX][4], *icon_bmp[ICON_BMP_MAX][4], *select_bmp[2], *dmapbmp_small, *dmapbmp_large;
 BITMAP *arrow_bmp[MAXARROWS],*brushbmp, *brushscreen, *tooltipbmp;//*brushshadowbmp;
 byte *colordata=NULL, *trashbuf=NULL;
 itemdata *itemsbuf;
@@ -7637,9 +7638,7 @@ void refresh(int32_t flags)
     
     unscare_mouse();
     SCRFIX();
-#ifdef __EMSCRIPTEN__
-    all_render_screen();
-#endif
+	update_hw_screen();
 }
 
 void select_scr()
@@ -30294,10 +30293,7 @@ void custom_vsync()
     
     while(!myvsync) rest(1);
     
-    all_mark_screen_dirty();
-#ifdef __EMSCRIPTEN__
-    all_render_screen();
-#endif
+	update_hw_screen();
     
     myvsync=0;
     
@@ -30647,9 +30643,10 @@ int32_t main(int32_t argc,char **argv)
 	al5img_init();
 	register_png_file_type();
 
+	all_disable_threaded_display();
+
 #ifdef __EMSCRIPTEN__
 	em_mark_initializing_status();
-	all_disable_threaded_display();
 	em_init_fs();
 #endif
 	
@@ -31810,11 +31807,7 @@ int32_t main(int32_t argc,char **argv)
 	  zqwin_set_scale(scale_arg);
 	}*/
 
-	all_set_force_integer_scale(zc_get_config("zquest", "scaling_force_integer", 1) != 0);
-	if (strcmp(zc_get_config("zquest", "scaling_mode", "linear"), "linear") == 0)
-		all_set_bitmap_flags(ALLEGRO_NO_PRESERVE_TEXTURE | ALLEGRO_MAG_LINEAR | ALLEGRO_MIN_LINEAR);
-
-	int32_t videofail = (set_gfx_mode(tempmode,zq_screen_w*zqwin_scale,zq_screen_h*zqwin_scale,0,0));
+	int32_t videofail = (set_gfx_mode(tempmode,zq_screen_w,zq_screen_h,0,0));
 
 	if(videofail!=0)
 	{
@@ -31969,12 +31962,12 @@ int32_t main(int32_t argc,char **argv)
 		double hscale = gethorizontalscale(); 
 		int window_width_temp = window_width*hscale;
 		int window_height_temp = window_height*vscale;
-		al_resize_display(all_get_display(), window_width_temp, window_height_temp);
+		// al_resize_display(all_get_display(), window_width_temp, window_height_temp);
 		
 		int new_x = zc_get_config("zquest","window_x",0);
 		int new_y = zc_get_config("zquest","window_y",0);
-		if (new_x > 0 && new_y > 0) al_set_window_position(all_get_display(), new_x, new_y);
-		else al_set_window_position(all_get_display(), center_x - window_width_temp / 2, center_y - window_height_temp / 2);
+		// if (new_x > 0 && new_y > 0) al_set_window_position(all_get_display(), new_x, new_y);
+		// else al_set_window_position(all_get_display(), center_x - window_width_temp / 2, center_y - window_height_temp / 2);
 	}
 #endif
 	LastWidth = al_get_display_width(all_get_display());
@@ -32001,6 +31994,7 @@ int32_t main(int32_t argc,char **argv)
 	clear_bitmap(menu1);
 	menu3 = create_bitmap_ex(8,zq_screen_w,zq_screen_h);
 	mapscreenbmp = create_bitmap_ex(8,16*(showedges?18:16),16*(showedges?13:11));
+	gui_bmp = create_bitmap_ex(8, zq_screen_w, zq_screen_h);
 	dmapbmp_small = create_bitmap_ex(8,65,33);
 	dmapbmp_large = create_bitmap_ex(8,(is_large?177:113),(is_large?81:57));
 	brushbmp = create_bitmap_ex(8,256*mapscreensize, 176*mapscreensize);
@@ -34377,23 +34371,97 @@ void doAspectResize()
 	}
 }
 
+static RenderTreeItem rti_root;
+static RenderTreeItem rti_screen;
+
+static int zc_gui_mouse_x()
+{
+	return rti_screen.translate_mouse_x(mouse_x);
+}
+
+static int zc_gui_mouse_y()
+{
+	return rti_screen.translate_mouse_y(mouse_y);
+}
+
+static void init_render_tree()
+{
+	if (!rti_root.children.empty())
+		return;
+
+	if (zc_get_config("zquest", "scaling_mode", 0) == 1)
+		all_set_bitmap_flags(ALLEGRO_NO_PRESERVE_TEXTURE | ALLEGRO_MAG_LINEAR | ALLEGRO_MIN_LINEAR);
+	else
+		al_set_new_bitmap_flags(ALLEGRO_NO_PRESERVE_TEXTURE);
+	rti_screen.bitmap = al_create_bitmap(screen->w, screen->h);
+
+	// al_set_new_bitmap_flags(ALLEGRO_NO_PRESERVE_TEXTURE);
+	// rti_menu.bitmap = al_create_bitmap(menu_bmp->w, menu_bmp->h);
+
+	rti_root.children.push_back(&rti_screen);
+	// rti_root.children.push_back(&rti_menu);
+
+	gui_mouse_x = zc_gui_mouse_x;
+	gui_mouse_y = zc_gui_mouse_y;
+}
+
+static void configure_render_tree()
+{
+	int resx = al_get_display_width(all_get_display());
+	int resy = al_get_display_height(all_get_display());
+
+	rti_root.transform.x = 0;
+	rti_root.transform.y = 0;
+	rti_root.transform.scale = 1;
+	rti_root.visible = true;
+
+	{
+		static bool scaling_force_integer = zc_get_config("zquest", "scaling_force_integer", 1) != 0;
+
+		int w = al_get_bitmap_width(rti_screen.bitmap);
+		int h = al_get_bitmap_height(rti_screen.bitmap);
+		float scale = std::min((float)resx/w, (float)resy/h);
+		if (scaling_force_integer)
+			scale = (int) scale;
+		rti_screen.transform.x = (resx - w*scale) / 2 / scale;
+		rti_screen.transform.y = (resy - h*scale) / 2 / scale;
+		rti_screen.transform.scale = scale;
+		rti_screen.visible = true;
+	}
+
+	all_render_a5_bitmap(screen, rti_screen.bitmap);
+}
+
+// TODO move to zq_render
+static void render_zq()
+{
+	init_render_tree();
+	configure_render_tree();
+	render_tree_layout(&rti_root, nullptr);
+
+	al_set_target_backbuffer(all_get_display());
+	al_clear_to_color(al_map_rgb_f(0, 0, 0));
+	render_tree_draw(&rti_root);
+
+	al_flip_display();
+}
+
 bool update_hw_pal = false;
 void update_hw_screen(bool force)
 {
-	doAspectResize();
+	// doAspectResize();
 	if(force || myvsync)
 	{
 		zc_process_mouse_events();
+		zc_process_display_events();
 		if(update_hw_pal)
 		{
 			set_palette(RAMpal);
 			update_hw_pal=false;
 		}
+		if (myvsync)
+			render_zq();
 		myvsync=0;
-		all_mark_screen_dirty();
-#ifdef __EMSCRIPTEN__
-		all_render_screen();
-#endif
 	}
 }
 

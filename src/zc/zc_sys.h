@@ -14,10 +14,13 @@
 
 #include "base/zdefs.h"
 #include "base/jwinfsel.h"
+#include "base/render_tree.h"
 
 extern MENU the_player_menu[];
 extern MENU the_player_menu2[];
 extern bool is_sys_pal;
+
+void render_zc();
 
 void large_dialog(DIALOG *d);
 void large_dialog(DIALOG *d, float RESIZE_AMT);

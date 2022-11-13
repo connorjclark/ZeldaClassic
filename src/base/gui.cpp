@@ -24,6 +24,7 @@
 #endif
 
 #include "base/zdefs.h"
+#include "base/zapp.h"
 #include "zelda.h"
 #include "tiles.h"
 #include "base/colors.h"
@@ -208,17 +209,24 @@ extern int32_t zqwin_scale;
 int32_t do_zqdialog(DIALOG *dialog, int32_t focus_obj)
 {
 	BITMAP *mouse_screen = _mouse_screen;
-	BITMAP *gui_bmp = screen;
+	BITMAP *prev_screen = screen;
 	int32_t screen_count = _gfx_mode_set_count;
 	DIALOG_PLAYER *player2;
+	bool render_to_gui_bmp = get_app_id() == App::zelda;
 	ASSERT(dialog);
 	
-	if(!is_same_bitmap(_mouse_screen, gui_bmp) && !(gfx_capabilities&GFX_HW_CURSOR))
+	if(!is_same_bitmap(_mouse_screen, screen) && !(gfx_capabilities&GFX_HW_CURSOR))
 	{
-		show_mouse(gui_bmp);
+		show_mouse(screen);
 	}
 	
 	player2 = init_dialog(dialog, focus_obj);
+
+	if (render_to_gui_bmp)
+	{
+		clear_bitmap(gui_bmp);
+		screen = gui_bmp;
+	}
 	
 	while(update_dialog(player2))
 	{
@@ -230,6 +238,9 @@ int32_t do_zqdialog(DIALOG *dialog, int32_t focus_obj)
 		//if (active_menu_player2)
 		//rest(1);
 	}
+
+	if (render_to_gui_bmp)
+		screen = prev_screen;
 	
 	if(_gfx_mode_set_count == screen_count && !(gfx_capabilities&GFX_HW_CURSOR))
 	{

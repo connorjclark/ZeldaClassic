@@ -766,7 +766,9 @@ void replay_poll()
         if (mode == ReplayMode::Update)
         {
             start_manual_takeover();
+			enter_sys_pal();
             jwin_alert("Recording", "Re-recording until new screen is loaded", NULL, NULL, "OK", NULL, 13, 27, lfont);
+			exit_sys_pal();
         }
         else if (mode == ReplayMode::Snapshot && frame_arg == frame_count)
         {
@@ -778,7 +780,9 @@ void replay_poll()
             Paused = true;
             replay_forget_input();
             replay_stop();
+			enter_sys_pal();
             jwin_alert("Recording", "Replaying stopped at requested frame", NULL, NULL, "OK", NULL, 13, 27, lfont);
+			exit_sys_pal();
         }
     }
 

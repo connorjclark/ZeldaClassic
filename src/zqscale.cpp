@@ -171,129 +171,9 @@ INLINE int32_t offset_y(BITMAP *bmp)
     return ret;
 }
 
-void zqwin_acquire(struct BITMAP *bmp)
-{
-    if(orig_vtable->acquire)
-    {
-        orig_vtable->acquire(bmp);
-    }
-    
-    acquire_bitmap(orig_screen);
-    return;
-}
-
-void zqwin_release(struct BITMAP *bmp)
-{
-    if(orig_vtable->release)
-    {
-        orig_vtable->release(bmp);
-    }
-    
-    release_bitmap(orig_screen);
-    return;
-}
-
-void zqwin_putpixel(struct BITMAP *bmp, int32_t x, int32_t y, int32_t color)
-{
-    orig_vtable->putpixel(bmp, x, y, color);
-    x += offset_x(bmp);
-    y += offset_y(bmp);
-    /*
-      for(int32_t i = 0; i < zqwin_scale; i++)
-      {
-      for(int32_t j = 0; j < zqwin_scale; j++)
-      {
-      putpixel(orig_screen, x*zqwin_scale+i, y*zqwin_scale+j, color);
-      }
-      }
-      */
-    clip_and_rectfill(orig_screen, x*zqwin_scale, y*zqwin_scale, (((x+1)*zqwin_scale)-1), (((y+1)*zqwin_scale)-1), color);
-    return;
-}
-
-void zqwin_vline(struct BITMAP *bmp, int32_t x, int32_t y1, int32_t y2, int32_t color)
-{
-    orig_vtable->vline(bmp, x, y1, y2, color);
-    x += offset_x(bmp);
-    int32_t dy = offset_y(bmp);
-    y1 += dy;
-    y2 += dy;
-    /*
-      for(int32_t i = 0; i < zqwin_scale; i++)
-      {
-      _allegro_vline(orig_screen, x*zqwin_scale+i, y1*zqwin_scale, (y2+1)*zqwin_scale-1, color);
-      }
-      */
-    clip_and_rectfill(orig_screen, x*zqwin_scale, y1*zqwin_scale, (((x+1)*zqwin_scale)-1), (((y2+1)*zqwin_scale)-1), color);
-    return;
-}
-
-void zqwin_hline(struct BITMAP *bmp, int32_t x1, int32_t y, int32_t x2, int32_t color)
-{
-    orig_vtable->hline(bmp, x1, y, x2, color);
-    int32_t dx = offset_x(bmp);
-    x1 += dx;
-    x2 += dx;
-    y += offset_y(bmp);
-    /*
-      for(int32_t i = 0; i < zqwin_scale; i++)
-      {
-      _allegro_hline(orig_screen, x1*zqwin_scale, y*zqwin_scale+i, (x2+1)*zqwin_scale-1, color);
-      }
-      */
-    clip_and_rectfill(orig_screen, x1*zqwin_scale, y*zqwin_scale, (((x2+1)*zqwin_scale)-1), (((y+1)*zqwin_scale)-1), color);
-    return;
-}
-
-void zqwin_hfill(struct BITMAP *bmp, int32_t x1, int32_t y, int32_t x2, int32_t color)
-{
-    orig_vtable->hfill(bmp, x1, y, x2, color);
-    int32_t dx = offset_x(bmp);
-    x1 += dx;
-    x2 += dx;
-    y += offset_y(bmp);
-    
-    for(int32_t i = 0; i < zqwin_scale; i++)
-    {
-        orig_screen->vtable->hfill(orig_screen, x1*zqwin_scale, y*zqwin_scale+i, (x2+1)*zqwin_scale-1, color);
-    }
-    
-    return;
-}
-
 void line_helper(BITMAP *bmp, int32_t x, int32_t y, int32_t d)
 {
     clip_and_rectfill(bmp, x*zqwin_scale, y*zqwin_scale, (((x+1)*zqwin_scale)-1), (((y+1)*zqwin_scale)-1), d);
-}
-
-void zqwin_line(struct BITMAP *bmp, int32_t x1, int32_t y1, int32_t x2, int32_t y2, int32_t color)
-{
-    orig_vtable->line(bmp, x1, y1, x2, y2, color);
-    //not sure what this stuff does here...
-    /*
-      int32_t dx = offset_x(bmp);
-      x1 += dx;
-      x2 += dx;
-      int32_t dy = offset_y(bmp);
-      y1 += dy;
-      y2 += dy;
-      do_line(orig_screen, x1*zqwin_scale, y1*zqwin_scale, (((x2+1)*zqwin_scale)-1), (((y2+1)*zqwin_scale)-1), color, line_helper);
-    */
-    
-    return;
-}
-
-void zqwin_rectfill(struct BITMAP *bmp, int32_t x1, int32_t y1, int32_t x2, int32_t y2, int32_t color)
-{
-    orig_vtable->rectfill(bmp, x1, y1, x2, y2, color);
-    int32_t dx = offset_x(bmp);
-    x1 += dx;
-    x2 += dx;
-    int32_t dy = offset_y(bmp);
-    y1 += dy;
-    y2 += dy;
-    clip_and_rectfill(orig_screen, x1*zqwin_scale, y1*zqwin_scale, (x2+1)*zqwin_scale-1, (y2+1)*zqwin_scale-1, color);
-    return;
 }
 
 void zqwin_draw_sprite(struct BITMAP *bmp, struct BITMAP *sprite, int32_t x, int32_t y)
@@ -639,6 +519,9 @@ int32_t zqscale_mouse_y()
 
 bool zqwin_set_scale(int32_t scale, bool defer)
 {
+	// TODO: delete this scaling code! yay!
+	scale = 1;
+
     // These are here to make compiler happy
     defer=defer;
     
@@ -648,9 +531,9 @@ bool zqwin_set_scale(int32_t scale, bool defer)
     all_set_scale(scale);
 
     zqwin_scale = (scale > 1) ? scale : 1;
-#ifndef COMPILE_FOR_LINUX
-    gui_mouse_x=zqscale_mouse_x;
-    gui_mouse_y=zqscale_mouse_y;
-#endif
+// #ifndef COMPILE_FOR_LINUX
+//     gui_mouse_x=zqscale_mouse_x;
+//     gui_mouse_y=zqscale_mouse_y;
+// #endif
     return true;
 }

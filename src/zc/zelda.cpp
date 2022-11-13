@@ -24,6 +24,7 @@
 #include <sstream>
 
 #include "base/zc_alleg.h"
+#include <allegro5/allegro_ttf.h>
 
 #include <stdlib.h>
 
@@ -218,10 +219,6 @@ END_OF_FUNCTION(update_script_counter)
 
 void throttleFPS()
 {
-#ifdef _WIN32           // TEMPORARY!! -Trying to narrow down a win10 bug that affects performance.
-    timeBeginPeriod(1); // Basically, jist is that other programs can affect the FPS of ZC in weird ways. (making it better for example... go figure)
-#endif
-
     if( (Throttlefps ^ (zc_getkey(KEY_TILDE)!=0)) || get_bit(quest_rules, qr_NOFASTMODE) )
     {
         if(zc_vsync == FALSE)
@@ -242,11 +239,6 @@ void throttleFPS()
         }
 	
     }
-#ifdef _WIN32
-    timeEndPeriod(1);
-#endif
-
-	all_mark_screen_dirty();
 
     logic_counter = 0;
 }
@@ -290,10 +282,10 @@ int32_t curr_tb_page=0;
 RGB_MAP rgb_table;
 COLOR_MAP trans_table, trans_table2;
 
-BITMAP     *framebuf, *scrollbuf, *tmp_bmp, *tmp_scr, *screen2, *fps_undo,
+BITMAP     *framebuf, *menu_bmp, *gui_bmp, *scrollbuf, *tmp_bmp, *tmp_scr, *screen2, *fps_undo,
            *msg_portrait_display_buf, *msg_txt_display_buf, *msg_bg_display_buf,
 		   *pricesdisplaybuf, *tb_page[3], *temp_buf, *prim_bmp,
-		   *script_menu_buf, *f6_menu_buf, *hw_screen;
+		   *script_menu_buf, *f6_menu_buf;
 BITMAP     *zcmouse[4];
 DATAFILE   *data, *sfxdata, *fontsdata, *mididata;
 PALETTE    RAMpal;
@@ -585,7 +577,10 @@ dword getNumGlobalArrays()
 //movingblock mblock2; //mblock[4]?
 //HeroClass   Hero;
 
-int32_t resx= 0,resy= 0,scrx= 0,scry= 0;
+int32_t resx= 0,resy= 0;
+// the number of horizontal or vertical pixels between the framebuffer (320x240) and the window.
+// aka, the letterbox size.
+int32_t scrx= 0,scry= 0;
 int32_t window_width = 0, window_height = 0;
 bool sbig=false;                                                  // big screen
 bool sbig2=false;													// bigger screen
@@ -664,22 +659,30 @@ bool update_hw_pal = false;
 PALETTE* hw_palette = NULL;
 void update_hw_screen(bool force)
 {
-	//if(!hw_screen) return;
-	doAspectResize();
+	// doAspectResize();
 	if(force || (!is_sys_pal && !Throttlefps) || myvsync)
 	{
 		zc_process_mouse_events();
-		blit(screen, hw_screen, 0, 0, 0, 0, screen->w, screen->h);
+		zc_process_display_events();
+		if (SCREEN_W != resx || SCREEN_H != resy)
+		{
+			resx = SCREEN_W;
+			resy = SCREEN_H;
+			// zq_screen_w = resx;
+			// zq_screen_h = resy;
+			// scrx = (resx-320)>>1;
+			// scry = (resy-240)>>1;
+		}
 		if(update_hw_pal && hw_palette)
 		{
+			all_set_transparent_palette_index(0);
 			set_palette(*hw_palette);
 			update_hw_pal = false;
 		}
+		framecnt++;
+		if (myvsync)
+			render_zc();
 		myvsync=0;
-		all_mark_screen_dirty();
-#ifdef __EMSCRIPTEN__
-		all_render_screen();
-#endif
 	}
 }
 
@@ -4679,16 +4682,28 @@ int main(int argc, char **argv)
 		al_destroy_config(tempcfg);
 	}
 
+	all_disable_threaded_display();
 
 #ifdef __EMSCRIPTEN__
 	em_mark_initializing_status();
-	all_disable_threaded_display();
 	em_init_fs();
 #endif
 	
 	if(!al_init_image_addon())
 	{
 		Z_error_fatal("Failed al_init_image_addon");
+		quit_game();
+	}
+
+	if(!al_init_font_addon())
+	{
+		Z_error_fatal("Failed al_init_font_addon");
+		quit_game();
+	}
+
+	if(!al_init_primitives_addon())
+	{
+		Z_error_fatal("Failed al_init_primitives_addon");
 		quit_game();
 	}
 
@@ -4966,6 +4981,8 @@ int main(int argc, char **argv)
 	//set_color_depth(32);
 	//set_color_conversion(COLORCONV_24_TO_8);
 	framebuf  = create_bitmap_ex(8,256,224);
+	menu_bmp  = create_bitmap_ex(8,640,480);
+	gui_bmp   = create_bitmap_ex(8,640,480);
 	temp_buf  = create_bitmap_ex(8,256,224);
 	scrollbuf = create_bitmap_ex(8,512,406);
 	screen2   = create_bitmap_ex(8,320,240);
@@ -5366,23 +5383,23 @@ int main(int argc, char **argv)
 		tempmode=GFX_AUTODETECT_WINDOWED;
 	}
 
-	
-	//set scale
 	if(resx < 256) resx = 256;
-	
 	if(resy < 240) resy = 240;
 	
-	// We pretty much ignore resx/resy now, always making a display of 640x480. a5_display.c handles the scaling now.
 	// TODO: rename "resx" "resy" options and zlauncher "Resolution" to "Window size",
 	window_width = resx;
 	window_height = resy;
-	resx = 320*2;
-	resy = 240*2;
-	screen_scale = 2;
-	
-	all_set_force_integer_scale(zc_get_config("zquest", "scaling_force_integer", 1) != 0);
-	if (strcmp(zc_get_config("zeldadx", "scaling_mode", "linear"), "linear") == 0)
-		all_set_bitmap_flags(ALLEGRO_NO_PRESERVE_TEXTURE | ALLEGRO_MAG_LINEAR | ALLEGRO_MIN_LINEAR);
+
+	// TODO:
+	// - cursor
+	// - fullscreen
+	// - rm screen_scale, scale cfg
+	// - rm old mutex for screen gui shit
+	// - maybe rm fix_dialogs ?
+	// - zquest, launcher
+	// - fix window pos and size cfgs
+	// - fix keep aspect ratio
+	// - document
 	
 	if(!game_vid_mode(tempmode, wait_ms_on_set_graphics))
 	{
@@ -5438,6 +5455,7 @@ int main(int argc, char **argv)
 	{
 		Z_message("set gfx mode succsessful at -%d %dbpp %d x %d \n", tempmode, get_color_depth(), resx, resy);
 	}
+	zc_install_display_event_handler();
 
 	if (zc_get_config("zeldadx","hw_cursor",0) == 1)
 	{
@@ -5448,6 +5466,11 @@ int main(int argc, char **argv)
 		select_mouse_cursor(MOUSE_CURSOR_ARROW);
 		show_mouse(screen);
 	}
+
+	// while (!all_get_display()) rest(1);
+	// enable_hardware_cursor();
+	// select_mouse_cursor(MOUSE_CURSOR_NONE);
+	// // show_mouse(screen);
 
 #ifndef __EMSCRIPTEN__
 	if (!all_get_fullscreen_flag()) {
@@ -5466,12 +5489,12 @@ int main(int argc, char **argv)
 		double hscale = gethorizontalscale(); 
 		int window_width_temp = window_width*hscale;
 		int window_height_temp = window_height*vscale;
-		al_resize_display(all_get_display(), window_width_temp, window_height_temp);
+		// al_resize_display(all_get_display(), window_width_temp, window_height_temp);
 		
 		int new_x = zc_get_config("zeldadx","window_x",0);
 		int new_y = zc_get_config("zeldadx","window_y",0);
-		if (new_x > 0 && new_y > 0) al_set_window_position(all_get_display(), new_x, new_y);
-		else al_set_window_position(all_get_display(), center_x - window_width_temp / 2, center_y - window_height_temp / 2);
+		// if (new_x > 0 && new_y > 0) al_set_window_position(all_get_display(), new_x, new_y);
+		// else al_set_window_position(all_get_display(), center_x - window_width_temp / 2, center_y - window_height_temp / 2);
 	}
 #endif
 	LastWidth = al_get_display_width(all_get_display());
@@ -5479,12 +5502,11 @@ int main(int argc, char **argv)
 	sbig = (screen_scale > 1);
 	switch_type = pause_in_background ? SWITCH_PAUSE : SWITCH_BACKGROUND;
 	set_display_switch_mode(is_windowed_mode()?SWITCH_PAUSE:switch_type);
-	zq_screen_w = resx;
-	zq_screen_h = resy;
 	
-	hw_screen = screen;
 	hw_palette = &RAMpal;
-	screen = create_bitmap_ex(8, resx, resy);
+	zq_screen_w = 320*2;
+	zq_screen_h = 240*2;
+	screen = create_bitmap_ex(8, zq_screen_w, zq_screen_h);
 	clear_to_color(screen, BLACK);	
 	
 	set_close_button_callback((void (*)()) hit_close_button);
