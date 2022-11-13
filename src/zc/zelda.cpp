@@ -5354,6 +5354,7 @@ int main(int argc, char **argv)
 	window_height = resy;
 
 	// TODO:
+	// - rm all_mark_screen_dirty ?
 	// - cursor
 	// - fullscreen
 	// - rm screen_scale, scale cfg
