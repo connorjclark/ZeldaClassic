@@ -282,7 +282,7 @@ int32_t curr_tb_page=0;
 RGB_MAP rgb_table;
 COLOR_MAP trans_table, trans_table2;
 
-BITMAP     *framebuf, *menu_bmp, *gui_bmp, *scrollbuf, *tmp_bmp, *tmp_scr, *screen2, *fps_undo,
+BITMAP     *framebuf, *menu_bmp, *scrollbuf, *tmp_bmp, *tmp_scr, *screen2, *fps_undo,
            *msg_portrait_display_buf, *msg_txt_display_buf, *msg_bg_display_buf,
 		   *pricesdisplaybuf, *tb_page[3], *temp_buf, *prim_bmp,
 		   *script_menu_buf, *f6_menu_buf;
@@ -359,7 +359,6 @@ combo_pool combo_pools[MAXCOMBOPOOLS];
 SAMPLE customsfxdata[WAV_COUNT] = {0};
 uint8_t customsfxflag[WAV_COUNT>>3]  = {0};
 int32_t sfxdat=1;
-int32_t zqwin_scale = 0;
 
 extern int32_t jwin_pal[jcMAX];
 int32_t gui_colorset=0;
@@ -668,10 +667,6 @@ void update_hw_screen(bool force)
 		{
 			resx = SCREEN_W;
 			resy = SCREEN_H;
-			// zq_screen_w = resx;
-			// zq_screen_h = resy;
-			// scrx = (resx-320)>>1;
-			// scry = (resy-240)>>1;
 		}
 		if(update_hw_pal && hw_palette)
 		{
@@ -4982,7 +4977,6 @@ int main(int argc, char **argv)
 	//set_color_conversion(COLORCONV_24_TO_8);
 	framebuf  = create_bitmap_ex(8,256,224);
 	menu_bmp  = create_bitmap_ex(8,640,480);
-	gui_bmp   = create_bitmap_ex(8,640,480);
 	temp_buf  = create_bitmap_ex(8,256,224);
 	scrollbuf = create_bitmap_ex(8,512,406);
 	screen2   = create_bitmap_ex(8,320,240);

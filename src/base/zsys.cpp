@@ -43,7 +43,6 @@ using std::getline;
 #endif
 
 extern volatile int32_t myvsync;
-extern int32_t zqwin_scale;
 extern bool update_hw_pal;
 void update_hw_screen(bool force);
 
@@ -1037,12 +1036,6 @@ void set_default_box_size()
     int32_t screen_w=SCREEN_W;
     int32_t screen_h=SCREEN_H;
     
-    if(zqwin_scale>1)
-    {
-        screen_w/=zqwin_scale;
-        screen_h/=zqwin_scale;
-    }
-    
     box_w=MIN(512, screen_w-16);
     box_h=MIN(256, (screen_h-64)&0xFFF0);
     
@@ -1057,11 +1050,6 @@ void set_box_size(int32_t w, int32_t h)
 	int32_t screen_w=SCREEN_W;
 	int32_t screen_h=SCREEN_H;
 	
-	if(zqwin_scale>1)
-	{
-		screen_w/=zqwin_scale;
-		screen_h/=zqwin_scale;
-	}
 	if(w <= 0) w = 512;
 	if(h <= 0) h = 256;
 	box_w=MIN(w, screen_w-16);

@@ -45,7 +45,7 @@ extern bool is_large;
 extern int32_t RulesetDialog;
 
 extern bool disable_saving, OverwriteProtection;
-extern int32_t zq_scale, TileProtection;
+extern int32_t TileProtection;
 
 extern uint8_t PreFillTileEditorPage, PreFillComboEditorPage, PreFillMapTilePage;
 extern int32_t DMapEditorLastMaptileUsed;
@@ -119,7 +119,7 @@ extern char *datafile_str;
 extern RGB_MAP zq_rgb_table;
 extern DATAFILE *zcdata, *fontsdata;
 extern MIDI *song;
-extern BITMAP *menu1,*menu3, *gui_bmp, *mapscreenbmp, *tmp_scr, *screen2, *mouse_bmp[MOUSE_BMP_MAX][4], *mouse_bmp_1x[MOUSE_BMP_MAX][4], *icon_bmp[ICON_BMP_MAX][4], *panel_button_icon_bmp[m_menucount][4], *select_bmp[2],*dmapbmp_small, *dmapbmp_large;
+extern BITMAP *menu1,*menu3, *mapscreenbmp, *tmp_scr, *screen2, *mouse_bmp[MOUSE_BMP_MAX][4], *mouse_bmp_1x[MOUSE_BMP_MAX][4], *icon_bmp[ICON_BMP_MAX][4], *panel_button_icon_bmp[m_menucount][4], *select_bmp[2],*dmapbmp_small, *dmapbmp_large;
 extern BITMAP *arrow_bmp[MAXARROWS],*brushbmp, *brushscreen, *tooltipbmp; //, *brushshadowbmp;
 extern byte *colordata, *trashbuf;
 //extern byte *tilebuf;
@@ -410,7 +410,6 @@ int32_t onTemplates();
 extern BITMAP *pic;
 extern PALETTE picpal;
 extern int32_t  pblack,pwhite;
-extern double scale;
 extern bool vp_showpal, vp_showsize, vp_center;
 
 INLINE int32_t pal_sum(RGB p)

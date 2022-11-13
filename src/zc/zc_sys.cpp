@@ -208,6 +208,8 @@ static int zc_gui_mouse_y()
 	}
 }
 
+static BITMAP* gui_bmp;
+
 static void init_render_tree()
 {
 	if (!rti_root.children.empty())
@@ -222,6 +224,8 @@ static void init_render_tree()
 	al_set_new_bitmap_flags(ALLEGRO_NO_PRESERVE_TEXTURE);
 	rti_menu.bitmap = al_create_bitmap(menu_bmp->w, menu_bmp->h);
 
+	gui_bmp = create_bitmap_ex(8, 640, 480);
+	zc_set_gui_bmp(gui_bmp);
 	al_set_new_bitmap_flags(ALLEGRO_NO_PRESERVE_TEXTURE);
 	rti_gui.bitmap = al_create_bitmap(gui_bmp->w, gui_bmp->h);
 

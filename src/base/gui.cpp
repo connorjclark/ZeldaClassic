@@ -24,7 +24,6 @@
 #endif
 
 #include "base/zdefs.h"
-#include "base/zapp.h"
 #include "zelda.h"
 #include "tiles.h"
 #include "base/colors.h"
@@ -38,6 +37,12 @@
 #include "base/gui.h"
 
 extern int32_t zq_screen_w, zq_screen_h;
+
+static BITMAP* gui_bmp = nullptr;
+void zc_set_gui_bmp(BITMAP* bmp)
+{
+	gui_bmp = bmp;
+}
 
 //Don't really need this for anything at the moment?
 //!TODO trim -Em
@@ -204,15 +209,14 @@ int32_t update_dialog_through_bitmap(BITMAP* buffer, DIALOG_PLAYER *the_player)
 	return result;
 }
 
-extern int32_t zqwin_scale;
-
+// Renders the dialog to the screen bitmap.
+// If `zc_set_gui_bmp` has been called, renders to that bitmap instead.
 int32_t do_zqdialog(DIALOG *dialog, int32_t focus_obj)
 {
 	BITMAP *mouse_screen = _mouse_screen;
 	BITMAP *prev_screen = screen;
 	int32_t screen_count = _gfx_mode_set_count;
 	DIALOG_PLAYER *player2;
-	bool render_to_gui_bmp = get_app_id() == App::zelda;
 	ASSERT(dialog);
 	
 	if(!is_same_bitmap(_mouse_screen, screen) && !(gfx_capabilities&GFX_HW_CURSOR))
@@ -222,7 +226,7 @@ int32_t do_zqdialog(DIALOG *dialog, int32_t focus_obj)
 	
 	player2 = init_dialog(dialog, focus_obj);
 
-	if (render_to_gui_bmp)
+	if (gui_bmp)
 	{
 		clear_bitmap(gui_bmp);
 		screen = gui_bmp;
@@ -239,7 +243,7 @@ int32_t do_zqdialog(DIALOG *dialog, int32_t focus_obj)
 		//rest(1);
 	}
 
-	if (render_to_gui_bmp)
+	if (gui_bmp)
 		screen = prev_screen;
 	
 	if(_gfx_mode_set_count == screen_count && !(gfx_capabilities&GFX_HW_CURSOR))

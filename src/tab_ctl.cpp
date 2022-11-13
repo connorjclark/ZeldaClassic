@@ -32,7 +32,6 @@
 #include "jwin.h"
 
 extern volatile int32_t myvsync;
-extern int32_t zqwin_scale;
 void update_hw_screen(bool force);
 extern bool is_large;
 

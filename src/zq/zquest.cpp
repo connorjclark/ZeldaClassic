@@ -174,7 +174,6 @@ extern CConsoleLoggerEx zscript_coloured_console;
 uint8_t console_is_open = 0;
 uint8_t __isZQuest = 1; //Shared functionscan reference this. -Z
 
-#include "zqscale.h"
 #include "base/util.h"
 
 #ifdef __EMSCRIPTEN__
@@ -207,8 +206,6 @@ int32_t passive_subscreen_height=56;
 int32_t passive_subscreen_offset=0;
 
 bool disable_saving=false, OverwriteProtection;
-int32_t scale_arg;
-int32_t zq_scale_small, zq_scale_large, zq_scale;
 bool halt=false;
 bool show_sprites=true;
 bool show_hitboxes = false;
@@ -369,7 +366,7 @@ COLOR_MAP trans_table, trans_table2;
 char *datafile_str;
 DATAFILE *zcdata=NULL, *fontsdata=NULL, *sfxdata=NULL;
 MIDI *song=NULL;
-BITMAP *menu1, *menu3, *mapscreenbmp, *gui_bmp, *tmp_scr, *screen2, *mouse_bmp[MOUSE_BMP_MAX][4], *mouse_bmp_1x[MOUSE_BMP_MAX][4], *icon_bmp[ICON_BMP_MAX][4], *select_bmp[2], *dmapbmp_small, *dmapbmp_large;
+BITMAP *menu1, *menu3, *mapscreenbmp, *tmp_scr, *screen2, *mouse_bmp[MOUSE_BMP_MAX][4], *mouse_bmp_1x[MOUSE_BMP_MAX][4], *icon_bmp[ICON_BMP_MAX][4], *select_bmp[2], *dmapbmp_small, *dmapbmp_large;
 BITMAP *arrow_bmp[MAXARROWS],*brushbmp, *brushscreen, *tooltipbmp;//*brushshadowbmp;
 byte *colordata=NULL, *trashbuf=NULL;
 itemdata *itemsbuf;
@@ -1537,8 +1534,6 @@ int32_t onResetTransparency()
     return D_O_K;
 }
 
-extern int32_t zqwin_scale;
-
 int32_t onFullScreen()
 {
 	
@@ -1555,7 +1550,6 @@ int32_t onFullScreen()
 		0, 
 		lfont) == 1)	
     {
-	    int32_t old_scale = zqwin_scale;
 	#ifdef ALLEGRO_DOS
 	    return D_O_K;
 	#endif
@@ -1563,63 +1557,13 @@ int32_t onFullScreen()
 	    show_mouse(NULL);
 	    bool windowed=is_windowed_mode()!=0;
 	    
-	    if(windowed)
-	    {
-		zqwin_set_scale(1);
-	    }
-	    else
-	    {
-		zqwin_set_scale(scale_arg);
-	    }
-
-	    int32_t ret=set_gfx_mode(windowed?GFX_AUTODETECT_FULLSCREEN:GFX_AUTODETECT_WINDOWED,zq_screen_w*zqwin_scale,zq_screen_h*zqwin_scale,0,0);
-	    
+	    int32_t ret=set_gfx_mode(windowed?GFX_AUTODETECT_FULLSCREEN:GFX_AUTODETECT_WINDOWED,zq_screen_w,zq_screen_h,0,0);
 	    if(ret!=0)
 	    {
-		if(zqwin_scale==1&&windowed)
-		{
-		    zqwin_set_scale(2);
-		    ret=set_gfx_mode(windowed?GFX_AUTODETECT_FULLSCREEN:GFX_AUTODETECT_WINDOWED,zq_screen_w*zqwin_scale,zq_screen_h*zqwin_scale,0,0);
-		    
-		    if(ret!=0)
-		    {
-			zqwin_set_scale(scale_arg);
-			ret=set_gfx_mode(GFX_AUTODETECT_WINDOWED,zq_screen_w*zqwin_scale,zq_screen_h*zqwin_scale,0,0);
-			
-			if(ret!=0)
-			{
-			    /*FFCore.ZScriptConsole
-			    (
-				
-				CConsoleLoggerEx::COLOR_RED |CConsoleLoggerEx::COLOR_INTENSITY | 
-				CConsoleLoggerEx::COLOR_BACKGROUND_BLACK,"Can't set video mode (%d).\n", ret
-			    );*/
-			    Z_message("Can't set video mode (%d).\n", ret);
-			    Z_message(allegro_error);
-			    //quit_game();
-			    exit(1);
-			}
-		    }
-		}
-		else
-		{
-		    zqwin_set_scale(old_scale);
-		    ret=set_gfx_mode(GFX_AUTODETECT_FULLSCREEN,zq_screen_w*zqwin_scale,zq_screen_h*zqwin_scale,0,0);
-		    
-		    if(ret!=0)
-		    {
-			/*FFCore.ZScriptConsole
-			(
-				CConsoleLoggerEx::COLOR_RED |CConsoleLoggerEx::COLOR_INTENSITY | 
-				CConsoleLoggerEx::COLOR_BACKGROUND_BLACK,"Can't set video mode (%d).\n", ret
-			);*/
-			
 			Z_message("Can't set video mode (%d).\n", ret);
 			Z_message(allegro_error);
 			// quit_game();
 			exit(1);
-		    }
-		}
 	    }
 	    
 	    gui_mouse_focus=0;
@@ -8655,7 +8599,7 @@ void doxypos(byte &px2,byte &py2,int32_t color,int32_t mask, bool immediately, i
         if(canedit && gui_mouse_b()==1 && isinRect(x,y,startxint,startyint,int32_t(startx+(256*mapscreensize)-1),int32_t(starty+(176*mapscreensize)-1)))
         {
             scare_mouse();
-            zq_set_mouse_range(startxint,startyint,int32_t(startxint+(256*mapscreensize)-1),int32_t(startyint+(176*mapscreensize)-1));
+            set_mouse_range(startxint,startyint,int32_t(startxint+(256*mapscreensize)-1),int32_t(startyint+(176*mapscreensize)-1));
             
             while(gui_mouse_b()==1)
             {
@@ -8689,7 +8633,7 @@ void doxypos(byte &px2,byte &py2,int32_t color,int32_t mask, bool immediately, i
                 py2=byte(vbound(y,0,255)&mask);
             }
             
-            zq_set_mouse_range(0,0,zq_screen_w-1,zq_screen_h-1);
+            set_mouse_range(0,0,zq_screen_w-1,zq_screen_h-1);
             unscare_mouse();
             done=true;
         }
@@ -19477,7 +19421,7 @@ int32_t d_warpdestsel_proc(int32_t msg,DIALOG *d,int32_t c)
                 if(!mousedown||!inrect)
                 {
                     set_mouse_sprite(mouse_bmp[MOUSE_BMP_BLANK][0]);
-                    zq_set_mouse_range(d->x+2, d->y+2, d->x+256+1, d->y+176+1);
+                    set_mouse_range(d->x+2, d->y+2, d->x+256+1, d->y+176+1);
                 }
                 
                 rect(bmp, px2, py2, px2+15, py2+15, vc(15));
@@ -19489,7 +19433,7 @@ int32_t d_warpdestsel_proc(int32_t msg,DIALOG *d,int32_t c)
             {
                 if(mousedown||!inrect)
                 {
-                    zq_set_mouse_range(0,0,zq_screen_w-1,zq_screen_h-1);
+                    set_mouse_range(0,0,zq_screen_w-1,zq_screen_h-1);
                     set_mouse_sprite(mouse_bmp[MOUSE_BMP_POINT_BOX][0]);
                 }
                 
@@ -31753,41 +31697,13 @@ int32_t main(int32_t argc,char **argv)
 	
 	set_close_button_callback((void (*)()) hit_close_button);
 	
-#ifndef ALLEGRO_DOS
-	zq_scale_small = zc_get_config("zquest","scale",1);
-	zq_scale_large = zc_get_config("zquest","scale_large",1);
-	zq_scale = is_large ? zq_scale_large : zq_scale_small;
-	scale_arg = used_switch(argc,argv,"-scale");
-	
-	if(scale_arg && (argc>(scale_arg+1)))
-	{
-		scale_arg = atoi(argv[scale_arg+1]);
-		
-		if(scale_arg == 0)
-		{
-			scale_arg = 1;
-		}
-		
-		zq_scale=scale_arg;
-	}
-	else
-	{
-		scale_arg = zq_scale;
-	}
-	
-	zqwin_set_scale(scale_arg);
-	
-#endif
-	
 	if(used_switch(argc,argv,"-fullscreen"))
 	{
 		tempmode = GFX_AUTODETECT_FULLSCREEN;
-		zqwin_set_scale(1);
 	}
 	else if(used_switch(argc,argv,"-windowed"))
 	{
 		tempmode=GFX_AUTODETECT_WINDOWED;
-		zqwin_set_scale(scale_arg);
 	}
 	
 	/*if (tempmode==GFX_AUTODETECT_FULLSCREEN)
@@ -31809,111 +31725,6 @@ int32_t main(int32_t argc,char **argv)
 
 	int32_t videofail = (set_gfx_mode(tempmode,zq_screen_w,zq_screen_h,0,0));
 
-	if(videofail!=0)
-	{
-		three_finger_flag=false;
-		
-		//set_config_file("ag.cfg");
-		zc_set_config_standard();
-		if(install_timer() < 0)
-		{
-
-			/*
-		FFCore.ZScriptConsole
-		(
-			CConsoleLoggerEx::COLOR_RED |CConsoleLoggerEx::COLOR_INTENSITY | 
-				CConsoleLoggerEx::COLOR_BACKGROUND_BLACK,"ZQuest Creator I/O Error: %s\n", 
-			"Failed to init allegro timers!"
-		);
-			*/
-
-		Z_error_fatal(allegro_error);
-		quit_game();
-		}
-		
-		if(install_keyboard() < 0)
-		{
-
-			/*
-		FFCore.ZScriptConsole
-		(
-			CConsoleLoggerEx::COLOR_RED |CConsoleLoggerEx::COLOR_INTENSITY | 
-				CConsoleLoggerEx::COLOR_BACKGROUND_BLACK,"ZQuest Creator I/O Error: %s\n", 
-			"Failed to install keyboard!"
-		);
-			*/
-
-		Z_error_fatal(allegro_error);
-		quit_game();
-		}
-		
-		if(install_mouse() < 0)
-		{
-
-		/*FFCore.ZScriptConsole
-		(
-			CConsoleLoggerEx::COLOR_RED |CConsoleLoggerEx::COLOR_INTENSITY | 
-				CConsoleLoggerEx::COLOR_BACKGROUND_BLACK,"ZQuest Creator I/O Error: %s\n", 
-			"Failed to install mouse!"
-		);
-			*/
-
-		Z_error_fatal(allegro_error);
-		quit_game();
-		}
-		zc_install_mouse_event_handler();
-		
-		LOCK_VARIABLE(lastfps);
-		
-		LOCK_VARIABLE(framecnt);
-		LOCK_FUNCTION(fps_callback);
-		
-		if(install_int_ex(fps_callback,SECS_TO_TIMER(1)))
-		{
-
-		/*
-			FFCore.ZScriptConsole
-		(
-			CConsoleLoggerEx::COLOR_RED |CConsoleLoggerEx::COLOR_INTENSITY | 
-				CConsoleLoggerEx::COLOR_BACKGROUND_BLACK,"ZQuest Creator I/O Error: %s\n", 
-			"Failed to allocate timer fps callback!"
-		);
-			*/
-
-		Z_error_fatal("couldn't allocate timer");
-		quit_game();
-		}
-		
-		
-		LOCK_VARIABLE(dclick_status);
-		LOCK_VARIABLE(dclick_time);
-		lock_dclick_function();
-		install_int(dclick_check, 20);
-	
-		//while(!quit && (--exittimer > 0))
-		//{
-			
-			
-		//}
-		//Z_error_fatal("Vid");
-		
-			//The console requires the allegro process to exist, vefore it can lwaunch. 
-		//Let's hope that this doesn't create a magical memory leak, or thread issues.
-		CConsoleLoggerEx zq_scale_console;
-		zq_scale_console.Create("ZQuest Creator Logging Console", 600, 200);
-		zq_scale_console.cls(CConsoleLoggerEx::COLOR_BACKGROUND_BLACK);
-		zq_scale_console.gotoxy(0,0);
-		zq_scale_console.cprintf( CConsoleLoggerEx::COLOR_BLUE | CConsoleLoggerEx::COLOR_INTENSITY |
-		CConsoleLoggerEx::COLOR_BACKGROUND_BLACK,"ZQuest Creator Logging Console\n");
-
-		zq_scale_console.cprintf( CConsoleLoggerEx::COLOR_RED |CConsoleLoggerEx::COLOR_INTENSITY | 
-						CConsoleLoggerEx::COLOR_BACKGROUND_BLACK,"ZQuest Creator cannot run at the selected scale (%d) \nwith your current video hardware.\nPlease try a lower-resolution setting or a smaller scale.\n", zq_scale);
-
-
-		Z_error_fatal(allegro_error);
-	//quit_game here crashes if we call console code
-	//I think that there is no process by the time that the console tries to attach itself?
-	}
 	//extra block here is intentional
 	if(videofail!=0)
 	{
@@ -31923,7 +31734,7 @@ int32_t main(int32_t argc,char **argv)
 	else
 	{
 		Z_message("gfx mode set at -%d %dbpp %d x %d \n",
-				  tempmode, get_color_depth(), zq_screen_w*zqwin_scale, zq_screen_h*zqwin_scale);
+				  tempmode, get_color_depth(), zq_screen_w, zq_screen_h);
 		//Z_message("OK\n");
 	}
 
@@ -31994,7 +31805,6 @@ int32_t main(int32_t argc,char **argv)
 	clear_bitmap(menu1);
 	menu3 = create_bitmap_ex(8,zq_screen_w,zq_screen_h);
 	mapscreenbmp = create_bitmap_ex(8,16*(showedges?18:16),16*(showedges?13:11));
-	gui_bmp = create_bitmap_ex(8, zq_screen_w, zq_screen_h);
 	dmapbmp_small = create_bitmap_ex(8,65,33);
 	dmapbmp_large = create_bitmap_ex(8,(is_large?177:113),(is_large?81:57));
 	brushbmp = create_bitmap_ex(8,256*mapscreensize, 176*mapscreensize);
@@ -32490,10 +32300,6 @@ int32_t main(int32_t argc,char **argv)
 	}
 	parser_console.kill();
 	killConsole();
-#ifndef ALLEGRO_DOS
-	zqwin_set_scale(1);
-#endif
-	
 	
 	quit_game();
 	
@@ -33366,8 +33172,6 @@ int32_t save_config_file()
     set_config_int("zquest","float_brush",FloatBrush);
     set_config_int("zquest","open_last_quest",OpenLastQuest);
     set_config_int("zquest","show_misalignments",ShowMisalignments);
-    set_config_int("zquest","scale",zq_scale_small);
-    set_config_int("zquest","scale_large",zq_scale_large);
     set_config_int("zquest","fullscreen", is_windowed_mode() ? 0 : 1);
     set_config_int("zquest","showffscripts",ShowFFScripts);
     set_config_int("zquest","showsquares",ShowSquares);
@@ -34395,11 +34199,7 @@ static void init_render_tree()
 		al_set_new_bitmap_flags(ALLEGRO_NO_PRESERVE_TEXTURE);
 	rti_screen.bitmap = al_create_bitmap(screen->w, screen->h);
 
-	// al_set_new_bitmap_flags(ALLEGRO_NO_PRESERVE_TEXTURE);
-	// rti_menu.bitmap = al_create_bitmap(menu_bmp->w, menu_bmp->h);
-
 	rti_root.children.push_back(&rti_screen);
-	// rti_root.children.push_back(&rti_menu);
 
 	gui_mouse_x = zc_gui_mouse_x;
 	gui_mouse_y = zc_gui_mouse_y;

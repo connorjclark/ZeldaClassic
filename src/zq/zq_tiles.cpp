@@ -29,7 +29,6 @@
 #include "qst.h"
 #include "jwin.h"
 #include "base/jwinfsel.h"
-#include "zqscale.h"
 #include "zc_custom.h"
 #include "questReport.h"
 #include "dialog/info.h"
@@ -53,7 +52,6 @@ static void massRecolorReset8Bit();
 static bool massRecolorSetup(int32_t cset);
 static void massRecolorApply(int32_t tile);
 extern int32_t last_droplist_sel;
-extern int32_t zqwin_scale;
 
 int32_t ex=0;
 int32_t nextcombo_fake_click=0;

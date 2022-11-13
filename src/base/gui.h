@@ -16,6 +16,7 @@
 
 extern DIALOG_PLAYER *player;
 
+void     zc_set_gui_bmp(BITMAP* bmp);
 int32_t  zc_do_dialog(DIALOG *d, int32_t f);
 int32_t  zc_popup_dialog(DIALOG *d, int32_t f);
 int32_t  PopUp_dialog(DIALOG *d,int32_t f);
