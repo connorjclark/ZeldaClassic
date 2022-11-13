@@ -44,31 +44,6 @@ void zc_set_gui_bmp(BITMAP* bmp)
 	gui_bmp = bmp;
 }
 
-//Don't really need this for anything at the moment?
-//!TODO trim -Em
-static size_t sp_acquire_ctr = 0;
-void sp_acquire_screen()
-{
-	++sp_acquire_ctr;
-	acquire_screen();
-}
-void sp_release_screen()
-{
-	if(sp_acquire_ctr)
-	{
-		--sp_acquire_ctr;
-		release_screen();
-	}
-}
-void sp_release_screen_all()
-{
-	while(sp_acquire_ctr)
-	{
-		--sp_acquire_ctr;
-		release_screen();
-	}
-}
-
 void broadcast_dialog_message(DIALOG* dialog, int32_t msg, int32_t c)
 {
 	while(dialog->proc)
