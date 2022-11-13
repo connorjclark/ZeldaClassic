@@ -180,10 +180,6 @@ int32_t main(int32_t argc, char* argv[])
 
 	all_disable_threaded_display();
 
-	// all_set_force_integer_scale(zc_get_config("ZLAUNCH", "scaling_force_integer", 1) != 0);
-	// if (strcmp(zc_get_config("ZLAUNCH", "scaling_mode", "linear"), "linear") == 0)
-	// 	all_set_bitmap_flags(ALLEGRO_NO_PRESERVE_TEXTURE | ALLEGRO_MAG_LINEAR | ALLEGRO_MIN_LINEAR);
-
 	int32_t videofail = set_gfx_mode(GFX_AUTODETECT_WINDOWED,zq_screen_w,zq_screen_h,0,0);
 	
 	if(videofail)
@@ -538,7 +534,7 @@ static void configure_render_tree()
 	rti_root.visible = true;
 
 	{
-		static bool scaling_force_integer = zc_get_config("ZLAUNCH", "scaling_force_integer", 1) == 1;
+		static bool scaling_force_integer = zc_get_config("ZLAUNCH", "scaling_force_integer", 0) == 1;
 
 		int w = al_get_bitmap_width(rti_screen.bitmap);
 		int h = al_get_bitmap_height(rti_screen.bitmap);
