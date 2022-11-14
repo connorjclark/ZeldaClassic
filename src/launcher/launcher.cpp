@@ -180,7 +180,15 @@ int32_t main(int32_t argc, char* argv[])
 
 	all_disable_threaded_display();
 
-	int32_t videofail = set_gfx_mode(GFX_AUTODETECT_WINDOWED,zq_screen_w,zq_screen_h,0,0);
+	// TODO: remember window size.
+	int window_width = zq_screen_w;
+	int window_height = zq_screen_h;
+#ifdef ALLEGRO_MACOSX
+	window_width *= 2;
+	window_height *= 2;
+#endif
+
+	int32_t videofail = set_gfx_mode(GFX_AUTODETECT_WINDOWED,window_width,window_height,0,0);
 	
 	if(videofail)
 	{
@@ -265,6 +273,7 @@ END_OF_MAIN()
 
 //Things required to compile from shared files... le sigh -Em
 bool is_large = true; //scaling
+bool DragAspect = true;
 bool is_zquest() //Used for sizing purposes
 {
 	return true;
@@ -554,7 +563,6 @@ static void render_launcher()
 {
 	init_render_tree();
 	configure_render_tree();
-	render_tree_layout(&rti_root, nullptr);
 
 	al_set_target_backbuffer(all_get_display());
 	al_clear_to_color(al_map_rgb_f(0, 0, 0));
