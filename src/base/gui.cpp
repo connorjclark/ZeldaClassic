@@ -44,6 +44,11 @@ void zc_set_gui_bmp(BITMAP* bmp)
 	gui_bmp = bmp;
 }
 
+BITMAP* zc_get_gui_bmp()
+{
+	return gui_bmp;
+}
+
 void broadcast_dialog_message(DIALOG* dialog, int32_t msg, int32_t c)
 {
 	while(dialog->proc)

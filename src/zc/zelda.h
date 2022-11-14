@@ -19,7 +19,6 @@
 #include <map>
 #include "base/zdefs.h"
 #include "base/zc_array.h"
-#include "base/render_tree.h"
 #include "zc_sys.h"
 #include "zeldadat.h"
 #include "sfx.h"
@@ -543,13 +542,6 @@ extern const byte ten_rupies_y[10];
 extern zctune tunes[MAXMIDIS];
 //extern zcmidi_ tunes[MAXMIDIS];
 //extern emusic enhancedMusic[MAXMUSIC];
-
-#ifndef IS_ZQUEST
-extern RenderTreeItem rti_root;
-extern RenderTreeItem rti_game;
-extern RenderTreeItem rti_menu;
-extern RenderTreeItem rti_gui;
-#endif
 
 #endif
 

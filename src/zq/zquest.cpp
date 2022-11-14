@@ -63,7 +63,7 @@ void setZScriptVersion(int32_t) { } //bleh...
 #include "zquest.h"
 #include "zquestdat.h"
 #include "ffasm.h"
-#include <fmt/format.h>
+#include "render.h"
 
 // the following are used by both zelda.cc and zquest.cc
 #include "base/zdefs.h"
@@ -34141,77 +34141,6 @@ void doDarkroomCircle(int32_t cx, int32_t cy, byte glowRad,BITMAP* dest,BITMAP* 
 	}
 }
 void doDarkroomCone(int32_t sx, int32_t sy, byte glowRad, int32_t dir, BITMAP* dest,BITMAP* transdest){}
-
-static RenderTreeItem rti_root;
-static RenderTreeItem rti_screen;
-
-static int zc_gui_mouse_x()
-{
-	return rti_screen.translate_mouse_x(mouse_x);
-}
-
-static int zc_gui_mouse_y()
-{
-	return rti_screen.translate_mouse_y(mouse_y);
-}
-
-static void init_render_tree()
-{
-	if (!rti_root.children.empty())
-		return;
-
-	if (zc_get_config("zquest", "scaling_mode", 0) == 1)
-		all_set_bitmap_flags(ALLEGRO_NO_PRESERVE_TEXTURE | ALLEGRO_MAG_LINEAR | ALLEGRO_MIN_LINEAR);
-	else
-		al_set_new_bitmap_flags(ALLEGRO_NO_PRESERVE_TEXTURE);
-	rti_screen.bitmap = al_create_bitmap(screen->w, screen->h);
-
-	rti_root.children.push_back(&rti_screen);
-
-	gui_mouse_x = zc_gui_mouse_x;
-	gui_mouse_y = zc_gui_mouse_y;
-}
-
-static void configure_render_tree()
-{
-	int resx = al_get_display_width(all_get_display());
-	int resy = al_get_display_height(all_get_display());
-
-	rti_root.transform.x = 0;
-	rti_root.transform.y = 0;
-	rti_root.transform.scale = 1;
-	rti_root.visible = true;
-
-	{
-		static bool scaling_force_integer = zc_get_config("zquest", "scaling_force_integer", 1) != 0;
-
-		int w = al_get_bitmap_width(rti_screen.bitmap);
-		int h = al_get_bitmap_height(rti_screen.bitmap);
-		float scale = std::min((float)resx/w, (float)resy/h);
-		if (scaling_force_integer)
-			scale = (int) scale;
-		rti_screen.transform.x = (resx - w*scale) / 2 / scale;
-		rti_screen.transform.y = (resy - h*scale) / 2 / scale;
-		rti_screen.transform.scale = scale;
-		rti_screen.visible = true;
-	}
-
-	all_render_a5_bitmap(screen, rti_screen.bitmap);
-}
-
-// TODO move to zq_render
-static void render_zq()
-{
-	init_render_tree();
-	configure_render_tree();
-	render_tree_layout(&rti_root, nullptr);
-
-	al_set_target_backbuffer(all_get_display());
-	al_clear_to_color(al_map_rgb_f(0, 0, 0));
-	render_tree_draw(&rti_root);
-
-	al_flip_display();
-}
 
 bool update_hw_pal = false;
 void update_hw_screen(bool force)

@@ -363,7 +363,7 @@ set(zcbase_sources
 	src/base/module.cpp
 	src/base/process_management.cpp
 	src/base/random.cpp
-	src/base/render_tree.cpp
+	src/base/render.cpp
 	src/base/sin1.cpp
 	src/base/util.cpp
 	src/base/win32.cpp

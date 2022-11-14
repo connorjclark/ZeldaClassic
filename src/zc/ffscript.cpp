@@ -24,6 +24,7 @@ uint8_t using_SRAM = 0;
 #include "base/zc_math.h"
 #include "base/zc_array.h"
 #include "ffscript.h"
+#include "render.h"
 #include "zc_subscr.h"
 #include <time.h>
 #include "script_drawing.h"
