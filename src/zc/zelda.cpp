@@ -5349,6 +5349,9 @@ int main(int argc, char **argv)
 	if(resx < 256) resx = 256;
 	if(resy < 240) resy = 240;
 	
+	resx *= gethorizontalscale();
+	resy *= getverticalscale();
+
 	// TODO: rename "resx" "resy" options and zlauncher "Resolution" to "Window size",
 	window_width = resx;
 	window_height = resy;
@@ -5445,20 +5448,15 @@ int main(int argc, char **argv)
 
 		int o_window_x, o_window_y;
 		al_get_window_position(all_get_display(), &o_window_x, &o_window_y);
-		int o_window_w = al_get_display_width(all_get_display());
-		int o_window_h = al_get_display_height(all_get_display());
-		int center_x = o_window_x + o_window_w / 2;
-		int center_y = o_window_y + o_window_h / 2;
-		double vscale = getverticalscale(); 
-		double hscale = gethorizontalscale(); 
-		int window_width_temp = window_width*hscale;
-		int window_height_temp = window_height*vscale;
-		al_resize_display(all_get_display(), window_width_temp, window_height_temp);
+		int window_w = al_get_display_width(all_get_display());
+		int window_h = al_get_display_height(all_get_display());
+		int center_x = o_window_x + window_w / 2;
+		int center_y = o_window_y + window_h / 2;
 		
 		int new_x = zc_get_config("zeldadx","window_x",0);
 		int new_y = zc_get_config("zeldadx","window_y",0);
-		if (new_x > 0 && new_y > 0) al_set_window_position(all_get_display(), new_x, new_y);
-		else al_set_window_position(all_get_display(), center_x - window_width_temp / 2, center_y - window_height_temp / 2);
+		if (SaveWinPos && new_x > 0 && new_y > 0) al_set_window_position(all_get_display(), new_x, new_y);
+		else al_set_window_position(all_get_display(), center_x - window_w / 2, center_y - window_h / 2);
 	}
 #endif
 	sbig = (screen_scale > 1);
