@@ -24,7 +24,6 @@
 #include <sstream>
 
 #include "base/zc_alleg.h"
-#include <allegro5/allegro_ttf.h>
 
 #include <stdlib.h>
 
@@ -5455,10 +5454,10 @@ int main(int argc, char **argv)
 	set_display_switch_mode(is_windowed_mode()?SWITCH_PAUSE:switch_type);
 	
 	hw_palette = &RAMpal;
-	zq_screen_w = 320*2;
-	zq_screen_h = 240*2;
+	zq_screen_w = 640;
+	zq_screen_h = 480;
 	screen = create_bitmap_ex(8, zq_screen_w, zq_screen_h);
-	clear_to_color(screen, BLACK);	
+	clear_to_color(screen, BLACK);
 	
 	set_close_button_callback((void (*)()) hit_close_button);
 	set_window_title("Zelda Classic");

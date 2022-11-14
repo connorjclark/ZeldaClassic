@@ -6,7 +6,6 @@
 RenderTreeItem rti_root;
 RenderTreeItem rti_game;
 RenderTreeItem rti_menu;
-// TODO: change this to `screen_gui` and just render out the screen bmp
 RenderTreeItem rti_gui;
 
 static int zc_gui_mouse_x()
