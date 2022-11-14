@@ -15,6 +15,11 @@
  *      See readme.txt for copyright information.
  */
 
+// NOTE!
+// this file is pretty terribly butchered now, and isn't truly "allegro legacy".
+// all_disable_threaded_display() MUST be used, else things will surely not work.
+// TODO: remove any usage of this file and move all display handling code into base/
+
 #include "allegro.h"
 #include "allegro/internal/aintern.h"
 #include "allegro/platform/ainta5.h"
@@ -84,7 +89,16 @@ static bool _a5_setup_screen(int w, int h)
 
   al_set_new_display_flags(flags);
 
-  _a5_display = al_create_display(w, h);
+  if (_a5_display)
+  {
+    al_resize_display(_a5_display, w, h);
+    al_set_display_flag(_a5_display, ALLEGRO_FULLSCREEN_WINDOW, flags&ALLEGRO_FULLSCREEN_WINDOW);
+    al_set_display_flag(_a5_display, ALLEGRO_FULLSCREEN, flags&ALLEGRO_FULLSCREEN);
+  }
+  else
+  {
+    _a5_display = al_create_display(w, h);
+  }
   if(!_a5_display)
   {
     goto fail;
@@ -120,6 +134,7 @@ static bool _a5_setup_screen(int w, int h)
   //   _a5_screen_format = ALLEGRO_LEGACY_PIXEL_FORMAT_8888;
   // }
   // _a5_screen_format = pixel_format;
+
   return true;
 
   fail:
@@ -347,7 +362,7 @@ static void a5_display_exit(BITMAP * bp)
   }
   else
   {
-    _a5_destroy_screen();
+    // _a5_destroy_screen();
   }
 }
 

@@ -5356,7 +5356,6 @@ int main(int argc, char **argv)
 	window_height = resy;
 
 	// TODO:
-	// - cursor
 	// - fullscreen
 	// - rm screen_scale, scale cfg
 	// - maybe rm fix_dialogs ?
@@ -5365,53 +5364,9 @@ int main(int argc, char **argv)
 	
 	if(!game_vid_mode(tempmode, wait_ms_on_set_graphics))
 	{
-		//what we need here is not rightousness but madness!!!
-		
-#define TRY_SET_VID_MODE(scale) \
-	Z_message("Unable to set gfx mode at -%d %dbpp %d x %d \n", tempmode, get_color_depth(), resx, resy); \
-	screen_scale=scale; \
-	resx=320*scale; \
-	resy=240*scale
-		
-		TRY_SET_VID_MODE(2);
-		
-		if(!game_vid_mode(tempmode, wait_ms_on_set_graphics))
-		{
-			TRY_SET_VID_MODE(1);
-			
-			if(!game_vid_mode(tempmode, wait_ms_on_set_graphics))
-			{
-				if(tempmode != GFX_AUTODETECT_WINDOWED)
-				{
-					tempmode=GFX_AUTODETECT_WINDOWED;
-					al_trace("-fullscreen not supported by your video driver! setting -windowed switch\n");
-					TRY_SET_VID_MODE(2);
-					
-					if(!game_vid_mode(tempmode, wait_ms_on_set_graphics))
-					{
-						TRY_SET_VID_MODE(1);
-						
-						if(!game_vid_mode(tempmode, wait_ms_on_set_graphics))
-						{
-							Z_message("Unable to set gfx mode at -%d %dbpp %d x %d \n", tempmode, get_color_depth(), resx, resy);
-							al_trace("Fatal Error...Zelda Classic could not be initialized. Have a nice day :) \n");
-							Z_error_fatal(allegro_error);
-							quit_game();
-						}
-						else Z_message("set gfx mode succsessful at -%d %dbpp %d x %d \n", tempmode, get_color_depth(), resx, resy);
-					}
-					else Z_message("set gfx mode succsessful at -%d %dbpp %d x %d \n", tempmode, get_color_depth(), resx, resy);
-				}
-				else
-				{
-					al_trace("Fatal Error: could not create a window for Zelda Classic.\n");
-					Z_error_fatal(allegro_error);
-					quit_game();
-				}
-			}
-			else Z_message("set gfx mode succsessful at -%d %dbpp %d x %d \n", tempmode, get_color_depth(), resx, resy);
-		}
-		else Z_message("set gfx mode succsessful at -%d %dbpp %d x %d \n", tempmode, get_color_depth(), resx, resy);
+		al_trace("Fatal Error: could not create a window for Zelda Classic.\n");
+		Z_error_fatal(allegro_error);
+		quit_game();
 	}
 	else
 	{
