@@ -94,6 +94,7 @@ static bool _a5_setup_screen(int w, int h)
     al_resize_display(_a5_display, w, h);
     al_set_display_flag(_a5_display, ALLEGRO_FULLSCREEN_WINDOW, flags&ALLEGRO_FULLSCREEN_WINDOW);
     al_set_display_flag(_a5_display, ALLEGRO_FULLSCREEN, flags&ALLEGRO_FULLSCREEN);
+    al_set_display_flag(_a5_display, ALLEGRO_RESIZABLE, flags&ALLEGRO_RESIZABLE);
   }
   else
   {

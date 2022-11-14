@@ -5355,11 +5355,8 @@ int main(int argc, char **argv)
 	window_width = resx;
 	window_height = resy;
 
-	// TODO:
-	// - fullscreen
+	// TODO !
 	// - rm screen_scale, scale cfg
-	// - maybe rm fix_dialogs ?
-	// - zquest, launcher
 	// - document
 	
 	if(!game_vid_mode(tempmode, wait_ms_on_set_graphics))
