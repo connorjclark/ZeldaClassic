@@ -78,7 +78,6 @@ static void * a5_mouse_thread_proc(ALLEGRO_THREAD * thread, void * data)
                     _mouse_z = event.mouse.z;
 
                     if (prevx != _mouse_x || prevy != _mouse_y || prevz != _mouse_z) {
-                        all_mark_screen_dirty();
                         prevx = event.mouse.x;
                         prevy = event.mouse.y;
                         prevz = event.mouse.z;

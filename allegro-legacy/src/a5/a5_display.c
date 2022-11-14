@@ -668,12 +668,6 @@ ALLEGRO_BITMAP * all_get_a5_bitmap(BITMAP * bp)
     return NULL;
 }
 
-// local edit
-void all_mark_screen_dirty()
-{
-    dirty_screen = true;
-}
-
 void all_render_screen(void)
 {
     if (!dirty_screen) {

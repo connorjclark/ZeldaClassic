@@ -31,7 +31,6 @@ AL_LEGACY_FUNC(void, all_render_a5_bitmap, (BITMAP * bp, ALLEGRO_BITMAP * a5bp))
 AL_LEGACY_FUNC(void, all_render_screen, (void));
 AL_LEGACY_FUNC(void, all_disable_threaded_display, (void));
 // local edit
-AL_LEGACY_FUNC(void, all_mark_screen_dirty, (void));
 AL_LEGACY_FUNC(void, all_process_display_events, ());
 AL_LEGACY_FUNC(void, all_set_scale, (int scale));
 AL_LEGACY_FUNC(void, all_set_force_integer_scale, (bool force));

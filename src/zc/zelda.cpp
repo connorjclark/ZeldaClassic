@@ -5357,15 +5357,11 @@ int main(int argc, char **argv)
 	window_height = resy;
 
 	// TODO:
-	// - rm all_mark_screen_dirty ?
 	// - cursor
 	// - fullscreen
 	// - rm screen_scale, scale cfg
-	// - rm old mutex for screen gui shit
 	// - maybe rm fix_dialogs ?
 	// - zquest, launcher
-	// - fix window pos and size cfgs
-	// - fix keep aspect ratio
 	// - document
 	
 	if(!game_vid_mode(tempmode, wait_ms_on_set_graphics))
@@ -5433,11 +5429,6 @@ int main(int argc, char **argv)
 		select_mouse_cursor(MOUSE_CURSOR_ARROW);
 		show_mouse(screen);
 	}
-
-	// while (!all_get_display()) rest(1);
-	// enable_hardware_cursor();
-	// select_mouse_cursor(MOUSE_CURSOR_NONE);
-	// // show_mouse(screen);
 
 #ifndef __EMSCRIPTEN__
 	if (!all_get_fullscreen_flag()) {
