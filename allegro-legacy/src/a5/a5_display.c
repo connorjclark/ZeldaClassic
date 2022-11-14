@@ -103,8 +103,15 @@ static bool _a5_setup_screen(int w, int h)
   {
     goto fail;
   }
+
+  w = _a5_display_width = gfx_driver->w = al_get_display_width(_a5_display);
+  h = _a5_display_height = gfx_driver->h = al_get_display_height(_a5_display);
+
   al_store_state(&old_state, ALLEGRO_STATE_NEW_BITMAP_PARAMETERS);
   al_set_new_bitmap_flags(_a5_bitmap_flags);
+
+  if (_a5_screen)
+    al_destroy_bitmap(_a5_screen);
 
   _a5_screen = al_create_bitmap(w, h);
   al_restore_state(&old_state);
@@ -325,30 +332,20 @@ static BITMAP * a5_display_init(int w, int h, int vw, int vh, int color_depth)
 
     screen_mutex = al_create_mutex_recursive();
 
-    bp = create_bitmap(w, h);
-    if (!bp)
-      return NULL;
-
     _a5_display_width = w;
     _a5_display_height = h;
 
-    if(!_a5_disable_threaded_display)
+    if(!_setup())
     {
-      _a5_display_creation_done = 0;
-      _a5_screen_thread = al_create_thread(_a5_display_thread, NULL);
-      al_start_thread(_a5_screen_thread);
-      // local edit
-      while(!_a5_display_creation_done) rest(1);
+      return NULL;
     }
-    else
-    {
-      if(!_setup())
-      {
-        return NULL;
-      }
-    }
-    gfx_driver->w = bp->w;
-    gfx_driver->h = bp->h;
+
+    bp = create_bitmap(_a5_display_width, _a5_display_height);
+    if (!bp)
+      return NULL;
+
+    gfx_driver->w = _a5_display_width;
+    gfx_driver->h = _a5_display_height;
 
     return bp;
 }

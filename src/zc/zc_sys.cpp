@@ -3949,9 +3949,9 @@ void updatescr(bool allowwavy, bool record_gfx)
 	//TODO: Optimize blit 'overcalls' -Gleeok
 	BITMAP *source = nosubscr ? panorama : wavybuf;
 
-	// TODO: skip this blit somehow
+	// TODO ! skip this blit somehow
 	blit(source,framebuf,0,0,0,0,256,224);
-	// TODO: delete below code
+	// TODO ! delete below code
 
 	static BITMAP *scanlinesbmp=NULL;
 	
