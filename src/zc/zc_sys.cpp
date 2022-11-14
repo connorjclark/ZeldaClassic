@@ -26,10 +26,8 @@
 #include "base/zc_alleg.h"
 #include "gamedata.h"
 #include "zc_init.h"
-//#include "zquest.h"
 #include "init.h"
 #include "replay.h"
-#include "render.h"
 #include "cheats.h"
 #include "base/zc_math.h"
 
@@ -8318,9 +8316,16 @@ int32_t onExtLetterGridEntry()
 	return D_O_K;
 }
 
+static BITMAP* oldscreen;
 int32_t onFullscreenMenu()
 {
-	onFullscreen();
+	// super hacks
+	screen = oldscreen;
+	if (onFullscreen() == D_REDRAW)
+	{
+		oldscreen = screen;
+	}
+	screen = menu_bmp;
 	misc_menu[2].flags =(isFullScreen()==1)?D_SELECTED:0;
 	return D_O_K;
 }
@@ -8880,47 +8885,20 @@ void System()
 	show_mouse(screen);
 	
 	DIALOG_PLAYER *p;
-	
-	// if(!Playing || (!zcheats.flags && !get_debug() && DEVLEVEL < 2 && !zqtesting_mode))
-	// {
-	// 	memcpy(dlg_copy, (void*)system_dlg2, 10*sizeof(DIALOG));
-	// 	p = init_dialog(dlg_copy,-1);
-	// }
-	// else
-	// {
-	// 	memcpy(dlg_copy, (void*)system_dlg, 10*sizeof(DIALOG));
-	// 	p = init_dialog(dlg_copy,-1);
-	// }
 
-	// gui_set_screen(gui_bmp);
 	clear_bitmap(menu_bmp);
-	BITMAP* oldscreen = screen;
+	oldscreen = screen;
+	
 	screen = menu_bmp;
 
-	// FONT* gui_scaled_font = extract_font_range(font, -1, -1);
-	// gui_scaled_font->height *= 2;
-	// FONT_MONO_DATA* mf = (FONT_MONO_DATA*)(gui_scaled_font->data);
-    // while(mf) {
-	// 	for(int i = mf->begin; i < mf->end; i++) {
-    //     	FONT_GLYPH* g = mf->glyphs[i - mf->begin];
-    //     	// g->w *= 2;
-	// 		// g->h *= 2;
-	// 		g->w += 2;
-	// 		g->h += 2;
-	// 	}
-    //     mf = mf->next;
-    // }
-	// FONT* old_font = font;
-	// font = gui_scaled_font;
-
-	// if(!Playing || (!zcheats.flags && !get_debug() && DEVLEVEL < 2 && !zqtesting_mode))
-	// {
-		// p = init_dialog(system_dlg2,-1);
-	// }
-	// else
-	// {
+	if(!Playing || (!zcheats.flags && !get_debug() && DEVLEVEL < 2 && !zqtesting_mode))
+	{
+		p = init_dialog(system_dlg2,-1);
+	}
+	else
+	{
 		p = init_dialog(system_dlg,-1);
-	// }
+	}
 	
 	// drop the menu on startup if menu button pressed
 	if(joybtn(Mbtn)||zc_getrawkey(KEY_ESC))

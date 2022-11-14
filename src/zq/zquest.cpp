@@ -1564,6 +1564,8 @@ int32_t onFullScreen()
 			// quit_game();
 			exit(1);
 	    }
+
+		screen = create_bitmap_ex(8, zq_screen_w, zq_screen_h);
 	    
 	    gui_mouse_focus=0;
 	    gui_bg_color=jwin_pal[jcBOX];
