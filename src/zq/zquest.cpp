@@ -31737,6 +31737,8 @@ int32_t main(int32_t argc,char **argv)
 		//Z_message("OK\n");
 	}
 
+	all_set_transparent_palette_index(0);
+
 	if (zc_get_config("zquest","hw_cursor",0) == 1)
 	{
 		// Must wait for the display thread to create the a5 display before the

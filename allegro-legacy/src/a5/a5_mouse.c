@@ -64,6 +64,8 @@ static void * a5_mouse_thread_proc(ALLEGRO_THREAD * thread, void * data)
                 case ALLEGRO_EVENT_MOUSE_ENTER_DISPLAY:
                 {
                     _mouse_on = -1;
+                    // TODO: feels like this shouldn't be needed. for osx, it helps.
+                    al_show_mouse_cursor(all_get_display());
                     break;
                 }
                 case ALLEGRO_EVENT_MOUSE_LEAVE_DISPLAY:
@@ -132,10 +134,10 @@ static int a5_mouse_init(void)
     }
     have_touch_input = al_install_touch_input();
 
-    if(_a5_display)
-    {
-        al_hide_mouse_cursor(_a5_display);
-    }
+    // if(_a5_display)
+    // {
+    //     al_hide_mouse_cursor(_a5_display);
+    // }
     a5_mouse_thread = al_create_thread(a5_mouse_thread_proc, NULL);
     al_start_thread(a5_mouse_thread);
     return 0;
@@ -150,7 +152,7 @@ static void a5_mouse_exit(void)
 
 static void a5_mouse_position(int x, int y)
 {
-    al_set_mouse_xy(_a5_display, x, y);
+    // al_set_mouse_xy(_a5_display, x, y);
 }
 
 static void a5_mouse_get_mickeys(int * x, int * y)

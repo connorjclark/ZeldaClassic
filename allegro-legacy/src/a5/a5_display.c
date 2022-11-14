@@ -433,15 +433,46 @@ static void a5_display_move_mouse(int x, int y)
   al_set_mouse_xy(_a5_display, x, y);
 }
 
+// local edit
+BITMAP* a4_cursor_bitmaps[20];
+ALLEGRO_MOUSE_CURSOR* a5_cursors[20];
+int a5_display_set_mouse_sprite(struct BITMAP *sprite, int xfocus, int yfocus)
+{
+  ALLEGRO_MOUSE_CURSOR* cursor = NULL;
+  int i;
+
+  for (i = 0; i < 20 && a4_cursor_bitmaps[i]; i++)
+  {
+    if (a4_cursor_bitmaps[i] == sprite)
+    {
+      cursor = a5_cursors[i];
+      break;
+    }
+  }
+
+  if (!cursor)
+  {
+    if (i == 20)
+      return 1;
+    
+    ALLEGRO_BITMAP* a5_mouse_sprite = all_get_a5_bitmap(sprite);
+    cursor = al_create_mouse_cursor(a5_mouse_sprite, xfocus, yfocus);
+    a4_cursor_bitmaps[i] = sprite;
+    a5_cursors[i] = cursor;
+    al_destroy_bitmap(a5_mouse_sprite);
+  }
+
+  al_show_mouse_cursor(_a5_display);
+	al_set_mouse_cursor(all_get_display(), cursor);
+
+  return 0;
+}
+
 static int a5_display_show_mouse(BITMAP * bp, int x, int y)
 {
   all_mouse_is_ready(true); 
-  if(bp)
-  {
-    return -1;
-  }
   al_show_mouse_cursor(_a5_display);
-  a5_display_move_mouse(x, y);
+  // a5_display_move_mouse(x, y);
   return 0;
 }
 
@@ -811,7 +842,7 @@ GFX_DRIVER display_allegro_5 = {
    NULL, //be_gfx_bwindowscreen_request_video_bitmap,// AL_LEGACY_METHOD(int, request_video_bitmap, (struct BITMAP *bitmap));
    NULL,                              // AL_LEGACY_METHOD(struct BITMAP *, create_system_bitmap, (int width, int height));
    NULL,                              // AL_LEGACY_METHOD(void, destroy_system_bitmap, (struct BITMAP *bitmap));
-   NULL,                              // AL_LEGACY_METHOD(int, set_mouse_sprite, (struct BITMAP *sprite, int xfocus, int yfocus));
+   a5_display_set_mouse_sprite,                        // AL_LEGACY_METHOD(int, set_mouse_sprite, (struct BITMAP *sprite, int xfocus, int yfocus));
    a5_display_show_mouse,                              // AL_LEGACY_METHOD(int, show_mouse, (struct BITMAP *bmp, int x, int y));
    a5_display_hide_mouse,                              // AL_LEGACY_METHOD(void, hide_mouse, (void));
    a5_display_move_mouse,                              // AL_LEGACY_METHOD(void, move_mouse, (int x, int y));
