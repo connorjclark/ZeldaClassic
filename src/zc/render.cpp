@@ -48,7 +48,7 @@ static void init_render_tree()
 		return;
 
 	if (zc_get_config("zeldadx", "scaling_mode", 0) == 1)
-		all_set_bitmap_flags(ALLEGRO_NO_PRESERVE_TEXTURE | ALLEGRO_MAG_LINEAR | ALLEGRO_MIN_LINEAR);
+		al_set_new_bitmap_flags(ALLEGRO_NO_PRESERVE_TEXTURE | ALLEGRO_MAG_LINEAR | ALLEGRO_MIN_LINEAR);
 	else
 		al_set_new_bitmap_flags(ALLEGRO_NO_PRESERVE_TEXTURE);
 	rti_game.bitmap = al_create_bitmap(framebuf->w, framebuf->h);
