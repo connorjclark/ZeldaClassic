@@ -281,7 +281,7 @@ int32_t curr_tb_page=0;
 RGB_MAP rgb_table;
 COLOR_MAP trans_table, trans_table2;
 
-BITMAP     *framebuf, *menu_bmp, *scrollbuf, *tmp_bmp, *tmp_scr, *screen2, *fps_undo,
+BITMAP     *framebuf, *menu_bmp, *scrollbuf, *tmp_bmp, *tmp_scr, *screen2,
            *msg_portrait_display_buf, *msg_txt_display_buf, *msg_bg_display_buf,
 		   *pricesdisplaybuf, *tb_page[3], *temp_buf, *prim_bmp,
 		   *script_menu_buf, *f6_menu_buf;
@@ -579,7 +579,6 @@ int32_t resx= 0,resy= 0;
 // aka, the letterbox size.
 int32_t scrx= 0,scry= 0;
 int32_t window_width = 0, window_height = 0;
-bool scanlines=false; 
 extern byte pause_in_background;
 extern signed char pause_in_background_menu_init;
 bool toogam=false;
@@ -4947,7 +4946,6 @@ int main(int argc, char **argv)
 	screen2   = create_bitmap_ex(8,320,240);
 	tmp_scr   = create_bitmap_ex(8,320,240);
 	tmp_bmp   = create_bitmap_ex(8,32,32);
-	fps_undo  = create_bitmap_ex(8,64,16);
 	prim_bmp  = create_bitmap_ex(8,512,512);
 	msg_bg_display_buf = create_bitmap_ex(8,256, 176);
 	msg_txt_display_buf = create_bitmap_ex(8,256, 176);
@@ -4965,7 +4963,7 @@ int main(int argc, char **argv)
 	darkscr_bmp_scrollscr_trans = create_bitmap_ex(8, 256, 176);
 	lightbeam_bmp = create_bitmap_ex(8, 256, 176);
 	
-	if(!framebuf || !scrollbuf || !tmp_bmp || !fps_undo || !tmp_scr
+	if(!framebuf || !scrollbuf || !tmp_bmp || !tmp_scr
 			|| !screen2 || !msg_txt_display_buf || !msg_bg_display_buf || !pricesdisplaybuf
 			|| !script_menu_buf || !f6_menu_buf)
 	{
@@ -5354,7 +5352,7 @@ int main(int argc, char **argv)
 
 	// TODO !
 	// - fix show_saving
-	// - rm screen_scale, sbig, fps_undo, scanlines
+	// - rm screen_scale
 	// - show_replay_controls
 	// - document
 	
@@ -6023,7 +6021,6 @@ void quit_game()
 	destroy_bitmap(tmp_scr);
 	destroy_bitmap(screen2);
 	destroy_bitmap(tmp_bmp);
-	destroy_bitmap(fps_undo);
 	destroy_bitmap(prim_bmp);
 	set_clip_state(msg_bg_display_buf, 1);
 	destroy_bitmap(msg_bg_display_buf);

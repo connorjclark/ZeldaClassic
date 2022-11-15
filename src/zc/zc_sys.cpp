@@ -371,7 +371,6 @@ void load_game_configs()
 	DragAspect = zc_get_config(cfg_sect,"drag_aspect",0)!=0;
 	SaveWinPos = zc_get_config(cfg_sect,"save_window_position",0)!=0;
    
-	scanlines = zc_get_config(cfg_sect,"scanlines",0)!=0;
 	loadlast = zc_get_config(cfg_sect,"load_last",0);
    
 	fullscreen = zc_get_config(cfg_sect,"fullscreen",0);
@@ -544,7 +543,6 @@ void save_game_configs()
 	set_config_int(cfg_sect,"window_width",window_width);
 	set_config_int(cfg_sect,"window_height",window_height);
    
-	set_config_int(cfg_sect,"scanlines",scanlines);
 	set_config_int(cfg_sect,"load_last",loadlast);
 	chop_path(qstdir);
 	set_config_string(cfg_sect,qst_dir_name,qstdir);
@@ -8421,9 +8419,6 @@ void system_pal()
 	
 	destroy_bitmap(panorama);
 	
-	// save the fps_undo section
-	blit(tmp_scr,fps_undo,40,216,0,0,64,16);
-	
 	// display everything
 	vsync();
 	hw_palette = &pal;
@@ -8638,9 +8633,6 @@ void system_pal2()
 	}
 	
 	destroy_bitmap(panorama);
-	
-	// save the fps_undo section
-	blit(tmp_scr,fps_undo,40,216,0,0,64,16);
 	
 	// display everything
 	vsync();
