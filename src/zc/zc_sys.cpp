@@ -544,11 +544,6 @@ void save_game_configs()
 	set_config_int(cfg_sect,"window_width",window_width);
 	set_config_int(cfg_sect,"window_height",window_height);
    
-	//sbig depricated as of 2.5 RC3. handled exclusively by resx, resy now.
-	//set_config_int(cfg_sect,"screen_scale",screen_scale);
-	//set_config_int(cfg_sect,"sbig",sbig);
-	//set_config_int(cfg_sect,"sbig2",sbig2);
-   
 	set_config_int(cfg_sect,"scanlines",scanlines);
 	set_config_int(cfg_sect,"load_last",loadlast);
 	chop_path(qstdir);
@@ -667,14 +662,7 @@ void show_paused(BITMAP *target)
 		buf[i]+=0x60;
 		
 	//  text_mode(-1);
-	if(sbig)
-	{
-		int32_t x = scrx+40-((screen_scale-1)*120);
-		int32_t y = scry+224+((screen_scale-1)*104);
-		textout_ex(target,zfont,buf,x,y,-1,-1);
-	}
-	else
-		textout_ex(target,zfont,buf,scrx+40,scry+224,-1,-1);
+	textout_ex(target,zfont,buf,scrx+40,scry+224,-1,-1);
 }
 
 void show_fps(BITMAP *target)
@@ -689,17 +677,7 @@ void show_fps(BITMAP *target)
 		if(buf[i]!=' ')
 			buf[i]+=0x60;
 			
-	if(sbig)
-	{
-		int32_t x = scrx+40-((screen_scale-1)*120);
-		int32_t y = scry+216+((screen_scale-1)*104);
-		textout_ex(target,zfont,buf,x,y,-1,-1);
-		// textout_ex(target,zfont,buf,scrx+40-120,scry+216+104,-1,-1);
-	}
-	else
-	{
-		textout_ex(target,zfont,buf,scrx+40,scry+216,-1,-1);
-	}
+	textout_ex(target,zfont,buf,scrx+40,scry+216,-1,-1);
 }
 
 void show_saving(BITMAP *target)
@@ -712,14 +690,7 @@ void show_saving(BITMAP *target)
 	for(int32_t i=0; buf[i]!=0; i++)
 		buf[i]+=0x60;
 		
-	if(sbig)
-	{
-		int32_t x = scrx+200+((screen_scale-1)*120);
-		int32_t y = scry+224+((screen_scale-1)*104);
-		textout_ex(target,zfont,buf,x,y,-1,-1);
-	}
-	else
-		textout_ex(target,zfont,buf,scrx+200,scry+224,-1,-1);
+	textout_ex(target,zfont,buf,scrx+200,scry+224,-1,-1);
 }
 
 void show_replay_controls(BITMAP *target)
@@ -729,14 +700,7 @@ void show_replay_controls(BITMAP *target)
 	
 	std::string text = replay_get_buttons_string();
 		
-	if(sbig)
-	{
-		int32_t x = scrx+140+((screen_scale-1)*120);
-		int32_t y = scry+224+((screen_scale-1)*104);
-		textout_ex(target,zfont,text.c_str(),x,y,-1,0);
-	}
-	else
-		textout_ex(target,zfont,text.c_str(),scrx+140,scry+224,-1,0);
+	textout_ex(target,zfont,text.c_str(),scrx+140,scry+224,-1,0);
 }
 
 //----------------------------------------------------------------
@@ -8464,11 +8428,6 @@ void system_pal()
 	vsync();
 	hw_palette = &pal;
 	update_hw_pal = true;
-	
-	// if(sbig)
-	// 	stretch_blit(tmp_scr,screen,0,0,320,240,scrx-(160*(screen_scale-1)),scry-(120*(screen_scale-1)),screen_scale*320,screen_scale*240);
-	// else
-	// 	blit(tmp_scr,screen,0,0,scrx,scry,320,240);
 		
 	if(Paused)
 		show_paused(screen);
@@ -8688,11 +8647,7 @@ void system_pal2()
 	hw_palette = &RAMpal2;
 	update_hw_pal = true;
 	
-	if(sbig)
-		//stretch_blit(tmp_scr,screen,0,0,320,240,scrx-160,scry-120,640,480);
-		stretch_blit(tmp_scr,screen,0,0,320,240,scrx-(160*(screen_scale-1)),scry-(120*(screen_scale-1)),screen_scale*320,screen_scale*240);
-	else
-		blit(tmp_scr,screen,0,0,scrx,scry,320,240);
+	blit(tmp_scr,screen,0,0,scrx,scry,320,240);
 		
 	if(Paused)
 		show_paused(screen);
@@ -8992,20 +8947,6 @@ void fix_dialog(DIALOG *d)
 
 void fix_dialogs()
 {
-	/*
-	  int32_t x = scrx-(sbig?160:0);
-	  int32_t y = scry-(sbig?120:0);
-	  if(x>0) x+=3;
-	  if(y>0) y+=3;
-	  if(x<0) x=0;
-	  if(y<0) y=0;
-	
-	  system_dlg[0].x = x;
-	  system_dlg[0].y = y;
-	  system_dlg2[0].x = x;
-	  system_dlg2[0].y = y;
-	*/
-	
 	jwin_center_dialog(about_dlg);
 	jwin_center_dialog(gamepad_dlg);
 	jwin_center_dialog(credits_dlg);

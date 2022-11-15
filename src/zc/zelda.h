@@ -489,8 +489,6 @@ dword getNumGlobalArrays();
 
 extern int32_t  resx,resy,scrx,scry;
 extern int32_t window_width, window_height;
-extern bool sbig;                                           // big screen
-extern bool sbig2;	//BIGGER SCREEN!!!!
 
 extern bool scanlines;                                      //do scanlines if sbig==1
 extern bool toogam;

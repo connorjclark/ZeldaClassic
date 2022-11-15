@@ -579,11 +579,9 @@ int32_t resx= 0,resy= 0;
 // aka, the letterbox size.
 int32_t scrx= 0,scry= 0;
 int32_t window_width = 0, window_height = 0;
-bool sbig=false;                                                  // big screen
-bool sbig2=false;													// bigger screen
 bool scanlines=false; 
 extern byte pause_in_background;
-extern signed char pause_in_background_menu_init;//do scanlines if sbig==1
+extern signed char pause_in_background_menu_init;
 bool toogam=false;
 bool ignoreSideview=false;
 
@@ -5355,7 +5353,8 @@ int main(int argc, char **argv)
 	window_height = resy;
 
 	// TODO !
-	// - rm screen_scale, scale cfg, sbig
+	// - fix show_saving
+	// - rm screen_scale, sbig, fps_undo, scanlines
 	// - show_replay_controls
 	// - document
 	
@@ -5401,7 +5400,6 @@ int main(int argc, char **argv)
 		else al_set_window_position(all_get_display(), center_x - window_w / 2, center_y - window_h / 2);
 	}
 #endif
-	sbig = false;
 	switch_type = pause_in_background ? SWITCH_PAUSE : SWITCH_BACKGROUND;
 	set_display_switch_mode(is_windowed_mode()?SWITCH_PAUSE:switch_type);
 	
