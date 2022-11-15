@@ -4307,7 +4307,6 @@ void f_Quit(int32_t type)
 		kill_sfx();
 		music_stop();
 		game_pal();
-		clear_to_color(screen,BLACK);
 		update_hw_screen();
 	}
 	else
@@ -5511,10 +5510,10 @@ void kb_getkey(DIALOG *d)
 	
 	scare_mouse();
 	jwin_button_proc(MSG_DRAW,d,0);
-	jwin_draw_win(screen, (resx-160)/2, (resy-48)/2, 160, 48, FR_WIN);
+	jwin_draw_win(gui_bmp, (gui_bmp->w-160)/2, (gui_bmp->h-48)/2, 160, 48, FR_WIN);
 	//  text_mode(vc(11));
-	textout_centre_ex(screen, font, "Press a key", resx/2, resy/2 - 8, jwin_pal[jcBOXFG],jwin_pal[jcBOX]);
-	textout_centre_ex(screen, font, "ESC to cancel", resx/2, resy/2, jwin_pal[jcBOXFG],jwin_pal[jcBOX]);
+	textout_centre_ex(gui_bmp, font, "Press a key", gui_bmp->w/2, gui_bmp->h/2 - 8, jwin_pal[jcBOXFG],jwin_pal[jcBOX]);
+	textout_centre_ex(gui_bmp, font, "ESC to cancel", gui_bmp->w/2, gui_bmp->h/2, jwin_pal[jcBOXFG],jwin_pal[jcBOX]);
 	unscare_mouse();
 	
 	update_hw_screen(true);
@@ -5541,13 +5540,13 @@ void kb_clearjoystick(DIALOG *d)
 	
 	scare_mouse();
 	jwin_button_proc(MSG_DRAW,d,0);
-	jwin_draw_win(screen, (resx-160)/2, (resy-48)/2, 168, 48, FR_WIN);
+	jwin_draw_win(gui_bmp, (gui_bmp->w-160)/2, (gui_bmp->h-48)/2, 168, 48, FR_WIN);
 	//  text_mode(vc(11));
-	textout_centre_ex(screen, font, "Press any key to clear", resx/2, resy/2 - 8, jwin_pal[jcBOXFG],jwin_pal[jcBOX]);
-	textout_centre_ex(screen, font, "ESC to cancel", resx/2, resy/2, jwin_pal[jcBOXFG],jwin_pal[jcBOX]);
+	textout_centre_ex(gui_bmp, font, "Press any key to clear", gui_bmp->w/2, gui_bmp->h/2 - 8, jwin_pal[jcBOXFG],jwin_pal[jcBOX]);
+	textout_centre_ex(gui_bmp, font, "ESC to cancel", gui_bmp->w/2, gui_bmp->h/2, jwin_pal[jcBOXFG],jwin_pal[jcBOX]);
 	unscare_mouse();
 	
-	update_hw_screen();
+	update_hw_screen(true);
 	
 	clear_keybuf();
 	int32_t k = next_press_key();
@@ -5572,13 +5571,13 @@ void kb_clearkey(DIALOG *d)
 	
 	scare_mouse();
 	jwin_button_proc(MSG_DRAW,d,0);
-	jwin_draw_win(screen, (resx-160)/2, (resy-48)/2, 160, 48, FR_WIN);
+	jwin_draw_win(gui_bmp, (gui_bmp->w-160)/2, (gui_bmp->h-48)/2, 160, 48, FR_WIN);
 	//  text_mode(vc(11));
-	textout_centre_ex(screen, font, "Press any key to clear", resx/2, resy/2 - 8, jwin_pal[jcBOXFG],jwin_pal[jcBOX]);
-	textout_centre_ex(screen, font, "ESC to cancel", resx/2, resy/2, jwin_pal[jcBOXFG],jwin_pal[jcBOX]);
+	textout_centre_ex(gui_bmp, font, "Press any key to clear", gui_bmp->w/2, gui_bmp->h/2 - 8, jwin_pal[jcBOXFG],jwin_pal[jcBOX]);
+	textout_centre_ex(gui_bmp, font, "ESC to cancel", gui_bmp->w/2, gui_bmp->h/2, jwin_pal[jcBOXFG],jwin_pal[jcBOX]);
 	unscare_mouse();
 	
-	update_hw_screen();
+	update_hw_screen(true);
 	
 	clear_keybuf();
 	int32_t k = next_press_key();
@@ -5663,15 +5662,15 @@ void j_getbtn(DIALOG *d)
 	d->flags|=D_SELECTED;
 	scare_mouse();
 	jwin_button_proc(MSG_DRAW,d,0);
-	jwin_draw_win(screen, (resx-160)/2, (resy-48)/2, 160, 48, FR_WIN);
+	jwin_draw_win(gui_bmp, (gui_bmp->w-160)/2, (gui_bmp->h-48)/2, 160, 48, FR_WIN);
 	//  text_mode(vc(11));
-	int32_t y = resy/2 - 12;
-	textout_centre_ex(screen, font, "Press a button", resx/2, y, jwin_pal[jcBOXFG],jwin_pal[jcBOX]);
-	textout_centre_ex(screen, font, "ESC to cancel", resx/2, y+8, jwin_pal[jcBOXFG],jwin_pal[jcBOX]);
-	textout_centre_ex(screen, font, "SPACE to disable", resx/2, y+16, jwin_pal[jcBOXFG],jwin_pal[jcBOX]);
+	int32_t y = gui_bmp->h/2 - 12;
+	textout_centre_ex(gui_bmp, font, "Press a button", gui_bmp->w/2, y, jwin_pal[jcBOXFG],jwin_pal[jcBOX]);
+	textout_centre_ex(gui_bmp, font, "ESC to cancel", gui_bmp->w/2, y+8, jwin_pal[jcBOXFG],jwin_pal[jcBOX]);
+	textout_centre_ex(gui_bmp, font, "SPACE to disable", gui_bmp->w/2, y+16, jwin_pal[jcBOXFG],jwin_pal[jcBOX]);
 	unscare_mouse();
 	
-	update_hw_screen();
+	update_hw_screen(true);
 	
 	int32_t b = next_press_btn();
 	
@@ -5680,10 +5679,8 @@ void j_getbtn(DIALOG *d)
 		
 	d->flags&=~D_SELECTED;
 	
-	if(!player) //safety first...
-		player = init_dialog(d,-1);
-		
-	player->joy_on = TRUE;
+	if (player)
+		player->joy_on = TRUE;
 }
 
 int32_t d_jbutton_proc(int32_t msg,DIALOG *d,int32_t c)
@@ -6783,7 +6780,6 @@ int32_t onCredits()
 	destroy_bitmap(win);
 	comeback();
 
-	clear_bitmap(screen);
 	all_set_transparent_palette_index(0);
 	update_hw_screen();
 
@@ -8717,7 +8713,6 @@ void System()
 
 	clear_bitmap(menu_bmp);
 	oldscreen = screen;
-	
 	screen = menu_bmp;
 
 	if(!Playing || (!zcheats.flags && !get_debug() && DEVLEVEL < 2 && !zqtesting_mode))
@@ -8848,7 +8843,6 @@ void System()
 	{
 		kill_sfx();
 		music_stop();
-		clear_to_color(screen,BLACK);
 		update_hw_screen();
 	}
 	else

@@ -281,7 +281,7 @@ int32_t curr_tb_page=0;
 RGB_MAP rgb_table;
 COLOR_MAP trans_table, trans_table2;
 
-BITMAP     *framebuf, *menu_bmp, *scrollbuf, *tmp_bmp, *tmp_scr, *screen2,
+BITMAP     *framebuf, *menu_bmp, *gui_bmp, *scrollbuf, *tmp_bmp, *tmp_scr, *screen2,
            *msg_portrait_display_buf, *msg_txt_display_buf, *msg_bg_display_buf,
 		   *pricesdisplaybuf, *tb_page[3], *temp_buf, *prim_bmp,
 		   *script_menu_buf, *f6_menu_buf;
@@ -639,7 +639,7 @@ void update_hw_screen(bool force)
 			update_hw_pal = false;
 		}
 		framecnt++;
-		if (myvsync)
+		if (myvsync||force)
 			render_zc();
 		myvsync=0;
 	}
@@ -5350,6 +5350,7 @@ int main(int argc, char **argv)
 	window_height = resy;
 
 	// TODO !
+	// - matrix screensaver still work?
 	// - rm screen_scale
 	// - document
 	

@@ -40,8 +40,6 @@ static int zc_gui_mouse_y()
 	}
 }
 
-static BITMAP* gui_bmp;
-
 static void init_render_tree()
 {
 	if (!rti_root.children.empty())
