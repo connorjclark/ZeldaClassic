@@ -12,15 +12,15 @@ static int zc_gui_mouse_x()
 {
 	if (rti_gui.visible)
 	{
-		return rti_gui.translate_mouse_x(mouse_x);
+		return rti_gui.global_to_local_x(mouse_x);
 	}
 	else if (rti_menu.visible)
 	{
-		return rti_menu.translate_mouse_x(mouse_x);
+		return rti_menu.global_to_local_x(mouse_x);
 	}
 	else
 	{
-		return rti_game.translate_mouse_x(mouse_x);
+		return rti_game.global_to_local_x(mouse_x);
 	}
 }
 
@@ -28,15 +28,15 @@ static int zc_gui_mouse_y()
 {
 	if (rti_gui.visible)
 	{
-		return rti_gui.translate_mouse_y(mouse_y);
+		return rti_gui.global_to_local_y(mouse_y);
 	}
 	else if (rti_menu.visible)
 	{
-		return rti_menu.translate_mouse_y(mouse_y);
+		return rti_menu.global_to_local_y(mouse_y);
 	}
 	else
 	{
-		return rti_game.translate_mouse_x(mouse_y);
+		return rti_game.global_to_local_x(mouse_y);
 	}
 }
 

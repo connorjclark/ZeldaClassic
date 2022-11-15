@@ -491,7 +491,6 @@ extern int32_t  resx,resy,scrx,scry;
 extern int32_t window_width, window_height;
 extern bool sbig;                                           // big screen
 extern bool sbig2;	//BIGGER SCREEN!!!!
-extern int32_t screen_scale; //user adjustable screen size.
 
 extern bool scanlines;                                      //do scanlines if sbig==1
 extern bool toogam;

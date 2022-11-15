@@ -20,7 +20,7 @@
 extern DATAFILE* data;
 
 extern bool sbig;
-extern int32_t screen_scale;
+static int32_t screen_scale = 1; // TODO: remove.
 extern int32_t joystick_index;
 int32_t logovolume = 0;
 
@@ -160,7 +160,7 @@ int32_t aglogo_new_nofire(BITMAP *frame, BITMAP *firebuf, int32_t resx, int32_t 
         vsync();
         
         //if(sbig)
-            stretch_blit(frame,screen, 0,0,255,223, 0,0,SCREEN_W, SCREEN_H);// (resx-(320*screen_scale))>>1, (resy-(198*screen_scale))>>1, 320*screen_scale,198*screen_scale);
+            stretch_blit(frame,screen, 0,0,255,223, 0,0,SCREEN_W, SCREEN_H);
         //else
         //    blit(frame,screen, 0,0,(resx-320)>>1, (resy-198)>>1, 320,198);
             
@@ -239,9 +239,9 @@ int32_t aglogo(BITMAP *frame, BITMAP *firebuf, int32_t resx, int32_t resy)
 	textout_ex(interm, dsphantompfont, "Celebrating Twenty Years", 79-32-1, 170-1, 3, -1);
 	textout_ex(interm, dsphantompfont, "Celebrating Twenty Years", 79-32, 170, 200, -1);
 	
-	stretch_blit(interm,frame, 0,0,255,223, 0,0,256, 224);// (resx-(320*screen_scale))>>1, (resy-(198*screen_scale))>>1, 320*screen_scale,198*screen_scale);
+	stretch_blit(interm,frame, 0,0,255,223, 0,0,256, 224);
         vsync();
-	stretch_blit(frame,screen, 0,0,255,223, 0,0,SCREEN_W, SCREEN_H);// (resx-(320*screen_scale))>>1, (resy-(198*screen_scale))>>1, 320*screen_scale,198*screen_scale);
+	stretch_blit(frame,screen, 0,0,255,223, 0,0,SCREEN_W, SCREEN_H);
         
 	//else
         //    blit(frame,screen, 0,0,(resx-320)>>1, (resy-198)>>1, 320,198);

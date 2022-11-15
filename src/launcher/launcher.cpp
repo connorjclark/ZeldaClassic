@@ -508,12 +508,12 @@ static RenderTreeItem rti_screen;
 
 static int zc_gui_mouse_x()
 {
-	return rti_screen.translate_mouse_x(mouse_x);
+	return rti_screen.global_to_local_x(mouse_x);
 }
 
 static int zc_gui_mouse_y()
 {
-	return rti_screen.translate_mouse_y(mouse_y);
+	return rti_screen.global_to_local_y(mouse_y);
 }
 
 static void init_render_tree()

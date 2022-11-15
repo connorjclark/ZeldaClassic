@@ -21,13 +21,21 @@ public:
 	ALLEGRO_COLOR* tint;
 	std::vector<RenderTreeItem*> children;
 
-	int translate_mouse_x(int x)
+	int global_to_local_x(int x)
 	{
 		return (x - computed.x) / computed.scale;
 	}
-	int translate_mouse_y(int y)
+	int global_to_local_y(int y)
 	{
 		return (y - computed.y) / computed.scale;
+	}
+	int local_to_global_x(int x)
+	{
+		return (x + computed.x) * computed.scale;
+	}
+	int local_to_global_y(int y)
+	{
+		return (y + computed.y) * computed.scale;
 	}
 };
 

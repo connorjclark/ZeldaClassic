@@ -67,6 +67,8 @@
 #include "base/emscripten_utils.h"
 #endif
 
+static int32_t screen_scale = 1; // TODO: remove.
+
 extern FFScript FFCore;
 extern bool Playing;
 int32_t sfx_voice[WAV_COUNT];
@@ -368,7 +370,6 @@ void load_game_configs()
 	SaveDragResize = zc_get_config(cfg_sect,"save_drag_resize",0)!=0;
 	DragAspect = zc_get_config(cfg_sect,"drag_aspect",0)!=0;
 	SaveWinPos = zc_get_config(cfg_sect,"save_window_position",0)!=0;
-	//screen_scale = zc_get_config(cfg_sect,"screen_scale",2);
    
 	scanlines = zc_get_config(cfg_sect,"scanlines",0)!=0;
 	loadlast = zc_get_config(cfg_sect,"load_last",0);
@@ -3944,66 +3945,12 @@ void updatescr(bool allowwavy, bool record_gfx)
 
 	// TODO ! skip this blit somehow
 	blit(source,framebuf,0,0,0,0,256,224);
-	// TODO ! delete below code
-
-	static BITMAP *scanlinesbmp=NULL;
-	
-	// if(resx != SCREEN_W || resy != SCREEN_H)
-	// {
-	// 	Z_message("Conflicting variables warning: screen_scale %i, resx %i, resy %i, w %i, h %i\n", screen_scale, resx, resy, SCREEN_W, SCREEN_H);
-	// 	resx = SCREEN_W;
-	// 	resy = SCREEN_H;
-	// 	screen_scale = zc_max(zc_min(resx / 320, resy / 240), 1);
-	// }
-	screen_scale = 1; // TODO
-	
-	if(!sbig && screen_scale > 1)
-		sbig = true;
 		
 	const int32_t sx = 256 * screen_scale;
 	const int32_t sy = 224 * screen_scale;
 	const int32_t scale_mul = screen_scale - 1;
 	const int32_t mx = scale_mul * 128;
 	const int32_t my = scale_mul * 112;
-	
-	// if(sbig)
-	// {
-	// 	if(scanlines)
-	// 	{
-	// 		if(!scanlinesbmp)
-	// 			scanlinesbmp = create_bitmap_ex(8, sx, sy);
-				
-	// 		stretch_blit(source, scanlinesbmp, 0, 0, 256, 224, 0, 0, sx, sy);
-			
-	// 		for(int32_t i=0; i<224; ++i)
-	// 			_allegro_hline(scanlinesbmp, 0, (i*screen_scale)+1, sx, BLACK);
-				
-	// 		blit(scanlinesbmp, screen, 0, 0, scrx+32-mx, scry+8-my, sx, sy);
-	// 	}
-	// 	else
-	// 	{
-	// 		stretch_blit(source, screen, 0, 0, 256, 224, scrx+32-mx, scry+8-my, sx, sy);
-	// 		// blit(source,screen,0,0,0,0,256,224);
-	// 	}
-		
-	// 	if(quakeclk>0)
-	// 		rectfill(screen, // I don't know if these are right...
-	// 				 scrx+32 - mx, //x1
-	// 				 scry+8 - my + sy, //y1
-	// 				 scrx+32 - mx + sx, //x2
-	// 				 scry+8 - my + sy + (16 * scale_mul), //y2
-	// 				 BLACK);
-					 
-	// 	//stretch_blit(nosubscr?panorama:wavybuf,screen,0,0,256,224,scrx+32-128,scry+8-112,512,448);
-	// 	//if(quakeclk>0) rectfill(screen,scrx+32-128,scry+8-112+448,scrx+32-128+512,scry+8-112+456,0);
-	// }
-	// else
-	// {
-	// 	blit(source,screen,0,0,scrx+32,scry+8,256,224);
-	// 	// stretch_blit(source, screen, 0, 0, 256, 224, scrx+32, scry+8, resx, resy);
-		
-	// 	if(quakeclk>0) rectfill(screen,scrx+32,scry+8+224,scrx+32+256,scry+8+232,BLACK);
-	// }
 	
 	show_replay_controls(screen);
 		
