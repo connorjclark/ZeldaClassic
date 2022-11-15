@@ -5351,7 +5351,7 @@ int main(int argc, char **argv)
 	resx *= gethorizontalscale();
 	resy *= getverticalscale();
 
-	// TODO: rename "resx" "resy" options and zlauncher "Resolution" to "Window size",
+	// TODO: consolidate "resx" and "resy" variables with window_width,height.
 	window_width = resx;
 	window_height = resy;
 

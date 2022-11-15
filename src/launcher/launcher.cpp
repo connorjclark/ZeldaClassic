@@ -179,6 +179,7 @@ int32_t main(int32_t argc, char* argv[])
 	set_color_depth(8);
 
 	all_disable_threaded_display();
+	all_set_transparent_palette_index(0);
 
 	// TODO: remember window size.
 	int window_width = zq_screen_w;

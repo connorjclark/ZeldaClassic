@@ -363,8 +363,8 @@ void load_game_configs()
 	pause_in_background = zc_get_config(cfg_sect, "pause_in_background", 0);
    
 	//default - scale x2, 640 x 480
-	window_width = resx = zc_get_config(cfg_sect,"resx",640);
-	window_height = resy = zc_get_config(cfg_sect,"resy",480);
+	window_width = resx = zc_get_config(cfg_sect,"window_width",640);
+	window_height = resy = zc_get_config(cfg_sect,"window_height",480);
 	SaveDragResize = zc_get_config(cfg_sect,"save_drag_resize",0)!=0;
 	DragAspect = zc_get_config(cfg_sect,"drag_aspect",0)!=0;
 	SaveWinPos = zc_get_config(cfg_sect,"save_window_position",0)!=0;
@@ -373,12 +373,7 @@ void load_game_configs()
 	scanlines = zc_get_config(cfg_sect,"scanlines",0)!=0;
 	loadlast = zc_get_config(cfg_sect,"load_last",0);
    
-// Fullscreen may be problematic on newer windows systems.
-#ifdef _WIN32
 	fullscreen = zc_get_config(cfg_sect,"fullscreen",0);
-#else
-	fullscreen = zc_get_config(cfg_sect,"fullscreen",1);
-#endif
    
 	zc_color_depth = (byte) zc_get_config(cfg_sect,"color_depth",8);
    
@@ -439,7 +434,7 @@ void load_game_configs()
 	heart_beep = zc_get_config(cfg_sect,"heart_beep",1)!=0;
 	gui_colorset = zc_get_config(cfg_sect,"gui_colorset",0);
 	sfxdat = zc_get_config(cfg_sect,"use_sfx_dat",1);
-	fullscreen = zc_get_config(cfg_sect,"fullscreen",1);
+	fullscreen = zc_get_config(cfg_sect,"fullscreen",0);
 	use_save_indicator = zc_get_config(cfg_sect,"save_indicator",0);
 	zc_192b163_warp_compatibility = zc_get_config(cfg_sect,"zc_192b163_warp_compatibility",0);
 }
@@ -545,8 +540,8 @@ void save_game_configs()
 		set_config_int(cfg_sect,"window_y",o_window_y);
 	}
 	
-	set_config_int(cfg_sect,"resx",window_width);
-	set_config_int(cfg_sect,"resy",window_height);
+	set_config_int(cfg_sect,"window_width",window_width);
+	set_config_int(cfg_sect,"window_height",window_height);
    
 	//sbig depricated as of 2.5 RC3. handled exclusively by resx, resy now.
 	//set_config_int(cfg_sect,"screen_scale",screen_scale);

@@ -345,26 +345,6 @@ char const* getGFXDriverStr(int32_t id)
 }
 //}
 
-//{ Resolution
-
-int32_t getResPreset(int32_t resx, int32_t resy)
-{
-	double mod_x = resx/320.0,
-		mod_y = resy/240.0;
-	if(mod_x > 5 || mod_y > 5) return 5;
-	if(mod_x < 1 || mod_y < 1) return 1;
-	double left_x = mod_x - floor(mod_x),
-		left_y = mod_y - floor(mod_y);
-	double avg_leftovers = (left_x+left_y)/2;
-	int32_t round_x = (left_x >= 0.5 ? ceil(mod_x) : floor(mod_x)),
-		round_y = (left_y >= 0.5 ? ceil(mod_y) : floor(mod_y));
-	if(round_x != round_y)
-		return (avg_leftovers >= 0.5 ? zc_max(round_x, round_y) : zc_min(round_x, round_y));
-	return round_x;
-}
-
-//}
-
 //}
 
 char theme_saved_filepath[4096] = {0};
@@ -437,6 +417,7 @@ std::shared_ptr<GUI::Widget> LauncherDialog::view()
 						CONFIG_CHECKBOX_I("Lock Aspect Ratio On Resize","zc.cfg","zeldadx","drag_aspect",0,"Makes any changes to the window size by dragging get snapped to ZC's default (4:3) aspect ratio."),
 						CONFIG_CHECKBOX_I("Save Window Position","zc.cfg","zeldadx","save_window_position",0,"Remembers the last position of the ZC Window."),
 						CONFIG_CHECKBOX_I("Force Integer Values for Scale","zc.cfg","zeldadx","scaling_force_integer",0,"Locks the game screen to only scale by an integer value. Results in perfect pixel art scaling, at the expense of not using the entire availabe window space."),
+						CONFIG_CHECKBOX_I("Linear Scaling","zc.cfg","zeldadx","scaling_mode",1,"Use linear scaling when upscaling the window. If off, the default is nearest-neighbor scaling"),
 						CONFIG_CHECKBOX_I("Monochrome Debuggers","zc.cfg","CONSOLE","monochrome_debuggers",0,"Use non-colored debugger text."),
 						CONFIG_CHECKBOX_I("Text Readability","zc.cfg","gui","bolder_font",0,"Attempts to make text more readable in some areas (ex. larger, bolder)")
 					),
@@ -501,19 +482,6 @@ std::shared_ptr<GUI::Widget> LauncherDialog::view()
 						),
 						DummyWidget(),
 						//
-						Label(text = "Resolution:", hAlign = 1.0),
-						ddl_res = DropDownList(data = resPresetList,
-							fitParent = true,
-							minwidth = CONFIG_DROPDOWN_MINWIDTH,
-							selectedValue = getResPreset(zc_get_config("zc.cfg","zeldadx","resx",640), zc_get_config("zc.cfg","zeldadx","resx",480)),
-							onSelectFunc = [&](int32_t val)
-							{
-								zc_set_config("zc.cfg","zeldadx","resx",320*val);
-								zc_set_config("zc.cfg","zeldadx","resy",240*val);
-							}
-						),
-						DummyWidget(),
-						//
 						CONFIG_DROPDOWN_I("Quickload Slot:", "zc.cfg","zeldadx","quickload_slot",0,quickSlotList,"Unless 'disabled', this save slot will be immediately loaded upon launching.")
 					)
 				)),
@@ -547,7 +515,8 @@ std::shared_ptr<GUI::Widget> LauncherDialog::view()
 						CONFIG_CHECKBOX_I("Autosave Window Size Changes","zquest.cfg","zquest","save_drag_resize",0,"Makes any changes to the window size by dragging get saved for whenever you open the program next."),
 						CONFIG_CHECKBOX_I("Lock Aspect Ratio On Resize","zquest.cfg","zquest","drag_aspect",0,"Makes any changes to the window size by dragging get snapped to ZQuest's default (4:3) aspect ratio."),
 						CONFIG_CHECKBOX_I("Save Window Position","zquest.cfg","zquest","save_window_position",0,"Remembers the last position of the ZQuest Window."),
-						CONFIG_CHECKBOX_I("Force Integer Values for Scale","zquest.cfg","zquest","scaling_force_integer",0,"Locks the screen to only scale by an integer value. Results in perfect pixel art scaling, at the expense of not using the entire availabe window space.")
+						CONFIG_CHECKBOX_I("Force Integer Values for Scale","zquest.cfg","zquest","scaling_force_integer",0,"Locks the screen to only scale by an integer value. Results in perfect pixel art scaling, at the expense of not using the entire availabe window space."),
+						CONFIG_CHECKBOX_I("Linear Scaling","zquest.cfg","zquest","scaling_mode",0,"Use linear scaling when upscaling the window. If off, the default is nearest-neighbor scaling")
 					),
 					Rows<3>(fitParent = true,
 						CONFIG_TEXTFIELD_FL("Cursor Scale (small):", "zquest.cfg","zquest","cursor_scale_small",1.0,1.0,5.0, 4),
