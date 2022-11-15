@@ -651,31 +651,6 @@ void dump_pal(BITMAP *dest)
 		rectfill(dest,(i&63)<<2,(i&0xFC0)>>4,((i&63)<<2)+3,((i&0xFC0)>>4)+3,i);
 }
 
-void show_fps(BITMAP *target)
-{
-	char buf[50];
-
-	//  text_mode(-1);
-	sprintf(buf,"%2d/60",lastfps);
-	
-	//  sprintf(buf,"%d/%u/%f/%u",lastfps,int32_t(avgfps),avgfps,fps_secs);
-	for(int32_t i=0; buf[i]!=0; i++)
-		if(buf[i]!=' ')
-			buf[i]+=0x60;
-			
-	textout_ex(target,zfont,buf,40,216,-1,-1);
-}
-
-void show_replay_controls(BITMAP *target)
-{
-	if (!replay_is_replaying())
-		return;
-	
-	std::string text = replay_get_buttons_string();
-		
-	textout_ex(target,zfont,text.c_str(),scrx+140,scry+224,-1,0);
-}
-
 //----------------------------------------------------------------
 
 //Handles converting the mouse sprite from the .dat file
@@ -3889,8 +3864,7 @@ void updatescr(bool allowwavy, bool record_gfx)
 	const int32_t mx = scale_mul * 128;
 	const int32_t my = scale_mul * 112;
 	
-	show_replay_controls(screen);
-		
+	// TODO !
 	if(details)
 	{
 		textprintf_ex(screen,font,0,SCREEN_H-8,254,BLACK,"%-6d (%s)", idle_count, time_str_long(idle_count));

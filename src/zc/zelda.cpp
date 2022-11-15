@@ -5351,7 +5351,6 @@ int main(int argc, char **argv)
 
 	// TODO !
 	// - rm screen_scale
-	// - show_replay_controls
 	// - document
 	
 	if(!game_vid_mode(tempmode, wait_ms_on_set_graphics))

@@ -187,8 +187,6 @@ enum {bosCIRCLE=0, bosOVAL, bosTRIANGLE, bosSMAS, bosFADEBLACK, bosMAX};
 void go();
 void comeback();
 void dump_pal(BITMAP *dest);
-void show_fps(BITMAP *target);
-void show_replay_controls(BITMAP *target);
 bool game_vid_mode(int32_t mode,int32_t wait);
 void init_NES_mode();
 

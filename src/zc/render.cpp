@@ -167,6 +167,17 @@ void render_zc()
 	int font_height = al_get_font_line_height(font);
 	int debug_text_y = resy - font_scale*font_height - 5;
 	
+	if (ShowFPS)
+	{
+		render_debug_text(font, fmt::format("fps: {}", (int)lastfps), 5, debug_text_y, font_scale);
+		debug_text_y -= font_scale*font_height + 3;
+	}
+	if (replay_is_replaying())
+	{
+		std::string text = replay_get_buttons_string();
+		render_debug_text(font, text.c_str(), 5, debug_text_y, font_scale);
+		debug_text_y -= font_scale*font_height + 3;
+	}
 	if (Paused)
 	{
 		render_debug_text(font, "PAUSED", 5, debug_text_y, font_scale);
@@ -175,11 +186,6 @@ void render_zc()
 	if (Saving)
 	{
 		render_debug_text(font, "SAVING ...", 5, debug_text_y, font_scale);
-		debug_text_y -= font_scale*font_height + 3;
-	}
-	if (ShowFPS)
-	{
-		render_debug_text(font, fmt::format("fps: {}", (int)lastfps), 5, debug_text_y, font_scale);
 		debug_text_y -= font_scale*font_height + 3;
 	}
 
