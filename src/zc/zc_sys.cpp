@@ -651,18 +651,6 @@ void dump_pal(BITMAP *dest)
 		rectfill(dest,(i&63)<<2,(i&0xFC0)>>4,((i&63)<<2)+3,((i&0xFC0)>>4)+3,i);
 }
 
-void show_paused(BITMAP *target)
-{
-	//  return;
-	char buf[7] = "PAUSED";
-	
-	for(int32_t i=0; buf[i]!=0; i++)
-		buf[i]+=0x60;
-		
-	//  text_mode(-1);
-	textout_ex(target,zfont,buf,scrx+40,scry+224,-1,-1);
-}
-
 void show_fps(BITMAP *target)
 {
 	char buf[50];
@@ -675,20 +663,7 @@ void show_fps(BITMAP *target)
 		if(buf[i]!=' ')
 			buf[i]+=0x60;
 			
-	textout_ex(target,zfont,buf,scrx+40,scry+216,-1,-1);
-}
-
-void show_saving(BITMAP *target)
-{
-	if(!use_save_indicator)
-		return;
-	
-	char buf[10] = "SAVING...";
-	
-	for(int32_t i=0; buf[i]!=0; i++)
-		buf[i]+=0x60;
-		
-	textout_ex(target,zfont,buf,scrx+200,scry+224,-1,-1);
+	textout_ex(target,zfont,buf,40,216,-1,-1);
 }
 
 void show_replay_controls(BITMAP *target)
@@ -3915,9 +3890,6 @@ void updatescr(bool allowwavy, bool record_gfx)
 	const int32_t my = scale_mul * 112;
 	
 	show_replay_controls(screen);
-		
-	if(Paused)
-		show_paused(screen);
 		
 	if(details)
 	{
@@ -8424,9 +8396,6 @@ void system_pal()
 	hw_palette = &pal;
 	update_hw_pal = true;
 		
-	if(Paused)
-		show_paused(screen);
-		
 	//  sys_pal = pal;
 	memcpy(sys_pal,pal,sizeof(pal));
 }
@@ -8640,9 +8609,6 @@ void system_pal2()
 	update_hw_pal = true;
 	
 	blit(tmp_scr,screen,0,0,scrx,scry,320,240);
-		
-	if(Paused)
-		show_paused(screen);
 		
 	//  sys_pal = pal;
 	memcpy(sys_pal,RAMpal2,sizeof(RAMpal2));

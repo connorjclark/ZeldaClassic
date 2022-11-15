@@ -166,12 +166,17 @@ void render_zc()
 	static int font_scale = 5;
 	int font_height = al_get_font_line_height(font);
 	int debug_text_y = resy - font_scale*font_height - 5;
+	
 	if (Paused)
 	{
 		render_debug_text(font, "PAUSED", 5, debug_text_y, font_scale);
 		debug_text_y -= font_scale*font_height + 3;
 	}
-
+	if (Saving)
+	{
+		render_debug_text(font, "SAVING ...", 5, debug_text_y, font_scale);
+		debug_text_y -= font_scale*font_height + 3;
+	}
 	if (ShowFPS)
 	{
 		render_debug_text(font, fmt::format("fps: {}", (int)lastfps), 5, debug_text_y, font_scale);

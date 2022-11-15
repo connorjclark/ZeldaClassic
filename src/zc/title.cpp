@@ -2888,7 +2888,7 @@ int32_t writesaves(gamedata *savedata, PACKFILE *f)
 	return 0;
 }
 
-int32_t save_savedgames()
+static int32_t do_save_games()
 {
 	if (disable_save_to_disk || saves==NULL)
 		return 1;
@@ -2953,6 +2953,15 @@ int32_t save_savedgames()
 #endif
 
 	return ret;
+}
+
+int32_t save_savedgames()
+{
+	Saving = true;
+	render_zc();
+	int32_t result = do_save_games();
+	Saving = false;
+	return result;
 }
 
 void load_game_icon(gamedata *g, bool, int32_t index)
@@ -4814,7 +4823,6 @@ void game_over(int32_t type)
 			iconbuffer[currgame].ring = zc_min(ring, 3);
 			
 			load_game_icon(saves+currgame,false,currgame);
-			show_saving(screen);
 			save_savedgames();
 			if (replay_get_mode() == ReplayMode::Record) replay_save();
 		}
@@ -4851,7 +4859,6 @@ void save_game(bool savepoint)
 	if (ring > 0) --ring;
 	iconbuffer[currgame].ring = zc_min(ring, 3);
 	load_game_icon(saves+currgame,false,currgame);
-	show_saving(screen);
 	save_savedgames();
 	if (replay_get_mode() == ReplayMode::Record) replay_save();
 }
@@ -4995,7 +5002,6 @@ bool save_game(bool savepoint, int32_t type)
 				if (ring > 0) --ring;
 				iconbuffer[currgame].ring = zc_min(ring, 3);
 				load_game_icon(saves+currgame,false,currgame);
-				show_saving(screen);
 				save_savedgames();
 				if (replay_get_mode() == ReplayMode::Record) replay_save();
 				didsaved=true;

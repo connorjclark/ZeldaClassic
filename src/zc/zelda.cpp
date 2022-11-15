@@ -399,7 +399,7 @@ bool show_layer_0=true, show_layer_1=true, show_layer_2=true, show_layer_3=true,
      show_layer_over=true, show_layer_push=true, show_sprites=true, show_ffcs=true, show_hitboxes=false, show_walkflags=false, show_ff_scripts=false, show_effectflags = false;
 
 
-bool Throttlefps = true, MenuOpen = false, ClickToFreeze=false, Paused=false, Advance=false, ShowFPS = true, Showpal=false, disableClickToFreeze=false, SaveDragResize=false, DragAspect=false, SaveWinPos=false;
+bool Throttlefps = true, MenuOpen = false, ClickToFreeze=false, Paused=false, Saving=false, Advance=false, ShowFPS = true, Showpal=false, disableClickToFreeze=false, SaveDragResize=false, DragAspect=false, SaveWinPos=false;
 bool Playing, FrameSkip=false, TransLayers = true;
 bool __debug=false,debug_enabled = false;
 bool refreshpal,blockpath = false,loaded_guys= false,freeze_guys= false,
@@ -5289,7 +5289,6 @@ int main(int argc, char **argv)
 		{
 			pan_style = (int32_t)FFCore.usr_panstyle;
 		}
-		show_saving(screen);
 		save_savedgames();
 		if (replay_get_mode() == ReplayMode::Record) replay_save();
 		save_game_configs();
@@ -5351,7 +5350,6 @@ int main(int argc, char **argv)
 	window_height = resy;
 
 	// TODO !
-	// - fix show_saving
 	// - rm screen_scale
 	// - show_replay_controls
 	// - document
@@ -5945,7 +5943,6 @@ reload_for_replay_file:
 	{
 		pan_style = (int32_t)FFCore.usr_panstyle;
 	}
-	show_saving(screen);
 	save_savedgames();
 	if (replay_get_mode() == ReplayMode::Record) replay_save();
 	save_game_configs();
