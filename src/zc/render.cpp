@@ -1,7 +1,13 @@
 #include "render.h"
 #include "zelda.h"
+#include "maps.h"
+#include "sprite.h"
+#include "guys.h"
+#include "qst.h"
 #include "base/gui.h"
 #include <fmt/format.h>
+
+extern sprite_list guys;
 
 RenderTreeItem rti_root;
 RenderTreeItem rti_game;
@@ -151,6 +157,24 @@ static void render_debug_text(ALLEGRO_FONT* font, std::string text, int x, int y
 	al_destroy_bitmap(text_bitmap);
 }
 
+enum class DebugJustify {
+	left,
+	right,
+};
+static void render_text_lines(ALLEGRO_FONT* font, std::vector<std::string> lines, DebugJustify justify, int scale)
+{
+	int font_height = al_get_font_line_height(font);
+	int debug_text_y = resy - scale*font_height - 5;
+	for (std::string line : lines)
+	{
+		int x = justify == DebugJustify::left ?
+			5 :
+			al_get_display_width(all_get_display()) - al_get_text_width(font, line.c_str())*scale - 5;
+		render_debug_text(font, line.c_str(), x, debug_text_y, scale);
+		debug_text_y -= scale*font_height + 3;
+	}
+}
+
 void render_zc()
 {
 	init_render_tree();
@@ -164,28 +188,36 @@ void render_zc()
 	static int font_scale = 5;
 	int font_height = al_get_font_line_height(font);
 	int debug_text_y = resy - font_scale*font_height - 5;
-	
+
+	std::vector<std::string> lines_left;
+	std::vector<std::string> lines_right;
+
 	if (ShowFPS)
-	{
-		render_debug_text(font, fmt::format("fps: {}", (int)lastfps), 5, debug_text_y, font_scale);
-		debug_text_y -= font_scale*font_height + 3;
-	}
+		lines_left.push_back(fmt::format("fps: {}", (int)lastfps));
 	if (replay_is_replaying())
-	{
-		std::string text = replay_get_buttons_string();
-		render_debug_text(font, text.c_str(), 5, debug_text_y, font_scale);
-		debug_text_y -= font_scale*font_height + 3;
-	}
+		lines_left.push_back(replay_get_buttons_string().c_str());
 	if (Paused)
-	{
-		render_debug_text(font, "PAUSED", 5, debug_text_y, font_scale);
-		debug_text_y -= font_scale*font_height + 3;
-	}
+		lines_right.push_back("PAUSED");
 	if (Saving)
+		lines_right.push_back("SAVING ...");
+	if (details && game)
 	{
-		render_debug_text(font, "SAVING ...", 5, debug_text_y, font_scale);
-		debug_text_y -= font_scale*font_height + 3;
+		lines_right.push_back(fmt::format("dlvl:{:2} dngn:{}", dlevel, isdungeon()));
+		lines_right.push_back(time_str_long(game->get_time()));
+		for (int i = 0; i < guys.Count(); i++)
+			lines_right.push_back(fmt::format("{}", (int)((enemy*)guys.spr(i))->id));
 	}
+	if (show_ff_scripts)
+	{
+		for (int i = 0; i < MAXFFCS; i++)
+		{
+			if (tmpscr->ffscript[i])
+				lines_right.push_back(ffcmap[tmpscr->ffscript[i]-1].scriptname);
+		}
+	}
+
+	render_text_lines(font, lines_left, DebugJustify::left, font_scale);
+	render_text_lines(font, lines_right, DebugJustify::right, font_scale);
 
     al_flip_display();
 }

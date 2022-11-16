@@ -3794,11 +3794,6 @@ void updatescr(bool allowwavy, bool record_gfx)
 		}
 	}
 	
-	if(details)
-		show_details();
-	if(show_ff_scripts)
-		show_ffscript_names();
-	
 	bool clearwavy = (wavy <= 0);
 	
 	if(wavy <= 0)
@@ -3857,20 +3852,6 @@ void updatescr(bool allowwavy, bool record_gfx)
 
 	// TODO ! skip this blit somehow
 	blit(source,framebuf,0,0,0,0,256,224);
-		
-	const int32_t sx = 256 * screen_scale;
-	const int32_t sy = 224 * screen_scale;
-	const int32_t scale_mul = screen_scale - 1;
-	const int32_t mx = scale_mul * 128;
-	const int32_t my = scale_mul * 112;
-	
-	// TODO !
-	if(details)
-	{
-		textprintf_ex(screen,font,0,SCREEN_H-8,254,BLACK,"%-6d (%s)", idle_count, time_str_long(idle_count));
-	}
-	
-	//if(panorama!=NULL) destroy_bitmap(panorama);
 	
 	update_hw_screen();
 }

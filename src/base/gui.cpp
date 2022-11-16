@@ -206,10 +206,10 @@ int32_t do_zqdialog(DIALOG *dialog, int32_t focus_obj)
 	
 	player2 = init_dialog(dialog, focus_obj);
 
-	if (gui_bmp)
+	if (saved_gui_bmp)
 	{
-		clear_bitmap(gui_bmp);
-		screen = gui_bmp;
+		clear_bitmap(saved_gui_bmp);
+		screen = saved_gui_bmp;
 	}
 	
 	while(update_dialog(player2))
@@ -223,7 +223,7 @@ int32_t do_zqdialog(DIALOG *dialog, int32_t focus_obj)
 		//rest(1);
 	}
 
-	if (gui_bmp)
+	if (saved_gui_bmp)
 		screen = prev_screen;
 	
 	if(_gfx_mode_set_count == screen_count && !(gfx_capabilities&GFX_HW_CURSOR))

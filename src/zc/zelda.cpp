@@ -218,7 +218,7 @@ END_OF_FUNCTION(update_script_counter)
 
 void throttleFPS()
 {
-    if( (Throttlefps ^ (zc_getkey(KEY_TILDE)!=0)) || get_bit(quest_rules, qr_NOFASTMODE) )
+    if( (Throttlefps ^ (zc_getkey(KEY_TILDE)!=0)) || get_bit(quest_rules, qr_NOFASTMODE) || Paused)
     {
         if(zc_vsync == FALSE)
         {
@@ -2868,59 +2868,6 @@ void putintro()
     if(DMaps[currdmap].intro[intropos]==' ' && DMaps[currdmap].intro[intropos+1]==' ')
         while(DMaps[currdmap].intro[intropos]==' ')
             ++intropos;
-}
-
-//static char *dirstr[4] = {"Up","Down","Left","Right"};
-//static char *dirstr[32] = {"U","D","L","R"," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "};
-
-//use detail_int[x] for global detail info
-void show_details()
-{
-    //textprintf_ex(framebuf,font,-3,-5,WHITE,BLACK,"%-4d",whistleclk);
-    textprintf_ex(framebuf,font,0,8,WHITE,BLACK,"dlvl:%-2d dngn:%d", dlevel, isdungeon());
-    textprintf_ex(framebuf,font,0,176,WHITE,BLACK,"%u %s",game->get_time(),time_str_long(game->get_time()));
-    
-//    textprintf_ex(framebuf,font,200,16,WHITE,BLACK,"%3d",Hero.getPushing());
-//    for(int32_t i=0; i<Lwpns.Count(); i++)
-//      textprintf_ex(framebuf,font,200,(i<<3)+16,WHITE,BLACK,"%3d",items.spr(i)->id);
-
-//    for(int32_t i=0; i<Ewpns.Count(); i++)
-//      textprintf_ex(framebuf,font,90,(i<<3)+16,WHITE,BLACK,"%3d %3d %3d %3d %3d",((weapon*)Ewpns.spr(i))->id, ((weapon*)Ewpns.spr(i))->tile, ((weapon*)Ewpns.spr(i))->clk, ((weapon*)Ewpns.spr(i))->aframe, wpnsbuf[((weapon*)Ewpns.spr(i))->id].frames);
-
-//    for(int32_t i=0; i<items.Count(); i++)
-//      textprintf_ex(framebuf,font,90,(i<<3)+16,WHITE,BLACK,"%3d %3d %3d",((weapon*)Lwpns.spr(i))->tile, ((weapon*)Lwpns.spr(i))->dir, ((weapon*)Lwpns.spr(i))->flip);
-
-    for(int32_t i=0; i<guys.Count(); i++)
-        textprintf_ex(framebuf,font,90,(i<<3)+16,WHITE,BLACK,"%d",(int32_t)((enemy*)guys.spr(i))->id);
-        
-//      textprintf_ex(framebuf,font,90,16,WHITE,BLACK,"%3d, %3d",int32_t(HeroModifiedX()),int32_t(HeroModifiedY()));
-    //textprintf_ex(framebuf,font,90,24,WHITE,BLACK,"%3d, %3d",detail_int[0],detail_int[1]);
-//      textprintf_ex(framebuf,font,200,16,WHITE,BLACK,"%3d",Hero.getAction());
-
-    /*
-      for(int32_t i=0; i<Ewpns.Count(); i++)
-      {
-      sprite *s=Ewpns.spr(i);
-      textprintf_ex(framebuf,font,100,(i<<3)+16,WHITE,BLACK,"%3d>%3d %3d>%3d %3d<%3d %3d<%3d ",
-      int32_t(Hero.getX()+0+16), int32_t(s->x+s->hxofs),  int32_t(Hero.getY()+0+16), int32_t(s->y+s->hyofs),
-      int32_t(Hero.getX()+0), int32_t(s->x+s->hxofs+s->hxsz), int32_t(Hero.getY()+0), int32_t(s->y+s->hyofs+s->hysz));
-      }
-      */
-//        textprintf_ex(framebuf,font,200,16,WHITE,BLACK,"gi=%3d",guycarryingitem);
-}
-
-void show_ffscript_names()
-{
-    int32_t ypos = 8;
-    
-    for(int32_t i=0; i< MAXFFCS; i++)
-    {
-        if(tmpscr->ffscript[i])
-        {
-            textout_shadowed_ex(framebuf,font, ffcmap[tmpscr->ffscript[i]-1].scriptname.c_str(),2,ypos,WHITE,BLACK,-1);
-            ypos+=12;
-        }
-    }
 }
 
 void do_magic_casting()
