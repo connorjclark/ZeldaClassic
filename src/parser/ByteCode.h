@@ -1470,7 +1470,45 @@
 #define RESRVD_VAR_EMILY29      1386
 #define RESRVD_VAR_EMILY30      1387
 
-#define LAST_BYTECODE           1388
+#define REFPALDATA              1388
+
+#define PALDATACOLOR            1389
+#define PALDATAR                1390
+#define PALDATAG                1391
+#define PALDATAB                1392
+
+#define RESRVD_VAR_MOOSH01      1393
+#define RESRVD_VAR_MOOSH02      1394
+#define RESRVD_VAR_MOOSH03      1395
+#define RESRVD_VAR_MOOSH04      1396
+#define RESRVD_VAR_MOOSH05      1397
+#define RESRVD_VAR_MOOSH06      1398
+#define RESRVD_VAR_MOOSH07      1399
+#define RESRVD_VAR_MOOSH08      1400
+#define RESRVD_VAR_MOOSH09      1401
+#define RESRVD_VAR_MOOSH10      1402
+#define RESRVD_VAR_MOOSH11      1403
+#define RESRVD_VAR_MOOSH12      1404
+#define RESRVD_VAR_MOOSH13      1405
+#define RESRVD_VAR_MOOSH14      1406
+#define RESRVD_VAR_MOOSH15      1407
+#define RESRVD_VAR_MOOSH16      1408
+#define RESRVD_VAR_MOOSH17      1409
+#define RESRVD_VAR_MOOSH18      1410
+#define RESRVD_VAR_MOOSH19      1411
+#define RESRVD_VAR_MOOSH20      1412
+#define RESRVD_VAR_MOOSH21      1413
+#define RESRVD_VAR_MOOSH22      1414
+#define RESRVD_VAR_MOOSH23      1415
+#define RESRVD_VAR_MOOSH24      1416
+#define RESRVD_VAR_MOOSH25      1417
+#define RESRVD_VAR_MOOSH26      1418
+#define RESRVD_VAR_MOOSH27      1419
+#define RESRVD_VAR_MOOSH28      1420
+#define RESRVD_VAR_MOOSH29      1421
+#define RESRVD_VAR_MOOSH30      1422
+
+#define LAST_BYTECODE           1423
 
 //} END OF BYTECODE
 
@@ -3641,7 +3679,281 @@ namespace ZScript
 		}
 	};
 
+	class OCreatePalData : public Opcode
+	{
+	public:
+		OCreatePalData() : Opcode() {}
+		std::string toString();
+		Opcode *clone()
+		{
+			return new OCreatePalData();
+		}
+	};
+	
+	class OCreatePalDataClr : public UnaryOpcode
+	{
+	public:
+		OCreatePalDataClr(Argument *A) : UnaryOpcode(A) {}
+		std::string toString();
+		Opcode *clone()
+		{
+			return new OCreatePalDataClr(a->clone());
+		}
+	};
 
+	class OCreateRGBHex : public UnaryOpcode
+	{
+	public:
+		OCreateRGBHex(Argument* A) : UnaryOpcode(A) {}
+		std::string toString();
+		Opcode* clone()
+		{
+			return new OCreateRGBHex(a->clone());
+		}
+	};
+
+	class OCreateRGB : public Opcode
+	{
+	public:
+		OCreateRGB() : Opcode() {}
+		std::string toString();
+		Opcode* clone()
+		{
+			return new OCreateRGB();
+		}
+	};
+	
+	class OMixColorArray : public Opcode
+	{
+	public:
+		OMixColorArray() : Opcode() {}
+		std::string toString();
+		Opcode *clone()
+		{
+			return new OMixColorArray();
+		}
+	};
+	
+	class OLoadLevelPalette : public UnaryOpcode
+	{
+	public:
+		OLoadLevelPalette(Argument *A) : UnaryOpcode(A) {}
+		std::string toString();
+		Opcode *clone()
+		{
+			return new OLoadLevelPalette(a->clone());
+		}
+	};
+
+	class OLoadSpritePalette : public UnaryOpcode
+	{
+	public:
+		OLoadSpritePalette(Argument *A) : UnaryOpcode(A) {}
+		std::string toString();
+		Opcode *clone()
+		{
+			return new OLoadSpritePalette(a->clone());
+		}
+	};
+
+	class OLoadMainPalette : public Opcode
+	{
+	public:
+		OLoadMainPalette() : Opcode() {}
+		std::string toString();
+		Opcode *clone()
+		{
+			return new OLoadMainPalette();
+		}
+	};
+
+	class OLoadCyclePalette : public UnaryOpcode
+	{
+	public:
+		OLoadCyclePalette(Argument* A) : UnaryOpcode(A) {}
+		std::string toString();
+		Opcode* clone()
+		{
+			return new OLoadCyclePalette(a->clone());
+		}
+	};
+
+	class OLoadBitmapPalette : public UnaryOpcode
+	{
+	public:
+		OLoadBitmapPalette(Argument* A) : UnaryOpcode(A) {}
+		std::string toString();
+		Opcode* clone()
+		{
+			return new OLoadBitmapPalette(a->clone());
+		}
+	};
+	
+	class OWriteLevelPalette : public UnaryOpcode
+	{
+	public:
+		OWriteLevelPalette(Argument *A) : UnaryOpcode(A) {}
+		std::string toString();
+		Opcode *clone()
+		{
+			return new OWriteLevelPalette(a->clone());
+		}
+	};
+	
+	class OWriteLevelCSet : public BinaryOpcode
+	{
+	public:
+		OWriteLevelCSet(Argument *A, Argument *B) : BinaryOpcode(A,B) {}
+		std::string toString();
+		Opcode *clone()
+		{
+			return new OWriteLevelCSet(a->clone(), b->clone());
+		}
+	};
+	
+	class OWriteSpritePalette : public UnaryOpcode
+	{
+	public:
+		OWriteSpritePalette(Argument *A) : UnaryOpcode(A) {}
+		std::string toString();
+		Opcode *clone()
+		{
+			return new OWriteSpritePalette(a->clone());
+		}
+	};
+	
+	class OWriteSpriteCSet : public BinaryOpcode
+	{
+	public:
+		OWriteSpriteCSet(Argument *A, Argument *B) : BinaryOpcode(A,B) {}
+		std::string toString();
+		Opcode *clone()
+		{
+			return new OWriteSpriteCSet(a->clone(), b->clone());
+		}
+	};
+	
+	class OWriteMainPalette : public Opcode
+	{
+	public:
+		OWriteMainPalette() : Opcode() {}
+		std::string toString();
+		Opcode *clone()
+		{
+			return new OWriteMainPalette();
+		}
+	};
+	
+	class OWriteMainCSet : public UnaryOpcode
+	{
+	public:
+		OWriteMainCSet(Argument *A) : UnaryOpcode(A) {}
+		std::string toString();
+		Opcode *clone()
+		{
+			return new OWriteMainCSet(a->clone());
+		}
+	};
+
+	class OWriteCyclePalette : public UnaryOpcode
+	{
+	public:
+		OWriteCyclePalette(Argument *A) : UnaryOpcode(A) {}
+		std::string toString();
+		Opcode* clone()
+		{
+			return new OWriteCyclePalette(a->clone());
+		}
+	};
+
+	class OWriteCycleCSet : public BinaryOpcode
+	{
+	public:
+		OWriteCycleCSet(Argument *A, Argument *B) : BinaryOpcode(A,B) {}
+		std::string toString();
+		Opcode* clone()
+		{
+			return new OWriteCycleCSet(a->clone(), b->clone());
+		}
+	};
+	
+	class OPalDataColorValid : public UnaryOpcode
+	{
+	public:
+		OPalDataColorValid(Argument* A) : UnaryOpcode(A) {}
+		std::string toString();
+		Opcode* clone()
+		{
+			return new OPalDataColorValid(a->clone());
+		}
+	};
+	
+	class OPalDataClearColor : public UnaryOpcode
+	{
+	public:
+		OPalDataClearColor(Argument *A) : UnaryOpcode(A) {}
+		std::string toString();
+		Opcode *clone()
+		{
+			return new OPalDataClearColor(a->clone());
+		}
+	};
+
+	class OPalDataClearCSet : public UnaryOpcode
+	{
+	public:
+		OPalDataClearCSet(Argument* A) : UnaryOpcode(A) {}
+		std::string toString();
+		Opcode* clone()
+		{
+			return new OPalDataClearCSet(a->clone());
+		}
+	};
+
+	class OPalDataMix : public Opcode
+	{
+	public:
+		OPalDataMix() : Opcode() {}
+		std::string toString();
+		Opcode *clone()
+		{
+			return new OPalDataMix();
+		}
+	};
+	
+	class OPalDataMixCSet : public Opcode
+	{
+	public:
+		OPalDataMixCSet() : Opcode() {}
+		std::string toString();
+		Opcode *clone()
+		{
+			return new OPalDataMixCSet();
+		}
+	};
+	
+	class OPalDataCopy : public UnaryOpcode
+	{
+	public:
+		OPalDataCopy(Argument *A) : UnaryOpcode(A) {}
+		std::string toString();
+		Opcode *clone()
+		{
+			return new OPalDataCopy(a->clone());
+		}
+	};
+
+	class OPalDataCopyCSet : public Opcode
+	{
+	public:
+		OPalDataCopyCSet() : Opcode() {}
+		std::string toString();
+		Opcode* clone()
+		{
+			return new OPalDataCopyCSet();
+		}
+	};
+	
 	class OLoadDropsetRegister : public UnaryOpcode
 	{
 	public:
@@ -10713,6 +11025,24 @@ namespace ZScript
 		Opcode *clone()
 		{
 			return new ORunGenericFrozenScript(a->clone());
+		}
+	};
+	class OPalDataFree : public Opcode
+	{
+	public:
+		std::string toString();
+		Opcode *clone()
+		{
+			return new OPalDataFree();
+		}
+	};
+	class OPalDataOwn : public Opcode
+	{
+	public:
+		std::string toString();
+		Opcode *clone()
+		{
+			return new OPalDataOwn();
 		}
 	};
 }

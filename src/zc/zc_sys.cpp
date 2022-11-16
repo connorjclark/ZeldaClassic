@@ -4889,14 +4889,12 @@ void advanceframe(bool allowwavy, bool sfxcleanup, bool allowF6Script)
 	syskeys();
 	if (replay_is_replaying())
 		replay_peek_quit();
-	if (Quit)
-		replay_step_quit(Quit);
-	if (GameFlags & GAMEFLAG_TRYQUIT)
-		replay_step_quit(0);
 	if(allowF6Script)
 	{
 		FFCore.runF6Engine();
 	}
+	if (Quit)
+		replay_step_quit(Quit);
 	// Someday... maybe install a Turbo button here?
 	updatescr(allowwavy, true);
 	throttleFPS();
@@ -8026,6 +8024,7 @@ static MENU fixes_menu[] =
 #if DEVLEVEL > 0
 int32_t devLogging();
 int32_t devDebug();
+int32_t devTimestmp();
 #if DEVLEVEL > 1
 int32_t setCheat();
 #endif //DEVLEVEL > 1
