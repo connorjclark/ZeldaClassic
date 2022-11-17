@@ -634,7 +634,6 @@ void update_hw_screen(bool force)
 		}
 		if(update_hw_pal && hw_palette)
 		{
-			all_set_transparent_palette_index(0);
 			set_palette(*hw_palette);
 			update_hw_pal = false;
 		}

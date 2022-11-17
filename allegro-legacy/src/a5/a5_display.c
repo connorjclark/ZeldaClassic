@@ -406,12 +406,6 @@ static void a5_palette_from_a4_palette(const PALETTE a4_palette, ALLEGRO_COLOR *
 
             a = 255;
 
-            // local edit - treat index 0 as transparent.
-            if (i == transparent_palette_index)
-            {
-              r = g = b = a = 0;
-            }
-
             if(_a5_screen_format == ALLEGRO_PIXEL_FORMAT_ABGR_8888)
             {
                 _a5_screen_palette_a5[i] = r | (g << 8) | (b << 16) | (a << 24);
@@ -468,6 +462,7 @@ int a5_display_set_mouse_sprite(struct BITMAP *sprite, int xfocus, int yfocus)
     if (i == 20)
       return 1;
     
+    all_set_transparent_palette_index(0);
     ALLEGRO_BITMAP* a5_mouse_sprite = all_get_a5_bitmap(sprite);
     cursor = al_create_mouse_cursor(a5_mouse_sprite, xfocus, yfocus);
     a4_cursor_bitmaps[i] = sprite;
@@ -556,7 +551,15 @@ static void render_8_8888(BITMAP * bp, ALLEGRO_BITMAP * a5bp)
         {
             for(j = 0; j < bp->w; j++)
             {
-                line_32[j] = _a5_screen_palette_a5[bp->line[i][j]];
+                int index = bp->line[i][j];
+                if (index == transparent_palette_index)
+                {
+                  line_32[j] = 0;
+                }
+                else
+                {
+                  line_32[j] = _a5_screen_palette_a5[index];
+                }
             }
             line_8 += lr->pitch;
             line_32 = (uint32_t *)line_8;

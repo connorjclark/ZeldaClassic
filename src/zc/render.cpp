@@ -60,14 +60,17 @@ static void init_render_tree()
 
 	al_set_new_bitmap_flags(ALLEGRO_NO_PRESERVE_TEXTURE);
 	rti_menu.bitmap = al_create_bitmap(menu_bmp->w, menu_bmp->h);
+	rti_menu.transparency_index = 0;
 
 	gui_bmp = create_bitmap_ex(8, 640, 480);
 	zc_set_gui_bmp(gui_bmp);
 	al_set_new_bitmap_flags(ALLEGRO_NO_PRESERVE_TEXTURE);
 	rti_gui.bitmap = al_create_bitmap(gui_bmp->w, gui_bmp->h);
+	rti_gui.transparency_index = 0;
 
 	al_set_new_bitmap_flags(ALLEGRO_NO_PRESERVE_TEXTURE);
 	rti_screen.bitmap = al_create_bitmap(screen->w, screen->h);
+	rti_screen.transparency_index = 0;
 
 	rti_root.children.push_back(&rti_game);
 	rti_root.children.push_back(&rti_menu);
@@ -76,6 +79,12 @@ static void init_render_tree()
 
 	gui_mouse_x = zc_gui_mouse_x;
 	gui_mouse_y = zc_gui_mouse_y;
+}
+
+static void render_from_a4_bitmap(RenderTreeItem* rti, BITMAP* a4_bitmap)
+{
+	all_set_transparent_palette_index(rti->transparency_index);
+	all_render_a5_bitmap(a4_bitmap, rti->bitmap);
 }
 
 static void configure_render_tree()
@@ -143,16 +152,16 @@ static void configure_render_tree()
 	}
 	else
 	{
-		all_render_a5_bitmap(framebuf, rti_game.bitmap);
+		render_from_a4_bitmap(&rti_game, framebuf);
 		rti_game.tint = nullptr;
 	}
 
 	if (rti_menu.visible)
-		all_render_a5_bitmap(menu_bmp, rti_menu.bitmap);
+		render_from_a4_bitmap(&rti_menu, menu_bmp);
 	if (rti_gui.visible)
-		all_render_a5_bitmap(gui_bmp, rti_gui.bitmap);
+		render_from_a4_bitmap(&rti_gui, gui_bmp);
 	if (rti_screen.visible)
-		all_render_a5_bitmap(screen, rti_screen.bitmap);
+		render_from_a4_bitmap(&rti_screen, screen);
 }
 
 static void render_debug_text(ALLEGRO_FONT* font, std::string text, int x, int y, int scale)

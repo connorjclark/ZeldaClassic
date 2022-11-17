@@ -1,5 +1,4 @@
 #include "render.h"
-// #include "zelda.h"
 
 static RenderTreeItem rti_root;
 static RenderTreeItem rti_screen;

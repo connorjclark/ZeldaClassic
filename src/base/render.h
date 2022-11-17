@@ -17,6 +17,8 @@ public:
 	RenderTreeItemProps transform;
 	RenderTreeItemProps computed;
 	bool visible;
+	// -1 for no transparency.
+	int transparency_index = -1;
 	ALLEGRO_BITMAP* bitmap;
 	ALLEGRO_COLOR* tint;
 	std::vector<RenderTreeItem*> children;

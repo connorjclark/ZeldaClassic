@@ -29,6 +29,7 @@
 #include "init.h"
 #include "replay.h"
 #include "cheats.h"
+#include "render.h"
 #include "base/zc_math.h"
 
 #ifdef ALLEGRO_DOS
@@ -6701,10 +6702,9 @@ int32_t onCredits()
 	RGB *pal = (RGB*)(data[PAL_CREDITS].dat);
 	PALETTE tmppal;
 
-	const int transparent_index = 1;
-	all_set_transparent_palette_index(transparent_index);
+	rti_gui.transparency_index = 1;
 
-	clear_to_color(win, transparent_index);
+	clear_to_color(win, rti_gui.transparency_index);
 	draw_rle_sprite(win,rle,0,0);
 	credits_dlg[0].dp2=lfont;
 	credits_dlg[1].fg = jwin_pal[jcDISABLED_FG];
@@ -6717,7 +6717,7 @@ int32_t onCredits()
 	BITMAP* old_screen = screen;
 	BITMAP* gui_bmp = zc_get_gui_bmp();
 	ASSERT(gui_bmp);
-	clear_to_color(gui_bmp, transparent_index);
+	clear_to_color(gui_bmp, rti_gui.transparency_index);
 	screen = gui_bmp;
 	
 	while(update_dialog(p))
@@ -6759,7 +6759,7 @@ int32_t onCredits()
 	destroy_bitmap(win);
 	comeback();
 
-	all_set_transparent_palette_index(0);
+	rti_gui.transparency_index = 0;
 	update_hw_screen();
 
 	return D_O_K;
