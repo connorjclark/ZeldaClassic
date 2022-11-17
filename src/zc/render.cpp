@@ -13,6 +13,7 @@ RenderTreeItem rti_root;
 RenderTreeItem rti_game;
 RenderTreeItem rti_menu;
 RenderTreeItem rti_gui;
+RenderTreeItem rti_screen;
 
 static int zc_gui_mouse_x()
 {
@@ -65,9 +66,13 @@ static void init_render_tree()
 	al_set_new_bitmap_flags(ALLEGRO_NO_PRESERVE_TEXTURE);
 	rti_gui.bitmap = al_create_bitmap(gui_bmp->w, gui_bmp->h);
 
+	al_set_new_bitmap_flags(ALLEGRO_NO_PRESERVE_TEXTURE);
+	rti_screen.bitmap = al_create_bitmap(screen->w, screen->h);
+
 	rti_root.children.push_back(&rti_game);
 	rti_root.children.push_back(&rti_menu);
 	rti_root.children.push_back(&rti_gui);
+	rti_root.children.push_back(&rti_screen);
 
 	gui_mouse_x = zc_gui_mouse_x;
 	gui_mouse_y = zc_gui_mouse_y;
@@ -94,6 +99,7 @@ static void configure_render_tree()
 		rti_game.visible = true;
 	}
 
+	if (rti_menu.visible = MenuOpen)
 	{
 		int w = al_get_bitmap_width(rti_menu.bitmap);
 		int h = al_get_bitmap_height(rti_menu.bitmap);
@@ -101,9 +107,9 @@ static void configure_render_tree()
 		rti_menu.transform.x = 0;
 		rti_menu.transform.y = 0;
 		rti_menu.transform.scale = scale;
-		rti_menu.visible = MenuOpen;
 	}
 
+	if (rti_gui.visible = (dialog_count >= 1 && !active_dialog) || dialog_count >= 2 || screen == gui_bmp)
 	{
 		int w = al_get_bitmap_width(rti_gui.bitmap);
 		int h = al_get_bitmap_height(rti_gui.bitmap);
@@ -111,9 +117,22 @@ static void configure_render_tree()
 		rti_gui.transform.x = (resx - w*scale) / 2 / scale;
 		rti_gui.transform.y = (resy - h*scale) / 2 / scale;
 		rti_gui.transform.scale = scale;
-		rti_gui.visible = (dialog_count >= 1 && !active_dialog) || dialog_count >= 2 || screen == gui_bmp;
 		if (rti_gui.visible)
 			rti_menu.visible = false;
+	}
+
+	if (rti_screen.visible)
+	{
+		static bool scaling_force_integer = zc_get_config("zeldadx", "scaling_force_integer", 1);
+		
+		int w = al_get_bitmap_width(rti_screen.bitmap);
+		int h = al_get_bitmap_height(rti_screen.bitmap);
+		float scale = std::min((float)resx/w, (float)resy/h);
+		if (scaling_force_integer)
+			scale = std::max((int) scale, 1);
+		rti_screen.transform.x = (resx - w*scale) / 2 / scale;
+		rti_screen.transform.y = (resy - h*scale) / 2 / scale;
+		rti_screen.transform.scale = scale;
 	}
 
 	bool freeze_game_bitmap = rti_menu.visible || rti_gui.visible;
@@ -132,6 +151,8 @@ static void configure_render_tree()
 		all_render_a5_bitmap(menu_bmp, rti_menu.bitmap);
 	if (rti_gui.visible)
 		all_render_a5_bitmap(gui_bmp, rti_gui.bitmap);
+	if (rti_screen.visible)
+		all_render_a5_bitmap(screen, rti_screen.bitmap);
 }
 
 static void render_debug_text(ALLEGRO_FONT* font, std::string text, int x, int y, int scale)
