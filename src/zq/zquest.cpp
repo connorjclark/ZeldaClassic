@@ -7581,7 +7581,7 @@ void refresh(int32_t flags)
     
     unscare_mouse();
     SCRFIX();
-	update_hw_screen(true);
+	update_hw_screen();
 }
 
 void select_scr()
@@ -7929,7 +7929,12 @@ void draw(bool justcset)
             int32_t cxstart=(x-startxint)/int32_t(16*mapscreensize);
             int32_t cystart=(y-startyint)/int32_t(16*mapscreensize);
             int32_t cstart=(cystart*16)+cxstart;
-			if(cstart == lastpos) continue;
+			if(cstart == lastpos)
+			{
+				do_animations();
+				refresh(rALL);
+				continue;
+			}
 			lastpos = cstart;
             combo_alias *combo = &combo_aliases[combo_apos];
             
