@@ -7581,7 +7581,7 @@ void refresh(int32_t flags)
     
     unscare_mouse();
     SCRFIX();
-	update_hw_screen();
+	update_hw_screen(true);
 }
 
 void select_scr()
