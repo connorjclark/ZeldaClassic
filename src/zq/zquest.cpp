@@ -31781,7 +31781,7 @@ int32_t main(int32_t argc,char **argv)
 		int new_x = zc_get_config("zquest","window_x",0);
 		int new_y = zc_get_config("zquest","window_y",0);
 		if (new_x > 0 && new_y > 0) al_set_window_position(all_get_display(), new_x, new_y);
-		else al_set_window_position(all_get_display(), center_x - window_width_temp / 2, center_y - window_height_temp / 2);
+		else al_set_window_position(all_get_display(), center_x - window_w / 2, center_y - window_h / 2);
 #endif
 	}
 #endif
