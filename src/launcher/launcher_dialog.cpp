@@ -518,7 +518,7 @@ std::shared_ptr<GUI::Widget> LauncherDialog::view()
 						CONFIG_CHECKBOX_I("Lock Aspect Ratio On Resize","zquest.cfg","zquest","drag_aspect",0,"Makes any changes to the window size by dragging get snapped to ZQuest's default (4:3) aspect ratio."),
 						CONFIG_CHECKBOX_I("Save Window Position","zquest.cfg","zquest","save_window_position",0,"Remembers the last position of the ZQuest Window."),
 						CONFIG_CHECKBOX_I("Force Integer Values for Scale","zquest.cfg","zquest","scaling_force_integer",0,"Locks the screen to only scale by an integer value. Results in perfect pixel art scaling, at the expense of not using the entire availabe window space."),
-						CONFIG_CHECKBOX_I("Linear Scaling","zquest.cfg","zquest","scaling_mode",0,"Use linear scaling when upscaling the window. If off, the default is nearest-neighbor scaling")
+						CONFIG_CHECKBOX_I("Linear Scaling","zquest.cfg","zquest","scaling_mode",0,"Use linear scaling when upscaling the window. If off, the default is nearest-neighbor scaling"),
 						CONFIG_CHECKBOX_I("Record During Test Feature","zquest.cfg","zquest","test_mode_record",0,"Save a recording to replays/latest_test.zplay when using the GUI test feature.")
 					),
 					Rows<3>(fitParent = true,
