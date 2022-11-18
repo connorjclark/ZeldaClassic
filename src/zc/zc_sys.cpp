@@ -4244,10 +4244,15 @@ void f_Quit(int32_t type)
 {
 	if(type==qQUIT && !Playing)
 		return;
-		
-	music_pause();
-	pause_all_sfx();
-	system_pal();
+	
+	bool from_menu = is_sys_pal;
+	
+	if(!from_menu)
+	{
+		music_pause();
+		pause_all_sfx();
+	}
+	enter_sys_pal();
 	clear_keybuf();
 	
 	locking_keys = true;
@@ -4276,14 +4281,17 @@ void f_Quit(int32_t type)
 	{
 		kill_sfx();
 		music_stop();
-		game_pal();
+		exit_sys_pal();
 		update_hw_screen();
 	}
 	else
 	{
-		game_pal();
-		music_resume();
-		resume_all_sfx();
+		exit_sys_pal();
+		if(!from_menu)
+		{
+			music_resume();
+			resume_all_sfx();
+		}
 	}
 	
 	show_mouse(NULL);
@@ -8707,6 +8715,12 @@ void System()
 		
 	do
 	{
+		if(close_button_quit)
+		{
+			close_button_quit=false;
+			f_Quit(qEXIT);
+			if(Quit) break;
+		}
 		rest(17);
 		
 		if(mouse_down && !gui_mouse_b())
