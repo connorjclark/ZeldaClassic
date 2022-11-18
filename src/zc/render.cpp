@@ -52,10 +52,14 @@ static void init_render_tree()
 	if (!rti_root.children.empty())
 		return;
 
+	// ALLEGRO_NO_PRESERVE_TEXTURE is not included for rti_game because on windows that results in
+	// the bitmap being cleared when losing focus. Since we sometimes don't always draw to this
+	// every frame (when it is frozen under a pause menu), we need to pay the cost to keep the texture
+	// backed up.
 	if (zc_get_config("zeldadx", "scaling_mode", 0) == 1)
-		al_set_new_bitmap_flags(ALLEGRO_NO_PRESERVE_TEXTURE | ALLEGRO_MAG_LINEAR | ALLEGRO_MIN_LINEAR);
+		al_set_new_bitmap_flags(ALLEGRO_MAG_LINEAR | ALLEGRO_MIN_LINEAR);
 	else
-		al_set_new_bitmap_flags(ALLEGRO_NO_PRESERVE_TEXTURE);
+		al_set_new_bitmap_flags(0);
 	rti_game.bitmap = al_create_bitmap(framebuf->w, framebuf->h);
 	rti_game.a4_bitmap = framebuf;
 
