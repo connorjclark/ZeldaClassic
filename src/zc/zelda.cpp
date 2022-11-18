@@ -4428,7 +4428,7 @@ int32_t onFullscreen()
 	    gui_mouse_focus=0;
 	    show_mouse(screen);
 	    switch_type = pause_in_background ? SWITCH_PAUSE : SWITCH_BACKGROUND;
-	    set_display_switch_mode(switch_type);
+	    set_display_switch_mode(fullscreen?SWITCH_BACKAMNESIA:switch_type);
 		set_display_switch_callback(SWITCH_OUT, switch_out_callback);
 		set_display_switch_callback(SWITCH_IN, switch_in_callback);
 
@@ -5341,7 +5341,7 @@ int main(int argc, char **argv)
 	}
 #endif
 	switch_type = pause_in_background ? SWITCH_PAUSE : SWITCH_BACKGROUND;
-	set_display_switch_mode(switch_type);
+	set_display_switch_mode(is_windowed_mode()?SWITCH_PAUSE:switch_type);
 	
 	hw_palette = &RAMpal;
 	zq_screen_w = 640;
@@ -5380,7 +5380,8 @@ int main(int argc, char **argv)
 	checked_epilepsy = true;
 #endif
 	
-	set_display_switch_mode(pause_in_background ? SWITCH_PAUSE : SWITCH_BACKGROUND);
+	//set switching/focus mode -Z
+	set_display_switch_mode(is_windowed_mode()?(pause_in_background ? SWITCH_PAUSE : SWITCH_BACKGROUND):SWITCH_BACKAMNESIA);
 	
 	int32_t test_arg = used_switch(argc,argv,"-test");
 	zqtesting_mode = test_arg > 0;
