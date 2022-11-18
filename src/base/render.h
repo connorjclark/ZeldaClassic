@@ -23,6 +23,7 @@ public:
 	BITMAP* a4_bitmap;
 	bool freeze_a4_bitmap_render;
 	ALLEGRO_COLOR* tint;
+	bool monochrome = false;
 	std::vector<RenderTreeItem*> children;
 
 	int global_to_local_x(int x)
