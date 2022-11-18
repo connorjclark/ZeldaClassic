@@ -1572,7 +1572,7 @@ int32_t onFullScreen()
 	    set_palette(RAMpal);
 	    position_mouse(zq_screen_w/2,zq_screen_h/2);
 	    show_mouse(screen);
-	    set_display_switch_mode(SWITCH_BACKGROUND);
+	    // set_display_switch_mode(SWITCH_BACKGROUND);
 	    set_display_switch_callback(SWITCH_OUT, switch_out);
 	    set_display_switch_callback(SWITCH_IN, switch_in);
 	    return D_REDRAW;
@@ -32118,7 +32118,7 @@ int32_t main(int32_t argc,char **argv)
 	
 	rebuild_trans_table();
 	
-	set_display_switch_mode(SWITCH_BACKGROUND);
+	// set_display_switch_mode(SWITCH_BACKGROUND);
 	set_display_switch_callback(SWITCH_OUT, switch_out);
 	set_display_switch_callback(SWITCH_IN, switch_in);
 	
