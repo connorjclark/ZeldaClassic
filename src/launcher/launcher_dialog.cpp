@@ -419,7 +419,9 @@ std::shared_ptr<GUI::Widget> LauncherDialog::view()
 						CONFIG_CHECKBOX_I("Force Integer Values for Scale","zc.cfg","zeldadx","scaling_force_integer",0,"Locks the game screen to only scale by an integer value. Results in perfect pixel art scaling, at the expense of not using the entire availabe window space."),
 						CONFIG_CHECKBOX_I("Linear Scaling","zc.cfg","zeldadx","scaling_mode",1,"Use linear scaling when upscaling the window. If off, the default is nearest-neighbor scaling"),
 						CONFIG_CHECKBOX_I("Monochrome Debuggers","zc.cfg","CONSOLE","monochrome_debuggers",0,"Use non-colored debugger text."),
-						CONFIG_CHECKBOX_I("Text Readability","zc.cfg","gui","bolder_font",0,"Attempts to make text more readable in some areas (ex. larger, bolder)")
+						CONFIG_CHECKBOX_I("Text Readability","zc.cfg","gui","bolder_font",0,"Attempts to make text more readable in some areas (ex. larger, bolder)"),
+						CONFIG_CHECKBOX_I("Replay New Saves","zc.cfg","zeldadx","replay_new_saves",0,"Starting a new game will prompt recording to a .zplay file"),
+						CONFIG_CHECKBOX_I("Replay Debug","zc.cfg","zeldadx","replay_debug",0,"Record debug information when making a .zplay file")
 					),
 					Rows<3>(fitParent = true,
 						CONFIG_TEXTFIELD_FL("Cursor Scale (small):", "zc.cfg","zeldadx","cursor_scale_small",1.0,1.0,5.0, 4),
@@ -517,6 +519,7 @@ std::shared_ptr<GUI::Widget> LauncherDialog::view()
 						CONFIG_CHECKBOX_I("Save Window Position","zquest.cfg","zquest","save_window_position",0,"Remembers the last position of the ZQuest Window."),
 						CONFIG_CHECKBOX_I("Force Integer Values for Scale","zquest.cfg","zquest","scaling_force_integer",0,"Locks the screen to only scale by an integer value. Results in perfect pixel art scaling, at the expense of not using the entire availabe window space."),
 						CONFIG_CHECKBOX_I("Linear Scaling","zquest.cfg","zquest","scaling_mode",0,"Use linear scaling when upscaling the window. If off, the default is nearest-neighbor scaling")
+						CONFIG_CHECKBOX_I("Record During Test Feature","zquest.cfg","zquest","test_mode_record",0,"Save a recording to replays/latest_test.zplay when using the GUI test feature.")
 					),
 					Rows<3>(fitParent = true,
 						CONFIG_TEXTFIELD_FL("Cursor Scale (small):", "zquest.cfg","zquest","cursor_scale_small",1.0,1.0,5.0, 4),

@@ -60,6 +60,7 @@
 #include "base/zc_math.h"
 #include <fmt/format.h>
 #include <fmt/std.h>
+#include <regex>
 
 using namespace util;
 extern FFScript FFCore; //the core script engine.
@@ -95,7 +96,7 @@ bool use_testingst_start = false;
 static uint16_t testingqst_dmap = 0;
 static uint8_t testingqst_screen = 0;
 static uint8_t testingqst_retsqr = 0;
-static bool replay_debug_arg = false;
+static bool replay_debug = false;
 
 extern CConsoleLoggerEx zscript_coloured_console;
 extern CConsoleLoggerEx coloured_console;
@@ -1808,10 +1809,13 @@ int32_t init_game()
 		std::filesystem::create_directory(replay_file_dir);
 		if (firstplay && replay_new_saves)
 		{
-			// TODO: need to escape?
 			std::string filename_prefix = fmt::format("{}-{}", saves[currgame].title, saves[currgame]._name);
-			filename_prefix.erase(0, filename_prefix.find_first_not_of("\t\n\v\f\r ")); // left trim
-			filename_prefix.erase(filename_prefix.find_last_not_of("\t\n\v\f\r ") + 1); // right trim
+			{
+				filename_prefix.erase(0, filename_prefix.find_first_not_of("\t\n\v\f\r ")); // left trim
+				filename_prefix.erase(filename_prefix.find_last_not_of("\t\n\v\f\r ") + 1); // right trim
+				std::regex re("[^a-zA-Z0-9_-+]+");
+				filename_prefix = std::regex_replace(filename_prefix, re, "_");
+			}
 			auto replay_path_prefix = replay_file_dir / filename_prefix;
 			std::string replay_path = fmt::format("{}.{}", replay_path_prefix.string(), REPLAY_EXTENSION);
 			if (std::filesystem::exists(replay_path))
@@ -1827,11 +1831,11 @@ int32_t init_game()
 				"You are about to create a new recording at:",
 				relativize_path(replay_path).c_str(),
 				"Do you wish to record this save file?",
-				"Yes","No",13,27,lfont)!=0)
+				"Yes","No",13,27,lfont)==1)
 			{
 				saves[currgame].replay_file = replay_path;
 				replay_start(ReplayMode::Record, replay_path);
-				replay_set_debug(replay_debug_arg);
+				replay_set_debug(replay_debug);
 				replay_set_sync_rng(true);
 				replay_set_meta("qst", relativize_path(game->qstpath));
 				replay_set_meta("name", game->get_name());
@@ -3450,8 +3454,6 @@ void game_loop()
 			midi_paused=false;
 			midi_suspended = midissuspNONE;
 		}
-
-		cheats_execute_queued();
 		
 		//  walkflagx=0; walkflagy=0;
 		runDrunkRNG();
@@ -5236,7 +5238,6 @@ int main(int argc, char **argv)
 			pan_style = (int32_t)FFCore.usr_panstyle;
 		}
 		save_savedgames();
-		if (replay_get_mode() == ReplayMode::Record) replay_save();
 		save_game_configs();
 		set_gfx_mode(GFX_TEXT,80,25,0,0);
 		//rest(250); // ???
@@ -5331,10 +5332,12 @@ int main(int argc, char **argv)
 		int center_x = o_window_x + window_w / 2;
 		int center_y = o_window_y + window_h / 2;
 		
+#ifndef ALLEGRO_MACOSX
 		int new_x = zc_get_config("zeldadx","window_x",0);
 		int new_y = zc_get_config("zeldadx","window_y",0);
-		if (SaveWinPos && new_x > 0 && new_y > 0) al_set_window_position(all_get_display(), new_x, new_y);
-		else al_set_window_position(all_get_display(), center_x - window_w / 2, center_y - window_h / 2);
+		if (new_x > 0 && new_y > 0) al_set_window_position(all_get_display(), new_x, new_y);
+		else al_set_window_position(all_get_display(), center_x - window_width_temp / 2, center_y - window_height_temp / 2);
+#endif
 	}
 #endif
 	switch_type = pause_in_background ? SWITCH_PAUSE : SWITCH_BACKGROUND;
@@ -5434,7 +5437,8 @@ int main(int argc, char **argv)
 	int assert_arg = used_switch(argc, argv, "-assert");
 	int update_arg = used_switch(argc, argv, "-update");
 	int frame_arg = used_switch(argc, argv, "-frame");
-	replay_debug_arg = used_switch(argc, argv, "-replay-debug") > 0;
+
+	replay_debug = zc_get_config("zeldadx","replay_debug",0) == 1 || used_switch(argc, argv, "-replay-debug") > 0;
 	if (replay_arg > 0)
 	{
 		load_replay_file(ReplayMode::Replay, argv[replay_arg + 1]);
@@ -5457,7 +5461,7 @@ int main(int argc, char **argv)
 		ASSERT(zqtesting_mode);
 
 		replay_start(ReplayMode::Record, argv[record_arg + 1]);
-		replay_set_debug(replay_debug_arg);
+		replay_set_debug(replay_debug);
 		replay_set_sync_rng(true);
 		replay_set_meta("qst", testingqst_name);
 		replay_set_meta_bool("test_mode", true);
@@ -5858,7 +5862,7 @@ reload_for_replay_file:
 	
 	// clean up
 	
-	if (zqtesting_mode && replay_get_mode() == ReplayMode::Record) replay_save();
+	if (replay_get_mode() == ReplayMode::Record) replay_save();
 	replay_stop();
 	music_stop();
 	kill_sfx();
@@ -5931,7 +5935,7 @@ void delete_everything_else() //blarg.
 
 void quit_game()
 {
-	if (zqtesting_mode && replay_get_mode() == ReplayMode::Record) replay_save();
+	if (replay_get_mode() == ReplayMode::Record) replay_save();
 	replay_stop();
 
 	script_drawing_commands.Dispose(); //for allegro bitmaps

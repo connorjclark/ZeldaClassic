@@ -4250,35 +4250,27 @@ void f_Quit(int32_t type)
 	system_pal();
 	clear_keybuf();
 	
-	switch(type)
-	{
-	case qQUIT:
-		if (replay_is_replaying())
+	locking_keys = true;
+	replay_poll();
+	locking_keys = false;
+	if (replay_is_replaying())
+		replay_peek_quit();
+
+	if (!replay_is_replaying())
+		switch(type)
 		{
-			disableClickToFreeze=false;
-			Quit=qQUIT;
-			
-			// Trying to evade a door repair charge?
-			if(repaircharge)
-			{
-				game->change_drupy(-repaircharge);
-				repaircharge=0;
-			}
-		}
-		else
-		{
+		case qQUIT:
 			onQuit();
+			break;
+			
+		case qRESET:
+			onReset();
+			break;
+			
+		case qEXIT:
+			onExit();
+			break;
 		}
-		break;
-		
-	case qRESET:
-		onReset();
-		break;
-		
-	case qEXIT:
-		onExit();
-		break;
-	}
 	
 	if(Quit)
 	{
@@ -4848,7 +4840,6 @@ void advanceframe(bool allowwavy, bool sfxcleanup, bool allowF6Script)
 		{
 			FFCore.runF6Engine();
 		}
-		// to keep fps constant
 		updatescr(allowwavy);
 		throttleFPS();
 		
@@ -4883,9 +4874,19 @@ void advanceframe(bool allowwavy, bool sfxcleanup, bool allowF6Script)
 	update_keys(); //Update ZScript key arrays
 	locking_keys = false;
 	
+	if (replay_is_replaying())
+		replay_do_cheats();
 	syskeys();
+
+	// Cheats used via the System menu (called by syskeys) will call cheats_enqueue. syskeys
+	// is called just above, and in the paused loop above, so the queue-and-defer-slightly
+	// approach here means it doesn't matter which call adds the cheat.
+	cheats_execute_queued();
+
 	if (replay_is_replaying())
 		replay_peek_quit();
+	if (GameFlags & GAMEFLAG_TRYQUIT)
+		replay_step_quit(0);
 	if(allowF6Script)
 	{
 		FFCore.runF6Engine();

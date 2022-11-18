@@ -193,7 +193,7 @@ struct CheatReplayStep : ReplayStep
 
     void run()
     {
-        cheats_execute(cheat, arg1, arg2);
+        // During replay, replay_do_cheats handles enqueuing cheats.
     }
 
     std::string print()
@@ -853,6 +853,20 @@ void replay_peek_input()
     }
 }
 
+void replay_do_cheats()
+{
+    size_t i = replay_log_current_index;
+    while (i < replay_log.size() && replay_log[i]->frame == frame_count)
+    {
+        if (replay_log[i]->type == TypeCheat)
+        {
+            auto cheat_replay_step = static_cast<CheatReplayStep *>(replay_log[i].get());
+            cheats_enqueue(cheat_replay_step->cheat, cheat_replay_step->arg1, cheat_replay_step->arg2);
+        }
+        i++;
+    }
+}
+
 bool replay_is_assert_done()
 {
     return mode == ReplayMode::Assert && (has_assert_failed || assert_current_index == replay_log.size());
@@ -875,7 +889,10 @@ void replay_stop()
         return;
 
     if (replay_is_replaying())
+    {
         keyboard_callback = nullptr;
+        replay_forget_input();
+    }
 
     if (mode == ReplayMode::Assert)
     {
@@ -981,7 +998,9 @@ void replay_stop_manual_takeover()
     mode = ReplayMode::Update;
     keyboard_callback = keyboard_intercept;
     frame_arg = -1;
+    enter_sys_pal();
     jwin_alert("Recording", "Done re-recording, resuming replay from here", NULL, NULL, "OK", NULL, 13, 27, lfont);
+    exit_sys_pal();
 
     // TODO currently just for manually debugging this system. Instead, should somehow enable assert mode when going back to ::Update.
     bool DEBUG_MANUAL_OVERRIDE = false;
@@ -1246,12 +1265,16 @@ void replay_set_rng_seed(zc_randgen *rng, int seed)
         else if (mode != ReplayMode::Update)
         {
             int line_number = replay_log_current_index + meta_map.size() + 1;
-            fprintf(stderr, "<%d> rng desync\n", line_number);
+            std::string error = fmt::format("<{}> rng desync", line_number);
+            fprintf(stderr, "%s\n", error.c_str());
+            replay_stop();
             if (mode == ReplayMode::Assert)
             {
-                replay_stop();
+                ASSERT(false);
             }
-            ASSERT(false);
+            enter_sys_pal();
+            jwin_alert("Recording", "rng desync! stopping replay", NULL, NULL, "OK", NULL, 13, 27, lfont);
+            exit_sys_pal();
         }
     }
 
@@ -1300,6 +1323,8 @@ void replay_sync_rng()
         if (found_first_step && find_rng_step(i, first_step_index_for_frame, record_log))
             continue;
         replay_set_rng_seed(rngs[i], seed);
+        if (mode == ReplayMode::Off)
+            return;
     }
 
     frame = 0;
