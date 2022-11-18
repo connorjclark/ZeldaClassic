@@ -20,6 +20,8 @@ public:
 	// -1 for no transparency.
 	int transparency_index = -1;
 	ALLEGRO_BITMAP* bitmap;
+	BITMAP* a4_bitmap;
+	bool freeze_a4_bitmap_render;
 	ALLEGRO_COLOR* tint;
 	std::vector<RenderTreeItem*> children;
 

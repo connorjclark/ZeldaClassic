@@ -23,6 +23,7 @@ static void init_render_tree()
 	else
 		al_set_new_bitmap_flags(ALLEGRO_NO_PRESERVE_TEXTURE);
 	rti_screen.bitmap = al_create_bitmap(screen->w, screen->h);
+	rti_screen.a4_bitmap = screen;
 
 	rti_root.children.push_back(&rti_screen);
 
@@ -52,9 +53,9 @@ static void configure_render_tree()
 		rti_screen.transform.y = (resy - h*scale) / 2 / scale;
 		rti_screen.transform.scale = scale;
 		rti_screen.visible = true;
+		// TODO: don't recreate screen bitmap when alternating fullscreen mode.
+		rti_screen.a4_bitmap = screen;
 	}
-
-	all_render_a5_bitmap(screen, rti_screen.bitmap);
 }
 
 void render_zq()

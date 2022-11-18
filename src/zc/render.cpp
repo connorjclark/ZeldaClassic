@@ -57,19 +57,23 @@ static void init_render_tree()
 	else
 		al_set_new_bitmap_flags(ALLEGRO_NO_PRESERVE_TEXTURE);
 	rti_game.bitmap = al_create_bitmap(framebuf->w, framebuf->h);
+	rti_game.a4_bitmap = framebuf;
 
 	al_set_new_bitmap_flags(ALLEGRO_NO_PRESERVE_TEXTURE);
 	rti_menu.bitmap = al_create_bitmap(menu_bmp->w, menu_bmp->h);
+	rti_menu.a4_bitmap = menu_bmp;
 	rti_menu.transparency_index = 0;
 
 	gui_bmp = create_bitmap_ex(8, 640, 480);
 	zc_set_gui_bmp(gui_bmp);
 	al_set_new_bitmap_flags(ALLEGRO_NO_PRESERVE_TEXTURE);
 	rti_gui.bitmap = al_create_bitmap(gui_bmp->w, gui_bmp->h);
+	rti_gui.a4_bitmap = gui_bmp;
 	rti_gui.transparency_index = 0;
 
 	al_set_new_bitmap_flags(ALLEGRO_NO_PRESERVE_TEXTURE);
 	rti_screen.bitmap = al_create_bitmap(screen->w, screen->h);
+	rti_screen.a4_bitmap = screen;
 	rti_screen.transparency_index = 0;
 
 	rti_root.children.push_back(&rti_game);
@@ -79,12 +83,6 @@ static void init_render_tree()
 
 	gui_mouse_x = zc_gui_mouse_x;
 	gui_mouse_y = zc_gui_mouse_y;
-}
-
-static void render_from_a4_bitmap(RenderTreeItem* rti, BITMAP* a4_bitmap)
-{
-	all_set_transparent_palette_index(rti->transparency_index);
-	all_render_a5_bitmap(a4_bitmap, rti->bitmap);
 }
 
 static void configure_render_tree()
@@ -142,26 +140,19 @@ static void configure_render_tree()
 		rti_screen.transform.x = (resx - w*scale) / 2 / scale;
 		rti_screen.transform.y = (resy - h*scale) / 2 / scale;
 		rti_screen.transform.scale = scale;
+		// TODO: don't recreate screen bitmap when alternating fullscreen mode.
+		rti_screen.a4_bitmap = screen;
 	}
 
-	bool freeze_game_bitmap = rti_menu.visible || rti_gui.visible;
-	if (freeze_game_bitmap)
+	if (rti_game.freeze_a4_bitmap_render = rti_menu.visible || rti_gui.visible)
 	{
 		static ALLEGRO_COLOR tint = al_premul_rgba_f(0.4, 0.4, 0.8, 0.8);
 		rti_game.tint = &tint;
 	}
 	else
 	{
-		render_from_a4_bitmap(&rti_game, framebuf);
 		rti_game.tint = nullptr;
 	}
-
-	if (rti_menu.visible)
-		render_from_a4_bitmap(&rti_menu, menu_bmp);
-	if (rti_gui.visible)
-		render_from_a4_bitmap(&rti_gui, gui_bmp);
-	if (rti_screen.visible)
-		render_from_a4_bitmap(&rti_screen, screen);
 }
 
 static void render_debug_text(ALLEGRO_FONT* font, std::string text, int x, int y, int scale)

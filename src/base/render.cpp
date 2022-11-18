@@ -28,6 +28,12 @@ static void render_tree_draw_item(RenderTreeItem* rti)
 
 	if (rti->bitmap)
 	{
+		if (rti->a4_bitmap && !rti->freeze_a4_bitmap_render)
+		{
+			all_set_transparent_palette_index(rti->transparency_index);
+			all_render_a5_bitmap(rti->a4_bitmap, rti->bitmap);
+		}
+
 		int w = al_get_bitmap_width(rti->bitmap);
 		int h = al_get_bitmap_height(rti->bitmap);
 

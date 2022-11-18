@@ -81,6 +81,7 @@ void Matrix(int32_t speed, int32_t density, int32_t mousedelay)
     if (rti_matrix.bitmap)
         al_destroy_bitmap(rti_matrix.bitmap);
     rti_matrix.bitmap = al_create_bitmap(w, h);
+    rti_matrix.a4_bitmap = target_bitmap;
 
     // speed 0-6, density 0-6
     _density = zc_max(zc_min(density, 6), 0);
@@ -102,7 +103,6 @@ void Matrix(int32_t speed, int32_t density, int32_t mousedelay)
         rti_matrix.transform.x = rti_game.transform.x;
         rti_matrix.transform.y = rti_game.transform.y;
         rti_matrix.transform.scale = rti_game.transform.scale;
-        all_render_a5_bitmap(target_bitmap, rti_matrix.bitmap);
 
         update_hw_screen();
         
