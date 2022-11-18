@@ -91,10 +91,14 @@ static bool _a5_setup_screen(int w, int h)
 
   if (_a5_display)
   {
-    al_resize_display(_a5_display, w, h);
-    al_set_display_flag(_a5_display, ALLEGRO_FULLSCREEN_WINDOW, flags&ALLEGRO_FULLSCREEN_WINDOW);
-    al_set_display_flag(_a5_display, ALLEGRO_FULLSCREEN, flags&ALLEGRO_FULLSCREEN);
-    al_set_display_flag(_a5_display, ALLEGRO_RESIZABLE, flags&ALLEGRO_RESIZABLE);
+    al_unregister_event_source(_a5_display_thread_event_queue, al_get_display_event_source(_a5_display));
+    al_destroy_display(_a5_display);
+    _a5_display = al_create_display(w, h);
+    al_convert_memory_bitmaps();
+    gfx_driver->w = al_get_display_width(_a5_display);
+    gfx_driver->h = al_get_display_height(_a5_display);
+    al_register_event_source(_a5_display_thread_event_queue, al_get_display_event_source(_a5_display));
+    al_acknowledge_resize(_a5_display);
   }
   else
   {

@@ -15,13 +15,15 @@ static int zc_gui_mouse_y()
 
 static void init_render_tree()
 {
+	static const int base_flags = ALLEGRO_NO_PRESERVE_TEXTURE | ALLEGRO_CONVERT_BITMAP;
+
 	if (!rti_root.children.empty())
 		return;
 
 	if (zc_get_config("zquest", "scaling_mode", 0) == 1)
-		al_set_new_bitmap_flags(ALLEGRO_NO_PRESERVE_TEXTURE | ALLEGRO_MAG_LINEAR | ALLEGRO_MIN_LINEAR);
+		al_set_new_bitmap_flags(base_flags | ALLEGRO_MAG_LINEAR | ALLEGRO_MIN_LINEAR);
 	else
-		al_set_new_bitmap_flags(ALLEGRO_NO_PRESERVE_TEXTURE);
+		al_set_new_bitmap_flags(base_flags);
 	rti_screen.bitmap = al_create_bitmap(screen->w, screen->h);
 	rti_screen.a4_bitmap = screen;
 

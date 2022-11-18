@@ -49,33 +49,36 @@ static int zc_gui_mouse_y()
 
 static void init_render_tree()
 {
+	static const int base_flags_preserve_texture = ALLEGRO_CONVERT_BITMAP;
+	static const int base_flags = ALLEGRO_NO_PRESERVE_TEXTURE | base_flags_preserve_texture;
+
 	if (!rti_root.children.empty())
 		return;
 
-	// ALLEGRO_NO_PRESERVE_TEXTURE is not included for rti_game because on windows that results in
+	// ALLEGRO_NO_PRESERVE_TEXTURE is not included for rti_game because on Windows that results in
 	// the bitmap being cleared when losing focus. Since we sometimes don't always draw to this
 	// every frame (when it is frozen under a pause menu), we need to pay the cost to keep the texture
 	// backed up.
 	if (zc_get_config("zeldadx", "scaling_mode", 0) == 1)
-		al_set_new_bitmap_flags(ALLEGRO_MAG_LINEAR | ALLEGRO_MIN_LINEAR);
+		al_set_new_bitmap_flags(base_flags_preserve_texture | ALLEGRO_MAG_LINEAR | ALLEGRO_MIN_LINEAR);
 	else
-		al_set_new_bitmap_flags(0);
+		al_set_new_bitmap_flags(base_flags_preserve_texture);
 	rti_game.bitmap = al_create_bitmap(framebuf->w, framebuf->h);
 	rti_game.a4_bitmap = framebuf;
 
-	al_set_new_bitmap_flags(ALLEGRO_NO_PRESERVE_TEXTURE);
+	al_set_new_bitmap_flags(base_flags);
 	rti_menu.bitmap = al_create_bitmap(menu_bmp->w, menu_bmp->h);
 	rti_menu.a4_bitmap = menu_bmp;
 	rti_menu.transparency_index = 0;
 
 	gui_bmp = create_bitmap_ex(8, 640, 480);
 	zc_set_gui_bmp(gui_bmp);
-	al_set_new_bitmap_flags(ALLEGRO_NO_PRESERVE_TEXTURE);
+	al_set_new_bitmap_flags(base_flags);
 	rti_gui.bitmap = al_create_bitmap(gui_bmp->w, gui_bmp->h);
 	rti_gui.a4_bitmap = gui_bmp;
 	rti_gui.transparency_index = 0;
 
-	al_set_new_bitmap_flags(ALLEGRO_NO_PRESERVE_TEXTURE);
+	al_set_new_bitmap_flags(base_flags);
 	rti_screen.bitmap = al_create_bitmap(screen->w, screen->h);
 	rti_screen.a4_bitmap = screen;
 	rti_screen.transparency_index = 0;
@@ -91,6 +94,9 @@ static void init_render_tree()
 
 static void configure_render_tree()
 {
+	int resx = al_get_display_width(all_get_display());
+	int resy = al_get_display_height(all_get_display());
+
 	rti_root.transform.x = 0;
 	rti_root.transform.y = 0;
 	rti_root.transform.scale = 1;

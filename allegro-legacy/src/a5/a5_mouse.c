@@ -65,7 +65,7 @@ static void * a5_mouse_thread_proc(ALLEGRO_THREAD * thread, void * data)
                 {
                     _mouse_on = -1;
                     // TODO: feels like this shouldn't be needed. for osx, it helps.
-                    al_show_mouse_cursor(all_get_display());
+                    // al_show_mouse_cursor(all_get_display());
                     break;
                 }
                 case ALLEGRO_EVENT_MOUSE_LEAVE_DISPLAY:
