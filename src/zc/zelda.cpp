@@ -5294,11 +5294,6 @@ int main(int argc, char **argv)
 	// TODO: consolidate "resx" and "resy" variables with window_width,height.
 	window_width = resx;
 	window_height = resy;
-
-	// TODO !
-	// - matrix screensaver still work?
-	// - rm screen_scale
-	// - document
 	
 	if(!game_vid_mode(tempmode, wait_ms_on_set_graphics))
 	{

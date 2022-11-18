@@ -20,7 +20,6 @@
 
 extern DATAFILE* data;
 
-static int32_t screen_scale = 1; // TODO: remove.
 extern int32_t joystick_index;
 int32_t logovolume = 0;
 

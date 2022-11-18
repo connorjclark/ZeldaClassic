@@ -487,7 +487,7 @@ std::shared_ptr<GUI::Widget> LauncherDialog::view()
 				)),
 				TabRef(name = "ZQ Creator", Row(framed = true,
 					Rows<2>(fitParent = true,
-						CONFIG_CHECKBOX_I("Fullscreen","zquest.cfg","zquest","fullscreen",0,"Not exactly 'stable'."),
+						CONFIG_CHECKBOX_I("Fullscreen","zquest.cfg","zquest","fullscreen",0,"Exactly stable."),
 						CONFIG_CHECKBOX_I("Small Mode","zquest.cfg","zquest","small",0,"If enabled, the 'classic' small mode interface will be used. This mode has less screen space, and lacks features such as favorite combos, favorite commands, multiple combo rows, next-screen preview, etc."),
 						CONFIG_CHECKBOX("VSync","zquest.cfg","zquest","vsync",1),
 						CONFIG_CHECKBOX("Show FPS","zquest.cfg","zquest","showfps",0),
