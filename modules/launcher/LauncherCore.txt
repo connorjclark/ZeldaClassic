@@ -1,0 +1,12 @@
+## Source list for Launcher Core module
+set(LAUNCHER_SOURCES
+
+################################
+# Add or remove files here
+################################
+src/launcher/launcher.cpp
+src/zconfig.cpp
+src/zqscale.cpp
+
+## End of Launcher Core module
+)

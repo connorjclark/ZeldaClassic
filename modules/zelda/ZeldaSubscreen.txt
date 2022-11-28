@@ -1,0 +1,14 @@
+## Source list for Zelda Subscreen module
+set(ZELDA_SUBSCREEN_SOURCES
+
+################################
+# Add or remove files here
+################################
+src/subscr.cpp
+src/zc/zc_subscr.cpp
+src/md5.cpp
+src/midi.cpp
+src/zc/zc_sys.cpp
+
+## End of Zelda Subscreen module
+)

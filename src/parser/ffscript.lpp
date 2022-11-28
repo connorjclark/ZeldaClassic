@@ -1,0 +1,577 @@
+/* -*- mode: bison; tab-width: 8 -*-
+  use this file to generate lex.yy.c
+  command: flex -B -olex.yy.cpp ffscript.lpp
+*/
+
+%option noyywrap
+%option never-interactive
+
+%x COMMENT
+%x STRING
+%x IMPORTING
+%x IMPORTSTR
+%s HASH
+
+%{
+#include <stdlib.h>
+#include <sstream>
+#include "AST.h"
+#include "../zsyssimple.h"
+#include "y.tab.hpp"
+YYLTYPE noloc = {0,0,0,0};
+int32_t yyrow, yycol;
+int32_t doImportStr = 0;
+
+enum {st_none, st_case};
+int32_t special_state = st_none;
+
+// Defined in ffscript.ypp.
+void yymsg(std::string const& message, int32_t row = yyrow, int32_t col = yycol);
+%}
+
+%%
+
+ /* Parser local code */
+%{
+using namespace ZScript;
+
+int32_t srow, scol;
+std::ostringstream qstr;
+
+#define NEWLINE ++yyrow; yycol = 1; doImportStr = 0
+#define ADVANCE yycol += yyleng
+
+#define UPDATE_YYLLOC \
+yylloc.first_line = yylloc.last_line = yyrow; \
+yylloc.first_column = yycol; \
+yycol += yyleng; \
+yylloc.last_column = yycol
+
+// Return token.
+#define TOKEN(NAME) UPDATE_YYLLOC; return TOK_##NAME
+
+// Return token and value.
+#define VALUE(NAME, CONSTRUCTOR) \
+UPDATE_YYLLOC; \
+yylval = new CONSTRUCTOR; \
+return TOK_##NAME
+
+#define ESC_CHAR(CHAR) \
+yycol += yyleng + 1; \
+qstr << CHAR; \
+break
+
+#define TERMINATE \
+BEGIN( INITIAL ); \
+return 0
+%}
+
+ /* Keywords */
+script		TOKEN( SCRIPT );
+for		TOKEN( FOR );
+if		TOKEN( IF );
+else		TOKEN( ELSE );
+switch		TOKEN( SWITCH );
+case		{
+	special_state = st_case;
+	TOKEN( CASE );
+}
+default		TOKEN( DEFAULT );
+return		TOKEN( RETURN );
+import		{
+	BEGIN( IMPORTING ); //Handle the string following 'import' specially
+	TOKEN( IMPORT );
+}
+true		TOKEN( ZTRUE );
+false		TOKEN( ZFALSE );
+while		TOKEN( WHILE );
+global		TOKEN( GLOBAL );
+break		TOKEN( BREAK );
+continue	TOKEN( CONTINUE );
+const		TOKEN( ZCONST );
+do		TOKEN( DO );
+typedef		TOKEN( TYPEDEF );
+
+catch			TOKEN( EXPECTERROR );
+OPTION_VALUE	TOKEN( OPTIONVALUE );
+IS_INCLUDED		++doImportStr; TOKEN( ISINCLUDED );
+enum			TOKEN( ENUM );
+namespace		TOKEN( NAMESPACE );
+using			TOKEN( USING );
+always			TOKEN( ALWAYS );
+asm				TOKEN( ZASM );
+zasm			TOKEN( ZASM );
+until			TOKEN( UNTIL );
+unless			TOKEN( UNLESS );
+repeat			TOKEN( REPEAT );
+inline			TOKEN( INLINE );
+CONST_ASSERT	TOKEN( CASSERT );
+
+ /* Types */
+void		TOKEN( ZVOID );
+untyped		TOKEN( UNTYPED );
+bool		TOKEN( ZBOOL );
+float		TOKEN( ZFLOAT );
+int		TOKEN( ZFLOAT );
+char32		TOKEN( ZCHAR );
+long		TOKEN( ZLONG );
+bitmap		TOKEN( BITMAP );
+cheatdata		TOKEN( CHEAT );
+combodata	TOKEN( COMBO );
+doorsetdat		TOKEN( DOORSET );
+dropsetdata		TOKEN( DROPSET );
+dmapdata	TOKEN( DMAP );
+eweapon		TOKEN( EWEAPON );
+ffc		TOKEN( FFC );
+gamedata	TOKEN( GAMEDATA );
+itemdata	TOKEN( ITEMCLASS );
+lweapon		TOKEN( LWEAPON );
+mapdata		TOKEN( MAP );
+messagedata	TOKEN( MESSAGE );
+misccolordata	TOKEN( MISCCOLOR );
+misccolourdata	TOKEN( MISCCOLOR );
+npc		TOKEN( NPC );
+npcdata		TOKEN( NPCDATA );
+palcycledata	TOKEN( PALCYCLE );
+palette		TOKEN( PALETTE );
+ponddata	TOKEN( POND );
+rgbdata		TOKEN( RGB );
+shopdata	TOKEN( SHOP );
+spritedata	TOKEN( SPRITE );
+musicdata		TOKEN( TUNE );
+warpringdata	TOKEN( WARPRING );
+screendata	TOKEN( SCREEN );
+player	TOKEN( LINK );
+link	TOKEN( LINK );
+hero	TOKEN( LINK );
+itemsprite	TOKEN( ITEMSPRITE );
+file	TOKEN( FILE );
+directory	TOKEN( DIRECTORY );
+stack	TOKEN( STACK );
+randgen	TOKEN( RANDGEN );
+bottledata	TOKEN( BOTTLEDATA );
+bottleshopdata	TOKEN( BOTTLESHOPDATA );
+subscreendata	TOKEN( SUBSCREENDATA );
+generic	TOKEN( GENERIC );
+genericdata	TOKEN( GENERICDATA );
+particlesprite	TOKEN( PARTICLE );
+decorationsprite	TOKEN( DECORATION );
+"try"	{
+		zconsole_error("%s","The 'try' keyword is reserved and may not be used as an identifier.");
+		return 0;
+	}
+
+ /* Syntax */
+","		TOKEN( COMMA );
+"."		TOKEN( DOT );
+";"		TOKEN( SEMICOLON );
+"::"		TOKEN( SCOPERES );
+".."		TOKEN( SCOPERES );
+":"		{
+	if(special_state == st_case) special_state = st_none;
+	TOKEN( COLON );
+}
+"("		TOKEN( LPAREN );
+")"		TOKEN( RPAREN );
+"["		TOKEN( LBRACKET );
+"]"		TOKEN( RBRACKET );
+"{"		TOKEN( LBRACE );
+"}"		TOKEN( RBRACE );
+"?"		TOKEN( QMARK ); //for ternary
+
+"#"		{
+		BEGIN( HASH ); //Handle the string following 'import' specially
+		TOKEN( HASH );
+}
+
+ /* Operators (in order of operations) */
+"->"		TOKEN( ARROW );
+"++"		TOKEN( INCREMENT );
+"--"		TOKEN( DECREMENT );
+"!"		TOKEN( NOT );
+not		TOKEN( NOT );
+"~"		TOKEN( BITNOT );
+compl		TOKEN( BITNOT );
+bitnot		TOKEN( BITNOT );
+"*"		TOKEN( TIMES );
+"/"		TOKEN( DIVIDE );
+"%"		TOKEN( MODULO );
+"+"		TOKEN( PLUS );
+"-"		TOKEN( MINUS );
+"<<"		TOKEN( LSHIFT );
+">>"		TOKEN( RSHIFT );
+"<"		TOKEN( LT );
+"<="		TOKEN( LE );
+">"		TOKEN( GT );
+">="		TOKEN( GE );
+"=="		TOKEN( EQ );
+"equals"	TOKEN( EQ );
+"!="		TOKEN( NE );
+not_eq		TOKEN( NE );
+"<>"		TOKEN( NE );
+not_equal	TOKEN( NE );
+"&"		TOKEN( BITAND );
+bitand		TOKEN( BITAND );
+"^"		TOKEN( BITXOR );
+bitxor		TOKEN( BITXOR );
+"|"		TOKEN( BITOR );
+bitor		TOKEN( BITOR );
+"&&"		TOKEN( AND );
+and		TOKEN( AND );
+"||"		TOKEN( OR );
+or		TOKEN( OR );
+"="		TOKEN( ASSIGN );
+":="		TOKEN( ASSIGN );
+"+="		TOKEN( PLUSASSIGN );
+"-="		TOKEN( MINUSASSIGN );
+"*="		TOKEN( TIMESASSIGN );
+"/="		TOKEN( DIVIDEASSIGN );
+"%="		TOKEN( MODULOASSIGN );
+"<<="		TOKEN( LSHIFTASSIGN );
+">>="		TOKEN( RSHIFTASSIGN );
+"&="		TOKEN( BITANDASSIGN );
+and_eq		TOKEN( BITANDASSIGN );
+and_equal	TOKEN( BITANDASSIGN );
+"^="		TOKEN( BITXORASSIGN );
+xor_eq		TOKEN( BITXORASSIGN );
+xor_equal	TOKEN( BITXORASSIGN );
+"|="		TOKEN( BITORASSIGN );
+or_eq		TOKEN( BITORASSIGN );
+or_equal	TOKEN( BITORASSIGN );
+"&&="		TOKEN( ANDASSIGN );
+"||="		TOKEN( ORASSIGN );
+"^^"		TOKEN( XOR );
+"xor"		TOKEN( XOR );
+"..."		TOKEN( RANGE );
+"~~"		TOKEN (APPXEQUAL);
+appx_eq		TOKEN( APPXEQUAL );
+appx_equal	TOKEN( APPXEQUAL );
+"!!"		TOKEN (DOUBLEBANG);
+"%%"		TOKEN (PERCENT);
+"~="		TOKEN (BITNOTASSIGN);
+"bitnot_eq"	TOKEN (BITNOTASSIGN);
+"bitnot_equal"	TOKEN (BITNOTASSIGN);
+"!%"		TOKEN (INVMOD);
+"$$"		TOKEN (DOUBLEADDR);
+"**"		TOKEN (DOUBLESTAR);
+"@"		TOKEN (HANDLE);
+"@@"		TOKEN (HANDLETOHANDLE);
+"$"		TOKEN (ADDR);
+"^^^"		TOKEN( EXPN );
+ /*	cast	TOKEN( CAST );	*/
+ /*	static_cast		TOKEN( CAST );	*/
+ /* "*"+IDENTIFIER how do we segregate from multiply? */
+ /* "&"+IDENTIFIER how do we segregate from bitand? */
+ /* these would need to see if they are LH values. */
+ /* https://stackoverflow.com/questions/23529298/how-to-make-bison-to-use-a-rule-if-two-rules-matches */
+ /* "**" pointer/poiters */
+ 
+ zstruct		TOKEN( SCRIPTSTRUCT );
+
+ /* Line Comments */
+"//".*		/* hit end of file */
+"//".*\n	NEWLINE;
+
+ /* Block Comments */
+"/*"[^*\n]*			{
+	srow = yyrow;
+	scol = yycol;
+	ADVANCE; 
+	BEGIN( COMMENT );
+} 
+<COMMENT>{
+	[^*\n]*			ADVANCE;
+	[^*\n]*\n		NEWLINE;
+	"*"+[^*/\n]*		ADVANCE;
+	"*"+[^*/\n]*\n		NEWLINE;
+	"*"+"/"			ADVANCE; BEGIN( INITIAL );
+	<<EOF>>			{
+		yymsg("WARNING: Comment does not end.", srow, scol);
+		TERMINATE;
+	}
+}
+
+ /* Hash Commands */
+<HASH>{
+	\\\n			NEWLINE;
+	[ \t\r]+		ADVANCE;
+	[ \t\r]*\n		NEWLINE; BEGIN( INITIAL ); TOKEN ( ENDLINE ); 
+	"option"		TOKEN( OPTION );
+	"ignore error"		TOKEN( EXPECTERROR );
+	"IGNORE ERROR"		TOKEN( EXPECTERROR );
+	"ignore warning"	TOKEN( EXPECTERROR );
+	"IGNORE WARNING"	TOKEN( EXPECTERROR );
+	"define"		TOKEN( DEFINE );
+	include			BEGIN( IMPORTING ); TOKEN( INCLUDE );
+	includepath			BEGIN( IMPORTING ); TOKEN( INCLUDEPATH );
+	includeif			++doImportStr; BEGIN( INITIAL ); TOKEN( INCLUDEIF );
+	inherit			TOKEN( INHERIT );
+	on			VALUE( NUMBER, ASTFloat("1", ASTFloat::TYPE_DECIMAL, yylloc) );
+	off			VALUE( NUMBER, ASTFloat("0", ASTFloat::TYPE_DECIMAL, yylloc) );
+	error			VALUE( NUMBER, ASTFloat("2", ASTFloat::TYPE_DECIMAL, yylloc) );
+	warn			VALUE( NUMBER, ASTFloat("3", ASTFloat::TYPE_DECIMAL, yylloc) );
+}
+
+ /* Strings */
+<INITIAL>\"		{
+	if(doImportStr > 0)
+	{
+		BEGIN( IMPORTSTR );
+		--doImportStr;
+	}
+	else BEGIN( STRING );
+	qstr.str(""); /* Clear qstr */
+	srow = yyrow;
+	scol = yycol;
+	ADVANCE;
+}
+<STRING>{
+	<<EOF>>			{
+		yymsg("ERROR: String does not end.", srow, scol);
+		TERMINATE;
+	}
+	[^\"\n\\]*		ADVANCE; qstr << yytext;
+	[^\"\n\\]*\n		NEWLINE; qstr << yytext;
+	[^\"\n\\]*\\		{
+		// Add the current text to the output, minus the \.
+		yytext[yyleng - 1] = 0;
+		qstr << yytext;
+		// Read in the escaped character.
+		int32_t c = yyinput();
+		switch (c)
+    {
+			case 'a': ESC_CHAR('\a');
+			case 'b': ESC_CHAR('\b');
+			case 'f': ESC_CHAR('\f');
+			case 'n': ESC_CHAR('\n');
+			case 'r': ESC_CHAR('\r');
+			case 't': ESC_CHAR('\t');
+			case 'v': ESC_CHAR('\v');
+			case '\n': NEWLINE; break;
+			case 'x':
+			{
+				std::stringstream escstr;
+				escstr.str("");
+				int32_t ch = yyinput();
+				if((ch >= '0' && ch <= '9')||(ch>='a'&&ch<='f')||(ch>='A'&&ch<='F'))
+					escstr << ((char)ch);
+				else
+				{
+					yymsg("ERROR: Hex-insert escape code '\\x' has no value.", srow, scol);
+					TERMINATE;
+				}
+				ch = yyinput();
+				if((ch >= '0' && ch <= '9')||(ch>='a'&&ch<='f')||(ch>='A'&&ch<='F'))
+					escstr << ((char)ch);
+				else
+				{
+					unput(ch);
+					//yymsg("ERROR: Hex-insert escape code '\\x' has one digit. These must have exactly two digits", srow, scol);
+					//TERMINATE;
+				}
+				std::stringstream buf;
+				int32_t temp;
+				buf << std::hex << escstr.str();
+				buf >> temp;
+				ESC_CHAR((char)temp);
+			}
+			case EOF:
+				yymsg("ERROR: String does not end.", srow, scol);
+				TERMINATE;
+			case '\'':
+			case '\\':
+			case '\"':
+			case '\?':
+				ESC_CHAR((char)c);
+			default:
+				yymsg("ERROR: Unknown escape character.", srow, scol);
+				TERMINATE;
+		}
+	}
+	[^\"\n\\]*\"		{
+		ADVANCE;
+		yytext[yyleng - 1] = 0; /* Remove the '"'. */
+		qstr << yytext;
+		BEGIN( INITIAL );
+		yylloc.first_line = srow;
+		yylloc.first_column = scol;
+		yylloc.last_line = yyrow;
+		yylloc.last_column = yycol;
+		yylval = new ASTString(qstr.str(), yylloc);
+		if(special_state == st_case) return TOK_CASESTRING;
+		return TOK_QUOTEDSTRING;
+	}
+}
+
+ /* Import String */
+ <IMPORTING>{
+	<<EOF>>			{
+		yymsg("ERROR: Import/include without string", srow, scol);
+		TERMINATE;
+	}
+	[^\"\n]*\n]		{ //newline, without open quotation
+		yymsg("ERROR: Import/include without string", srow, scol);
+		TERMINATE;
+	}
+	\" {
+		BEGIN( IMPORTSTR );
+		qstr.str(""); /* Clear qstr */
+		srow = yyrow;
+		scol = yycol;
+		ADVANCE;
+	}
+ }
+ 
+ <IMPORTSTR>{
+	<<EOF>>			{
+		yymsg("ERROR: String does not end.", srow, scol);
+		TERMINATE;
+	}
+	[^\"\n]*		ADVANCE; qstr << yytext;
+	[^\"\n]*\n		NEWLINE; qstr << yytext;
+	[^\"\n]*\"		{
+		ADVANCE;
+		yytext[yyleng - 1] = 0; /* Remove the '"'. */
+		qstr << yytext;
+		BEGIN( INITIAL );
+		yylloc.first_line = srow;
+		yylloc.first_column = scol;
+		yylloc.last_line = yyrow;
+		yylloc.last_column = yycol;
+		yylval = new ASTString(qstr.str(), yylloc);
+		return TOK_IMPORTSTRING;
+	}
+ }
+
+ /* Identifier */
+[_a-zA-Z][_a-zA-Z0-9]*	{
+	VALUE( IDENTIFIER, ASTString(yytext, yylloc) );
+}
+
+ /* Numbers */
+[0-9]*\.?[0-9]+ 	{
+	VALUE( NUMBER, ASTFloat(yytext, ASTFloat::TYPE_DECIMAL, yylloc) );
+}
+[0-9]+L 	{
+	VALUE( LONGNUMBER, ASTFloat(yytext, ASTFloat::TYPE_L_DECIMAL, yylloc) );
+}
+0x[0-9a-fA-F]+ 		{
+	VALUE( NUMBER, ASTFloat(yytext, ASTFloat::TYPE_HEX, yylloc) );
+}
+0x[0-9a-fA-F]+L 		{
+	VALUE( LONGNUMBER, ASTFloat(yytext, ASTFloat::TYPE_L_HEX, yylloc) );
+}
+[0-1]+b			{
+	VALUE( NUMBER, ASTFloat(yytext, ASTFloat::TYPE_BINARY, yylloc) );
+}
+[0-1]+Lb			{
+	VALUE( LONGNUMBER, ASTFloat(yytext, ASTFloat::TYPE_L_BINARY, yylloc) );
+}
+[0-1]+bL			{
+	VALUE( LONGNUMBER, ASTFloat(yytext, ASTFloat::TYPE_L_BINARY, yylloc) );
+}
+0b[0-1]+			{
+	VALUE( NUMBER, ASTFloat(yytext, ASTFloat::TYPE_BINARY_2, yylloc) );
+}
+0b[0-1]+L			{
+	VALUE( LONGNUMBER, ASTFloat(yytext, ASTFloat::TYPE_L_BINARY_2, yylloc) );
+}
+[0-7]+o 		{
+	VALUE( NUMBER, ASTFloat(yytext, ASTFloat::TYPE_OCTAL, yylloc) );
+}
+[0-7]+oL 		{
+	VALUE( LONGNUMBER, ASTFloat(yytext, ASTFloat::TYPE_L_OCTAL, yylloc) );
+}
+[0-7]+Lo 		{
+	VALUE( LONGNUMBER, ASTFloat(yytext, ASTFloat::TYPE_L_OCTAL, yylloc) );
+}
+0o[0-7]+ 		{
+	VALUE( NUMBER, ASTFloat(yytext, ASTFloat::TYPE_OCTAL_2, yylloc) );
+}
+0o[0-7]+L 		{
+	VALUE( LONGNUMBER, ASTFloat(yytext, ASTFloat::TYPE_L_OCTAL_2, yylloc) );
+}
+
+ /* Char */
+\'[^\']?\' {
+	VALUE( SINGLECHAR, ASTString(yytext, yylloc) );
+}
+
+\'\\[^\n]\'	{
+	switch(yytext[yyleng-2])
+	{
+		case 'a':
+			yytext[yyleng-3] = '\a';
+			break;
+		case 'b':
+			yytext[yyleng-3] = '\b';
+			break;
+		case 'f':
+			yytext[yyleng-3] = '\f';
+			break;
+		case 'n':
+			yytext[yyleng-3] = '\n';
+			break;
+		case 'r':
+			yytext[yyleng-3] = '\r';
+			break;
+		case 't':
+			yytext[yyleng-3] = '\t';
+			break;
+		case 'v':
+			yytext[yyleng-3] = '\v';
+			break;
+		case '\'':
+		case '\\':
+		case '\"':
+		case '\?':
+			yytext[yyleng-3] = yytext[yyleng-2];
+			break;
+		default:
+			yymsg("ERROR: Unknown escape character.", srow, scol);
+			TERMINATE;
+	}
+	yytext[yyleng-2] = yytext[yyleng-1];
+	yytext[yyleng-1] = 0;
+	VALUE( SINGLECHAR, ASTString(yytext, yylloc) );
+}
+
+\'\\x[0-9a-fA-F][0-9a-fA-F]?\' {
+	int32_t x = yytext[yyleng-3]=='x' ? yyleng-3 : yyleng-4;
+	std::stringstream escstr;
+	escstr.str("");
+	escstr << yytext[x+1];
+	if(yytext[x+2]!='\'')
+		escstr << yytext[x+2];
+	std::stringstream buf;
+	int32_t temp;
+	buf << std::hex << escstr.str();
+	buf >> temp;
+	yytext[x-1] = (char)temp;
+	yytext[x] = '\'';
+	//Clear the extra space
+	for(int32_t q = x+1; q < yyleng; ++q)
+		yytext[q] = 0;
+	VALUE( SINGLECHAR, ASTString(yytext, yylloc) );
+}
+
+ /* Whitespace */
+[ \t\r]*\n	NEWLINE;
+[ \t\r]+	ADVANCE;
+
+ /* Error */
+ .		{
+	yymsg("WARNING: Unknown Character");
+	TERMINATE;
+}
+
+%%
+
+void resetLexer() {
+	YY_FLUSH_BUFFER;
+	BEGIN( INITIAL );
+	yyrow = 1;
+	yycol = 1;
+	doImportStr = 0;
+	special_state = st_none;
+}

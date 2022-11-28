@@ -1,0 +1,30 @@
+## Source list for Zelda GUI module
+set(ZELDA_GUI_SOURCES
+
+################################
+# Add or remove files here
+################################
+src/zc/aglogo.cpp
+src/debug.cpp
+src/zc/decorations.cpp
+src/editbox.cpp
+src/EditboxModel.cpp
+src/EditboxView.cpp
+src/zc/ending.cpp
+src/zc/matrix.cpp
+src/pal.cpp
+src/tab_ctl.cpp
+src/zc/title.cpp
+src/zc/zc_custom.cpp
+src/jwin.cpp
+
+src/zc_list_data.cpp
+
+src/dialog/init_data.cpp
+src/dialog/cheat_dialog.cpp
+src/dialog/info.cpp
+src/dialog/alert.cpp
+src/dialog/vidmode.cpp
+
+## End of Zelda GUI module
+)

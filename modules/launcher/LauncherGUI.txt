@@ -1,0 +1,21 @@
+## Source list for Launcher GUI module
+set(LAUNCHER_GUI_SOURCES
+
+################################
+# Add or remove files here
+################################
+src/jwin.cpp
+src/editbox.cpp
+src/tab_ctl.cpp
+src/EditboxModel.cpp
+src/EditboxView.cpp
+
+src/launcher/launcher_dialog.cpp
+src/dialog/info.cpp
+src/dialog/alert.cpp
+src/dialog/alertfunc.cpp
+src/launcher/theme_editor.cpp
+
+## End of Launcher GUI module
+)
+

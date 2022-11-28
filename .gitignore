@@ -1,0 +1,132 @@
+# Compiled object files
+*.slo
+*.lo
+*.o
+*.obj
+*.elf
+*.ko
+
+# Generated precompiled headers
+*.gch
+*.pch
+
+# Compiled dynamic libraries
+#.so
+#.so.*
+#*.dylib
+
+
+# Compiled static libraries
+#*.lai
+#*.la
+#*.lib
+#*.lo
+#*.a
+
+# Generated executables
+*.out
+*.app
+*.i*86
+*.x86_64
+*.hex
+
+# Generated buidl directories
+/[Dd]ebug/
+/*.dir/
+[Dd]ebugPublic/
+[Rr]elease/
+[Rr]elWithDebInfo/
+[Rr]eleases/
+x64/
+x86/
+bld/
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+[Bb]uild/
+build64/
+.git/
+.git - Copy/
+src - Copy/
+src - Copy (1)/
+src - Copy (2)/
+src - Copy (3)/
+src - Copy (4)/
+src - Copy (5)/
+src - Copy (6)/
+src - Copy (7)/
+src - Copy (8)/
+src - Copy (9)/
+src - Copy (10)/
+build_emscripten
+
+CMakeFiles/
+
+# Debug based files.
+*.dSYM/
+
+# User-specific files
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+.userprefs
+*.h.sig
+
+# Visual Studio based files
+*.aps
+*.ncb
+*.opendb
+*.opensdf
+*.sdf
+*.cachefile
+*.psess
+*.vsp
+*.vspx
+*.sap
+*.vcproj
+*.sln
+.vs/*
+*.vcxproj*
+Win32/*
+*.bak
+.vscode
+
+# Emacs files
+.dir-locals.el
+.#*
+\#*#
+
+# Misc files
+*.gcda
+makefile.inc
+
+# Allegro Files
+_deps/*
+allegro-legacy/include/allegro/platform/alplatf.h
+allegro-legacy/allegro-legacy.dir/*
+allegro-legacy/lib/Debug/*
+
+# Generated CMake Files.
+/allegro/CMakeCache.txt
+/allegro/CMakeFiles/
+/allegro/Makefile
+/allegro/cmake_install.cmake
+CmakeCache.*
+cmake_install.cmake
+
+# Bison
+/src/parser/y.output
+
+# Package generation
+output/_auto/buildpack_log.txt
+output/_auto/buildpack
+output/_auto/extrapack_log.txt
+output/_auto/extrapack
+output/_auto/zelda-classic-mac
+*.dmg
+output/_auto/*.zip
+
+# Other
+*.zplay.roundtrip
+*.zplay.unexpected*

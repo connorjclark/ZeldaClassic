@@ -1,0 +1,21 @@
+## Source list for Zelda Sprite module
+set(ZELDA_SPRITE_SOURCES
+
+################################
+# Add or remove files here
+################################
+src/zc/zc_sprite.cpp
+src/guys.cpp
+src/weapons.cpp
+src/zc/combos.cpp
+src/zc/hero.cpp
+src/particles.cpp
+src/items.cpp
+src/sprite.cpp
+src/tiles.cpp
+src/maps.cpp
+src/zc/script_drawing.cpp
+
+## End of Zelda Sprite module
+)
+
