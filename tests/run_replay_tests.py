@@ -73,7 +73,7 @@ elif args.replay:
 is_windows_ci = args.ci and 'windows' in args.ci
 script_dir = os.path.dirname(os.path.realpath(__file__))
 replays_dir = os.path.join(script_dir, 'replays')
-tests = list(pathlib.Path(replays_dir).glob('*.zplay'))
+tests = sorted(list(pathlib.Path(replays_dir).glob('*.zplay')))
 if args.filter:
     tests = [t for t in tests if args.filter in str(
         t.relative_to(replays_dir))]
