@@ -138,4 +138,5 @@ output/_auto/*.zip
 *.zplay.*.png
 test_results.json
 compare-tracks/
+compare-report/
 .gha-cache-dir/

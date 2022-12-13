@@ -44,6 +44,7 @@ import functools
 from types import SimpleNamespace
 from time import sleep
 from timeit import default_timer as timer
+from .common import infer_gha_platform
 
 ASSERT_FAILED_EXIT_CODE = 120
 
@@ -201,11 +202,14 @@ def get_shards(tests, n):
 
 
 def save_test_results():
+    runs_on, arch = infer_gha_platform()
     json_result = {
-        'ci': args.ci,
+        'runs_on': runs_on,
+        'arch': arch,
     }
     if os.environ.get('CI'):
         json_result['ref'] = os.environ.get('GITHUB_REF')
+        json_result['ci'] = True
 
     json_result['replays'] = []
     for replay, test_result in test_results.items():

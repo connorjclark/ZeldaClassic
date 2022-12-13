@@ -6,15 +6,15 @@ import argparse
 from argparse import ArgumentTypeError
 import os
 import io
-import platform
 import json
 import requests
 import zipfile
 from time import sleep
-from typing import List, Optional
+from typing import List
 from pathlib import Path
 # pip install PyGithub
 from github import Github, GithubException
+from .common import infer_gha_platform, get_gha_artifacts
 
 script_dir = Path(os.path.dirname(os.path.realpath(__file__)))
 
@@ -46,20 +46,6 @@ gh = Github(args.token)
 if args.test_results is not None and args.failing_workflow_run is not None:
     raise ArgumentTypeError(
         'can only choose one of --test_results or --failing_workflow_run')
-
-
-def infer_gha_platform(ci: Optional[str] = ''):
-    if ci:
-        return ci.split('_')
-
-    system = platform.system()
-    if system == 'Windows':
-        runs_on = 'windows-2022'
-        arch = 'x64' if platform.architecture()[0] == '64bit' else 'win32'
-    elif system == 'Darwin':
-        runs_on = 'macos-12'
-        arch = 'intel'
-    return runs_on, arch
 
 
 def download_artifact(artifact, dest):
@@ -164,9 +150,8 @@ def collect_baseline_from_test_results(test_results_paths: List[Path]):
     results_grouped_by_platform = {}
     for path in test_results_paths:
         test_results = json.loads(path.read_text('utf-8'))
-        runs_on, arch = infer_gha_platform(test_results['ci'])
 
-        key = (runs_on, arch)
+        key = (test_results['runs_on'], test_results['arch'])
         if key in results_grouped_by_platform:
             results_for_platform = results_grouped_by_platform[key]
         else:
@@ -220,26 +205,8 @@ def collect_baseline_from_run_test_results(run_id: int):
     if not replay_artifacts:
         raise Exception(f'no replay artifacts found for run {run_id}')
 
-    # TODO use this for compare_replays.py too
-    gha_cache_dir = script_dir / '.gha-cache-dir'
-    workflow_run_dir = gha_cache_dir / str(run_id)
-    workflow_run_dir.mkdir(exist_ok=True, parents=True)
-
-    test_results_paths = []
-    for artifact in replay_artifacts:
-        artifact_dir = workflow_run_dir / str(artifact.name)
-        if not artifact_dir.exists():
-            print(f'downloading artifact: {artifact.name}')
-            download_artifact(artifact, artifact_dir)
-        test_results_path = next(artifact_dir.glob('test_results.json'), None)
-        if test_results_path:
-            test_results_paths.append(test_results_path)
-        else:
-            print(f'missing test_results.json for {artifact.name}')
-
-    if not test_results_paths:
-        raise Exception('found no test_results.json files')
-
+    workflow_run_dir = get_gha_artifacts(run_id)
+    test_results_paths = list(workflow_run_dir.rglob('test_results.json'))
     collect_baseline_from_test_results(test_results_paths)
 
 
