@@ -154,7 +154,7 @@ if args.filter:
 
 if args.ci:
     skip_in_ci = [
-        # nothing right now!
+        'dueling_dragons.zplay',
     ]
     tests = [t for t in tests if t.name not in skip_in_ci]
 
