@@ -39,7 +39,6 @@ import json
 import re
 import difflib
 import pathlib
-import platform
 import functools
 from types import SimpleNamespace
 from time import sleep
@@ -52,37 +51,52 @@ ASSERT_FAILED_EXIT_CODE = 120
 if os.name == 'nt':
     sys.stdout.reconfigure(encoding='utf-8')
 
-parser = argparse.ArgumentParser()
-parser.add_argument('--build_folder', default='build/Debug',
-    help='The folder containing the exe files',metavar='DIRECTORY')
+
+script_dir = pathlib.Path(os.path.dirname(os.path.realpath(__file__)))
+root_dir = script_dir.parent
+
+default_build_folders = [root_dir / 'build/Release', root_dir / 'Release']
+default_build_folder = next(
+    (d for d in default_build_folders if d.exists()), None)
+
+
+class ExplicitDefaultsHelpFormatter(argparse.ArgumentDefaultsHelpFormatter):
+    def _get_help_string(self, action):
+        if action.default in (None, False):
+            return action.help
+        return super()._get_help_string(action)
+
+
+parser = argparse.ArgumentParser(formatter_class=ExplicitDefaultsHelpFormatter)
+parser.add_argument('--build_folder', default=default_build_folder,
+                    help='The folder containing the ZC binary files (same folder used to configure the cmake build)', metavar='DIRECTORY')
 parser.add_argument('--filter', action='append', metavar='FILEPATH',
-    help='Specify a file to run, instead of running all. Can be supplied multiple times.')
-parser.add_argument('--max_duration', type=int, metavar='SECONDS',
-    help='The maximum time, in seconds, the replay will test for.')
+                    help='The .zplay file to run, instead of running all. Can be set multiple times.')
 parser.add_argument('--throttle_fps', action='store_true',
-    help='Supply this to cap the replay\'s FPS')
+                    help='Supply this to cap the replay\'s FPS')
+parser.add_argument('--max_duration', type=int, metavar='SECONDS',
+                    help='The maximum time, in seconds, the replay will test for.')
+parser.add_argument('--frame', action='append',
+                    help='Stop replay at this frame number')
+parser.add_argument('--snapshot', action='append',
+                    help='Save snapshots of these frame numbers, denoted by ranges. Examples (separted by commas): 100, 100 120-140, 155')
 parser.add_argument('--retries', type=int, default=0,
-    help='The number of retries (default 0) to give each replay')
+                    help='The number of retries to give each replay (default: 0)')
 
+mode_group = parser.add_argument_group(
+    'Mode', 'The replay mode').add_mutually_exclusive_group()
+mode_group.add_argument('--assert', action='store_true',
+                        help='Play back, asserting nothing has changed. This is the default behavior if no mode is specified.')
+mode_group.add_argument('--update', action='store_true',
+                        help='Update, accepting any changes.')
+mode_group.add_argument('--replay', action='store_true',
+                        help='Play back, without updating or asserting.')
 
-mode_group = parser.add_argument_group('Mode','The playback mode')
-exclgroup = mode_group.add_mutually_exclusive_group()
-
-exclgroup.add_argument('--replay', action='store_true',
-    help='Play back the replay, without updating or asserting.')
-exclgroup.add_argument('--update', action='store_true',
-    help='Update the replays, accepting any changes.')
-exclgroup.add_argument('--assert', dest='assertmode', action='store_true',
-    help='Play back the replays in assert mode. This is the default behavior if no mode is specified.')
-
-int_group = parser.add_argument_group('Internal','Use these only if you know what they do.')
-
-int_group.add_argument('--snapshot', action='append')
-int_group.add_argument('--frame', action='append')
-int_group.add_argument('--ci', nargs='?',
-    help='Special arg meant for CI behaviors')
-int_group.add_argument('--shard')
-int_group.add_argument('--print_shards', action='store_true')
+ci_group = parser.add_argument_group('CI', 'Options for CI usage')
+ci_group.add_argument('--ci', nargs='?',
+                      help='<os>_<arch>')
+ci_group.add_argument('--shard')
+ci_group.add_argument('--print_shards', action='store_true')
 
 args = parser.parse_args()
 
@@ -91,8 +105,6 @@ if args.update:
     mode = 'update'
 elif args.replay:
     mode = 'replay'
-else:
-    args.assertmode = True #default true, not handled by argparse
 
 if args.ci and '_' in args.ci:
     runs_on, arch = args.ci.split('_')
