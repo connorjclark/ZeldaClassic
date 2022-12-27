@@ -81,8 +81,8 @@ jobs:
             sentry: false
       fail-fast: false
     # See https://github.com/community/community/discussions/40777
-    # uses: ./.github/workflows/build.yml
-    uses: ArmageddonGames/ZQuestClassic/.github/workflows/build.yml@main
+    uses: ./.github/workflows/build.yml
+    # uses: ArmageddonGames/ZQuestClassic/.github/workflows/build.yml@main
     with:
       runs-on: ${{ matrix.runs-on }}
       arch: ${{ matrix.arch }}
