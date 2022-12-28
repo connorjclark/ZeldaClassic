@@ -27363,7 +27363,7 @@ void getitem(int32_t id, bool nosound, bool doRunPassive)
 		break;
 	}
 	
-	flushItemCache();
+	// flushItemCache(); // TODO !
 	update_subscreens();
 	load_Sitems(&QMisc);
 	verifyBothWeapons();
