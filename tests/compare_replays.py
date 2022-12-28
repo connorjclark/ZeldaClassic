@@ -16,7 +16,7 @@ import json
 from pathlib import Path
 from itertools import groupby
 from github import Github
-from common import get_gha_artifacts
+from common import get_gha_artifacts, ReplayTestResults
 
 
 def dir_path(path):
@@ -52,17 +52,18 @@ def get_replay_from_snapshot_path(path):
 #  - if run in CI, the workflow run id and git ref
 #  - a list of replays and any snapshots they produced
 def collect_test_run_from_dir(directory: Path):
-    test_results = json.loads((directory/'test_results.json').read_text('utf-8'))
+    test_results_json = json.loads((directory/'test_results.json').read_text('utf-8'))
+    test_results = ReplayTestResults(**test_results_json)
     test_run = {
         'label': '',
-        'runs_on': test_results['runs_on'],
-        'arch': test_results['arch'],
+        'runs_on': test_results.runs_on,
+        'arch': test_results.arch,
         'ci': False,
     }
-    if 'ci' in test_results and test_results['ci']:
+    if test_results.ci:
         test_run['ci'] = True
-        test_run['ref'] = test_results['ref']
-        test_run['run_id'] = test_results['run_id']
+        test_run['ref'] = test_results.ref
+        test_run['run_id'] = test_results.run_id
 
     label_parts = [
         test_run['runs_on'],
