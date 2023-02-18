@@ -1560,9 +1560,9 @@ void textprintf_shadow_ex(BITMAP *bmp, const FONT *f, int32_t x, int32_t y, int3
 {
     char buf[512];
     va_list ap;
-    ASSERT(bmp);
-    ASSERT(f);
-    ASSERT(format);
+    CHECK(bmp);
+    CHECK(f);
+    CHECK(format);
     
     va_start(ap, format);
     uvszprintf(buf, sizeof(buf), format, ap);
@@ -1575,9 +1575,9 @@ void textprintf_shadow_center_ex(BITMAP *bmp, const FONT *f, int32_t x, int32_t 
 {
     char buf[512];
     va_list ap;
-    ASSERT(bmp);
-    ASSERT(f);
-    ASSERT(format);
+    CHECK(bmp);
+    CHECK(f);
+    CHECK(format);
     
     va_start(ap, format);
     uvszprintf(buf, sizeof(buf), format, ap);
@@ -1590,9 +1590,9 @@ void textprintf_shadow_right_ex(BITMAP *bmp, const FONT *f, int32_t x, int32_t y
 {
     char buf[512];
     va_list ap;
-    ASSERT(bmp);
-    ASSERT(f);
-    ASSERT(format);
+    CHECK(bmp);
+    CHECK(f);
+    CHECK(format);
     
     va_start(ap, format);
     uvszprintf(buf, sizeof(buf), format, ap);
@@ -1606,9 +1606,9 @@ void textprintf_shadow_u_ex(BITMAP *bmp, const FONT *f, int32_t x, int32_t y, in
 {
     char buf[512];
     va_list ap;
-    ASSERT(bmp);
-    ASSERT(f);
-    ASSERT(format);
+    CHECK(bmp);
+    CHECK(f);
+    CHECK(format);
     
     va_start(ap, format);
     uvszprintf(buf, sizeof(buf), format, ap);
@@ -1621,9 +1621,9 @@ void textprintf_shadow_center_u_ex(BITMAP *bmp, const FONT *f, int32_t x, int32_
 {
     char buf[512];
     va_list ap;
-    ASSERT(bmp);
-    ASSERT(f);
-    ASSERT(format);
+    CHECK(bmp);
+    CHECK(f);
+    CHECK(format);
     
     va_start(ap, format);
     uvszprintf(buf, sizeof(buf), format, ap);
@@ -1636,9 +1636,9 @@ void textprintf_shadow_right_u_ex(BITMAP *bmp, const FONT *f, int32_t x, int32_t
 {
     char buf[512];
     va_list ap;
-    ASSERT(bmp);
-    ASSERT(f);
-    ASSERT(format);
+    CHECK(bmp);
+    CHECK(f);
+    CHECK(format);
     
     va_start(ap, format);
     uvszprintf(buf, sizeof(buf), format, ap);
@@ -1652,9 +1652,9 @@ void textprintf_shadow_o_ex(BITMAP *bmp, const FONT *f, int32_t x, int32_t y, in
 {
     char buf[512];
     va_list ap;
-    ASSERT(bmp);
-    ASSERT(f);
-    ASSERT(format);
+    CHECK(bmp);
+    CHECK(f);
+    CHECK(format);
     
     va_start(ap, format);
     uvszprintf(buf, sizeof(buf), format, ap);
@@ -1667,9 +1667,9 @@ void textprintf_shadow_center_o_ex(BITMAP *bmp, const FONT *f, int32_t x, int32_
 {
     char buf[512];
     va_list ap;
-    ASSERT(bmp);
-    ASSERT(f);
-    ASSERT(format);
+    CHECK(bmp);
+    CHECK(f);
+    CHECK(format);
     
     va_start(ap, format);
     uvszprintf(buf, sizeof(buf), format, ap);
@@ -1682,9 +1682,9 @@ void textprintf_shadow_right_o_ex(BITMAP *bmp, const FONT *f, int32_t x, int32_t
 {
     char buf[512];
     va_list ap;
-    ASSERT(bmp);
-    ASSERT(f);
-    ASSERT(format);
+    CHECK(bmp);
+    CHECK(f);
+    CHECK(format);
     
     va_start(ap, format);
     uvszprintf(buf, sizeof(buf), format, ap);
@@ -1703,9 +1703,9 @@ void textprintf_shadow_plus_ex(BITMAP *bmp, const FONT *f, int32_t x, int32_t y,
 {
     char buf[512];
     va_list ap;
-    ASSERT(bmp);
-    ASSERT(f);
-    ASSERT(format);
+    CHECK(bmp);
+    CHECK(f);
+    CHECK(format);
     
     va_start(ap, format);
     uvszprintf(buf, sizeof(buf), format, ap);
@@ -1718,9 +1718,9 @@ void textprintf_shadow_center_plus_ex(BITMAP *bmp, const FONT *f, int32_t x, int
 {
     char buf[512];
     va_list ap;
-    ASSERT(bmp);
-    ASSERT(f);
-    ASSERT(format);
+    CHECK(bmp);
+    CHECK(f);
+    CHECK(format);
     
     va_start(ap, format);
     uvszprintf(buf, sizeof(buf), format, ap);
@@ -1733,9 +1733,9 @@ void textprintf_shadow_right_plus_ex(BITMAP *bmp, const FONT *f, int32_t x, int3
 {
     char buf[512];
     va_list ap;
-    ASSERT(bmp);
-    ASSERT(f);
-    ASSERT(format);
+    CHECK(bmp);
+    CHECK(f);
+    CHECK(format);
     
     va_start(ap, format);
     uvszprintf(buf, sizeof(buf), format, ap);
@@ -1748,9 +1748,9 @@ void textprintf_shadow_x_ex(BITMAP *bmp, const FONT *f, int32_t x, int32_t y, in
 {
     char buf[512];
     va_list ap;
-    ASSERT(bmp);
-    ASSERT(f);
-    ASSERT(format);
+    CHECK(bmp);
+    CHECK(f);
+    CHECK(format);
     
     va_start(ap, format);
     uvszprintf(buf, sizeof(buf), format, ap);
@@ -1763,9 +1763,9 @@ void textprintf_shadow_center_x_ex(BITMAP *bmp, const FONT *f, int32_t x, int32_
 {
     char buf[512];
     va_list ap;
-    ASSERT(bmp);
-    ASSERT(f);
-    ASSERT(format);
+    CHECK(bmp);
+    CHECK(f);
+    CHECK(format);
     
     va_start(ap, format);
     uvszprintf(buf, sizeof(buf), format, ap);
@@ -1778,9 +1778,9 @@ void textprintf_shadow_right_x_ex(BITMAP *bmp, const FONT *f, int32_t x, int32_t
 {
     char buf[512];
     va_list ap;
-    ASSERT(bmp);
-    ASSERT(f);
-    ASSERT(format);
+    CHECK(bmp);
+    CHECK(f);
+    CHECK(format);
     
     va_start(ap, format);
     uvszprintf(buf, sizeof(buf), format, ap);
@@ -1807,9 +1807,9 @@ void textprintf_shadowed_ex(BITMAP *bmp, const FONT *f, int32_t x, int32_t y, in
 {
     char buf[512];
     va_list ap;
-    ASSERT(bmp);
-    ASSERT(f);
-    ASSERT(format);
+    CHECK(bmp);
+    CHECK(f);
+    CHECK(format);
     
     va_start(ap, format);
     uvszprintf(buf, sizeof(buf), format, ap);
@@ -1822,9 +1822,9 @@ void textprintf_shadowed_center_ex(BITMAP *bmp, const FONT *f, int32_t x, int32_
 {
     char buf[512];
     va_list ap;
-    ASSERT(bmp);
-    ASSERT(f);
-    ASSERT(format);
+    CHECK(bmp);
+    CHECK(f);
+    CHECK(format);
     
     va_start(ap, format);
     uvszprintf(buf, sizeof(buf), format, ap);
@@ -1837,9 +1837,9 @@ void textprintf_shadowed_right_ex(BITMAP *bmp, const FONT *f, int32_t x, int32_t
 {
     char buf[512];
     va_list ap;
-    ASSERT(bmp);
-    ASSERT(f);
-    ASSERT(format);
+    CHECK(bmp);
+    CHECK(f);
+    CHECK(format);
     
     va_start(ap, format);
     uvszprintf(buf, sizeof(buf), format, ap);
@@ -1852,9 +1852,9 @@ void textprintf_shadowed_u_ex(BITMAP *bmp, const FONT *f, int32_t x, int32_t y, 
 {
     char buf[512];
     va_list ap;
-    ASSERT(bmp);
-    ASSERT(f);
-    ASSERT(format);
+    CHECK(bmp);
+    CHECK(f);
+    CHECK(format);
     
     va_start(ap, format);
     uvszprintf(buf, sizeof(buf), format, ap);
@@ -1867,9 +1867,9 @@ void textprintf_shadowed_center_u_ex(BITMAP *bmp, const FONT *f, int32_t x, int3
 {
     char buf[512];
     va_list ap;
-    ASSERT(bmp);
-    ASSERT(f);
-    ASSERT(format);
+    CHECK(bmp);
+    CHECK(f);
+    CHECK(format);
     
     va_start(ap, format);
     uvszprintf(buf, sizeof(buf), format, ap);
@@ -1882,9 +1882,9 @@ void textprintf_shadowed_right_u_ex(BITMAP *bmp, const FONT *f, int32_t x, int32
 {
     char buf[512];
     va_list ap;
-    ASSERT(bmp);
-    ASSERT(f);
-    ASSERT(format);
+    CHECK(bmp);
+    CHECK(f);
+    CHECK(format);
     
     va_start(ap, format);
     uvszprintf(buf, sizeof(buf), format, ap);
@@ -1897,9 +1897,9 @@ void textprintf_shadowed_o_ex(BITMAP *bmp, const FONT *f, int32_t x, int32_t y, 
 {
     char buf[512];
     va_list ap;
-    ASSERT(bmp);
-    ASSERT(f);
-    ASSERT(format);
+    CHECK(bmp);
+    CHECK(f);
+    CHECK(format);
     
     va_start(ap, format);
     uvszprintf(buf, sizeof(buf), format, ap);
@@ -1912,9 +1912,9 @@ void textprintf_shadowed_center_o_ex(BITMAP *bmp, const FONT *f, int32_t x, int3
 {
     char buf[512];
     va_list ap;
-    ASSERT(bmp);
-    ASSERT(f);
-    ASSERT(format);
+    CHECK(bmp);
+    CHECK(f);
+    CHECK(format);
     
     va_start(ap, format);
     uvszprintf(buf, sizeof(buf), format, ap);
@@ -1927,9 +1927,9 @@ void textprintf_shadowed_right_o_ex(BITMAP *bmp, const FONT *f, int32_t x, int32
 {
     char buf[512];
     va_list ap;
-    ASSERT(bmp);
-    ASSERT(f);
-    ASSERT(format);
+    CHECK(bmp);
+    CHECK(f);
+    CHECK(format);
     
     va_start(ap, format);
     uvszprintf(buf, sizeof(buf), format, ap);
@@ -1942,9 +1942,9 @@ void textprintf_shadowed_plus_ex(BITMAP *bmp, const FONT *f, int32_t x, int32_t 
 {
     char buf[512];
     va_list ap;
-    ASSERT(bmp);
-    ASSERT(f);
-    ASSERT(format);
+    CHECK(bmp);
+    CHECK(f);
+    CHECK(format);
     
     va_start(ap, format);
     uvszprintf(buf, sizeof(buf), format, ap);
@@ -1957,9 +1957,9 @@ void textprintf_shadowed_center_plus_ex(BITMAP *bmp, const FONT *f, int32_t x, i
 {
     char buf[512];
     va_list ap;
-    ASSERT(bmp);
-    ASSERT(f);
-    ASSERT(format);
+    CHECK(bmp);
+    CHECK(f);
+    CHECK(format);
     
     va_start(ap, format);
     uvszprintf(buf, sizeof(buf), format, ap);
@@ -1972,9 +1972,9 @@ void textprintf_shadowed_right_plus_ex(BITMAP *bmp, const FONT *f, int32_t x, in
 {
     char buf[512];
     va_list ap;
-    ASSERT(bmp);
-    ASSERT(f);
-    ASSERT(format);
+    CHECK(bmp);
+    CHECK(f);
+    CHECK(format);
     
     va_start(ap, format);
     uvszprintf(buf, sizeof(buf), format, ap);
@@ -1988,9 +1988,9 @@ void textprintf_shadowed_x_ex(BITMAP *bmp, const FONT *f, int32_t x, int32_t y, 
 {
     char buf[512];
     va_list ap;
-    ASSERT(bmp);
-    ASSERT(f);
-    ASSERT(format);
+    CHECK(bmp);
+    CHECK(f);
+    CHECK(format);
     
     va_start(ap, format);
     uvszprintf(buf, sizeof(buf), format, ap);
@@ -2003,9 +2003,9 @@ void textprintf_shadowed_center_x_ex(BITMAP *bmp, const FONT *f, int32_t x, int3
 {
     char buf[512];
     va_list ap;
-    ASSERT(bmp);
-    ASSERT(f);
-    ASSERT(format);
+    CHECK(bmp);
+    CHECK(f);
+    CHECK(format);
     
     va_start(ap, format);
     uvszprintf(buf, sizeof(buf), format, ap);
@@ -2018,9 +2018,9 @@ void textprintf_shadowed_right_x_ex(BITMAP *bmp, const FONT *f, int32_t x, int32
 {
     char buf[512];
     va_list ap;
-    ASSERT(bmp);
-    ASSERT(f);
-    ASSERT(format);
+    CHECK(bmp);
+    CHECK(f);
+    CHECK(format);
     
     va_start(ap, format);
     uvszprintf(buf, sizeof(buf), format, ap);
@@ -2467,7 +2467,7 @@ void zc_trace_clear()
         trace_file = fopen(getenv("ALLEGRO_LEGACY_TRACE"), "w");
     else
         trace_file = fopen("allegro.log", "w");
-    ASSERT(trace_file);
+    CHECK(trace_file);
 }
 
 void sane_destroy_bitmap(BITMAP **bmp)

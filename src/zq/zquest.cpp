@@ -5478,9 +5478,9 @@ void textprintf_disabled(BITMAP *bmp, AL_CONST FONT *f, int32_t x, int32_t y, in
 {
     char buf[512];
     va_list ap;
-    ASSERT(bmp);
-    ASSERT(f);
-    ASSERT(format);
+    CHECK(bmp);
+    CHECK(f);
+    CHECK(format);
     
     va_start(ap, format);
     uvszprintf(buf, sizeof(buf), format, ap);
@@ -5496,9 +5496,9 @@ void textprintf_centre_disabled(BITMAP *bmp, AL_CONST FONT *f, int32_t x, int32_
 {
     char buf[512];
     va_list ap;
-    ASSERT(bmp);
-    ASSERT(f);
-    ASSERT(format);
+    CHECK(bmp);
+    CHECK(f);
+    CHECK(format);
     
     va_start(ap, format);
     uvszprintf(buf, sizeof(buf), format, ap);
@@ -24964,7 +24964,7 @@ int32_t txtout(BITMAP* dest, char* txt, int32_t x, int32_t y, bool disabled)
 int32_t jwin_zmeta_proc(int32_t msg, DIALOG *d, int32_t )
 {
 	int32_t ret = D_O_K;
-    ASSERT(d);
+    CHECK(d);
     
 	BITMAP* target = (msg==MSG_START ? NULL : screen);
     switch(msg)

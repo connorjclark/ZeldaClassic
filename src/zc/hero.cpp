@@ -9905,7 +9905,7 @@ bool HeroClass::animate(int32_t)
 
 bool HeroClass::push_pixel(zfix dx, zfix dy)
 {
-	ASSERT(abs(dx) <= 1 && abs(dy) <= 1);
+	DCHECK(abs(dx) <= 1 && abs(dy) <= 1);
 	if(dx && dy)
 	{
 		bool r = push_pixel(0,dy);

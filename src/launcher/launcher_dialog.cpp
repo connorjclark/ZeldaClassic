@@ -307,8 +307,8 @@ Button(forceFitH = true, text = "?", \
 int _al_stricmp(const char *s1, const char *s2)
 {
    int c1, c2;
-   ASSERT(s1);
-   ASSERT(s2);
+   CHECK(s1);
+   CHECK(s2);
 
    do {
       c1 = tolower(*(s1++));

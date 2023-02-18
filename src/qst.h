@@ -34,7 +34,7 @@ struct script_slot_data
 		char const* scriptstr = scriptname.c_str();
 		size_t len = strlen(formatstr) + strlen(slotstr) + strlen(scriptstr) - 4 + 1;
 		char* temp = (char*)malloc(len);
-		ASSERT(temp);
+		CHECK(temp);
 		sprintf(temp, formatstr, slotstr, scriptstr);
 		temp[len - 1] = 0;
 		output = temp;

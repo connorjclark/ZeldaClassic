@@ -831,7 +831,7 @@ int32_t jwin_text_proc(int32_t msg, DIALOG *d, int32_t c)
 	//these are here to bypass compiler warnings about unused arguments
 	c=c;
 	
-	ASSERT(d);
+	CHECK(d);
 	static BITMAP *dummy=create_bitmap_ex(8, 1, 1);
 	
 	switch(msg)
@@ -883,7 +883,7 @@ int32_t jwin_ctext_proc(int32_t msg, DIALOG *d, int32_t c)
     //these are here to bypass compiler warnings about unused arguments
     c=c;
     
-    ASSERT(d);
+    CHECK(d);
     static BITMAP *dummy=create_bitmap_ex(8, 320, 240);
     
     switch(msg)
@@ -922,7 +922,7 @@ int32_t jwin_rtext_proc(int32_t msg, DIALOG *d, int32_t c)
     //these are here to bypass compiler warnings about unused arguments
     c=c;
     
-    ASSERT(d);
+    CHECK(d);
     static BITMAP *dummy=create_bitmap_ex(8, 1, 1);
     
     switch(msg)
@@ -3352,7 +3352,7 @@ int32_t jwin_numedit_swap_zsint2_proc(int32_t msg, DIALOG *d, int32_t c)
 {
 	const size_t maxlen = 13;
 	DIALOG* swapbtn;
-	ASSERT(d->flags&D_NEW_GUI);
+	CHECK(d->flags&D_NEW_GUI);
 	swapbtn = d+1;
 	if(!swapbtn) return D_O_K;
 	GUI::TextField *tf_obj = (GUI::TextField*)d->dp3;
@@ -5117,7 +5117,7 @@ int32_t jwin_slider_proc(int32_t msg, DIALOG *d, int32_t c)
     int32_t irange;
     int32_t slx, sly, slh, slw;
     fixed slratio, slmax, slpos;
-    ASSERT(d);
+    CHECK(d);
     
     /* check for slider direction */
     if(d->h < d->w)
@@ -6512,8 +6512,8 @@ int32_t jwin_alert(const char *title, const char *s1, const char *s2, const char
 
 int32_t d_autotext_proc(int32_t msg, DIALOG *d, int32_t c)
 {
-	ASSERT(d);
-	ASSERT(d->dp);
+	CHECK(d);
+	CHECK(d->dp);
 	#define AUTOBUF_SIZE 8092
 	static char auto_buf[AUTOBUF_SIZE] = {0};
 	static int32_t auto_inds[50] = {0};
@@ -7123,7 +7123,7 @@ int32_t jwin_check_proc(int32_t msg, DIALOG *d, int32_t c)
     int32_t x;
     int32_t bx=0, tl=0;
     int32_t tx=d->x;
-    ASSERT(d);
+    CHECK(d);
     
     switch(msg)
     {
@@ -7200,7 +7200,7 @@ int32_t new_check_proc(int32_t msg, DIALOG *d, int32_t c)
 	//these are here to bypass compiler warnings about unused arguments
 	c=c;
 	int32_t bx=0, tl=0;
-	ASSERT(d);
+	CHECK(d);
 	
     FONT *oldfont = font;
     
@@ -7306,7 +7306,7 @@ int32_t jwin_radiofont_proc(int32_t msg, DIALOG *d, int32_t c)
 int32_t jwin_radio_proc(int32_t msg, DIALOG *d, int32_t c)
 {
     int32_t x, center, r, ret, tl=0, tx;
-    ASSERT(d);
+    CHECK(d);
     
     switch(msg)
     {
@@ -8039,7 +8039,7 @@ int32_t jwin_tab_proc(int32_t msg, DIALOG *d, int32_t c)
 	DIALOG   *panel_dialog=NULL, *current_object=NULL;
 	int32_t selected=0;
 	int32_t counter=0;
-	ASSERT(d);
+	CHECK(d);
 	int32_t temp_d, temp_d2;
 	
 	if(d->dp==NULL) return D_O_K;
@@ -8376,7 +8376,7 @@ int32_t new_tab_proc(int32_t msg, DIALOG *d, int32_t c)
     int32_t sd=2; //selected delta
 	static bool skipredraw = false;
 	GUI::TabPanel *panel=(GUI::TabPanel*)d->dp;
-    ASSERT(d);
+    CHECK(d);
     
     if(d->dp==NULL) return D_O_K;
     
@@ -8588,7 +8588,7 @@ int32_t jwin_hline_proc(int32_t msg, DIALOG *d, int32_t c)
     //these are here to bypass compiler warnings about unused arguments
     c=c;
     
-    ASSERT(d);
+    CHECK(d);
     
     if(msg==MSG_DRAW)
     {
@@ -8604,7 +8604,7 @@ int32_t jwin_vline_proc(int32_t msg, DIALOG *d, int32_t c)
     //these are here to bypass compiler warnings about unused arguments
     c=c;
     
-    ASSERT(d);
+    CHECK(d);
     
     if(msg==MSG_DRAW)
     {
@@ -8625,7 +8625,7 @@ void jwin_center_dialog(DIALOG *dialog)
 {
     int32_t xc, yc;
     int32_t c;
-    ASSERT(dialog);
+    CHECK(dialog);
     
     /* how much to move by? */
     xc = (zq_screen_w - dialog[0].w) / 2 - dialog[0].x;
@@ -8643,7 +8643,7 @@ void jwin_ulalign_dialog(DIALOG *dialog)
 {
     int32_t xc, yc;
     int32_t c;
-    ASSERT(dialog);
+    CHECK(dialog);
     
     /* how much to move by? */
     xc = dialog[0].x;
@@ -8682,7 +8682,7 @@ int32_t d_jslider_proc(int32_t msg, DIALOG *d, int32_t c)
     SLIDER_TYPE proc = NULL;
     //int32_t (*proc)(void *cbpointer, int32_t d2value);
     int32_t oldval;
-    ASSERT(d);
+    CHECK(d);
     
     /* check for slider direction */
     if(d->h < d->w)
@@ -8942,7 +8942,7 @@ int32_t d_jwinbutton_proc(int32_t msg, DIALOG *d, int32_t)
     int32_t black;
     int32_t swap;
     int32_t g;
-    ASSERT(d);
+    CHECK(d);
     
     gui_bmp = gui_get_screen();
     

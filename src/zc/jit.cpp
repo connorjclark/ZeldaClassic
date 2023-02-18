@@ -231,7 +231,7 @@ static void div_10000(x86::Compiler &cc, x86::Gp dividend)
 	}
 	else
 	{
-		ASSERT(false);
+		CHECK(false);
 		exit(0);
 	}
 }
@@ -438,7 +438,7 @@ static void error(script_data *script, std::string str)
 
 	if (DEBUG_JIT_EXIT_ON_COMPILE_FAIL)
 	{
-		ASSERT(false);
+		CHECK(false);
 		exit(1);
 	}
 }

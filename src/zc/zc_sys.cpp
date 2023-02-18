@@ -6598,7 +6598,7 @@ int32_t onCredits()
 
 	BITMAP* old_screen = screen;
 	BITMAP* gui_bmp = zc_get_gui_bmp();
-	ASSERT(gui_bmp);
+	CHECK(gui_bmp);
 	clear_to_color(gui_bmp, rti_gui.transparency_index);
 	screen = gui_bmp;
 	

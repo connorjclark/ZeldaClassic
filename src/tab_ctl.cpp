@@ -304,7 +304,7 @@ int32_t d_tab_proc(int32_t msg, DIALOG *d, int32_t c)
     DIALOG   *panel_dialog=NULL, *current_object=NULL;
     int32_t selected=0;
     int32_t counter=0;
-    ASSERT(d);
+    CHECK(d);
     (void) c;
     int32_t temp_d, temp_d2;
     

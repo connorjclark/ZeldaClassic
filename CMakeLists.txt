@@ -799,6 +799,8 @@ foreach(target IN LISTS zc_targets)
 	if(CMAKE_C_COMPILER_ID MATCHES "GNU")
 		target_compile_options(${target} PRIVATE ${zc_gcc_errors})
 	endif()
+
+	target_compile_definitions(${target} PUBLIC "$<$<CONFIG:DEBUG>:ZC_DEBUG>")
 endforeach()
 
 if(WIN32)

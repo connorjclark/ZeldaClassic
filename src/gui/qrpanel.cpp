@@ -115,7 +115,7 @@ void QRPanel::loadList(GUI::ListData qrlist)
 			content->add(cbox);
 			if(scrolling)
 			{
-				//ASSERT(li);
+				//CHECK(li);
 				std::shared_ptr<Label> lbl = std::make_shared<Label>();
 				lbl->setHAlign(1.0);
 				content->add(lbl);

@@ -940,8 +940,8 @@ int32_t jwin_file_select_ex(AL_CONST char *message, char *path, AL_CONST char *e
     int32_t ret;
     char *p;
     char tmp[32];
-    ASSERT(message);
-    ASSERT(path);
+    CHECK(message);
+    CHECK(path);
     
     if(title_font)
     {
@@ -964,7 +964,7 @@ int32_t jwin_file_select_ex(AL_CONST char *message, char *path, AL_CONST char *e
 #endif
         
     /* for fs_dlist_proc() */
-    ASSERT(size >= 4 * uwidth_max(U_CURRENT));
+    CHECK(size >= 4 * uwidth_max(U_CURRENT));
     
     usetc(updir, 0);
     file_selector[FS_WIN].dp = (char *)message;
@@ -1134,8 +1134,8 @@ int32_t jwin_dfile_select_ex(AL_CONST char *message, char *path, AL_CONST char *
     int32_t ret;
     char *p;
     char tmp[32];
-    ASSERT(message);
-    ASSERT(path);
+    CHECK(message);
+    CHECK(path);
     
     if(title_font)
     {
@@ -1158,7 +1158,7 @@ int32_t jwin_dfile_select_ex(AL_CONST char *message, char *path, AL_CONST char *
 #endif
         
     /* for fs_dlist_proc() */
-    ASSERT(size >= 4 * uwidth_max(U_CURRENT));
+    CHECK(size >= 4 * uwidth_max(U_CURRENT));
     
     usetc(updir, 0);
     file_selector[FS_WIN].dp = (char *)message;
@@ -1285,8 +1285,8 @@ int32_t jwin_file_browse_ex(AL_CONST char *message, char *path, EXT_LIST *list, 
     int32_t ret;
     char *p;
     char tmp[32];
-    ASSERT(message);
-    ASSERT(path);
+    CHECK(message);
+    CHECK(path);
     
     if(title_font)
     {
@@ -1309,7 +1309,7 @@ int32_t jwin_file_browse_ex(AL_CONST char *message, char *path, EXT_LIST *list, 
 #endif
         
     /* for fs_dlist_proc() */
-    ASSERT(size >= 4 * uwidth_max(U_CURRENT));
+    CHECK(size >= 4 * uwidth_max(U_CURRENT));
     
     usetc(updir, 0);
     file_selector[FS_WIN].dp = (char *)message;

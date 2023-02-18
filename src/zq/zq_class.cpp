@@ -243,7 +243,7 @@ bool zmap::reset_templates(bool validate)
     }
     
     char *deletefilename=(char *)malloc(1);
-    ASSERT(deletefilename);
+    CHECK(deletefilename);
     deletefilename[0]=0;
     
     //int32_t ret;
@@ -4402,8 +4402,8 @@ void paste_screen_command::undo()
 {
     if (prev_screens.size() > 1)
     {
-        ASSERT(type == PasteCommandType::ScreenPartialToEveryScreen || type == PasteCommandType::ScreenAllToEveryScreen);
-        ASSERT(prev_screens.size() == 128);
+        CHECK(type == PasteCommandType::ScreenPartialToEveryScreen || type == PasteCommandType::ScreenAllToEveryScreen);
+        CHECK(prev_screens.size() == 128);
         for (int i = 0; i < 128; i++)
         {
             copy_mapscr(Map.AbsoluteScr(view_map, i), prev_screens[i].get());
@@ -4487,7 +4487,7 @@ int set_screen_command::size()
 static std::shared_ptr<list_command> current_list_command;
 void zmap::StartListCommand()
 {
-    ASSERT(!current_list_command);
+    CHECK(!current_list_command);
     current_list_command.reset(new list_command);
 }
 

@@ -371,7 +371,7 @@ static int get_rng_index(zc_randgen *rng)
 // If an offset is given, the nth RNG step will be returned (offset = 1 means the first).
 static RngReplayStep *find_rng_step(int rng_index, size_t starting_step_index, const std::vector<std::shared_ptr<ReplayStep>> &log, int offset = 1)
 {
-    ASSERT(offset >= 1);
+    CHECK(offset >= 1);
 
     int num_seen = 0;
     for (size_t i = starting_step_index; i < log.size(); i++)
@@ -656,7 +656,7 @@ static void load_replay(std::filesystem::path path)
 
         if (type == TypeMeta)
         {
-            ASSERT(!done_with_meta);
+            CHECK(!done_with_meta);
 
             std::string key;
             std::string value;
@@ -664,8 +664,8 @@ static void load_replay(std::filesystem::path path)
             iss.ignore(1);
             portable_get_line(iss, value);
 
-            ASSERT(meta_map.find(key) == meta_map.end());
-            ASSERT(annotation_pos == std::string::npos);
+            CHECK(meta_map.find(key) == meta_map.end());
+            CHECK(annotation_pos == std::string::npos);
             meta_map[key] = value;
         }
         else if (type == TypeComment)
@@ -689,7 +689,7 @@ static void load_replay(std::filesystem::path path)
             std::string cheat_name;
             iss >> cheat_name;
             cheat = cheat_from_string(cheat_name);
-            ASSERT(cheat > Cheat::None && cheat < Cheat::Last);
+            CHECK(cheat > Cheat::None && cheat < Cheat::Last);
 
             if (cheat == Cheat::PlayerData)
             {
@@ -711,12 +711,12 @@ static void load_replay(std::filesystem::path path)
             iss >> start_index;
             iss >> end_index;
             iss >> seed;
-            ASSERT(start_index <= end_index);
+            CHECK(start_index <= end_index);
             replay_log.push_back(std::make_shared<RngReplayStep>(frame, start_index, end_index, seed));
         }
         else if (type == TypeKeyMap)
         {
-			ASSERT(version >= 5);
+			CHECK(version >= 5);
             std::array<int, KeyMapReplayStep::NumButtons> keys;
             for (int i = 0; i < KeyMapReplayStep::NumButtons; i++)
             {
@@ -733,7 +733,7 @@ static void load_replay(std::filesystem::path path)
         else if (type == TypeKeyUp || type == TypeKeyDown)
         {
             if (version >= 5)
-                ASSERT(found_key_map);
+                CHECK(found_key_map);
 
             std::string text;
             portable_get_line(iss, text);
@@ -746,14 +746,14 @@ static void load_replay(std::filesystem::path path)
                 key_index = KeyReplayStep::find_index_for_key_name(text.substr(2));
                 if (key_index == -1)
                     fprintf(stderr, "unknown key %s\n", text.substr(2).c_str());
-                ASSERT(key_index != -1);
+                CHECK(key_index != -1);
             }
             else
             {
                 button_index = KeyReplayStep::find_index_for_button_name(text);
                 if (button_index == -1)
                     fprintf(stderr, "unknown button %s\n", text.c_str());
-                ASSERT(button_index != -1);
+                CHECK(button_index != -1);
                 key_index = key_map.button_keys[button_index];
             }
 
@@ -982,7 +982,7 @@ static void start_manual_takeover()
         break;
     }
     // TODO: support updating the very last screen.
-    ASSERT(old_start_of_next_screen_index != -1);
+    CHECK(old_start_of_next_screen_index != -1);
 
     // Calculate what the button state is at the beginning of the next screen.
     // The state will be restored to this after the manual takeover is done.
@@ -1060,8 +1060,8 @@ std::string replay_mode_to_string(ReplayMode mode)
 
 void replay_start(ReplayMode mode_, std::filesystem::path path, int frame)
 {
-    ASSERT(mode == ReplayMode::Off);
-    ASSERT(mode_ != ReplayMode::Off && mode_ != ReplayMode::ManualTakeover);
+    CHECK(mode == ReplayMode::Off);
+    CHECK(mode_ != ReplayMode::Off && mode_ != ReplayMode::ManualTakeover);
     time_started = std::chrono::system_clock::now();
     mode = mode_;
     debug = false;
@@ -1117,7 +1117,7 @@ void replay_start(ReplayMode mode_, std::filesystem::path path, int frame)
 
     if (replay_is_replaying())
     {
-        ASSERT(!keyboard_callback);
+        CHECK(!keyboard_callback);
         install_keyboard_handlers();
         KeyMapReplayStep::stored = KeyMapReplayStep::make(0);
     }
@@ -1130,7 +1130,7 @@ void replay_start(ReplayMode mode_, std::filesystem::path path, int frame)
 
 void replay_continue(std::filesystem::path path)
 {
-    ASSERT(mode == ReplayMode::Off);
+    CHECK(mode == ReplayMode::Off);
     mode = ReplayMode::Record;
     frame_arg = -1;
     prev_mouse_state = {0, 0, 0, 0};
@@ -1518,7 +1518,7 @@ void replay_save(std::filesystem::path path)
 
 void replay_stop_manual_takeover()
 {
-    ASSERT(mode == ReplayMode::ManualTakeover);
+    CHECK(mode == ReplayMode::ManualTakeover);
 
     // Update the replay log to account for the newly added steps.
     int old_frame_duration = replay_log[old_start_of_next_screen_index]->frame - frame_arg;
@@ -1853,10 +1853,10 @@ size_t replay_register_rng(zc_randgen *rng)
 
 void replay_set_rng_seed(zc_randgen *rng, int seed)
 {
-    ASSERT(mode != ReplayMode::Off);
+    CHECK(mode != ReplayMode::Off);
 
     int index = get_rng_index(rng);
-    ASSERT(index != -1);
+    CHECK(index != -1);
 
     int seed_count = 0;
     {

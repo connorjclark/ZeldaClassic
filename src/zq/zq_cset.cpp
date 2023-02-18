@@ -119,7 +119,7 @@ int32_t jwin_hsl_proc(int32_t msg, DIALOG *d, int32_t c)
 #define HSL_FLAG_COLOR		2
 #define HSL_FLAG_SATURATION	4
 #define HSL_FLAGS_CS		(HSL_FLAG_COLOR|HSL_FLAG_SATURATION)
-	ASSERT(d);
+	CHECK(d);
 	//d->w and d->h are ignored
 	d->w = (is_large?1.5:1)*174;
 	d->h = (is_large?1.5:1)*88;
@@ -251,7 +251,7 @@ int32_t jwin_cset_proc(int32_t msg, DIALOG* d, int32_t c)
 	static int32_t cs_hei = 8;
 	static int32_t last_index = 0, last_copy = 0;
 	static int32_t lastshow16 = 0;
-	ASSERT(d);
+	CHECK(d);
 	int32_t ret = D_O_K;
 	if(d->flags & D_DIRTY)
 	{
@@ -376,7 +376,7 @@ int32_t jwin_cset_proc(int32_t msg, DIALOG* d, int32_t c)
 
 int32_t edit_cset_kb_handler(int32_t msg, DIALOG* d, int32_t c)
 {
-	ASSERT(d);
+	CHECK(d);
 	int32_t ret = D_O_K;
 	switch(msg)
 	{

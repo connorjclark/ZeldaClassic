@@ -4373,7 +4373,7 @@ int32_t onFullscreen()
 static bool current_session_is_replay = false;
 static void load_replay_file(ReplayMode mode, std::string replay_file, int frame)
 {
-	ASSERT(mode == ReplayMode::Replay || mode == ReplayMode::Assert || mode == ReplayMode::Update);
+	CHECK(mode == ReplayMode::Replay || mode == ReplayMode::Assert || mode == ReplayMode::Update);
 	replay_start(mode, replay_file, frame);
 
 	std::string qst_meta = replay_get_meta_str("qst");
@@ -5393,7 +5393,7 @@ int main(int argc, char **argv)
 	}
 	else if (record_arg > 0)
 	{
-		ASSERT(zqtesting_mode);
+		CHECK(zqtesting_mode);
 		int replay_name_arg = used_switch(argc, argv, "-replay-name");
 
 		replay_start(ReplayMode::Record, argv[record_arg + 1], frame);

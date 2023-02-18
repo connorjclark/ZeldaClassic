@@ -37,7 +37,7 @@ static const std::vector<std::string> CheatStrings = {
 Cheat cheat_from_string(std::string name)
 {
     auto it = std::find(std::begin(CheatStrings), std::end(CheatStrings), name.c_str());
-    ASSERT(it != std::end(CheatStrings));
+    CHECK(it != std::end(CheatStrings));
     return (Cheat)(it - std::begin(CheatStrings));
 }
 

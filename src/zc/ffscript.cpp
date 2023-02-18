@@ -46337,7 +46337,7 @@ void zscript_load_config_file(ZSCRIPT_CONFIG **config, const char *filename, con
  */
 void zscript_set_config_file(const char *filename)
 {
-	ASSERT(filename);
+	CHECK(filename);
 	zscript_load_config_file(&config[0], filename, filename);
 }
 
@@ -46349,7 +46349,7 @@ void zscript_set_config_file(const char *filename)
  */
 void zscript_set_config_data(const char *data, int32_t length)
 {
-	ASSERT(data);
+	CHECK(data);
 	zscript_set_config(&config[0], data, length, NULL);
 }
 
@@ -46379,7 +46379,7 @@ void zscript_override_config_file(const char *filename)
  */
 void zscript_override_config_data(const char *data, int32_t length)
 {
-	ASSERT(data);
+	CHECK(data);
 	zscript_set_config(&config_override, data, length, NULL);
 }
 
@@ -47194,7 +47194,7 @@ const char *zscript_get_config_text(const char *msg)
 	ZSCRIPT_CONFIG_HOOK *hook;
 	ZSCRIPT_CONFIG_ENTRY *p;
 	int32_t c, pos, size;
-	ASSERT(msg);
+	CHECK(msg);
 
 	/* Hack: the inline definition of install_allegro() from 4.2.0 calls
 	* zscript_get_config_text() even before Allegro has been initialised, leading

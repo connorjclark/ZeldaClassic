@@ -829,7 +829,7 @@ namespace util
 using namespace util;
 int32_t vbound(int32_t val, int32_t low, int32_t high)
 {
-	ASSERT(low <= high);
+	DCHECK(low <= high);
 	if(val <= low)
 		return low;
 	if(val >= high)
@@ -839,7 +839,7 @@ int32_t vbound(int32_t val, int32_t low, int32_t high)
 
 double vbound(double val, double low, double high)
 {
-	ASSERT(low <= high);
+	DCHECK(low <= high);
 	if(val <= low)
 		return low;
 	if(val >= high)

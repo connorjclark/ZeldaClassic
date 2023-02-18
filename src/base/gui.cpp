@@ -202,7 +202,7 @@ int32_t do_zqdialog(DIALOG *dialog, int32_t focus_obj)
 	BITMAP *prev_screen = screen;
 	int32_t screen_count = _gfx_mode_set_count;
 	DIALOG_PLAYER *player2;
-	ASSERT(dialog);
+	CHECK(dialog);
 	
 	if(!is_same_bitmap(_mouse_screen, screen) && !(gfx_capabilities&GFX_HW_CURSOR))
 	{
@@ -253,7 +253,7 @@ int32_t popup_zqdialog(DIALOG *dialog, int32_t focus_obj)
 	BITMAP *bmp;
 	BITMAP *gui_bmp;
 	int32_t ret;
-	ASSERT(dialog);
+	CHECK(dialog);
 	
 	bmp = create_bitmap_ex(8, dialog->w, dialog->h);
 	gui_bmp = saved_gui_bmp ? saved_gui_bmp : screen;

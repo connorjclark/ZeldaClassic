@@ -55,7 +55,7 @@ struct WidgetSet
 	{
 		//Assert: No '[]' on an empty WidgetSet
 		if(!head) Z_error_fatal("WidgetSet error: [] on empty WidgetSet! Crashing...\n");
-		ASSERT(head); //otherwise have no 'std::shared_ptr<T>&' to return...
+		CHECK(head); //otherwise have no 'std::shared_ptr<T>&' to return...
 		if(head==tail) return head->widg;
 		//[-1] accesses the tail, further negatives go backwards.
 		//If it would over/underflow, it wraps, as a sanity concern.

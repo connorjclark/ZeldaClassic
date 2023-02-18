@@ -70,7 +70,7 @@ void Matrix(int32_t speed, int32_t density, int32_t mousedelay)
     rti_matrix.visible = true;
 
     auto it = std::find(rti_root.children.begin(), rti_root.children.end(), &rti_menu);
-    ASSERT(it != rti_root.children.end());
+    CHECK(it != rti_root.children.end());
     rti_root.children.insert(it, &rti_matrix);
 
     int w = al_get_bitmap_width(rti_game.bitmap);

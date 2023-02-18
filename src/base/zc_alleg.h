@@ -12,6 +12,13 @@
 #define _ZC_ALLEG_H_
 
 #define DEBUGMODE
+#define CHECK(condition) ASSERT(condition)
+#ifdef ZC_DEBUG
+	#define DCHECK(condition) ASSERT(condition)
+#else
+	#define DCHECK(condition)
+#endif
+
 #define ALLEGRO_NO_COMPATIBILITY
 #include "base/allegro_wrapper.h"
 #include <allegro/internal/aintern.h>
