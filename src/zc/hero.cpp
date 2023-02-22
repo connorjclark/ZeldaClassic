@@ -1566,7 +1566,8 @@ void HeroClass::init()
 	}
 	FFCore.nostepforward = 0;
 
-	z3step = 2;
+	if (!replay_is_active() || replay_get_version() >= 12)
+		z3step = 2;
 }
 
 void HeroClass::draw_under(BITMAP* dest)
