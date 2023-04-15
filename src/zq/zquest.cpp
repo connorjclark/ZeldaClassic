@@ -24671,7 +24671,7 @@ static DIALOG assignscript_dlg[] =
     
 };
 
-int32_t txtout(BITMAP* dest, char* txt, int32_t x, int32_t y, bool disabled)
+int32_t txtout(BITMAP* dest, const char* txt, int32_t x, int32_t y, bool disabled)
 {
 	if(disabled)
 	{
