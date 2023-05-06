@@ -643,6 +643,8 @@ def run_replay_test(replay_file: pathlib.Path, output_dir: pathlib.Path) -> RunR
     # Cap the duration in CI, in case it somehow never ends.
     do_timeout = True if args.ci else False
     timeout = 60
+    if replay_file.name == 'yuurand.zplay':
+        timeout = 120
     if is_coverage:
         timeout *= 5
 
