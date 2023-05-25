@@ -26308,7 +26308,7 @@ bool HeroClass::edge_of_dmap(int32_t side)
         return currscr<16;
         
     case down:
-        return currscr>=112;
+        return currscr>=112 + 128;
         
     case left:
         if((currscr&15)==0)

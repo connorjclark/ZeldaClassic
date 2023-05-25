@@ -93,7 +93,8 @@ static int scr_xy_to_index(int x, int y) {
 	// TODO can't do this check, because some code expected to be able to go slightly out of bounds
 	// DCHECK(x >= 0 && x < 16 && y >= 0 && y < 8);
 	x = CLAMP(0, x, 15);
-	y = CLAMP(0, y, 7);
+	// y = CLAMP(0, y, 7);
+	y = CLAMP(0, y, 15);
 	return x + y*16;
 }
 
@@ -164,6 +165,7 @@ bool is_extended_height_mode()
 
 int get_region_id(int dmap, int scr)
 {
+	return 1;
 	if (!global_z3_scrolling) return 0;
 	if (scr >= 128) return 0;
 #ifndef hardcode_regions_mode
@@ -228,13 +230,14 @@ void z3_calculate_region(int dmap, int screen_index, int& origin_scr, int& regio
 
 	region_scr_width = region_scr_right - origin_scr_x + 1;
 	region_scr_height = region_scr_bottom - origin_scr_y + 1;
+	region_scr_height *= 2;
 	world_w = 256*region_scr_width;
 	world_h = 176*region_scr_height;
 	region_scr_dx = input_scr_x - origin_scr_x;
 	region_scr_dy = input_scr_y - origin_scr_y;
 
-	DCHECK_RANGE_INCLUSIVE(region_scr_width, 0, 16);
-	DCHECK_RANGE_INCLUSIVE(region_scr_height, 0, 8);
+	// DCHECK_RANGE_INCLUSIVE(region_scr_width, 0, 16);
+	// DCHECK_RANGE_INCLUSIVE(region_scr_height, 0, 8);
 }
 
 void z3_load_region(int dmap)
@@ -333,7 +336,7 @@ void z3_update_currscr()
 	int dx = x / 256;
 	int dy = y / 176;
 	int newscr = z3_origin_screen_index + dx + dy * 16;
-	if (dx >= 0 && dy >= 0 && dx < 16 && dy < 8 && is_in_current_region(newscr))
+	if (dx >= 0 && dy >= 0 && dx < 16 && dy < 8*2 && is_in_current_region(newscr))
 	{
 		region_scr_dx = dx;
 		region_scr_dy = dy;
@@ -456,7 +459,11 @@ const mapscr* get_canonical_scr(int map, int screen)
 
 mapscr* get_scr(int map, int screen)
 {
-	DCHECK_RANGE_INCLUSIVE(screen, 0, 135);
+	// DCHECK_RANGE_INCLUSIVE(screen, 0, 135);
+	if (is_z3_scrolling_mode() && map == currmap && screen >= 128) {
+		map = 8;
+		screen -= 128;
+	}
 	if (screen == initial_region_scr && map == currmap) return &tmpscr;
 	if (screen == homescr && map == currmap) return &special_warp_return_screen;
 
@@ -480,7 +487,11 @@ mapscr* get_scr(int map, int screen)
 
 mapscr* get_scr_no_load(int map, int screen)
 {
-	DCHECK_RANGE_INCLUSIVE(screen, 0, 135);
+	// DCHECK_RANGE_INCLUSIVE(screen, 0, 135);
+	if (is_z3_scrolling_mode() && map == currmap && screen >= 128) {
+		map = 8;
+		screen -= 128;
+	}
 	if (screen == initial_region_scr && map == currmap) return &tmpscr;
 	if (screen == homescr && map == currmap) return &special_warp_return_screen;
 
@@ -501,6 +512,11 @@ mapscr* get_scr_no_load(int map, int screen)
 mapscr* get_layer_scr(int map, int screen, int layer)
 {
 	DCHECK_LAYER_NEG1_INDEX(layer);
+	if (is_z3_scrolling_mode() && map == currmap && screen >= 128) {
+		map = 8;
+		screen -= 128;
+	}
+
 	if (layer == -1) return get_scr(map, screen);
 	if (screen == initial_region_scr && map == currmap) return &tmpscr2[layer];
 	if (screen == homescr && map == currmap) return &tmpscr3[layer];
@@ -4140,7 +4156,7 @@ static void for_every_nearby_screen(const std::function <void (std::array<screen
 				if (Hero.edge_of_dmap(XY_DELTA_TO_DIR(currscr_dx, 0))) continue;
 				if (Hero.edge_of_dmap(XY_DELTA_TO_DIR(0, currscr_dy))) continue;
 				if (scr_x < 0 || scr_x >= 16) continue;
-				if (scr_y < 0 || scr_y >= 8) continue;
+				if (scr_y < 0 || scr_y >= 8*2) continue;
 			}
 
 			int screen_index = scr_x + scr_y * 16;
