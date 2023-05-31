@@ -30299,7 +30299,10 @@ int32_t main(int32_t argc,char **argv)
 	call_foo_dlg();
 
 	if(used_switch(argc,argv,"-q"))
-		FatalConsole("-q switch used, quitting program.\n");
+	{
+		Z_message("-q switch used, quitting program.\n");
+		exit(0);
+	}
 
 	while(!quit)
 	{
