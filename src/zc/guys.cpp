@@ -12907,8 +12907,8 @@ bool eZora::animate(int32_t index)
 	
 	if(watch)
 	{
-		++clock_zoras[id];
-		return true;
+		clk = 0;
+		return false;
 	}
 	
 	if(get_bit(quest_rules,qr_NEWENEMYTILES))
@@ -12981,7 +12981,7 @@ bool eZora::animate(int32_t index)
 
 void eZora::draw(BITMAP *dest)
 {
-	if(clk<3)
+	if (isSubmerged())
 		return;
 		
 	update_enemy_frame();
@@ -12990,7 +12990,7 @@ void eZora::draw(BITMAP *dest)
 
 bool eZora::isSubmerged() const
 {
-	return ( clk < 3 );
+	return clk < 3 || watch;
 }
 
 eStalfos::eStalfos(zfix X,zfix Y,int32_t Id,int32_t Clk) : enemy(X,Y,Id,Clk)

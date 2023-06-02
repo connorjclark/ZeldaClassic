@@ -8337,14 +8337,6 @@ heroanimate_skip_liftwpn:;
 			}
 			
 			watch=false;
-			
-			for(int32_t i=0; i<eMAXGUYS; i++)
-			{
-				for(int32_t zoras=0; zoras<clock_zoras[i]; zoras++)
-				{
-					addenemy(0,0,i,0);
-				}
-			}
 		}
 	}
 	
@@ -11968,9 +11960,6 @@ bool HeroClass::startwpn(int32_t itemid)
 			paymagiccost(itemid);
 			
 			setClock(watch=true);
-			
-			for(int32_t i=0; i<eMAXGUYS; i++)
-				clock_zoras[i]=0;
 				
 			clockclk=itm.misc1;
 			sfx(itm.usesound);
@@ -29169,9 +29158,6 @@ void getitem(int32_t id, bool nosound, bool doRunPassive)
 			if((idat.flags & ITEM_FLAG2) && clockclk) //"Can't activate while clock active"
 				break;
 			setClock(watch=true);
-			
-			for(int32_t i=0; i<eMAXGUYS; i++)
-				clock_zoras[i]=0;
 				
 			clockclk=itemsbuf[id&0xFF].misc1;
 			sfx(idat.usesound);
