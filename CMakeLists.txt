@@ -32,9 +32,21 @@ if(WANT_ASAN)
 endif()
 
 if(WANT_GIT_HOOKS)
-	if (EXISTS "${CMAKE_SOURCE_DIR}/.git")
-		configure_file("${CMAKE_CURRENT_SOURCE_DIR}/cmake/commit-msg.in" "${CMAKE_SOURCE_DIR}/.git/hooks/commit-msg")
-		configure_file("${CMAKE_CURRENT_SOURCE_DIR}/cmake/prepare-commit-msg.in" "${CMAKE_SOURCE_DIR}/.git/hooks/prepare-commit-msg")
+	if(EXISTS "${CMAKE_SOURCE_DIR}/.git")
+		configure_file("${CMAKE_CURRENT_SOURCE_DIR}/cmake/commit-msg.in" "${CMAKE_SOURCE_DIR}/.git/commit-msg")
+		configure_file("${CMAKE_CURRENT_SOURCE_DIR}/cmake/prepare-commit-msg.in" "${CMAKE_SOURCE_DIR}/.git/prepare-commit-msg")
+		if(UNIX)
+			file(
+				COPY "${CMAKE_SOURCE_DIR}/.git/commit-msg"
+				DESTINATION "${CMAKE_SOURCE_DIR}/.git/hooks"
+				FILE_PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE
+			)
+			file(
+				COPY "${CMAKE_SOURCE_DIR}/.git/prepare-commit-msg"
+				DESTINATION "${CMAKE_SOURCE_DIR}/.git/hooks"
+				FILE_PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE
+			)
+		endif()
 	endif()
 endif()
 

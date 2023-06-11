@@ -10,7 +10,7 @@ commit_msg_path = Path(sys.argv[1])
 commit_msg = commit_msg_path.read_text()
 
 comment_char = subprocess.check_output(
-    'git config core.commentchar', encoding='utf-8').strip()
+    'git config core.commentchar', shell=True, encoding='utf-8').strip()
 commit_msg += f'{comment_char} example commit - type(scope): details'
 commit_msg += '\n'
 commit_msg += f'{comment_char} valid types    - '
@@ -20,7 +20,7 @@ commit_msg += f'{comment_char} valid scopes   - '
 commit_msg += ', '.join(valid_scopes)
 
 changed_files = subprocess.check_output(
-    'git diff --cached --name-only --diff-filter=ACM', encoding='utf-8').splitlines()
+    'git diff --cached --name-only --diff-filter=ACM', shell=True, encoding='utf-8').splitlines()
 changed_files = [f.lower() for f in changed_files]
 suggested_types = []
 suggested_scopes = []
