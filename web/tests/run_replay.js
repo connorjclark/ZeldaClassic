@@ -82,19 +82,25 @@ async function runReplay(zplay) {
   }
   while (!hasExited) {
     await getResultFile();
+    console.log('GOT A RES FILE');
     await new Promise(resolve => setTimeout(resolve, 1000));
   }
+  console.log('DEAD');
   await getResultFile();
+  console.log('GOT A RES FILE');
 
   await page.addScriptTag({ content: fs.readFileSync(`${dirname}/buffer.js`).toString() });
+  console.log('added buffer.js');
   const snapshots = await page.evaluate((zplayName) => {
     const files = FS.readdir('/test_replays')
       .filter(file => file.endsWith('.png') && file.includes(zplayName));
+    console.log('reading snapshots', files);
     return files.map(file => ({
       file,
       content: Buffer.from(FS.readFile(`/test_replays/${file}`)).toString('binary'),
     }));
   }, zplayName);
+  console.log('got snapshots');
 
   for (const { file, content } of snapshots) {
     fs.writeFileSync(`${outputFolder}/${file}`, Buffer.from(content, 'binary'));
@@ -103,6 +109,7 @@ async function runReplay(zplay) {
   const allegroLog = await page.evaluate(() => {
     return new TextDecoder().decode(FS.readFile('allegro.log'));
   });
+  console.log('got allegro.log');
   fs.writeFileSync(`${outputFolder}/allegro.log`, allegroLog);
 
   const roundtrip = await page.evaluate((zplay) => {
@@ -117,6 +124,7 @@ async function runReplay(zplay) {
   fs.closeSync(stdoutFd);
   fs.closeSync(stderrFd);
 
+  console.log('CLOSING BROWSER');
   await browser.close();
   await server.server.close();
   return exitCode;
