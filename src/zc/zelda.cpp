@@ -4490,16 +4490,23 @@ int main(int argc, char **argv)
 	{
 		Z_error_fatal("Error");
 	}
+
+	Z_message("CONNOR DEBUG 1\n");
 	
 	Z_message("Initializing Allegro... ");
+	Z_message("CONNOR DEBUG 2\n");
 	if(!al_init())
 	{
+		Z_message("CONNOR DEBUG !! 1\n");
 		Z_error_fatal("Failed Init!");
 	}
+	Z_message("CONNOR DEBUG 3\n");
 	if(allegro_init() != 0)
 	{
+		Z_message("CONNOR DEBUG !! 2\n");
 		Z_error_fatal("Failed Init!");
 	}
+	Z_message("CONNOR DEBUG 4\n");
 
 	// Merge old a4 config into a5 system config.
 	ALLEGRO_CONFIG *tempcfg = al_load_config_file(get_config_file_name());
@@ -4532,6 +4539,7 @@ int main(int argc, char **argv)
 
 	al5img_init();
 	register_png_file_type();
+	Z_message("CONNOR DEBUG 5\n");
 
 	three_finger_flag=false;
 
