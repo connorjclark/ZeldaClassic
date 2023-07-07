@@ -72,7 +72,11 @@ async function runReplay(zplay) {
       if (!FS.findObject(`${zplay}.result.txt`)) {
         return;
       }
-      return new TextDecoder().decode(FS.readFile(`${zplay}.result.txt`));
+      const ff = new TextDecoder().decode(FS.readFile(`${zplay}.result.txt`));
+      console.log('GOT A RES FILE');
+      console.log(ff);
+      return ff;
+      // return new TextDecoder().decode(FS.readFile(`${zplay}.result.txt`));
     }, zplay);
     if (!result) return;
 
@@ -82,19 +86,17 @@ async function runReplay(zplay) {
   }
   while (!hasExited) {
     await getResultFile();
-    console.log('GOT A RES FILE');
     await new Promise(resolve => setTimeout(resolve, 1000));
   }
   console.log('DEAD');
   await getResultFile();
-  console.log('GOT A RES FILE');
 
   await page.addScriptTag({ content: fs.readFileSync(`${dirname}/buffer.js`).toString() });
   console.log('added buffer.js');
   const snapshots = await page.evaluate((zplayName) => {
     const files = FS.readdir('/test_replays')
       .filter(file => file.endsWith('.png') && file.includes(zplayName));
-    console.log('reading snapshots', files);
+    console.log('reading snapshots', files.length);
     return files.map(file => ({
       file,
       content: Buffer.from(FS.readFile(`/test_replays/${file}`)).toString('binary'),
