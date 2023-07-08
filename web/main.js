@@ -140,6 +140,8 @@ async function main() {
         if (TARGET === 'zquest') setupOpenTestMode();
       },
       setStatus: function (text, percentProgress = null) {
+        console.log(`status: ${text}`);
+
         // `.data.js` emscripten generated script passes progress like this:
         //   Downloading data... (x/y)
         // And there's no way to configure that, so just parse it.

@@ -6,11 +6,14 @@
 
 EM_ASYNC_JS(void, em_init_fs_, (), {
   // Initialize the filesystem with 0-byte files for every quest.
+  console.log('em_init_fs_ 1');
   const quests = await ZC.fetch("https://hoten.cc/quest-maker/play/quest-manifest.json").catch(error => {
 	console.error(error.toString());
 	return [];
   });
+  console.log('em_init_fs_ 2');
   FS.mkdir('/_quests');
+  console.log('em_init_fs_ 3');
 
   function writeFakeFile(path, url) {
     FS.mkdirTree(PATH.dirname(path));
@@ -19,6 +22,7 @@ EM_ASYNC_JS(void, em_init_fs_, (), {
     // window.ZC.pathToUrl[path] = `https://hoten.cc/quest-maker/play/${url}`;
     window.ZC.pathToUrl[path] = url;
   }
+  console.log('em_init_fs_ 4');
 
   for (let i = 0; i < quests.length; i++) {
     const quest = quests[i];
@@ -32,13 +36,16 @@ EM_ASYNC_JS(void, em_init_fs_, (), {
       writeFakeFile(window.ZC.createPathFromUrl(extraResourceUrl), 'https://hoten.cc/quest-maker/play/' + extraResourceUrl);
     }
   }
+  console.log('em_init_fs_ 5');
 
   for (const file of window.ZC_Constants.files) {
     FS.mkdirTree(PATH.dirname(file));
     writeFakeFile(file, 'files' + file);
   }
+  console.log('em_init_fs_ 6');
 
   await ZC.configureMount();
+  console.log('em_init_fs_ 7');
 });
 void em_init_fs() {
   em_init_fs_();

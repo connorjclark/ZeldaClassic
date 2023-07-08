@@ -4522,8 +4522,11 @@ int main(int argc, char **argv)
 	Z_message("CONNOR DEBUG 4.2\n");
 
 #ifdef __EMSCRIPTEN__
+	Z_message("CONNOR DEBUG LOL 1\n");
 	em_mark_initializing_status();
+	Z_message("CONNOR DEBUG LOL 2\n");
 	em_init_fs();
+	Z_message("CONNOR DEBUG LOL 3\n");
 #endif
 	
 	if(!al_init_image_addon())
