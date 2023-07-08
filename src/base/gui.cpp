@@ -188,15 +188,35 @@ int32_t do_zqdialog(DIALOG *dialog, int32_t focus_obj)
 	
 	player2 = init_dialog(dialog, focus_obj);
 	
-	while(update_dialog(player2))
+	int x;
+	int should_draw = 1;
+	int num_idle_frames = 0;
+	while(x = update_dialog(player2))
 	{
-		/* If a menu is active, we yield here, since the dialog
-		* engine is shut down so no user code can be running.
-		*/
-		update_hw_screen(true);
-		
-		//if (active_menu_player2)
-		//rest(1);
+		al_rest(1./60);
+
+		// We don't need to draw every frame - only when the dialog has responded to input.
+		if (player2->click_wait)
+			should_draw = 1;
+		if (x != 1)
+			should_draw = 1;
+		// Key inputs for drawing the tab panel don't take affect until the next frame.
+		if (player2->res)
+			should_draw = 2;
+		if (should_draw-- > 0)
+		{
+			num_idle_frames = 0;
+			update_hw_screen(true);
+			continue;
+		}
+
+		// The above can miss things, so draw at least a few times a second.
+		if (num_idle_frames++ == 15)
+		{
+			should_draw = 1;
+		}
+
+		// Not perfect, but beats using 100% of CPU.
 	}
 	
 	int ret = shutdown_dialog(player2);
