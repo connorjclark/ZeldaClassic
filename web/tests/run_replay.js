@@ -70,6 +70,7 @@ async function runReplay(zplay) {
   async function getResultFile() {
     const result = await page.evaluate((zplay) => {
       if (!FS.findObject(`${zplay}.result.txt`)) {
+        console.log('no res file');
         return;
       }
       const ff = new TextDecoder().decode(FS.readFile(`${zplay}.result.txt`));
