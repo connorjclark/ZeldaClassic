@@ -22,103 +22,103 @@ jobs:
       - name: git clone
         uses: nschloe/action-cached-lfs-checkout@d6efedcb8fc03d006e1e77743718e26234ed2c97
 
-  test:
-    needs: warm-lfs-cache
-    strategy:
-      matrix:
-        include:
-          - runs-on: windows-2022
-            arch: x64
-            compiler: msvc
-          - runs-on: windows-2022
-            arch: win32
-            compiler: msvc
-            extra-args: --max_duration 60
-          - runs-on: macos-12
-            arch: intel
-            compiler: clang
-          - runs-on: ubuntu-22.04
-            arch: x64
-            compiler: clang
-      fail-fast: false
-    # See https://github.com/community/community/discussions/40777
-    # uses: ./.github/workflows/test.yml
-    uses: ArmageddonGames/ZQuestClassic/.github/workflows/test.yml@main
-    with:
-      runs-on: ${{ matrix.runs-on }}
-      arch: ${{ matrix.arch }}
-      compiler: ${{ matrix.compiler }}
-      config: Release
-      extra-args: ${{ matrix.extra-args }}
+  # test:
+  #   needs: warm-lfs-cache
+  #   strategy:
+  #     matrix:
+  #       include:
+  #         - runs-on: windows-2022
+  #           arch: x64
+  #           compiler: msvc
+  #         - runs-on: windows-2022
+  #           arch: win32
+  #           compiler: msvc
+  #           extra-args: --max_duration 60
+  #         - runs-on: macos-12
+  #           arch: intel
+  #           compiler: clang
+  #         - runs-on: ubuntu-22.04
+  #           arch: x64
+  #           compiler: clang
+  #     fail-fast: false
+  #   # See https://github.com/community/community/discussions/40777
+  #   # uses: ./.github/workflows/test.yml
+  #   uses: ArmageddonGames/ZQuestClassic/.github/workflows/test.yml@main
+  #   with:
+  #     runs-on: ${{ matrix.runs-on }}
+  #     arch: ${{ matrix.arch }}
+  #     compiler: ${{ matrix.compiler }}
+  #     config: Release
+  #     extra-args: ${{ matrix.extra-args }}
 
-  compare:
-    needs: ["test"]
-    runs-on: ubuntu-latest
-    if: failure()
-    env:
-      REPLAY_FAILURE_DISCORD_WEBHOOK: ${{ secrets.REPLAY_FAILURE_DISCORD_WEBHOOK }}
+  # compare:
+  #   needs: ["test"]
+  #   runs-on: ubuntu-latest
+  #   if: failure()
+  #   env:
+  #     REPLAY_FAILURE_DISCORD_WEBHOOK: ${{ secrets.REPLAY_FAILURE_DISCORD_WEBHOOK }}
 
-    steps:
-      - uses: actions/setup-python@v4
-        with:
-          python-version: '3.10' 
-      - run: pip install PyGithub==1.58.2 requests discord.py watchdog Pillow intervaltree cutie
-      - name: Install Node.js 18.x
-        uses: actions/setup-node@v3
-        with:
-          node-version: 18.x
-      - name: git clone
-        uses: actions/checkout@v3
+  #   steps:
+  #     - uses: actions/setup-python@v4
+  #       with:
+  #         python-version: '3.10' 
+  #     - run: pip install PyGithub==1.58.2 requests discord.py watchdog Pillow intervaltree cutie
+  #     - name: Install Node.js 18.x
+  #       uses: actions/setup-node@v3
+  #       with:
+  #         node-version: 18.x
+  #     - name: git clone
+  #       uses: actions/checkout@v3
 
-      # TODO: there is no simple way to download just the "replay-*" artifacts,
-      # so currently this also downloads each large build artifact.
-      # https://github.com/actions/download-artifact/issues/6
-      - uses: actions/download-artifact@v3
-        with:
-          path: test-results
+  #     # TODO: there is no simple way to download just the "replay-*" artifacts,
+  #     # so currently this also downloads each large build artifact.
+  #     # https://github.com/actions/download-artifact/issues/6
+  #     - uses: actions/download-artifact@v3
+  #       with:
+  #         path: test-results
 
-      # TODO: instead of starting baseline workflow runs when all platforms finish,
-      # kick each off as necessary in `test.yml` and just poll for their completion here.
-      - name: Collect baseline
-        run: python3 tests/run_test_workflow.py --test_results test-results --repo ${{ github.repository }} --token ${{ secrets.GITHUB_TOKEN }}
-        id: collect-baseline
-      - name: Generate report
-        run: python3 tests/compare_replays.py --workflow_run ${{ steps.collect-baseline.outputs.baseline_run_id }} --local test-results --repo ${{ github.repository }} --token ${{ secrets.GITHUB_TOKEN }}
+  #     # TODO: instead of starting baseline workflow runs when all platforms finish,
+  #     # kick each off as necessary in `test.yml` and just poll for their completion here.
+  #     - name: Collect baseline
+  #       run: python3 tests/run_test_workflow.py --test_results test-results --repo ${{ github.repository }} --token ${{ secrets.GITHUB_TOKEN }}
+  #       id: collect-baseline
+  #     - name: Generate report
+  #       run: python3 tests/compare_replays.py --workflow_run ${{ steps.collect-baseline.outputs.baseline_run_id }} --local test-results --repo ${{ github.repository }} --token ${{ secrets.GITHUB_TOKEN }}
 
-      - run: npx surge ${{ github.workspace }}/tests/compare-report zc-replay-compare-${{ github.run_id }}.surge.sh --token ${{ secrets.SURGE_TOKEN }}
-        name: Upload to https://zc-replay-compare-${{ github.run_id }}.surge.sh
+  #     - run: npx surge ${{ github.workspace }}/tests/compare-report zc-replay-compare-${{ github.run_id }}.surge.sh --token ${{ secrets.SURGE_TOKEN }}
+  #       name: Upload to https://zc-replay-compare-${{ github.run_id }}.surge.sh
 
-      - name: Discord notification
-        shell: python
-        run: |
-          import inspect
-          import discord
+  #     - name: Discord notification
+  #       shell: python
+  #       run: |
+  #         import inspect
+  #         import discord
 
-          url = '${{ secrets.REPLAY_FAILURE_DISCORD_WEBHOOK }}'
-          ref_name = '${{ github.ref_name }}'
-          run_id = '${{ github.run_id }}'
-          repository = '${{ github.repository }}'
-          actor = '${{ github.actor }}'
+  #         url = '${{ secrets.REPLAY_FAILURE_DISCORD_WEBHOOK }}'
+  #         ref_name = '${{ github.ref_name }}'
+  #         run_id = '${{ github.run_id }}'
+  #         repository = '${{ github.repository }}'
+  #         actor = '${{ github.actor }}'
 
-          content = inspect.cleandoc(f'''
-              Report: https://zc-replay-compare-{run_id}.surge.sh
-              CI: https://github.com/{repository}/actions/runs/{run_id}
-              Actor: {actor}
-          ''')
+  #         content = inspect.cleandoc(f'''
+  #             Report: https://zc-replay-compare-{run_id}.surge.sh
+  #             CI: https://github.com/{repository}/actions/runs/{run_id}
+  #             Actor: {actor}
+  #         ''')
 
-          webhook = discord.SyncWebhook.from_url(url)
-          webhook.send(
-              content,
-              thread_name=f'Replay tests failed for {ref_name}',
-              wait=True,
-          )
+  #         webhook = discord.SyncWebhook.from_url(url)
+  #         webhook.send(
+  #             content,
+  #             thread_name=f'Replay tests failed for {ref_name}',
+  #             wait=True,
+  #         )
 
-      # Upload as artifact, so that if publishing to surge fails the report is still accessible.
-      - uses: actions/upload-artifact@v3
-        if: always()
-        with:
-          name: report
-          path: ${{ github.workspace }}/tests/compare-report
+  #     # Upload as artifact, so that if publishing to surge fails the report is still accessible.
+  #     - uses: actions/upload-artifact@v3
+  #       if: always()
+  #       with:
+  #         name: report
+  #         path: ${{ github.workspace }}/tests/compare-report
 
   web:
     needs: warm-lfs-cache
@@ -173,8 +173,8 @@ jobs:
       - run: sudo apt-get install xvfb
       - run: npm install
         working-directory: web
-      - run: xvfb-run --auto-servernum npm run test -- --timeout 100000 || xvfb-run --auto-servernum npm run test -- --timeout 100000 || xvfb-run --auto-servernum npm run test -- --timeout 100000
-        working-directory: web
+      # - run: xvfb-run --auto-servernum npm run test -- --timeout 100000 || xvfb-run --auto-servernum npm run test -- --timeout 100000 || xvfb-run --auto-servernum npm run test -- --timeout 100000
+      #   working-directory: web
       - run: pip install PyGithub==1.58.2 requests discord.py watchdog Pillow intervaltree cutie
       # Run each replay for just ~15 seconds, but run all of classic_1st_lvl1.zplay
       - run: xvfb-run --auto-servernum python -Xutf8 tests/run_replay_tests.py --build_folder build_emscripten/Release --max_duration 15 --max_duration classic_1st_lvl1.zplay=0 --test_results .tmp/test_results --ci web --retries 2

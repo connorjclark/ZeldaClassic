@@ -4492,6 +4492,7 @@ int main(int argc, char **argv)
 	}
 
 	Z_message("CONNOR DEBUG 1\n");
+	all_disable_threaded_display();
 	
 	Z_message("Initializing Allegro... ");
 	Z_message("CONNOR DEBUG 2\n");
@@ -4511,11 +4512,14 @@ int main(int argc, char **argv)
 	// Merge old a4 config into a5 system config.
 	ALLEGRO_CONFIG *tempcfg = al_load_config_file(get_config_file_name());
 	if (tempcfg) {
+		Z_message("CONNOR DEBUG 4.0\n");
 		al_merge_config_into(al_get_system_config(), tempcfg);
 		al_destroy_config(tempcfg);
 	}
+	Z_message("CONNOR DEBUG 4.1\n");
 
-	all_disable_threaded_display();
+	// all_disable_threaded_display();
+	Z_message("CONNOR DEBUG 4.2\n");
 
 #ifdef __EMSCRIPTEN__
 	em_mark_initializing_status();
@@ -4526,18 +4530,22 @@ int main(int argc, char **argv)
 	{
 		Z_error_fatal("Failed al_init_image_addon");
 	}
+	Z_message("CONNOR DEBUG 4.3\n");
 
 	if(!al_init_font_addon())
 	{
 		Z_error_fatal("Failed al_init_font_addon");
 	}
 
+	Z_message("CONNOR DEBUG 4.4\n");
 	if(!al_init_primitives_addon())
 	{
 		Z_error_fatal("Failed al_init_primitives_addon");
 	}
+	Z_message("CONNOR DEBUG 4.5\n");
 
 	al5img_init();
+	Z_message("CONNOR DEBUG 4.6\n");
 	register_png_file_type();
 	Z_message("CONNOR DEBUG 5\n");
 
