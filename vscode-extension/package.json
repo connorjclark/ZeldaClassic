@@ -1,5 +1,6 @@
 {
 	"name": "zquest-lsp",
+	"publisher": "cjamcl",
 	"description": "ZScript scripting language for ZQuest Classic",
 	"author": "Connor Clark",
 	"license": "MIT",

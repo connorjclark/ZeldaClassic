@@ -1,4 +1,10 @@
-# LSP Example
+# VS Code extension for ZScript
+
+Get the extension [here](https://marketplace.visualstudio.com/items?itemName=cjamcl.zquest-lsp).
+
+The rest of this README is left unmodified from the example project this was taken from.
+
+_______
 
 Heavily documented sample code for https://code.visualstudio.com/api/language-extensions/language-server-extension-guide
 
