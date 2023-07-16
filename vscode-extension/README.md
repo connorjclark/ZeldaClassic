@@ -2,6 +2,21 @@
 
 Get the extension [here](https://marketplace.visualstudio.com/items?itemName=cjamcl.zquest-lsp).
 
+For developing:
+
+```sh
+# open this folder in terminal
+# install things
+npm install
+# open _this folder_ (not repo root) in vscode
+# in Run and Debug panel, run the client
+# This will open up a new vscode extension debug window, where the code in this
+# folder is used.
+# To re-update the extension, hit the "restart" thing in the first VS Code's debug pane
+```
+
+Most of the interesting code is in `server.ts`. `syntaxes/` has grammar stuff.
+
 The rest of this README is left unmodified from the example project this was taken from.
 
 _______

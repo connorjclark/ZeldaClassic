@@ -165,6 +165,7 @@ async function processScript(textDocument: TextDocument): Promise<void> {
 
 	const tmpInput = `${globalTmpDir}/tmp.zs`;
 	let stdout = '';
+	let success = false;
 	fs.writeFileSync(tmpInput, text);
 	const exe = os.platform() === 'win32' ? './zscript.exe' : './zscript';
 	try {
@@ -174,6 +175,7 @@ async function processScript(textDocument: TextDocument): Promise<void> {
 		], {
 			cwd: settings.installationFolder,
 		});
+		success = true;
 		stdout = cp.stdout;
 	} catch (e: any) {
 		if (e.code === undefined) throw e;
@@ -238,6 +240,19 @@ async function processScript(textDocument: TextDocument): Promise<void> {
 			};
 			diagnostics.push(diagnostic);
 		}
+	}
+
+	// Fallback, incase compiling failed but we failed to parse out an error.
+	if (!success && diagnostics.length === 0) {
+		diagnostics.push({
+			severity: DiagnosticSeverity.Error,
+			range: {
+				start: textDocument.positionAt(0),
+				end: textDocument.positionAt(0),
+			},
+			message: stdout,
+			source: exe,
+		});
 	}
 
 	// Send the computed diagnostics to VSCode.
