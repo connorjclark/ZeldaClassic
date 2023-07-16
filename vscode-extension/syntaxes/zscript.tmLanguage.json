@@ -24,12 +24,16 @@
 					"match": "\\b(enum|function|int|bool|void|ffc)\\b"
 				},
 				{
+					"name": "storage.type.zscript",
+					"match": "\\b(void|untyped|bool|float|int|char32|long|rgb|bitmap|cheatdata|combodata|doorsetdat|dropsetdata|dmapdata|eweapon|ffc|gamedata|itemdata|lweapon|mapdata|messagedata|misccolordata|misccolourdata|npc|npcdata|palcycledata|ponddata|shopdata|spritedata|musicdata|warpringdata|screendata|player|link|hero|itemsprite|file|directory|stack|randgen|paldata|bottledata|bottleshopdata|subscreendata|generic|genericdata|portal|savedportal|particlesprite|decorationsprite)\\b"
+				},
+				{
 					"name": "support.function.zscript",
 					"match": "\\b(Rand|Cos|Sin|Waitframe)\\b"
 				},
 				{
 					"name": "support.type.zscript",
-					"match": "\\b(ffc|global|generic|script)\\b"
+					"match": "\\b(script|global|ffc|item|npc|eweapon|lweapon|player|screendata|dmapdata|itemsprite|untyped|combodata|subscreendata|generic)\\b"
 				},
 				{
 					"name": "support.class.zscript",
@@ -37,7 +41,7 @@
 				},
 				{
 					"name": "constant.numeric.zscript",
-					"match": "\\b(\\d+\\.?\\d?)\\b"
+					"match": "\\b(\\d+[.]?\\d?)\\b"
 				}
 			]
 		},
@@ -46,6 +50,11 @@
 				{
 					"name": "comment.line.zscript",
 					"match": "//.*"
+				},
+				{
+					"name": "comment.block.zscript",
+					"begin": "/[*]",
+					"end": "[*]/"
 				}
 			]
 		},

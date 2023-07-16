@@ -23,7 +23,6 @@ import * as fs from 'fs';
 
 const execFile = promisify(childProcess.execFile);
 
-
 // Create a connection for the server, using Node's IPC as a transport.
 // Also include all preview / proposed LSP features.
 const connection = createConnection(ProposedFeatures.all);
@@ -86,6 +85,7 @@ connection.onInitialized(() => {
 // The example settings
 interface Settings {
 	installationFolder?: string;
+	printCompilerOutput?: boolean;
 }
 
 // The global settings, used when the `workspace/configuration` request is not supported by the client.
@@ -179,7 +179,9 @@ async function processScript(textDocument: TextDocument): Promise<void> {
 		if (e.code === undefined) throw e;
 		stdout = e.stdout;
 	}
-	console.log(stdout);
+	if (settings.printCompilerOutput) {
+		console.log(stdout);
+	}
 	
 	const diagnostics: Diagnostic[] = [];
 	for (const line of stdout.split('\n')) {
@@ -250,21 +252,22 @@ connection.onDidChangeWatchedFiles(_change => {
 // This handler provides the initial list of the completion items.
 connection.onCompletion(
 	(_textDocumentPosition: TextDocumentPositionParams): CompletionItem[] => {
+		return [];
 		// The pass parameter contains the position of the text document in
 		// which code complete got requested. For the example we ignore this
 		// info and always provide the same completion items.
-		return [
-			{
-				label: 'TypeScript',
-				kind: CompletionItemKind.Text,
-				data: 1
-			},
-			{
-				label: 'JavaScript',
-				kind: CompletionItemKind.Text,
-				data: 2
-			}
-		];
+		// return [
+		// 	{
+		// 		label: 'TypeScript',
+		// 		kind: CompletionItemKind.Text,
+		// 		data: 1
+		// 	},
+		// 	{
+		// 		label: 'JavaScript',
+		// 		kind: CompletionItemKind.Text,
+		// 		data: 2
+		// 	}
+		// ];
 	}
 );
 
@@ -272,13 +275,13 @@ connection.onCompletion(
 // the completion list.
 connection.onCompletionResolve(
 	(item: CompletionItem): CompletionItem => {
-		if (item.data === 1) {
-			item.detail = 'TypeScript details';
-			item.documentation = 'TypeScript documentation';
-		} else if (item.data === 2) {
-			item.detail = 'JavaScript details';
-			item.documentation = 'JavaScript documentation';
-		}
+		// if (item.data === 1) {
+		// 	item.detail = 'TypeScript details';
+		// 	item.documentation = 'TypeScript documentation';
+		// } else if (item.data === 2) {
+		// 	item.detail = 'JavaScript details';
+		// 	item.documentation = 'JavaScript documentation';
+		// }
 		return item;
 	}
 );
