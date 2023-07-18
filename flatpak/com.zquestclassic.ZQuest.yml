@@ -46,7 +46,7 @@ modules:
       - type: extra-data
         url: https://github.com/ArmageddonGames/ZQuestClassic/releases/download/2.55-alpha-115/2.55-alpha-115-linux.tar.gz
         sha256: fd3782a997e6a0bde2b2d5b3ecc52c61468c3145e4e4fbc814502356c4a94cb4
-        size: 94327756
+        size: 31826824
         filename: zc.tar.gz
         only-arches: [x86_64]
         x-checker-data:
