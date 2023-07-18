@@ -30,8 +30,6 @@ modules:
       #   done
       - 
     post-install:
-      # - install -Dm644 com.zquestclassic.ZQuest.metainfo.xml -t ${FLATPAK_DEST}/share/metainfo/
-      # - install -Dm644 com.zquestclassic.ZQuest.desktop -t ${FLATPAK_DEST}/share/applications/
       - icon_in="zc.png";
         icon_out="zc.png";
         for s in {32,64,128,192,256,512}; do
@@ -54,6 +52,10 @@ modules:
           url: https://api.github.com/repos/ArmageddonGames/ZQuestClassic/releases/latest
           version-query: .tag_name
           url-query: .assets[] | select(.name|endswith("linux.tar.gz")) | .browser_download_url
+      - type: file
+        path: com.zquestclassic.ZQuest.metainfo.xml
+      - type: file
+        path: com.zquestclassic.ZQuest.desktop
     modules:
       - name: ImageMagick
         config-opts:
