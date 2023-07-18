@@ -31,7 +31,6 @@ modules:
       - echo hiiiii
       - pwd
       - ls
-    post-install:
       - icon_in="zc.png";
         icon_out="zc.png";
         for s in {32,64,128,192,256,512}; do
@@ -42,10 +41,11 @@ modules:
       - find . -perm /a+x -type f -exec mv {} ${FLATPAK_DEST}/bin/ \;
       - mkdir ${FLATPAK_DEST}/resources/
       - mv * ${FLATPAK_DEST}/resources/
-      # See note in `zlauncher.sh` below.
+      # This can be removed once we release a version using posix_spawnp.
       - ln -s ${FLATPAK_DEST}/bin/zelda ${FLATPAK_DEST}/resources/zelda
       - ln -s ${FLATPAK_DEST}/bin/zquest ${FLATPAK_DEST}/resources/zquest
       - ln -s ${FLATPAK_DEST}/bin/zscript ${FLATPAK_DEST}/resources/zscript
+    # post-install:
     sources:
       - type: archive
         url: https://github.com/ArmageddonGames/ZQuestClassic/releases/download/2.55-alpha-115/2.55-alpha-115-linux.tar.gz
@@ -62,9 +62,7 @@ modules:
         dest-filename: zlauncher.sh
         commands:
           - pwd
-          # This will work once we release a version using posix_spawnp
-          # - export PATH=$PWD:$PATH
-          # ...until then, do a big hack (see build-commands).
+          - export PATH=$PWD:$PATH
           - cd ../resources
           - zlauncher
       - type: file
