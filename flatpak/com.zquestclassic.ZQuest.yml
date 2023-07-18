@@ -29,6 +29,14 @@ modules:
     buildsystem: autotools
     config-opts:
       - --with-openssl
+    cleanup:
+      - /include
+      - /lib/*.a
+      - /lib/*.la
+      - /lib/pkgconfig
+    # build-commands:
+    #   - install -d /app/lib/x86_64-linux-gnu
+    #   - ln -s /app/lib/libcurl.so.4.8.0 /app/lib/x86_64-linux-gnu/libcurl-gnutls.so.4
     sources:
       - type: archive
         url: https://github.com/curl/curl/releases/download/curl-8_1_2/curl-8.1.2.tar.gz
@@ -66,6 +74,8 @@ modules:
     buildsystem: simple
     build-commands:
       - pwd
+      - install -d /app/lib/x86_64-linux-gnu
+      - ln -s /app/lib/libcurl.so.4.8.0 /app/lib/x86_64-linux-gnu/libcurl-gnutls.so.4
       - ls
       # - install -Dm 755 chrome.sh /app/bin/chrome
       - install -Dm 644 -t /app/share/applications com.zquestclassic.ZQuest.desktop
