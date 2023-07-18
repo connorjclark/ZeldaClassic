@@ -110,6 +110,8 @@ modules:
       - type: file
         path: icons/com.zquestclassic.ZQuest-128.png
       - type: file
+        path: icons/com.zquestclassic.ZQuest-192.png
+      - type: file
         path: icons/com.zquestclassic.ZQuest-256.png
       - type: file
         path: icons/com.zquestclassic.ZQuest-512.png
