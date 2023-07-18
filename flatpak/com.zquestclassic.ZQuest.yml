@@ -52,6 +52,12 @@ modules:
           url: https://api.github.com/repos/ArmageddonGames/ZQuestClassic/releases/latest
           version-query: .tag_name
           url-query: .assets[] | select(.name|endswith("linux.tar.gz")) | .browser_download_url
+      - type: script
+        dest-filename: zlauncher.sh
+        commands:
+          - pwd
+          - cd ../resources
+          - ../bin/zlauncher
       - type: file
         path: com.zquestclassic.ZQuest.metainfo.xml
       - type: file
