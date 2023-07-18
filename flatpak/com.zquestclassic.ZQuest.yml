@@ -27,6 +27,8 @@ modules:
   #     # - ln -s /usr/lib/x86_64-linux-gnu/libcurl.so.4 /app/lib/x86_64-linux-gnu/libcurl-gnutls.so.4
   - name: libcurl
     buildsystem: autotools
+    build-options:
+      - --with-openssl
     sources:
       - type: archive
         url: https://github.com/curl/curl/releases/download/curl-8_1_2/curl-8.1.2.tar.gz
