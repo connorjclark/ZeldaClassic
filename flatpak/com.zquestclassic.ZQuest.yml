@@ -1,16 +1,43 @@
 app-id: com.zquestclassic.ZQuest
 runtime: org.freedesktop.Platform
-runtime-version: '22.08'
+# runtime-version: '22.08'
+
+runtime-version: &runtime-version '22.08'
+x-gl-version: &gl-version '1.4'
+x-gl-versions: &gl-versions 22.08;22.08-extra;1.4
+x-gl-merge-dirs: &gl-merge-dirs vulkan/icd.d;glvnd/egl_vendor.d;OpenCL/vendors;lib/dri;lib/d3d;vulkan/explicit_layer.d;vulkan/implicit_layer.d
+
+
 sdk: org.freedesktop.Sdk
 sdk-extensions:
   - org.freedesktop.Sdk.Compat.i386
   - org.freedesktop.Sdk.Extension.toolchain-i386
 add-extensions:
-  org.freedesktop.Platform.GL:
-    directory: lib/GL
-    version: '23.1.1'
+  # org.freedesktop.Platform.GL:
+  #   directory: lib/GL
+  #   version: '23.1.1'
+  #   subdirectories: true
+  #   add-ld-path: lib
+  org.freedesktop.Platform.Compat.i386:
+    directory: lib/i386-linux-gnu
+    version: *runtime-version
+
+  org.freedesktop.Platform.Compat.i386.Debug:
+    directory: lib/debug/lib/i386-linux-gnu
+    version: *runtime-version
+    no-autodownload: true
+
+  org.freedesktop.Platform.GL32:
+    directory: lib/i386-linux-gnu/GL
+    version: *gl-version
+    versions: *gl-versions
     subdirectories: true
+    no-autodownload: true
+    autodelete: false
     add-ld-path: lib
+    merge-dirs: *gl-merge-dirs
+    download-if: active-gl-driver
+    enable-if: active-gl-driver
 finish-args:
   - --device=all
   - --share=network
@@ -66,6 +93,14 @@ modules:
       - ln -s ../bin/zelda ${FLATPAK_DEST}/resources/zelda
       - ln -s ../bin/zquest ${FLATPAK_DEST}/resources/zquest
       - ln -s ../bin/zscript ${FLATPAK_DEST}/resources/zscript
+      - |
+        set -e
+        mkdir -p /app/bin
+        mkdir -p /app/lib/i386-linux-gnu
+        mkdir -p /app/lib/i386-linux-gnu/GL
+        mkdir -p /app/lib/i386-linux-gnu/dri/intel-vaapi-driver
+        mkdir -p /app/lib/debug/lib/i386-linux-gnu
+        mkdir -p /app/lib/debug/lib/i386-linux-gnu/GL
     # post-install:
     sources:
       - type: archive
