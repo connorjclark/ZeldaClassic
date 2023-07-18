@@ -21,7 +21,7 @@ modules:
     build-commands:
       # - echo DEBUGGGGG========
       # - ls /app
-      - mkdir -p /app/lib
+      - install -d /app/lib
       - ln -s i386-linux-gnu/libcurl.so.4 /app/lib/libcurl-gnutls.so.4
 
   - name: libglu
