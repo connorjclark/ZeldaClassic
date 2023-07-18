@@ -116,14 +116,18 @@ modules:
 
     sources:
       - type: archive
-        url: https://github.com/ArmageddonGames/ZQuestClassic/releases/download/2.55-alpha-115/2.55-alpha-115-linux.tar.gz
-        sha256: fd3782a997e6a0bde2b2d5b3ecc52c61468c3145e4e4fbc814502356c4a94cb4
+        # zelda-classic@connorjclark-nightly-2023-07-18
+        # url: https://github.com/ArmageddonGames/ZQuestClassic/releases/download/2.55-alpha-115/2.55-alpha-115-linux.tar.gz
+        # sha256: fd3782a997e6a0bde2b2d5b3ecc52c61468c3145e4e4fbc814502356c4a94cb4
+        url: https://github.com/connorjclark/ZeldaClassic/releases/download/connorjclark-nightly-2023-07-18/connorjclark-nightly-2023-07-18-linux.tar.gz
+        sha256: 393ed15175f1fda04a630a7663222c867382342da480ae4312b82099860c42d5
         only-arches: [x86_64]
-        x-checker-data:
-          type: json
-          url: https://api.github.com/repos/ArmageddonGames/ZQuestClassic/releases/latest
-          version-query: .tag_name
-          url-query: .assets[] | select(.name|endswith("linux.tar.gz")) | .browser_download_url
+        # TODO: enable for next alpha.
+        # x-checker-data:
+        #   type: json
+        #   url: https://api.github.com/repos/ArmageddonGames/ZQuestClassic/releases/latest
+        #   version-query: .tag_name
+        #   url-query: .assets[] | select(.name|endswith("linux.tar.gz")) | .browser_download_url
       - type: script
         dest-filename: entry.sh
         commands:
