@@ -24,6 +24,8 @@ modules:
       - ls
       - ls /usr/lib/
       - ls /usr/lib/i386-linux-gnu
+      - ls /app
+      - mkdir -p /app/lib
       - ln -s /usr/lib/i386-linux-gnu/libcurl.so.4 /app/lib/libcurl-gnutls.so.4
 
   - name: libglu
