@@ -75,6 +75,7 @@ modules:
     build-commands:
       - pwd
       - install -d /app/lib/x86_64-linux-gnu
+      # - ln -s ../libcurl.so.4.8.0 /app/lib/x86_64-linux-gnu/libcurl-gnutls.so.4
       - ln -s /app/lib/libcurl.so.4.8.0 /app/lib/x86_64-linux-gnu/libcurl-gnutls.so.4
       - ls
       # - install -Dm 755 chrome.sh /app/bin/chrome
@@ -118,6 +119,9 @@ modules:
       - type: script
         dest-filename: entry.sh
         commands:
+          - echo hello world
+          - pwd
+          - ls /lib
           - cd /app/resources
           - PATH=/app/bin:$PATH zlauncher
       - type: file
