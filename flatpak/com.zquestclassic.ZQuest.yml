@@ -8,7 +8,7 @@ finish-args:
   - --share=ipc
   - --socket=x11
   - --socket=pulseaudio
-command: zlauncher
+command: zlauncher.sh
 rename-icon: zc
 build-options:
   no-debuginfo: true
