@@ -1,43 +1,7 @@
 app-id: com.zquestclassic.ZQuest
 runtime: org.freedesktop.Platform
-# runtime-version: '22.08'
-
-runtime-version: &runtime-version '22.08'
-x-gl-version: &gl-version '1.4'
-x-gl-versions: &gl-versions 22.08;22.08-extra;1.4
-x-gl-merge-dirs: &gl-merge-dirs vulkan/icd.d;glvnd/egl_vendor.d;OpenCL/vendors;lib/dri;lib/d3d;vulkan/explicit_layer.d;vulkan/implicit_layer.d
-
-
+runtime-version: '22.08'
 sdk: org.freedesktop.Sdk
-# sdk-extensions:
-#   - org.freedesktop.Sdk.Compat.i386
-#   - org.freedesktop.Sdk.Extension.toolchain-i386
-add-extensions:
-  # org.freedesktop.Platform.GL:
-  #   directory: lib/GL
-  #   version: '23.1.1'
-  #   subdirectories: true
-  #   add-ld-path: lib
-  # org.freedesktop.Platform.Compat.i386:
-  #   directory: lib/i386-linux-gnu
-  #   version: *runtime-version
-
-  # org.freedesktop.Platform.Compat.i386.Debug:
-  #   directory: lib/debug/lib/i386-linux-gnu
-  #   version: *runtime-version
-  #   no-autodownload: true
-
-  org.freedesktop.Platform.GL.mesa-git:
-    directory: lib
-    version: *gl-version
-    versions: *gl-versions
-    subdirectories: true
-    no-autodownload: true
-    autodelete: false
-    add-ld-path: lib
-    merge-dirs: *gl-merge-dirs
-    download-if: active-gl-driver
-    enable-if: active-gl-driver
 finish-args:
   - --device=all
   - --share=network
@@ -49,6 +13,23 @@ rename-icon: zc
 build-options:
   no-debuginfo: true
 modules:
+  - name: libglu
+    buildsystem: meson
+    cleanup:
+      - /include
+      - /lib/debug
+      - /lib/pkgconfig
+      - /lib/*.a
+    sources:
+      - type: archive
+        url: https://mesa.freedesktop.org/archive/glu/glu-9.0.2.tar.xz
+        sha256: 6e7280ff585c6a1d9dfcdf2fca489251634b3377bfc33c29e4002466a38d02d4
+        x-checker-data:
+          type: anitya
+          project-id: 13518
+          stable-only: true
+          url-template: https://mesa.freedesktop.org/archive/glu/glu-$version.tar.xz
+
   - name: libjpeg # with libjpeg.so.8
     buildsystem: cmake-ninja
     config-opts:
