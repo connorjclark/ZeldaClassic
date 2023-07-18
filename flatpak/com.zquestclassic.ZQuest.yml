@@ -2,6 +2,9 @@ app-id: com.zquestclassic.ZQuest
 runtime: org.freedesktop.Platform
 runtime-version: '22.08'
 sdk: org.freedesktop.Sdk
+org.gnome.Platform.Compat.i386:
+  directory: lib/i386-linux-gnu
+  version: '44'
 finish-args:
   - --device=all
   - --share=network
@@ -16,7 +19,7 @@ modules:
   - name: libcurl-gnutls
     buildsystem: simple
     build-commands:
-      - ln -s /usr/lib/$(clang --print-multiarch)/libcurl.so.4 /app/lib/libcurl-gnutls.so.4
+      - ln -s /usr/lib/i386-linux-gnu/libcurl.so.4 /app/lib/libcurl-gnutls.so.4
 
   - name: libglu
     buildsystem: meson
