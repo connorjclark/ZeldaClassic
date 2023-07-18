@@ -55,16 +55,16 @@ modules:
         path: com.zquestclassic.ZQuest.metainfo.xml
       - type: file
         path: com.zquestclassic.ZQuest.desktop
-    # modules:
-    #   - name: ImageMagick
-    #     config-opts:
-    #       - --disable-static
-    #       - --disable-docs
-    #       - --with-hdri
-    #       - --with-pic
-    #     sources:
-    #       - type: archive
-    #         url: https://github.com/ImageMagick/ImageMagick/archive/7.0.8-65.tar.gz
-    #         sha256: 14afaf722d8964ed8de2ebd8184a229e521f1425e18e7274806f06e008bf9aa7
-    #     cleanup:
-    #       - '*'
+    modules:
+      - name: ImageMagick
+        config-opts:
+          - --disable-static
+          - --disable-docs
+          - --with-hdri
+          - --with-pic
+        sources:
+          - type: archive
+            url: https://github.com/ImageMagick/ImageMagick/archive/7.0.8-65.tar.gz
+            sha256: 14afaf722d8964ed8de2ebd8184a229e521f1425e18e7274806f06e008bf9aa7
+        cleanup:
+          - '*'
