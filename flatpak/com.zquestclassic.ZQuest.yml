@@ -17,6 +17,7 @@ cleanup:
   - /lib/libpng
   - /lib/pkgconfig
 command: zlauncher
+rename-icon: zquest
 modules:
   - name: zquest
     buildsystem: cmake-ninja
@@ -56,16 +57,16 @@ modules:
         commands:
           - cp src/metadata/devsig.h.sig src/metadata/sigs/
           - cp src/metadata/compilersig.h.sig src/metadata/sigs/
-    # modules:
-    #   - name: ImageMagick
-    #     config-opts:
-    #       - --disable-static
-    #       - --disable-docs
-    #       - --with-hdri
-    #       - --with-pic
-    #     sources:
-    #       - type: archive
-    #         url: https://github.com/ImageMagick/ImageMagick/archive/7.0.8-65.tar.gz
-    #         sha256: 14afaf722d8964ed8de2ebd8184a229e521f1425e18e7274806f06e008bf9aa7
-    #     cleanup:
-    #       - '*'
+    modules:
+      - name: ImageMagick
+        config-opts:
+          - --disable-static
+          - --disable-docs
+          - --with-hdri
+          - --with-pic
+        sources:
+          - type: archive
+            url: https://github.com/ImageMagick/ImageMagick/archive/7.0.8-65.tar.gz
+            sha256: 14afaf722d8964ed8de2ebd8184a229e521f1425e18e7274806f06e008bf9aa7
+        cleanup:
+          - '*'
