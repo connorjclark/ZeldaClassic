@@ -121,10 +121,11 @@ modules:
         commands:
           - echo hello world
           - pwd
-          - set -e
+          - set -ex
           - ls /
           - ls /usr
           - ls /lib
+          - ls /usr/lib/x86_64-linux-gnu
           - cd /app/resources
           - ldd /app/bin/zlauncher | grep gnu
           - PATH=/app/bin:$PATH zlauncher
