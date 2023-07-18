@@ -19,9 +19,11 @@ modules:
   - name: libcurl-gnutls
     buildsystem: simple
     build-commands:
-      # - echo DEBUGGGGG========
+      - echo DEBUGGGGG========
       # - ls /app
       - install -d /app/lib
+      - ls /usr/lib/x86_64-linux-gnu/
+      - ls /usr/lib/x86_64-linux-gnu/ | grep curl
       - ln -s i386-linux-gnu/libcurl.so.4 /app/lib/libcurl-gnutls.so.4
 
   - name: libglu
