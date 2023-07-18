@@ -62,7 +62,7 @@ modules:
         dest-filename: zlauncher.sh
         commands:
           - pwd
-          - export PATH=$PWD:$PATH
+          - export PATH=/app/bin:$PATH
           - cd /app/resources
           - zlauncher
       - type: file
