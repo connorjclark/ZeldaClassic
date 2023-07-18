@@ -3,12 +3,9 @@ runtime: org.freedesktop.Platform
 runtime-version: '22.08'
 sdk: org.freedesktop.Sdk
 add-extensions:
-  org.freedesktop.Platform.Compat.i386:
-    directory: lib/i386-linux-gnu
-    version: '18.08'
-  # org.freedesktop.Platform.GL.default:
-  #   directory: lib/i386-linux-gnu
-  #   version: '18.08'
+  org.freedesktop.Platform.GL.default:
+    directory: lib
+    version: '23.1.1'
 finish-args:
   - --device=all
   - --share=network
@@ -69,8 +66,6 @@ modules:
       - type: archive
         url: https://github.com/ArmageddonGames/ZQuestClassic/releases/download/2.55-alpha-115/2.55-alpha-115-linux.tar.gz
         sha256: fd3782a997e6a0bde2b2d5b3ecc52c61468c3145e4e4fbc814502356c4a94cb4
-        size: 31826824
-        filename: zc.tar.gz
         only-arches: [x86_64]
         x-checker-data:
           type: json
