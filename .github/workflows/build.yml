@@ -101,7 +101,7 @@ jobs:
         run: vcpkg install libogg libvorbis
 
       - if: ${{ contains(inputs.runs-on, 'ubuntu') }}
-        run: sudo apt-get update && sudo apt-get install ccache ninja-build build-essential gcc-multilib g++-multilib libx11-dev libglu1-mesa-dev libcurl4-gnutls-dev freeglut3-dev mesa-common-dev libxcursor1 libasound2-dev libgtk-3-dev flex bison elfutils libogg-dev libvorbis-dev
+        run: sudo apt-get update && sudo apt-get install ccache ninja-build build-essential gcc-multilib g++-multilib libx11-dev libglu1-mesa-dev freeglut3-dev mesa-common-dev libssl-dev libcurl4-openssl-dev libxcursor1 libasound2-dev libgtk-3-dev flex bison elfutils libogg-dev libvorbis-dev
 
       - if: ${{ contains(inputs.runs-on, 'mac') }}
         run: brew install ninja dylibbundler create-dmg ccache
@@ -216,13 +216,13 @@ jobs:
           path: build/${{ inputs.config }}/packages/${{ steps.set-package-name.outputs.package-name }}
 
       # Upload debug symbols to Sentry.
-      - name: Setup Sentry CLI
-        if: inputs.sentry
-        uses: mathieu-bour/setup-sentry-cli@v1.3.0
-        with:
-          token: ${{ secrets.SENTRY_TOKEN }}
-          organization: zeldaclassic
-          project: zelda-classic
-      - name: Upload debugging symbols
-        if: inputs.sentry
-        run: sentry-cli upload-dif 'zelda-classic@${{ needs.create-tag.outputs.release_tag }}' --include-sources --wait build
+      # - name: Setup Sentry CLI
+      #   if: inputs.sentry
+      #   uses: mathieu-bour/setup-sentry-cli@v1.3.0
+      #   with:
+      #     token: ${{ secrets.SENTRY_TOKEN }}
+      #     organization: zeldaclassic
+      #     project: zelda-classic
+      # - name: Upload debugging symbols
+      #   if: inputs.sentry
+      #   run: sentry-cli upload-dif 'zelda-classic@${{ needs.create-tag.outputs.release_tag }}' --include-sources --wait build
