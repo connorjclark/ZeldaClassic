@@ -16,7 +16,7 @@ modules:
   - name: libcurl-gnutls
     buildsystem: simple
     build-commands:
-      - ln -s /usr/lib/$(gcc --print-multiarch)/libcurl.so.4 /app/lib/libcurl-gnutls.so.4
+      - ln -s /usr/lib/$(clang --print-multiarch)/libcurl.so.4 /app/lib/libcurl-gnutls.so.4
 
   - name: libglu
     buildsystem: meson
