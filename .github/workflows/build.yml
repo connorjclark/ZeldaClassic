@@ -216,13 +216,13 @@ jobs:
           path: build/${{ inputs.config }}/packages/${{ steps.set-package-name.outputs.package-name }}
 
       # Upload debug symbols to Sentry.
-      - name: Setup Sentry CLI
-        if: inputs.sentry
-        uses: mathieu-bour/setup-sentry-cli@v1.3.0
-        with:
-          token: ${{ secrets.SENTRY_TOKEN }}
-          organization: zeldaclassic
-          project: zelda-classic
-      - name: Upload debugging symbols
-        if: inputs.sentry
-        run: sentry-cli upload-dif 'zelda-classic@${{ needs.create-tag.outputs.release_tag }}' --include-sources --wait build
+      # - name: Setup Sentry CLI
+      #   if: inputs.sentry
+      #   uses: mathieu-bour/setup-sentry-cli@v1.3.0
+      #   with:
+      #     token: ${{ secrets.SENTRY_TOKEN }}
+      #     organization: zeldaclassic
+      #     project: zelda-classic
+      # - name: Upload debugging symbols
+      #   if: inputs.sentry
+      #   run: sentry-cli upload-dif 'zelda-classic@${{ needs.create-tag.outputs.release_tag }}' --include-sources --wait build
