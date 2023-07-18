@@ -2,7 +2,8 @@ app-id: com.zquestclassic.ZQuest
 runtime: org.freedesktop.Platform
 runtime-version: '22.08'
 sdk: org.freedesktop.Sdk
-sdk-extensions: org.freedesktop.Sdk.Extension.llvm13
+sdk-extensions: 
+  - org.freedesktop.Sdk.Extension.llvm13
 finish-args:
   - --device=all
   - --share=network
