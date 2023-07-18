@@ -62,7 +62,7 @@ modules:
       - |
         ls
         for s in {16,32,64,128,192,256,512}; do
-          install -p -Dm644 com.zquestclassic.ZQuest-${s}.png -t "${FLATPAK_DEST}/share/icons/hicolor/${s}x${s}/apps/";
+          install -p -Dm644 com.zquestclassic.ZQuest-${s}.png -t /app/share/icons/hicolor/${s}x${s}/apps/com.zquestclassic.ZQuest.png
         done;
       - find . -name "*.so*" -exec mv {} ${FLATPAK_DEST}/bin/ \;
       - find . -perm /a+x -type f -exec mv {} ${FLATPAK_DEST}/bin/ \;
