@@ -13,7 +13,6 @@ finish-args:
   - --socket=x11
   - --socket=pulseaudio
 command: entry.sh
-rename-icon: zc
 build-options:
   no-debuginfo: true
 modules:
