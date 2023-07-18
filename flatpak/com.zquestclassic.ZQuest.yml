@@ -9,26 +9,26 @@ x-gl-merge-dirs: &gl-merge-dirs vulkan/icd.d;glvnd/egl_vendor.d;OpenCL/vendors;l
 
 
 sdk: org.freedesktop.Sdk
-sdk-extensions:
-  - org.freedesktop.Sdk.Compat.i386
-  - org.freedesktop.Sdk.Extension.toolchain-i386
+# sdk-extensions:
+#   - org.freedesktop.Sdk.Compat.i386
+#   - org.freedesktop.Sdk.Extension.toolchain-i386
 add-extensions:
   # org.freedesktop.Platform.GL:
   #   directory: lib/GL
   #   version: '23.1.1'
   #   subdirectories: true
   #   add-ld-path: lib
-  org.freedesktop.Platform.Compat.i386:
-    directory: lib/i386-linux-gnu
-    version: *runtime-version
+  # org.freedesktop.Platform.Compat.i386:
+  #   directory: lib/i386-linux-gnu
+  #   version: *runtime-version
 
-  org.freedesktop.Platform.Compat.i386.Debug:
-    directory: lib/debug/lib/i386-linux-gnu
-    version: *runtime-version
-    no-autodownload: true
+  # org.freedesktop.Platform.Compat.i386.Debug:
+  #   directory: lib/debug/lib/i386-linux-gnu
+  #   version: *runtime-version
+  #   no-autodownload: true
 
-  org.freedesktop.Platform.GL32:
-    directory: lib/i386-linux-gnu/GL
+  org.freedesktop.Platform.GL.mesa-git:
+    directory: lib
     version: *gl-version
     versions: *gl-versions
     subdirectories: true
