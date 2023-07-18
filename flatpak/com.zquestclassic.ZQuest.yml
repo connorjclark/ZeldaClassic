@@ -61,10 +61,8 @@ modules:
       - type: script
         dest-filename: zlauncher.sh
         commands:
-          - pwd
-          - export PATH=/app/bin:$PATH
           - cd /app/resources
-          - zlauncher
+          - PATH=/app/bin:$PATH zlauncher
       - type: file
         path: com.zquestclassic.ZQuest.metainfo.xml
       - type: file
