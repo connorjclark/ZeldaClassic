@@ -23,7 +23,7 @@ modules:
       # - install -Dm 755 stub_sandbox.sh /app/bin/stub_sandbox
       # - install -Dm 644 -t /app/etc cobalt.ini
       - install -Dm 644 -t /app/share/applications com.zquestclassic.ZQuest.desktop
-      - install -Dm 644 -t /app/share/metainfo com.zquestclassic.ZQuest.appdata.xml
+      - install -Dm 644 -t /app/share/metainfo com.zquestclassic.ZQuest.metainfo.xml
       # - |
       #   for icon in 16 24 32 48 64 128 256; do
       #     install -Dm 644 com.google.Chrome-$icon.png /app/share/icons/hicolor/${icon}x${icon}/apps/com.google.Chrome.png
@@ -32,8 +32,8 @@ modules:
       - tar -xvzf zc.tar.gz -C ./opt/zquest-classic
       - rm zc.tar.gz
     post-install:
-      - install -Dm644 com.zquestclassic.ZQuest.appdata.xml -t ${FLATPAK_DEST}/share/metainfo/
-      - install -Dm644 com.zquestclassic.ZQuest.desktop -t ${FLATPAK_DEST}/share/applications/
+      # - install -Dm644 com.zquestclassic.ZQuest.metainfo.xml -t ${FLATPAK_DEST}/share/metainfo/
+      # - install -Dm644 com.zquestclassic.ZQuest.desktop -t ${FLATPAK_DEST}/share/applications/
       - icon_in="./opt/zquest-classic/zc.png";
         icon_out="zquest.png";
         for s in {32,64,128,192,256,512}; do
@@ -55,7 +55,7 @@ modules:
           version-query: .tag_name
           url-query: .assets[] | select(.name|endswith("linux.tar.gz")) | .browser_download_url
       - type: file
-        path: com.zquestclassic.ZQuest.appdata.xml
+        path: com.zquestclassic.ZQuest.metainfo.xml
       - type: file
         path: com.zquestclassic.ZQuest.desktop
     modules:
