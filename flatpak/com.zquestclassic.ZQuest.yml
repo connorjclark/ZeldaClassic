@@ -25,7 +25,7 @@ modules:
       - -DCMAKE_C_COMPILER=clang
       - -DCMAKE_CXX_COMPILER=clang++
       - -DWANT_OPUS=OFF
-      # - -DWANT_SENTRY=ON
+      - -DWANT_OPENAL=OFF
     build-options:
         append-path: /usr/lib/sdk/llvm16/bin
         prepend-ld-library-path: /usr/lib/sdk/llvm16/lib
