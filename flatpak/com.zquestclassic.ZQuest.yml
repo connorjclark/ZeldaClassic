@@ -40,7 +40,8 @@ modules:
         done;
       # - find -L . -perm /a+x -type f -maxdepth 1 -name "*.so*" -exec cp -a {} ${FLATPAK_DEST}/lib/ \;
       - find -L . -perm /a+x -type f -maxdepth 1 -exec mv {} ${FLATPAK_DEST}/bin/ \;
-      - mv . ${FLATPAK_DEST}/resources/
+      - mkdir ${FLATPAK_DEST}/resources/
+      - mv * ${FLATPAK_DEST}/resources/
     sources:
       - type: archive
         url: https://github.com/ArmageddonGames/ZQuestClassic/releases/download/2.55-alpha-115/2.55-alpha-115-linux.tar.gz
