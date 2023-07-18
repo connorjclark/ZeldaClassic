@@ -13,6 +13,11 @@ rename-icon: zc
 build-options:
   no-debuginfo: true
 modules:
+  - name: libcurl-gnutls
+    buildsystem: simple
+    build-commands:
+      - ln -s /usr/lib/$(gcc --print-multiarch)/libcurl.so.4 /app/lib/libcurl-gnutls.so.4
+
   - name: libglu
     buildsystem: meson
     cleanup:
@@ -43,9 +48,6 @@ modules:
       - pwd
       - ls
       # - install -Dm 755 chrome.sh /app/bin/chrome
-      # - install -Dm 755 apply_extra.sh /app/bin/apply_extra
-      # - install -Dm 755 stub_sandbox.sh /app/bin/stub_sandbox
-      # - install -Dm 644 -t /app/etc cobalt.ini
       - install -Dm 644 -t /app/share/applications com.zquestclassic.ZQuest.desktop
       - install -Dm 644 -t /app/share/metainfo com.zquestclassic.ZQuest.metainfo.xml
       # - |
@@ -77,7 +79,7 @@ modules:
         mkdir -p /app/lib/i386-linux-gnu/dri/intel-vaapi-driver
         mkdir -p /app/lib/debug/lib/i386-linux-gnu
         mkdir -p /app/lib/debug/lib/i386-linux-gnu/GL
-    # post-install:
+
     sources:
       - type: archive
         url: https://github.com/ArmageddonGames/ZQuestClassic/releases/download/2.55-alpha-115/2.55-alpha-115-linux.tar.gz
