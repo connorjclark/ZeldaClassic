@@ -57,7 +57,9 @@ modules:
         commands:
           - pwd
           - cd ../resources
-          - ../bin/zlauncher
+          - ls /
+          - PATH=$PWD/../bin:$PATH
+          - zlauncher
       - type: file
         path: com.zquestclassic.ZQuest.metainfo.xml
       - type: file
