@@ -2,6 +2,13 @@ app-id: com.zquestclassic.ZQuest
 runtime: org.freedesktop.Platform
 runtime-version: '22.08'
 sdk: org.freedesktop.Sdk
+add-extensions:
+  org.freedesktop.Platform.Compat.i386:
+    directory: lib/i386-linux-gnu
+    version: '18.08'
+  # org.freedesktop.Platform.GL.default:
+  #   directory: lib/i386-linux-gnu
+  #   version: '18.08'
 finish-args:
   - --device=all
   - --share=network
