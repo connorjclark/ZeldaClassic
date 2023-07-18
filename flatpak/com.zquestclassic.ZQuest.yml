@@ -126,9 +126,9 @@ modules:
           - pwd
           - set -ex
           - ls /
-          - ls /usr
-          - ls /lib
-          - ls /app/lib/
+          - ls -al /usr
+          - ls -al /lib
+          - ls -al /app/lib/
           - cd /app/resources
           - ldd /app/bin/zlauncher
           - PATH=/app/bin:$PATH zlauncher
