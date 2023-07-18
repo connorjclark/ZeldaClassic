@@ -19,8 +19,12 @@ modules:
   - name: libcurl-gnutls
     buildsystem: simple
     build-commands:
-      - install -d /app/lib/x86_64-linux-gnu
-      - cp /usr/lib/x86_64-linux-gnu/libcurl.so.4 /app/lib/x86_64-linux-gnu/libcurl-gnutls.so.4
+      - echo DEBUGGGGG========
+      # - ls /app
+      # - install -d /app/lib
+      # - ls /usr/lib/x86_64-linux-gnu/ | grep curl
+      - ln -s /usr/lib/x86_64-linux-gnu /app/lib/x86_64-linux-gnu
+      # - ln -s /usr/lib/x86_64-linux-gnu/libcurl.so.4 /app/lib/x86_64-linux-gnu/libcurl-gnutls.so.4
 
   - name: libglu
     buildsystem: meson
