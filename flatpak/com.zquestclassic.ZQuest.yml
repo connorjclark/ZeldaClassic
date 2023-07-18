@@ -21,7 +21,7 @@ modules:
     build-commands:
       - echo DEBUGGGGG========
       # - ls /app
-      # - install -d /app/lib
+      - install -d /app/lib
       # - ls /usr/lib/x86_64-linux-gnu/ | grep curl
       - ln -s /usr/lib/x86_64-linux-gnu /app/lib/x86_64-linux-gnu
       # - ln -s /usr/lib/x86_64-linux-gnu/libcurl.so.4 /app/lib/x86_64-linux-gnu/libcurl-gnutls.so.4
