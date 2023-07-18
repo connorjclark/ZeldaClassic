@@ -27,7 +27,7 @@ modules:
   #     # - ln -s /usr/lib/x86_64-linux-gnu/libcurl.so.4 /app/lib/x86_64-linux-gnu/libcurl-gnutls.so.4
   - name: libcurl
     buildsystem: autotools
-    build-options:
+    config-opts:
       - --with-openssl
     sources:
       - type: archive
