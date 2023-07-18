@@ -74,13 +74,15 @@ modules:
     buildsystem: simple
     build-commands:
       - pwd
+      - set -ex
       - install -d /app/lib/x86_64-linux-gnu
       # - ln -s ../libcurl.so.4.8.0 /app/lib/x86_64-linux-gnu/libcurl-gnutls.so.4
       # - ln -s /app/lib/libcurl.so.4.8.0 /app/lib/x86_64-linux-gnu/libcurl-gnutls.so.4
       # - ln -s /usr/lib/x86_64-linux-gnu/libcurl.so.4 /usr/lib/x86_64-linux-gnu/libcurl-gnutls.so.4
       # - ln -s /usr/lib/x86_64-linux-gnu/libcurl.so.4 /app/lib/x86_64-linux-gnu/libcurl-gnutls.so.4
       # - ln -s /usr/lib/x86_64-linux-gnu/libcurl.so.4 /app/lib/libcurl-gnutls.so.4
-      - ln -s libcurl.so.4.8.0 /app/lib/libcurl-gnutls.so.4
+      # - ln -s libcurl.so.4.8.0 /app/lib/libcurl-gnutls.so.4
+      - ln -s libcurl.so.4.8.0 /app/bin/libcurl-gnutls.so.4
       - ldconfig -v | grep curl
       - ls
       # - install -Dm 755 chrome.sh /app/bin/chrome
