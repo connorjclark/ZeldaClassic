@@ -28,9 +28,6 @@ modules:
       #   for icon in 16 24 32 48 64 128 256; do
       #     install -Dm 644 com.google.Chrome-$icon.png /app/share/icons/hicolor/${icon}x${icon}/apps/com.google.Chrome.png
       #   done
-
-      - tar -xvzf zc.tar.gz -C ./opt/zquest-classic
-      - rm zc.tar.gz
     post-install:
       # - install -Dm644 com.zquestclassic.ZQuest.metainfo.xml -t ${FLATPAK_DEST}/share/metainfo/
       # - install -Dm644 com.zquestclassic.ZQuest.desktop -t ${FLATPAK_DEST}/share/applications/
