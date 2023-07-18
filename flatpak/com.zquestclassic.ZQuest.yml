@@ -24,8 +24,8 @@ modules:
       - -DCMAKE_C_COMPILER=clang
       - -DCMAKE_CXX_COMPILER=clang++
     build-options:
-        append-path: /usr/lib/sdk/llvm13/bin
-        prepend-ld-library-path: /usr/lib/sdk/llvm13/lib
+        append-path: /usr/lib/sdk/llvm16/bin
+        prepend-ld-library-path: /usr/lib/sdk/llvm16/lib
         build-args:
           - --share=network
     post-install:
