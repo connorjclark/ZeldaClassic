@@ -130,7 +130,7 @@ modules:
           - ls /lib
           - ls /app/lib/
           - cd /app/resources
-          - ldd /app/bin/zlauncher | grep gnu
+          - ldd /app/bin/zlauncher
           - PATH=/app/bin:$PATH zlauncher
       - type: file
         path: com.zquestclassic.ZQuest.metainfo.xml
