@@ -121,6 +121,9 @@ modules:
         commands:
           - echo hello world
           - pwd
+          - set -e
+          - ls /
+          - ls /usr
           - ls /lib
           - cd /app/resources
           - ldd /app/bin/zlauncher | grep gnu
