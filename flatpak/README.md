@@ -1,25 +1,50 @@
+The flatpaks we publish are:
+
+1. Latest stable (today, that is our alpha release)
+1. Latest nightly (we often do multiple nightlies in a day, but flathub will only look for updates once a day)
+
+The following (unpublished) flatpak config builds from source:
+
+```yml
 app-id: com.zquestclassic.ZQuest
 runtime: org.freedesktop.Platform
 runtime-version: '22.08'
 sdk: org.freedesktop.Sdk
+sdk-extensions: 
+  - org.freedesktop.Sdk.Extension.llvm16
 finish-args:
   - --device=all
   - --share=network
   - --share=ipc
   - --socket=x11
   - --socket=pulseaudio
+cleanup:
+  - /include
+  - "*.a"
+  - /lib/cmake
+  - /lib/libpng
+  - /lib/pkgconfig
 command: zlauncher
 rename-icon: zquest
 modules:
   - name: zquest
-    buildsystem: simple
-    build-commands:
-      - tar -xvzf zc.tar.gz -C ./opt/zquest-classic
-      - rm zc.tar.gz
+    buildsystem: cmake-ninja
+    config-opts:
+      - -DCMAKE_C_COMPILER=clang
+      - -DCMAKE_CXX_COMPILER=clang++
+      - -DWANT_OPUS=OFF
+      - -DWANT_OPENAL=OFF
+      # libjpeg.so.62 => not found
+      - -DWANT_JPEG=OFF
+    build-options:
+        append-path: /usr/lib/sdk/llvm16/bin
+        prepend-ld-library-path: /usr/lib/sdk/llvm16/lib
+        build-args:
+          - --share=network
     post-install:
       - install -Dm644 com.zquestclassic.ZQuest.appdata.xml -t ${FLATPAK_DEST}/share/metainfo/
       - install -Dm644 com.zquestclassic.ZQuest.desktop -t ${FLATPAK_DEST}/share/applications/
-      - icon_in="./opt/zquest-classic/zc.png";
+      - icon_in="resources/zc.png";
         icon_out="zquest.png";
         for s in {32,64,128,192,256,512}; do
         convert "${icon_in}" -resize "${s}" "${icon_out}";
@@ -28,17 +53,14 @@ modules:
       - find -L . -perm /a+x -type f -maxdepth 1 -name "*.so*" -exec cp -a {} ${FLATPAK_DEST}/lib/ \;
       - find -L . -perm /a+x -type f -maxdepth 1 -not -name "*.so*" -exec cp -a {} ${FLATPAK_DEST}/bin/ \;
     sources:
-      - type: extra-data
-        url: https://github.com/ArmageddonGames/ZQuestClassic/releases/download/2.55-alpha-115/2.55-alpha-115-linux.tar.gz
-        sha256: 22f9403f4ebe8c814cfcf8343b6b6cae4629a7fd357ebdc008b29f2ff4d4c70c
-        size: 94327756
-        filename: zc.tar.gz
-        only-arches: [x86_64]
+      - type: git
+        url: https://github.com/ArmageddonGames/ZQuestClassic
+        tag: 2.55-alpha-115
+        commit: 812da2517f688635a4f5c440e22d037504535c85
         x-checker-data:
-          type: json
-          url: https://api.github.com/repos/ArmageddonGames/ZQuestClassic/releases/latest
-          version-query: .tag_name
-          url-query: .assets[] | select(.name|endswith("linux.tar.gz")) | .browser_download_url
+          type: git
+          tag-pattern: ^2.55-.*(\d+)$
+          sort-tags: false
       - type: file
         path: com.zquestclassic.ZQuest.appdata.xml
       - type: file
@@ -60,3 +82,5 @@ modules:
             sha256: 14afaf722d8964ed8de2ebd8184a229e521f1425e18e7274806f06e008bf9aa7
         cleanup:
           - '*'
+
+```
