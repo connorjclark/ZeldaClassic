@@ -44,6 +44,10 @@ modules:
         url: https://github.com/ArmageddonGames/ZQuestClassic
         tag: 2.55-alpha-115
         commit: 812da2517f688635a4f5c440e22d037504535c85
+        x-checker-data:
+          type: git
+          tag-pattern: ^2.55-.*(\d+)$
+          sort-tags: false
       - type: file
         path: com.zquestclassic.ZQuest.appdata.xml
       - type: file
