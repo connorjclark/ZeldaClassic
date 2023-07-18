@@ -43,10 +43,6 @@ modules:
         path: com.zquestclassic.ZQuest.appdata.xml
       - type: file
         path: com.zquestclassic.ZQuest.desktop
-      - type: shell
-        commands:
-          - cp src/metadata/devsig.h.sig src/metadata/sigs/
-          - cp src/metadata/compilersig.h.sig src/metadata/sigs/
     modules:
       - name: ImageMagick
         config-opts:

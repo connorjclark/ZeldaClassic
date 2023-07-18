@@ -1,9 +1,17 @@
-The flatpaks we publish are:
+The flatpak we publish to flathub tracks the latest stable release.
 
-1. Latest stable (today, that is our alpha release)
-1. Latest nightly (we often do multiple nightlies in a day, but flathub will only look for updates once a day)
+You can also find here two more flatpaks, which the advanced user can use as they wish:
 
-The following (unpublished) flatpak config builds from source:
+## Extra flatpak: Latest nightly
+
+The following flatpak config builds from source:
+
+```yml
+```
+
+## Extra flatpak: Built directly from source
+
+The following flatpak config builds from source:
 
 ```yml
 app-id: com.zquestclassic.ZQuest
