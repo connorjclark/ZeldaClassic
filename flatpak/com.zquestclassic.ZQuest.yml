@@ -2,6 +2,7 @@ app-id: com.zquestclassic.ZQuest
 runtime: org.freedesktop.Platform
 runtime-version: '22.08'
 sdk: org.freedesktop.Sdk
+sdk-extensions: org.freedesktop.Sdk.Extension.llvm13
 finish-args:
   - --device=all
   - --share=network
@@ -18,6 +19,9 @@ command: zlauncher
 modules:
   - name: zquest
     buildsystem: cmake-ninja
+    config-opts:
+      - -DCMAKE_C_COMPILER=clang
+      - -DCMAKE_CXX_COMPILER=clang++
     build-options:
         build-args:
           - --share=network
