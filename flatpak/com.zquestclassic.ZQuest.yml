@@ -28,7 +28,9 @@ modules:
       #   for icon in 16 24 32 48 64 128 256; do
       #     install -Dm 644 com.google.Chrome-$icon.png /app/share/icons/hicolor/${icon}x${icon}/apps/com.google.Chrome.png
       #   done
-      - 
+      - echo hiiiii
+      - pwd
+      - ls
     post-install:
       - icon_in="zc.png";
         icon_out="zc.png";
@@ -40,6 +42,10 @@ modules:
       - find . -perm /a+x -type f -exec mv {} ${FLATPAK_DEST}/bin/ \;
       - mkdir ${FLATPAK_DEST}/resources/
       - mv * ${FLATPAK_DEST}/resources/
+      # See note in `zlauncher.sh` below.
+      - ln -s ${FLATPAK_DEST}/bin/zelda ${FLATPAK_DEST}/resources/zelda
+      - ln -s ${FLATPAK_DEST}/bin/zquest ${FLATPAK_DEST}/resources/zquest
+      - ln -s ${FLATPAK_DEST}/bin/zscript ${FLATPAK_DEST}/resources/zscript
     sources:
       - type: archive
         url: https://github.com/ArmageddonGames/ZQuestClassic/releases/download/2.55-alpha-115/2.55-alpha-115-linux.tar.gz
@@ -56,7 +62,9 @@ modules:
         dest-filename: zlauncher.sh
         commands:
           - pwd
-          - export PATH=$PWD:$PATH
+          # This will work once we release a version using posix_spawnp
+          # - export PATH=$PWD:$PATH
+          # ...until then, do a big hack (see build-commands).
           - cd ../resources
           - zlauncher
       - type: file
