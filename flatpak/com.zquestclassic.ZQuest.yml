@@ -20,10 +20,7 @@ modules:
   - name: libcurl-gnutls
     buildsystem: simple
     build-commands:
-      - pwd
-      - ls
-      - ls /usr/lib/
-      - ls /usr/lib/i386-linux-gnu
+      - echo DEBUGGGGG========
       - ls /app
       - mkdir -p /app/lib
       - ln -s /usr/lib/i386-linux-gnu/libcurl.so.4 /app/lib/libcurl-gnutls.so.4
@@ -64,6 +61,7 @@ modules:
       - pwd
       - ls
       - |
+        ls
         for s in {16,32,64,128,192,256,512}; do
           install -p -Dm644 icons/com.zquestclassic.ZQuest-${s}.png -t "${FLATPAK_DEST}/share/icons/hicolor/${s}x${s}/apps/";
         done;
