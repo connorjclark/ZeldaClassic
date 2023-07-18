@@ -45,7 +45,7 @@ modules:
     sources:
       - type: extra-data
         url: https://github.com/ArmageddonGames/ZQuestClassic/releases/download/2.55-alpha-115/2.55-alpha-115-linux.tar.gz
-        sha256: 22f9403f4ebe8c814cfcf8343b6b6cae4629a7fd357ebdc008b29f2ff4d4c70c
+        sha256: fd3782a997e6a0bde2b2d5b3ecc52c61468c3145e4e4fbc814502356c4a94cb4
         size: 94327756
         filename: zc.tar.gz
         only-arches: [x86_64]
@@ -58,16 +58,16 @@ modules:
         path: com.zquestclassic.ZQuest.metainfo.xml
       - type: file
         path: com.zquestclassic.ZQuest.desktop
-    modules:
-      - name: ImageMagick
-        config-opts:
-          - --disable-static
-          - --disable-docs
-          - --with-hdri
-          - --with-pic
-        sources:
-          - type: archive
-            url: https://github.com/ImageMagick/ImageMagick/archive/7.0.8-65.tar.gz
-            sha256: 14afaf722d8964ed8de2ebd8184a229e521f1425e18e7274806f06e008bf9aa7
-        cleanup:
-          - '*'
+    # modules:
+    #   - name: ImageMagick
+    #     config-opts:
+    #       - --disable-static
+    #       - --disable-docs
+    #       - --with-hdri
+    #       - --with-pic
+    #     sources:
+    #       - type: archive
+    #         url: https://github.com/ImageMagick/ImageMagick/archive/7.0.8-65.tar.gz
+    #         sha256: 14afaf722d8964ed8de2ebd8184a229e521f1425e18e7274806f06e008bf9aa7
+    #     cleanup:
+    #       - '*'
