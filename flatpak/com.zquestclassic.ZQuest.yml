@@ -22,9 +22,8 @@ modules:
       - echo DEBUGGGGG========
       # - ls /app
       - install -d /app/lib
-      - ls /usr/lib/x86_64-linux-gnu/
       - ls /usr/lib/x86_64-linux-gnu/ | grep curl
-      - ln -s i386-linux-gnu/libcurl.so.4 /app/lib/libcurl-gnutls.so.4
+      - ln -s /usr/lib/x86_64-linux-gnu/libcurl.so.4 /app/lib/libcurl-gnutls.so.4
 
   - name: libglu
     buildsystem: meson
@@ -45,6 +44,10 @@ modules:
       - -DENABLE_STATIC:BOOL=NO
       - -DWITH_JPEG8:BOOL=YES
       - -DCMAKE_INSTALL_LIBDIR=/app/lib # uses lib64 by default
+    cleanup:
+      - /include
+      - /lib/cmake
+      - /lib/pkgconfig
     sources:
       - type: archive
         url: https://github.com/libjpeg-turbo/libjpeg-turbo/archive/refs/tags/2.1.3.tar.gz
