@@ -63,7 +63,7 @@ modules:
         commands:
           - pwd
           - export PATH=$PWD:$PATH
-          - cd ../resources
+          - cd /app/resources
           - zlauncher
       - type: file
         path: com.zquestclassic.ZQuest.metainfo.xml
