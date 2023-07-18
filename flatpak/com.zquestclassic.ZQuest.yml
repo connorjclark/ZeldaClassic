@@ -3,9 +3,11 @@ runtime: org.freedesktop.Platform
 runtime-version: '22.08'
 sdk: org.freedesktop.Sdk
 add-extensions:
-  org.freedesktop.Platform.GL.default:
-    directory: lib
+  org.freedesktop.Platform.GL:
+    directory: lib/GL
     version: '23.1.1'
+    subdirectories: true
+    add-ld-path: lib
 finish-args:
   - --device=all
   - --share=network
