@@ -10,11 +10,25 @@ finish-args:
   - --socket=pulseaudio
 command: zlauncher
 rename-icon: zquest
+build-options:
+  no-debuginfo: true
 modules:
   - name: zquest
     buildsystem: simple
     build-commands:
       - pwd
+      - ls
+      # - install -Dm 755 chrome.sh /app/bin/chrome
+      # - install -Dm 755 apply_extra.sh /app/bin/apply_extra
+      # - install -Dm 755 stub_sandbox.sh /app/bin/stub_sandbox
+      # - install -Dm 644 -t /app/etc cobalt.ini
+      - install -Dm 644 -t /app/share/applications com.zquestclassic.ZQuest.desktop
+      - install -Dm 644 -t /app/share/metainfo com.zquestclassic.ZQuest.appdata.xml
+      # - |
+      #   for icon in 16 24 32 48 64 128 256; do
+      #     install -Dm 644 com.google.Chrome-$icon.png /app/share/icons/hicolor/${icon}x${icon}/apps/com.google.Chrome.png
+      #   done
+
       - tar -xvzf zc.tar.gz -C ./opt/zquest-classic
       - rm zc.tar.gz
     post-install:
