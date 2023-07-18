@@ -19,17 +19,6 @@ cleanup:
 command: zlauncher
 rename-icon: zquest
 modules:
-  - name: libjpeg # with libjpeg.so.8
-    buildsystem: cmake-ninja
-    config-opts:
-      - -DCMAKE_SKIP_RPATH:BOOL=YES
-      - -DENABLE_STATIC:BOOL=NO
-      - -DWITH_JPEG8:BOOL=YES
-      - -DCMAKE_INSTALL_LIBDIR=/app/lib # uses lib64 by default
-    sources:
-      - type: archive
-        url: https://github.com/libjpeg-turbo/libjpeg-turbo/archive/refs/tags/2.1.3.tar.gz
-        sha256: dbda0c685942aa3ea908496592491e5ec8160d2cf1ec9d5fd5470e50768e7859
   - name: zquest
     buildsystem: cmake-ninja
     config-opts:
@@ -37,6 +26,8 @@ modules:
       - -DCMAKE_CXX_COMPILER=clang++
       - -DWANT_OPUS=OFF
       - -DWANT_OPENAL=OFF
+      # libjpeg.so.62 => not found
+      - -DWANT_JPEG=OFF
     build-options:
         append-path: /usr/lib/sdk/llvm16/bin
         prepend-ld-library-path: /usr/lib/sdk/llvm16/lib
