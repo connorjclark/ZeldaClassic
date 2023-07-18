@@ -50,18 +50,12 @@ modules:
       # - install -Dm 755 chrome.sh /app/bin/chrome
       - install -Dm 644 -t /app/share/applications com.zquestclassic.ZQuest.desktop
       - install -Dm 644 -t /app/share/metainfo com.zquestclassic.ZQuest.metainfo.xml
-      # - |
-      #   for icon in 16 24 32 48 64 128 256; do
-      #     install -Dm 644 com.google.Chrome-$icon.png /app/share/icons/hicolor/${icon}x${icon}/apps/com.google.Chrome.png
-      #   done
       - echo hiiiii
       - pwd
       - ls
-      - icon_in="zc.png";
-        icon_out="zc.png";
-        for s in {32,64,128,192,256,512}; do
-        convert "${icon_in}" -resize "${s}" "${icon_out}";
-        install -p -Dm644 "${icon_out}" -t "${FLATPAK_DEST}/share/icons/hicolor/${s}x${s}/apps/";
+      - |
+        for s in {16,32,64,128,192,256,512}; do
+          install -p -Dm644 com.zquestclassic.ZQuest-${s}.png -t "${FLATPAK_DEST}/share/icons/hicolor/${s}x${s}/apps/";
         done;
       - find . -name "*.so*" -exec mv {} ${FLATPAK_DEST}/bin/ \;
       - find . -perm /a+x -type f -exec mv {} ${FLATPAK_DEST}/bin/ \;
@@ -99,16 +93,15 @@ modules:
         path: com.zquestclassic.ZQuest.metainfo.xml
       - type: file
         path: com.zquestclassic.ZQuest.desktop
-    modules:
-      - name: ImageMagick
-        config-opts:
-          - --disable-static
-          - --disable-docs
-          - --with-hdri
-          - --with-pic
-        sources:
-          - type: archive
-            url: https://github.com/ImageMagick/ImageMagick/archive/7.0.8-65.tar.gz
-            sha256: 14afaf722d8964ed8de2ebd8184a229e521f1425e18e7274806f06e008bf9aa7
-        cleanup:
-          - '*'
+      - type: file
+        path: icons/com.zquestclassic.ZQuest-16.png
+      - type: file
+        path: icons/com.zquestclassic.ZQuest-32.png
+      - type: file
+        path: icons/com.zquestclassic.ZQuest-64.png
+      - type: file
+        path: icons/com.zquestclassic.ZQuest-128.png
+      - type: file
+        path: icons/com.zquestclassic.ZQuest-256.png
+      - type: file
+        path: icons/com.zquestclassic.ZQuest-512.png
