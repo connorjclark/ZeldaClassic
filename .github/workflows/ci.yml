@@ -4,6 +4,7 @@ on:
   push:
     branches-ignore:
       - 'compare-baseline-*'
+      - 'flatpak'
   pull_request:
 
 env:
