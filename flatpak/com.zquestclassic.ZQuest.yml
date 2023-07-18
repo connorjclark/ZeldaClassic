@@ -42,9 +42,9 @@ modules:
       - mkdir ${FLATPAK_DEST}/resources/
       - mv * ${FLATPAK_DEST}/resources/
       # This can be removed once we release a version using posix_spawnp.
-      - ln -s ${FLATPAK_DEST}/bin/zelda ${FLATPAK_DEST}/resources/zelda
-      - ln -s ${FLATPAK_DEST}/bin/zquest ${FLATPAK_DEST}/resources/zquest
-      - ln -s ${FLATPAK_DEST}/bin/zscript ${FLATPAK_DEST}/resources/zscript
+      - ln -s ../bin/zelda ${FLATPAK_DEST}/resources/zelda
+      - ln -s ../bin/zquest ${FLATPAK_DEST}/resources/zquest
+      - ln -s ../bin/zscript ${FLATPAK_DEST}/resources/zscript
     # post-install:
     sources:
       - type: archive
