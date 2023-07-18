@@ -29,8 +29,8 @@ modules:
     buildsystem: autotools
     sources:
       - type: archive
-        url: https://github.com/curl/curl/releases/download/curl-7_64_1/curl-7.64.1.tar.gz
-        sha256: 432d3f466644b9416bc5b649d344116a753aeaa520c8beaf024a90cba9d3d35d
+        url: https://github.com/curl/curl/releases/download/curl-8_1_2/curl-8.1.2.tar.gz
+        sha256: 2e5a9b8fcdc095bdd2f079561f369de71c5eb3b80f00a702fbe9a8b8d9897891
 
   - name: libglu
     buildsystem: meson
