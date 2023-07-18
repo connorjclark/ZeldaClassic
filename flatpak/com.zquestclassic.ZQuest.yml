@@ -128,7 +128,7 @@ modules:
           - ls /
           - ls /usr
           - ls /lib
-          - ls /usr/lib/x86_64-linux-gnu
+          - ls /app/lib/
           - cd /app/resources
           - ldd /app/bin/zlauncher | grep gnu
           - PATH=/app/bin:$PATH zlauncher
