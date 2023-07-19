@@ -15,7 +15,6 @@ finish-args:
   - --filesystem=xdg-download
   - --filesystem=xdg-documents
   - --filesystem=xdg-data/ZQuest Classic:create
-  - --filesystem=~/ZQuest Classic
   # Needed for game controllers.
   - --device=all
 command: entry.sh
