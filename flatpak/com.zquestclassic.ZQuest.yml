@@ -70,11 +70,8 @@ modules:
 
     sources:
       - type: archive
-        # zelda-classic@connorjclark-nightly-2023-07-18
-        # url: https://github.com/ArmageddonGames/ZQuestClassic/releases/download/2.55-alpha-115/2.55-alpha-115-linux.tar.gz
-        # sha256: fd3782a997e6a0bde2b2d5b3ecc52c61468c3145e4e4fbc814502356c4a94cb4
-        url: https://github.com/connorjclark/ZeldaClassic/releases/download/connorjclark-nightly-2023-07-18-2/connorjclark-nightly-2023-07-18-2-linux.tar.gz
-        sha256: c5dee0d5f081ea805abb2470cd946be8429b92ed36542811eba066d9d7580ca9
+        url: https://github.com/ArmageddonGames/ZQuestClassic/releases/download/nightly-2023-07-19/nightly-2023-07-19-linux.tar.gz
+        sha256: bedfea106f72855ab5d1f832547440fdaf1356ba07a6f4533a30e4911371e2ee
         only-arches: [x86_64]
         # TODO: enable for next alpha.
         # x-checker-data:
