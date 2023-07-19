@@ -14,8 +14,8 @@
     <content_attribute id="violence-cartoon">mild</content_attribute>
   </content_rating>
   <releases>
-    <release date="2022-07-09" version="2.55-alpha-115">
-      <url>https://github.com/ArmageddonGames/ZQuestClassic/releases/tag/2.55-alpha-115</url>
+    <release date="2023-07-19" version="nightly-2023-07-19">
+      <url>https://github.com/ArmageddonGames/ZQuestClassic/releases/tag/nightly-2023-07-19</url>
     </release>
   </releases>
   <screenshots>
