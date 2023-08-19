@@ -16,6 +16,7 @@ from common import ReplayTestResults
 script_dir = Path(os.path.dirname(os.path.realpath(__file__)))
 root_dir = script_dir.parent
 tmp_dir = root_dir / '.tmp/test_zquest'
+tmp_dir.mkdir(exist_ok=True, parents=True)
 
 sys.path.append(str((root_dir / 'scripts').absolute()))
 import run_target
@@ -61,7 +62,6 @@ class TestReplays(unittest.TestCase):
 
     # Resave classic_1st.qst and assert classic_1st.zplay, to make sure the loading/saving code is not introducing bugs.
     def test_zquest_save(self):
-        tmp_dir.mkdir(exist_ok=True, parents=True)
         qst_path = tmp_dir / 'tmp.qst'
         run_target.check_run('zquest', [
             '-headless',
