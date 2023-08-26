@@ -16,10 +16,6 @@
 #include <cstdint>
 #include <string>
 
-#ifdef __EMSCRIPTEN__
-#include <SDL2/SDL_mixer.h>
-#endif
-
 #define ZCMF_DUH      0x00000001
 #define ZCMF_OGG      0x00000002
 #define ZCMF_MP3      0x00000004
@@ -57,7 +53,6 @@ ZCM_EXTERN bool zcmusic_poll(int32_t flags = -1);
 ZCM_EXTERN void zcmusic_exit();
 
 ZCM_EXTERN ZCMUSIC * zcmusic_load_file(const char *filename);
-ZCM_EXTERN ZCMUSIC * zcmusic_load_file_ex(const char *filename);
 ZCM_EXTERN bool zcmusic_play(ZCMUSIC* zcm, int32_t vol);
 ZCM_EXTERN bool zcmusic_pause(ZCMUSIC* zcm, int32_t pause);
 ZCM_EXTERN bool zcmusic_stop(ZCMUSIC* zcm);
@@ -72,24 +67,6 @@ ZCM_EXTERN void zcmusic_set_speed(ZCMUSIC* zcm, int32_t value);
 ZCM_EXTERN int32_t zcmusic_get_length(ZCMUSIC* zcm);
 ZCM_EXTERN void zcmusic_set_loop(ZCMUSIC* zcm, double start, double end);
 ZCM_EXTERN int32_t zcmusic_get_type(ZCMUSIC* zcm);
-
-typedef struct
-{
-    ZCMUSIC *newtrack;
-    ZCMUSIC *oldtrack;
-
-    int32_t fadeinframes;
-    int32_t fadeinmaxframes;
-    int32_t fadeindelay;
-
-    int32_t fadeoutframes;
-    int32_t fadeoutmaxframes;
-    int32_t fadeoutdelay;
-} ZCMIXER;
-
-ZCM_EXTERN ZCMIXER* zcmixer_create();
-ZCM_EXTERN void zcmixer_update(ZCMIXER* mix, int32_t basevol, int32_t uservol, bool oldscriptvol);
-ZCM_EXTERN void zcmixer_exit(ZCMIXER* &mix);
 
 #undef ZCM_EXTERN
 #endif
