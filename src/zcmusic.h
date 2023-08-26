@@ -16,6 +16,10 @@
 #include <cstdint>
 #include <string>
 
+#ifdef __EMSCRIPTEN__
+#include <SDL2/SDL_mixer.h>
+#endif
+
 #define ZCMF_DUH      0x00000001
 #define ZCMF_OGG      0x00000002
 #define ZCMF_MP3      0x00000004
