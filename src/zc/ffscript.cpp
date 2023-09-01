@@ -672,7 +672,7 @@ struct WasmScriptHandle
 	char* heap_buf;
 	wasm_exec_env_t exec_env;
 	wasm_module_inst_t instance;
-	wasm_function_inst_t run_fn;
+	wasm_function_inst_t init_fn, run_fn;
 };
 
 // Returns true if registers had to be initialized.
@@ -30850,6 +30850,17 @@ void set_register_wrapper(wasm_exec_env_t exec_env, int arg, int value)
 	set_register(arg, value);
 }
 
+int run_command_rnd_wrapper(wasm_exec_env_t exec_env, int arg)
+{
+	// TODO: OK to drop the 10000???
+	if(arg > 0)
+		return (zc_oldrand() % arg);
+	else if (arg < 0)
+		return (zc_oldrand() % (-arg)) * -1;
+	else
+		return 0;
+}
+
 // ---
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -30970,7 +30981,7 @@ bh_read_file_to_buffer(const char *filename, uint32_t *ret_size)
 
 static WasmScriptHandle* wasm_create_script_handle(script_data *script, refInfo *ri)
 {
-	size_t heap_size = 512 * 1024;
+	size_t heap_size = 1 * 1024 * 1024;
 	char* heap_buf = (char*)calloc(heap_size, 1);
     char error_buf[128];
 	uint8_t* buffer;
@@ -30982,6 +30993,7 @@ static WasmScriptHandle* wasm_create_script_handle(script_data *script, refInfo 
     wasm_exec_env_t exec_env = NULL;
     uint32_t buf_size, stack_size = 8092;
     wasm_function_inst_t run_fn = NULL;
+	wasm_function_inst_t init_fn = NULL;
     char *native_buffer = NULL;
     uint32_t wasm_buffer = 0;
 
@@ -31002,10 +31014,10 @@ static WasmScriptHandle* wasm_create_script_handle(script_data *script, refInfo 
         //     "(i*~i)i",  // the function prototype signature, avoid to use i32
         //     NULL        // attachment is NULL
         // },
-		EXPORT_WASM_API_WITH_SIG(hello, "(i)"),
+		// EXPORT_WASM_API_WITH_SIG(hello, "(i)"),
 		EXPORT_WASM_API_WITH_SIG2(get_register, "(i)i"),
 		EXPORT_WASM_API_WITH_SIG2(set_register, "(ii)"),
-        // { "calculate_native", calculate_native, "(iii)i", NULL }
+		EXPORT_WASM_API_WITH_SIG2(run_command_rnd, "(i)i"),
     };
 
     init_args.mem_alloc_type = Alloc_With_Pool;
@@ -31022,7 +31034,12 @@ static WasmScriptHandle* wasm_create_script_handle(script_data *script, refInfo 
         return nullptr;
     }
 
-    buffer = bh_read_file_to_buffer("hello.wasm", &buf_size);
+	// static NativeSymbol native_symbols_go[] = {
+	// 	EXPORT_WASM_API_WITH_SIG(gojs_ticks, "(i)i"),
+	// }
+	// wasm_runtime_register_natives("gojs", &native_symbols_go, sizeof(native_symbols_go) / sizeof(NativeSymbol));
+
+    buffer = bh_read_file_to_buffer("circle.wasm", &buf_size);
 
     if (!buffer) {
         printf("Open wasm app file [%s] failed.\n", wasm_path);
@@ -31055,6 +31072,9 @@ static WasmScriptHandle* wasm_create_script_handle(script_data *script, refInfo 
         goto fail;
     }
 
+	// Optional.
+	init_fn = wasm_runtime_lookup_function(module_inst, "initialize", NULL);
+
 	goto success;
 
 fail:
@@ -31079,7 +31099,20 @@ success:
 	handle->heap_buf = heap_buf;
 	handle->exec_env = exec_env;
 	handle->instance = module_inst;
+	handle->init_fn = init_fn;
 	handle->run_fn = run_fn;
+
+	if (init_fn)
+	{
+		uint32_t argv[8] = {};
+		for (int i = 0; i < 8; i++) argv[i] = ri->d[i];
+		if (!wasm_runtime_call_wasm(handle->exec_env, init_fn, 8, argv)) {
+			printf("call wasm function initialize failed. %s\n",
+				wasm_runtime_get_exception(handle->instance));
+			return 0; // TODO !
+		}
+	}
+
 	return handle;
 }
 
@@ -31100,15 +31133,20 @@ static int32_t run_script_wasm()
 	if (!wasm_script)
 		return 0; // TODO !
 
-	// set_register(FX, 60 * 10000);
+	if (ri->waitframes)
+	{
+		--ri->waitframes;
+		return RUNSCRIPT_OK;
+	}
 
-	if (!wasm_runtime_call_wasm(wasm_script->exec_env, wasm_script->run_fn, 0, nullptr)) {
+	uint32_t argv[1] = {0};
+	if (!wasm_runtime_call_wasm(wasm_script->exec_env, wasm_script->run_fn, 1, argv)) {
         printf("call wasm function run failed. %s\n",
                wasm_runtime_get_exception(wasm_script->instance));
 		return 0; // TODO !
     }
 
-	return 0;
+	return (int)argv[0];
 }
 
 int32_t run_script(ScriptType type, const word script, const int32_t i)
