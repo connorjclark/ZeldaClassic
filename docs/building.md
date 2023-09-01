@@ -112,3 +112,9 @@ Some care is needed to ensure build outputs are determinstic. If you do a clean 
 Other useful links:
 
 - https://crascit.com/2016/04/09/using-ccache-with-cmake/
+
+# WebAssembly script engine
+
+```sh
+brew install wabt
+```

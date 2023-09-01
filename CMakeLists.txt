@@ -5,6 +5,7 @@ project (ZeldaClassic)
 set(CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH};${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 include(FetchContent)
 include(CodeCoverage)
+find_package(PkgConfig REQUIRED)
 
 option(COPY_RESOURCES "Copy runtime resources to build folder, but only if they do not exist yet" ON)
 
@@ -641,6 +642,35 @@ endif()
 if(CMAKE_SIZEOF_VOID_P EQUAL 4 AND WIN32)
 	target_compile_definitions(zplayer PRIVATE ZC_WIN_32)
 endif()
+
+# pkg_check_modules(WASMER REQUIRED wasmer)
+# target_link_libraries(zplayer PRIVATE ${WASMER_LIBRARIES})
+# target_include_directories(zplayer PRIVATE ${WASMER_INCLUDE_DIRS})
+# target_link_options(zplayer PRIVATE ${WASMER_LDFLAGS})
+
+
+# set(WAMR_BUILD_TARGET "X86_64")
+
+
+# https://00f.net/2023/01/04/webassembly-benchmark-2023/
+# iwasm via "WebAssembly Micro Runtime" seems like a good pick.
+FetchContent_Declare(
+	wasm
+	GIT_REPOSITORY https://github.com/bytecodealliance/wasm-micro-runtime.git
+	GIT_TAG        382d52fc05dbb543dfafb969182104d6c4856c63
+)
+FetchContent_MakeAvailable(wasm)
+set(WAMR_ROOT_DIR ${wasm_SOURCE_DIR})
+set(WAMR_BUILD_PLATFORM "darwin")
+set(WAMR_BUILD_INTERP 1)
+set(WAMR_BUILD_FAST_INTERP 1)
+set(WAMR_BUILD_AOT 1)
+set(WAMR_BUILD_LIBC_BUILTIN 1)
+set(WAMR_BUILD_LIBC_WASI 1)
+set(WAMR_BUILD_SIMD 1)
+include(${wasm_SOURCE_DIR}/build-scripts/runtime_lib.cmake)
+add_library(vmlib ${WAMR_RUNTIME_LIB_SOURCE})
+target_link_libraries(zplayer PRIVATE vmlib)
 
 #############################################################
 # ZQuest
