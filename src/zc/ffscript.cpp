@@ -1,4 +1,5 @@
 #include <deque>
+#include <exception>
 #include <string>
 #include <sstream>
 #include <math.h>
@@ -662,6 +663,18 @@ bool& FFScript::waitdraw(ScriptType type, int index)
 	return get_script_engine_data(type, index).waitdraw;
 }
 
+#include "wasm_export.h"
+
+struct WasmScriptHandle
+{
+	script_data *script;
+	refInfo *ri;
+	char* heap_buf;
+	wasm_exec_env_t exec_env;
+	wasm_module_inst_t instance;
+	wasm_function_inst_t run_fn;
+};
+
 // Returns true if registers had to be initialized.
 static bool set_current_script_engine_data(ScriptType type, int script, int index)
 {
@@ -683,6 +696,12 @@ static bool set_current_script_engine_data(ScriptType type, int script, int inde
 				memcpy(ri->d, tmpscr->ffcs[index].initd, 8 * sizeof(int32_t));
 				memcpy(ri->a, tmpscr->ffcs[index].inita, 2 * sizeof(int32_t));
 				data.initialized = true;
+			}
+
+			if (curscript->debug_id == 513)
+			{
+				// ...
+				
 			}
 
 			ri->ffcref = index;
@@ -30762,6 +30781,335 @@ portal* loadportal(savedportal& p);
 //                                       Run the script                                                //
 ///----------------------------------------------------------------------------------------------------//
 
+static std::map<std::pair<script_data*, refInfo*>, WasmScriptHandle*> wasm_scripts;
+
+// The first parameter is not exec_env because it is invoked by native funtions
+static void reverse(char *str, int len)
+{
+    int i = 0, j = len - 1, temp;
+    while (i < j) {
+        temp = str[i];
+        str[i] = str[j];
+        str[j] = temp;
+        i++;
+        j--;
+    }
+}
+
+// The first parameter exec_env must be defined using type wasm_exec_env_t
+// which is the calling convention for exporting native API by WAMR.
+//
+// Converts a given integer x to string str[].
+// digit is the number of digits required in the output.
+// If digit is more than the number of digits in x,
+// then 0s are added at the beginning.
+int intToStr(wasm_exec_env_t exec_env, int x, char *str, int str_len, int digit)
+{
+    int i = 0;
+
+    printf("calling into native function: %s\n", __FUNCTION__);
+
+    while (x) {
+        // native is responsible for checking the str_len overflow
+        if (i >= str_len) {
+            return -1;
+        }
+        str[i++] = (x % 10) + '0';
+        x = x / 10;
+    }
+
+    // If number of digits required is more, then
+    // add 0s at the beginning
+    while (i < digit) {
+        if (i >= str_len) {
+            return -1;
+        }
+        str[i++] = '0';
+    }
+
+    reverse(str, i);
+
+    if (i >= str_len)
+        return -1;
+    str[i] = '\0';
+    return i;
+}
+
+void hello(wasm_exec_env_t exec_env, int i)
+{
+	printf("got value: %d\n", i);
+}
+
+int get_register_wrapper(wasm_exec_env_t exec_env, int arg)
+{
+	return get_register(arg);
+}
+
+void set_register_wrapper(wasm_exec_env_t exec_env, int arg, int value)
+{
+	set_register(arg, value);
+}
+
+// ---
+#include <sys/stat.h>
+#include <fcntl.h>
+#if defined(_WIN32) || defined(_WIN32_)
+#include <io.h>
+#else
+#include <unistd.h>
+#endif
+
+#if defined(_WIN32) || defined(_WIN32_)
+
+#if defined(__MINGW32__) && !defined(_SH_DENYNO)
+#define _SH_DENYNO 0x40
+#endif
+
+char *
+bh_read_file_to_buffer(const char *filename, uint32_t *ret_size)
+{
+    char *buffer;
+    int file;
+    uint32_t file_size, buf_size, read_size;
+    struct stat stat_buf;
+
+    if (!filename || !ret_size) {
+        printf("Read file to buffer failed: invalid filename or ret size.\n");
+        return NULL;
+    }
+
+    if (_sopen_s(&file, filename, _O_RDONLY | _O_BINARY, _SH_DENYNO, 0)) {
+        printf("Read file to buffer failed: open file %s failed.\n", filename);
+        return NULL;
+    }
+
+    if (fstat(file, &stat_buf) != 0) {
+        printf("Read file to buffer failed: fstat file %s failed.\n", filename);
+        _close(file);
+        return NULL;
+    }
+    file_size = (uint32_t)stat_buf.st_size;
+
+    /* At lease alloc 1 byte to avoid malloc failed */
+    buf_size = file_size > 0 ? file_size : 1;
+
+    if (!(buffer = (char *)BH_MALLOC(buf_size))) {
+        printf("Read file to buffer failed: alloc memory failed.\n");
+        _close(file);
+        return NULL;
+    }
+#if WASM_ENABLE_MEMORY_TRACING != 0
+    printf("Read file, total size: %u\n", file_size);
+#endif
+
+    read_size = _read(file, buffer, file_size);
+    _close(file);
+
+    if (read_size < file_size) {
+        printf("Read file to buffer failed: read file content failed.\n");
+        BH_FREE(buffer);
+        return NULL;
+    }
+
+    *ret_size = file_size;
+    return buffer;
+}
+#else /* else of defined(_WIN32) || defined(_WIN32_) */
+uint8_t *
+bh_read_file_to_buffer(const char *filename, uint32_t *ret_size)
+{
+    uint8_t *buffer;
+    int file;
+    uint32_t file_size, buf_size, read_size;
+    struct stat stat_buf;
+
+    if (!filename || !ret_size) {
+        printf("Read file to buffer failed: invalid filename or ret size.\n");
+        return NULL;
+    }
+
+    if ((file = open(filename, O_RDONLY, 0)) == -1) {
+        printf("Read file to buffer failed: open file %s failed.\n", filename);
+        return NULL;
+    }
+
+    if (fstat(file, &stat_buf) != 0) {
+        printf("Read file to buffer failed: fstat file %s failed.\n", filename);
+        close(file);
+        return NULL;
+    }
+
+    file_size = (uint32_t)stat_buf.st_size;
+
+    /* At lease alloc 1 byte to avoid malloc failed */
+    buf_size = file_size > 0 ? file_size : 1;
+
+    if (!(buffer = (uint8_t*)BH_MALLOC(buf_size))) {
+        printf("Read file to buffer failed: alloc memory failed.\n");
+        close(file);
+        return NULL;
+    }
+#if WASM_ENABLE_MEMORY_TRACING != 0
+    printf("Read file, total size: %u\n", file_size);
+#endif
+
+    read_size = (uint32_t)read(file, buffer, file_size);
+    close(file);
+
+    if (read_size < file_size) {
+        printf("Read file to buffer failed: read file content failed.\n");
+        BH_FREE(buffer);
+        return NULL;
+    }
+
+    *ret_size = file_size;
+    return buffer;
+}
+#endif /* end of defined(_WIN32) || defined(_WIN32_) */
+// ---
+
+static WasmScriptHandle* wasm_create_script_handle(script_data *script, refInfo *ri)
+{
+	size_t heap_size = 512 * 1024;
+	char* heap_buf = (char*)calloc(heap_size, 1);
+    char error_buf[128];
+	uint8_t* buffer;
+    int opt;
+    char *wasm_path = NULL;
+
+    wasm_module_t module = NULL;
+    wasm_module_inst_t module_inst = NULL;
+    wasm_exec_env_t exec_env = NULL;
+    uint32_t buf_size, stack_size = 8092;
+    wasm_function_inst_t run_fn = NULL;
+    char *native_buffer = NULL;
+    uint32_t wasm_buffer = 0;
+
+    RuntimeInitArgs init_args;
+    memset(&init_args, 0, sizeof(RuntimeInitArgs));
+
+    // Define an array of NativeSymbol for the APIs to be exported.
+    // Note: the array must be static defined since runtime
+    //            will keep it after registration
+    // For the function signature specifications, goto the link:
+    // https://github.com/bytecodealliance/wasm-micro-runtime/blob/main/doc/export_native_api.md
+
+    static NativeSymbol native_symbols[] = {
+        // {
+        //     "intToStr", // the name of WASM function name
+        //     // (int (*fn)(int, char, int, int)) intToStr,   // the native function pointer
+		// 	(void*)intToStr,
+        //     "(i*~i)i",  // the function prototype signature, avoid to use i32
+        //     NULL        // attachment is NULL
+        // },
+		EXPORT_WASM_API_WITH_SIG(hello, "(i)"),
+		EXPORT_WASM_API_WITH_SIG2(get_register, "(i)i"),
+		EXPORT_WASM_API_WITH_SIG2(set_register, "(ii)"),
+        // { "calculate_native", calculate_native, "(iii)i", NULL }
+    };
+
+    init_args.mem_alloc_type = Alloc_With_Pool;
+    init_args.mem_alloc_option.pool.heap_buf = heap_buf;
+    init_args.mem_alloc_option.pool.heap_size = heap_size;
+
+    // Native symbols need below registration phase
+    init_args.n_native_symbols = sizeof(native_symbols) / sizeof(NativeSymbol);
+    init_args.native_module_name = "env";
+    init_args.native_symbols = native_symbols;
+
+    if (!wasm_runtime_full_init(&init_args)) {
+        printf("Init runtime environment failed.\n");
+        return nullptr;
+    }
+
+    buffer = bh_read_file_to_buffer("hello.wasm", &buf_size);
+
+    if (!buffer) {
+        printf("Open wasm app file [%s] failed.\n", wasm_path);
+        goto fail;
+    }
+
+    module = wasm_runtime_load(buffer, buf_size, error_buf, sizeof(error_buf));
+    if (!module) {
+        printf("Load wasm module failed. error: %s\n", error_buf);
+        goto fail;
+    }
+
+    module_inst = wasm_runtime_instantiate(module, stack_size, heap_size,
+                                           error_buf, sizeof(error_buf));
+
+    if (!module_inst) {
+        printf("Instantiate wasm module failed. error: %s\n", error_buf);
+        goto fail;
+    }
+
+    exec_env = wasm_runtime_create_exec_env(module_inst, stack_size);
+    if (!exec_env) {
+        printf("Create wasm execution environment failed.\n");
+        goto fail;
+    }
+
+    if (!(run_fn = wasm_runtime_lookup_function(module_inst, "run",
+                                              NULL))) {
+        printf("The run wasm function is not found.\n");
+        goto fail;
+    }
+
+	goto success;
+
+fail:
+	free(heap_buf);
+    if (exec_env)
+        wasm_runtime_destroy_exec_env(exec_env);
+    if (module_inst) {
+        if (wasm_buffer)
+            wasm_runtime_module_free(module_inst, wasm_buffer);
+        wasm_runtime_deinstantiate(module_inst);
+    }
+    if (module)
+        wasm_runtime_unload(module);
+    if (buffer)
+        BH_FREE(buffer);
+	return nullptr;
+
+success:
+	auto handle = new WasmScriptHandle();
+	handle->script = script;
+	handle->ri = ri;
+	handle->heap_buf = heap_buf;
+	handle->exec_env = exec_env;
+	handle->instance = module_inst;
+	handle->run_fn = run_fn;
+	return handle;
+}
+
+static int32_t run_script_wasm()
+{
+	WasmScriptHandle* wasm_script = nullptr;
+	
+	auto it = wasm_scripts.find({curscript, ri});
+	if (it == wasm_scripts.end())
+	{
+		wasm_scripts[{curscript, ri}] = wasm_script = wasm_create_script_handle(curscript, ri);
+	}
+	else
+	{
+		wasm_script = it->second;
+	}
+
+	if (!wasm_script)
+		return 0; // TODO !
+
+	// set_register(FX, 60 * 10000);
+
+	if (!wasm_runtime_call_wasm(wasm_script->exec_env, wasm_script->run_fn, 0, nullptr)) {
+        printf("call wasm function run failed. %s\n",
+               wasm_runtime_get_exception(wasm_script->instance));
+		return 0; // TODO !
+    }
+
+	return 0;
+}
 
 int32_t run_script(ScriptType type, const word script, const int32_t i)
 {
@@ -30936,6 +31284,11 @@ int32_t run_script(ScriptType type, const word script, const int32_t i)
 	// 	return RUNSCRIPT_OK;
 
 	script_funcrun = false;
+
+	if (curscript->debug_id == 513)
+	{
+		return run_script_wasm();
+	}
 
 	if (DEBUG_PRINT_ZASM && !seen_scripts.contains(curscript->debug_id))
 	{
