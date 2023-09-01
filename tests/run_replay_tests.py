@@ -358,7 +358,7 @@ def clear_progress_str():
 
 
 is_mac_ci = args.ci and 'mac' in args.ci
-is_web = bool(list(args.build_folder.glob('*.wasm')))
+is_web = bool(list(args.build_folder.glob('zplayer.wasm')))
 is_web_ci = is_web and args.ci
 is_coverage = args.build_folder.name == 'Coverage' or args.build_type == 'Coverage'
 is_asan = args.build_folder.name == 'Asan' or args.build_type == 'Asan'
