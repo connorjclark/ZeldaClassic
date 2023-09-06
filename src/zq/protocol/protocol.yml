@@ -1,0 +1,48 @@
+types:
+  Widget:
+    name: string
+    type: string
+  Item:
+    id: int
+    name: string
+    tile: int
+
+commands:
+  show_message:
+    params:
+      type:
+        - info
+        - alert
+      title: string
+      content: string
+  quit:
+  load_quest:
+    params:
+      path: string
+      show_progress:
+        type: bool
+        default: true
+    result:
+      success: bool
+      error_code: int
+  get_items:
+    result:
+      items: Item[]
+  get_item_names:
+    result:
+      names: string[]
+  click_screen:
+    params:
+      x: int
+      y: int
+
+events:
+  quest_loaded:
+    params:
+      path: string
+  quest_saved:
+    params:
+      path: string
+  dialog_opened:
+    params:
+      widget: Widget[]

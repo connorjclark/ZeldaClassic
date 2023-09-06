@@ -629,7 +629,8 @@ std::shared_ptr<GUI::Widget> LauncherDialog::view()
 						CONFIG_CHECKBOX_I("Linear Scaling",App::zquest,"zquest","scaling_mode",0,"Use linear scaling when upscaling the window. If off, the default is nearest-neighbor scaling. If on, things will look a little blurry at most resolutions"),
 						CONFIG_CHECKBOX_I("Ignore Monitor Scale",App::zquest,"gui","ignore_monitor_scale",1,"Ignore monitor DPI scale (i.e. Windows' \"Scale and Layout\" scale)"),
 						CONFIG_CHECKBOX_I("Record During Test Feature",App::zquest,"zquest","test_mode_record",0,"Save a recording to replays/test_XXXXXXXX.zplay when using the GUI test feature."),
-						CONFIG_CHECKBOX_I("Custom Fonts",App::zquest,"gui","custom_fonts",1,"Use custom fonts from the 'customfonts' folder for UI elements.")
+						CONFIG_CHECKBOX_I("Custom Fonts",App::zquest,"gui","custom_fonts",1,"Use custom fonts from the 'customfonts' folder for UI elements."),
+						CONFIG_CHECKBOX_I("(EXPERIMENTAL) Protocol server",App::zquest,"zquest","protocol_server",0,"Enable websocket server for ZQuest automation protocol.")
 					),
 					Rows<3>(fitParent = true,
 						CONFIG_TEXTFIELD_FL("Cursor Scale:", App::zquest,"zquest","cursor_scale_large",1.5,1.0,5.0, 4),

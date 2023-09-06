@@ -21,6 +21,7 @@ tmp_dir.mkdir(exist_ok=True, parents=True)
 
 sys.path.append(str((root_dir / 'scripts').absolute()))
 import run_target
+from protocol.protocol_client import ZCProtocol
 
 class TestZQuest(unittest.TestCase):
     def setUp(self):
@@ -118,6 +119,53 @@ class TestZQuest(unittest.TestCase):
                 output_dir = tmp_dir / 'output' / original_replay_path.name
                 output_dir.mkdir(exist_ok=True, parents=True)
                 self.run_replay(output_dir, [replay_path])
+
+    def test_protocol(self):
+        sp = run_target.Popen('zquest', [
+            # '-headless',
+            '-test-skip-warnings',
+            '-protocol-server',
+            '-new',
+        ], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+        p = ZCProtocol('ws://localhost:9002')
+
+        r = p.wait_for_event('quest_loaded')
+        self.assertEqual(r['method'], 'quest_loaded')
+        self.assertEqual(r['params']['path'], 'modules/classic/default.qst')
+
+        r = p.send_command('load_quest', {'path': 'modules/classic/classic_1st.qst'})
+        self.assertEqual(r['id'], 1)
+        self.assertEqual(r['result']['success'], True)
+        self.assertEqual(r['result']['error_code'], 0)
+
+        r = p.wait_for_event('quest_loaded')
+        self.assertEqual(r['method'], 'quest_loaded')
+        self.assertEqual(r['params']['path'], 'modules/classic/classic_1st.qst')
+
+        r = p.send_command('get_item_names')
+        self.assertEqual(r['id'], 2)
+        self.assertEqual(len(r['result']['names']), 256)
+        self.assertEqual(r['result']['names'][0], 'Rupee (1)')
+        self.assertEqual(r['result']['names'][1], 'Rupee (5)')
+
+        r = p.send_command('get_items')
+        self.assertEqual(r['id'], 3)
+        self.assertEqual(len(r['result']['items']), 256)
+        self.assertEqual(r['result']['items'][0], {'id': 0, 'name': 'Rupee (1)', 'tile': 49})
+        self.assertEqual(r['result']['items'][1], {'id': 1, 'name': 'Rupee (5)', 'tile': 49})
+        self.assertEqual(r['result']['items'][5], {'id': 5, 'name': 'Sword 1 (Wooden)', 'tile': 41})
+
+        p.send_command_async('quit')
+
+        # while p.wait_for_any_event():
+        #     event = p.pop_event()
+        #     print(event)
+        #     p.send_command_async('quit')
+
+        if sp.wait() != 0:
+            print('stdout\n', sp.stdout)
+            print('stderr\n', sp.stderr)
 
 if __name__ == '__main__':
     unittest.main()

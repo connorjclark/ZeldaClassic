@@ -179,6 +179,7 @@ extern int32_t ImportMapBias;                                   //tells what has
 extern int32_t BrushWidth, BrushHeight;
 extern bool quit,saved;
 extern bool __debug;
+extern bool currently_loading_quest;
 extern int32_t LayerMaskInt[7];
 extern int32_t CurrentLayer;
 extern int32_t DuplicateAction[4];

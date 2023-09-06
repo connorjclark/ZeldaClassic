@@ -11,6 +11,8 @@
 #include "base/cpool.h"
 #include "base/gui.h"
 #include "base/msgstr.h"
+#include "zq/protocol/impl.h"
+#include "zq/protocol/protocol.h"
 #include "zq/zq_class.h"
 #include "zq/zq_misc.h"
 #include "zq/zquest.h"
@@ -6902,9 +6904,13 @@ void popup_bugfix_dlg(const char* cfg)
 #pragma GCC diagnostic pop
 #endif
 
+bool currently_loading_quest = false;
+
 // wrapper to reinitialize everything on an error
 int32_t load_quest(const char *filename, bool show_progress)
 {
+	currently_loading_quest = true;
+
 	char buf[2048];
 //  if(encrypted)
 //	  setPackfilePassword(datapwd);
@@ -6962,7 +6968,12 @@ int32_t load_quest(const char *filename, bool show_progress)
 	}
 
     Map.ClearCommandHistory();
-	
+
+	currently_loading_quest = false;
+	protocol::events::quest_loaded::emit({
+		.path = filename,
+	});
+
 	return ret;
 }
 

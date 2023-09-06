@@ -683,6 +683,17 @@ if(WIN32)
 	)
 endif()
 
+if (NOT EMSCRIPTEN)
+	target_include_directories(zquest PRIVATE third_party)
+
+	add_library(json INTERFACE third_party/json/json.h)
+	target_link_libraries(zquest PRIVATE json)
+
+	add_library(asio INTERFACE third_party/asio/asio.hpp)
+	target_include_directories(asio INTERFACE third_party/asio)
+	target_link_libraries(zquest PRIVATE asio)
+endif()
+
 #############################################################
 # ZScript parser
 #############################################################

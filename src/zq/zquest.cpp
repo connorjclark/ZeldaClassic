@@ -90,6 +90,7 @@ void setZScriptVersion(int32_t) { } //bleh...
 #include "colorname.h"
 #include "zq/zq_hotkey.h"
 #include "zq/package.h"
+#include "zq/protocol/protocol.h"
 
 extern CConsoleLoggerEx parser_console;
 //Windows mmemory tools
@@ -27033,6 +27034,9 @@ int32_t main(int32_t argc,char **argv)
 	em_init_fs();
 #endif
 
+	if (used_switch(argc, argv, "-protocol-server") || zc_get_config("zquest", "protocol_server", false))
+		protocol_server_start();
+
 #ifndef __EMSCRIPTEN__
 	if(zc_get_config("zquest","open_debug_console",0))
 		initConsole();
@@ -27628,7 +27632,7 @@ int32_t main(int32_t argc,char **argv)
 	char *curcontrol = getBetaControlString();
 	const char *oldcontrol = zc_get_config("zquest", "beta_warning", "");
 	
-	if (zc_get_config("zquest","always_betawarn",0) || strcmp(curcontrol, oldcontrol))
+	if (!used_switch(argc, argv, "-test-skip-warnings") && (zc_get_config("zquest","always_betawarn",0) || strcmp(curcontrol, oldcontrol)))
 	{
 		InfoDialog("Alpha Warning", "WARNING:\nThis is an ALPHA version of ZQuest."
 			" There may be major bugs, which could cause quests"
@@ -30544,6 +30548,8 @@ void update_hw_screen(bool force)
 			render_zq();
 		myvsync=0;
 	}
+
+	protocol_server_poll();
 }
 
 bool checkCost(int32_t ctr, int32_t amnt)
