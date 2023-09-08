@@ -160,10 +160,12 @@ class TestZQuest(unittest.TestCase):
 
         # while p.wait_for_any_event():
         #     event = p.pop_event()
-        #     print(event)
+        #     print(event['method'])
         #     if event['method'] == 'dialog_opened':
         #         for widget in event['params']['widgets']:
         #             print(widget)
+        #     else:
+        #         print(event['params'])
 
         if sp.wait() != 0:
             print('stdout\n', sp.stdout)

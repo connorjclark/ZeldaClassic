@@ -50,3 +50,4 @@ events:
   dialog_opened:
     params:
       widgets: Widget[]
+  dialog_closed:

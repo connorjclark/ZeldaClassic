@@ -7,7 +7,11 @@ namespace GUI {
 	class DialogRunner;
 }
 
-void hooks_dialog_runner_start_register(void (*cb) (GUI::DialogRunner*));
-void hooks_on_dialog_runner_start_execute(GUI::DialogRunner* runner);
+#define HOOK(name, type) \
+void hooks_register_##name(void (*cb) (type));\
+void hooks_execute_##name(type input);
+
+HOOK(dialog_runner_start, GUI::DialogRunner*)
+HOOK(dialog_runner_stop, GUI::DialogRunner*)
 
 #endif

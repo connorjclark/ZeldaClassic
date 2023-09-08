@@ -1,15 +1,15 @@
 #include "base/hooks.h"
 #include <vector>
 
-static std::vector<void (*) (GUI::DialogRunner*)> dialog_runner_start_cbs;
-
-void hooks_dialog_runner_start_register(void (*cb) (GUI::DialogRunner*))
-{
-	dialog_runner_start_cbs.push_back(cb);
+#define HOOK_IMPL(name, type) \
+static std::vector<void (*) (type)> cbs_##name;\
+void hooks_register_##name(void (*cb) (type)) {\
+	cbs_##name.push_back(cb);\
+}\
+void hooks_execute_##name(type input) {\
+	for (auto cb : cbs_##name)\
+		cb(input);\
 }
 
-void hooks_on_dialog_runner_start_execute(GUI::DialogRunner* runner)
-{
-	for (auto cb : dialog_runner_start_cbs)
-		cb(runner);
-}
+HOOK_IMPL(dialog_runner_start, GUI::DialogRunner*)
+HOOK_IMPL(dialog_runner_stop, GUI::DialogRunner*)

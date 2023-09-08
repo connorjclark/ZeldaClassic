@@ -106,6 +106,7 @@ namespace events {
 		quest_loaded,
 		quest_saved,
 		dialog_opened,
+		dialog_closed,
 	};
 
 	namespace quest_loaded {
@@ -125,6 +126,12 @@ namespace events {
 	namespace dialog_opened {
 		struct params {
 			std::vector<protocol::types::Widget> widgets;
+		};
+		void emit(params params);
+	}
+
+	namespace dialog_closed {
+		struct params {
 		};
 		void emit(params params);
 	}

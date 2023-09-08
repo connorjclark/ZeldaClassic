@@ -26946,7 +26946,7 @@ int32_t main(int32_t argc,char **argv)
 		do_copy_qst_command(input_filename, output_filename);
 	}
 
-	hooks_dialog_runner_start_register([](GUI::DialogRunner* runner){
+	hooks_register_dialog_runner_start([](GUI::DialogRunner* runner){
 		protocol::events::dialog_opened::params params;
 		std::set<GUI::Widget*> seen;
 		for (auto widget : runner->getWidgets())
@@ -26975,6 +26975,10 @@ int32_t main(int32_t argc,char **argv)
 			});
 		}
 		protocol::events::dialog_opened::emit(params);
+	});
+
+	hooks_register_dialog_runner_stop([](GUI::DialogRunner* runner){
+		protocol::events::dialog_closed::emit({});
 	});
 
 	Z_title("%s, v.%s %s",ZQ_EDITOR_NAME, ZQ_EDITOR_V, ALPHA_VER_STR);

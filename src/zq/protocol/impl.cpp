@@ -24,6 +24,7 @@ std::string protocol_event_to_string(protocol::events::type type)
 	if (type == protocol::events::type::quest_loaded) return "quest_loaded";
 	if (type == protocol::events::type::quest_saved) return "quest_saved";
 	if (type == protocol::events::type::dialog_opened) return "dialog_opened";
+	if (type == protocol::events::type::dialog_closed) return "dialog_closed";
 	return "unknown";
 }
 
@@ -217,4 +218,10 @@ void protocol::events::dialog_opened::emit(protocol::events::dialog_opened::para
 	JSON params_json;
 	write_type(params_json["widgets"], params.widgets);
 	protocol_broadcast_event(protocol::events::type::dialog_opened, params_json);
+}
+
+void protocol::events::dialog_closed::emit(protocol::events::dialog_closed::params params)
+{
+	JSON params_json;
+	protocol_broadcast_event(protocol::events::type::dialog_closed, params_json);
 }
