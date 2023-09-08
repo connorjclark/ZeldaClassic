@@ -156,12 +156,14 @@ class TestZQuest(unittest.TestCase):
         self.assertEqual(r['result']['items'][1], {'id': 1, 'name': 'Rupee (5)', 'tile': 49})
         self.assertEqual(r['result']['items'][5], {'id': 5, 'name': 'Sword 1 (Wooden)', 'tile': 41})
 
-        # p.send_command_async('quit')
+        p.send_command_async('quit')
 
-        while p.wait_for_any_event():
-            event = p.pop_event()
-            print(event)
-            # p.send_command_async('quit')
+        # while p.wait_for_any_event():
+        #     event = p.pop_event()
+        #     print(event)
+        #     if event['method'] == 'dialog_opened':
+        #         for widget in event['params']['widgets']:
+        #             print(widget)
 
         if sp.wait() != 0:
             print('stdout\n', sp.stdout)

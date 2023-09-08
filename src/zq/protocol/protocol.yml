@@ -1,7 +1,9 @@
 types:
   Widget:
-    name: string
     type: string
+    text: string
+    x: int
+    y: int
     width: int
     height: int
   Item:

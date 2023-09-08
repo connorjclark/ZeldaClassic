@@ -20,6 +20,8 @@ public:
 
 	Frame();
 
+	std::string getType() const override {return "Frame";}
+
 	/* Sets the frame's title. */
 	void setTitle(const std::string& str);
 	void setInfo(const std::string& str);

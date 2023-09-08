@@ -15,6 +15,8 @@ class TabRef: public Widget
 public:
 	TabRef();
 
+	std::string getType() const override {return "TabRef";}
+
 	/* Sets the widget that will appear in the window. */
 	void setContent(std::shared_ptr<Widget> newContent) noexcept;
 	

@@ -13,8 +13,11 @@ class Label: public Widget
 public:
 	Label();
 
+	std::string getType() const override {return "Label";}
+
 	/* Sets the text to display. */
 	void setText(std::string newText);
+	std::string getText() const;
 
 	/* Sets the maximum number of lines the text can be split into. */
 	void setMaxLines(size_t newMax);

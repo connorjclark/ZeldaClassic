@@ -26948,18 +26948,28 @@ int32_t main(int32_t argc,char **argv)
 
 	hooks_dialog_runner_start_register([](GUI::DialogRunner* runner){
 		protocol::events::dialog_opened::params params;
+		std::set<GUI::Widget*> seen;
 		for (auto widget : runner->getWidgets())
 		{
-			std::string title;
-			std::string type;
-			if (GUI::Window* window = dynamic_cast<GUI::Window*>(widget.get()))
-			{
-				title = window->getTitle();
-				type = "window";
-			}
+			// TODO: for some reason, the DialogRunner widgets will contain multiple instances of the Window.
+			if (seen.contains(widget.get()))
+				continue;
+			seen.insert(widget.get());
+
+			std::string text;
+			if (GUI::Window* w = dynamic_cast<GUI::Window*>(widget.get()))
+				text = w->getTitle();
+			if (GUI::Label* w = dynamic_cast<GUI::Label*>(widget.get()))
+				text = w->getText();
+			if (GUI::Button* w = dynamic_cast<GUI::Button*>(widget.get()))
+				text = w->getText();
+			if (GUI::TextField* w = dynamic_cast<GUI::TextField*>(widget.get()))
+				text = w->getText();
 			params.widgets.push_back({
-				.name = title,
-				.type = type,
+				.type = widget->getType(),
+				.text = text,
+				.x = widget->getX(),
+				.y = widget->getY(),
 				.width = widget->getWidth(),
 				.height = widget->getHeight(),
 			});

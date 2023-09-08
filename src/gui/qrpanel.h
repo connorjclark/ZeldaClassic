@@ -17,6 +17,8 @@ class QRPanel: public TabPanel
 {
 public:
 	QRPanel();
+
+	std::string getType() const override {return "QRPanel";}
 	
 	void loadQRs(byte const* qrs);
 	void setCount(size_t count);

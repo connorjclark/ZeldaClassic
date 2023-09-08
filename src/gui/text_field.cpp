@@ -213,6 +213,12 @@ void TextField::setText(std::string_view newText)
 	pendDraw();
 }
 
+std::string TextField::getText() const
+{
+	size_t len = strlen(buffer.get());
+	return std::string(buffer.get(), len);
+}
+
 void TextField::setVal(int32_t val)
 {
 	if(ubound > lbound)

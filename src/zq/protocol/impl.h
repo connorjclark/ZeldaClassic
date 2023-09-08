@@ -9,8 +9,10 @@
 namespace protocol {
 namespace types {
 	struct Widget {
-		std::string name;
 		std::string type;
+		std::string text;
+		int x;
+		int y;
 		int width;
 		int height;
 	};

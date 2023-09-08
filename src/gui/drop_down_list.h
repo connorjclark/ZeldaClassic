@@ -17,6 +17,8 @@ class DropDownList: public Widget
 public:
 	DropDownList();
 
+	std::string getType() const override {return "DropDownList";}
+
 	/* Sets the source of items to appear in the list. */
 	void setListData(const ::GUI::ListData& newListData);
 

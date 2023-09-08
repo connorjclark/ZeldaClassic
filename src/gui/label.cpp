@@ -23,6 +23,11 @@ void Label::setText(std::string newText)
 	fitText();
 }
 
+std::string Label::getText() const
+{
+	return text;
+}
+
 void Label::setMaxLines(size_t newMax)
 {
 	maxLines = newMax;

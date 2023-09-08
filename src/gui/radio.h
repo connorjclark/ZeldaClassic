@@ -12,6 +12,8 @@ class Radio: public Widget
 public:
 	Radio();
 
+	std::string getType() const override {return "Radio";}
+
 	/* Sets the text to appear next to the radio. */
 	void setText(std::string newText);
 

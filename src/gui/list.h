@@ -21,6 +21,8 @@ class List: public Widget
 public:
 	List();
 
+	std::string getType() const override {return "List";}
+
 	/* Sets the source of items to appear in the list. */
 	void setListData(const ::GUI::ListData& newListData);
 

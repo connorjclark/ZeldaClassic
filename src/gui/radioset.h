@@ -19,6 +19,8 @@ class RadioSet: public Widget
 {
 public:
 	RadioSet();
+
+	std::string getType() const override {return "RadioSet";}
 	
 	/* Sets whether the radio is checked or not. */
 	void setChecked(size_t value);

@@ -14,6 +14,8 @@ class ColorSel: public Widget
 public:
 	
 	ColorSel();
+
+	std::string getType() const override {return "ColorSel";}
 	
 	void setVal(byte val);
 	byte getVal();

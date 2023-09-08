@@ -18,6 +18,8 @@ class TabPanel: public Widget
 public:
 	TabPanel();
 
+	std::string getType() const override {return "TabPanel";}
+
 	void add(std::shared_ptr<Widget> child);
 
 	/* Makes the widget with the given index visible, hiding all others. */

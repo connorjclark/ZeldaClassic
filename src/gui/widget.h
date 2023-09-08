@@ -29,6 +29,7 @@ public:
 	Widget() noexcept;
 	virtual ~Widget() {}
 	virtual bool isTopLevel() const {return false;}
+	virtual std::string getType() const {return "";}
 
 	/* Set the widget's width, overriding its preferred size.
 	 * This should not be used by widgets.
@@ -167,6 +168,9 @@ public:
 	 * should return true.
 	 */
 	virtual int32_t onEvent(int32_t event, MessageDispatcher& sendMessage);
+
+	int32_t getX() const { return x; }
+	int32_t getY() const { return y; }
 
 	/* Returns the width of the widget. This should only be used by widgets. */
 	int32_t getWidth() const { return width; }

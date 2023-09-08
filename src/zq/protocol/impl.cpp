@@ -96,8 +96,10 @@ static void write_type(JSON& json, const bool value)
 static void write_type(JSON& json, const protocol::types::Widget value)
 {
 	json = JSON::Make(JSON::Class::Object);
-	json["name"] = value.name;
 	json["type"] = value.type;
+	json["text"] = value.text;
+	json["x"] = value.x;
+	json["y"] = value.y;
 	json["width"] = value.width;
 	json["height"] = value.height;
 }

@@ -19,6 +19,8 @@ class ScrollingPane: public Widget
 public:
 	ScrollingPane();
 
+	std::string getType() const override {return "ScrollingPane";}
+
 	/* Sets the widget that will appear in the pane. */
 	inline void setContent(std::shared_ptr<Widget> newContent) noexcept
 	{

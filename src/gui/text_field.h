@@ -22,6 +22,8 @@ public:
 	
 	TextField();
 
+	std::string getType() const override {return "TextField";}
+
 	/* Set the text field's input type. This determines how the text
 	 * will be interpreted when a message is sent.
 	 */
@@ -49,6 +51,7 @@ public:
 	 * is 0, the maximum length will be set to the length of the text.
 	 */
 	void setText(std::string_view newText);
+	std::string getText() const;
 
 	/* Returns the current text. This does not interpret the text according to
 	 * the type. The string_view will include a null terminator. It's owned by

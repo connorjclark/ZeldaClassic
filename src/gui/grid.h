@@ -18,6 +18,8 @@ public:
 
 	Grid(type growthType, size_t growthLimit);
 
+	std::string getType() const override {return "Grid";}
+
 	/* Create a new grid that fills left-to-right, then top-to-bottom. */
 	static inline std::shared_ptr<Grid> rows(size_t itemsPerRow)
 	{

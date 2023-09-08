@@ -12,6 +12,8 @@ namespace GUI
 	public:
 		Slider();
 
+		std::string getType() const override {return "Slider";}
+
 		void setOffset(int32_t newoffset);
 		int32_t getOffset() const;
 

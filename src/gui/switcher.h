@@ -16,6 +16,8 @@ class Switcher: public Widget
 public:
 	Switcher();
 
+	std::string getType() const override {return "Switcher";}
+
 	void add(std::shared_ptr<Widget> child) noexcept
 	{
 		children.emplace_back(std::move(child));

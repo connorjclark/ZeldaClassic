@@ -12,6 +12,8 @@ class QRCheckbox: public Checkbox
 {
 public:
 	QRCheckbox();
+
+	std::string getType() const override {return "QRCheckbox";}
 	
 	void setQR(int32_t newqr);
 	

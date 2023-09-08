@@ -18,6 +18,8 @@ public:
 	};
 	
 	Button();
+
+	std::string getType() const override {return "Button";}
 	
 	void setType(type newType);
 	void setBoundKB(int* kb_ptr);
@@ -26,6 +28,7 @@ public:
 
 	/* Sets the text to appear on the button. */
 	void setText(std::string newText);
+	std::string getText() const;
 	
 	/* Sets a function to be called on press. */
 	void setOnPress(std::function<void()> newOnPress);

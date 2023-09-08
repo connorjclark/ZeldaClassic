@@ -209,6 +209,11 @@ void Button::setText(std::string newText)
 	text = newText;
 }
 
+std::string Button::getText() const
+{
+	return text;
+}
+
 void Button::setOnPress(std::function<void()> newOnPress)
 {
 	onPress = std::move(newOnPress);

@@ -14,6 +14,8 @@ public:
 
 	Checkbox();
 
+	std::string getType() const override {return "Checkbox";}
+
 	/* Sets the text to appear next to the checkbox. */
 	void setText(std::string newText);
 

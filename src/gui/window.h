@@ -14,6 +14,8 @@ class Window: public TopLevelWidget
 public:
 	Window();
 
+	std::string getType() const override {return "Window";}
+
 	/* Sets the window's title. */
 	void setTitle(std::string newTitle);
 	std::string getTitle() const;

@@ -16,6 +16,8 @@ class DDPanel: public TabPanel
 {
 public:
 	DDPanel();
+
+	std::string getType() const override {return "DDPanel";}
 	
 	void linkVals(int32_t* vals);
 	void setCount(size_t count);
