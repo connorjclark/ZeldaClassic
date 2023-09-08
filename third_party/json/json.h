@@ -782,6 +782,14 @@ namespace giri {
                  * @returns object entry by key.
                  */
                 JSON &at( const std::string &key ) {
+					auto it = Internal.Map->Map.find(key);
+					bool present = it != Internal.Map->Map.end();
+					if (present)
+					{
+						return it->second;
+					}
+
+					Internal.Map->Order.push_back(key);
                     return operator[]( key );
                 }
 
