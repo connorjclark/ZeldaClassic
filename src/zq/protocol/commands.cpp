@@ -42,13 +42,13 @@ protocol::commands::get_items::result protocol::commands::get_items::handle(prot
 	protocol::commands::get_items::result result;
 	result.items.reserve(MAXITEMS);
 	for (int i = 0; i < MAXITEMS; i++)
-    {
+	{
 		result.items.push_back({
 			.id = i,
 			.name = item_string[i],
 			.tile = itemsbuf[i].tile,
 		});
-    }
+	}
 	return result;
 }
 
@@ -57,9 +57,9 @@ protocol::commands::get_item_names::result protocol::commands::get_item_names::h
 	protocol::commands::get_item_names::result result;
 	result.names.reserve(MAXITEMS);
 	for (int i = 0; i < MAXITEMS; i++)
-    {
+	{
 		result.names.push_back(item_string[i]);
-    }
+	}
 	return result;
 }
 
