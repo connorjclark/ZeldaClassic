@@ -86,6 +86,9 @@ class ZCProtocol():
 	def pop_event(self):
 		return self.events.pop(0)
 
+	def clear_events(self):
+		self.events.clear()
+
 	def wait_for_event(self, method: str):
 		for event in self.events:
 			if event['method'] == method:

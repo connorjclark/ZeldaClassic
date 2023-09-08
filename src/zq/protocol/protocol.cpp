@@ -1,5 +1,4 @@
 #include "zq/protocol/protocol.h"
-#include <system_error>
 
 #ifdef __EMSCRIPTEN__
 
@@ -8,15 +7,14 @@ void protocol_server_poll() {}
 
 #else
 
-#include <iostream>
-#include "dialog/info.h"
-
 #define ASIO_STANDALONE
+
 #include "zq/protocol/protocol.h"
 #include "zq/protocol/impl.h"
 #include "websocketpp/config/asio_no_tls.hpp"
 #include "websocketpp/server.hpp"
 #include "json/json.h"
+#include <set>
 
 typedef websocketpp::server<websocketpp::config::asio> server;
 typedef std::set<websocketpp::connection_hdl,std::owner_less<websocketpp::connection_hdl> > con_list;
