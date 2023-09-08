@@ -1,4 +1,4 @@
-# python -m pip install websocket-client
+# python -m pip install websockets
 
 import time
 import json
