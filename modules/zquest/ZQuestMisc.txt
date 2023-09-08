@@ -18,7 +18,7 @@ src/zq/colorname.cpp
 src/zq/zq_hotkey.cpp
 src/zq/protocol/protocol.cpp
 src/zq/protocol/commands.cpp
-src/zq/protocol/impl_gen.cpp
+src/zq/protocol/impl.cpp
 
 
 ## End of ZQuest Misc module

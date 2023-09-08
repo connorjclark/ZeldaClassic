@@ -553,7 +553,7 @@ def run():
 		generate_handle_command_fn(protocol_config.commands),
 		*map(generate_emit_event_fn, protocol_config.events),
 	])
-	(root_dir / 'src/zq/protocol/impl_gen.cpp').write_text(content)
+	(root_dir / 'src/zq/protocol/impl.cpp').write_text(content)
 
 	insert_command_stubs(protocol_config)
 
