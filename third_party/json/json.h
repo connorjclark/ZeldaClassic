@@ -1,4 +1,7 @@
 // https://github.com/nwrkbiz/Cpp-SupportLibrary/blob/master/JSON.h
+//
+// Modifications:
+// - Replace std::map for objects with a combination of map + vector, to retain insertion order.
 
 /**
  * @file JSON.h
@@ -30,6 +33,7 @@
 #include <string>
 #include <deque>
 #include <map>
+#include <vector>
 #include <type_traits>
 #include <initializer_list>
 #include <ostream>
@@ -453,7 +457,74 @@ namespace giri {
                 BackingData()           : Int( 0 ){}
 
                 std::deque<JSON>             *List;
-                std::map<std::string,JSON>   *Map;
+				struct MapAndOrder {
+					std::map<std::string,JSON>   Map;
+					std::vector<std::string>     Order;
+					
+					struct iterator {
+						using iterator_category = std::forward_iterator_tag;
+						using difference_type   = std::ptrdiff_t;
+						using value_type        = std::pair<const std::string, JSON>;
+						using pointer           = std::string*;  // or also value_type*
+						using reference         = std::map<std::string, giri::json::JSON>::value_type&;  // or also value_type&
+						iterator(pointer ptr, MapAndOrder* map_and_order) : m_ptr(ptr), m_map_and_order(map_and_order) {}
+
+						reference operator*() const { return *m_map_and_order->Map.find(*m_ptr); }
+						pointer operator->() { return m_ptr; }
+
+						// Prefix increment
+						iterator& operator++() { m_ptr++; return *this; }  
+
+						// Postfix increment
+						iterator operator++(int) { iterator tmp = *this; ++(*this); return tmp; }
+
+						friend bool operator== (const iterator& a, const iterator& b) { return a.m_ptr == b.m_ptr; };
+						friend bool operator!= (const iterator& a, const iterator& b) { return a.m_ptr != b.m_ptr; };  
+					private:
+						pointer m_ptr;
+						MapAndOrder* m_map_and_order;
+					};
+					iterator begin() {
+						if (Map.empty()) return iterator(nullptr, this);
+						return iterator(&Order[0], this);
+					}
+					iterator end() {
+						if (Map.empty()) return iterator(nullptr, this);
+						return iterator(&Order[Order.size()], this);
+					}
+
+					struct const_iterator {
+						using iterator_category = std::forward_iterator_tag;
+						using difference_type   = std::ptrdiff_t;
+						using value_type        = std::pair<const std::string, JSON>;
+						using pointer           = std::string*;  // or also value_type*
+						using reference         = std::map<std::string, giri::json::JSON>::value_type&;  // or also value_type&
+						const_iterator(pointer ptr, MapAndOrder* map_and_order) : m_ptr(ptr), m_map_and_order(map_and_order) {}
+
+						reference operator*() const { return *m_map_and_order->Map.find(*m_ptr); }
+						pointer operator->() { return m_ptr; }
+
+						// Prefix increment
+						const_iterator& operator++() { m_ptr++; return *this; }  
+
+						// Postfix increment
+						const_iterator operator++(int) { const_iterator tmp = *this; ++(*this); return tmp; }
+
+						friend bool operator== (const const_iterator& a, const const_iterator& b) { return a.m_ptr == b.m_ptr; };
+						friend bool operator!= (const const_iterator& a, const const_iterator& b) { return a.m_ptr != b.m_ptr; };  
+					private:
+						pointer m_ptr;
+						MapAndOrder* m_map_and_order;
+					};
+					const_iterator cbegin() {
+						if (Map.empty()) return const_iterator(nullptr, this);
+						return const_iterator(&Order[0], this);
+					}
+					const_iterator cend() {
+						if (Map.empty()) return const_iterator(nullptr, this);
+						return const_iterator(&Order[Order.size()], this);
+					}
+				}                            *Map;
                 std::string                  *String;
                 double                       Float;
                 long long                    Int;
@@ -531,8 +602,12 @@ namespace giri {
                     switch( other.Type ) {
                     case Class::Object:
                         Internal.Map = 
-                            new std::map<std::string,JSON>( other.Internal.Map->begin(),
-                                                            other.Internal.Map->end() );
+                            new BackingData::MapAndOrder({
+								std::map<std::string,JSON>(other.Internal.Map->Map.begin(),
+																other.Internal.Map->Map.end()),
+								std::vector<std::string>(other.Internal.Map->Order.begin(),
+																other.Internal.Map->Order.end()),
+							});
                         break;
                     case Class::Array:
                         Internal.List = 
@@ -555,8 +630,12 @@ namespace giri {
                     switch( other.Type ) {
                     case Class::Object:
                         Internal.Map = 
-                            new std::map<std::string,JSON>( other.Internal.Map->begin(),
-                                                            other.Internal.Map->end() );
+                            new BackingData::MapAndOrder({
+								std::map<std::string,JSON>(other.Internal.Map->Map.begin(),
+																other.Internal.Map->Map.end()),
+								std::vector<std::string>(other.Internal.Map->Order.begin(),
+																other.Internal.Map->Order.end()),
+							});
                         break;
                     case Class::Array:
                         Internal.List = 
@@ -674,7 +753,16 @@ namespace giri {
                  * @returns The object stored at key.
                  */
                 JSON& operator[]( const std::string &key ) {
-                    SetType( Class::Object ); return Internal.Map->operator[]( key );
+                    SetType( Class::Object );
+					auto it = Internal.Map->Map.find(key);
+					bool present = it != Internal.Map->Map.end();
+					if (present)
+					{
+						return it->second;
+					}
+
+					Internal.Map->Order.push_back(key);
+					return Internal.Map->Map.operator[]( key );
                 }
 
                 /**
@@ -703,7 +791,7 @@ namespace giri {
                  * @returns object entry by key.
                  */
                 const JSON &at( const std::string &key ) const {
-                    return Internal.Map->at( key );
+                    return Internal.Map->Map.at( key );
                 }
 
                 /**
@@ -741,7 +829,7 @@ namespace giri {
                  */
                 bool hasKey( const std::string &key ) const {
                     if( Type == Class::Object )
-                        return Internal.Map->find( key ) != Internal.Map->end();
+                        return Internal.Map->Map.find( key ) != Internal.Map->Map.end();
                     return false;
                 }
 
@@ -751,7 +839,7 @@ namespace giri {
                  */
                 std::size_t size() const {
                     if( Type == Class::Object )
-                        return Internal.Map->size();
+                        return Internal.Map->Map.size();
                     else if( Type == Class::Array )
                         return Internal.List->size();
                     else
@@ -1028,10 +1116,10 @@ namespace giri {
                  * Returns ObjectRange which allows iterating over the object items.
                  * @returns ObjectRange which allows iterating over the object items.
                  */
-                JSONWrapper<std::map<std::string,JSON>> ObjectRange() {
+                JSONWrapper<BackingData::MapAndOrder> ObjectRange() {
                     if( Type == Class::Object )
-                        return JSONWrapper<std::map<std::string,JSON>>( Internal.Map );
-                    return JSONWrapper<std::map<std::string,JSON>>( nullptr );
+                        return JSONWrapper<BackingData::MapAndOrder>( Internal.Map );
+                    return JSONWrapper<BackingData::MapAndOrder>( nullptr );
                 }
 
                 /**
@@ -1048,10 +1136,10 @@ namespace giri {
                  * Returns ObjectRange which allows iterating over the object items.
                  * @returns ObjectRange which allows iterating over the object items.
                  */
-                JSONConstWrapper<std::map<std::string,JSON>> ObjectRange() const {
+                JSONConstWrapper<BackingData::MapAndOrder> ObjectRange() const {
                     if( Type == Class::Object )
-                        return JSONConstWrapper<std::map<std::string,JSON>>( Internal.Map );
-                    return JSONConstWrapper<std::map<std::string,JSON>>( nullptr );
+                        return JSONConstWrapper<BackingData::MapAndOrder>( Internal.Map );
+                    return JSONConstWrapper<BackingData::MapAndOrder>( nullptr );
                 }
 
                 /**
@@ -1167,7 +1255,7 @@ namespace giri {
                 
                     switch( type ) {
                     case Class::Null:      Internal.Map    = nullptr;                break;
-                    case Class::Object:    Internal.Map    = new std::map<std::string,JSON>(); break;
+					case Class::Object:    Internal.Map    = new BackingData::MapAndOrder(); break;
                     case Class::Array:     Internal.List   = new std::deque<JSON>();      break;
                     case Class::String:    Internal.String = new std::string();           break;
                     case Class::Floating:  Internal.Float  = 0.0;                    break;

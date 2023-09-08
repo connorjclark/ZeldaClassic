@@ -447,6 +447,7 @@ set(zcbase_sources
 	src/base/fonts.cpp
 	src/base/general.cpp
 	src/base/gui.cpp
+	src/base/hooks.cpp
 	src/base/hotkey.cpp
 	src/base/jwinfsel.cpp
 	src/base/mapscr.cpp

@@ -1,6 +1,7 @@
 #include "gui/dialog_runner.h"
 #include "gui/common.h"
 #include "base/gui.h"
+#include "base/hooks.h"
 #include "jwin.h"
 
 using std::shared_ptr;
@@ -113,6 +114,7 @@ void DialogRunner::runInner(std::shared_ptr<Widget> root)
 {
 	realize(root);
 	realized = true;
+	hooks_on_dialog_runner_start_execute(this);
 	popup_zqdialog_start_a5();
 	new_gui_popup_dialog(alDialog.data(), focused, done, running);
 	popup_zqdialog_end_a5();

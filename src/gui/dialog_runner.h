@@ -82,6 +82,11 @@ public:
 		done = true;
 	}
 
+	const std::vector<std::shared_ptr<Widget>>& getWidgets()
+	{
+		return widgets;
+	}
+
 private:
 	std::function<void(int32_t, MessageArg, std::shared_ptr<Widget>)> sendMessage;
 	std::vector<DIALOG> alDialog;

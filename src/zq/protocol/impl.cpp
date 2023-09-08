@@ -98,6 +98,8 @@ static void write_type(JSON& json, const protocol::types::Widget value)
 	json = JSON::Make(JSON::Class::Object);
 	json["name"] = value.name;
 	json["type"] = value.type;
+	json["width"] = value.width;
+	json["height"] = value.height;
 }
 
 static void write_type(JSON& json, const protocol::types::Item value)
@@ -211,6 +213,6 @@ void protocol::events::quest_saved::emit(protocol::events::quest_saved::params p
 void protocol::events::dialog_opened::emit(protocol::events::dialog_opened::params params)
 {
 	JSON params_json;
-	write_type(params_json["widget"], params.widget);
+	write_type(params_json["widgets"], params.widgets);
 	protocol_broadcast_event(protocol::events::type::dialog_opened, params_json);
 }

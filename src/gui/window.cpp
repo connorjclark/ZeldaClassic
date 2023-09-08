@@ -32,6 +32,11 @@ void Window::setTitle(std::string newTitle)
 	}
 }
 
+std::string Window::getTitle() const
+{
+	return title;
+}
+
 void Window::setHelp(std::string newHelp)
 {
 	helptext = std::move(newHelp);

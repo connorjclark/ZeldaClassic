@@ -11,6 +11,8 @@ namespace types {
 	struct Widget {
 		std::string name;
 		std::string type;
+		int width;
+		int height;
 	};
 	struct Item {
 		int id;
@@ -120,7 +122,7 @@ namespace events {
 
 	namespace dialog_opened {
 		struct params {
-			std::vector<protocol::types::Widget> widget;
+			std::vector<protocol::types::Widget> widgets;
 		};
 		void emit(params params);
 	}

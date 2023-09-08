@@ -2,6 +2,8 @@ types:
   Widget:
     name: string
     type: string
+    width: int
+    height: int
   Item:
     id: int
     name: string
@@ -45,4 +47,4 @@ events:
       path: string
   dialog_opened:
     params:
-      widget: Widget[]
+      widgets: Widget[]

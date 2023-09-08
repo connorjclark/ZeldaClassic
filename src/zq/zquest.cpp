@@ -73,6 +73,7 @@ void setZScriptVersion(int32_t) { } //bleh...
 #include "sprite.h"
 #include "fontsdat.h"
 #include "base/jwinfsel.h"
+#include "base/hooks.h"
 #include "zq/zq_class.h"
 #include "subscr.h"
 #include "zq/zq_subscr.h"
@@ -26944,6 +26945,27 @@ int32_t main(int32_t argc,char **argv)
 		const char* output_filename = argv[copy_qst_arg + 2];
 		do_copy_qst_command(input_filename, output_filename);
 	}
+
+	hooks_dialog_runner_start_register([](GUI::DialogRunner* runner){
+		protocol::events::dialog_opened::params params;
+		for (auto widget : runner->getWidgets())
+		{
+			std::string title;
+			std::string type;
+			if (GUI::Window* window = dynamic_cast<GUI::Window*>(widget.get()))
+			{
+				title = window->getTitle();
+				type = "window";
+			}
+			params.widgets.push_back({
+				.name = title,
+				.type = type,
+				.width = widget->getWidth(),
+				.height = widget->getHeight(),
+			});
+		}
+		protocol::events::dialog_opened::emit(params);
+	});
 
 	Z_title("%s, v.%s %s",ZQ_EDITOR_NAME, ZQ_EDITOR_V, ALPHA_VER_STR);
 	

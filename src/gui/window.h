@@ -16,6 +16,7 @@ public:
 
 	/* Sets the window's title. */
 	void setTitle(std::string newTitle);
+	std::string getTitle() const;
 
 	/* Sets the window's title. */
 	void setHelp(std::string newHelp);
