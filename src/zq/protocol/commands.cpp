@@ -31,7 +31,7 @@ protocol::commands::load_quest::result protocol::commands::load_quest::handle(pr
 	}
 	else
 	{
-		result.error_code = ::load_quest("modules/classic/classic_1st.qst", params.show_progress);
+		result.error_code = ::load_quest(params.path.c_str(), params.show_progress);
 		result.success = result.error_code == 0;
 	}
 	return result;
