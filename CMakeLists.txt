@@ -685,9 +685,13 @@ if(WIN32)
 endif()
 
 if (NOT EMSCRIPTEN)
-	target_include_directories(zquest PRIVATE third_party)
+	add_library(websocketpp INTERFACE)
+	target_include_directories(websocketpp INTERFACE third_party/websocketpp)
+	target_compile_definitions(websocketpp INTERFACE _WEBSOCKETPP_CPP11_STL_)
+	target_link_libraries(zquest PRIVATE websocketpp)
 
-	add_library(json INTERFACE third_party/json/json.h)
+	add_library(json INTERFACE third_party/json/json/json.h)
+	target_include_directories(json INTERFACE third_party/json)
 	target_link_libraries(zquest PRIVATE json)
 
 	add_library(asio INTERFACE third_party/asio/asio.hpp)
