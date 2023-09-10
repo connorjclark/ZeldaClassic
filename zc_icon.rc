@@ -80,12 +80,12 @@ BEGIN
         BEGIN
             VALUE "CompanyName", COMPANY_NAME
             VALUE "FileDescription", ZC_PLAYER_NAME
-            VALUE "FileVersion", ZC_PLAYER_V
+            VALUE "FileVersion", ZC_VERSION_STRING
             VALUE "InternalName", "zc_icon"
             VALUE "LegalCopyright", ZC_PLAYER_COPYRIGHT
             VALUE "OriginalFilename", ZC_PLAYER_NAME
             VALUE "ProductName", ZC_PLAYER_NAME
-            VALUE "ProductVersion", ZC_PLAYER_V
+            VALUE "ProductVersion", ZC_VERSION_STRING
         END
     END
     BLOCK "VarFileInfo"

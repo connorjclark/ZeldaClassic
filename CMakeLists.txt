@@ -826,19 +826,22 @@ if(WANT_SENTRY)
 endif()
 
 # See docs/versioning.md
-if(NOT ZC_VERSION)
-	if(EXISTS "${CMAKE_SOURCE_DIR}/.git")
-		add_custom_command(
-			COMMAND ${PYTHON} ${CMAKE_CURRENT_SOURCE_DIR}/scripts/generate_version_fallback_header.py
-			OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/src/base/version_fallback.h
-			DEPENDS .git/refs/tags
-		)
-		add_custom_target(version_fallback DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/src/base/version_fallback.h)
-		add_dependencies(zcbase version_fallback)
-	endif()
+if(NOT ZC_VERSION AND EXISTS "${CMAKE_SOURCE_DIR}/.git")
+	add_custom_command(
+		COMMAND ${PYTHON} ${CMAKE_CURRENT_SOURCE_DIR}/scripts/generate_version_fallback_header.py
+		OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/src/base/version_fallback.h
+		DEPENDS .git/refs/tags
+	)
+	add_custom_target(version_fallback DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/src/base/version_fallback.h)
+	add_dependencies(zcbase version_fallback)
 endif()
 if(ZC_VERSION)
 	set_source_files_properties(src/base/version.cpp PROPERTIES COMPILE_DEFINITIONS ZC_VERSION_STRING="${ZC_VERSION}")
+	if(MSVC)
+		set_source_files_properties(zq_icon.rc PROPERTIES COMPILE_DEFINITIONS ZC_VERSION_STRING="${ZC_VERSION}")
+		set_source_files_properties(zc_icon.rc PROPERTIES COMPILE_DEFINITIONS ZC_VERSION_STRING="${ZC_VERSION}")
+		set_source_files_properties(zl_icon.rc PROPERTIES COMPILE_DEFINITIONS ZC_VERSION_STRING="${ZC_VERSION}")
+	endif()
 endif()
 
 if(RELEASE_CHANNEL)

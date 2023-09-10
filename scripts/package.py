@@ -168,7 +168,7 @@ elif args.extras:
 else:
     # Generate changelog for changes since last stable release.
     last_stable = subprocess.check_output(
-        'git describe --tags --abbrev=0 --match "2.55-*"', shell=True, encoding='utf-8').strip()
+        'git describe --tags --abbrev=0 --match "*.*.*"', shell=True, encoding='utf-8').strip()
     changelog = subprocess.check_output([
         sys.executable, script_dir / 'generate_changelog.py',
         '--from', last_stable,

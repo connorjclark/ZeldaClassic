@@ -79,12 +79,12 @@ BEGIN
         BEGIN
             VALUE "CompanyName", COMPANY_NAME
             VALUE "FileDescription", ZQ_EDITOR_NAME
-            VALUE "FileVersion", ZQ_EDITOR_V
+            VALUE "FileVersion", ZC_VERSION_STRING
             VALUE "InternalName", "zq_icon"
             VALUE "LegalCopyright", ZQ_EDITOR_COPYRIGHT
             VALUE "OriginalFilename", ZQ_EDITOR_NAME
             VALUE "ProductName", ZQ_EDITOR_NAME
-            VALUE "ProductVersion", ZQ_EDITOR_V
+            VALUE "ProductVersion", ZC_VERSION_STRING
         END
     END
     BLOCK "VarFileInfo"
@@ -103,7 +103,8 @@ END
 //
 // Generated from the TEXTINCLUDE 3 resource.h
 //
-
+
+
 /////////////////////////////////////////////////////////////////////////////
 #endif    // not APSTUDIO_INVOKED
 

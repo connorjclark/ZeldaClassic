@@ -19,7 +19,6 @@ args = parser.parse_args()
 
 previous_release_version = subprocess.check_output(
     'git describe --tags --abbrev=0 --match "*.*.*"', shell=True, encoding='utf-8')
-
 major, minor, patch = map(int, re.match(r'(\d+)\.(\d+)\.(\d+)', previous_release_version).groups())
 
 version_meta = []
@@ -29,7 +28,8 @@ if args.github_org != 'ZQuestClassic':
 if args.version_type == 'stable':
     minor += 1
     patch = 0
-    release_version = release_name = f'{major}.{minor}.{patch}'
+    release_version = f'{major}.{minor}.{patch}'
+    release_name = f'{major}.{minor}'
 if args.version_type == 'nightly':
     patch += 1
     today = time.strftime("%Y-%m-%d")
