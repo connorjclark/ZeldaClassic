@@ -1007,7 +1007,7 @@ int32_t onAbout()
     {
 		char buf2[80]={0};
 		char buf3[80]={0};
-		sprintf(buf1,"ZQuest %s - DEBUG", getVersionString().c_str());
+		sprintf(buf1,"ZQuest %s - DEBUG", getVersionString());
         sprintf(buf3,"This qst file: %04X",header.internal&0xFFFF);
         InfoDialog("About ZQuest", { buf1, buf2, buf3 }).show();
     }

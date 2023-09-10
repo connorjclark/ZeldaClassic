@@ -27058,7 +27058,7 @@ int32_t main(int32_t argc,char **argv)
 
 	if (used_switch(argc, argv, "-version"))
 	{
-		printf("version %s\n", getVersionString().c_str());
+		printf("version %s\n", getVersionString());
 		printf("version %d %d %d\n", getVersion().major, getVersion().minor, getVersion().patch);
 		return 0;
 	}
@@ -27111,7 +27111,7 @@ int32_t main(int32_t argc,char **argv)
 		do_copy_qst_command(input_filename, output_filename);
 	}
 
-	Z_title("%s, v.%s %s",ZQ_EDITOR_NAME, getVersionString().c_str());
+	Z_title("%s, v.%s",ZQ_EDITOR_NAME, getVersionString());
 	
 	// Before anything else, let's register our custom trace handler:
 	register_trace_handler(zc_trace_handler);

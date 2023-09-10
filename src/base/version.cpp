@@ -59,11 +59,8 @@ static constexpr auto version = parseVersion();
 static_assert(version.major == 3, "version not set correctly");
 static_assert(version.minor != -1, "version not set correctly");
 static_assert(version.patch != -1, "version not set correctly");
-// Matches zquestheader::zelda_version_string
-// static_assert(strlen(version.version_string) < 35, "version not set correctly");
 
-
-std::string getVersionString()
+const char* getVersionString()
 {
 	return version.version_string;
 }

@@ -4391,7 +4391,7 @@ int main(int argc, char **argv)
 
 	if (used_switch(argc, argv, "-version"))
 	{
-		printf("version %s\n", getVersionString().c_str());
+		printf("version %s\n", getVersionString());
 		return 0;
 	}
 
@@ -4482,10 +4482,10 @@ int main(int argc, char **argv)
 	memset(zc_aboutstr,0,80);
 
 	sprintf(zc_builddate,"Build Date: %s %s, %d at @ %s %s", dayextension(BUILDTM_DAY).c_str(), (char*)months[BUILDTM_MONTH], BUILDTM_YEAR, __TIME__, __TIMEZONE__);
-	sprintf(zc_aboutstr,"%s, Version %s", ZC_PLAYER_NAME, getVersionString().c_str());
+	sprintf(zc_aboutstr,"%s, Version %s", ZC_PLAYER_NAME, getVersionString());
 	
 
-	Z_title("ZC Launched: %s, v.%s",ZC_PLAYER_NAME, getVersionString().c_str());
+	Z_title("ZC Launched: %s, v.%s",ZC_PLAYER_NAME, getVersionString());
 	
 	int standalone_arg = used_switch(argc, argv, "-standalone");
 	if (standalone_arg)
