@@ -20,10 +20,6 @@ consteval int stoi(const char* str, int start)
     return stoi_impl(str + start);
 }
 
-#ifndef ZC_VERSION_STRING
-#   error ZC_VERSION_STRING required
-#endif
-
 consteval ZCVersion parseVersion()
 {
 	int components[] = {-1, -1, -1};
