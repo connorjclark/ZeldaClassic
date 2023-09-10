@@ -1,6 +1,12 @@
 #include "base/version.h"
 #include <string_view>
 
+// Only used for local builds.
+#ifndef ZC_VERSION_STRING
+#include "base/version_fallback.h"
+#define ZC_VERSION_STRING ZC_VERSION_FALLBACK
+#endif
+
 consteval bool is_digit(char c)
 {
     return c <= '9' && c >= '0';

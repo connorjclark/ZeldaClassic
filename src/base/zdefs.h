@@ -2231,15 +2231,17 @@ struct zquestheader
     byte  old_foo2[18];
     // No one used custom quest templates, so we stopped supporting it.
     char  templatepath[2048];
-	// Currently version 3.
-    int32_t new_version_id_main;
-    int32_t new_version_id_second;
-    int32_t new_version_id_third;
+    int32_t version_major;
+    int32_t version_minor;
+    int32_t version_patch;
+
+	// Deprecated.
     int32_t new_version_id_fourth;
     int32_t new_version_id_alpha;
     int32_t new_version_id_beta;
     int32_t new_version_id_gamma;
     int32_t new_version_id_release;
+
 	bool new_version_is_nightly;
     word new_version_id_date_year;
     byte new_version_id_date_month;

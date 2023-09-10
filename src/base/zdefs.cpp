@@ -768,13 +768,13 @@ string generate_zq_about()
 
 bool zquestheader::is_legacy() const
 {
-	return new_version_id_main < 2 || (new_version_id_main == 2 && new_version_id_second < 55);
+	return version_major < 2 || (version_major == 2 && version_minor < 55);
 }
 
 int8_t zquestheader::getAlphaState() const
 {
-	if (new_version_id_main >= 3)
-		return new_version_id_third == 0 ? 3 : 0;
+	if (version_major >= 3)
+		return version_patch == 0 ? 3 : 0;
 
 	if(new_version_id_release) return 3;
 	else if(new_version_id_gamma) return 2;
@@ -827,7 +827,7 @@ char const* zquestheader::getVerStr() const
 {
 	static char buf[80] = "";
 
-	if (new_version_id_main >= 3)
+	if (version_major >= 3)
 		return zelda_version_string;
 
 	if(is_legacy())
@@ -895,10 +895,10 @@ char const* zquestheader::getVerStr() const
 		}
 	}
 	else if(new_version_id_fourth > 0)
-		sprintf(buf, "%d.%d.%d.%d %s", new_version_id_main, new_version_id_second,
-			new_version_id_third, new_version_id_fourth, getAlphaVerStr());
-	else sprintf(buf, "%d.%d.%d %s", new_version_id_main, new_version_id_second,
-			new_version_id_third, getAlphaVerStr());
+		sprintf(buf, "%d.%d.%d.%d %s", version_major, version_minor,
+			version_patch, new_version_id_fourth, getAlphaVerStr());
+	else sprintf(buf, "%d.%d.%d %s", version_major, version_minor,
+			version_patch, getAlphaVerStr());
 	return buf;
 }
 
@@ -942,17 +942,17 @@ int32_t zquestheader::compareDate() const
 int32_t zquestheader::compareVer() const
 {
 	auto version = getVersion();
-	if(new_version_id_main > version.major)
+	if(version_major > version.major)
 		return 1;
-	if(new_version_id_main < version.major)
+	if(version_major < version.major)
 		return -1;
-	if(new_version_id_second > version.minor)
+	if(version_minor > version.minor)
 		return 1;
-	if(new_version_id_second < version.minor)
+	if(version_minor < version.minor)
 		return -1;
-	if(new_version_id_third > version.patch)
+	if(version_patch > version.patch)
 		return 1;
-	if(new_version_id_third < version.patch)
+	if(version_patch < version.patch)
 		return -1;
 	if(new_version_id_fourth > V_ZC_FOURTH)
 		return 1;

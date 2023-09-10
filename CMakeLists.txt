@@ -23,6 +23,8 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
+find_program(PYTHON python3 python REQUIRED)
+
 if(MSVC)
 	set(CMAKE_CXX_FLAGS_ASAN "${CMAKE_CXX_FLAGS_DEBUG} /fsanitize=address" CACHE STRING "" FORCE)
 	set(CMAKE_C_FLAGS_ASAN "${CMAKE_C_FLAGS_DEBUG} /fsanitize=address" CACHE STRING "" FORCE)
@@ -823,17 +825,21 @@ if(WANT_SENTRY)
 	endforeach()
 endif()
 
+# See docs/versioning.md
 if(NOT ZC_VERSION)
-	find_program(GIT git)
-	if(EXISTS "${CMAKE_SOURCE_DIR}/.git" AND GIT)
-		execute_process(COMMAND "${GIT}" describe --tags --abbrev=0 --match *.*.*
-			OUTPUT_VARIABLE ZC_VERSION OUTPUT_STRIP_TRAILING_WHITESPACE)
+	if(EXISTS "${CMAKE_SOURCE_DIR}/.git")
+		add_custom_command(
+			COMMAND ${PYTHON} ${CMAKE_CURRENT_SOURCE_DIR}/scripts/generate_version_fallback_header.py
+			OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/src/base/version_fallback.h
+			DEPENDS .git/refs/tags
+		)
+		add_custom_target(version_fallback DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/src/base/version_fallback.h)
+		add_dependencies(zcbase version_fallback)
 	endif()
 endif()
-if(NOT ZC_VERSION)
-	set(ZC_VERSION 3.0.0)
+if(ZC_VERSION)
+	set_source_files_properties(src/base/version.cpp PROPERTIES COMPILE_DEFINITIONS ZC_VERSION_STRING="${ZC_VERSION}")
 endif()
-set_source_files_properties(src/base/version.cpp PROPERTIES COMPILE_DEFINITIONS ZC_VERSION_STRING="${ZC_VERSION}")
 
 if(RELEASE_CHANNEL)
 	foreach(target IN LISTS zc_targets)
@@ -910,8 +916,6 @@ if(WIN32)
 else()
 	set_source_files_properties(src/parser/lex.yy.cpp PROPERTIES COMPILE_FLAGS -Wno-everything)
 endif()
-
-find_program(PYTHON python3 python REQUIRED)
 
 get_property(is_multi_config GLOBAL PROPERTY GENERATOR_IS_MULTI_CONFIG)
 if(is_multi_config)
