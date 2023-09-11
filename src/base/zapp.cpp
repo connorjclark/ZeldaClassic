@@ -43,6 +43,11 @@ bool is_in_osx_application_bundle()
 // TODO: move qst.cpp to base/
 int32_t get_qst_buffers();
 
+// #include "client/crashpad_client.h"
+// #include "client/settings.h"
+
+// using namespace crashpad;
+
 void common_main_setup(App id, int argc, char **argv)
 {
     app_id = id;
@@ -52,12 +57,42 @@ void common_main_setup(App id, int argc, char **argv)
 		set_headless_mode();
 	}
 
+	// Cache directory that will store crashpad information and minidumps
+//   base::FilePath database(L".crashpad");
+//   // Path to the out-of-process handler executable
+//   base::FilePath handler(L"crashpad_handler.exe");
+//   // URL used to submit minidumps to
+// //   std::string url("https://o1313474.ingest.sentry.io/api/6563738/minidump/?sentry_key=133f371c936a4bc4bddec532b1d1304a");
+//   // Optional annotations passed via --annotations to the handler
+//   std::map<std::string, std::string> annotations;
+//   // Optional arguments to pass to the handler
+//   std::vector<std::string> arguments;
+// arguments.push_back("--no-rate-limit");
+//   std::vector<base::FilePath> attachments;
+
+//   CrashpadClient client;
+//   std::string url;
+// //   std::string url = "https://o1313474.ingest.sentry.io/api/6563738/minidump/?sentry_key=133f371c936a4bc4bddec532b1d1304a";
+//   std::string http_proxy;
+//   bool success = client.StartHandler(
+//     handler,
+//     database,
+//     database,
+//     url,
+// 	http_proxy,
+//     annotations,
+//     arguments,
+//     /* restartable */ true,
+//     /* asynchronous_start */ false,
+// 	attachments
+//   );
+
 #ifdef HAS_SENTRY
     sentry_options_t *options = sentry_options_new();
     sentry_options_set_dsn(options, "https://133f371c936a4bc4bddec532b1d1304a@o1313474.ingest.sentry.io/6563738");
     sentry_options_set_release(options, "zelda-classic@" RELEASE_TAG);
 	// Only track sessions for the main apps.
-	if (id != App::zelda && id != App::zquest)
+	if (id != App::zelda && id != App::zquest || is_ci())
 		sentry_options_set_auto_session_tracking(options, 0);
     sentry_init(options);
     switch (id)
@@ -80,10 +115,13 @@ void common_main_setup(App id, int argc, char **argv)
     }
     atexit(sentry_atexit);
 
-	// Sentry backend is configured to scrub the IP. This just gets us a rough unique user count.
-	sentry_value_t user = sentry_value_new_object();
-	sentry_value_set_by_key(user, "ip_address", sentry_value_new_string("{{auto}}"));
-	sentry_set_user(user);
+	if (!is_ci())
+	{
+		// Sentry backend is configured to scrub the IP. This just gets us a rough unique user count.
+		sentry_value_t user = sentry_value_new_object();
+		sentry_value_set_by_key(user, "ip_address", sentry_value_new_string("{{auto}}"));
+		sentry_set_user(user);
+	}
 #endif
 
     // This allows for opening a binary from Finder and having ZC be in its expected

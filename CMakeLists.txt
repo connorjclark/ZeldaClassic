@@ -11,6 +11,7 @@ option(COPY_RESOURCES "Copy runtime resources to build folder, but only if they 
 set(USE_PCH FALSE CACHE BOOL "Use precompiled headers")
 set(UNITY_BUILD FALSE CACHE BOOL "Unity build")
 set(WANT_SENTRY FALSE CACHE BOOL "Include Sentry for crash dump handling")
+set(WANT_ONLY_CRASHPAD TRUE CACHE BOOL "When including sentry, disable sentry and just keep the crashpad part")
 set(WANT_MAC_DEBUG_FILES FALSE CACHE BOOL "Generate .dSYM debug files on Mac")
 set(WANT_FUZZ FALSE CACHE BOOL "Set FUZZ CXX definition")
 set(WANT_GIT_HOOKS TRUE CACHE BOOL "Install git hooks")
@@ -790,6 +791,12 @@ if(WANT_SENTRY)
 		target_link_libraries(${target} PRIVATE sentry)
 		target_compile_definitions(${target} PRIVATE HAS_SENTRY)
 	endforeach()
+
+	# if(WANT_ONLY_CRASHPAD)
+	# 	target_compile_definitions(zcbase PRIVATE ONLY_CRASHPAD)
+	# endif()
+
+	# target_link_libraries(zcbase PUBLIC crashpad_client)
 endif()
 
 if(RELEASE_TAG)

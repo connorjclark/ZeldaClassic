@@ -179,10 +179,10 @@ jobs:
         run: >
           cmake -S . -B build -G 'Ninja Multi-Config'
           -DCOPY_RESOURCES=OFF
-          -DRELEASE_TAG="${{ inputs.release-tag }}"
+          -DRELEASE_TAG="${{ inputs.release-tag || 'ci' }}"
           -DRELEASE_CHANNEL="${{ steps.set-channel.outputs.channel }}"
           -DREPO="${{ github.repository }}"
-          -DWANT_SENTRY="${{ inputs.sentry }}"
+          -DWANT_SENTRY=ON
           -DWANT_MAC_DEBUG_FILES="${{ inputs.config == 'RelWithDebInfo' }}"
           -DCMAKE_WIN32_EXECUTABLE=1
           -DCMAKE_C_COMPILER_LAUNCHER=ccache
@@ -247,12 +247,12 @@ jobs:
 
       # Upload debug symbols to Sentry.
       - name: Setup Sentry CLI
-        if: inputs.sentry
+        # if: inputs.sentry
         uses: mathieu-bour/setup-sentry-cli@v1.3.0
         with:
           token: ${{ secrets.SENTRY_TOKEN }}
           organization: zeldaclassic
           project: zelda-classic
       - name: Upload debugging symbols
-        if: inputs.sentry
-        run: sentry-cli upload-dif 'zelda-classic@${{ inputs.release-tag }}' --include-sources --wait build
+        # if: inputs.sentry
+        run: sentry-cli upload-dif 'zelda-classic@${{ inputs.release-tag || 'ci' }}' --include-sources --wait build
