@@ -118,17 +118,17 @@ jobs:
       - name: Generate changelog
         run: python scripts/generate_changelog.py --format markdown --from ${{ needs.create-tag.outputs.previous-release-tag }} --for-nightly=${{ github.event.inputs.full_release != 'true' }} > new_changelog.md
 
-      - name: Release
-        uses: softprops/action-gh-release@v1
-        with:
-          name: ${{ needs.create-tag.outputs.release-name }}
-          tag_name: ${{ needs.create-tag.outputs.release-tag }}
-          target_commitish: ${{ github.sha }}
-          files: release-packages/**/*
-          prerelease: ${{ !inputs.full_release }}
-          fail_on_unmatched_files: true
-          generate_release_notes: false
-          body_path: new_changelog.md
+      # - name: Release
+      #   uses: softprops/action-gh-release@v1
+      #   with:
+      #     name: ${{ needs.create-tag.outputs.release-name }}
+      #     tag_name: ${{ needs.create-tag.outputs.release-tag }}
+      #     target_commitish: ${{ github.sha }}
+      #     files: release-packages/**/*
+      #     prerelease: ${{ !inputs.full_release }}
+      #     fail_on_unmatched_files: true
+      #     generate_release_notes: false
+      #     body_path: new_changelog.md
 
       - name: Setup Sentry CLI
         if: inputs.sentry
