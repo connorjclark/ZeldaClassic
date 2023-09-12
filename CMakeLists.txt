@@ -23,6 +23,18 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
+if(ZC_OFFICIAL)
+	if(NOT ZC_VERSION)
+		message(FATAL_ERROR "Missing expected ZC_VERSION")
+	endif()
+	if(NOT RELEASE_CHANNEL)
+		message(FATAL_ERROR "Missing expected RELEASE_CHANNEL")
+	endif()
+	if(NOT REPO)
+		message(FATAL_ERROR "Missing expected REPO")
+	endif()
+endif()
+
 find_program(PYTHON python3 python REQUIRED)
 
 if(MSVC)

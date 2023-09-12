@@ -5,6 +5,7 @@
 #include "base/zsys.h"
 #include <filesystem>
 #include <string>
+#include <fmt/format.h>
 
 #ifdef _WIN32
 #include <allegro5/allegro_windows.h>

@@ -22,6 +22,10 @@ on:
         default: false
         description: "Whether to include debug info in the packaged artifact"
       # The following is for releases only.
+      official:
+        type: boolean
+        default: false
+        description: "Do not set this directly! Use release workflow."
       sentry:
         type: boolean
         default: false
@@ -166,6 +170,7 @@ jobs:
         run: >
           cmake -S . -B build -G 'Ninja Multi-Config'
           -DCOPY_RESOURCES=OFF
+          -DZC_OFFICIAL="${{ inputs.official }}"
           -DZC_VERSION="${{ inputs.release-version }}"
           -DRELEASE_CHANNEL="${{ steps.set-channel.outputs.channel }}"
           -DREPO="${{ github.repository }}"
@@ -245,4 +250,4 @@ jobs:
         if: inputs.sentry
       - name: Upload debugging symbols
         if: inputs.sentry
-        run: sentry-cli --log-level=DEBUG upload-dif 'zc-test@${{ iinputs.release-version }}' --include-sources --wait build
+        run: sentry-cli --log-level=DEBUG upload-dif 'zc-test@${{ inputs.release-version }}' --include-sources --wait build

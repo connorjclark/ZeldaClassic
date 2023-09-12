@@ -22,8 +22,6 @@ previous_release_version = subprocess.check_output(
 major, minor, patch = map(int, re.match(r'(\d+)\.(\d+)\.(\d+)', previous_release_version).groups())
 
 version_meta = []
-if args.github_org != 'ZQuestClassic':
-    version_meta.append(args.github_org)
 
 if args.version_type == 'stable':
     minor += 1
@@ -36,6 +34,9 @@ if args.version_type == 'nightly':
     release_version = f'{major}.{minor}.{patch}-nightly'
     version_meta.append(today)
     release_name = f'{major}.{minor}.{patch} Nightly {today}'
+
+if args.github_org != 'ZQuestClassic':
+    version_meta.append(args.github_org)
 if version_meta:
     release_version += '+' + '.'.join(version_meta)
 
