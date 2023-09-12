@@ -40,10 +40,10 @@ jobs:
           version: '2.20.6'
           token: ${{ secrets.SENTRY_TOKEN }}
           organization: zeldaclassic
-          project: zelda-classic
+          project: zc-test
       - run: sentry-cli --version
         if: inputs.sentry
-      - run: sentry-cli --log-level=DEBUG releases new 'zelda-classic@${{ steps.make-vars.outputs.release-tag }}'
+      - run: sentry-cli --log-level=DEBUG releases new 'zc-test@${{ steps.make-vars.outputs.release-tag }}'
         if: inputs.sentry
 
   build-release:
@@ -127,9 +127,9 @@ jobs:
           version: '2.20.6'
           token: ${{ secrets.SENTRY_TOKEN }}
           organization: zeldaclassic
-          project: zelda-classic
+          project: zc-test
       - name: Finalize sentry
         if: inputs.sentry
         run: |
-          sentry-cli --log-level=DEBUG releases set-commits 'zelda-classic@${{ needs.create-tag.outputs.release-tag }}' --auto
-          sentry-cli --log-level=DEBUG releases finalize 'zelda-classic@${{ needs.create-tag.outputs.release-tag }}'
+          sentry-cli --log-level=DEBUG releases set-commits 'zc-test@${{ needs.create-tag.outputs.release-tag }}' --auto
+          sentry-cli --log-level=DEBUG releases finalize 'zc-test@${{ needs.create-tag.outputs.release-tag }}'
