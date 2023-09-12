@@ -12,9 +12,6 @@ on:
         description: Whether the build specified is an Alpha/Beta/Gamma/Release
         options:
           - alpha
-          - beta
-          - gamma
-          - release
         required: true
         default: alpha
       full_release:

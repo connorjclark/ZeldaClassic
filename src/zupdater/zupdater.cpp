@@ -1,6 +1,7 @@
 #include "base/about.h"
 #include "base/process_management.h"
 #include "base/util.h"
+#include "base/version.h"
 #include "base/zc_alleg.h"
 #include "base/zapp.h"
 #include "allegro5/allegro_native_dialog.h"

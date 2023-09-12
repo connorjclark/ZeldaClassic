@@ -1,4 +1,5 @@
 #include "base/zdefs.h"
+#include "base/version.h"
 #include "jwin_a5.h"
 #include "base/zapp.h"
 #include "dialog/info.h"
@@ -23,7 +24,7 @@ const char months[13][13] =
 	"Nonetober", "January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"
 };
 
-char *VerStr(int32_t version)
+char *VerStrFromHex(int32_t version)
 {
     static char ver_str[15];
     sprintf(ver_str,"v%d.%02X",version>>8,version&0xFF);
@@ -630,8 +631,7 @@ string get_dbreport_string()
 	
 	oss << "```\n"
 		<< ZQ_EDITOR_NAME
-		<< "\nVersion: " << ZQ_EDITOR_V << " " << ALPHA_VER_STR
-		<< "\nTag: " << getReleaseTag();
+		<< "\nVersion: " << getVersion();
 		
 	sprintf(buf,"Build Date: %s %s, %d at @ %s %s", dayextension(BUILDTM_DAY).c_str(),
 		(char*)months[BUILDTM_MONTH], BUILDTM_YEAR, __TIME__, __TIMEZONE__);
@@ -754,11 +754,9 @@ string generate_zq_about()
 {
 	char buf1[256];
 	std::ostringstream oss;
-	sprintf(buf1,"%s, Version: %s", ZQ_EDITOR_NAME,ZQ_EDITOR_V);
+	sprintf(buf1,ZQ_EDITOR_NAME);
 	oss << buf1 << '\n';
-	sprintf(buf1,"Tag: %s", getReleaseTag());
-	oss << buf1 << '\n';
-	sprintf(buf1, "%s", ALPHA_VER_STR);
+	sprintf(buf1,"Version: %s", getVersion().c_str());
 	oss << buf1 << '\n';
 	sprintf(buf1,"Build Date: %s %s, %d at @ %s %s", dayextension(BUILDTM_DAY).c_str(), (char*)months[BUILDTM_MONTH], BUILDTM_YEAR, __TIME__, __TIMEZONE__);
 	oss << buf1 << '\n';
@@ -775,6 +773,9 @@ bool zquestheader::is_legacy() const
 
 int8_t zquestheader::getAlphaState() const
 {
+	if (new_version_id_main >= 3)
+		return new_version_id_third == 0 ? 3 : 0;
+
 	if(new_version_id_release) return 3;
 	else if(new_version_id_gamma) return 2;
 	else if(new_version_id_beta) return 1;
@@ -825,6 +826,10 @@ char const* zquestheader::getAlphaVerStr() const
 char const* zquestheader::getVerStr() const
 {
 	static char buf[80] = "";
+
+	if (new_version_id_main >= 3)
+		return zelda_version_string;
+
 	if(is_legacy())
 	{
 		switch(zelda_version)
@@ -936,32 +941,24 @@ int32_t zquestheader::compareDate() const
 
 int32_t zquestheader::compareVer() const
 {
-	if(new_version_id_main > V_ZC_FIRST)
+	auto version = getVersionComponents();
+	if(new_version_id_main > version.major)
 		return 1;
-	if(new_version_id_main < V_ZC_FIRST)
+	if(new_version_id_main < version.major)
 		return -1;
-	if(new_version_id_second > V_ZC_SECOND)
+	if(new_version_id_second > version.minor)
 		return 1;
-	if(new_version_id_second < V_ZC_SECOND)
+	if(new_version_id_second < version.minor)
 		return -1;
-	if(new_version_id_third > V_ZC_THIRD)
+	if(new_version_id_third > version.patch)
 		return 1;
-	if(new_version_id_third < V_ZC_THIRD)
+	if(new_version_id_third < version.patch)
 		return -1;
 	if(new_version_id_fourth > V_ZC_FOURTH)
 		return 1;
 	if(new_version_id_fourth < V_ZC_FOURTH)
 		return -1;
 	return 0;
-}
-
-int8_t getProgramAlphaState()
-{
-	if(V_ZC_RELEASE) return 3;
-	else if(V_ZC_GAMMA) return 2;
-	else if(V_ZC_BETA) return 1;
-	else if(V_ZC_ALPHA) return 0;
-	return -1;
 }
 
 //double ddir=atan2(double(fakey-(Hero.y)),double(Hero.x-fakex));

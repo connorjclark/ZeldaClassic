@@ -1,5 +1,6 @@
 #include "allegro/file.h"
 #include "base/util.h"
+#include "base/version.h"
 #include "base/zapp.h"
 #include "base/qrs.h"
 #include "base/cpool.h"
@@ -2589,6 +2590,15 @@ int32_t readheader(PACKFILE *f, zquestheader *Header, byte printmetadata)
 		{
 			return qe_invalid;
 		}
+
+		if(version>=9)
+		{
+			if(!pfread(tempheader.zelda_version_string,sizeof(tempheader.zelda_version_string),f))
+			{
+				return qe_invalid;
+			}
+			tempheader.zelda_version_string[sizeof(tempheader.zelda_version_string)-1] = 0;
+		}
 	
 		if(version>=4)
 		{
@@ -2883,8 +2893,8 @@ int32_t readheader(PACKFILE *f, zquestheader *Header, byte printmetadata)
 	
 	//{ Version Warning
 	int32_t vercmp = tempheader.compareVer();
-	int32_t astatecmp = compare(int32_t(tempheader.getAlphaState()), ALPHA_STATE);
-	int32_t avercmp = compare(tempheader.getAlphaVer(), ALPHA_VER);
+	int32_t astatecmp = compare(int32_t(tempheader.getAlphaState()), getAlphaState());
+	int32_t avercmp = compare(tempheader.getAlphaVer(), 0);
 	if(vercmp > 0 || (!vercmp &&
 		(astatecmp > 0 || (!astatecmp &&
 			avercmp > 0))))

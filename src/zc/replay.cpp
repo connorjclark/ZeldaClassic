@@ -1,4 +1,5 @@
 #include "zc/replay.h"
+#include "base/version.h"
 #include "zc/zc_sys.h"
 #include "base/zc_alleg.h"
 #include "base/util.h"
@@ -823,7 +824,7 @@ static void save_replay(std::string filename, const std::vector<std::shared_ptr<
 
     std::time_t ct = std::time(0);
     replay_set_meta("time_updated", strtok(ctime(&ct), "\n"));
-    replay_set_meta("zc_version_updated", getReleaseTag());
+    replay_set_meta("zc_version_updated", getVersion());
     replay_set_meta("version", version);
 
     std::ofstream out(filename, std::ios::binary);
@@ -902,7 +903,7 @@ static void save_result(bool stopped = false, bool changed = false)
 	out << fmt::format("mode: {}", replay_mode_to_string(mode)) << '\n';
 	out << fmt::format("time: {}", strtok(ctime(&time_started_c), "\n")) << '\n';
 	out << fmt::format("duration: {}", elapsed.count()) << '\n';
-	out << fmt::format("zc_version: {}", getReleaseTag()) << '\n';
+	out << fmt::format("zc_version: {}", getVersion()) << '\n';
 	if (replay_is_replaying())
 		out << fmt::format("replay_log_frames: {}", replay_log.back()->frame) << '\n';
 	if (replay_is_recording())
@@ -1197,7 +1198,7 @@ void replay_start(ReplayMode mode_, std::filesystem::path path, int frame)
         version = VERSION;
         std::time_t ct = std::time(0);
         replay_set_meta("time_created", strtok(ctime(&ct), "\n"));
-        replay_set_meta("zc_version_created", getReleaseTag());
+        replay_set_meta("zc_version_created", getVersion());
         KeyMapReplayStep::current = KeyMapReplayStep::make(0);
         break;
     }

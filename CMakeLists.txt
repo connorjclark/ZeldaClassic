@@ -460,6 +460,7 @@ set(zcbase_sources
 	src/base/render.cpp
 	src/base/sin1.cpp
 	src/base/util.cpp
+	src/base/version.cpp
 	src/base/win32.cpp
 	src/base/zapp.cpp
 	src/base/zc_alleg.cpp
