@@ -54,7 +54,7 @@ namespace fs = std::filesystem;
 static bool headless;
 static std::string repo = getRepo();
 static std::string channel = getReleaseChannel();
-static std::string current_version = getReleaseTag();
+static std::string current_version = getVersionString();
 
 std::ofstream out("updater.log", std::ios::binary);
 
