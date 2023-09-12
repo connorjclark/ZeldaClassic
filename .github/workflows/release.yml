@@ -3,21 +3,14 @@ name: Release
 on:
   workflow_dispatch:
     inputs:
-      number:
-        description: Version number (Alpha/Beta/Gamma/Release).
-        type: string
-        required: false
-      versiontype:
+      version-type:
         type: choice
-        description: Whether the build specified is an Alpha/Beta/Gamma/Release
+        description: New stable release or nightly?
         options:
-          - alpha
+          - stable
+          - nightly
         required: true
-        default: alpha
-      full_release:
-        type: boolean
-        description: Full Version (i.e. NOT a nightly)
-        default: false
+        default: nightly
       sentry:
         type: boolean
         description: Perform a sentry release
@@ -38,9 +31,7 @@ jobs:
         run: |
           python3 .github/workflows/print-release-name-vars.py \
             --github_org=${{ github.repository_owner }} \
-            --full_release=${{ github.event.inputs.full_release }} \
-            --version_type=${{ github.event.inputs.versiontype }} \
-            --number=${{ inputs.number }}
+            --version_type=${{ github.event.inputs.version-type }}
 
       - name: Setup Sentry CLI
         uses: mathieu-bour/setup-sentry-cli@v1.3.0

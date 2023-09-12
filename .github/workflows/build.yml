@@ -1,4 +1,4 @@
-run-name: ${{ inputs.release-tag || 'Build' }}, ${{ inputs.runs-on }} ${{ inputs.arch }} ${{ inputs.config }} w/ ${{ inputs.compiler }}
+run-name: ${{ inputs.release-name || 'Build' }}, ${{ inputs.runs-on }} ${{ inputs.arch }} ${{ inputs.config }} w/ ${{ inputs.compiler }}
 
 on:
   workflow_call:
@@ -26,7 +26,7 @@ on:
         type: boolean
         default: false
         description: "Do not set this directly! Use release workflow."
-      release-tag:
+      release-version:
         type: string
         required: false
         description: "Do not set this directly! Use release workflow."
@@ -34,18 +34,6 @@ on:
         type: string
         required: false
         description: "Do not set this directly! Use release workflow."
-      number:
-        description: Version number (Alpha/Beta/Gamma/Release).
-        type: string
-        required: false
-      versiontype:
-        type: string
-        description: Whether the build specified is an Alpha/Beta/Gamma/Release
-        required: false
-      full_release:
-        type: boolean
-        description: Full Version (i.e. NOT a nightly)
-        required: false
     outputs:
       artifact-name:
         description: "The name of the artifact that should be downloaded by the caller workflow"
@@ -153,8 +141,7 @@ jobs:
         if: inputs.config == 'Coverage'
         run: echo "TARGET=zplayer" >> "$GITHUB_ENV"
       - run: cp src/metadata/*.h.sig src/metadata/sigs/
-      - run: bash .github/workflows/configure-signatures.sh ${{ inputs.compiler }} ${{ inputs.versiontype }} ${{ inputs.full_release }} ${{ inputs.number }}
-        if: ${{ inputs.versiontype }}
+      - run: bash .github/workflows/configure-signatures.sh ${{ inputs.compiler }}
       - name: Set channel
         id: set-channel
         shell: python
@@ -179,7 +166,7 @@ jobs:
         run: >
           cmake -S . -B build -G 'Ninja Multi-Config'
           -DCOPY_RESOURCES=OFF
-          -DRELEASE_TAG="${{ inputs.release-tag }}"
+          -DZC_VERSION="${{ inputs.release-version }}"
           -DRELEASE_CHANNEL="${{ steps.set-channel.outputs.channel }}"
           -DREPO="${{ github.repository }}"
           -DWANT_SENTRY="${{ inputs.sentry }}"
@@ -202,17 +189,17 @@ jobs:
           import platform
           import os
 
-          release_tag = '${{ inputs.release-tag }}' or 'zc'
+          release_version = '${{ inputs.release-version }}' or 'zc'
           arch = '${{ inputs.arch }}'
 
           system = platform.system()
           if system == 'Windows':
             arch_label = 'x86' if arch == 'win32' else 'x64'
-            package_name = f'{release_tag}-windows-{arch_label}.zip'
+            package_name = f'{release_version}-windows-{arch_label}.zip'
           elif system == 'Darwin':
-            package_name = f'{release_tag}-mac.dmg'
+            package_name = f'{release_version}-mac.dmg'
           elif system == 'Linux':
-            package_name = f'{release_tag}-linux.tar.gz'
+            package_name = f'{release_version}-linux.tar.gz'
 
           with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
             print('{0}={1}'.format('package-name', package_name), file=f)
@@ -258,4 +245,4 @@ jobs:
         if: inputs.sentry
       - name: Upload debugging symbols
         if: inputs.sentry
-        run: sentry-cli --log-level=DEBUG upload-dif 'zelda-classic@${{ inputs.release-tag }}' --include-sources --wait build
+        run: sentry-cli --log-level=DEBUG upload-dif 'zelda-classic@${{ iinputs.release-version }}' --include-sources --wait build

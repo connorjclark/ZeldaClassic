@@ -631,7 +631,7 @@ string get_dbreport_string()
 	
 	oss << "```\n"
 		<< ZQ_EDITOR_NAME
-		<< "\nVersion: " << getVersion();
+		<< "\nVersion: " << getVersionString();
 		
 	sprintf(buf,"Build Date: %s %s, %d at @ %s %s", dayextension(BUILDTM_DAY).c_str(),
 		(char*)months[BUILDTM_MONTH], BUILDTM_YEAR, __TIME__, __TIMEZONE__);
@@ -756,7 +756,7 @@ string generate_zq_about()
 	std::ostringstream oss;
 	sprintf(buf1,ZQ_EDITOR_NAME);
 	oss << buf1 << '\n';
-	sprintf(buf1,"Version: %s", getVersion().c_str());
+	sprintf(buf1,"Version: %s", getVersionString().c_str());
 	oss << buf1 << '\n';
 	sprintf(buf1,"Build Date: %s %s, %d at @ %s %s", dayextension(BUILDTM_DAY).c_str(), (char*)months[BUILDTM_MONTH], BUILDTM_YEAR, __TIME__, __TIMEZONE__);
 	oss << buf1 << '\n';
@@ -941,7 +941,7 @@ int32_t zquestheader::compareDate() const
 
 int32_t zquestheader::compareVer() const
 {
-	auto version = getVersionComponents();
+	auto version = getVersion();
 	if(new_version_id_main > version.major)
 		return 1;
 	if(new_version_id_main < version.major)

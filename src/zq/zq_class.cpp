@@ -7134,7 +7134,7 @@ int32_t writeheader(PACKFILE *f, zquestheader *Header)
             new_return(20);
         }
 		
-		auto version = getVersionComponents();
+		auto version = getVersion();
 
 		if(!pfwrite(version.version_string,sizeof(zquestheader::zelda_version_string),f))
         {

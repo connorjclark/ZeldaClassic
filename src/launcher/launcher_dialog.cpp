@@ -433,7 +433,7 @@ static bool check_for_updates()
 
 	next_version = output_map["tag_name"];
 	next_asset_url = output_map["asset_url"];
-	return found_new_update = next_version != getVersion();
+	return found_new_update = next_version != getVersionString();
 }
 
 std::shared_ptr<GUI::Widget> LauncherDialog::view()
@@ -823,7 +823,7 @@ std::shared_ptr<GUI::Widget> LauncherDialog::view()
 							CONFIG_CHECKBOX_I("Check for updates on startup",App::launcher,"ZLAUNCH","check_for_updates",0,"Check for updates when starting ZLauncher. When a new version is available, ZLauncher will focus the Update tab on startup.")
 						)
 					),
-					Label(text = fmt::format("Current version: {}", getVersion())),
+					Label(text = fmt::format("Current version: {}", getVersionString())),
 					Button(
 						text = "View Release Notes",
 						onClick = message::ZU_RELEASE_NOTES
@@ -915,7 +915,7 @@ bool LauncherDialog::handleMessage(const GUI::DialogMessage<message>& msg)
 		break;
 		case message::ZU_RELEASE_NOTES:
 		{
-			std::string url = fmt::format("https://www.github.com/{}/releases/tag/{}", getRepo(), getVersion());
+			std::string url = fmt::format("https://www.github.com/{}/releases/tag/{}", getRepo(), getVersionString());
 #ifdef _WIN32
 			std::string cmd = "start " + url;
 			system(cmd.c_str());

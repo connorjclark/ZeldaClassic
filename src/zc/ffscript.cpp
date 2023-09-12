@@ -8155,7 +8155,7 @@ int32_t get_register(const int32_t arg)
 		
 		case ZELDAVERSION:
 		{
-			auto version = getVersionComponents();
+			auto version = getVersion();
 			ret = version.major * 10000 + version.minor * 100 + version.patch; //Do *not* multiply by 10,000!
 			break;
 		}
@@ -47933,7 +47933,7 @@ void clearConsole()
 		CConsoleLoggerEx::COLOR_BACKGROUND_BLACK,"Quest Data Logging & ZScript Debug Console\n");
 	
 	zscript_coloured_console.cprintf( CConsoleLoggerEx::COLOR_BLUE |CConsoleLoggerEx::COLOR_GREEN | CConsoleLoggerEx::COLOR_INTENSITY |
-		CConsoleLoggerEx::COLOR_BACKGROUND_BLACK,"Running: %s\n", getVersion().c_str());
+		CConsoleLoggerEx::COLOR_BACKGROUND_BLACK,"Running: %s\n", getVersionString().c_str());
 	if ( FFCore.getQuestHeaderInfo(vZelda) > 0 )
 	{
 		char const* verstr = QHeader.getVerStr();

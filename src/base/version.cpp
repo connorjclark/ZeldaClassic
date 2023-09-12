@@ -20,7 +20,9 @@ consteval int stoi(const char* str, int start)
     return stoi_impl(str + start);
 }
 
-#define RELEASE_TAG "3.0.1-nightly+2023-01-02"
+#ifndef ZC_VERSION_STRING
+#   error ZC_VERSION_STRING required
+#endif
 
 consteval ZCVersion parseVersion()
 {
@@ -28,11 +30,11 @@ consteval ZCVersion parseVersion()
 	int last = 0;
 	int index = 0;
 	int i = 0;
-    for (const auto& ch : RELEASE_TAG)
+    for (const auto& ch : ZC_VERSION_STRING)
 	{
 		if (ch == '.')
 		{
-			components[i++] = stoi(RELEASE_TAG, last);
+			components[i++] = stoi(ZC_VERSION_STRING, last);
 			last = index + 1;
 		}
 		else if (!is_digit(ch))
@@ -46,36 +48,36 @@ consteval ZCVersion parseVersion()
     }
 
 	if (i == 2)
-		components[2] = stoi(RELEASE_TAG, last);
+		components[2] = stoi(ZC_VERSION_STRING, last);
 
-	return {RELEASE_TAG, components[0], components[1], components[2]};
+	return {ZC_VERSION_STRING, components[0], components[1], components[2]};
 }
 
-static constexpr auto components = parseVersion();
-static_assert(components.major == 3, "version not set correctly");
-static_assert(components.minor != -1, "version not set correctly");
-static_assert(components.patch != -1, "version not set correctly");
+static constexpr auto version = parseVersion();
+static_assert(version.major == 3, "version not set correctly");
+static_assert(version.minor != -1, "version not set correctly");
+static_assert(version.patch != -1, "version not set correctly");
 // Matches zquestheader::zelda_version_string
-// static_assert(strlen(components.version_string) < 35, "version not set correctly");
+// static_assert(strlen(version.version_string) < 35, "version not set correctly");
 
 
-std::string getVersion()
+std::string getVersionString()
 {
-	return components.version_string;
+	return version.version_string;
 }
 
-ZCVersion getVersionComponents()
+ZCVersion getVersion()
 {
-	return components;
+	return version;
 }
 
 int getAlphaState()
 {
-	if (components.patch == 0) return 3;
+	if (version.patch == 0) return 3;
 	return 0;
 }
 
 bool isStableRelease()
 {
-	return components.patch == 0;
+	return version.patch == 0;
 }

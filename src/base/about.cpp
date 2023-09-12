@@ -6,7 +6,7 @@
 
 int getProgramAlphaVer()
 {
-	return getVersionComponents().minor;
+	return getVersion().minor;
 }
 
 char const* getProgramAlphaStr(bool ignoreNightly = false)

@@ -2197,7 +2197,7 @@ struct zquestheader
 {
     char  id_str[31];
     int16_t zelda_version; // Deprecated
-	char zelda_version_string[35];
+	char zelda_version_string[40];
     word  internal;
     byte  quest_number;
     byte  old_rules[2];
