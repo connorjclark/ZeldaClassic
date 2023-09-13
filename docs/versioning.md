@@ -12,7 +12,7 @@ Version strings consist of three numbers: `major.minor.patch`.
 
 `src/base/version.cpp` is where version information is stored. No version string exists in source control files, but is instead configured at build time based on git tags. See `scripts/generate_version_header.py` and the `generate_version_header` build target.
 
-For local/CI test builds: the most recent release tag is used, but appended with `+local`. Ex: `3.1.1-nightly+2024-01-01.local`
+For local/CI test builds: the most recent release tag is used, but appended with `local`. Ex: `3.1.1-nightly+2024-01-01.local`
 
 For official builds via GitHub Actions: The "Release" action lets you choose between a "stable" or a "nightly" release, and `.github/workflows/print-release-name-vars.py` determines what the next version should be accordingly.
 
