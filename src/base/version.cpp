@@ -1,11 +1,6 @@
 #include "base/version.h"
+#include "base/version_header.h"
 #include <string_view>
-
-// Only used for local builds.
-#ifndef ZC_VERSION_STRING
-#include "base/version_fallback.h"
-#define ZC_VERSION_STRING ZC_VERSION_FALLBACK
-#endif
 
 consteval bool is_digit(char c)
 {
@@ -32,11 +27,11 @@ consteval ZCVersion parseVersion()
 	int last = 0;
 	int index = 0;
 	int i = 0;
-    for (const auto& ch : ZC_VERSION_STRING)
+    for (const auto& ch : ZC_VERSION)
 	{
 		if (ch == '.')
 		{
-			components[i++] = stoi(ZC_VERSION_STRING, last);
+			components[i++] = stoi(ZC_VERSION, last);
 			last = index + 1;
 		}
 		else if (!is_digit(ch))
@@ -50,9 +45,9 @@ consteval ZCVersion parseVersion()
     }
 
 	if (i == 2)
-		components[2] = stoi(ZC_VERSION_STRING, last);
+		components[2] = stoi(ZC_VERSION, last);
 
-	return {ZC_VERSION_STRING, components[0], components[1], components[2]};
+	return {ZC_VERSION, components[0], components[1], components[2]};
 }
 
 static constexpr auto version = parseVersion();

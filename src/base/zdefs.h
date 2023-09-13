@@ -125,7 +125,7 @@ struct cpos_info;
 
 // These version fields are deprecated, and no longer update. Replaced by base/version.h
 #define ZELDA_VERSION       0x0255                         //version of the program
-#define ZC_VERSION 25500 //Version ID for ZScript Game->Version
+#define ZC_VERSION_ID 25500 //Version ID for ZScript Game->Version
 #define VERSION_BUILD       61                             //V_BUILD build number of this version. Deprecated.
 
 #define COPYRIGHT_YEAR      "2019"                          //shown on title screen and in ending
