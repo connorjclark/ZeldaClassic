@@ -4,7 +4,7 @@ ZC's versioning is a variation of [semver](https://semver.org/).
 
 Version strings consist of three numbers: `major.minor.patch`.
 
-* Stable releases are `major.minor` (patch is zero and thus is elided). Ex: `3.1.0` is the second stable release of major version 3.
+* Stable releases are `major.minor.0` (patch is always zero). Ex: `3.1.0` is the second stable release of major version 3.
 * Each nightly release increments the patch component of the last stable release, and also includes the date. Ex: `3.1.1-nightly+2024-01-01` is the first nightly after the `3.1.0` stable release.
 * We aim to release a stable version on every first Monday of the month, but will release more often as needed to fix critical bugs.
 
