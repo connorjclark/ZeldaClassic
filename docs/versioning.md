@@ -18,7 +18,6 @@ For official builds via GitHub Actions: The "Release" action lets you choose bet
 
 Various legacy versioning fields still exist in the code base and in the quest file format. They are all frozen now, and won't be updated anymore:
 
-* `zelda_version_string` contains the full version string (aka the git tag)
-* `zelda_version` is deprecated (hex value, forever fixed at `0x255`)
+* `zelda_version` is deprecated (hex value, forever fixed at `0x255`) - instead, `zelda_version_string` contains the full version string (aka the git tag)
 *  The major, minor and patch components replace the previous "main, second, third" fields, but the "fourth" field is now deprecated and always zero.
 * `new_version_id_{alpha,beta,gamma,release}` fields are deprecated and now always 0.
