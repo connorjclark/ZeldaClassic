@@ -129,5 +129,5 @@ jobs:
       - name: Finalize sentry
         if: inputs.sentry
         run: |
-          sentry-cli --log-level=DEBUG releases set-commits 'zc-test@${{ needs.create-tag.outputs.release-version }}' --auto
+          sentry-cli --log-level=DEBUG releases set-commits 'zc-test@${{ needs.create-tag.outputs.release-version }}' --auto --ignore-missing
           sentry-cli --log-level=DEBUG releases finalize 'zc-test@${{ needs.create-tag.outputs.release-version }}'
