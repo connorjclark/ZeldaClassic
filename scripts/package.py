@@ -176,6 +176,7 @@ else:
             '--to', 'HEAD',
         ], encoding='utf-8').strip()
     except Exception as e:
+        changelog = None
         print(e)
 
     nightly_changelog_path = root_dir / 'changelogs/nightly.txt'
