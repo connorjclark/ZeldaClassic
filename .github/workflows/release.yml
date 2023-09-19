@@ -156,14 +156,13 @@ jobs:
       - run: npm install
         working-directory: web
       - run: python3 web/deploy/deploy.py --prepare --build_folder build_emscripten/Release
-      - run: zip -r web.zip web/deploy/dist
+      - run: zip -r ${{ needs.create-tag.outputs.release-tag }}-web.zip web/deploy/dist
 
       - uses: actions/upload-artifact@v3
-        if: failure()
         with:
-          name: emscripten cmake
+          name: build-web
           path: |
-            ${{ github.workspace }}/web.zip
+            ${{ github.workspace }}/${{ needs.create-tag.outputs.release-tag }}-web.zip
 
   publish:
     needs:
