@@ -3,6 +3,7 @@
 #include <stdexcept>
 #include <map>
 
+#include "allegro/debug.h"
 #include "metadata/metadata.h"
 
 #include "base/qrs.h"
@@ -14459,7 +14460,10 @@ int32_t save_unencoded_quest(const char *filename, bool compressed, const char *
 	std::error_code ec;
 	fs::rename(tmp_filename, filename, ec);
 	if (ec)
+	{
+		al_trace("Error saving: %s\n", std::strerror(ec.value()));
 		new_return(ec.value());
+	}
 
 	new_return(0);
 }

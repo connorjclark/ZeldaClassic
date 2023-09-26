@@ -1599,7 +1599,10 @@ static int32_t write_save(save_t* save)
 	std::error_code ec;
 	fs::rename(tmpfilename, save->path, ec);
 	if (ec)
+	{
+		al_trace("Error saving: %s\n", std::strerror(ec.value()));
 		ret = 5;
+	}
 
 #ifdef __EMSCRIPTEN__
 	em_sync_fs();
