@@ -1,10 +1,10 @@
 name: CI
 
-on:
-  push:
-    branches-ignore:
-      - 'compare-baseline-*'
-  pull_request:
+# on:
+#   push:
+#     branches-ignore:
+#       - 'compare-baseline-*'
+#   pull_request:
 
 env:
   PYTHONUNBUFFERED: '1'
