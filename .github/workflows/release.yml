@@ -47,39 +47,39 @@ jobs:
             --version_type=${{ github.event.inputs.versiontype }} \
             --number=${{ inputs.number }}
 
-      - name: Setup Sentry CLI
-        uses: mathieu-bour/setup-sentry-cli@v1.3.0
-        if: inputs.sentry
-        with:
-          version: '2.20.6'
-          token: ${{ secrets.SENTRY_TOKEN }}
-          organization: zeldaclassic
-          project: zelda-classic
-      - run: sentry-cli --version
-        if: inputs.sentry
-      - run: sentry-cli --log-level=DEBUG releases new 'zelda-classic@${{ steps.make-vars.outputs.release-tag }}'
-        if: inputs.sentry
+      # - name: Setup Sentry CLI
+      #   uses: mathieu-bour/setup-sentry-cli@v1.3.0
+      #   if: inputs.sentry
+      #   with:
+      #     version: '2.20.6'
+      #     token: ${{ secrets.SENTRY_TOKEN }}
+      #     organization: zeldaclassic
+      #     project: zelda-classic
+      # - run: sentry-cli --version
+      #   if: inputs.sentry
+      # - run: sentry-cli --log-level=DEBUG releases new 'zelda-classic@${{ steps.make-vars.outputs.release-tag }}'
+      #   if: inputs.sentry
 
   build-release:
     needs: ["create-tag"]
     strategy:
       matrix:
         include:
-          - runs-on: windows-2022
-            arch: x64
-            compiler: msvc
-            config: RelWithDebInfo
-            sentry: ${{ inputs.sentry }}
-          - runs-on: windows-2022
-            arch: win32
-            compiler: msvc
-            config: RelWithDebInfo
-            sentry: ${{ inputs.sentry }}
-          - runs-on: macos-12
-            arch: intel
-            compiler: clang
-            config: RelWithDebInfo
-            sentry: ${{ inputs.sentry }}
+          # - runs-on: windows-2022
+          #   arch: x64
+          #   compiler: msvc
+          #   config: RelWithDebInfo
+          #   sentry: ${{ inputs.sentry }}
+          # - runs-on: windows-2022
+          #   arch: win32
+          #   compiler: msvc
+          #   config: RelWithDebInfo
+          #   sentry: ${{ inputs.sentry }}
+          # - runs-on: macos-12
+          #   arch: intel
+          #   compiler: clang
+          #   config: RelWithDebInfo
+          #   sentry: ${{ inputs.sentry }}
           - runs-on: ubuntu-22.04
             arch: x64
             compiler: clang
@@ -196,27 +196,27 @@ jobs:
           generate_release_notes: false
           body_path: new_changelog.md
 
-      - uses: actions/github-script@v6
-        with:
-          github-token: ${{ secrets.WEBSITE_REPO_TOKEN }}
-          script: |
-            await github.rest.actions.createWorkflowDispatch({
-              owner: 'ZQuestClassic',
-              repo: 'zquestclassic.com',
-              workflow_id: 'deploy.yml',
-              ref: 'main',
-            })
+      # - uses: actions/github-script@v6
+      #   with:
+      #     github-token: ${{ secrets.WEBSITE_REPO_TOKEN }}
+      #     script: |
+      #       await github.rest.actions.createWorkflowDispatch({
+      #         owner: 'ZQuestClassic',
+      #         repo: 'zquestclassic.com',
+      #         workflow_id: 'deploy.yml',
+      #         ref: 'main',
+      #       })
 
-      - name: Setup Sentry CLI
-        if: inputs.sentry
-        uses: mathieu-bour/setup-sentry-cli@v1.3.0
-        with:
-          version: '2.20.6'
-          token: ${{ secrets.SENTRY_TOKEN }}
-          organization: zeldaclassic
-          project: zelda-classic
-      - name: Finalize sentry
-        if: inputs.sentry
-        run: |
-          sentry-cli --log-level=DEBUG releases set-commits 'zelda-classic@${{ needs.create-tag.outputs.release-tag }}' --auto --ignore-missing
-          sentry-cli --log-level=DEBUG releases finalize 'zelda-classic@${{ needs.create-tag.outputs.release-tag }}'
+      # - name: Setup Sentry CLI
+      #   if: inputs.sentry
+      #   uses: mathieu-bour/setup-sentry-cli@v1.3.0
+      #   with:
+      #     version: '2.20.6'
+      #     token: ${{ secrets.SENTRY_TOKEN }}
+      #     organization: zeldaclassic
+      #     project: zelda-classic
+      # - name: Finalize sentry
+      #   if: inputs.sentry
+      #   run: |
+      #     sentry-cli --log-level=DEBUG releases set-commits 'zelda-classic@${{ needs.create-tag.outputs.release-tag }}' --auto --ignore-missing
+      #     sentry-cli --log-level=DEBUG releases finalize 'zelda-classic@${{ needs.create-tag.outputs.release-tag }}'
