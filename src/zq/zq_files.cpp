@@ -751,7 +751,9 @@ int32_t onSave()
 	//Don't tie regular saves being uncompressed to the autosave option.
 	bool compress = true;
     if (util::get_ext(temppath) == ".qsu") compress = false;
+	printf("save_unencoded_quest 1\n");
     int32_t ret = save_unencoded_quest(filepath, compress, filepath);
+	printf("save_unencoded_quest 2: %d\n", ret);
     char buf[256+20],name[256];
     extract_name(filepath,name,FILENAMEALL);
     

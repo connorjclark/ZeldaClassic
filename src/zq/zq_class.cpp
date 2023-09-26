@@ -14458,6 +14458,12 @@ int32_t save_unencoded_quest(const char *filename, bool compressed, const char *
 	// Move file to destination at end, to avoid issues with file being unavailable to test mode.
 	std::error_code ec;
 	fs::rename(tmp_filename, filename, ec);
+	// Build on linux
+	// Copy zquest over to flatpak install
+	// debug.
+	printf("save_unencoded_quest tmp_filename: %s\n", tmp_filename.c_str());
+	printf("save_unencoded_quest filename: %s\n", filename);
+	printf("save_unencoded_quest ec: %d\n", ec.value());
 	if (ec)
 		new_return(ec.value());
 
