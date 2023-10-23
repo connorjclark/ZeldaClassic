@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.24)
-set(CMAKE_CONFIGURATION_TYPES Asan Debug Release RelWithDebInfo Coverage CACHE STRING INTERNAL FORCE)
+set(CMAKE_CONFIGURATION_TYPES Asan Debug Release RelWithDebInfo Coverage ReleaseCoverage CACHE STRING INTERNAL FORCE)
 project (ZeldaClassic)
 
 set(CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH};${CMAKE_CURRENT_SOURCE_DIR}/cmake")
@@ -10,6 +10,7 @@ option(COPY_RESOURCES "Copy runtime resources to build folder, but only if they 
 
 set(USE_PCH FALSE CACHE BOOL "Use precompiled headers")
 set(UNITY_BUILD FALSE CACHE BOOL "Unity build")
+set(WANT_PGO FALSE CACHE BOOL "Include flags for making PGO builds")
 set(WANT_SENTRY FALSE CACHE BOOL "Include Sentry for crash dump handling")
 set(WANT_MAC_DEBUG_FILES FALSE CACHE BOOL "Generate .dSYM debug files on Mac")
 set(WANT_FUZZ FALSE CACHE BOOL "Set FUZZ CXX definition")
@@ -30,6 +31,16 @@ else()
 	set(CMAKE_CXX_FLAGS_ASAN "${CMAKE_CXX_FLAGS_DEBUG} -fsanitize=address -fno-omit-frame-pointer" CACHE STRING "" FORCE)
 	set(CMAKE_C_FLAGS_ASAN "${CMAKE_C_FLAGS_DEBUG} -fsanitize=address -fno-omit-frame-pointer" CACHE STRING "" FORCE)
 	set(CMAKE_EXE_LINKER_FLAGS_ASAN "${CMAKE_EXE_LINKER_FLAGS_DEBUG} -fsanitize=address" CACHE STRING "" FORCE)
+endif()
+
+if(WANT_PGO)
+	set(CMAKE_C_FLAGS_COVERAGE "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -fprofile-instr-generate -fcoverage-mapping")
+	set(CMAKE_CXX_FLAGS_COVERAGE "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -fprofile-instr-generate -fcoverage-mapping")
+	set(CMAKE_EXE_LINKER_FLAGS_COVERAGE "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -fprofile-instr-generate -fcoverage-mapping")
+
+	set(CMAKE_C_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -fprofile-use=${CMAKE_BINARY_DIR}/Coverage/zc.profdata")
+	set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -fprofile-use=${CMAKE_BINARY_DIR}/Coverage/zc.profdata")
+	set(CMAKE_EXE_LINKER_FLAGS_RELWITHDEBINFO "${CMAKE_EXE_LINKER_FLAGS_RELWITHDEBINFO} -fprofile-use=${CMAKE_BINARY_DIR}/Coverage/zc.profdata")
 endif()
 
 if(WANT_GIT_HOOKS)
@@ -199,7 +210,7 @@ if(NOT allegro5_POPULATED)
   add_subdirectory(${allegro5_SOURCE_DIR} ${allegro5_BINARY_DIR} EXCLUDE_FROM_ALL)
   # Allegro 5 CMakeLists sets CMAKE_CONFIGURATION_TYPES in a way that doesn't work for us,
   # so set it back to our value.
-  set(CMAKE_CONFIGURATION_TYPES Asan Debug Release RelWithDebInfo Coverage CACHE STRING INTERNAL FORCE)
+  set(CMAKE_CONFIGURATION_TYPES Asan Debug Release RelWithDebInfo Coverage ReleaseCoverage CACHE STRING INTERNAL FORCE)
 endif()
 
 # These include files are typically copied into the correct places via allegro's install

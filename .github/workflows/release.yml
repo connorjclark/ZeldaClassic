@@ -99,6 +99,7 @@ jobs:
       compiler: ${{ matrix.compiler }}
       config: ${{ matrix.config }}
       sentry: ${{ matrix.sentry }}
+      pgo: true
       release-tag: ${{ needs.create-tag.outputs.release-tag }}
       release-name: ${{ needs.create-tag.outputs.release-name }}
       cache: false

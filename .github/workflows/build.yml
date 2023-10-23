@@ -26,6 +26,10 @@ on:
         type: boolean
         default: false
         description: "Do not set this directly! Use release workflow."
+      pgo:
+        type: boolean
+        default: false
+        description: "Do not set this directly! Use release workflow."
       release-tag:
         type: string
         required: false
@@ -158,44 +162,23 @@ jobs:
       - run: cp src/metadata/*.h.sig src/metadata/sigs/
       - run: bash .github/workflows/configure-signatures.sh ${{ inputs.compiler }} ${{ inputs.versiontype }} ${{ inputs.full_release }} ${{ inputs.number }}
         if: ${{ inputs.versiontype }}
-      - name: Set channel
-        id: set-channel
-        shell: python
-        run: |
-          import platform
-          import os
-
-          arch = '${{ inputs.arch }}'
-
-          system = platform.system()
-          if system == 'Windows':
-            arch_label = 'x86' if arch == 'win32' else 'x64'
-            channel = f'windows-{arch_label}'
-          elif system == 'Darwin':
-            channel = 'mac'
-          elif system == 'Linux':
-            channel = 'linux'
-
-          with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
-            print('{0}={1}'.format('channel', channel), file=f)
-      - name: Configure build
-        run: >
-          cmake -S . -B build -G 'Ninja Multi-Config'
-          -DCOPY_RESOURCES=OFF
-          -DRELEASE_TAG="${{ inputs.release-tag }}"
-          -DRELEASE_CHANNEL="${{ steps.set-channel.outputs.channel }}"
-          -DREPO="${{ github.repository }}"
-          -DWANT_SENTRY="${{ inputs.sentry }}"
-          -DWANT_MAC_DEBUG_FILES="${{ inputs.config == 'RelWithDebInfo' }}"
-          -DCMAKE_WIN32_EXECUTABLE=1
-          -DCMAKE_C_COMPILER_LAUNCHER=ccache
-          -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
 
       - run: ccache -z
-      - run: cmake --build build --config ${{ inputs.config }} --target ${{ env.TARGET }} -j 4 -- -k 0
+      - name: Build
+        run: >
+          python scripts/build_official.py
+          --build-folder build
+          --release-tag '${{ inputs.release-tag }}'
+          --config ${{ inputs.config }}
+          --arch ${{ inputs.arch }}
+          --repo '${{ github.repository }}'
+          ${{ inputs.sentry && '--sentry' || '' }}
+          ${{ inputs.pgo && '--pgo' || '' }}
+          --target ${{ env.TARGET }}
       - run: ccache -s
 
       # Package.
+      # TODO: move all this to build_official.py
       - if: inputs.debug-info
         run: echo "PACKAGE_DEBUG_INFO=1" >> "$GITHUB_ENV"
       - name: Set package name
