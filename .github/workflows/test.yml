@@ -44,13 +44,14 @@ env:
 jobs:
   build:
     # See https://github.com/community/community/discussions/40777
-    # uses: ./.github/workflows/build.yml
-    uses: ZQuestClassic/ZQuestClassic/.github/workflows/build.yml@main
+    uses: ./.github/workflows/build.yml
+    # uses: ZQuestClassic/ZQuestClassic/.github/workflows/build.yml@main
     with:
       runs-on: ${{ inputs.runs-on }}
       arch: ${{ inputs.arch }}
       compiler: ${{ inputs.compiler }}
       config: ${{ inputs.config }}
+      pgo: true
       debug-info: true
 
   test:
