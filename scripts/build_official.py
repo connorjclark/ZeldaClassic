@@ -132,7 +132,9 @@ def collect_coverage():
 
     compiler_dir = Path((Path(args.build_folder) / 'compiler.txt').read_text()).parent
     if llvm:
-        for p in (root_dir / f'{args.build_folder}/Coverage').rglob('*.profraw'):
+        for p in (root_dir / args.build_folder).rglob('*.profraw'):
+            p.unlink()
+        for p in (root_dir / args.build_folder).rglob('*.profdata'):
             p.unlink()
     else:
         for p in (root_dir / f'{args.build_folder}/Coverage').rglob('*.pgc'):
@@ -143,19 +145,25 @@ def collect_coverage():
     run_instrumented()
 
     if llvm:
-        raw_files = (str(p) for p in ((root_dir / f'{args.build_folder}/Coverage').rglob('*.profraw')))
-        (root_dir / f'{args.build_folder}/Coverage/profraw_list.txt').write_text('\n'.join(raw_files))
+        targets = []
+        for prof_dir_path in (root_dir / f'{args.build_folder}/Coverage').glob('profile-data-*'):
+            target = prof_dir_path.name.replace('profile-data-', '')
+            if not list(prof_dir_path.glob('*.profraw')):
+                gha_warning(f'no profraw found for {target}')
+                continue
 
-        cmd = 'llvm-profdata merge -output=zc.profdata --input-files=profraw_list.txt'
-        if 'CI' not in os.environ:
-            cmd = 'xcrun ' + cmd
-        subprocess.check_call(cmd.split(' '), cwd=f'{args.build_folder}/Coverage')
+            targets.append(target)
+            cmd = f'llvm-profdata merge -output={target}.profdata {prof_dir_path}'
+            if 'CI' not in os.environ:
+                cmd = 'xcrun ' + cmd
+            subprocess.check_call(cmd.split(' '), cwd=args.build_folder)
 
         section('Top functions')
-        cmd = 'llvm-profdata show --topn=100 zc.profdata'
-        if 'CI' not in os.environ:
-            cmd = 'xcrun ' + cmd
-        print(subprocess.check_output(cmd.split(' '), cwd=f'{args.build_folder}/Coverage', encoding='utf8'))
+        for target in targets:
+            cmd = f'llvm-profdata show --topn=100 --detailed-summary {target}.profdata'
+            if 'CI' not in os.environ:
+                cmd = 'xcrun ' + cmd
+            print(subprocess.check_output(cmd.split(' '), cwd=args.build_folder, encoding='utf8'))
     else:
         Path(f'{args.build_folder}/{args.config}').mkdir(exist_ok=True)
         for p in (root_dir / f'{args.build_folder}/Coverage').rglob('*.pgc'):
