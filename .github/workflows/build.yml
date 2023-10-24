@@ -183,7 +183,7 @@ jobs:
       - run: ccache -z
       - name: Build
         run: >
-          bash .github/workflows/run_python.sh scripts/build_official.py
+          bash .github/workflows/run_python_2.sh scripts/build_official.py
           --build-folder build
           --release-tag '${{ inputs.release-tag || 'test' }}'
           --config ${{ inputs.config }}
