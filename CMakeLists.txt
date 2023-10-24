@@ -918,7 +918,7 @@ foreach(target IN LISTS zc_targets)
 			set(OPTIONS /LTCG /USEPROFILE)
 			target_link_options(${target} PRIVATE "$<$<CONFIG:RELWITHDEBINFO>:${OPTIONS}>")
 		else()
-			set(OPTIONS -fprofile-generate -fcoverage-mapping)
+			set(OPTIONS -fprofile-generate)
 			target_compile_options(${target} PRIVATE "$<$<CONFIG:COVERAGE>:${OPTIONS}>")
 			target_link_options(${target} PRIVATE "$<$<CONFIG:COVERAGE>:${OPTIONS}>")
 
