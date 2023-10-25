@@ -26,13 +26,23 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 write_file(${CMAKE_BINARY_DIR}/compiler.txt "${CMAKE_C_COMPILER}")
 
 if(WANT_PGO)
-	set(CMAKE_C_FLAGS_COVERAGE "-fprofile-generate=profile-data-zc")
-	set(CMAKE_CXX_FLAGS_COVERAGE "-fprofile-generate=profile-data-zc")
-	set(CMAKE_EXE_LINKER_FLAGS_COVERAGE "-flto -fprofile-generate=profile-data-zc")
+	if(MSVC)
+		set(CMAKE_C_FLAGS_COVERAGE "/GL")
+		set(CMAKE_CXX_FLAGS_COVERAGE "/GL")
+		set(CMAKE_EXE_LINKER_FLAGS_COVERAGE "/LTCG /GENPROFILE")
 
-	set(CMAKE_C_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -fprofile-use=zc.profdata")
-	set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -fprofile-use=zc.profdata")
-	set(CMAKE_EXE_LINKER_FLAGS_RELWITHDEBINFO "${CMAKE_EXE_LINKER_FLAGS_RELWITHDEBINFO} -flto -fprofile-use=zc.profdata")
+		set(CMAKE_C_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} /GL")
+		set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} /GL")
+		set(CMAKE_EXE_LINKER_FLAGS_RELWITHDEBINFO "${CMAKE_EXE_LINKER_FLAGS_RELWITHDEBINFO} /LTCG /USEPROFILE")
+	else()
+		set(CMAKE_C_FLAGS_COVERAGE "-fprofile-generate=profile-data-zc")
+		set(CMAKE_CXX_FLAGS_COVERAGE "-fprofile-generate=profile-data-zc")
+		set(CMAKE_EXE_LINKER_FLAGS_COVERAGE "-flto -fprofile-generate=profile-data-zc")
+
+		set(CMAKE_C_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -fprofile-use=zc.profdata")
+		set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -fprofile-use=zc.profdata")
+		set(CMAKE_EXE_LINKER_FLAGS_RELWITHDEBINFO "${CMAKE_EXE_LINKER_FLAGS_RELWITHDEBINFO} -flto -fprofile-use=zc.profdata")
+	endif()
 endif()
 
 if(MSVC)
@@ -477,7 +487,7 @@ set(zcbase_sources
 if (EMSCRIPTEN)
     list(APPEND zcbase_sources src/base/emscripten_utils.cpp)
 endif()
-add_library(zcbase OBJECT ${zcbase_sources})
+add_library(zcbase STATIC ${zcbase_sources})
 target_link_libraries(zcbase PUBLIC allegro_with_legacy fmt)
 target_include_directories(zcbase PUBLIC src)
 if(NOT WIN32)
@@ -489,9 +499,8 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
 elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
 	target_link_options(zcbase PRIVATE "-force_load")
 endif()
-# target_link_options(zcbase PRIVATE "--unresolved-symbols=ignore-in-object-files")
 
-add_library(zcgui OBJECT
+add_library(zcgui STATIC
 	src/gui/buildutil.cpp
 	src/gui/button.cpp
 	src/gui/checkbox_qr.cpp
@@ -595,7 +604,7 @@ set(ZCSOUNDSOURCES
 	src/sound/zcmusic.cpp
 	src/sound/zcmixer.cpp
 )
-add_library(zcsound OBJECT ${ZCSOUNDSOURCES})
+add_library(zcsound SHARED ${ZCSOUNDSOURCES})
 target_link_libraries(zcsound PUBLIC allegro_with_legacy zcbase ${SOUNDLIBS} ${ZCSOUNDLIBSEXTRA} allegro_audio allegro_acodec)
 
 if(BUILD_SOUND_LIBS_FROM_SOURCE)
@@ -917,42 +926,42 @@ foreach(target IN LISTS zc_targets)
 		target_compile_options(${target} PRIVATE -Wall ${zc_gcc_errors})
 	endif()
 
-	if(WANT_PGO AND NOT (target STREQUAL "zconsole"))
-		if(MSVC)
-			set(OPTIONS /GL)
-			target_compile_options(${target} PRIVATE "$<$<CONFIG:COVERAGE>:${OPTIONS}>")
-			set(OPTIONS /LTCG /GENPROFILE)
-			target_link_options(${target} PRIVATE "$<$<CONFIG:COVERAGE>:${OPTIONS}>")
+	# if(WANT_PGO AND NOT (target STREQUAL "zconsole"))
+	# 	if(MSVC)
+	# 		set(OPTIONS /GL)
+	# 		target_compile_options(${target} PRIVATE "$<$<CONFIG:COVERAGE>:${OPTIONS}>")
+	# 		set(OPTIONS /LTCG /GENPROFILE)
+	# 		target_link_options(${target} PRIVATE "$<$<CONFIG:COVERAGE>:${OPTIONS}>")
 
-			set(OPTIONS /GL)
-			target_compile_options(${target} PRIVATE "$<$<CONFIG:RELWITHDEBINFO>:${OPTIONS}>")
-			set(OPTIONS /LTCG /USEPROFILE)
-			target_link_options(${target} PRIVATE "$<$<CONFIG:RELWITHDEBINFO>:${OPTIONS}>")
-		else()
-			# get_target_property(target_type ${target} TYPE)
-			# if(target_type STREQUAL "EXECUTABLE")
-			# 	set(profdata "${target}")
-			# else()
-			# 	set(profdata zplayer)
-			# 	# set(profdata "${target}")
+	# 		set(OPTIONS /GL)
+	# 		target_compile_options(${target} PRIVATE "$<$<CONFIG:RELWITHDEBINFO>:${OPTIONS}>")
+	# 		set(OPTIONS /LTCG /USEPROFILE)
+	# 		target_link_options(${target} PRIVATE "$<$<CONFIG:RELWITHDEBINFO>:${OPTIONS}>")
+	# 	else()
+	# 		get_target_property(target_type ${target} TYPE)
+	# 		if(target_type STREQUAL "EXECUTABLE")
+	# 			set(profdata "${target}")
+	# 		else()
+	# 			set(profdata zplayer)
+	# 			# set(profdata "${target}")
 
-			# 	# set(OPTIONS "-ffat-lto-objects")
-			# 	# target_link_options(${target} PRIVATE "-flto")
-			# endif()
-			# target_link_options(${target} PRIVATE "-flto")
+	# 			# set(OPTIONS "-ffat-lto-objects")
+	# 			# target_link_options(${target} PRIVATE "-flto")
+	# 		endif()
+	# 		target_link_options(${target} PRIVATE "-flto")
 
-			# set(OPTIONS -O2 "-fprofile-generate=profile-data-${profdata}")
-			# target_compile_options(${target} PRIVATE "$<$<CONFIG:COVERAGE>:${OPTIONS}>")
-			# target_link_options(${target} PRIVATE "$<$<CONFIG:COVERAGE>:${OPTIONS}>")
+	# 		set(OPTIONS -O2 "-fprofile-generate=profile-data-${profdata}")
+	# 		target_compile_options(${target} PRIVATE "$<$<CONFIG:COVERAGE>:${OPTIONS}>")
+	# 		target_link_options(${target} PRIVATE "$<$<CONFIG:COVERAGE>:${OPTIONS}>")
 
-			# # TODO: LTO doesn't seem to be working on mac... -flto=thin -Wl,object_path_lto,lto.o
-			# # https://github.com/conda-forge/gdb-feedstock/pull/23/#issuecomment-643008755
+	# 		# TODO: LTO doesn't seem to be working on mac... -flto=thin -Wl,object_path_lto,lto.o
+	# 		# https://github.com/conda-forge/gdb-feedstock/pull/23/#issuecomment-643008755
 
-			# set(OPTIONS "-fprofile-use=${profdata}.profdata")
-			# target_compile_options(${target} PRIVATE "$<$<CONFIG:RELWITHDEBINFO>:${OPTIONS}>")
-			# target_link_options(${target} PRIVATE "$<$<CONFIG:RELWITHDEBINFO>:${OPTIONS}>")
-		endif()
-	endif()
+	# 		set(OPTIONS "-fprofile-use=${profdata}.profdata")
+	# 		target_compile_options(${target} PRIVATE "$<$<CONFIG:RELWITHDEBINFO>:${OPTIONS}>")
+	# 		target_link_options(${target} PRIVATE "$<$<CONFIG:RELWITHDEBINFO>:${OPTIONS}>")
+	# 	endif()
+	# endif()
 endforeach()
 
 # Disable warnings for generated file.

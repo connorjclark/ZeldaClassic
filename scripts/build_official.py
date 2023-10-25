@@ -64,9 +64,9 @@ def configure():
         '-DCMAKE_C_COMPILER_LAUNCHER=ccache',
         '-DCMAKE_CXX_COMPILER_LAUNCHER=ccache',
     ]
-    # if system != 'Windows':
-    cmake_args.append('-G')
-    cmake_args.append('Ninja Multi-Config')
+    if system != 'Windows':
+        cmake_args.append('-G')
+        cmake_args.append('Ninja Multi-Config')
     subprocess.check_call(cmake_args)
 
 def build(config):
