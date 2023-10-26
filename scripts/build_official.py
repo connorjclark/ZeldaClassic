@@ -1,4 +1,7 @@
 # For CI. If you want to build locally, you don't need this script.
+#
+# Note, for local Windows:
+#   cp '/C/Program Files/Microsoft Visual Studio/2022/Community/VC/Tools/MSVC/14.36.32532/bin/Hostx64/x64/pgort140.dll' build_official/Coverage
 
 import argparse
 import os
