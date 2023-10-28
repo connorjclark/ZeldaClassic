@@ -10,7 +10,7 @@ option(COPY_RESOURCES "Copy runtime resources to build folder, but only if they 
 
 set(USE_PCH FALSE CACHE BOOL "Use precompiled headers")
 set(UNITY_BUILD FALSE CACHE BOOL "Unity build")
-set(WANT_PGO FALSE CACHE BOOL "Include flags for making PGO builds")
+set(WANT_PGO FALSE CACHE BOOL "Include flags for making PGO (and LTO) builds")
 set(WANT_SENTRY FALSE CACHE BOOL "Include Sentry for crash dump handling")
 set(WANT_MAC_DEBUG_FILES FALSE CACHE BOOL "Generate .dSYM debug files on Mac")
 set(WANT_FUZZ FALSE CACHE BOOL "Set FUZZ CXX definition")
@@ -23,6 +23,8 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
+write_file(${CMAKE_BINARY_DIR}/compiler.txt "${CMAKE_C_COMPILER}")
+
 if(MSVC)
 	set(CMAKE_CXX_FLAGS_ASAN "${CMAKE_CXX_FLAGS_DEBUG} /fsanitize=address" CACHE STRING "" FORCE)
 	set(CMAKE_C_FLAGS_ASAN "${CMAKE_C_FLAGS_DEBUG} /fsanitize=address" CACHE STRING "" FORCE)
@@ -31,16 +33,6 @@ else()
 	set(CMAKE_CXX_FLAGS_ASAN "${CMAKE_CXX_FLAGS_DEBUG} -fsanitize=address -fno-omit-frame-pointer" CACHE STRING "" FORCE)
 	set(CMAKE_C_FLAGS_ASAN "${CMAKE_C_FLAGS_DEBUG} -fsanitize=address -fno-omit-frame-pointer" CACHE STRING "" FORCE)
 	set(CMAKE_EXE_LINKER_FLAGS_ASAN "${CMAKE_EXE_LINKER_FLAGS_DEBUG} -fsanitize=address" CACHE STRING "" FORCE)
-endif()
-
-if(WANT_PGO)
-	set(CMAKE_C_FLAGS_COVERAGE "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -fprofile-instr-generate -fcoverage-mapping")
-	set(CMAKE_CXX_FLAGS_COVERAGE "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -fprofile-instr-generate -fcoverage-mapping")
-	set(CMAKE_EXE_LINKER_FLAGS_COVERAGE "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -fprofile-instr-generate -fcoverage-mapping")
-
-	set(CMAKE_C_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -fprofile-use=${CMAKE_BINARY_DIR}/Coverage/zc.profdata")
-	set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -fprofile-use=${CMAKE_BINARY_DIR}/Coverage/zc.profdata")
-	set(CMAKE_EXE_LINKER_FLAGS_RELWITHDEBINFO "${CMAKE_EXE_LINKER_FLAGS_RELWITHDEBINFO} -fprofile-use=${CMAKE_BINARY_DIR}/Coverage/zc.profdata")
 endif()
 
 if(WANT_GIT_HOOKS)
@@ -533,6 +525,11 @@ target_include_directories(zcgui PRIVATE src)
 if(WIN32)
 	add_executable(zconsole src/zconsole/ConsoleLoggerHelper.cpp)
 	target_link_options(zconsole PRIVATE "/SUBSYSTEM:CONSOLE")
+
+	# get_target_property(zconsole_link_options zconsole LINK_OPTIONS)
+	# string(REPLACE "/USEPROFILE" "" zconsole_link_options "${zconsole_link_options}")
+	# set_target_properties(zconsole PROPERTIES LINK_OPTIONS "${zconsole_link_options}")
+	# MESSAGE(FATAL_ERROR "zconsole_link_options ${zconsole_link_options}")
 endif()
 
 add_library(zconsolelogger STATIC src/zconsole/ConsoleLogger.cpp)
@@ -907,6 +904,30 @@ foreach(target IN LISTS zc_targets)
 	endif()
 	if(CMAKE_C_COMPILER_ID MATCHES "GNU")
 		target_compile_options(${target} PRIVATE -Wall ${zc_gcc_errors})
+	endif()
+
+	if(WANT_PGO AND NOT (target STREQUAL "zconsole"))
+		if(MSVC)
+			set(OPTIONS /GL)
+			target_compile_options(${target} PRIVATE "$<$<CONFIG:COVERAGE>:${OPTIONS}>")
+			set(OPTIONS /LTCG /GENPROFILE)
+			target_link_options(${target} PRIVATE "$<$<CONFIG:COVERAGE>:${OPTIONS}>")
+
+			set(OPTIONS /GL)
+			target_compile_options(${target} PRIVATE "$<$<CONFIG:RELWITHDEBINFO>:${OPTIONS}>")
+			set(OPTIONS /LTCG /USEPROFILE)
+			target_link_options(${target} PRIVATE "$<$<CONFIG:RELWITHDEBINFO>:${OPTIONS}>")
+		else()
+			set(OPTIONS -fprofile-instr-generate -fcoverage-mapping)
+			target_compile_options(${target} PRIVATE "$<$<CONFIG:COVERAGE>:${OPTIONS}>")
+			target_link_options(${target} PRIVATE "$<$<CONFIG:COVERAGE>:${OPTIONS}>")
+
+			# TODO: LTO doesn't seem to be working on mac... -flto=thin -Wl,object_path_lto,lto.o
+			# https://github.com/conda-forge/gdb-feedstock/pull/23/#issuecomment-643008755
+			set(OPTIONS "-fprofile-use=${CMAKE_BINARY_DIR}/Coverage/zc.profdata")
+			target_compile_options(${target} PRIVATE "$<$<CONFIG:RELWITHDEBINFO>:${OPTIONS}>")
+			target_link_options(${target} PRIVATE "$<$<CONFIG:RELWITHDEBINFO>:${OPTIONS}>")
+		endif()
 	endif()
 endforeach()
 

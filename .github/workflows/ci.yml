@@ -33,20 +33,24 @@ jobs:
             # RelWithDebInfo invalidates ccache, and we currently can't show backtraces on crash for windows in CI
             # so no need for it yet.
             config: Release
+            pgo: true
           - runs-on: windows-2022
             arch: win32
             compiler: msvc
             # RelWithDebInfo fails all replays on 32 bit
             config: Release
+            pgo: false
             extra-args: --max_duration 60
           - runs-on: macos-12
             arch: intel
             compiler: clang
             config: RelWithDebInfo
+            pgo: true
           - runs-on: ubuntu-22.04
             arch: x64
             compiler: clang
             config: RelWithDebInfo
+            pgo: true
       fail-fast: false
     # See https://github.com/community/community/discussions/40777
     uses: ./.github/workflows/test.yml
@@ -57,6 +61,7 @@ jobs:
       compiler: ${{ matrix.compiler }}
       config: ${{ matrix.config }}
       extra-args: ${{ matrix.extra-args }}
+      pgo: ${{ matrix.pgo }}
 
   compare:
     needs: ["test"]

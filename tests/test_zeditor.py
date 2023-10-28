@@ -107,6 +107,10 @@ class TestZEditor(unittest.TestCase):
                     '-copy-qst', load_qst_path, tmp_qst_path,
                 ])
 
+                if 'ZC_PGO' in os.environ:
+                    # Saving code is enough.
+                    continue
+
                 replay_content = (root_dir / 'tests/replays' / zplay_path).read_text('utf-8')
                 replay_content = replay_content.replace(qst_path, 'tmp.qst')
                 replay_path = tmp_qst_dir / 'tmp.zplay'
@@ -143,6 +147,10 @@ class TestZEditor(unittest.TestCase):
                 output_dir = tmp_dir / 'output' / original_replay_path.name
                 output_dir.mkdir(exist_ok=True, parents=True)
                 self.run_replay(output_dir, [replay_path])
+
+            if 'ZC_PGO' in os.environ:
+                # One is enough.
+                return
 
     def test_package_export(self):
         if 'emscripten' in str(run_target.get_build_folder()) or platform.system() != 'Windows':

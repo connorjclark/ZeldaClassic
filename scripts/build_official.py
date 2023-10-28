@@ -12,7 +12,7 @@ parser.add_argument('--release-tag', required=True)
 parser.add_argument('--config', required=True)
 parser.add_argument('--arch', required=True)
 parser.add_argument('--repo', required=True)
-parser.add_argument('--target', required=True)
+parser.add_argument('--target', default='zplayer zeditor zscript zlauncher zupdater')
 parser.add_argument('--sentry', action='store_true')
 parser.add_argument('--pgo', action='store_true')
 
@@ -32,6 +32,16 @@ elif system == 'Darwin':
 elif system == 'Linux':
     channel = 'linux'
 
+llvm = system != 'Windows'
+
+def section(title):
+    n = 40
+    print()
+    print('=' * n)
+    print('+' + title.center(n - 2, ' ') + '+')
+    print('=' * n)
+    print()
+
 def gha_warning(message):
     if 'CI' in os.environ:
         print(f'::warning file=scripts/build_official.py,title=Build warning::{message}')
@@ -39,11 +49,11 @@ def gha_warning(message):
         print(f'WARNING: {message}')
 
 def configure():
-    subprocess.check_call([
+    section('Configuring build')
+    cmake_args = [
         'cmake',
         '-S', '.',
         '-B', args.build_folder,
-        '-G', 'Ninja Multi-Config',
         f'-DWANT_PGO={args.pgo}',
         f'-DRELEASE_TAG={args.release_tag}',
         f'-DRELEASE_CHANNEL={channel}',
@@ -53,16 +63,21 @@ def configure():
         '-DCMAKE_WIN32_EXECUTABLE=1',
         '-DCMAKE_C_COMPILER_LAUNCHER=ccache',
         '-DCMAKE_CXX_COMPILER_LAUNCHER=ccache',
-    ])
+    ]
+    # if system != 'Windows':
+    cmake_args.append('-G')
+    cmake_args.append('Ninja Multi-Config')
+    subprocess.check_call(cmake_args)
 
 def build(config):
+    section(f'Building for {config}')
     subprocess.check_call([
         'cmake',
         '--build', args.build_folder,
         '--config', config,
-        '--target', args.target,
+        '--target', *args.target.split(' '),
         '-j', '4',
-        '--', '-k', '0',
+        # '--', '-k', '0',
     ])
 
 def run_replay_coverage(extra_args):
@@ -76,6 +91,19 @@ def run_replay_coverage(extra_args):
         ])
     except Exception as e:
         gha_warning(f'Error running replay for coverage: {e}')
+
+def run_python_test(path):
+    print(f'running python test: {path}')
+    try:
+        subprocess.check_call(['python', path], env={
+            **os.environ,
+            'BUILD_FOLDER': f'{args.build_folder}/Coverage',
+            'ZC_PGO': '1',
+            # (in case running locally) Disables password checking.
+            'CI': '1',
+        })
+    except Exception as e:
+        gha_warning(f'Error running {path.name} for coverage: {e}')
 
 def run_instrumented():
     run_replay_coverage([
@@ -93,18 +121,58 @@ def run_instrumented():
         '--filter', 'hero_of_dreams',
         '--frame=10000',
     ])
+    run_python_test(root_dir / 'tests/test_zplayer.py')
+    run_python_test(root_dir / 'tests/test_zeditor.py')
+    run_python_test(root_dir / 'tests/test_zscript.py')
+    run_python_test(root_dir / 'tests/test_updater.py')
 
 def collect_coverage():
     build('Coverage')
+    section('Collecting coverage')
 
-    for p in (root_dir / f'{args.build_folder}/Coverage').rglob('*.profraw'):
-        p.unlink()
+    compiler_dir = Path((Path(args.build_folder) / 'compiler.txt').read_text()).parent
+    if llvm:
+        for p in (root_dir / f'{args.build_folder}/Coverage').rglob('*.profraw'):
+            p.unlink()
+    else:
+        for p in (root_dir / f'{args.build_folder}/Coverage').rglob('*.pgc'):
+            p.unlink()
+        for p in (root_dir / f'{args.build_folder}/Coverage').rglob('*.pgd'):
+            subprocess.check_call([compiler_dir / 'pgomgr.exe', '/clear', p])
 
     run_instrumented()
 
-    raw_files = (str(p) for p in ((root_dir / f'{args.build_folder}/Coverage').rglob('*.profraw')))
-    (root_dir / f'{args.build_folder}/Coverage/profraw_list.txt').write_text('\n'.join(raw_files))
-    subprocess.check_call('xcrun llvm-profdata merge -output=zc.profdata --input-files=profraw_list.txt'.split(' '), cwd=f'{args.build_folder}/Coverage')
+    if llvm:
+        raw_files = (str(p) for p in ((root_dir / f'{args.build_folder}/Coverage').rglob('*.profraw')))
+        (root_dir / f'{args.build_folder}/Coverage/profraw_list.txt').write_text('\n'.join(raw_files))
+
+        cmd = 'llvm-profdata merge -output=zc.profdata --input-files=profraw_list.txt'
+        if 'CI' not in os.environ:
+            cmd = 'xcrun ' + cmd
+        subprocess.check_call(cmd.split(' '), cwd=f'{args.build_folder}/Coverage')
+
+        section('Top functions')
+        cmd = 'llvm-profdata show --topn=100 zc.profdata'
+        if 'CI' not in os.environ:
+            cmd = 'xcrun ' + cmd
+        print(subprocess.check_output(cmd.split(' '), cwd=f'{args.build_folder}/Coverage', encoding='utf8'))
+    else:
+        Path(f'{args.build_folder}/{args.config}').mkdir(exist_ok=True)
+        for p in (root_dir / f'{args.build_folder}/Coverage').rglob('*.pgc'):
+            dest_path = Path(f'{args.build_folder}/{args.config}/{p.name}')
+            dest_path.unlink(missing_ok=True)
+            p.rename(dest_path)
+        for p in (root_dir / f'{args.build_folder}/Coverage').rglob('*.pgd'):
+            dest_path = Path(f'{args.build_folder}/{args.config}/{p.name}')
+            dest_path.unlink(missing_ok=True)
+            p.rename(dest_path)
+        
+        section('Top functions')
+        for p in (root_dir / f'{args.build_folder}/{args.config}').rglob('*.pgd'):
+            subprocess.check_call([compiler_dir / 'pgomgr.exe', '/merge', p.name], cwd=f'{args.build_folder}/{args.config}')
+            output = subprocess.check_output([compiler_dir / 'pgomgr.exe', '/summary', p], encoding='utf8')
+            print(p.name)
+            print('\n'.join(output.splitlines()[:101]))
 
 
 configure()
