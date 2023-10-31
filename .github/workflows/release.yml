@@ -50,10 +50,10 @@ jobs:
           version: '2.20.6'
           token: ${{ secrets.SENTRY_TOKEN }}
           organization: zeldaclassic
-          project: zelda-classic
+          project: zc-test
       - run: sentry-cli --version
         if: inputs.sentry
-      - run: sentry-cli --log-level=DEBUG releases new 'zelda-classic@${{ steps.make-vars.outputs.release-version }}'
+      - run: sentry-cli --log-level=DEBUG releases new 'zc-test@${{ steps.make-vars.outputs.release-version }}'
         if: inputs.sentry
 
   build-release:
@@ -83,8 +83,8 @@ jobs:
             sentry: ${{ inputs.sentry }}
       fail-fast: false
     # See https://github.com/community/community/discussions/40777
-    # uses: ./.github/workflows/build.yml
-    uses: ZQuestClassic/ZQuestClassic/.github/workflows/build.yml@main
+    uses: ./.github/workflows/build.yml
+    # uses: ZQuestClassic/ZQuestClassic/.github/workflows/build.yml@main
     with:
       runs-on: ${{ matrix.runs-on }}
       arch: ${{ matrix.arch }}
@@ -194,12 +194,12 @@ jobs:
           version: '2.20.6'
           token: ${{ secrets.SENTRY_TOKEN }}
           organization: zeldaclassic
-          project: zelda-classic
+          project: zc-test
       - name: Finalize sentry
         if: inputs.sentry
         run: |
-          sentry-cli --log-level=DEBUG releases set-commits 'zelda-classic@${{ needs.create-tag.outputs.release-version }}' --auto --ignore-missing
-          sentry-cli --log-level=DEBUG releases finalize 'zelda-classic@${{ needs.create-tag.outputs.release-version }}'
+          sentry-cli --log-level=DEBUG releases set-commits 'zc-test@${{ needs.create-tag.outputs.release-version }}' --auto --ignore-missing
+          sentry-cli --log-level=DEBUG releases finalize 'zc-test@${{ needs.create-tag.outputs.release-version }}'
 
       - uses: actions/github-script@v6
         with:

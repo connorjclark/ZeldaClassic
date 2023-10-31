@@ -254,9 +254,9 @@ jobs:
           version: '2.20.6'
           token: ${{ secrets.SENTRY_TOKEN }}
           organization: zeldaclassic
-          project: zelda-classic
+          project: zc-test
       - run: sentry-cli --version
         if: inputs.sentry
       - name: Upload debugging symbols
         if: inputs.sentry
-        run: sentry-cli --log-level=DEBUG upload-dif 'zelda-classic@${{ inputs.release-version }}' --include-sources --wait build
+        run: sentry-cli --log-level=DEBUG upload-dif 'zc-test@${{ inputs.release-version }}' --include-sources --wait build
