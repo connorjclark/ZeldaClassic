@@ -2487,7 +2487,7 @@ void overtile16(BITMAP* dest,int32_t tile,int32_t x,int32_t y,int32_t cset,int32
 
 	if((flip&2)==0)
 	{
-		for(int32_t dy=0; (dy<16)&&(dy+y<dest->h); ++dy)
+		for(int32_t dy=0; dy<16; ++dy)
 		{
 			di = &(dest->line[y+dy][x]);
 
@@ -2503,7 +2503,7 @@ void overtile16(BITMAP* dest,int32_t tile,int32_t x,int32_t y,int32_t cset,int32
 	}
 	else
 	{
-		for(int32_t dy=15; (dy>=0)&&(dy+y>=0); --dy)
+		for(int32_t dy=15; dy>=0; --dy)
 		{
 			di = &(dest->line[y+dy][x]);
 			
