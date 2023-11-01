@@ -26853,16 +26853,16 @@ bool HeroClass::nextcombo_wf(int32_t d2)
     if(cmb>175)
         return true;
         
-    newcombo c = combobuf[TheMaps[ns].data[cmb]];
-    bool dried = iswater_type(c.type) && DRIEDLAKE;
-    bool swim = iswater_type(c.type) && (current_item(itype_flippers)) && !dried;
+    const newcombo* c = &combobuf[TheMaps[ns].data[cmb]];
+    bool dried = iswater_type(c->type) && DRIEDLAKE;
+    bool swim = iswater_type(c->type) && (current_item(itype_flippers)) && !dried;
     int32_t b=1;
     
     if(cx&8) b<<=2;
     
     if(cy&8) b<<=1;
     
-    if((c.walk&b) && !dried && !swim)
+    if((c->walk&b) && !dried && !swim)
         return true;
         
     // next block (i.e. cnt==2)
@@ -26872,9 +26872,9 @@ bool HeroClass::nextcombo_wf(int32_t d2)
     }
     else
     {
-        c = combobuf[TheMaps[ns].data[++cmb]];
-        dried = iswater_type(c.type) && DRIEDLAKE;
-        swim = iswater_type(c.type) && (current_item(itype_flippers)) && !dried;
+        c = &combobuf[TheMaps[ns].data[++cmb]];
+        dried = iswater_type(c->type) && DRIEDLAKE;
+        swim = iswater_type(c->type) && (current_item(itype_flippers)) && !dried;
         b=1;
         
         if(cy&8)
@@ -26883,7 +26883,7 @@ bool HeroClass::nextcombo_wf(int32_t d2)
         }
     }
     
-    return (c.walk&b) ? !dried && !swim : false;
+    return (c->walk&b) ? !dried && !swim : false;
 }
 
 bool HeroClass::nextcombo_solid(int32_t d2)
