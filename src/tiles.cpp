@@ -2074,7 +2074,11 @@ void oldputtile8(BITMAP* dest,int32_t tile,int32_t x,int32_t y,int32_t cset,int3
 
 void overtile8(BITMAP* dest,int32_t tile,int32_t x,int32_t y,int32_t cset,int32_t flip)
 {
-    if(x<-7 || y<-7)
+    int cl = 0;
+    if (dest->clip)
+        cl = dest->cl;
+
+    if(x<cl-7 || y<cl-7)
         return;
         
     if(y > dest->h)
@@ -2180,7 +2184,11 @@ void overtile8(BITMAP* dest,int32_t tile,int32_t x,int32_t y,int32_t cset,int32_
 
 void puttile16(BITMAP* dest,int32_t tile,int32_t x,int32_t y,int32_t cset,int32_t flip) //fixed
 {
-    if(x<0 || y<0)
+    int cl = 0;
+    if (dest->clip)
+        cl = dest->cl;
+
+    if(x<cl || y<cl)
         return;
         
     if(y > dest->h-16)
@@ -2446,13 +2454,21 @@ void overtileblock16(BITMAP* _Dest, int32_t tile, int32_t x, int32_t y, int32_t 
 }
 void overtile16(BITMAP* dest,int32_t tile,int32_t x,int32_t y,int32_t cset,int32_t flip)
 {
-	if(x<-15 || y<-15)
+	int cl = 0;
+	int cr = dest->w;
+	if (dest->clip)
+	{
+		cl = dest->cl;
+		cr = dest->cr;
+	}
+
+	if(x<cl-15 || y<cl-15)
 		return;
 		
 	if(y > dest->h)
 		return;
 		
-	if(y == dest->h && x > dest->w)
+	if(y == dest->h && x > cr)
 		return;
 		
 	if(tile<0 || tile>=NEWMAXTILES)
@@ -2477,7 +2493,7 @@ void overtile16(BITMAP* dest,int32_t tile,int32_t x,int32_t y,int32_t cset,int32
 
 	// 0: fast, no bounds checking
 	// 1: slow, bounds checking
-	int draw_mode = x < 0 || y < 0 || x >= dest->w-16 || y >= dest->h-16 ? 1 : 0;
+	int draw_mode = x < 0 || y < 0 || x >= cr-16 || y >= dest->h-16 ? 1 : 0;
 	if (draw_mode == 1)
 	{
 		byte *si = unpackbuf;
