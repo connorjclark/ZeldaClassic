@@ -4053,7 +4053,14 @@ void draw_screen(mapscr* this_screen, bool showhero, bool runGeneric)
 	
 	set_clip_rect(framebuf,draw_screen_clip_rect_x1,draw_screen_clip_rect_y1,draw_screen_clip_rect_x2,draw_screen_clip_rect_y2);
 	blit(scrollbuf, framebuf, 0, 0, 0, 0, 256, 224);
-	
+
+	//6b. Draw the subscreen, without clipping
+	if(!get_qr(qr_SUBSCREENOVERSPRITES))
+	{
+		bool dotime = false;
+		if (replay_version_check(22) || !replay_is_active()) dotime = game->should_show_time();
+		put_passive_subscr(framebuf, 0, passive_subscreen_offset, dotime, sspUP);
+	}
 	
 	//3. Draw some sprites onto framebuf
 	set_clip_rect(framebuf,0,0,256,224);
@@ -4262,17 +4269,18 @@ void draw_screen(mapscr* this_screen, bool showhero, bool runGeneric)
 	
 	particles.draw(framebuf, true, -1);
 	
-	//6b. Draw the subscreen, without clipping
-	if(!get_qr(qr_SUBSCREENOVERSPRITES))
-	{
-		bool dotime = false;
-		if (replay_version_check(22) || !replay_is_active()) dotime = game->should_show_time();
-		put_passive_subscr(framebuf, 0, passive_subscreen_offset, dotime, sspUP);
-	}
+	// //6b. Draw the subscreen, without clipping
+	// if(!get_qr(qr_SUBSCREENOVERSPRITES))
+	// {
+	// 	bool dotime = false;
+	// 	if (replay_version_check(22) || !replay_is_active()) dotime = game->should_show_time();
+	// 	put_passive_subscr(framebuf, 0, passive_subscreen_offset, dotime, sspUP);
+	// }
 	
 	
 	//7. Draw some flying sprites onto framebuf
 	clear_clip_rect(framebuf);
+	// set_clip_rect(framebuf,draw_screen_clip_rect_x1,draw_screen_clip_rect_y1,draw_screen_clip_rect_x2,draw_screen_clip_rect_y2);
 	
 	//Jumping Hero and jumping enemies are drawn on this layer.
 	if(Hero.getZ() > (zfix)zinit.jump_hero_layer_threshold)
@@ -4321,41 +4329,41 @@ void draw_screen(mapscr* this_screen, bool showhero, bool runGeneric)
 			
 	//8. Blit framebuf onto temp_buf
 	
-	masked_blit(framebuf, temp_buf, 0, 0, 0, 0, 256, 224);
+	// masked_blit(framebuf, temp_buf, 0, 0, 0, 0, 256, 224);
 	
-	//9. Draw some layers onto temp_buf and scrollbuf
-	
+	//9. Draw some layers onto framebuf and scrollbuf
+
 	set_clip_rect(framebuf,draw_screen_clip_rect_x1,draw_screen_clip_rect_y1,draw_screen_clip_rect_x2,draw_screen_clip_rect_y2);
 	
 	if (lightbeam_present)
 	{
 		color_map = &trans_table2;
 		if(get_qr(qr_LIGHTBEAM_TRANSPARENT))
-			draw_trans_sprite(temp_buf, lightbeam_bmp, 0, playing_field_offset);
+			draw_trans_sprite(framebuf, lightbeam_bmp, 0, playing_field_offset);
 		else 
-			masked_blit(lightbeam_bmp, temp_buf, 0, 0, 0, playing_field_offset, 256, 176);
+			masked_blit(lightbeam_bmp, framebuf, 0, 0, 0, playing_field_offset, 256, 176);
 		color_map = &trans_table;
 	}
 	
-	do_layer(temp_buf, 0, 5, this_screen, 0, 0, 2, false, true);
+	do_layer(framebuf, 0, 5, this_screen, 0, 0, 2, false, true);
 	do_layer(scrollbuf, 0, 5, this_screen, 0, 0, 2);
 	
-	particles.draw(temp_buf, true, 4);
+	particles.draw(framebuf, true, 4);
 	draw_msgstr(5, true);
 	
-	do_layer(temp_buf, -4, 0, this_screen, 0, 0, 2); // overhead freeform combos!
+	do_layer(framebuf, -4, 0, this_screen, 0, 0, 2); // overhead freeform combos!
 	do_layer(scrollbuf, -4, 0, this_screen, 0, 0, 2);
-	do_primitives(temp_buf, SPLAYER_OVERHEAD_FFC, this_screen, 0, playing_field_offset);
+	do_primitives(framebuf, SPLAYER_OVERHEAD_FFC, this_screen, 0, playing_field_offset);
 	
-	do_layer(temp_buf, 0, 6, this_screen, 0, 0, 2, false, true);
+	do_layer(framebuf, 0, 6, this_screen, 0, 0, 2, false, true);
 	do_layer(scrollbuf, 0, 6, this_screen, 0, 0, 2);
 	
-	particles.draw(temp_buf, true, 5);
+	particles.draw(framebuf, true, 5);
 	
 	//10. Blit temp_buf onto framebuf with clipping
 	
-	set_clip_rect(framebuf,draw_screen_clip_rect_x1,draw_screen_clip_rect_y1,draw_screen_clip_rect_x2,draw_screen_clip_rect_y2);
-	blit(temp_buf, framebuf, 0, 0, 0, 0, 256, 224);
+	// set_clip_rect(framebuf,draw_screen_clip_rect_x1,draw_screen_clip_rect_y1,draw_screen_clip_rect_x2,draw_screen_clip_rect_y2);
+	// blit(temp_buf, framebuf, 0, 0, 0, 0, 256, 224);
 	
 	//11. Handle low drawn darkness
 	if(get_qr(qr_NEW_DARKROOM)&& (this_screen->flags&fDARK))
