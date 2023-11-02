@@ -1250,7 +1250,7 @@ if args.prune_test_results:
     test_results.runs = [replay_runs]
 
     # These are huge and not necessary for the compare report.
-    for file in (test_results_dir / run.directory).rglob('*.zplay.roundtrip'):
+    for file in test_results_dir.rglob('*.zplay.roundtrip'):
         file.unlink()
 
 test_results_path.write_text(test_results.to_json())
