@@ -6,6 +6,7 @@ import argparse
 from argparse import ArgumentTypeError
 import os
 import json
+import tarfile
 from time import sleep
 from typing import List
 from pathlib import Path
@@ -228,6 +229,13 @@ if __name__ == '__main__':
     if args.test_results:
         test_results_paths = []
         if args.test_results.is_dir():
+            for tar_path in args.test_results.rglob('*.tar'):
+                print(f'extracting from {tar_path}')
+                extract_dir = tar_path.with_suffix('')
+                if not extract_dir.exists():
+                    with tarfile.open(tar_path) as tar:
+                        tar.extractall(path=extract_dir)
+                    tar_path.unlink()
             test_results_paths = list(
                 args.test_results.rglob('test_results.json'))
         else:
