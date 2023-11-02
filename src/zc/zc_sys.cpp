@@ -2366,10 +2366,36 @@ int32_t heart_container_id()
 	return -1;
 }
 
+struct tilemod_cache_state_t
+{
+	bool operator==(const tilemod_cache_state_t&) const = default;
+
+	bool valid;
+	bool bunny_clock;
+	bool superman;
+	int shield;
+};
+tilemod_cache_state_t tilemod_cache_state;
+int32_t tilemod_cache_value;
+
+void cache_tile_mod_clear()
+{
+	tilemod_cache_state = {false};
+}
+
 int32_t item_tile_mod()
 {
+	tilemod_cache_state_t state = {
+		.valid = true,
+		.bunny_clock = Hero.BunnyClock() != 0,
+		.superman = Hero.superman,
+		.shield = Hero.active_shield_id,
+	};
+	if (tilemod_cache_state == state)
+		return tilemod_cache_value;
+
 	int32_t tile=0;
-	
+
 	if(game->get_bombs())
 	{
 		int32_t itemid = current_item_id(itype_bomb,false);
@@ -2509,6 +2535,8 @@ int32_t item_tile_mod()
 		tile+=itm.ltm;
 	}
 	
+	tilemod_cache_value = tile;
+	tilemod_cache_state = state;
 	return tile;
 }
 

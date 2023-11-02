@@ -18639,13 +18639,18 @@ void set_register(int32_t arg, int32_t value)
 		}
 		//Hero tile modifier. 
 		case IDATALTM:
+		{
 			if(unsigned(ri->idata) >= MAXITEMS)
 			{
 				Z_scripterrlog("Invalid itemdata access: %d\n", ri->idata);
 				break;
 			}
-			itemsbuf[ri->idata].ltm=value/10000;
+			auto new_value = value/10000;
+			if (new_value != itemsbuf[ri->idata].ltm)
+				cache_tile_mod_clear();
+			itemsbuf[ri->idata].ltm = new_value;
 			break;
+		}
 		//Pickup script
 		case IDATAPSCRIPT:
 		{
