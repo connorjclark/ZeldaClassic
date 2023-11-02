@@ -14,6 +14,7 @@ import json
 import shutil
 import json
 import hashlib
+import tarfile
 from pathlib import Path
 from github import Github
 from common import get_gha_artifacts_with_retry, ReplayTestResults, RunResult
@@ -100,6 +101,12 @@ def collect_test_results_from_dir(directory: Path) -> ReplayTestResults:
 # platform (so that sharding does not generate multiple test runs).
 def collect_many_test_results_from_dir(directory: Path) -> List[ReplayTestResults]:
     test_runs: List[ReplayTestResults] = []
+
+    for tar_path in directory.rglob('*.tar'):
+        extract_dir = tar_path.parent / tar_path.with_suffix('')
+        if not extract_dir.exists():
+            with tarfile.open(tar_path) as tar:
+                tar.extractall(path=extract_dir)
 
     for test_results_path in directory.rglob('test_results.json'):
         test_run_dir = test_results_path.parent

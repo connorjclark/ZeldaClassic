@@ -158,6 +158,13 @@ jobs:
           name: coverage-${{ inputs.runs-on }}-${{ inputs.arch }}-${{ matrix.shard_index }}-of-${{ matrix.num_shards }}
           path: ${{ github.workspace }}/tests/.coverage/coverage.json
 
+      - name: Compress action step
+        if: (github.event_name == 'workflow_dispatch' && !contains(inputs.extra-args, '--update')) || failure()
+        uses: a7ul/tar-action@0349c8af1c0926712da20ad4b0ae96918e83cdd1
+        with:
+          command: c
+          files: ${{ github.workspace }}/.tmp/test_results
+          outPath: test_results.tar.gz
       - uses: actions/upload-artifact@v3
         if: (github.event_name == 'workflow_dispatch' && !contains(inputs.extra-args, '--update')) || failure()
         with:
