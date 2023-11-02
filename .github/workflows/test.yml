@@ -109,13 +109,6 @@ jobs:
       - run: sudo apt-get update && sudo apt-get install libopengl0 libglu1 lldb
         if: ${{ contains(inputs.runs-on, 'ubuntu') }}
 
-      # Unless this workflow was called explictly via dispatch, we should prune the test results
-      # to reduce how much data is uploaded as an artifact for the compare report job.
-      - name: Set ZC_REPLAY_TEST_RESULTS_PRUNE env variable
-        if: github.event_name == 'workflow_call'
-        run: |
-            echo "ZC_REPLAY_TEST_RESULTS_PRUNE=1" >> "$GITHUB_ENV"
-
       # Note: Uses JIT by default, except for win32.
       - name: Run replay tests
         run: >

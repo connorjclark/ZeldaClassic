@@ -239,6 +239,7 @@ int_group.add_argument('--ci', nargs='?',
     help='Special arg meant for CI behaviors')
 int_group.add_argument('--shard')
 int_group.add_argument('--print_shards', action='store_true')
+int_group.add_argument('--prune_test_results', action='store_true')
 
 parser.add_argument('replays', nargs='*',
     help='If provided, will only run these replays rather than those in tests/replays')
@@ -1232,7 +1233,7 @@ for i in range(args.retries + 1):
                 print(result.diff)
 
 
-if 'ZC_REPLAY_TEST_RESULTS_PRUNE' in os.environ:
+if args.prune_test_results:
     # Only keep the last run of each replay.
     replay_runs: List[RunResult] = []
     for runs in reversed(test_results.runs):
