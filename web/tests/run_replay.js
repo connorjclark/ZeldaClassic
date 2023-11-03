@@ -82,7 +82,7 @@ async function runReplay(zplay) {
     }, zplay);
     if (!result) return;
 
-    const tmpPath = `${tmpDir}/tmp.${zplay.replace('/', '-')}.result.txt`;
+    const tmpPath = `${tmpDir}/tmp.${zplay.replaceAll('/', '-')}.result.txt`;
     fs.writeFileSync(tmpPath, result);
     fs.renameSync(tmpPath, `${outputFolder}/${zplayName}.result.txt`);
   }
@@ -93,14 +93,15 @@ async function runReplay(zplay) {
   await getResultFile();
 
   await page.addScriptTag({ content: fs.readFileSync(`${dirname}/buffer.js`).toString() });
-  const snapshots = await page.evaluate((zplayName) => {
-    const files = FS.readdir('/test_replays')
+  const zplayDir = path.dirname(`/test_replays/${zplayName}`);
+  const snapshots = await page.evaluate((zplayName, zplayDir) => {
+    const files = FS.readdir(zplayDir)
       .filter(file => file.endsWith('.png') && file.includes(zplayName));
     return files.map(file => ({
       file,
       content: Buffer.from(FS.readFile(`/test_replays/${file}`)).toString('binary'),
     }));
-  }, zplayName);
+  }, zplayName, zplayDir);
 
   for (const { file, content } of snapshots) {
     fs.writeFileSync(`${outputFolder}/${file}`, Buffer.from(content, 'binary'));
