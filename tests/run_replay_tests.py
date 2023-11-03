@@ -403,6 +403,8 @@ if is_web:
         'python', root_dir / 'scripts/webserver.py',
         '--dir', args.build_folder / 'packages/web',
     ], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    # Lazy.
+    sleep(1)
 
 
 def apply_test_filter(filter: str):
