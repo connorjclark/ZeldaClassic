@@ -399,12 +399,15 @@ else:
     print(f'found {os.cpu_count()} cpus, setting concurrency to {concurrency}')
 
 if is_web:
+    print('starting webserver')
     webserver_p = subprocess.Popen([
         'python', root_dir / 'scripts/webserver.py',
         '--dir', args.build_folder / 'packages/web',
-    ], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-    # Lazy.
-    sleep(1)
+    ], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+    while webserver_p.poll() == None:
+        if 'Served by' in webserver_p.stdout.readline():
+            break
+    print('webserver started')
 
 
 def apply_test_filter(filter: str):
