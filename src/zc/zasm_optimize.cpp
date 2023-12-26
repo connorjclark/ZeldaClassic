@@ -296,7 +296,7 @@ static void optimize_compare(OptContext& ctx)
 				continue;
 
 			int command = ctx.script->zasm[j].command;
-			if (command != COMPARER) continue;
+			if (!one_of(command, COMPARER, COMPAREV, COMPAREV2)) continue;
 
 			auto maybe_cmp = reduce_comparison(ctx, j, final_pc);
 			if (!maybe_cmp)
@@ -312,6 +312,18 @@ static void optimize_compare(OptContext& ctx)
 			// 	continue;
 			// }
 			// if (ctx.script) break;
+
+			// TODO:
+			// follow the GOTOTRUE branch recursivley, until find:
+			//     D2 not used by COMPARE (so: LOAD D2 ... would invalidate it)
+			// Then we have:
+			// Head block (block 0)
+			// Block 1
+			// Block 2
+			// ...
+			// Block N
+			// End block
+			// And want to map blocks 0 to N to jump to the End block instead
 			
 
 			int start = j;
@@ -800,7 +812,37 @@ bool zasm_optimize_test()
 	}
 
 	{
-		name = "COMPARER w/ SETCMP CMP_LE";
+		name = "if COMPAREV w/ SETCMP CMP_LE";
+		ffscript s[] = {
+			{COMPAREV, D(2), 1337},
+			{SETCMP, D(2), CMP_LE},
+			{COMPAREV, D(2), 0},
+			{GOTOTRUE, 5},
+
+			{TRACEV, 0},
+
+			{QUIT},
+			{0xFFFF},
+		};
+		script.zasm = s;
+		script.recalc_size();
+		zasm_optimize(&script);
+
+		expect(name, &script, {
+			{COMPAREV, D(2), 1337},
+			{GOTOCMP, 5, CMP_GT},
+			{NOP},
+			{NOP},
+
+			{TRACEV, 0},
+
+			{QUIT},
+			{0xFFFF},
+		});
+	}
+
+	{
+		name = "if COMPARER w/ SETCMP CMP_LE";
 		ffscript s[] = {
 			{COMPARER, D(3), D(2)},
 			{SETCMP, D(2), CMP_LE},
@@ -830,7 +872,7 @@ bool zasm_optimize_test()
 	}
 
 	{
-		name = "COMPARER w/ SETCMP CMP_LT | CMP_SETI";
+		name = "if COMPARER w/ SETCMP CMP_LT | CMP_SETI";
 		ffscript s[] = {
 			{COMPARER, D(3), D(2)},
 			{SETCMP, D(2), CMP_LT | CMP_SETI},
@@ -860,7 +902,55 @@ bool zasm_optimize_test()
 	}
 
 	{
-		name = "COMPARER w/ SETFALSE/COMPAREV";
+		name = "if-else-if COMPAREV w/ SETCMP CMP_LE";
+		ffscript s[] = {
+			{COMPAREV, D(2), 1337},
+			{SETCMP, D(2), CMP_LE},
+			{COMPAREV, D(2), 0},
+			{GOTOTRUE, 6},
+
+			{TRACEV, 0},
+			{GOTO, 12},
+
+			{SETV, D(2), 9999},               // 6
+			{COMPAREV, D(2), 1338},
+			{SETCMP, D(2), CMP_EQ},
+			{COMPAREV, D(2), 0},
+			{GOTOTRUE, 12},
+
+			{TRACEV, 1},
+
+			{QUIT},                           // 12
+			{0xFFFF},
+		};
+		script.zasm = s;
+		script.recalc_size();
+		zasm_optimize(&script);
+
+		expect(name, &script, {
+			{COMPAREV, D(2), 1337},
+			{GOTOCMP, 6, CMP_GT},
+			{NOP},
+			{NOP},
+
+			{TRACEV, 0},
+			{GOTO, 12},
+
+			{SETV, D(2), 9999},               // 6
+			{COMPAREV, D(2), 1338},
+			{GOTOCMP, 12, CMP_NE},
+			{NOP},
+			{NOP},
+
+			{TRACEV, 1},
+
+			{QUIT},                           // 12
+			{0xFFFF},
+		});
+	}
+
+	{
+		name = "if COMPARER w/ SETFALSE/COMPAREV";
 		ffscript s[] = {
 			{COMPARER, D(3), D(2)},
 			{SETFALSE, D(2)},
@@ -894,7 +984,7 @@ bool zasm_optimize_test()
 	}
 
 	{
-		name = "COMPARER w/ SETLESS/COMPAREV";
+		name = "if COMPARER w/ SETLESS/COMPAREV";
 		ffscript s[] = {
 			{COMPARER, D(3), D(2)},
 			{SETLESS, D(2)},
@@ -928,7 +1018,7 @@ bool zasm_optimize_test()
 	}
 
 	{
-		name = "COMPARER w/ SETMORE/COMPAREV (1)";
+		name = "if COMPARER w/ SETMORE/COMPAREV (1)";
 		ffscript s[] = {
 			{COMPARER, D(3), D(2)},
 			{SETMORE, D(2)},
@@ -962,7 +1052,7 @@ bool zasm_optimize_test()
 	}
 
 	{
-		name = "COMPARER w/ SETMORE/COMPAREV (2)";
+		name = "if COMPARER w/ SETMORE/COMPAREV (2)";
 		ffscript s[] = {
 			{COMPARER, D(3), D(2)},
 			{SETMORE, D(2)},
@@ -1004,7 +1094,7 @@ bool zasm_optimize_test()
 	// each segment to jump directly to the non-true edge. This allowed for simpler usage of COMPARER/GOTOCMP, rather than
 	// complicate sharing of D2 across blocks.
 	{
-		name = "COMPARER across blocks (1)";
+		name = "if-short-circuiting COMPARER across blocks (1)";
 		ffscript s[] = {
 			{COMPARER, D(3), D(2)},                 // 0: [Block 0 -> 1, 2]
 			{SETCMP, D(2), CMP_LT | CMP_SETI},
@@ -1052,7 +1142,7 @@ bool zasm_optimize_test()
 	}
 
 	{
-		name = "COMPARER across blocks (2)";
+		name = "if-short-circuiting COMPARER across blocks (2)";
 		ffscript s[] = {
 			{COMPARER, D(2), D(3)},                 // 0: [Block 0 -> 1, 2]
 			{SETTRUEI, D(2)},
@@ -1106,7 +1196,7 @@ bool zasm_optimize_test()
 	}
 
 	{
-		name = "COMPARER across blocks (3)";
+		name = "if-short-circuiting COMPARER across blocks (3)";
 		ffscript s[] = {
 			{COMPARER, D(3), D(2)},                 // 0: [Block 0 -> 1, 2]
 			{SETMORE, D(2)},
@@ -1162,7 +1252,7 @@ bool zasm_optimize_test()
 	}
 
 	{
-		name = "COMPARER across blocks (4)";
+		name = "if-short-circuiting COMPARER across blocks (4)";
 		ffscript s[] = {
 			{COMPARER, D(3), D(2)},                 // 0: [Block 0 -> 1, 2]
 			{SETMOREI, D(2)},
@@ -1296,7 +1386,26 @@ bool zasm_optimize_test()
 		54617: COMPAREV        D2              1            [Block 1560 -> 1561]
 		54618: SETMOREI        D2                           
 		54619: CASTBOOLF       D2                           
-		54620: COMPAREV        D2              1            
+		54620: COMPAREV        D2              1       
+
+
+		------
+
+		435: COMPARER        D3              D2           
+		436: SETMORE         D2                           
+		437: COMPAREV        D2              0            
+		438: SETTRUEI        D2                           
+		439: CASTBOOLF       D2                           
+		440: COMPAREV        D2              1            [Block 12 -> 13, 14]
+		441: SETMOREI        D2                           
+		442: SETR            D6              D4           
+		443: ADDV            D6              90000        
+		444: STOREI          D2              D6           
+		445: SETR            D6              D4           
+		446: ADDV            D6              190000       
+		447: LOADI           D2              D6           
+		448: COMPAREV        D2              0            
+		449: GOTOTRUE        458                          
 
 	*/
 
