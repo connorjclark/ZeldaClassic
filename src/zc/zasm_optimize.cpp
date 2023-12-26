@@ -6,6 +6,14 @@
 #include "zc/script_debug.h"
 #include "zc/zasm_utils.h"
 #include <cstdint>
+#include <optional>
+#include <utility>
+
+template<class... Args>
+bool one_of(const unsigned int var, const Args&... args)
+{
+  return ((var == args) || ...);
+}
 
 static void expected_to_str(ffscript* s, size_t len)
 {
@@ -44,6 +52,13 @@ struct OptContext
 	ZasmCFG cfg;
 	std::vector<pc_t> block_starts;
 };
+
+static void remove(OptContext& ctx, pc_t start, pc_t final)
+{
+	for (int i = start; i <= final; i++)
+		ctx.script->zasm[i].command = NOP;
+	ctx.saved += final - start + 1;
+}
 
 static void optimize_by_block(OptContext& ctx, std::function<void(pc_t, pc_t, pc_t)> cb)
 {
@@ -152,6 +167,94 @@ static void optimize_setv_pushr(OptContext& ctx)
 	});
 }
 
+// Find pairs of SET, COMPARE
+// TODO: use for reducing SETTRUE
+// freedom_in_chains.qst/zasm-ffc-1.txt
+//   380: COMPARER        D3              D2           
+//   381: SETMORE         D2                           
+//   382: COMPAREV        D2              0            
+//   383: SETTRUE         D2                           
+static std::optional<std::pair<int, pc_t>> reduce_comparison(OptContext& ctx, pc_t start_pc, pc_t final_pc)
+{
+	if (!one_of(ctx.script->zasm[start_pc + 2].command, COMPAREV, COMPAREV2))
+		return std::nullopt;
+
+	int j = start_pc;
+	int k = j + 1;
+	int cmp = 0;
+	for (; k <= final_pc; k++)
+	{
+		int command = ctx.script->zasm[k].command;
+
+		ASSERT(command != COMPAREV2); // TODO
+		switch (command)
+		{
+			case COMPAREV:
+			{
+				ASSERT(ctx.script->zasm[k - 1].command != COMPAREV);
+				if (ctx.script->zasm[k].arg2 == 0)
+					cmp = INVERT_CMP(cmp);
+			}
+			break;
+
+			case SETFALSEI:
+			case SETLESSI:
+			case SETMOREI:
+			case SETTRUEI:
+			case SETCMP:
+			case SETFALSE:
+			case SETLESS:
+			case SETMORE:
+			case SETTRUE:
+			{
+				if (k + 1 > final_pc || ctx.script->zasm[k + 1].command != COMPAREV)
+				{
+					// ASSERT(false);
+					return std::nullopt;
+				}
+
+				// These should only ever appear once.
+				#define ASSIGN_ONCE(v) {ASSERT(!cmp); cmp = v;}
+				if (command == SETCMP) ASSIGN_ONCE(ctx.script->zasm[k].arg2 & CMP_FLAGS)
+				if (command == SETLESS || command == SETLESSI) ASSIGN_ONCE(CMP_LE)
+				if (command == SETMORE || command == SETMOREI) ASSIGN_ONCE(CMP_GE)
+				if (command == SETFALSE || command == SETFALSEI) ASSIGN_ONCE(CMP_NE)
+
+				// SETTRUE may be first after the COMPARER, in which case it matters.
+				// Otherwise, it's a silly nop.
+				if (command == SETTRUE || command == SETTRUEI) if (!cmp) cmp = CMP_EQ;
+			}
+			break;
+
+			case GOTOTRUE:
+			{
+				return std::make_pair(cmp, k);
+			}
+			break;
+
+			case GOTOFALSE:
+			{
+				return std::make_pair(INVERT_CMP(cmp), k);
+			}
+			break;
+
+			default:
+			{
+				return std::nullopt;
+			}
+		}
+	}
+
+	return std::nullopt;
+}
+
+static pc_t get_block_end(const OptContext& ctx, int block_index)
+{
+	return block_index == ctx.block_starts.size() - 1 ?
+		ctx.fn.final_pc :
+		ctx.block_starts.at(block_index + 1) - 1;
+}
+
 static void optimize_compare(OptContext& ctx)
 {
 	optimize_by_block(ctx, [&](pc_t block_index, pc_t start_pc, pc_t final_pc){
@@ -164,74 +267,21 @@ static void optimize_compare(OptContext& ctx)
 			int command = ctx.script->zasm[j].command;
 			if (command != COMPARER) continue;
 
-			// Find pairs of SET, COMPARE
-			bool bail = true;
-			int k = j + 1;
-			int cmp = 0;
-			for (; k <= final_pc; k += 2)
-			{
-				bool end = false;
-				int command = ctx.script->zasm[k].command;
-				switch (command)
-				{
-					case SETFALSEI:
-					case SETLESSI:
-					case SETMOREI:
-					case SETTRUEI:
-					case SETCMP:
-					case SETFALSE:
-					case SETLESS:
-					case SETMORE:
-					case SETTRUE:
-					{
-						if (k + 1 > final_pc || ctx.script->zasm[k + 1].command != COMPAREV)
-						{
-							end = true;
-							break;
-						}
-
-						// These should only ever appear once.
-						#define ASSIGN_ONCE(v) {ASSERT(!cmp); cmp = v;}
-						if (command == SETCMP) ASSIGN_ONCE(ctx.script->zasm[k].arg2 & CMP_FLAGS)
-						if (command == SETLESS || command == SETLESSI) ASSIGN_ONCE(CMP_LE)
-						if (command == SETMORE || command == SETMOREI) ASSIGN_ONCE(CMP_GE)
-						if (command == SETFALSE || command == SETFALSEI) ASSIGN_ONCE(CMP_NE)
-
-						// SETTRUE may be first after the COMPARER, in which case it matters.
-						// Otherwise, it's a silly nop.
-						if (command == SETTRUE || command == SETTRUEI) if (!cmp) cmp = CMP_EQ;
-
-						if (ctx.script->zasm[k + 1].arg2 == 0)
-							cmp = INVERT_CMP(cmp);
-					}
-					break;
-
-					case GOTOTRUE:
-					{
-						bail = false;
-						end = true;
-					}
-					break;
-
-					default:
-					{
-						end = true;
-					}
-				}
-				if (end) break;
-			}
-
-			if (bail)
+			auto maybe_cmp = reduce_comparison(ctx, j, final_pc);
+			if (!maybe_cmp)
 				continue;
+
+			auto [cmp, k] = maybe_cmp.value();
 
 			// Useful binary search tool for finding problems.
 			// static int c = 0;
 			// c++;
-			// if (!(1433 <= c && c < 1434))
+			// if (!(0 <= c && c < 100000))
 			// {
 			// 	continue;
 			// }
-			// 
+			// if (ctx.script) break;
+			
 
 			int start = j;
 			int final = k;
@@ -240,86 +290,216 @@ static void optimize_compare(OptContext& ctx)
 
 			pc_t block_1 = edges[0];
 			pc_t block_2 = edges[1];
+			pc_t block_1_start = ctx.block_starts.at(block_1);
+			pc_t block_1_final = get_block_end(ctx, block_1);
 			pc_t block_2_start = ctx.block_starts.at(block_2);
-			auto cmd1 = ctx.script->zasm[ctx.block_starts.at(block_1)];
-			auto cmd2 = ctx.script->zasm[ctx.block_starts.at(block_2)];
+			pc_t block_2_final = get_block_end(ctx, block_2);
+			auto cmd1 = ctx.script->zasm[block_1_start];
+			auto cmd2 = ctx.script->zasm[block_2_start];
+
 			if (cmd2.command == COMPAREV)
 			{
+				if (ctx.cfg.block_edges.at(block_1).size() != 1)
+				{
+					// TODO
+					continue;
+				}
+				if (ctx.cfg.block_edges.at(block_2).size() != 2)
+				{
+					// TODO
+					continue;
+				}
+
+				// static int c = 0;
+				// c++;
+				// if (!(2299 <= c && c < 2300))
+				// {
+				// 	continue;
+				// }
+
+				pc_t post_block_pc = ctx.block_starts.at(ctx.cfg.block_edges.at(block_2).back());
+
+				// TODO: is the comparison register always D2?
+				int r = D(2);
+
+				// if (cmd1.command == COMPAREV)
+				// {
+				// 	ASSERT(cmd1.arg1 == r);
+				// 	auto maybe_cmp = reduce_comparison(ctx, block_1_start, block_1_final);
+				// 	ASSERT(maybe_cmp);
+
+				// 	auto [cmp, final] = maybe_cmp.value();
+				// 	int start = block_1_start;
+				// 	ctx.script->zasm[start] = ctx.script->zasm[final];
+				// 	ctx.script->zasm[start].command = GOTOCMP;
+				// 	// ctx.script->zasm[start].arg1 = goto_pc;
+				// 	ctx.script->zasm[start].arg2 = cmp;
+
+				// 	for (int i = start + 1; i <= final; i++)
+				// 		ctx.script->zasm[i].command = NOP;
+
+				// 	ctx.saved += count;
+				// }
+				ASSERT(cmd1.command != COMPAREV);
+				// ASSERT(ctx.script->zasm[block_1_final].command == SETCMP);
+				ASSERT(ctx.script->zasm[block_2_start].command == COMPAREV);
+				ASSERT(ctx.script->zasm[block_2_start].arg1 == r);
+				// ASSERT(ctx.script->zasm[block_2_start].arg2 == 0);
+
+				// ctx.script->zasm[block_1_final].command = GOTOCMP;
+				// ctx.script->zasm[block_1_final].arg1 = post_block_pc;
+				// ctx.script->zasm[block_1_final].arg2 = INVERT_CMP(ctx.script->zasm[block_1_final].arg2) & CMP_FLAGS;
+
+				// Find the next compare op
+				int first_comp_pc = -1;
+				for (int h = block_1_start; h <= block_1_final; h++)
+				{
+					if (one_of(ctx.script->zasm[h].command, COMPAREV, COMPAREV2))
+					{
+						first_comp_pc = h;
+						break;
+					}
+				}
+				// ASSERT(first_comp_pc != -1);
+				if (first_comp_pc != -1)
+				for (int h = first_comp_pc+1; h <= block_1_final; h++)
+				{
+					if (!one_of(ctx.script->zasm[h].command, SETTRUEI, CASTBOOLF, SETCMP))
+					{
+						ASSERT(false);
+					}
+				}
+
+				ASSERT(block_1_final + 1 == block_2_start);
+				// 2. modify this cmp to get the right cmp based on the instructions in block 1
+				int cmp = cmd2.arg2 == 0 ? CMP_NE : CMP_EQ;
+				// auto maybe_cmp_1 = reduce_comparison(ctx, first_comp_pc-1, block_1_final);
+				// ASSERT(maybe_cmp_1);
+				// auto [cmp, k] = maybe_cmp_1.value();
+				int m;
+				if (first_comp_pc == -1)
+				{
+					ctx.script->zasm[block_1_final] = {COMPAREV, D(2), 1};
+					m = block_1_final + 1;
+				}
+				else
+				{
+					m = first_comp_pc + 1;
+				}
+				ctx.script->zasm[m].command = GOTOCMP;
+				ctx.script->zasm[m].arg1 = post_block_pc;
+				// ctx.script->zasm[m].arg2 = CMP_EQ;
+				ctx.script->zasm[m].arg2 = cmp;
+				
+				remove(ctx, m + 1, block_2_final);
+
+				
+
+				// if (cmd2.command == COMPAREV)
+				// {
+				// 	ASSERT(cmd2.arg1 == r);
+				// 	auto maybe_cmp = reduce_comparison(ctx, block_2_start, block_2_final);
+				// 	ASSERT(maybe_cmp);
+
+				// 	auto [cmp, final] = maybe_cmp.value();
+				// 	int start = block_2_start;
+				// 	ctx.script->zasm[start] = ctx.script->zasm[final];
+				// 	ctx.script->zasm[start].command = GOTOCMP;
+				// 	// ctx.script->zasm[start].arg1 = goto_pc;
+				// 	ctx.script->zasm[start].arg2 = cmp;
+
+				// 	for (int i = start + 1; i <= final; i++)
+				// 		ctx.script->zasm[i].command = NOP;
+
+				// 	ctx.saved += count;
+				// }
+
+
+				// ASSERT(ctx.script->zasm[block_2_final].command == GOTOTRUE || ctx.script->zasm[block_2_final].command == GOTOFALSE);
+
+				// remove(ctx, first_comp_pc + 2, block_2_final);
+				// for (int i = block_2_start; i <= block_2_final; i++)
+				// 	ctx.script->zasm[i].command = NOP;
+
 				// For now, skip this. Needs much work.
-				if (ctx.script)
-					break;
+				// if (ctx.script)
+				// 	break;
+
+				// Handle the first edge.
+
+
 
 				// Affirm that this is a negating COMPAREV.
-				if (cmd2.arg2 != 0)
-					continue;
+				// if (cmd2.arg2 != 0)
+				// 	continue;
 
-				// TODO: test case for when cmd2.arg2 == 1
-				// stellar_seas_randomizer.qst/zasm-ffc-1-SolarElemental.txt
-				// 176: COMPARER        D2              D3           
-				// 177: SETTRUEI        D2                           
-				// 178: COMPAREV        D2              0            
-				// 179: GOTOTRUE        186                          
-				// 180: SETR            D6              D4           [Block 6 -> 7]
-				// 181: ADDV            D6              60000        
-				// 182: LOADI           D2              D6           
-				// 183: COMPAREV        D2              0            
-				// 184: SETTRUEI        D2                           
-				// 185: CASTBOOLF       D2                           
-				// 186: COMPAREV        D2              1            [Block 7 -> 8, 9]
-				// 187: SETMOREI        D2                           
-				// 188: COMPAREV        D2              0            
-				// 189: GOTOTRUE        195                     
+				// // TODO: test case for when cmd2.arg2 == 1
+				// // stellar_seas_randomizer.qst/zasm-ffc-1-SolarElemental.txt
+				// // 176: COMPARER        D2              D3           
+				// // 177: SETTRUEI        D2                           
+				// // 178: COMPAREV        D2              0            
+				// // 179: GOTOTRUE        186                          
+				// // 180: SETR            D6              D4           [Block 6 -> 7]
+				// // 181: ADDV            D6              60000        
+				// // 182: LOADI           D2              D6           
+				// // 183: COMPAREV        D2              0            
+				// // 184: SETTRUEI        D2                           
+				// // 185: CASTBOOLF       D2                           
+				// // 186: COMPAREV        D2              1            [Block 7 -> 8, 9]
+				// // 187: SETMOREI        D2                           
+				// // 188: COMPAREV        D2              0            
+				// // 189: GOTOTRUE        195                     
 
-				if (ctx.script->zasm[block_2_start + 3].command != GOTOTRUE)
-					break;
-				// Test case for above.
-				/*
-				3342: COMPARER        D3              D2           
-				3343: SETCMP          D2              12           
-				3344: COMPAREV        D2              0            
-				3345: GOTOTRUE        3352                         
-				3346: LOADD           D2              50000        [Block 105 -> 106]
-				3347: PUSHR           D2                           
-				3348: LOADD           D2              20000        
-				3349: POP             D3                           
-				3350: COMPARER        D3              D2           
-				3351: SETCMP          D2              12           
-				3352: COMPAREV        D2              0            [Block 106 -> 107, 108]
-				3353: SETCMP          D2              11           
-				3354: COMPAREV        D2              0            
-				3355: GOTOFALSE       3368                         
-				*/
+				// if (ctx.script->zasm[block_2_start + 3].command != GOTOTRUE)
+				// 	break;
+				// // Test case for above.
+				// /*
+				// 3342: COMPARER        D3              D2           
+				// 3343: SETCMP          D2              12           
+				// 3344: COMPAREV        D2              0            
+				// 3345: GOTOTRUE        3352                         
+				// 3346: LOADD           D2              50000        [Block 105 -> 106]
+				// 3347: PUSHR           D2                           
+				// 3348: LOADD           D2              20000        
+				// 3349: POP             D3                           
+				// 3350: COMPARER        D3              D2           
+				// 3351: SETCMP          D2              12           
+				// 3352: COMPAREV        D2              0            [Block 106 -> 107, 108]
+				// 3353: SETCMP          D2              11           
+				// 3354: COMPAREV        D2              0            
+				// 3355: GOTOFALSE       3368                         
+				// */
 
-				// Fix the first edge.
+				// // Fix the first edge.
 
-				// Find the last instruction of the first block.
-				pc_t block_1_end = block_1 == ctx.block_starts.size() - 1 ?
-					ctx.fn.final_pc :
-					ctx.block_starts.at(block_1 + 1) - 1;
-				auto& block_1_end_cmd = ctx.script->zasm[block_1_end];
+				// // Find the last instruction of the first block.
+				// pc_t block_1_end = block_1 == ctx.block_starts.size() - 1 ?
+				// 	ctx.fn.final_pc :
+				// 	ctx.block_starts.at(block_1 + 1) - 1;
+				// auto& block_1_end_cmd = ctx.script->zasm[block_1_end];
 
-				ASSERT(block_1_end_cmd.command == SETCMP);
-				block_1_end_cmd.command = GOTOCMP;
-				block_1_end_cmd.arg1 = ctx.block_starts.at(ctx.cfg.block_edges.at(block_2).at(1));
-				block_1_end_cmd.arg2 = INVERT_CMP(block_1_end_cmd.arg2);
+				// ASSERT(block_1_end_cmd.command == SETCMP);
+				// block_1_end_cmd.command = GOTOCMP;
+				// block_1_end_cmd.arg1 = ctx.block_starts.at(ctx.cfg.block_edges.at(block_2).at(1));
+				// block_1_end_cmd.arg2 = INVERT_CMP(block_1_end_cmd.arg2);
 
-				// Fix the second edge.
-				ASSERT(ctx.script->zasm[block_2_start + 1].command == SETCMP);
-				ASSERT(ctx.script->zasm[block_2_start + 2].command == COMPAREV);
-				ASSERT(ctx.script->zasm[block_2_start + 2].arg2 == 0);
-				ASSERT(ctx.script->zasm[block_2_start + 3].command == GOTOTRUE);
+				// // Fix the second edge.
+				// ASSERT(ctx.script->zasm[block_2_start + 1].command == SETCMP);
+				// ASSERT(ctx.script->zasm[block_2_start + 2].command == COMPAREV);
+				// ASSERT(ctx.script->zasm[block_2_start + 2].arg2 == 0);
+				// ASSERT(ctx.script->zasm[block_2_start + 3].command == GOTOTRUE);
 
-				ctx.script->zasm[block_2_start] = {GOTOCMP, block_1_end_cmd.arg1, INVERT_CMP(ctx.script->zasm[block_2_start + 1].arg2)};
+				// ctx.script->zasm[block_2_start] = {GOTOCMP, block_1_end_cmd.arg1, INVERT_CMP(ctx.script->zasm[block_2_start + 1].arg2)};
 
-				for (int i = 0; i < 4; i++)
-					ctx.script->zasm[block_2_start + i].command = NOP;
-				ctx.saved += 4;
+				// for (int i = 0; i < 4; i++)
+				// 	ctx.script->zasm[block_2_start + i].command = NOP;
+				// ctx.saved += 4;
 
-				// Lastly
-				goto_pc = block_1_end_cmd.arg1;
+				// // Lastly
+				goto_pc = post_block_pc;
 			}
 
-			ctx.script->zasm[start + 1] = ctx.script->zasm[final];
+			// ctx.script->zasm[start + 1] = ctx.script->zasm[final];
 			ctx.script->zasm[start + 1].command = GOTOCMP;
 			ctx.script->zasm[start + 1].arg1 = goto_pc;
 			ctx.script->zasm[start + 1].arg2 = cmp;
@@ -397,6 +577,7 @@ static int optimize_function(script_data* script, const ZasmFunction& fn)
 
 int zasm_optimize(script_data* script)
 {
+	// if (script->meta.script_name != "Prime") return 0;
 	auto start_time = std::chrono::steady_clock::now();
 	auto structured_zasm = zasm_construct_structured(script);
 
@@ -742,7 +923,7 @@ bool zasm_optimize_test()
 	// each segment to jump directly to the non-true edge. This allowed for simpler usage of COMPARER/GOTOCMP, rather than
 	// complicate sharing of D2 across blocks.
 	{
-		name = "COMPARER across blocks";
+		name = "COMPARER across blocks (1)";
 		ffscript s[] = {
 			{COMPARER, D(3), D(2)},                 // 0: [Block 0 -> 1, 2]
 			{SETCMP, D(2), CMP_LT | CMP_SETI},
@@ -768,46 +949,200 @@ bool zasm_optimize_test()
 		zasm_optimize(&script);
 
 		expect(name, &script, {
-			// {COMPARER, D(3), D(2)},
-			// {GOTOCMP, 12, CMP_GT | CMP_EQ | CMP_SETI},
-			// {NOP},
-			// {NOP},
+			{COMPARER, D(3), D(2)},
+			{GOTOCMP, 12, CMP_GT | CMP_EQ},
+			{NOP},
+			{NOP},
 
-			// {SETR, D(2), LINKZ},
-			// {COMPAREV, D(2), 0},
-			// {GOTOCMP, 12, CMP_NE | CMP_SETI},
-
-			// {NOP},
-			// {NOP},
-			// {NOP},
-			// {NOP},
-
-			// {TRACEV, 0},
-
-			// {QUIT},
-			// {0xFFFF},
-
-			// TODO: for now, just ensure this type of input wouldn't change.
-			{COMPARER, D(3), D(2)},                 // 0: [Block 0 -> 1, 2]
-			{SETCMP, D(2), CMP_LT | CMP_SETI},
+			{SETR, D(2), LINKZ},
 			{COMPAREV, D(2), 0},
-			{GOTOTRUE, 7},
+			{GOTOCMP, 12, CMP_NE},
 
-			{SETR, D(2), LINKZ},                    // 4: [Block 1 -> 2]
-			{COMPAREV, D(2), 0},
-			{SETCMP, D(2), CMP_EQ | CMP_SETI},
+			{NOP},
+			{NOP},
+			{NOP},
+			{NOP},
 
-			{COMPAREV, D(2), 0},                    // 7: [Block 2 -> 3, 4]
-			{SETCMP, D(2), CMP_NE | CMP_SETI},
-			{COMPAREV, D(2), 0},
-			{GOTOTRUE, 12},
+			{TRACEV, 0},
 
-			{TRACEV, 0},                            // 11: [Block 3 -> 4]
-
-			{QUIT},                                 // 12: [Block 4 ->  ]
+			{QUIT},
 			{0xFFFF},
 		});
 	}
+
+	{
+		name = "COMPARER across blocks (2)";
+		ffscript s[] = {
+			{COMPARER, D(2), D(3)},                 // 0: [Block 0 -> 1, 2]
+			{SETTRUEI, D(2)},
+			{COMPAREV, D(2), 0},
+			{GOTOTRUE, 10},
+
+			{SETR, D(6), D(4)},                     // 4: [Block 1 -> 2]
+			{ADDV, D(6), 60000},
+			{LOADI, D(2), D(6)},
+			{COMPAREV, D(2), 0},
+			{SETTRUEI, D(2)},
+			{CASTBOOLF, D(2)},
+
+			{COMPAREV, D(2), 1},                    // 10: [Block 2 -> 3, 4]
+			{SETMOREI, D(2)},
+			{COMPAREV, D(2), 0},
+			{GOTOTRUE, 15},
+
+			{TRACEV, 0},                            // 14: [Block 3 -> 4]
+
+			{QUIT},                                 // 15: [Block 4 ->  ]
+			{0xFFFF},
+		};
+		script.zasm = s;
+		script.recalc_size();
+		zasm_optimize(&script);
+
+		expect(name, &script, {
+			{COMPARER, D(2), D(3)},
+			{GOTOCMP, 15, CMP_NE},
+			{NOP},
+			{NOP},
+
+			{SETR, D(6), D(4)},
+			{ADDV, D(6), 60000},
+			{LOADI, D(2), D(6)},
+			{COMPAREV, D(2), 0},
+			{GOTOCMP, 15, CMP_EQ},
+			{NOP},
+
+			{NOP},
+			{NOP},
+			{NOP},
+			{NOP},
+
+			{TRACEV, 0},
+
+			{QUIT},
+			{0xFFFF},
+		});
+	}
+
+	{
+		name = "COMPARER across blocks (3)";
+		ffscript s[] = {
+			{COMPARER, D(3), D(2)},                 // 0: [Block 0 -> 1, 2]
+			{SETMORE, D(2)},
+			{COMPAREV, D(2), 0},
+			{SETTRUEI, D(2)},
+			{COMPAREV, D(2), 0},
+			{GOTOTRUE, 11},
+
+			{PUSHR, D(4)},                          // 6: [Block 1 -> 2]
+			{PUSHV, 1337},
+			{TRACEV, 1337},
+			{POP, D(4)},
+			{CASTBOOLF, D(2)},
+
+			{COMPAREV, D(2), 1},                    // 11: [Block 2 -> 3, 4]
+			{SETMOREI, D(2)},
+			{COMPAREV, D(2), 0},
+			{GOTOTRUE, 16},
+
+			{TRACEV, 0},                            // 15: [Block 3 -> 4]
+
+			{QUIT},                                 // 16: [Block 4 ->  ]
+			{0xFFFF},
+		};
+		script.zasm = s;
+		script.recalc_size();
+		zasm_optimize(&script);
+
+		expect(name, &script, {
+			{COMPARER, D(3), D(2)},
+			{GOTOCMP, 16, CMP_GE},
+			{NOP},
+			{NOP},
+			{NOP},
+			{NOP},
+
+			{PUSHR, D(4)},
+			{PUSHV, 1337},
+			{TRACEV, 1337},
+			{POP, D(4)},
+			{COMPAREV, D(2), 1},
+
+			{GOTOCMP, 16, CMP_EQ},
+			{NOP},
+			{NOP},
+			{NOP},
+
+			{TRACEV, 0},
+
+			{QUIT},
+			{0xFFFF},
+		});
+	}
+
+	// {
+	// 	name = "COMPARER across blocks (4)";
+	// 	ffscript s[] = {
+	// 		{COMPARER, D(3), D(2)},                 // 0: [Block 0 -> 1, 2]
+	// 		{SETMOREI, D(2)},
+	// 		{COMPAREV, D(2), 0},
+	// 		{GOTOTRUE, 15},
+
+	// 		{SETR, D(6), D(4)},                     // 4: [Block 1 -> 2]
+	// 		{ADDV, D(6), 30000},
+	// 		{LOADI, D(2), D(6)},
+	// 		{PUSHR, D(2)},
+	// 		{SETV, D(2), 386050000},
+	// 		{POP, D(3)},
+	// 		{COMPARER, D(3), D(2)},
+	// 		{SETMORE, D(2)},
+	// 		{COMPAREV, D(2), 0},
+	// 		{SETTRUEI, D(2)},
+	// 		{CASTBOOLF, D(2)},
+
+	// 		{COMPAREV, D(2), 1},                    // 15: [Block 2 -> 3, 4]
+	// 		{SETMOREI, D(2)},
+	// 		{COMPAREV, D(2), 0},
+	// 		{GOTOTRUE, 20},
+
+	// 		{TRACEV, 0},                            // 19: [Block 3 -> 4]
+
+	// 		{QUIT},                                 // 20: [Block 4 ->  ]
+	// 		{0xFFFF},
+	// 	};
+	// 	script.zasm = s;
+	// 	script.recalc_size();
+	// 	zasm_optimize(&script);
+
+	// 	expect(name, &script, {
+	// 		{COMPARER, D(3), D(2)},                 // 0: [Block 0 -> 1, 2]
+	// 		{GOTOCMP, 20, CMP_LT},
+	// 		{NOP},
+	// 		{NOP},
+
+	// 		{SETR, D(6), D(4)},                     // 4: [Block 1 -> 2]
+	// 		{ADDV, D(6), 30000},
+	// 		{LOADI, D(2), D(6)},
+	// 		{PUSHR, D(2)},
+	// 		{SETV, D(2), 386050000},
+	// 		{POP, D(3)},
+	// 		{COMPARER, D(3), D(2)},
+	// 		{SETMORE, D(2)},
+	// 		{COMPAREV, D(2), 0},
+	// 		{SETTRUEI, D(2)},
+	// 		{CASTBOOLF, D(2)},
+
+	// 		{COMPAREV, D(2), 1},                    // 15: [Block 2 -> 3, 4]
+	// 		{SETMOREI, D(2)},
+	// 		{COMPAREV, D(2), 0},
+	// 		{GOTOTRUE, 20},
+
+	// 		{TRACEV, 0},                            // 19: [Block 3 -> 4]
+
+	// 		{QUIT},                                 // 20: [Block 4 ->  ]
+	// 		{0xFFFF},
+	// 	});
+	// }
 
 	script.zasm = nullptr;
 	return true;

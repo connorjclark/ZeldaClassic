@@ -296,7 +296,11 @@ std::string script_debug_command_to_string(word scommand, int32_t arg1, int32_t 
 	}
 	if (c.args >= 2)
 	{
-		if (c.arg2_type == 0)
+		if (scommand == SETCMP || scommand == GOTOCMP)
+		{
+			ss << SS_WIDTH(7) << CMP_STR(arg2);
+		}
+		else if (c.arg2_type == 0)
 		{
 			ss << SS_WIDTH(7) << ZASMVarToString(arg2);
 		}
