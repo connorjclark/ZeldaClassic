@@ -174,14 +174,13 @@ static void optimize_setv_pushr(OptContext& ctx)
 //   381: SETMORE         D2                           
 //   382: COMPAREV        D2              0            
 //   383: SETTRUE         D2                           
-static std::optional<std::pair<int, pc_t>> reduce_comparison(OptContext& ctx, pc_t start_pc, pc_t final_pc)
+static std::optional<std::pair<int, pc_t>> reduce_comparison(OptContext& ctx, pc_t start_pc, pc_t final_pc, int cmp = 0)
 {
 	// if (!one_of(ctx.script->zasm[start_pc + 2].command, COMPAREV, COMPAREV2))
 	// 	return std::nullopt;
 
 	int j = start_pc;
 	int k = j + 1;
-	int cmp = 0;
 	for (; k <= final_pc; k++)
 	{
 		int command = ctx.script->zasm[k].command;
@@ -240,6 +239,8 @@ static std::optional<std::pair<int, pc_t>> reduce_comparison(OptContext& ctx, pc
 				break;
 
 			case GOTOTRUE:
+			case GOTOMORE:
+			case GOTOLESS:
 			{
 				return std::make_pair(cmp, k);
 			}
@@ -272,6 +273,19 @@ static pc_t get_block_end(const OptContext& ctx, int block_index)
 		ctx.block_starts.at(block_index + 1) - 1;
 }
 
+static std::optional<int> find_next_comp_op(const OptContext& ctx, pc_t start, pc_t end)
+{
+	for (int i = start; i <= end; i++)
+	{
+		if (one_of(ctx.script->zasm[i].command, COMPAREV, COMPAREV2, COMPARER, CASTBOOLF))
+		{
+			return i;
+		}
+	}
+
+	return std::nullopt;
+}
+
 static void optimize_compare(OptContext& ctx)
 {
 	optimize_by_block(ctx, [&](pc_t block_index, pc_t start_pc, pc_t final_pc){
@@ -288,7 +302,7 @@ static void optimize_compare(OptContext& ctx)
 			if (!maybe_cmp)
 				continue;
 
-			auto [cmp, k] = maybe_cmp.value();
+			auto [head_block_cmp, k] = maybe_cmp.value();
 
 			// Useful binary search tool for finding problems.
 			// static int c = 0;
@@ -327,15 +341,56 @@ static void optimize_compare(OptContext& ctx)
 					continue;
 				}
 
-				static int c = 0;
-				c++;
-				if (!(2299 <= c && c < 2300))
+				pc_t post_block_pc = ctx.block_starts.at(ctx.cfg.block_edges.at(block_2).back());
+
+				auto maybe_cmp = reduce_comparison(ctx, find_next_comp_op(ctx, block_2_start, block_2_final).value()-1, block_2_final, head_block_cmp);
+				// ASSERT(maybe_cmp);
+				if (maybe_cmp)
+					head_block_cmp = maybe_cmp->first;
+				goto_pc = post_block_pc;
+
+				if (ctx.script->zasm[goto_pc].command == COMPAREV)
 				{
+					// Even the block after this conditional is reusing the
+					// initial condition comparison register (see 54010 below).
+					// There's a recursive problem here it seems.
+					// Ex: stellar_seas_randomizer.qst/zasm-ffc-123-RandomizerMenu.txt
+					/*
+						53929: COMPAREV        D2              0            
+						53930: GOTOTRUE        53983                        
+						53931: PUSHR           D4                           [Block 12 -> 13]
+						53932: PUSHV           53975                        
+						...
+						53978: COMPARER        D3              D2           
+						53979: SETMORE         D2                           
+						53980: COMPAREV        D2              0            
+						53981: SETTRUEI        D2                           
+						53982: CASTBOOLF       D2                           
+						53983: COMPAREV        D2              1            [Block 13 -> 14, 15]
+						53984: SETMOREI        D2                           
+						53985: COMPAREV        D2              0            
+						53986: GOTOTRUE        54010                        
+						53987: SETR            D6              D4           [Block 14 -> 15]
+						...
+						54007: COMPARER        D2              D3           
+						54008: SETTRUEI        D2                           
+						54009: CASTBOOLF       D2                           
+						54010: COMPAREV        D2              1            [Block 15 -> 16, 17]
+						54011: SETMOREI        D2                           
+						54012: COMPAREV        D2              0            
+					*/	
 					continue;
 				}
+
+				// static int c = 0;
+				// c++;
+				// if (!(2025 <= c && c < 2026))
+				// {
+				// 	continue;
+				// }
 				// if (ctx.script) continue;
 
-				pc_t post_block_pc = ctx.block_starts.at(ctx.cfg.block_edges.at(block_2).back());
+				
 
 				// TODO: is the comparison register always D2?
 				int r = D(2);
@@ -522,13 +577,13 @@ static void optimize_compare(OptContext& ctx)
 				// ctx.saved += 4;
 
 				// // Lastly
-				goto_pc = post_block_pc;
+				// goto_pc = post_block_pc;
 			}
 
 			// ctx.script->zasm[start + 1] = ctx.script->zasm[final];
 			ctx.script->zasm[start + 1].command = GOTOCMP;
 			ctx.script->zasm[start + 1].arg1 = goto_pc;
-			ctx.script->zasm[start + 1].arg2 = cmp;
+			ctx.script->zasm[start + 1].arg2 = head_block_cmp;
 
 			for (int i = start + 2; i <= final; i++)
 				ctx.script->zasm[i].command = NOP;
@@ -976,7 +1031,7 @@ bool zasm_optimize_test()
 
 		expect(name, &script, {
 			{COMPARER, D(3), D(2)},
-			{GOTOCMP, 12, CMP_GT | CMP_EQ},
+			{GOTOCMP, 12, CMP_LT},
 			{NOP},
 			{NOP},
 
@@ -1027,7 +1082,7 @@ bool zasm_optimize_test()
 
 		expect(name, &script, {
 			{COMPARER, D(2), D(3)},
-			{GOTOCMP, 15, CMP_NE},
+			{GOTOCMP, 15, CMP_EQ},
 			{NOP},
 			{NOP},
 
@@ -1082,7 +1137,7 @@ bool zasm_optimize_test()
 
 		expect(name, &script, {
 			{COMPARER, D(3), D(2)},
-			{GOTOCMP, 16, CMP_GE},
+			{GOTOCMP, 16, CMP_LT},
 			{NOP},
 			{NOP},
 			{NOP},
@@ -1142,7 +1197,7 @@ bool zasm_optimize_test()
 
 		expect(name, &script, {
 			{COMPARER, D(3), D(2)},
-			{GOTOCMP, 20, CMP_LT},
+			{GOTOCMP, 20, CMP_GE},
 			{NOP},
 			{NOP},
 
@@ -1169,6 +1224,81 @@ bool zasm_optimize_test()
 			{0xFFFF},
 		});
 	}
+
+	// TODO ! tests
+	/*
+
+		8088: COMPARER        D3              D2           
+		8089: SETMORE         D2                           
+		8090: COMPAREV        D2              0            
+		8091: SETTRUEI        D2                           
+		8092: COMPAREV        D2              0            
+		8093: GOTOTRUE        8105                         
+		8094: SETR            D2              LINKY        [Block 6 -> 7]
+		8095: PUSHR           D2                           
+		8096: SETR            D6              D4           
+		8097: ADDV            D6              20000        
+		8098: LOADI           D2              D6           
+		8099: POP             D3                           
+		8100: COMPARER        D3              D2           
+		8101: SETMORE         D2                           
+		8102: COMPAREV        D2              0            
+		8103: SETTRUEI        D2                           
+		8104: CASTBOOLF       D2                           
+		8105: COMPAREV        D2              1            [Block 7 -> 22]
+		8106: SETMOREI        D2                           
+		8107: GOTO            8224                         
+		8108: GOTO            8223                         [Block 8 -> 21]
+
+		-------
+
+
+
+		779: COMPARER        D2              D3           
+		780: SETTRUEI        D2                           
+		781: COMPAREV        D2              0            
+		782: GOTOTRUE        802                          
+		783: SETR            D6              D4           [Block 37 -> 38, 39]
+		784: ADDV            D6              90000        
+		785: LOADI           D2              D6           
+		786: COMPAREV        D2              1            
+		787: GOTOMORE        800                          
+		788: SETR            D6              D4           [Block 38 -> 39]
+		789: ADDV            D6              50000        
+		790: LOADI           D2              D6           
+		791: PUSHR           D2                           
+		792: SETV            D2              320000       
+		793: POP             D3                           
+		794: COMPARER        D3              D2           
+		795: SETLESS         D2                           
+
+
+
+		-------
+
+
+		54601: COMPARER        D2              D3           
+		54602: SETTRUEI        D2                           
+		54603: COMPAREV        D2              0            
+		54604: GOTOTRUE        54617                        
+		54605: SETV            D2              130000       [Block 1559 -> 1560]
+		54606: PUSHR           D2                           
+		54607: POP             D0                           
+		54608: SETR            D2              SCREENSTATED 
+		54609: PUSHR           D2                           
+		54610: SETV            D2              10000        
+		54611: POP             D3                           
+		54612: CASTBOOLF       D2                           
+		54613: CASTBOOLF       D3                           
+		54614: COMPARER        D2              D3           
+		54615: SETTRUEI        D2                           
+		54616: CASTBOOLF       D2                           
+		54617: COMPAREV        D2              1            [Block 1560 -> 1561]
+		54618: SETMOREI        D2                           
+		54619: CASTBOOLF       D2                           
+		54620: COMPAREV        D2              1            
+
+	*/
 
 	script.zasm = nullptr;
 	return true;
