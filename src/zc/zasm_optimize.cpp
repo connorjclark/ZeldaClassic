@@ -176,8 +176,8 @@ static void optimize_setv_pushr(OptContext& ctx)
 //   383: SETTRUE         D2                           
 static std::optional<std::pair<int, pc_t>> reduce_comparison(OptContext& ctx, pc_t start_pc, pc_t final_pc)
 {
-	if (!one_of(ctx.script->zasm[start_pc + 2].command, COMPAREV, COMPAREV2))
-		return std::nullopt;
+	// if (!one_of(ctx.script->zasm[start_pc + 2].command, COMPAREV, COMPAREV2))
+	// 	return std::nullopt;
 
 	int j = start_pc;
 	int k = j + 1;
@@ -210,21 +210,34 @@ static std::optional<std::pair<int, pc_t>> reduce_comparison(OptContext& ctx, pc
 				if (k + 1 > final_pc || ctx.script->zasm[k + 1].command != COMPAREV)
 				{
 					// ASSERT(false);
-					return std::nullopt;
+					// return std::nullopt;
 				}
 
 				// These should only ever appear once.
-				#define ASSIGN_ONCE(v) {ASSERT(!cmp); cmp = v;}
-				if (command == SETCMP) ASSIGN_ONCE(ctx.script->zasm[k].arg2 & CMP_FLAGS)
-				if (command == SETLESS || command == SETLESSI) ASSIGN_ONCE(CMP_LE)
-				if (command == SETMORE || command == SETMOREI) ASSIGN_ONCE(CMP_GE)
-				if (command == SETFALSE || command == SETFALSEI) ASSIGN_ONCE(CMP_NE)
+				#define ASSIGN(v) {cmp |= v;}
+				if (!cmp)
+				{
+					if (command == SETCMP) ASSIGN(ctx.script->zasm[k].arg2 & CMP_FLAGS)
+					if (command == SETLESS || command == SETLESSI) ASSIGN(CMP_LE)
+					if (command == SETMORE || command == SETMOREI) ASSIGN(CMP_GE)
+					if (command == SETFALSE || command == SETFALSEI) ASSIGN(CMP_NE)
+				}
+				else
+				{
+					if (command == SETCMP && (ctx.script->zasm[k].arg2 & CMP_FLAGS) == CMP_NE)
+						cmp = INVERT_CMP(cmp);
+				}
 
 				// SETTRUE may be first after the COMPARER, in which case it matters.
 				// Otherwise, it's a silly nop.
-				if (command == SETTRUE || command == SETTRUEI) if (!cmp) cmp = CMP_EQ;
+				if ((command == SETTRUE || command == SETTRUEI) && !cmp) cmp = CMP_EQ;
 			}
 			break;
+
+			case CASTBOOLF:
+			case CASTBOOLI:
+				if (!cmp) cmp = CMP_EQ;
+				break;
 
 			case GOTOTRUE:
 			{
@@ -243,9 +256,13 @@ static std::optional<std::pair<int, pc_t>> reduce_comparison(OptContext& ctx, pc
 				return std::nullopt;
 			}
 		}
+
+		// if (k == final_pc)
+		// 	return std::make_pair(cmp, k);
 	}
 
-	return std::nullopt;
+	// if (k == final_pc)
+	return std::make_pair(cmp, k);
 }
 
 static pc_t get_block_end(const OptContext& ctx, int block_index)
@@ -310,12 +327,13 @@ static void optimize_compare(OptContext& ctx)
 					continue;
 				}
 
-				// static int c = 0;
-				// c++;
-				// if (!(2299 <= c && c < 2300))
-				// {
-				// 	continue;
-				// }
+				static int c = 0;
+				c++;
+				if (!(2299 <= c && c < 2300))
+				{
+					continue;
+				}
+				// if (ctx.script) continue;
 
 				pc_t post_block_pc = ctx.block_starts.at(ctx.cfg.block_edges.at(block_2).back());
 
@@ -354,30 +372,38 @@ static void optimize_compare(OptContext& ctx)
 				int first_comp_pc = -1;
 				for (int h = block_1_start; h <= block_1_final; h++)
 				{
-					if (one_of(ctx.script->zasm[h].command, COMPAREV, COMPAREV2))
+					if (one_of(ctx.script->zasm[h].command, COMPAREV, COMPAREV2, COMPARER, CASTBOOLF))
 					{
 						first_comp_pc = h;
 						break;
 					}
 				}
-				// ASSERT(first_comp_pc != -1);
-				if (first_comp_pc != -1)
-				for (int h = first_comp_pc+1; h <= block_1_final; h++)
+				ASSERT(first_comp_pc != -1);
+				ASSERT(block_1_final + 1 == block_2_start);
+
+				int cmp;
+				if (ctx.script->zasm[first_comp_pc].command == CASTBOOLF)
 				{
-					if (!one_of(ctx.script->zasm[h].command, SETTRUEI, CASTBOOLF, SETCMP))
-					{
-						ASSERT(false);
-					}
+					auto maybe_cmp = reduce_comparison(ctx, first_comp_pc-1, block_2_final);
+					ASSERT(maybe_cmp);
+					cmp = maybe_cmp->first;
+				}
+				else
+				{
+					auto maybe_cmp = reduce_comparison(ctx, first_comp_pc, block_2_final);
+					ASSERT(maybe_cmp);
+					cmp = maybe_cmp->first;
 				}
 
-				ASSERT(block_1_final + 1 == block_2_start);
-				// 2. modify this cmp to get the right cmp based on the instructions in block 1
-				int cmp = cmd2.arg2 == 0 ? CMP_NE : CMP_EQ;
+				
+
+				// if (cmd2.arg2 == 0)
+				// 	cmp = INVERT_CMP(cmp);
 				// auto maybe_cmp_1 = reduce_comparison(ctx, first_comp_pc-1, block_1_final);
 				// ASSERT(maybe_cmp_1);
 				// auto [cmp, k] = maybe_cmp_1.value();
 				int m;
-				if (first_comp_pc == -1)
+				if (ctx.script->zasm[first_comp_pc].command == CASTBOOLF)
 				{
 					ctx.script->zasm[block_1_final] = {COMPAREV, D(2), 1};
 					m = block_1_final + 1;
@@ -1009,7 +1035,7 @@ bool zasm_optimize_test()
 			{ADDV, D(6), 60000},
 			{LOADI, D(2), D(6)},
 			{COMPAREV, D(2), 0},
-			{GOTOCMP, 15, CMP_EQ},
+			{GOTOCMP, 15, CMP_NE},
 			{NOP},
 
 			{NOP},
@@ -1068,7 +1094,7 @@ bool zasm_optimize_test()
 			{POP, D(4)},
 			{COMPAREV, D(2), 1},
 
-			{GOTOCMP, 16, CMP_EQ},
+			{GOTOCMP, 16, CMP_NE},
 			{NOP},
 			{NOP},
 			{NOP},
@@ -1080,69 +1106,69 @@ bool zasm_optimize_test()
 		});
 	}
 
-	// {
-	// 	name = "COMPARER across blocks (4)";
-	// 	ffscript s[] = {
-	// 		{COMPARER, D(3), D(2)},                 // 0: [Block 0 -> 1, 2]
-	// 		{SETMOREI, D(2)},
-	// 		{COMPAREV, D(2), 0},
-	// 		{GOTOTRUE, 15},
+	{
+		name = "COMPARER across blocks (4)";
+		ffscript s[] = {
+			{COMPARER, D(3), D(2)},                 // 0: [Block 0 -> 1, 2]
+			{SETMOREI, D(2)},
+			{COMPAREV, D(2), 0},
+			{GOTOTRUE, 15},
 
-	// 		{SETR, D(6), D(4)},                     // 4: [Block 1 -> 2]
-	// 		{ADDV, D(6), 30000},
-	// 		{LOADI, D(2), D(6)},
-	// 		{PUSHR, D(2)},
-	// 		{SETV, D(2), 386050000},
-	// 		{POP, D(3)},
-	// 		{COMPARER, D(3), D(2)},
-	// 		{SETMORE, D(2)},
-	// 		{COMPAREV, D(2), 0},
-	// 		{SETTRUEI, D(2)},
-	// 		{CASTBOOLF, D(2)},
+			{SETR, D(6), D(4)},                     // 4: [Block 1 -> 2]
+			{ADDV, D(6), 30000},
+			{LOADI, D(2), D(6)},
+			{PUSHR, D(2)},
+			{SETV, D(2), 386050000},
+			{POP, D(3)},
+			{COMPARER, D(3), D(2)},
+			{SETMORE, D(2)},
+			{COMPAREV, D(2), 0},
+			{SETTRUEI, D(2)},
+			{CASTBOOLF, D(2)},
 
-	// 		{COMPAREV, D(2), 1},                    // 15: [Block 2 -> 3, 4]
-	// 		{SETMOREI, D(2)},
-	// 		{COMPAREV, D(2), 0},
-	// 		{GOTOTRUE, 20},
+			{COMPAREV, D(2), 1},                    // 15: [Block 2 -> 3, 4]
+			{SETMOREI, D(2)},
+			{COMPAREV, D(2), 0},
+			{GOTOTRUE, 20},
 
-	// 		{TRACEV, 0},                            // 19: [Block 3 -> 4]
+			{TRACEV, 0},                            // 19: [Block 3 -> 4]
 
-	// 		{QUIT},                                 // 20: [Block 4 ->  ]
-	// 		{0xFFFF},
-	// 	};
-	// 	script.zasm = s;
-	// 	script.recalc_size();
-	// 	zasm_optimize(&script);
+			{QUIT},                                 // 20: [Block 4 ->  ]
+			{0xFFFF},
+		};
+		script.zasm = s;
+		script.recalc_size();
+		zasm_optimize(&script);
 
-	// 	expect(name, &script, {
-	// 		{COMPARER, D(3), D(2)},                 // 0: [Block 0 -> 1, 2]
-	// 		{GOTOCMP, 20, CMP_LT},
-	// 		{NOP},
-	// 		{NOP},
+		expect(name, &script, {
+			{COMPARER, D(3), D(2)},
+			{GOTOCMP, 20, CMP_LT},
+			{NOP},
+			{NOP},
 
-	// 		{SETR, D(6), D(4)},                     // 4: [Block 1 -> 2]
-	// 		{ADDV, D(6), 30000},
-	// 		{LOADI, D(2), D(6)},
-	// 		{PUSHR, D(2)},
-	// 		{SETV, D(2), 386050000},
-	// 		{POP, D(3)},
-	// 		{COMPARER, D(3), D(2)},
-	// 		{SETMORE, D(2)},
-	// 		{COMPAREV, D(2), 0},
-	// 		{SETTRUEI, D(2)},
-	// 		{CASTBOOLF, D(2)},
+			{SETR, D(6), D(4)},
+			{ADDV, D(6), 30000},
+			{LOADI, D(2), D(6)},
+			{PUSHR, D(2)},
+			{SETV, D(2), 386050000},
+			{POP, D(3)},
+			{COMPARER, D(3), D(2)},
+			{GOTOCMP, 20, CMP_GE},
+			{NOP},
+			{NOP},
+			{NOP},
 
-	// 		{COMPAREV, D(2), 1},                    // 15: [Block 2 -> 3, 4]
-	// 		{SETMOREI, D(2)},
-	// 		{COMPAREV, D(2), 0},
-	// 		{GOTOTRUE, 20},
+			{NOP},
+			{NOP},
+			{NOP},
+			{NOP},
 
-	// 		{TRACEV, 0},                            // 19: [Block 3 -> 4]
+			{TRACEV, 0},
 
-	// 		{QUIT},                                 // 20: [Block 4 ->  ]
-	// 		{0xFFFF},
-	// 	});
-	// }
+			{QUIT},
+			{0xFFFF},
+		});
+	}
 
 	script.zasm = nullptr;
 	return true;
