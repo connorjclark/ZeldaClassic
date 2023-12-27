@@ -291,6 +291,7 @@ static std::optional<int> find_next_comp_op(const OptContext& ctx, pc_t start, p
 
 static void optimize_compare(OptContext& ctx)
 {
+	// if (ctx.fn.id != 16) return;
 	// if (ctx.script->meta.script_name != "Prime")
 	// 	return;
 
@@ -379,7 +380,7 @@ static void optimize_compare(OptContext& ctx)
 				pc_t first_comp_op = -1;
 				for (pc_t k = block_start; k <= block_final; k++)
 				{
-					if (one_of(ctx.script->zasm[k].command, COMPARER, COMPAREV, COMPAREV2, CASTBOOLF))
+					if (one_of(ctx.script->zasm[k].command, COMPARER, COMPAREV, COMPAREV2, CASTBOOLF, SETCMP))
 					{
 						// Ignore switches for now.
 						if (ctx.script->zasm[k].arg1 == SWITCHKEY)
@@ -428,6 +429,14 @@ static void optimize_compare(OptContext& ctx)
 					}
 				}
 
+				if (!reuses_comparison_result)
+				{
+					if (!one_of(ctx.script->zasm[block_final].command, SETCMP, CASTBOOLF, CASTBOOLI))
+					{
+						continue;
+					}
+				}
+
 				blocks_to_modify.emplace_back(cur, first_comp_op, reuses_comparison_result);
 			}
 
@@ -439,19 +448,19 @@ static void optimize_compare(OptContext& ctx)
 			// 	if (i == 2) ASSERT(reuses);
 			// }
 			
-			while (blocks_to_modify.size() > 3)
-			{
-				blocks_to_modify.pop_back();
-			}
+			// while (blocks_to_modify.size() > 3)
+			// {
+			// 	blocks_to_modify.pop_back();
+			// }
 
-			if (blocks_to_modify.size() == 3)
-			{
-				if (std::get<2>(blocks_to_modify.at(1)) || !std::get<2>(blocks_to_modify.at(2)))
-				{
-					blocks_to_modify.pop_back();
-					blocks_to_modify.pop_back();
-				}
-			}
+			// if (blocks_to_modify.size() == 3)
+			// {
+			// 	if (std::get<2>(blocks_to_modify.at(1)) || !std::get<2>(blocks_to_modify.at(2)))
+			// 	{
+			// 		blocks_to_modify.pop_back();
+			// 		blocks_to_modify.pop_back();
+			// 	}
+			// }
 
 			if (blocks_to_modify.size() == 2)
 			{
@@ -873,6 +882,8 @@ static int optimize_function(StructuredZasm& structured_zasm, script_data* scrip
 int zasm_optimize(script_data* script)
 {
 	// if (script->meta.script_name != "Prime") return 0;
+	// if (script->id.index != 4) return 0;
+	// if (script->id.type != ScriptType::FFC) return 0;
 	auto start_time = std::chrono::steady_clock::now();
 	auto structured_zasm = zasm_construct_structured(script);
 
@@ -1522,7 +1533,7 @@ bool zasm_optimize_test()
 	}
 
 	{
-		name = "random stuff COMPARER across blocks";
+		name = "random stuff COMPARER across blocks (1)";
 		ffscript s[] = {
 			{COMPAREV, D(2), 0},                 // 0: [Block 0 -> 1, 2]
 			{GOTOTRUE, 16},
@@ -1582,6 +1593,60 @@ bool zasm_optimize_test()
 			{0xFFFF},
 		});
 	}
+
+	// {
+	// 	name = "random stuff COMPARER across blocks (2)";
+	// 	ffscript s[] = {
+	// 		{COMPAREV, D(2), 0},                 // 0: [Block 0 -> 1, 2]
+	// 		{GOTOTRUE, 8},
+
+	// 		{LOADD, D(2), 20000},                // 2: [Block 1 -> 2]
+	// 		{PUSHR, D(2)},
+	// 		{POP, REFNPC},
+	// 		{SETR, D(2), NPCSTUN},
+	// 		{COMPAREV, D(2), 0},
+	// 		{SETCMP, D(2), CMP_GT},
+
+	// 		{COMPAREV, D(2), 0},                 // 8: [Block 2 -> 3, 4]
+	// 		{SETCMP, D(2), CMP_NE},
+	// 		{COMPAREV, D(2), 0},
+	// 		{SETCMP, D(2), CMP_NE},
+	// 		{COMPAREV, D(2), 0},
+	// 		{GOTOTRUE, 15},
+
+	// 		{TRACEV, 1337},                      // 14: [Block 3 -> 4]
+
+	// 		{QUIT},                              // 15: [Block 4 ->  ]
+	// 		{0xFFFF},
+	// 	};
+	// 	script.zasm = s;
+	// 	script.recalc_size();
+	// 	zasm_optimize(&script);
+
+	// 	expect(name, &script, {
+	// 		{COMPAREV, D(2), 0},                 // 0: [Block 0 -> 1, 2]
+	// 		{GOTOTRUE, 8},
+
+	// 		{LOADD, D(2), 20000},                // 2: [Block 1 -> 2]
+	// 		{PUSHR, D(2)},
+	// 		{POP, REFNPC},
+	// 		{SETR, D(2), NPCSTUN},
+	// 		{COMPAREV, D(2), 0},
+	// 		{SETCMP, D(2), CMP_GT},
+
+	// 		{COMPAREV, D(2), 0},                 // 8: [Block 2 -> 3, 4]
+	// 		{SETCMP, D(2), CMP_NE},
+	// 		{COMPAREV, D(2), 0},
+	// 		{SETCMP, D(2), CMP_NE},
+	// 		{COMPAREV, D(2), 0},
+	// 		{GOTOTRUE, 15},
+
+	// 		{TRACEV, 1337},                      // 14: [Block 3 -> 4]
+
+	// 		{QUIT},                              // 15: [Block 4 ->  ]
+	// 		{0xFFFF},
+	// 	});
+	// }
 
 	// TODO ! tests
 	/*
