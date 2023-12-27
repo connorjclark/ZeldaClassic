@@ -17,10 +17,11 @@ bool one_of(const unsigned int var, const Args&... args)
 
 static void expected_to_str(ffscript* s, size_t len)
 {
-	for (int i = 0; i < len; i++)
-	{
-		printf("%s\n", script_debug_command_to_string(s[i].command, s[i].arg1, s[i].arg2).c_str());
-	}
+	script_data script(ScriptType::None, 0);
+	script.zasm = s;
+	script.recalc_size();
+	printf("%s\n", zasm_to_string(&script).c_str());
+	script.zasm = nullptr;
 }
 
 static void expect(std::string name, script_data* script, std::vector<ffscript> s)
@@ -51,6 +52,7 @@ struct OptContext
 	ZasmFunction fn;
 	ZasmCFG cfg;
 	std::vector<pc_t> block_starts;
+	StructuredZasm* structured_zasm;
 };
 
 static void remove(OptContext& ctx, pc_t start, pc_t final)
@@ -242,6 +244,7 @@ static std::optional<std::pair<int, pc_t>> reduce_comparison(OptContext& ctx, pc
 			case GOTOMORE:
 			case GOTOLESS:
 			{
+				if (command == GOTOTRUE && !cmp) cmp = CMP_EQ;
 				return std::make_pair(cmp, k);
 			}
 			break;
@@ -288,26 +291,38 @@ static std::optional<int> find_next_comp_op(const OptContext& ctx, pc_t start, p
 
 static void optimize_compare(OptContext& ctx)
 {
+	// if (ctx.script->meta.script_name != "Prime")
+	// 	return;
+
 	optimize_by_block(ctx, [&](pc_t block_index, pc_t start_pc, pc_t final_pc){
+		const auto& edges = ctx.cfg.block_edges.at(block_index);
+		if (edges.size() != 2)
+			return;
+
 		for (int j = start_pc; j < final_pc; j++)
 		{
-			const auto& edges = ctx.cfg.block_edges.at(block_index);
-			if (edges.size() != 2)
-				continue;
-
 			int command = ctx.script->zasm[j].command;
 			if (!one_of(command, COMPARER, COMPAREV, COMPAREV2)) continue;
 
+			ASSERT(edges.size() == 1 || edges.size() == 2);
 			auto maybe_cmp = reduce_comparison(ctx, j, final_pc);
 			if (!maybe_cmp)
 				continue;
 
+			// Simple case.
+			if (edges.size() == 1)
+			{
+				ASSERT(maybe_cmp);
+				auto [head_block_cmp, k] = maybe_cmp.value();
+				ASSERT(false); // TODO
+				continue;
+			}
 			auto [head_block_cmp, k] = maybe_cmp.value();
 
 			// Useful binary search tool for finding problems.
 			// static int c = 0;
 			// c++;
-			// if (!(0 <= c && c < 100000))
+			// if (!(2 <= c && c < 3))
 			// {
 			// 	continue;
 			// }
@@ -324,12 +339,197 @@ static void optimize_compare(OptContext& ctx)
 			// Block N
 			// End block
 			// And want to map blocks 0 to N to jump to the End block instead
-			
+			// (block index, pc of first comparison op, reuses head comparison)
+			std::vector<std::tuple<pc_t, pc_t, bool>> blocks_to_modify;
+			std::set<pc_t> seen;
+			std::set<pc_t> pending_ids;
 
+			// Handle the head block separately.
+			seen.insert(block_index);
+			blocks_to_modify.emplace_back(block_index, j, false);
+			for (pc_t edge : edges)
+				pending_ids.insert(edge);
+
+			while (!pending_ids.empty())
+			{
+				pc_t cur = *pending_ids.begin();
+				pending_ids.erase(pending_ids.begin());
+				seen.insert(cur);
+				const auto& edges = ctx.cfg.block_edges.at(cur);
+
+				// if (edges.size() != 2)
+				// {
+				// 	blocks_to_modify.emplace_back(cur, j, false);
+				// 	continue;
+				// }
+
+				// if (ctx.cfg.block_edges.at(cur).size() != 2)
+				// 	break;
+				// ASSERT(ctx.cfg.block_edges.at(cur).size() == 2);
+				// pc_t block_final = get_block_end(ctx, cur);
+				// auto& final_cmd = ctx.script->zasm[block_final];
+				// ASSERT(one_of(final_cmd.command, GOTOTRUE, GOTOFALSE, GOTOMORE, GOTOLESS, GOTOCMP));
+				// pc_t pc = final_cmd.arg1;
+				// int next_block = ctx.cfg.start_pc_to_block_id.at(pc);
+				// ASSERT(next_block == ctx.cfg.block_edges.at(cur).at(1));
+
+				pc_t block_start = ctx.block_starts.at(cur);
+				pc_t block_final = get_block_end(ctx, cur);
+				bool reuses_comparison_result = true;
+				pc_t first_comp_op = -1;
+				for (pc_t k = block_start; k <= block_final; k++)
+				{
+					if (one_of(ctx.script->zasm[k].command, COMPARER, COMPAREV, COMPAREV2, CASTBOOLF))
+					{
+						// Ignore switches for now.
+						if (ctx.script->zasm[k].arg1 == SWITCHKEY)
+							break;
+
+						if (reuses_comparison_result) ASSERT(ctx.script->zasm[k].arg1 == D(2));
+						first_comp_op = k;
+						break;
+					}
+
+					// Check if comparison result is overwritten, and thus this block does not reuse it.
+					if (ctx.script->zasm[k].arg1 == D(2))
+					{
+						if (ctx.script->zasm[k].command == NOP)
+							// It was overwritten with NOP in some previous pass...
+							continue;
+						// TODO: should check if this command even writes to its first register!
+						ASSERT(get_script_command(ctx.script->zasm[k].command).args >= 1);
+						reuses_comparison_result = false;
+					}
+					else if (ctx.structured_zasm->function_calls.contains(k))
+					{
+						// Function calls always invalidate D2.
+						reuses_comparison_result = false;
+					}
+				}
+
+				// No comparison, so not of any interest.
+				if (first_comp_op == -1)
+					continue;
+
+				// If the block doesn't directly use the comparison, and it advances
+				// to the next block unconditionally, then the block needs to be
+				// modified. Otherwise, if it has a conditional jump and does not
+				// reuse the comparison result, it should be safe to ignore. It may
+				// get picked up in a soon-to-come iteration of optimize_by_block.
+				// if (!reuses_comparison_result && edges.size() != 1)
+				// 	continue;
+
+				if (reuses_comparison_result)
+				{
+					for (int edge : edges)
+					{
+						if (!seen.contains(edge))
+							pending_ids.insert(edge);
+					}
+				}
+
+				blocks_to_modify.emplace_back(cur, first_comp_op, reuses_comparison_result);
+			}
+
+			// for (int i = 0; i < blocks_to_modify.size(); i++)
+			// {
+			// 	auto [block, comp_pc, reuses] = blocks_to_modify.at(i);
+			// 	if (i == 0) ASSERT(!reuses);
+			// 	if (i == 1) ASSERT(!reuses);
+			// 	if (i == 2) ASSERT(reuses);
+			// }
+			
+			while (blocks_to_modify.size() > 3)
+			{
+				blocks_to_modify.pop_back();
+			}
+
+			if (blocks_to_modify.size() == 3)
+			{
+				if (std::get<2>(blocks_to_modify.at(1)) || !std::get<2>(blocks_to_modify.at(2)))
+				{
+					blocks_to_modify.pop_back();
+					blocks_to_modify.pop_back();
+				}
+			}
+
+			if (blocks_to_modify.size() == 2)
+			{
+				blocks_to_modify.pop_back();
+			}
+
+			int end_block_cmp = CMP_EQ;
+			pc_t goto_pc = -1;
+			if (blocks_to_modify.size() > 1)
+			{
+				pc_t end_block = std::get<0>(blocks_to_modify.back());
+				pc_t end_block_start = ctx.block_starts.at(end_block);
+				pc_t end_block_final = get_block_end(ctx, end_block);
+				auto maybe_cmp = reduce_comparison(ctx, find_next_comp_op(ctx, end_block_start, end_block_final).value()-1, end_block_final, CMP_EQ);
+				if (maybe_cmp.has_value())
+				{
+					end_block_cmp = maybe_cmp.value().first;
+					ASSERT(end_block_cmp == CMP_EQ || end_block_cmp == CMP_NE);
+				}
+				else
+				{
+					// If no cmp, for some reason this block was an unconditional jump.
+					ASSERT(ctx.cfg.block_edges.at(end_block).size() == 1);
+					ASSERT(ctx.script->zasm[end_block_final].command == GOTO);
+				}
+
+				goto_pc = ctx.block_starts.at(ctx.cfg.block_edges.at(end_block).back());
+				remove(ctx, end_block_start, end_block_final);
+				blocks_to_modify.pop_back();
+			}
+			else
+			{
+				goto_pc = ctx.block_starts.at(ctx.cfg.block_edges.at(block_index).back());
+			}
+
+			int head_cmp = 0;
+			for (int i = 0; i < blocks_to_modify.size(); i++)
+			{
+				auto [block, comp_pc, reuses] = blocks_to_modify.at(i);
+				pc_t block_start = ctx.block_starts.at(block);
+				pc_t block_final = get_block_end(ctx, block);
+
+				int base_cmp = 0;
+
+				int m = comp_pc + 1;
+				if (ctx.script->zasm[comp_pc].command == CASTBOOLF)
+				{
+					ctx.script->zasm[comp_pc] = {COMPAREV, D(2), 1};
+					ASSERT(!reuses);
+					base_cmp = CMP_EQ;
+				}
+
+				if (reuses) base_cmp = head_cmp;
+				auto maybe_cmp = reduce_comparison(ctx, comp_pc, block_final, base_cmp);
+				ASSERT(maybe_cmp);
+				auto [cmp, k] = maybe_cmp.value();
+				if (i == 0)
+					head_cmp = cmp;
+
+				if (end_block_cmp == CMP_NE)
+					cmp = INVERT_CMP(cmp);
+
+				ctx.script->zasm[m].command = GOTOCMP;
+				ctx.script->zasm[m].arg1 = goto_pc;
+				ctx.script->zasm[m].arg2 = cmp;
+
+				remove(ctx, m + 1, block_final);
+				if (i == 0)
+					j += block_final - m + 2;
+			}
+
+			if (ctx.script) continue;
+			// TODO rm
+			
 			int start = j;
 			int final = k;
 			int count = k - j + 1;
-			int goto_pc = ctx.script->zasm[final].arg1;
+			goto_pc = ctx.script->zasm[final].arg1;
 
 			pc_t block_1 = edges[0];
 			pc_t block_2 = edges[1];
@@ -593,6 +793,7 @@ static void optimize_compare(OptContext& ctx)
 			}
 
 			// ctx.script->zasm[start + 1] = ctx.script->zasm[final];
+			// ASSERT(post_block_pc == goto_pc);
 			ctx.script->zasm[start + 1].command = GOTOCMP;
 			ctx.script->zasm[start + 1].arg1 = goto_pc;
 			ctx.script->zasm[start + 1].arg2 = head_block_cmp;
@@ -644,9 +845,10 @@ static void optimize_unreachable_blocks(OptContext& ctx)
 	}
 }
 
-static int optimize_function(script_data* script, const ZasmFunction& fn)
+static int optimize_function(StructuredZasm& structured_zasm, script_data* script, const ZasmFunction& fn)
 {
 	OptContext ctx;
+	ctx.structured_zasm = &structured_zasm;
 	ctx.saved = 0;
 	ctx.script = script;
 	ctx.fn = fn;
@@ -708,7 +910,7 @@ int zasm_optimize(script_data* script)
 		// 	continue;
 		// }
 
-		saved += optimize_function(script, fn);
+		saved += optimize_function(structured_zasm, script, fn);
 	}
 
 	// TODO: remove NOPs and update GOTOs.
@@ -1207,7 +1409,7 @@ bool zasm_optimize_test()
 
 			{PUSHR, D(4)},                          // 6: [Block 1 -> 2]
 			{PUSHV, 1337},
-			{TRACEV, 1337},
+			{CALLFUNC, 17},                         // Call a function, b/c that overwrites D2
 			{POP, D(4)},
 			{CASTBOOLF, D(2)},
 
@@ -1219,6 +1421,8 @@ bool zasm_optimize_test()
 			{TRACEV, 0},                            // 15: [Block 3 -> 4]
 
 			{QUIT},                                 // 16: [Block 4 ->  ]
+
+			{RETURNFUNC},                           // 17
 			{0xFFFF},
 		};
 		script.zasm = s;
@@ -1235,7 +1439,7 @@ bool zasm_optimize_test()
 
 			{PUSHR, D(4)},
 			{PUSHV, 1337},
-			{TRACEV, 1337},
+			{CALLFUNC, 17},
 			{POP, D(4)},
 			{COMPAREV, D(2), 1},
 
@@ -1247,6 +1451,8 @@ bool zasm_optimize_test()
 			{TRACEV, 0},
 
 			{QUIT},
+
+			{RETURNFUNC},
 			{0xFFFF},
 		});
 	}
@@ -1311,6 +1517,68 @@ bool zasm_optimize_test()
 			{TRACEV, 0},
 
 			{QUIT},
+			{0xFFFF},
+		});
+	}
+
+	{
+		name = "random stuff COMPARER across blocks";
+		ffscript s[] = {
+			{COMPAREV, D(2), 0},                 // 0: [Block 0 -> 1, 2]
+			{GOTOTRUE, 16},
+
+			{LOADD, D(2), 20000},                // 2: [Block 1 -> 2, 3]
+			{PUSHR, D(2)},
+			{LOADD, D(2), 0},
+			{COMPAREV, D(2), 0},
+			{SETCMP, D(2), CMP_NE},
+			{COMPAREV, D(2), 0},
+			{GOTOTRUE, 10},
+
+			{GOTO, 15},                          // 10: [Block 2 -> 5]
+
+			{LOADD, D(2), 0},                    // 10: [Block 3 -> 4]
+			{COMPAREV, D(2), 0},
+			{GOTOTRUE, 13},
+
+			{LOADD, D(2), 0},                    // 13: [Block 4 -> 6]
+			{TRACER, D(2)},
+			{GOTO, 16},
+
+			{TRACEV, 0},                         // 15: [Block 5 -> 6]
+
+			{QUIT},                              // 16: [Block 6 ->  ]
+			{0xFFFF},
+		};
+		script.zasm = s;
+		script.recalc_size();
+		zasm_optimize(&script);
+
+		expect(name, &script, {
+			{COMPAREV, D(2), 0},                 // 0: [Block 0 -> 1, 2]
+			{GOTOCMP, 16, CMP_EQ},
+
+			{LOADD, D(2), 20000},                // 2: [Block 1 -> 2, 3]
+			{PUSHR, D(2)},
+			{LOADD, D(2), 0},
+			{COMPAREV, D(2), 0},
+			{GOTOCMP, 10, CMP_EQ},
+			{NOP},
+			{NOP},
+
+			{GOTO, 15},                          //  9: [Block 2 -> 3]
+
+			{LOADD, D(2), 0},                    // 10: [Block 3 -> 4]
+			{COMPAREV, D(2), 0},
+			{GOTOCMP, 13, CMP_EQ},
+
+			{LOADD, D(2), 0},                    // 13: [Block 4 -> 5]
+			{TRACER, D(2)},
+			{GOTO, 16},
+
+			{TRACEV, 0},
+
+			{QUIT},                              // 16: [Block 6 ->  ]
 			{0xFFFF},
 		});
 	}

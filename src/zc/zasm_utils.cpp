@@ -267,7 +267,7 @@ static std::string zasm_to_string(const script_data* script, const StructuredZas
 	return ss.str();
 }
 
-std::string zasm_to_string(const script_data* script, bool generate_yielder)
+std::string zasm_to_string(const script_data* script, bool top_functions, bool generate_yielder)
 {
 	std::stringstream ss;
 	auto structured_zasm = zasm_construct_structured(script);
@@ -311,19 +311,22 @@ std::string zasm_to_string(const script_data* script, bool generate_yielder)
 		fn_lengths.emplace_back(fn_id, fn.final_pc - fn.start_pc + 1);
 	}
 
-	ss << "Top functions:\n\n";
-	std::sort(fn_lengths.begin(), fn_lengths.end(), [](auto &left, auto &right) {
-		return left.second > right.second;
-	});
-	int lengths_printed = 0;
-	for (auto [fn_id, length] : fn_lengths)
+	if (top_functions)
 	{
-		std::string name = fn_id == -1 ? "yielder" : zasm_fn_get_name(structured_zasm.functions.at(fn_id));
-		double percent = (double)length / script->size * 100;
-		ss << std::setw(15) << std::left << name + ": " << std::setw(6) << std::left << length << " " << (int)percent << '%' << '\n';
-		if (++lengths_printed == 5) break;
+		ss << "Top functions:\n\n";
+		std::sort(fn_lengths.begin(), fn_lengths.end(), [](auto &left, auto &right) {
+			return left.second > right.second;
+		});
+		int lengths_printed = 0;
+		for (auto [fn_id, length] : fn_lengths)
+		{
+			std::string name = fn_id == -1 ? "yielder" : zasm_fn_get_name(structured_zasm.functions.at(fn_id));
+			double percent = (double)length / script->size * 100;
+			ss << std::setw(15) << std::left << name + ": " << std::setw(6) << std::left << length << " " << (int)percent << '%' << '\n';
+			if (++lengths_printed == 5) break;
+		}
+		ss << '\n';
 	}
-	ss << '\n';
 
 	return ss.str();
 }

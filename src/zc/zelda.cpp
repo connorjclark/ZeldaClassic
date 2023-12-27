@@ -4249,13 +4249,14 @@ void do_extract_zasm_command(const char* quest_path)
 
 	DEBUG_PRINT_TO_FILE = true;
 	strcpy(qstpath, quest_path);
+	bool top_functions = true;
 	bool generate_yielder = get_flag_bool("-extract-zasm-yielder").value_or(false);
 	bool optimize = get_flag_bool("-extract-zasm-optimize").value_or(false);
 	zasm_for_every_script([&](script_data* script){
 		if (optimize)
 			zasm_optimize(script);
 		ScriptDebugHandle h(ScriptDebugHandle::OutputSplit::ByScript, script);
-		h.print(zasm_to_string(script, generate_yielder).c_str());
+		h.print(zasm_to_string(script, top_functions, generate_yielder).c_str());
 	});
 
 	exit(0);
