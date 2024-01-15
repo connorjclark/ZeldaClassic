@@ -507,60 +507,60 @@ static bool command_is_compiled(int command)
 	switch (command)
 	{
 	// These commands are critical to control flow.
-	case COMPARER:
-	case COMPAREV:
-	case COMPAREV2:
+	// case COMPARER:
+	// case COMPAREV:
+	// case COMPAREV2:
 	case GOTO:
-	case GOTOR:
-	case QUIT:
-	case RETURN:
-	case CALLFUNC:
-	case RETURNFUNC:
+	// case GOTOR:
+	// case QUIT:
+	// case RETURN:
+	// case CALLFUNC:
+	// case RETURNFUNC:
 
 	// These commands modify the stack pointer, which is just a local copy. If these commands
 	// were not compiled, then vStackIndex would have to be restored after compile_command_interpreter.
-	case POP:
-	case POPARGS:
-	case PUSHR:
-	case PUSHV:
-	case PUSHARGSR:
-	case PUSHARGSV:
+	// case POP:
+	// case POPARGS:
+	// case PUSHR:
+	// case PUSHV:
+	// case PUSHARGSR:
+	// case PUSHARGSV:
 
 	// These can be commented out to instead run interpreted. Useful for
 	// singling out problematic instructions.
-	case ABS:
-	case ADDR:
-	case ADDV:
-	case ANDR:
-	case ANDV:
-	case CASTBOOLF:
-	case CASTBOOLI:
-	case CEILING:
-	case DIVR:
-	case DIVV:
-	case FLOOR:
-	case LOADD:
-	case LOADI:
-	case MAXR:
-	case MAXV:
-	case MINR:
-	case MINV:
-	case MODR:
-	case MODV:
-	case MULTR:
-	case MULTV:
-	case NOP:
-	case SETR:
-	case SETV:
-	case STORED:
-	case STOREDV:
-	case STOREI:
-	case SUBR:
-	case SUBV:
-	case SUBV2:
+	// case ABS:
+	// case ADDR:
+	// case ADDV:
+	// case ANDR:
+	// case ANDV:
+	// case CASTBOOLF:
+	// case CASTBOOLI:
+	// case CEILING:
+	// case DIVR:
+	// case DIVV:
+	// case FLOOR:
+	// case LOADD:
+	// case LOADI:
+	// case MAXR:
+	// case MAXV:
+	// case MINR:
+	// case MINV:
+	// case MODR:
+	// case MODV:
+	// case MULTR:
+	// case MULTV:
+	// case NOP:
+	// case SETR:
+	// case SETV:
+	// case STORED:
+	// case STOREDV:
+	// case STOREI:
+	// case SUBR:
+	// case SUBV:
+	// case SUBV2:
 	
 	//
-	case STACKWRITEATVV:
+	// case STACKWRITEATVV:
 		return true;
 	}
 
@@ -585,6 +585,7 @@ static void error(ScriptDebugHandle* debug_handle, script_data *script, std::str
 // Compile the entire ZASM script at once, into a single function.
 JittedFunction jit_compile_script(script_data *script)
 {
+	if (script->meta.script_name != "LttP_Bumper") return nullptr;
 	if (script->size <= 1)
 		return nullptr;
 
@@ -678,7 +679,7 @@ JittedFunction jit_compile_script(script_data *script)
 	}
 
 	x86::Compiler cc(&code);
-	// cc.addDiagnosticOptions(DiagnosticOptions::kRAAnnotate | DiagnosticOptions::kRADebugAll);
+	cc.addDiagnosticOptions(DiagnosticOptions::kRAAnnotate | DiagnosticOptions::kRADebugAll);
 
 	// Setup parameters.
 	cc.addFunc(FuncSignatureT<int32_t, int32_t *, int32_t *, int32_t *, uint16_t *, uint32_t *, intptr_t *, uint32_t *, uint32_t *>(state.calling_convention));
@@ -916,6 +917,8 @@ JittedFunction jit_compile_script(script_data *script)
 			i += uncompiled_command_count - 1;
 			continue;
 		}
+
+		//if(script) continue;
 
 		// Every command here must be reflected in command_is_compiled!
 		switch (command)

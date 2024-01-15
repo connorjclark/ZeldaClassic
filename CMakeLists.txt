@@ -671,13 +671,13 @@ elseif(JIT_BACKEND STREQUAL "x64")
 		GIT_REPOSITORY
 			https://github.com/asmjit/asmjit.git
 		GIT_TAG
-			7e64eabca49c1a4d2cbfb06e4b9d3987bce7f7b3
+			118ae6ced160f68dd142a0d758aa7efb4356196a
 	)
 	FetchContent_MakeAvailable(asmjit)
 	target_link_libraries(zplayer PRIVATE asmjit)
 
 	get_target_property(asm_compile_options asmjit COMPILE_OPTIONS)
-	string(REPLACE "$<NOT:$<CONFIG:Debug>>" "$<NOT:$<CONFIG:Debug,Asan>>" asm_compile_options "${asm_compile_options}")
+	# string(REPLACE "$<NOT:$<CONFIG:Debug>>" "$<NOT:$<CONFIG:Debug,Asan>>" asm_compile_options "${asm_compile_options}")
 	set_target_properties(asmjit PROPERTIES COMPILE_OPTIONS "${asm_compile_options}")
 elseif(JIT_BACKEND STREQUAL "wasm")
 	target_sources(zplayer PUBLIC src/zc/jit_wasm.cpp)
