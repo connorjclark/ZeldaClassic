@@ -825,17 +825,18 @@ JittedFunction jit_compile_script(script_data *script)
 		if (goto_labels.contains(i))
 		{
 			cc.bind(goto_labels.at(i));
+			if(debug_handle)debug_handle->printf("cc.bind(goto_labels.at(%d))\n", i);
 		}
 
 		if (DEBUG_JIT_PRINT_ASM && structured_zasm.start_pc_to_function.contains(i))
 		{
-			cc.setInlineComment((comment = fmt::format("function {}", structured_zasm.start_pc_to_function.at(i))).c_str());
-			cc.nop();
+			// cc.setInlineComment((comment = fmt::format("function {}", structured_zasm.start_pc_to_function.at(i))).c_str());
+			// cc.nop();
 		}
 
 		if (DEBUG_JIT_PRINT_ASM)
 		{
-			cc.setInlineComment((comment = fmt::format("{} {}", i, script_debug_command_to_string(command, arg1, arg2, arg3, argvec, argstr))).c_str());
+			// cc.setInlineComment((comment = fmt::format("{} {}", i, script_debug_command_to_string(command, arg1, arg2, arg3, argvec, argstr))).c_str());
 		}
 
 		// Can be useful for debugging.
@@ -852,22 +853,22 @@ JittedFunction jit_compile_script(script_data *script)
 		// trace being printed just once for the entire group of instructions.
 		if (runtime_debugging && !command_uses_comparison_result(command))
 		{
-			InvokeNode *invokeNode;
-			cc.invoke(&invokeNode, debug_pre_command, FuncSignatureT<void, int32_t, uint16_t>(state.calling_convention));
-			invokeNode->setArg(0, i);
-			invokeNode->setArg(1, vStackIndex);
+			// InvokeNode *invokeNode;
+			// cc.invoke(&invokeNode, debug_pre_command, FuncSignatureT<void, int32_t, uint16_t>(state.calling_convention));
+			// invokeNode->setArg(0, i);
+			// invokeNode->setArg(1, vStackIndex);
 		}
 
 		if (command_uses_comparison_result(command))
 		{
-			compile_compare(state, cc, goto_labels, vStackIndex, command, op.arg1, op.arg2, op.arg3);
+			// compile_compare(state, cc, goto_labels, vStackIndex, command, op.arg1, op.arg2, op.arg3);
 			continue;
 		}
 
 		if (command_is_wait(command))
 		{
-			compile_command_interpreter(state, cc, script, i, 1, vStackIndex);
-			cc.mov(x86::ptr_32(state.ptrWaitIndex), label_index + 1);
+			//compile_command_interpreter(state, cc, script, i, 1, vStackIndex);
+			//cc.mov(x86::ptr_32(state.ptrWaitIndex), label_index + 1);
 			cc.jmp(state.L_End);
 			cc.bind(wait_frame_labels[label_index]);
 			label_index += 1;
@@ -944,16 +945,17 @@ JittedFunction jit_compile_script(script_data *script)
 			if (structured_zasm.function_calls.contains(i))
 			{
 				// https://github.com/asmjit/asmjit/issues/286
-				x86::Gp address = cc.newIntPtr();
-				cc.lea(address, x86::qword_ptr(call_pc_to_return_label.at(i)));
-				cc.mov(x86::qword_ptr(state.ptrCallStackRets, vCallStackRetIndex, 3), address);
-				cc.add(vCallStackRetIndex, 1);
-				cc.jmp(goto_labels.at(arg1));
-				cc.bind(call_pc_to_return_label.at(i));
+				// x86::Gp address = cc.newIntPtr();
+				// cc.lea(address, x86::qword_ptr(call_pc_to_return_label.at(i)));
+				// cc.mov(x86::qword_ptr(state.ptrCallStackRets, vCallStackRetIndex, 3), address);
+				// cc.add(vCallStackRetIndex, 1);
+				// cc.jmp(goto_labels.at(arg1));
+				// cc.bind(call_pc_to_return_label.at(i));
 			}
 			else
 			{
 				cc.jmp(goto_labels.at(arg1));
+				if(debug_handle)debug_handle->printf("cc.jmp(goto_labels.at(%d))\n", arg1);
 			}
 		}
 		break;

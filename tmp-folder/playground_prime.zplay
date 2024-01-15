@@ -1,0 +1,99 @@
+M debug true
+M qst playground.qst
+M script_trace true
+M starting_dmap 0
+M starting_retsqr 0
+M starting_scr 2
+M sync_rng true
+M test_mode true
+M frames 69
+M time_created Mon Jan  9 22:00:06 2023
+M time_updated Mon Jan  9 22:12:34 2023
+M version latest
+M zc_version_created 2.55.0 Nightly (Alpha 111/112)
+M zc_version_updated 2.55.0 Nightly (Alpha 111/112)
+K 0 84 85 82 83 26 24 67 17 23 75 1 19 4 3
+C 0 init_game
+R 0 0 1 1673330406
+R 0 2 257 1971858558
+C 0 getitem Shield 1 (Small)
+C 0 dmap=0
+C 0 scr=2
+C 0 h 80 50
+C 0 g DJ,
+C 1 g FYM
+C 2 g BJg
+C 3 g Gp%
+C 4 g Cs;
+C 5 g BOb
+C 6 g FMU
+C 7 g GaW
+C 8 g EF3
+C 9 g EcU
+C 10 g C@9
+C 11 g E)}
+C 12 g Dc+
+C 13 g F4o
+C 14 g FqE
+C 15 g Guu
+C 16 g H@H
+C 17 g GtO
+C 18 g Fza
+C 19 g GMo
+C 20 g Ez6
+C 21 g q)
+C 22 g CQ}
+C 23 g DeN
+C 24 g Et&
+C 25 g E50
+C 26 g EpF
+C 27 g #V
+C 28 g VW
+C 29 g H+
+C 30 g EpB
+C 31 g H6b
+C 32 g CG<
+C 33 g D1R
+C 34 g Bmq
+C 35 g GF)
+C 36 g }]
+C 37 g H0$
+C 38 g 6r
+C 39 g BZH
+C 40 g DS^
+C 41 g Gxk
+C 42 g Gle
+C 43 g D!j
+C 44 g D!,
+C 45 g dQ
+C 46 g G~p
+C 47 g T^
+C 48 g DLX
+C 49 g F;i
+C 50 g BG&
+C 51 g HkQ
+C 52 g FX{
+C 53 g ST
+C 54 g E3Y
+C 55 g FMC
+C 56 g CIr
+C 57 g B:1
+C 58 g Z;
+C 59 g .x
+C 60 g C6s
+C 61 g HDj
+C 62 g HR)
+C 63 g Es_
+C 64 g E5[
+C 65 g C3h
+C 66 trace: 2.0000
+C 66 trace: 3.0000
+C 66 trace: 643.0000
+C 66 g FU*
+C 67 trace: 2.0000
+C 67 trace: 3.0000
+C 67 trace: 643.0000
+C 68 trace: 2.0000
+C 68 trace: 3.0000
+C 68 trace: 643.0000
+Q 69 3
