@@ -49,6 +49,15 @@ bool zasm_optimize_enabled()
 	return enabled;
 }
 
+// TODO: remove when more stable.
+// Need to clean up the code for what registers/commands have side effects, use implicit registers, etc.
+// Need to verify nothing was missed.
+static bool should_run_experimental_passes()
+{
+	static bool enabled = get_flag_bool("-optimize-zasm-experimental").has_value() || get_flag_bool("-test-optimize-zasm").has_value() || get_flag_bool("-extract-zasm-optimize").has_value() || get_flag_bool("-replay-exit-when-done").has_value() || is_ci();
+	return enabled;
+}
+
 // Very useful tool for identifying a single bad optimization.
 // Use with a tool like `find-first-fail`: https://gitlab.com/ole.tange/tangetools/-/blob/master/find-first-fail/find-first-fail
 // 1. Enable ENABLE_BISECT_TOOL below.
@@ -1763,6 +1772,9 @@ static std::vector<ffscript> compile_conditional(const ffscript& instr, const Si
 // between setting to a D-register and using it.
 static void optimize_propagate_values(OptContext& ctx)
 {
+	if (!should_run_experimental_passes())
+		return;
+
 	add_context_cfg(ctx);
 	optimize_by_block(ctx, [&](pc_t block_index, pc_t start_pc, pc_t final_pc){
 		SimulationState state{};
@@ -2508,6 +2520,9 @@ static void optimize_inline_functions(OptContext& ctx)
 // https://www.cs.cmu.edu/afs/cs/academic/class/15745-s19/www/lectures/L5-Intro-to-Dataflow.pdf
 static void optimize_dead_code(OptContext& ctx)
 {
+	if (!should_run_experimental_passes())
+		return;
+
 	add_context_cfg(ctx);
 
 	std::map<pc_t, std::vector<pc_t>> precede;
