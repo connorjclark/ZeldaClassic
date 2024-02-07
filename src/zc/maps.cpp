@@ -3308,6 +3308,191 @@ void draw_cmb_pos(BITMAP* dest, int32_t x, int32_t y, byte pos, int32_t cid,
 	draw_cmb(dest, COMBOX(pos)+x, COMBOY(pos)+y, cid, cset, over, transp);
 }
 
+
+struct tile_map
+{
+	BITMAP* bitmap = create_bitmap(256, 224);
+	int tmp;
+	int layer;
+	bool over;
+	bool transparent;
+	int tile[176];
+	int cset[176];
+};
+
+static bool USE_TILE_MAP_RENDERER = !true;
+static std::vector<tile_map> tile_maps;
+
+// TODO:
+// need to build layers...
+// ... then call drawtile one at a time...
+// ... maybe even need a `callback` layer thing for non-tilemaps inbetween...
+// TODO: waste of time? not much faster. and hard.
+// 𐳼 ss_jenny.zplay                                                                 1m 58s 1430 fps   failure on frame 74124
+// 𐳼 stellar_seas_randomizer.zplay                                                  6m 07s  272 fps   failure on frame 39195
+
+
+static void do_tile_map_render(BITMAP* bmp, const mapscr* scr, int layer, bool over, bool transp, int x, int y)
+{
+	int tmp = scr == &tmpscr[0] ? 0 : 1;
+	auto tile_map_it = std::find_if(tile_maps.begin(), tile_maps.end(), [&](auto& tm){
+		return tm.layer == layer && tm.tmp == tmp;
+	});
+	tile_map* tm;
+	if (tile_map_it == tile_maps.end())
+	{
+		auto& tm_new = tile_maps.emplace_back();
+		clear_bitmap(tm_new.bitmap);
+		tm_new.layer = layer;
+		tm_new.tmp = tmp;
+		tm = &tm_new;
+	}
+	else
+	{
+		tm = &(*tile_map_it);
+	}
+
+	int num = 0;
+	for(int32_t i=0; i<176; i++)
+	{
+		newcombo const& c = combobuf[scr->data[i]];
+		int tile = combo_tile(c, x, y);
+		int cset = scr->cset[i];
+		if (tm->tile[i] == tile && tm->cset[i] == cset)
+			continue;
+
+		draw_cmb_pos(tm->bitmap, 0, 0, i, scr->data[i], cset, layer, over, transp);
+		tm->tile[i] = tile;
+		tm->cset[i] = cset;
+		num++;
+	}
+	if (num)
+		printf("%d\n", num);
+
+	assert(bmp->w >= tm->bitmap->w);
+	assert(bmp->h >= tm->bitmap->h);
+	blit(tm->bitmap, bmp, 0, 0, x, y, tm->bitmap->w, tm->bitmap->h);
+}
+
+struct tile_map2
+{
+	int layer;
+	int x;
+	int y;
+	bool over;
+	bool transparent;
+	int combo[176];
+	int tile[176];
+	int cset[176];
+};
+
+static std::vector<tile_map2> tile_maps_prev_frame;
+static std::vector<tile_map2> tile_maps_this_frame;
+static BITMAP* tile_map_bitmap;
+static bool is_tile_map_rendering_;
+
+static void start_tile_map_rendering()
+{
+	is_tile_map_rendering_ = true;
+	tile_maps_this_frame.clear();
+	if (tile_map_bitmap == nullptr)
+	{
+		tile_map_bitmap = create_bitmap(256, 224);
+		clear_bitmap(tile_map_bitmap);
+	}
+}
+
+static void tile_map_render_add_layer(BITMAP* bmp, const mapscr* scr, int layer, bool over, bool transp, int x, int y)
+{
+	auto& tm = tile_maps_this_frame.emplace_back();
+	tm.layer = layer;
+	tm.over = over;
+	tm.transparent = transp;
+	tm.x = x;
+	tm.y = y;
+
+	for (int i = 0; i < 176; i++)
+	{
+		int combo = scr->data[i];
+		newcombo const& c = combobuf[combo];
+		int tile = combo_tile(c, x, y);
+		int cset = scr->cset[i];
+		tm.combo[i] = combo;
+		tm.tile[i] = tile;
+		tm.cset[i] = cset;
+	}
+}
+
+static void end_tile_map_rendering(BITMAP* dest)
+{
+	bool redraw_all = true;
+	if (tile_maps_this_frame.size() != tile_maps_prev_frame.size())
+	{
+		redraw_all = true;
+		tile_maps_prev_frame = tile_maps_this_frame;
+	}
+
+	int num = 0;
+	// bool redraw_index[176];
+	for (int i = 0; i < 176; i++)
+	{
+		bool redraw = redraw_all;
+
+		for (int j = 0; j < tile_maps_this_frame.size() && !redraw; j++)
+		{
+			const auto& this_frame = tile_maps_this_frame[j];
+			auto& prev_frame = tile_maps_prev_frame[j];
+			// if (this_frame.over == prev_frame.over && this_frame.transparent == prev_frame.transparent && this_frame.cset[i] == prev_frame.cset[i] && this_frame.combo[i] == prev_frame.combo[i] && this_frame.tile[i] == prev_frame.tile[i])
+			if (this_frame.cset[i] == prev_frame.cset[i] && this_frame.combo[i] == prev_frame.combo[i] && this_frame.tile[i] == prev_frame.tile[i])
+				continue;
+
+			prev_frame = this_frame;
+			redraw = true;
+		}
+
+		// redraw_index[i] = redraw;
+		if (!redraw)
+			continue;
+
+		for (int j = 0; j < tile_maps_this_frame.size(); j++)
+		{
+			const auto& lyr = tile_maps_this_frame[j];
+			draw_cmb_pos(tile_map_bitmap, lyr.x, lyr.y, i, lyr.combo[i], lyr.cset[i], lyr.layer, lyr.over, lyr.transparent);
+			num += 1;
+		}
+	}
+
+	// for (int j = 0; j < tile_maps_this_frame.size(); j++)
+	// {
+	// 	const auto& lyr = tile_maps_this_frame[j];
+	// 	for (int i = 0; i < 176; i++)
+	// 	{
+	// 		if (!redraw_index[i])
+	// 			continue;
+
+	// 		draw_cmb_pos(tile_map_bitmap, lyr.x, lyr.y, i, lyr.combo[i], lyr.cset[i], lyr.layer, lyr.over, lyr.transparent);
+	// 		num += 1;
+	// 	}
+	// }
+
+	if (num)
+		printf("%d\n", num);
+
+	BITMAP* src = tile_map_bitmap;
+	assert(dest->w >= src->w);
+	assert(dest->h >= src->h);
+	blit(src, dest, 0, 0, 0, 0, src->w, src->h);
+
+	// if (num)
+	// 	tile_maps_prev_frame = tile_maps_this_frame;
+	is_tile_map_rendering_ = false;
+}
+
+static bool is_tile_map_rendering()
+{
+	return is_tile_map_rendering_;
+}
+
 void do_scrolling_layer(BITMAP *bmp, int32_t type, int32_t layer, mapscr* basescr, int32_t x, int32_t y, bool scrolling, int32_t tempscreen)
 {
 	mapscr const* tmp = (layer > 0 ? (&(tempscreen==2?tmpscr2[layer-1]:tmpscr3[layer-1]))
@@ -3404,7 +3589,13 @@ void do_scrolling_layer(BITMAP *bmp, int32_t type, int32_t layer, mapscr* basesc
 			}
 			return;
 	}
-	
+
+	if (is_tile_map_rendering())
+	{
+		tile_map_render_add_layer(bmp, tmp, layer, over, transp, x, y-playing_field_offset);
+		return;
+	}
+
 	for(int32_t i=0; i<176; i++)
 	{
 		draw_cmb_pos(bmp, -x, playing_field_offset-y, i, tmp->data[i], tmp->cset[i], layer, over, transp);
@@ -4020,7 +4211,7 @@ void draw_screen(mapscr* this_screen, bool showhero, bool runGeneric)
 	
 	//1. Draw some background layers
 	clear_bitmap(scrollbuf);
-	
+
 	if(XOR(this_screen->flags7&fLAYER2BG, DMaps[currdmap].flags&dmfLAYER2BG))
 	{
 		do_layer(scrollbuf, 0, 2, this_screen, 0, 0, 2, false, true);
@@ -4039,11 +4230,17 @@ void draw_screen(mapscr* this_screen, bool showhero, bool runGeneric)
 	
 	if(lenscheck(this_screen,0))
 	{
+		if (USE_TILE_MAP_RENDERER)
+			start_tile_map_rendering();
 		putscr(scrollbuf,0,playing_field_offset,this_screen);
+		// TODO: how is this not much faster?
+		if (USE_TILE_MAP_RENDERER)
+			end_tile_map_rendering(scrollbuf);
 		if(!get_qr(qr_PUSHBLOCK_SPRITE_LAYER))
 			if(mblock2.draw(scrollbuf,0))
 				do_primitives(scrollbuf, SPLAYER_MOVINGBLOCK, this_screen, 0, playing_field_offset);
 	}
+
 	
 	// Lens hints, then primitives, then particles.
 	if((lensclk || (get_debug() && zc_getkey(KEY_L))) && !get_qr(qr_OLDLENSORDER))
@@ -4166,6 +4363,9 @@ void draw_screen(mapscr* this_screen, bool showhero, bool runGeneric)
 		draw_lens_under(scrollbuf, true);
 		do_primitives(scrollbuf, SPLAYER_LENS_UNDER_2, this_screen, 0, playing_field_offset);
 	}
+
+	// if (USE_TILE_MAP_RENDERER)
+	// 	end_tile_map_rendering(scrollbuf);
 	
 	//2. Blit those layers onto framebuf
 	
@@ -5601,6 +5801,19 @@ void putscr(BITMAP* dest,int32_t x,int32_t y, mapscr* scrn)
 	
 	bool over = XOR(scrn->flags7&fLAYER2BG,DMaps[currdmap].flags&dmfLAYER2BG)
 		|| XOR(scrn->flags7&fLAYER3BG, DMaps[currdmap].flags&dmfLAYER3BG);
+	
+
+	// if (!over && USE_TILE_MAP_RENDERER)
+	// {
+	// 	do_tile_map_render(dest, scrn, 0, over, false, x, y);
+	// 	return;
+	// }
+
+	if (is_tile_map_rendering())
+	{
+		tile_map_render_add_layer(dest, scrn, 0, over, false, x, y);
+		return;
+	}
 
 	for(int32_t i=0; i<176; ++i)
 	{
