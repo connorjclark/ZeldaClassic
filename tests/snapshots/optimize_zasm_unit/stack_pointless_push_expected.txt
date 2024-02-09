@@ -1,8 +1,14 @@
+rewrite 46: 3 -> 3 commands
+46: SETR            D0              LINKX  
+47: TRACER          D0              
+48: TRACER          D0              
+remove 80: SETR            D3              GD3    
+remove 73: SETR            D2              D3     
 Function #0
     0: CALLFUNC        5                            [Block 0 -> ][Call Function #1]
     1: CALLFUNC        39                           [Call Function #2]
-    2: CALLFUNC        54                           [Call Function #4]
-    3: CALLFUNC        71                           [Call Function #5]
+    2: CALLFUNC        54                           [Call Function #3]
+    3: CALLFUNC        71                           [Call Function #4]
     4: QUIT
 
 
@@ -51,20 +57,17 @@ Function #2
    43: SETV            D1              0
    44: SETR            SCRIPTRAM       D2
    45: PUSHR           D0
-   46: PUSHR           D4
-   47: CALLFUNC        50                           [Call Function #3]
-   48: POP             D4
+   46: SETR            D0              LINKX
+   47: TRACER          D0
+   48: TRACER          D0
    49: RETURNFUNC
+   50: NOP
+   51: NOP
+   52: NOP
+   53: NOP
 
 
 Function #3
-   50: SETR            D0              LINKX        [Block 0 -> ]
-   51: TRACER          D0
-   52: TRACER          D0
-   53: RETURNFUNC
-
-
-Function #4
    54: PUSHR           D0                           [Block 0 -> ]
    55: PUSHR           REFFFC
    56: PUSHARGSV       0               7
@@ -84,7 +87,7 @@ Function #4
    70: RETURNFUNC
 
 
-Function #5
+Function #4
    71: LOAD            D3              0            [Block 0 -> ]
    72: NOP
    73: NOP

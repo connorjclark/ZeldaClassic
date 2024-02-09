@@ -47,8 +47,8 @@ Function #2
 
 
 Function #3
-   39: NOP                                          [Block 0 -> ]
-   40: NOP
+   39: LOAD            D2              0            [Block 0 -> ]
+   40: ADDR            D2              D0
    41: NOP
    42: NOP
    43: RETURNFUNC

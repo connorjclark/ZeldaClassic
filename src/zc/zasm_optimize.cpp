@@ -381,6 +381,7 @@ struct OptContext
 	bool cfg_stale;
 	std::vector<pc_t> block_starts;
 	std::set<pc_t> block_unreachable;
+	OptimizeResults* results;
 	StructuredZasm* structured_zasm;
 	bool debug;
 };
@@ -388,9 +389,10 @@ struct OptContext
 #define C(i) (ctx.script->zasm[i])
 #define E(i) (ctx.cfg.block_edges.at(i))
 
-static OptContext create_context_no_cfg(StructuredZasm& structured_zasm, script_data* script, const ZasmFunction& fn)
+static OptContext create_context_no_cfg(OptimizeResults& results, StructuredZasm& structured_zasm, script_data* script, const ZasmFunction& fn)
 {
 	OptContext ctx{};
+	ctx.results = &results;
 	ctx.structured_zasm = &structured_zasm;
 	ctx.script = script;
 	ctx.fn = fn;
@@ -410,9 +412,9 @@ static void add_context_cfg(OptContext& ctx)
 	ctx.cfg_stale = false;
 }
 
-static OptContext create_context(StructuredZasm& structured_zasm, script_data* script, const ZasmFunction& fn)
+static OptContext create_context(OptimizeResults& results, StructuredZasm& structured_zasm, script_data* script, const ZasmFunction& fn)
 {
-	auto ctx = create_context_no_cfg(structured_zasm, script, fn);
+	auto ctx = create_context_no_cfg(results, structured_zasm, script, fn);
 	add_context_cfg(ctx);
 	return ctx;
 }
@@ -655,31 +657,18 @@ static void optimize_conseq_additive(OptContext& ctx)
 //   LOAD            D2              4
 static void optimize_load_store(OptContext& ctx)
 {
-	if (bisect_tool_should_skip())
-		return;
-
-	for (pc_t i = ctx.fn.start_pc + 2; i < ctx.fn.final_pc; i++)
+	for (pc_t i = 0; i < ctx.script->size; i++)
 	{
 		int command = C(i).command;
 		int arg1 = C(i).arg1;
 		int arg2 = C(i).arg2;
 		if (!one_of(command, LOADI, STOREI) || arg2 != rSFTEMP) continue;
 
-		bool bail = false;
 		int setr_pc = i - 2;
 		while (!(C(setr_pc).command == SETR && C(setr_pc).arg1 == rSFTEMP && C(setr_pc).arg2 == rSFRAME))
 		{
-			if (setr_pc == ctx.fn.start_pc)
-			{
-				bail = true;
-				break;
-			}
 			setr_pc -= 1;
 		}
-
-		ASSERT(!bail);
-		if (bail)
-			continue;
 
 		int addv_arg2 = C(setr_pc + 1).arg2;
 		ASSERT(C(setr_pc + 1).command == ADDV);
@@ -689,7 +678,7 @@ static void optimize_load_store(OptContext& ctx)
 		remove(ctx, setr_pc, setr_pc + 1);
 	}
 
-	for (pc_t i = ctx.fn.start_pc; i < ctx.fn.final_pc; i++)
+	for (pc_t i = 0; i < ctx.script->size; i++)
 	{
 		int command = C(i).command;
 		int arg1 = C(i).arg1;
@@ -861,6 +850,7 @@ struct SimulationState
 	SimulationValue operand_2;
 	int operand_2_backing_reg = -1;
 	std::vector<SimulationValue> stack;
+	int sp = 0;
 	bool side_effects = false;
 	bool bail = false;
 
@@ -1281,8 +1271,6 @@ static void simulate(OptContext& ctx, SimulationState& state)
 			{
 				value = state.stack.back();
 				state.stack.pop_back();
-				if (value == reg(arg1))
-					break;
 				if (value.type == ValueType::Unknown)
 					value = reg(arg1);
 			}
@@ -1302,8 +1290,6 @@ static void simulate(OptContext& ctx, SimulationState& state)
 				{
 					value = state.stack.back();
 					state.stack.pop_back();
-					if (value == reg(arg1))
-						continue;
 					if (value.type == ValueType::Unknown)
 						value = reg(arg1);
 				}
@@ -1318,6 +1304,9 @@ static void simulate(OptContext& ctx, SimulationState& state)
 		}
 		case SETR:
 		{
+			if (arg1 == rSFRAME && arg2 == SP2)
+				state.sp = state.stack.size() - 1;
+
 			auto value = IS_GENERIC_REG(arg2) ? state.d[arg2] : reg(arg2);
 			simulate_set_value(ctx, state, arg1, value);
 			break;
@@ -1363,10 +1352,40 @@ static void simulate(OptContext& ctx, SimulationState& state)
 			return;
 		}
 
+		// TODO: this is a WIP
+		// case LOAD:
+		// {
+		// 	SimulationValue value;
+		// 	int index = state.sp - arg2;
+		// 	if (state.stack.size() > index)
+		// 	{
+		// 		value = state.stack.at(index);
+		// 		if (value.type == ValueType::Unknown)
+		// 			value = reg(arg1);
+		// 	}
+		// 	else
+		// 	{
+		// 		value = reg(arg1);
+		// 	}
+		// 	simulate_set_value(ctx, state, arg1, value);
+		// 	break;
+		// }
+
 		// TODO: handle
-		// case STACKWRITEATRV:
-		// case STACKWRITEATVV_IF:
-		// case STACKWRITEATVV:
+		// case STORE:
+		// case STORED:
+
+		// // Simulator is not used before the LOAD optimization, so ignore these for now.
+		// case LOADD:
+		// case LOADI:
+		// case STOREI:
+		// case STORED:
+		// {
+		// 	state.bail = true;
+		// 	ASSERT(false);
+		// 	break;
+		// }
+
 
 		default:
 			command_handled = false;
@@ -1574,6 +1593,7 @@ static void optimize_propagate_values(OptContext& ctx)
 
 		struct propagate_candidate
 		{
+			pc_t pc;
 			int32_t* arg;
 			int32_t new_arg;
 		};
@@ -1633,9 +1653,9 @@ static void optimize_propagate_values(OptContext& ctx)
 
 					if (!has_register_dependency(state.d[reg].data))
 					{
-						if (argn == 0) candidates.emplace_back(propagate_candidate{&C(state.pc).arg1, state.d[reg].data});
-						if (argn == 1) candidates.emplace_back(propagate_candidate{&C(state.pc).arg2, state.d[reg].data});
-						if (argn == 2) candidates.emplace_back(propagate_candidate{&C(state.pc).arg3, state.d[reg].data});
+						if (argn == 0) candidates.emplace_back(propagate_candidate{state.pc, &C(state.pc).arg1, state.d[reg].data});
+						if (argn == 1) candidates.emplace_back(propagate_candidate{state.pc, &C(state.pc).arg2, state.d[reg].data});
+						if (argn == 2) candidates.emplace_back(propagate_candidate{state.pc, &C(state.pc).arg3, state.d[reg].data});
 					}
 
 					reg_reads[reg] = true;
@@ -1682,16 +1702,23 @@ static void optimize_propagate_values(OptContext& ctx)
 							break;
 						}
 
+						if (j == start_pc)
+							break;
+
 						// If reads from stack, bail.
 						// TODO: is it worth keeping track of all commands that read stack? For now, use command_is_pure as standin...
 						// if (one_of(C(j).command, PRINTFVARG, SPRINTFVARG))
 						if (!command_is_pure(C(j).command))
-						{
 							break;
-						}
 
-						if (j == start_pc)
+						bool bail = false;
+						for_every_command_register_arg_include_indices(C(j), [&](bool read, bool write, int reg, int argn){
+							if (write && reg == state.d[arg1].data)
+								bail = true;
+						});
+						if (bail)
 							break;
+
 						j -= 1;
 					}
 					
@@ -1782,6 +1809,20 @@ static void optimize_spurious_branches(OptContext& ctx)
 
 		while (true)
 		{
+			// TODO: this is a WIP
+			// for (int k = state.pc; k <= state.final_pc; k++)
+			// {
+			// 	switch (C(k).command)
+			// 	{
+			// 		case LOAD:
+			// 		case LOADD:
+			// 		case LOADI:
+			// 			state.bail = true;
+			// 			break;
+			// 	}
+			// }
+			// if (state.bail)
+			// 	break;
 			simulate_block(ctx, state);
 			if (state.bail)
 				return;
@@ -1811,6 +1852,12 @@ static void optimize_spurious_branches(OptContext& ctx)
 			return;
 		if (goto_pc != C(final_pc).arg1)
 			ctx.cfg_stale = true;
+		// For debugging.
+		// for (int k = start_pc; k <= final_pc; k++)
+		// {
+		// 	fmt::println("old {}: {}", k, script_debug_command_to_string(C(k)));
+		// 	ctx.debug = true;
+		// }
 		C(final_pc) = {GOTOCMP, (int)goto_pc, command_to_cmp(command, C(final_pc).arg2)};
 		if (ctx.debug)
 			fmt::println("rewrite {}: {}", final_pc, script_debug_command_to_string(C(final_pc)));
@@ -2097,100 +2144,109 @@ static void optimize_calling_mode(OptContext& ctx)
 	}
 }
 
+static bool can_inline_function(const OptContext& ctx, const ZasmFunction& fn)
+{
+	if (fn.id == 0)
+		return false;
+
+	// We are limited to inlining function calls without inserting any additional commands,
+	// so there is an upper limit to the size of inlinable functions.
+	// The number of instructions it takes to call a function increases with how many parameters
+	// it has. We don't have that information, so we're just gonna guess. Function calls that
+	// don't have enough space to inline a function will be ignored in the next loop, so a guess
+	// is OK here.
+	size_t max_function_len = 0;
+	// For the CALLFUNC.
+	max_function_len += 1;
+	// For the PUSH/POP of the stack frame.
+	max_function_len += 2;
+	// For the PUSH of the return address - we always have CALLFUNC by this point, but there may be a NOP left behind
+	// from optimize_calling_mode.
+	max_function_len += 1;
+	// An additional three instructions, to cover maybe three paramaters being passed.
+	max_function_len += 3;
+
+	size_t length = fn.final_pc - fn.start_pc + 1;
+	if (length > max_function_len)
+		return false;
+
+	for (pc_t k = fn.start_pc; k <= fn.final_pc; k++)
+	{
+		// TODO: support GOTOs by rewriting their pcs.
+		if (command_is_goto(C(k).command))
+			return false;
+
+		// TODO: why does this break? see crucible_quest.zplay --frame 4000
+		if (C(k).command == QUIT)
+			return false;
+
+		// For now, don't inline large instructions.
+		if (C(k).strptr || C(k).vecptr)
+			return false;
+	}
+
+	return true;
+}
+
+static void optimize_function(OptContext& ctx, const ZasmFunction& fn);
 static void optimize_inline_functions(OptContext& ctx)
 {
 	struct InlineFunctionData
 	{
 		const ZasmFunction& fn;
-		ffscript inline_instr;
-		int internal_reg_to_type[8]; // 0 - stack index, 1 - z-register/number
-		int internal_reg_to_value[8];
+		int params_stack_start_index;
+		std::vector<ffscript> code_template;
 		bool all_uses_inlined = true;
 	};
 
 	std::map<pc_t, InlineFunctionData> functions_to_inline;
 	for (const auto& fn : ctx.structured_zasm->functions)
 	{
-		size_t length = fn.final_pc - fn.start_pc + 1;
-		if (length > 4)
+		if (!can_inline_function(ctx, fn))
+			continue;
+		if (bisect_tool_should_skip())
 			continue;
 
-		InlineFunctionData data = {fn};
-		for (int i = 0; i < 8; i++) data.internal_reg_to_type[i] = -1;
-		for (int i = 0; i < 8; i++) data.internal_reg_to_value[i] = -1;
+		// Optimize the function before attempting to inline it.
+		optimize_function(ctx, fn);
 
-		int stack = 0;
-		bool bail = true;
-		bool found_instr = false;
+		// Find how big function's stack is.
+		int function_stack_size = 0;
+		for (pc_t k = fn.start_pc; k <= fn.final_pc; k++)
+		{
+			if (C(k).command == SETR)
+			{
+				ASSERT(C(k).arg1 == D(4));
+				break;
+			}
+			if (one_of(C(k).command, PUSHR, PUSHV))
+			{
+				function_stack_size += 1;
+				continue;
+			}
+			if (one_of(C(k).command, PUSHARGSV, PUSHARGSR))
+			{
+				function_stack_size += C(k).arg2;
+				continue;
+			}
+			break;
+		}
+
+		InlineFunctionData data = {fn};
+		data.params_stack_start_index = function_stack_size;
+
 		for (pc_t k = fn.start_pc; k <= fn.final_pc; k++)
 		{
 			int command = C(k).command;
-			int arg1 = C(k).arg1;
-			int arg2 = C(k).arg2;
 
 			if (one_of(command, NOP, RETURNFUNC))
 				continue;
 
-			if (command == POP)
-			{
-				if (found_instr)
-					continue;
-
-				int reg = arg1;
-				if (reg >= D(8))
-				{
-					bail = true;
-					break;
-				}
-
-				// TODO: support more than 1 parameter.
-				if (stack == 1)
-				{
-					bail = true;
-					break;
-				}
-
-				data.internal_reg_to_value[reg] = stack++;
-				data.internal_reg_to_type[reg] = 0;
-				continue;
-			}
-
-			if (command == POPARGS)
-			{
-				bail = true;
-				break;
-			}
-
-			if (command == SETR)
-			{
-				if (found_instr)
-					continue;
-
-				int reg = arg1;
-				data.internal_reg_to_value[reg] = arg2;
-				data.internal_reg_to_type[reg] = 1;
-				continue;
-			}
-
-			if (found_instr)
-			{
-				bail = true;
-				break;
-			}
-
-			bail = false;
-			found_instr = true;
-			C(k).copy(data.inline_instr);
+			auto& instr = data.code_template.emplace_back();
+			C(k).copy(instr);
 		}
-		if (bail)
-			continue;
-		if (command_is_goto(data.inline_instr.command))
-			continue;
-		// TODO: why does inlining a QUIT break things? It does for crucible_quest.zplay
-		if (data.inline_instr.command == QUIT)
-			continue;
 
-		functions_to_inline.emplace(fn.id, data);
+		functions_to_inline.emplace(fn.id, std::move(data));
 	}
 
 	std::vector<pc_t> store_stack_pcs;
@@ -2198,13 +2254,13 @@ static void optimize_inline_functions(OptContext& ctx)
 	{
 		auto& instr = C(i);
 
-		if (one_of(instr.command, PUSHR) && instr.arg1 == rSFRAME)
+		if (instr.command == PUSHR && one_of(instr.arg1, rSFRAME, SP2))
 		{
 			store_stack_pcs.push_back(i);
 			continue;
 		}
 
-		if (instr.command == PUSHARGSR && instr.arg1 == rSFRAME)
+		if (instr.command == PUSHARGSR && one_of(instr.arg1, rSFRAME, SP2))
 		{
 			for (int k = 0; k < instr.arg2; k++)
 				store_stack_pcs.push_back(i);
@@ -2238,41 +2294,39 @@ static void optimize_inline_functions(OptContext& ctx)
 		ASSERT(one_of(C(i - 1).command, PUSHR, PUSHV, PUSHARGSR, PUSHARGSV, NOP));
 		stack_to_external_value[0] = C(i - 1).arg1;
 
-		std::vector<ffscript> inlined_zasm;
-		ffscript inline_instr = data.inline_instr;
-		for_every_command_arg(inline_instr, [&](bool read, bool write, int& reg, int argn){
-			if (read || write)
-			{
-				if (data.internal_reg_to_type[reg] == 0)
-					reg = stack_to_external_value[data.internal_reg_to_value[reg]];
-				else if (read)
-				{
-					inlined_zasm.emplace_back(SETR, reg, data.internal_reg_to_value[reg]);
-				}
-			}
-		});
-		inlined_zasm.push_back(inline_instr);
+		if (store_stack_pcs.empty())
+		{
+			data.all_uses_inlined = false;
+			continue;
+		}
 
 		pc_t store_stack_pc = store_stack_pcs.back();
-		bool must_keep_store_stack = false;
-		if (C(i + 1).command == PEEK)
-			must_keep_store_stack = true;
-		else
-			store_stack_pcs.pop_back();
-
+		bool must_keep_store_stack = C(i + 1).command == PEEK;
 		pc_t hole_start_pc = i;
-		if (C(i - 1).command != PUSHARGSR)
-			hole_start_pc -= 1;
 		pc_t hole_final_pc = i + 1;
 		bool store_stack_part_of_hole =
 			(store_stack_pc == hole_start_pc - 1 || store_stack_pc == hole_start_pc) && C(store_stack_pc).command != PUSHARGSR && !must_keep_store_stack;
 		if (store_stack_part_of_hole)
 			hole_start_pc = store_stack_pc;
 		size_t hole_length = hole_final_pc - hole_start_pc + 1;
-		if (inlined_zasm.size() > hole_length)
+		if (data.code_template.size() > hole_length)
 		{
 			data.all_uses_inlined = false;
 			continue;
+		}
+
+		std::vector<ffscript> inlined_zasm = data.code_template;
+		for (auto& instr : inlined_zasm)
+		{
+			// These LOAD commands depended on a fresh stack frame, so rewrite them
+			// to read from the proper position in the caller's frame.
+			if (instr.command == LOAD && instr.arg2 >= data.params_stack_start_index)
+			{
+				instr = {PEEKATV, instr.arg2 - data.params_stack_start_index};
+			}
+
+			if (command_is_wait(instr.command))
+				ctx.cfg_stale = true;
 		}
 
 		std::copy(inlined_zasm.begin(), inlined_zasm.end(), &C(hole_start_pc));
@@ -2286,6 +2340,9 @@ static void optimize_inline_functions(OptContext& ctx)
 
 		if (!must_keep_store_stack)
 		{
+			// The POP D4 will go away, so can't process in top of loop. So pop here.
+			store_stack_pcs.pop_back();
+
 			if (C(store_stack_pc).command == PUSHARGSR)
 			{
 				if (C(store_stack_pc).arg1 > 2)
@@ -2299,8 +2356,10 @@ static void optimize_inline_functions(OptContext& ctx)
 				remove(ctx, store_stack_pc);
 		}
 
-		if (command_is_wait(inline_instr.command))
-			ctx.cfg_stale = true;
+		// This is more than a minor optimization. If the inlined zasm stores/retrieves the stack frame (if
+		// it calls a function), then the processing loop will only see the POP if we don't skip past it here.
+		// That would unbalance `store_stack_pcs` and break things. 
+		i = hole_start_pc + inlined_zasm.size() - 1;
 	}
 
 	for (const auto& [fn_id, data] : functions_to_inline)
@@ -2415,7 +2474,11 @@ static void optimize_dead_code(OptContext& ctx)
 					{
 						// Don't remove writes that have other side effects (like modifying the stack).
 						if (command_is_pure(C(i).command) && !bisect_tool_should_skip())
+						{
+							if (ctx.debug)
+								fmt::println("remove {}: {}", i, script_debug_command_to_string(C(i)));
 							remove(ctx, i);
+						}
 					}
 					live &= ~(1 << reg);
 				}
@@ -2435,13 +2498,13 @@ static std::vector<std::pair<std::string, std::function<void(OptContext&)>>> scr
 	// passes may assume that.
 	{"calling_mode", optimize_calling_mode},
 	{"goto_next_instruction", optimize_goto_next_instruction},
+	{"load_store", optimize_load_store},
 	{"inline_functions", optimize_inline_functions},
 };
 
 static std::vector<std::pair<std::string, std::function<void(OptContext&)>>> function_passes = {
 	{"unreachable_blocks", optimize_unreachable_blocks},
 	{"conseq_additive", optimize_conseq_additive},
-	{"load_store", optimize_load_store},
 	{"setv_pushr", optimize_setv_pushr},
 	{"setr_pushr", optimize_setr_pushr},
 	{"stack", optimize_stack},
@@ -2452,7 +2515,7 @@ static std::vector<std::pair<std::string, std::function<void(OptContext&)>>> fun
 	{"dead_code", optimize_dead_code},
 };
 
-static void run_pass(OptimizeResults& results, int i, OptContext& ctx, std::pair<std::string, std::function<void(OptContext&)>> pass)
+static void run_pass(int i, OptContext& ctx, std::pair<std::string, std::function<void(OptContext&)>> pass)
 {
 	auto start_time = std::chrono::steady_clock::now();
 
@@ -2461,16 +2524,17 @@ static void run_pass(OptimizeResults& results, int i, OptContext& ctx, std::pair
 	fn(ctx);
 
 	auto end_time = std::chrono::steady_clock::now();
-	results.passes[i].instructions_saved += ctx.saved;
-	results.passes[i].elapsed += std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time).count();
+	ctx.results->passes[i].instructions_saved += ctx.saved;
+	ctx.results->passes[i].elapsed += std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time).count();
 }
 
-static void optimize_function(OptimizeResults& results, StructuredZasm& structured_zasm, script_data* script, const ZasmFunction& fn)
+static void optimize_function(OptContext& ctx, const ZasmFunction& fn)
 {
-	OptContext ctx = create_context_no_cfg(structured_zasm, script, fn);
+	ctx.fn = fn;
+	ctx.cfg_stale = true;
 	for (int i = 0; i < function_passes.size(); i++)
 	{
-		run_pass(results, script_passes.size() + i, ctx, function_passes[i]);
+		run_pass(script_passes.size() + i, ctx, function_passes[i]);
 	}
 }
 
@@ -2494,12 +2558,7 @@ OptimizeResults zasm_optimize(script_data* script)
 
 	auto start_time = std::chrono::steady_clock::now();
 	auto structured_zasm = zasm_construct_structured(script);
-
-	OptContext ctx = create_context_no_cfg(structured_zasm, script, structured_zasm.functions.front());
-	for (int i = 0; i < script_passes.size(); i++)
-	{
-		run_pass(results, i, ctx, script_passes[i]);
-	}
+	OptContext ctx = create_context_no_cfg(results, structured_zasm, script, structured_zasm.functions.front());
 
 	// Fix bugged reads of SDDDD.
 	// SDDDD reads D2, but when first introduced the compiler did not set D2. It still just happened to work,
@@ -2510,22 +2569,30 @@ OptimizeResults zasm_optimize(script_data* script)
 	// TODO: skip this if qst is known to be from non-bugged version.
 	for (pc_t i = 4; i < script->size; i++)
 	{
-		if (!(script->zasm[i].command == SETR && script->zasm[i].arg1 == D(2) && script->zasm[i].arg2 == SDDDD))
+		if (!(C(i).command == SETR && C(i).arg1 == D(2) && C(i).arg2 == SDDDD))
 			continue;
 
 		// While this bug existed, some internal functions were made inline, which places the bad POP
 		// in a different position relative to the SETR.
 		bool is_func = structured_zasm.start_pc_to_function.contains(i - 4);
 		pc_t pop_pc = is_func ? i - 4 : i - 3;
-		if (!(script->zasm[pop_pc].command == POP && script->zasm[pop_pc].arg1 == D(6)))
+		if (!(C(pop_pc).command == POP && C(pop_pc).arg1 == D(6)))
 			continue;
 
-		script->zasm[pop_pc] = {POP, D(2)};
+		C(pop_pc) = {POP, D(2)};
+	}
+
+	for (int i = 0; i < script_passes.size(); i++)
+	{
+		run_pass(i, ctx, script_passes[i]);
 	}
 
 	for (const auto& fn : structured_zasm.functions)
 	{
-		optimize_function(results, structured_zasm, script, fn);
+		// Inlinable functions are optimized in optimize_inline_functions.
+		if (can_inline_function(ctx, fn))
+			continue;
+		optimize_function(ctx, fn);
 	}
 
 	// TODO: remove NOPs and update GOTOs.
@@ -3020,7 +3087,8 @@ bool zasm_optimize_test()
 		script.recalc_size();
 
 		StructuredZasm structured_zasm = zasm_construct_structured(&script);
-		OptContext ctx = create_context(structured_zasm, &script, structured_zasm.functions.at(0));
+		OptimizeResults results = create_opt_results();
+		OptContext ctx = create_context(results, structured_zasm, &script, structured_zasm.functions.at(0));
 		SimulationState state{};
 		state.pc = 0;
 		state.final_pc = 7;

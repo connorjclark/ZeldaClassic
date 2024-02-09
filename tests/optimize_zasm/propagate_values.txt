@@ -96,20 +96,20 @@ Function #7
 
 
 Function #8
-   73: NOP                                          [Block 0 -> ]
-   74: NOP
-   75: NOP
-   76: NOP
-   77: NOP
+   73: SETR            D2              LINKX        [Block 0 -> ]
+   74: PUSHR           D2
+   75: LOAD            D2              0
+   76: POP             D3
+   77: ADDR            D2              D3
    78: NOP
    79: RETURNFUNC
 
 
 Function #9
-   80: NOP                                          [Block 0 -> ]
-   81: NOP
-   82: NOP
-   83: NOP
-   84: NOP
-   85: NOP
+   80: POP             D2                           [Block 0 -> ]
+   81: ADDV            D2              1
+   82: PUSHR           D2
+   83: LOAD            D2              0
+   84: POP             D3
+   85: ADDR            D2              D3
    86: RETURNFUNC

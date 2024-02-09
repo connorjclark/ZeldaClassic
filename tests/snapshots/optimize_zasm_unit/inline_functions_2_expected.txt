@@ -1,3 +1,6 @@
+remove 24: SETR            D4              SP2    
+remove 28: SETR            D4              SP2    
+remove 32: SETR            D4              SP2    
 rewrite 13: 3 -> 2 commands
 13: SETR            D2              LINKX  
 14: ADDV            D2              80000  

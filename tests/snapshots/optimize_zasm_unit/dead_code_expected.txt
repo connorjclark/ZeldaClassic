@@ -1,3 +1,9 @@
+remove 9: SETV            D2              10     
+remove 8: SETV            D4              10     
+remove 7: SETV            D3              10     
+remove 6: SETV            D3              10     
+remove 5: SETV            D3              10     
+
 [spurious_branches] Block #0
 
 14: SETV            D0              1337   
@@ -34,6 +40,11 @@ rewrite 18: GOTOCMP         20              ==
 rewrite 17: 2 -> 2 commands
 17: COMPAREV        D3              0      
 18: GOTOCMP         20              ==     
+remove 16: SETR            D3              LINKX  
+remove 15: SETV            D1              1337   
+remove 27: SETV            D0              1000   
+remove 24: SETR            D3              LINKX  
+remove 22: SETV            D0              1337   
 Function #0
     0: CALLFUNC        5                            [Block 0 -> ][Call Function #1]
     1: CALLFUNC        14                           [Call Function #2]

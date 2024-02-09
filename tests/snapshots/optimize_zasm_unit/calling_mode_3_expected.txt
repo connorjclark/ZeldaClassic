@@ -1,3 +1,6 @@
+remove 8: PEEK            D4              
+remove 5: PEEK            D4              
+remove 1: SETR            D4              SP2    
 Function #0
     0: PUSHV           0                            [Block 0 -> ]
     1: NOP

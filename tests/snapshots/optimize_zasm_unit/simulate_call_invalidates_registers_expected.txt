@@ -1,3 +1,5 @@
+remove 17: SETR            D3              LINKX  
+
 [spurious_branches] Block #0
 
 0: SETV            D3              0      
@@ -80,6 +82,7 @@ rewrite 8: 2 -> 2 commands
 rewrite 12: 2 -> 2 commands
 12: COMPAREV        D3              0      
 13: GOTOCMP         15              ==     
+remove 11: ADDV            D6              60000  
 Function #0
     0: SETV            D3              0            [Block 0 -> 1, 2]
     1: PUSHR           D4
