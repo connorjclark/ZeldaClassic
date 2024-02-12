@@ -3332,6 +3332,37 @@ namespace ZScript
 		}
 	};
 
+	class OLoad : public BinaryOpcode
+	{
+	public:
+		OLoad(Argument *A, Argument *B) : BinaryOpcode(A,B) {}
+		std::string toString() const;
+		Opcode* clone() const
+		{
+			return new OLoad(a->clone(),b->clone());
+		}
+	};
+	class OStore : public BinaryOpcode
+	{
+	public:
+		OStore(Argument *A, Argument *B) : BinaryOpcode(A,B) {}
+		std::string toString() const;
+		Opcode* clone() const
+		{
+			return new OStore(a->clone(),b->clone());
+		}
+	};
+	class OStoreV : public BinaryOpcode
+	{
+	public:
+		OStoreV(Argument *A, Argument *B) : BinaryOpcode(A,B) {}
+		std::string toString() const;
+		Opcode* clone() const
+		{
+			return new OStoreV(a->clone(),b->clone());
+		}
+	};
+
 	class OQuit : public Opcode
 	{
 	public:

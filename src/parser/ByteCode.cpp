@@ -3046,6 +3046,19 @@ string OStoreDirectV::toString() const
     return "STOREDV " + getFirstArgument()->toString() + "," + getSecondArgument()->toString();
 }
 
+string OLoad::toString() const
+{
+    return "LOAD " + getFirstArgument()->toString() + "," + getSecondArgument()->toString();
+}
+string OStore::toString() const
+{
+    return "STORE " + getFirstArgument()->toString() + "," + getSecondArgument()->toString();
+}
+string OStoreV::toString() const
+{
+    return "STOREV " + getFirstArgument()->toString() + "," + getSecondArgument()->toString();
+}
+
 string OQuit::toString() const
 {
     return "QUIT";

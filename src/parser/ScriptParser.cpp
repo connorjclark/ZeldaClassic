@@ -1131,7 +1131,7 @@ vector<shared_ptr<Opcode>> ScriptParser::assembleOne(Program& program,
 				++it;
 				continue;
 			}
-			// If [STORED reg,lit] is followed by [LOADD reg,lit], the LOADD
+			// If [STORE reg,lit] is followed by [LOAD reg,lit], the LOAD
 			// can be deleted, as 'reg' already will contain the value to be loaded.
 			if(OStoreDirect* stored = dynamic_cast<OStoreDirect*>(ocode))
 			{
@@ -1139,7 +1139,7 @@ vector<shared_ptr<Opcode>> ScriptParser::assembleOne(Program& program,
 				Argument const* litarg = stored->getSecondArgument();
 				auto it2 = it;
 				++it2;
-				if(OLoadDirect* loadd = dynamic_cast<OLoadDirect*>(it2->get()))
+				if(OLoad* loadd = dynamic_cast<OLoad*>(it2->get()))
 				{
 					if(*regarg == *loadd->getFirstArgument()
 						&& *litarg == *loadd->getSecondArgument()
