@@ -635,6 +635,7 @@ static char **config_argv = NULL;
 static char *argv_buf = NULL;
 static int32_t argv_buf_size = 0;
 
+int32_t run_script_jit_entry(int32_t pc, int32_t count);
 int32_t run_script_int(bool is_jitted);
 
 //Config files

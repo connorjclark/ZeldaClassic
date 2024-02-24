@@ -35725,6 +35725,13 @@ int32_t run_script(ScriptType type, const word script, const int32_t i)
 	return result;
 }
 
+int32_t run_script_jit_entry(int32_t pc, int32_t count)
+{
+	ri->pc = pc;
+	jitted_uncompiled_command_count = count;
+	return run_script_int(true);
+}
+
 int32_t run_script_int(bool is_jitted)
 {
 	ScriptType type = curScriptType;
