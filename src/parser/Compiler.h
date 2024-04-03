@@ -201,6 +201,7 @@ namespace ZScript
 		ScriptsData(Program&);
 		std::map<std::string, disassembled_script_data> theScripts;
 		std::map<std::string, ParserScriptType> scriptTypes;
+		std::string metadata;
 	};
 
 	unique_ptr<ScriptsData> compile(std::string const& filename);

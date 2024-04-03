@@ -1,4 +1,5 @@
 //2.53 Updated to 16th Jan, 2017
+#include "parser/MetadataVisitor.h"
 #include "zsyssimple.h"
 #include "ByteCode.h"
 #include "CompileError.h"
@@ -172,13 +173,18 @@ static unique_ptr<ScriptsData> _compile_helper(string const& filename)
 		ScriptParser::assemble(id.get());
 		if (ScriptParser::assemble_err) return nullptr;
 
-		unique_ptr<ScriptsData> result(new ScriptsData(program));
+		auto result = std::make_unique<ScriptsData>(program);
 		if(!ignore_asserts && casserts.size()) return nullptr;
 		if(zscript_error_out) return nullptr;
 
 		zconsole_info("%s", "Success!");
 
-		return unique_ptr<ScriptsData>(result.release());
+		MetadataVisitor md(program);
+		if(zscript_error_out) return nullptr;
+		if(rv.hasFailed()) return nullptr;
+		result->metadata = md.getOutput();
+
+		return result;
 	}
 	catch (compile_exception &e)
 	{

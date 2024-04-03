@@ -428,6 +428,9 @@ int32_t main(int32_t argc, char **argv)
 			else zconsole_error("Compile finished with exit code '%d' (compiled with errors)", res);
 		}
 		else zconsole_info("Compile finished with exit code '0' (success)");
+
+		if (result && !result->metadata.empty())
+			printf("=== METADATA\n%s\n", result->metadata.c_str());
 	}
 	if(!zasm_out.empty() && result)
 	{

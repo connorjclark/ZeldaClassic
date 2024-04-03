@@ -1,0 +1,40 @@
+/**a a
+b
+*c
+**s
+teset
+lol*/
+/** hmmm!! */
+// hmmm
+class bitmap2 {
+	/**
+	 * ...
+	 */
+	bitmap2();
+
+	/**
+	 * The width of the Bitmap, in pixels.
+	 * @property BITMAPWIDTH
+	 */
+	float width;
+	/**
+	 * The height of the Bitmap, in pixels.
+	 * @property BITMAPHEIGHT
+	 */
+	float height;
+
+	void huh() {
+		/** dassadasdsad */
+		int lolol = 1;
+	}
+
+	// @command GRAPHICSGETPIXEL
+	float GetPixel(float x, float y);
+
+	// @command GRAPHICSCOUNTCOLOR
+	// @calling_convention stack
+	float CountColor(bitmap mask, int a, int b, int c, int d);
+
+	// @command REGENERATEBITMAP
+	void Create(int layer, float width = 256, float height = 256);
+}

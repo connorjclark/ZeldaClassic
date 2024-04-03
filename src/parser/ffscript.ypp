@@ -30,6 +30,7 @@ extern char* yytext;
 extern int32_t yyleng;
 extern int32_t yylex(void);
 extern FILE *yyin, *yyout;
+extern ZScript::AST* last_identifier;
 extern void resetLexer();
 void yyerror(std::unique_ptr<ASTFile>& root, const char* s);
 void yymsg(string const& message, int32_t row = yyrow, int32_t col = yycol, char const* txt = yytext);
@@ -712,11 +713,13 @@ Data_List :
 			ASTDataDecl* element = (ASTDataDecl*)$3;
 			list->addDeclaration(element);
 			list->location = @$;
+			// element->doc_comment.clear(); // TODO ! needed?
 			$$ = list;}
 	| Data_Element {
 			ASTDataDecl* element = (ASTDataDecl*)$1;
 			ASTDataDeclList* list = new ASTDataDeclList(@$);
 			list->addDeclaration(element);
+			list->doc_comment = element->doc_comment; // TODO ! needed?
 			$$ = list;}
 	;
 
@@ -741,8 +744,10 @@ Data_Element_Array_List :
 			ASTString* name = (ASTString*)$1;
 			ASTDataDecl* element = new ASTDataDecl(@$);
 			element->name = name->getValue();
+			element->doc_comment = std::move(name->doc_comment); // TODO ! rm?
+			last_identifier = element;
 			$$ = element;
-			delete name;}
+		}
 	;
 
 Single_Data_req_assign :
@@ -822,6 +827,7 @@ Function :
 		ASTDataType* returnType = (ASTDataType*)$1;
 		ASTFuncDecl* func = (ASTFuncDecl*)$2;
 		func->returnType = returnType;
+		//func->...
 		$$ = func;}
 	;
 
@@ -850,6 +856,7 @@ Function_Heading :
 		func->iden = iden;
 		func->name = iden->components.back();
 		func->location = @$;
+		func->doc_comment = std::move(iden->doc_comment);
 		$$ = func;}
 	;
 
@@ -925,6 +932,9 @@ Class :
 		ASTClass* user_class = (ASTClass*)$3;
 		user_class->name = name->getValue();
 		user_class->location = @$;
+		user_class->name_location = name->location;
+		user_class->doc_comment = std::move(name->doc_comment);
+		last_identifier = user_class;
 		$$ = user_class;
 		delete name;}
 	;
@@ -1250,6 +1260,7 @@ Script :
 		script->type = type;
 		script->metadata.script_name = name->getValue();
 		script->location = @$;
+		script->name_location = name->location;
 		$$ = script;
 		delete name;}
 
@@ -1260,6 +1271,7 @@ Script :
 		script->type = type;
 		script->metadata.script_name = name->getValue();
 		script->location = @$;
+		script->name_location = name->location;
 		$$ = script;
 		delete name;}
 	;
@@ -2012,6 +2024,8 @@ Ambigious_Iden_List:
 	Identifier {
 		ASTString* name = (ASTString*)$1;
 		$$ = new ASTExprIdentifier(name->getValue(), @$);
+		$$->doc_comment = std::move(name->doc_comment);
+		last_identifier = $$;
 		delete name;}
 	;
 

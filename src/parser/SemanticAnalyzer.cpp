@@ -1066,10 +1066,11 @@ void SemanticAnalyzer::caseClass(ASTClass& host, void* param)
 	//
 	if(!host.constructors.size())
 	{
-		ASTFuncDecl* defcon = new ASTFuncDecl(host.location);
-		ASTExprIdentifier* iden = new ASTExprIdentifier(name, host.location);
+		ASTFuncDecl* defcon = new ASTFuncDecl(host.name_location);
+		ASTExprIdentifier* iden = new ASTExprIdentifier(name, host.name_location);
 		defcon->iden = iden;
 		defcon->name = name;
+		defcon->doc_comment = host.doc_comment;
 		defcon->prototype = true;
 		defcon->defaultReturn = new ASTExprConst(new ASTExprCast(
 				new ASTDataType(DataType::CUNTYPED, host.location),
