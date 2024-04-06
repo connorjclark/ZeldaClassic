@@ -27,7 +27,7 @@ ffc script Metadata {
         utils::fn(postfix);
         // i am a car
         auto c = new Car();
-        printf("%d %d\n", c->speed, radius);
+        printf("%d %d %d\n", c->speed, radius, utils::hmm);
     }
 }
 
@@ -37,4 +37,6 @@ namespace utils {
     void fn(int a) {
 
     }
+
+    int hmm; // hmmmmmm
 }

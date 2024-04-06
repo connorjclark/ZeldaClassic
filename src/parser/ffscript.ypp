@@ -1948,34 +1948,34 @@ Mixed_Identifier_List:
 		ASTExprIdentifier* identifier = (ASTExprIdentifier*)$1;
 		ASTString* name = (ASTString*)$3;
 		identifier->components.push_back(name->getValue());
+		identifier->componentNodes.push_back(std::shared_ptr<ASTString>(name));
 		identifier->delimiters.push_back(".");
 		identifier->location = @$;
-		$$ = identifier;
-		delete name;}
+		$$ = identifier;}
 	| idlist_scopres DOT Identifier {
 		ASTExprIdentifier* identifier = (ASTExprIdentifier*)$1;
 		ASTString* name = (ASTString*)$3;
 		identifier->components.push_back(name->getValue());
+		identifier->componentNodes.push_back(std::shared_ptr<ASTString>(name));
 		identifier->delimiters.push_back(".");
 		identifier->location = @$;
-		$$ = identifier;
-		delete name;}
+		$$ = identifier;}
 	| Mixed_Identifier_List ScopeRes Identifier {
 		ASTExprIdentifier* identifier = (ASTExprIdentifier*)$1;
 		ASTString* name = (ASTString*)$3;
 		identifier->components.push_back(name->getValue());
+		identifier->componentNodes.push_back(std::shared_ptr<ASTString>(name));
 		identifier->delimiters.push_back("::");
 		identifier->location = @$;
-		$$ = identifier;
-		delete name;}
+		$$ = identifier;}
 	| idlist_dot ScopeRes Identifier {
 		ASTExprIdentifier* identifier = (ASTExprIdentifier*)$1;
 		ASTString* name = (ASTString*)$3;
 		identifier->components.push_back(name->getValue());
+		identifier->componentNodes.push_back(std::shared_ptr<ASTString>(name));
 		identifier->delimiters.push_back("::");
 		identifier->location = @$;
-		$$ = identifier;
-		delete name;}
+		$$ = identifier;}
 	;
 
 idlist_scopres:
@@ -1983,18 +1983,18 @@ idlist_scopres:
 		ASTExprIdentifier* identifier = (ASTExprIdentifier*)$1;
 		ASTString* name = (ASTString*)$3;
 		identifier->components.push_back(name->getValue());
+		identifier->componentNodes.push_back(std::shared_ptr<ASTString>(name));
 		identifier->delimiters.push_back("::");
 		identifier->location = @$;
-		$$ = identifier;
-		delete name;}
+		$$ = identifier;}
 	| Ambigious_Iden_List ScopeRes Identifier {
 		ASTExprIdentifier* identifier = (ASTExprIdentifier*)$1;
 		ASTString* name = (ASTString*)$3;
 		identifier->components.push_back(name->getValue());
+		identifier->componentNodes.push_back(std::shared_ptr<ASTString>(name));
 		identifier->delimiters.push_back("::");
 		identifier->location = @$;
-		$$ = identifier;
-		delete name;}
+		$$ = identifier;}
 	| ScopeRes Ambigious_Iden_List {
 		ASTExprIdentifier* identifier = (ASTExprIdentifier*)$2;
 		identifier->noUsing = true;
@@ -2006,27 +2006,28 @@ idlist_dot:
 		ASTExprIdentifier* identifier = (ASTExprIdentifier*)$1;
 		ASTString* name = (ASTString*)$3;
 		identifier->components.push_back(name->getValue());
+		identifier->componentNodes.push_back(std::shared_ptr<ASTString>(name));
 		identifier->delimiters.push_back(".");
 		identifier->location = @$;
-		$$ = identifier;
-		delete name;}
+		$$ = identifier;}
 	| Ambigious_Iden_List DOT Identifier {
 		ASTExprIdentifier* identifier = (ASTExprIdentifier*)$1;
 		ASTString* name = (ASTString*)$3;
 		identifier->components.push_back(name->getValue());
+		identifier->componentNodes.push_back(std::shared_ptr<ASTString>(name));
 		identifier->delimiters.push_back(".");
 		identifier->location = @$;
-		$$ = identifier;
-		delete name;}
+		$$ = identifier;}
 	;
 
 Ambigious_Iden_List:
 	Identifier {
 		ASTString* name = (ASTString*)$1;
-		$$ = new ASTExprIdentifier(name->getValue(), @$);
-		$$->doc_comment = std::move(name->doc_comment);
-		last_identifier = $$;
-		delete name;}
+		ASTExprIdentifier* identifier = new ASTExprIdentifier(name->getValue(), @$);
+		identifier->componentNodes.push_back(std::shared_ptr<ASTString>(name));
+		identifier->doc_comment = std::move(name->doc_comment);
+		last_identifier = identifier;
+		$$ = identifier;}
 	;
 
 Identifier :

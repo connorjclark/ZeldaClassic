@@ -1345,6 +1345,7 @@ namespace ZScript
 	
 		// The identifier components separated by '.' or '::'.
 		std::vector<std::string> components;
+		std::vector<std::shared_ptr<ASTString>> componentNodes;
 		//Which symbol was used to delimit each?
 		std::vector<std::string> delimiters;
 

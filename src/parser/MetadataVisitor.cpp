@@ -217,8 +217,9 @@ void MetadataVisitor::caseFuncDecl(ASTFuncDecl& host, void* param)
 
 void MetadataVisitor::caseExprIdentifier(ASTExprIdentifier& host, void* param)
 {
+	// TODO: create identifiers for namespace components
 	if (!host.isConstant() && host.binding && !host.binding->isBuiltIn())
-		appendIdentifier(host, host.location);
+		appendIdentifier(host, host.componentNodes.back()->location);
 
 	RecursiveVisitor::caseExprIdentifier(host, param);
 }
@@ -232,7 +233,9 @@ void MetadataVisitor::caseExprArrow(ASTExprArrow& host, void* param)
 
 void MetadataVisitor::caseExprCall(ASTExprCall& host, void* param)
 {
-	appendIdentifier(host, host.left->location);
+	// TODO: create identifiers for namespace components
+	if (auto expr_ident = dynamic_cast<ASTExprIdentifier*>(host.left.get()))
+		appendIdentifier(host, expr_ident->componentNodes.back()->location);
 	RecursiveVisitor::caseExprCall(host, param);
 }
 
