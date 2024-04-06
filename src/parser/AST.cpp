@@ -1675,7 +1675,7 @@ DataType const* ASTExprIdentifier::getWriteType(Scope* scope, CompileErrorHandle
 
 // ASTExprArrow
 
-ASTExprArrow::ASTExprArrow(ASTExpr* left, string const& right,
+ASTExprArrow::ASTExprArrow(ASTExpr* left, ASTString* right,
 						   LocationData const& location)
 	: ASTExpr(location), left(left), right(right), index(NULL),
 	  leftClass(NULL), arrayFunction(NULL), readFunction(NULL), writeFunction(NULL),
@@ -1689,7 +1689,7 @@ void ASTExprArrow::execute(ASTVisitor& visitor, void* param)
 
 string ASTExprArrow::asString() const
 {
-	string s = left->asString() + "->" + right;
+	string s = left->asString() + "->" + right->getValue();
 	if (index != NULL) s += "[" + index->asString() + "]";
 	return s;
 }

@@ -2112,8 +2112,7 @@ Expr_Arrow :
 	Expr_3 ARROW IDENTIFIER {
 			ASTExpr* left = (ASTExpr*)$1;
 			ASTString* right = (ASTString*)$3;
-			$$ = new ASTExprArrow(left, right->getValue(), @$);
-			delete right;}
+			$$ = new ASTExprArrow(left, right, @$);}
 	;
 
 Expr_3 : Expr_2 {$$ = $1;}

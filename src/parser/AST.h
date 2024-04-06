@@ -1361,8 +1361,8 @@ namespace ZScript
 	class ASTExprArrow : public ASTExpr
 	{
 	public:
-		ASTExprArrow(ASTExpr* left = NULL,
-		             std::string const& right = "",
+		ASTExprArrow(ASTExpr* left,
+		             ASTString* right,
 		             LocationData const& location = LOC_NONE);
 		ASTExprArrow* clone() const {return new ASTExprArrow(*this);}
 
@@ -1380,7 +1380,7 @@ namespace ZScript
 		virtual DataType const* getWriteType(Scope* scope, CompileErrorHandler* errorHandler);
 	
 		owning_ptr<ASTExpr> left;
-		std::string right;
+		owning_ptr<ASTString> right;
 		owning_ptr<ASTExpr> index;
 
 		ZClass* leftClass;

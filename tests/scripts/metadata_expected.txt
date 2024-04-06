@@ -381,6 +381,22 @@ Compile finished with exit code '0' (success)
       },
       "doc": "A car, duh"
     },
+    "1,0": {
+      "loc": {
+        "range": {
+          "start": {
+            "line": 9,
+            "character": 8
+          },
+          "end": {
+            "line": 9,
+            "character": 13
+          }
+        },
+        "uri": "ZQ_BUFFER"
+      },
+      "doc": "How fast it goes"
+    },
     "42": {
       "loc": {
         "range": {
@@ -468,7 +484,7 @@ Compile finished with exit code '0' (success)
         "character": 26,
         "length": 7
       },
-      "symbol": 31
+      "symbol": "31"
     },
     {
       "loc": {
@@ -476,7 +492,7 @@ Compile finished with exit code '0' (success)
         "character": 39,
         "length": 1
       },
-      "symbol": 32
+      "symbol": "32"
     },
     {
       "loc": {
@@ -484,7 +500,7 @@ Compile finished with exit code '0' (success)
         "character": 15,
         "length": 2
       },
-      "symbol": 3521
+      "symbol": "3521"
     },
     {
       "loc": {
@@ -492,7 +508,7 @@ Compile finished with exit code '0' (success)
         "character": 18,
         "length": 7
       },
-      "symbol": 31
+      "symbol": "31"
     },
     {
       "loc": {
@@ -500,7 +516,15 @@ Compile finished with exit code '0' (success)
         "character": 21,
         "length": 3
       },
-      "symbol": 3525
+      "symbol": "3525"
+    },
+    {
+      "loc": {
+        "line": 29,
+        "character": 32,
+        "length": 5
+      },
+      "symbol": "1,0"
     },
     {
       "loc": {
@@ -508,7 +532,7 @@ Compile finished with exit code '0' (success)
         "character": 29,
         "length": 1
       },
-      "symbol": 42
+      "symbol": "42"
     },
     {
       "loc": {
@@ -516,7 +540,7 @@ Compile finished with exit code '0' (success)
         "character": 39,
         "length": 6
       },
-      "symbol": 35
+      "symbol": "35"
     },
     {
       "loc": {
@@ -524,7 +548,7 @@ Compile finished with exit code '0' (success)
         "character": 54,
         "length": 3
       },
-      "symbol": 33
+      "symbol": "33"
     },
     {
       "loc": {
@@ -532,7 +556,7 @@ Compile finished with exit code '0' (success)
         "character": 8,
         "length": 5
       },
-      "symbol": 34
+      "symbol": "34"
     },
     {
       "loc": {
@@ -540,7 +564,7 @@ Compile finished with exit code '0' (success)
         "character": 8,
         "length": 5
       },
-      "symbol": 3523
+      "symbol": "3523"
     }
   ]
 }

@@ -596,7 +596,7 @@ namespace ZScript
 			internalScope = scope;
 		}
 
-		AST* getNode()
+		AST* getNode() const
 		{
 			return node;
 		}

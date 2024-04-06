@@ -12,8 +12,8 @@ Compile finished with exit code '0' (success)
 === METADATA (elided)
 {
   "currentFileSymbols": 10,
-  "symbols": 5,
-  "identifiers": 8
+  "symbols": 6,
+  "identifiers": 9
 }
 PUSHR REFFFC; void run() Body Start
 PUSHARGSV 0,0.0003

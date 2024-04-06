@@ -6,6 +6,7 @@
 #include "Scope.h"
 #include "CompileError.h"
 #include <nlohmann/json.hpp>
+#include <fmt/format.h>
 
 using namespace ZScript;
 using json = nlohmann::ordered_json;
@@ -115,32 +116,29 @@ static std::string cleanComment(std::string comment)
 	return copy;
 }
 
-template <typename T>
-static void appendIdentifier(const T& node, const LocationData& loc)
+static void appendIdentifier(std::string symbol_id, const AST* symbol_node, const LocationData& loc)
 {
-	if (!node.binding || !node.binding->getNode())
+	if (!symbol_node)
 		return;
 
-	auto key = std::to_string(node.binding->id);
-	if (!root["symbols"].contains(key))
+	if (!root["symbols"].contains(symbol_id))
 	{
-		root["symbols"][key] = {
+		root["symbols"][symbol_id] = {
 			// TODO LocationData_location_json
 			{"loc", {
-				{"range", LocationData_json(node.binding->getNode()->location)},
-				{"uri", node.binding->getNode()->location.fname},
+				{"range", LocationData_json(symbol_node->location)},
+				{"uri", symbol_node->location.fname},
 			}},
 		};
 
-		auto comment = cleanComment(node.binding->getNode()->doc_comment);
+		auto comment = cleanComment(symbol_node->doc_comment);
 		if (!comment.empty())
-			root["symbols"][key]["doc"] = comment;
+			root["symbols"][symbol_id]["doc"] = comment;
 	}
 
 	root["identifiers"].push_back({
-		// {"name", node.binding->getName()}, // TODO ! remove
 		{"loc", LocationData_pos_json(loc)},
-		{"symbol", node.binding->id},
+		{"symbol", symbol_id},
 	});
 }
 
@@ -218,16 +216,19 @@ void MetadataVisitor::caseFuncDecl(ASTFuncDecl& host, void* param)
 void MetadataVisitor::caseExprIdentifier(ASTExprIdentifier& host, void* param)
 {
 	// TODO: create identifiers for namespace components
-	if (!host.isConstant() && host.binding && !host.binding->isBuiltIn())
-		appendIdentifier(host, host.componentNodes.back()->location);
+	if (host.binding && !host.isConstant() && !host.binding->isBuiltIn())
+		appendIdentifier(std::to_string(host.binding->id), host.binding->getNode(), host.componentNodes.back()->location);
 
 	RecursiveVisitor::caseExprIdentifier(host, param);
 }
 
 void MetadataVisitor::caseExprArrow(ASTExprArrow& host, void* param)
 {
-	// TODO: need to enrich ASTExprArrow with a binding.
-	// appendIdentifier(host, host.right);
+	if (host.u_datum && host.u_datum->getClass())
+	{
+		auto id = fmt::format("{},{}", host.u_datum->getClass()->getType()->getUniqueCustomId(), host.u_datum->getIndex());
+		appendIdentifier(id, host.u_datum->getNode(), host.right->location);
+	}
 	RecursiveVisitor::caseExprArrow(host, param);
 }
 
@@ -235,7 +236,7 @@ void MetadataVisitor::caseExprCall(ASTExprCall& host, void* param)
 {
 	// TODO: create identifiers for namespace components
 	if (auto expr_ident = dynamic_cast<ASTExprIdentifier*>(host.left.get()))
-		appendIdentifier(host, expr_ident->componentNodes.back()->location);
+		appendIdentifier(std::to_string(host.binding->id), host.binding->getNode(), expr_ident->componentNodes.back()->location);
 	RecursiveVisitor::caseExprCall(host, param);
 }
 
