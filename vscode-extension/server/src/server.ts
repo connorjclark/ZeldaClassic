@@ -7,14 +7,12 @@ import {
 	InitializeParams,
 	DidChangeConfigurationNotification,
 	CompletionItem,
-	CompletionItemKind,
 	TextDocumentPositionParams,
 	TextDocumentSyncKind,
 	InitializeResult,
 	HoverParams,
 	Hover,
 	DocumentSymbolParams,
-	SymbolKind,
 	DocumentSymbol,
 	MarkupKind,
 	DefinitionParams
@@ -489,7 +487,7 @@ connection.onHover((item: HoverParams): Hover | null => {
 		return null;
 
 	return {
-		contents: {kind: MarkupKind.PlainText, value},
+		contents: {kind: MarkupKind.Markdown, value},
 	};
 });
 
