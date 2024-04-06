@@ -204,7 +204,7 @@ namespace ZScript
 		std::string metadata;
 	};
 
-	unique_ptr<ScriptsData> compile(std::string const& filename);
+	unique_ptr<ScriptsData> compile(std::string const& filename, bool include_metadata);
 
 	class ScriptParser
 	{

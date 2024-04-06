@@ -1,0 +1,545 @@
+Compiling 'metadata.zs'
+Pass 1: Parsing
+Pass 2: Preprocessing
+Pass 3: Registration
+Pass 4: Analyzing Code
+Pass 5: Checking code paths
+Pass 6: Generating object code
+Pass 7: Assembling
+Success!
+Compile finished with exit code '0' (success)
+=== METADATA
+{
+  "currentFileSymbols": [
+    {
+      "name": "postfix",
+      "kind": 13,
+      "range": {
+        "start": {
+          "line": 2,
+          "character": 4
+        },
+        "end": {
+          "line": 2,
+          "character": 15
+        }
+      },
+      "selectionRange": {
+        "start": {
+          "line": 2,
+          "character": 4
+        },
+        "end": {
+          "line": 2,
+          "character": 15
+        }
+      },
+      "children": []
+    },
+    {
+      "name": "x",
+      "kind": 13,
+      "range": {
+        "start": {
+          "line": 4,
+          "character": 4
+        },
+        "end": {
+          "line": 4,
+          "character": 9
+        }
+      },
+      "selectionRange": {
+        "start": {
+          "line": 4,
+          "character": 4
+        },
+        "end": {
+          "line": 4,
+          "character": 9
+        }
+      },
+      "children": []
+    },
+    {
+      "name": "utils",
+      "kind": 3,
+      "range": {
+        "start": {
+          "line": 34,
+          "character": 0
+        },
+        "end": {
+          "line": 39,
+          "character": 1
+        }
+      },
+      "selectionRange": {
+        "start": {
+          "line": 34,
+          "character": 0
+        },
+        "end": {
+          "line": 39,
+          "character": 1
+        }
+      },
+      "children": [
+        {
+          "name": "fn",
+          "kind": 12,
+          "range": {
+            "start": {
+              "line": 36,
+              "character": 9
+            },
+            "end": {
+              "line": 36,
+              "character": 18
+            }
+          },
+          "selectionRange": {
+            "start": {
+              "line": 36,
+              "character": 9
+            },
+            "end": {
+              "line": 36,
+              "character": 18
+            }
+          },
+          "children": []
+        }
+      ]
+    },
+    {
+      "name": "Metadata",
+      "kind": 2,
+      "range": {
+        "start": {
+          "line": 22,
+          "character": 0
+        },
+        "end": {
+          "line": 31,
+          "character": 1
+        }
+      },
+      "selectionRange": {
+        "start": {
+          "line": 22,
+          "character": 11
+        },
+        "end": {
+          "line": 22,
+          "character": 19
+        }
+      },
+      "children": [
+        {
+          "name": "run",
+          "kind": 12,
+          "range": {
+            "start": {
+              "line": 24,
+              "character": 9
+            },
+            "end": {
+              "line": 24,
+              "character": 71
+            }
+          },
+          "selectionRange": {
+            "start": {
+              "line": 24,
+              "character": 9
+            },
+            "end": {
+              "line": 24,
+              "character": 71
+            }
+          },
+          "children": [
+            {
+              "name": "c",
+              "kind": 13,
+              "range": {
+                "start": {
+                  "line": 28,
+                  "character": 13
+                },
+                "end": {
+                  "line": 28,
+                  "character": 26
+                }
+              },
+              "selectionRange": {
+                "start": {
+                  "line": 28,
+                  "character": 13
+                },
+                "end": {
+                  "line": 28,
+                  "character": 26
+                }
+              },
+              "children": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Car",
+      "kind": 5,
+      "range": {
+        "start": {
+          "line": 7,
+          "character": 0
+        },
+        "end": {
+          "line": 19,
+          "character": 1
+        }
+      },
+      "selectionRange": {
+        "start": {
+          "line": 7,
+          "character": 6
+        },
+        "end": {
+          "line": 7,
+          "character": 9
+        }
+      },
+      "children": [
+        {
+          "name": "speed",
+          "kind": 13,
+          "range": {
+            "start": {
+              "line": 9,
+              "character": 8
+            },
+            "end": {
+              "line": 9,
+              "character": 13
+            }
+          },
+          "selectionRange": {
+            "start": {
+              "line": 9,
+              "character": 8
+            },
+            "end": {
+              "line": 9,
+              "character": 13
+            }
+          },
+          "children": []
+        },
+        {
+          "name": "vroom",
+          "kind": 12,
+          "range": {
+            "start": {
+              "line": 12,
+              "character": 9
+            },
+            "end": {
+              "line": 12,
+              "character": 16
+            }
+          },
+          "selectionRange": {
+            "start": {
+              "line": 12,
+              "character": 9
+            },
+            "end": {
+              "line": 12,
+              "character": 16
+            }
+          },
+          "children": []
+        },
+        {
+          "name": "vroom2",
+          "kind": 12,
+          "range": {
+            "start": {
+              "line": 16,
+              "character": 9
+            },
+            "end": {
+              "line": 16,
+              "character": 17
+            }
+          },
+          "selectionRange": {
+            "start": {
+              "line": 16,
+              "character": 9
+            },
+            "end": {
+              "line": 16,
+              "character": 17
+            }
+          },
+          "children": []
+        }
+      ]
+    }
+  ],
+  "symbols": {
+    "31": {
+      "loc": {
+        "range": {
+          "start": {
+            "line": 2,
+            "character": 4
+          },
+          "end": {
+            "line": 2,
+            "character": 15
+          }
+        },
+        "uri": "ZQ_BUFFER"
+      },
+      "doc": "THIS COMMENT USED"
+    },
+    "32": {
+      "loc": {
+        "range": {
+          "start": {
+            "line": 4,
+            "character": 4
+          },
+          "end": {
+            "line": 4,
+            "character": 9
+          }
+        },
+        "uri": "ZQ_BUFFER"
+      },
+      "doc": "x marks the spot"
+    },
+    "3521": {
+      "loc": {
+        "range": {
+          "start": {
+            "line": 36,
+            "character": 9
+          },
+          "end": {
+            "line": 36,
+            "character": 18
+          }
+        },
+        "uri": "ZQ_BUFFER"
+      },
+      "doc": "A lovely function."
+    },
+    "3525": {
+      "loc": {
+        "range": {
+          "start": {
+            "line": 7,
+            "character": 6
+          },
+          "end": {
+            "line": 7,
+            "character": 9
+          }
+        },
+        "uri": "ZQ_BUFFER"
+      },
+      "doc": "A car, duh"
+    },
+    "41": {
+      "loc": {
+        "range": {
+          "start": {
+            "line": 28,
+            "character": 13
+          },
+          "end": {
+            "line": 28,
+            "character": 26
+          }
+        },
+        "uri": "ZQ_BUFFER"
+      },
+      "doc": "i am a car"
+    },
+    "34": {
+      "loc": {
+        "range": {
+          "start": {
+            "line": 24,
+            "character": 13
+          },
+          "end": {
+            "line": 24,
+            "character": 23
+          }
+        },
+        "uri": "ZQ_BUFFER"
+      }
+    },
+    "33": {
+      "loc": {
+        "range": {
+          "start": {
+            "line": 9,
+            "character": 8
+          },
+          "end": {
+            "line": 9,
+            "character": 13
+          }
+        },
+        "uri": "ZQ_BUFFER"
+      },
+      "doc": "How fast it goes"
+    },
+    "3523": {
+      "loc": {
+        "range": {
+          "start": {
+            "line": 12,
+            "character": 9
+          },
+          "end": {
+            "line": 12,
+            "character": 16
+          }
+        },
+        "uri": "ZQ_BUFFER"
+      },
+      "doc": "Go fast"
+    }
+  },
+  "identifiers": [
+    {
+      "loc": {
+        "line": 25,
+        "character": 26,
+        "length": 7
+      },
+      "symbol": 31
+    },
+    {
+      "loc": {
+        "line": 25,
+        "character": 39,
+        "length": 1
+      },
+      "symbol": 32
+    },
+    {
+      "loc": {
+        "line": 26,
+        "character": 8,
+        "length": 9
+      },
+      "symbol": 3521
+    },
+    {
+      "loc": {
+        "line": 26,
+        "character": 18,
+        "length": 7
+      },
+      "symbol": 31
+    },
+    {
+      "loc": {
+        "line": 28,
+        "character": 21,
+        "length": 3
+      },
+      "symbol": 3525
+    },
+    {
+      "loc": {
+        "line": 29,
+        "character": 26,
+        "length": 1
+      },
+      "symbol": 41
+    },
+    {
+      "loc": {
+        "line": 29,
+        "character": 36,
+        "length": 6
+      },
+      "symbol": 34
+    },
+    {
+      "loc": {
+        "line": 13,
+        "character": 8,
+        "length": 5
+      },
+      "symbol": 33
+    },
+    {
+      "loc": {
+        "line": 17,
+        "character": 8,
+        "length": 5
+      },
+      "symbol": 3523
+    }
+  ]
+}
+
+PUSHR d0; void run(int, int, int, int, int) Params
+PUSHR d1
+PUSHR d2
+PUSHR d3
+PUSHR d4
+PUSHR REFFFC; void run(int, int, int, int, int) Body Start
+PUSHARGSV 0,0.0003
+SETR d4,SP2
+ALLOCATEMEMV d2,7,0
+STORE d2,0.0002
+WRITEPODSTRING d2,"%d %d\n"
+LOAD d2,0.0002; InlineFunc[void printf(char32)] Params Start
+PUSHR d2
+PUSHVARGR gd1
+SETR d2,gd2
+ADDV d2,1
+ADDV d2,2
+PUSHVARGR d2; InlineFunc[void printf(char32)] Params End
+PRINTFVARG; InlineFunc[void printf(char32)] Body Start
+POP d5; InlineFunc[void printf(char32)] Body End
+LOAD d3,0.0002
+DEALLOCATEMEMR d3
+SETV d2,0; ProtoFunc[Car Car()] Set Destructor
+ZCLASS_CONSTRUCT d2,{0.0001}; ProtoFunc[Car Car()] Default Construct
+STORE_OBJECT d2,0.0001
+ALLOCATEMEMV d2,7,0
+STORE d2,0
+WRITEPODSTRING d2,"%d %d\n"
+LOAD d2,0; InlineFunc[void printf(char32)] Params Start
+PUSHR d2
+LOAD d2,0.0001
+ZCLASS_READ d2,0
+PUSHVARGR d2
+LOAD d2,0.0008
+PUSHVARGR d2; InlineFunc[void printf(char32)] Params End
+PRINTFVARG; InlineFunc[void printf(char32)] Body Start
+POP d5; InlineFunc[void printf(char32)] Body End
+LOAD d3,0
+DEALLOCATEMEMR d3
+REF_REMOVE 0.0001
+POPARGS d5,0.0009
+QUIT; void run(int, int, int, int, int) Body End
+
+
+SETV gd1,1; void run() Body Start
+SETV gd2,1
+QUIT; void run() Body End

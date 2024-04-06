@@ -66,17 +66,6 @@ static std::filesystem::path derelativize_path(std::string src_path)
 
 
 extern std::vector<string> ZQincludePaths;
-//#define PARSER_DEBUG
-
-ScriptsData* compile(string const& filename);
-
-#if PARSER_DEBUG < 0
-int32_t main(int32_t argc, char *argv[])
-{
-	if (argc < 2) return -1;
-	compile(string(argv[1]));
-}
-#endif
 
 void ScriptParser::initialize()
 {
@@ -94,7 +83,7 @@ extern uint32_t zscript_failcode;
 extern bool zscript_error_out;
 extern bool delay_asserts, ignore_asserts;
 vector<ZScript::BasicCompileError> casserts;
-static unique_ptr<ScriptsData> _compile_helper(string const& filename)
+static unique_ptr<ScriptsData> _compile_helper(string const& filename, bool include_metadata)
 {
 	using namespace ZScript;
 	zscript_failcode = 0;
@@ -177,12 +166,15 @@ static unique_ptr<ScriptsData> _compile_helper(string const& filename)
 		if(!ignore_asserts && casserts.size()) return nullptr;
 		if(zscript_error_out) return nullptr;
 
-		zconsole_info("%s", "Success!");
+		if (include_metadata)
+		{
+			MetadataVisitor md(program);
+			if(zscript_error_out) return nullptr;
+			if(rv.hasFailed()) return nullptr;
+			result->metadata = md.getOutput();
+		}
 
-		MetadataVisitor md(program);
-		if(zscript_error_out) return nullptr;
-		if(rv.hasFailed()) return nullptr;
-		result->metadata = md.getOutput();
+		zconsole_info("%s", "Success!");
 
 		return result;
 	}
@@ -209,9 +201,9 @@ static unique_ptr<ScriptsData> _compile_helper(string const& filename)
 	}
 #endif
 }
-unique_ptr<ScriptsData> ZScript::compile(string const& filename)
+unique_ptr<ScriptsData> ZScript::compile(string const& filename, bool include_metadata)
 {
-	auto ret = _compile_helper(filename);
+	auto ret = _compile_helper(filename, include_metadata);
 	if(!ignore_asserts)
 		for(BasicCompileError const& error : casserts)
 			error.handle();

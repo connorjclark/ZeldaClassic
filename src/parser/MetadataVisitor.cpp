@@ -8,7 +8,7 @@
 #include <nlohmann/json.hpp>
 
 using namespace ZScript;
-using json = nlohmann::json;
+using json = nlohmann::ordered_json;
 
 json root;
 json* active;
