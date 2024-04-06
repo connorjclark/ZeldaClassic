@@ -245,10 +245,12 @@ async function processScript(textDocument: TextDocument): Promise<void> {
 			args.push('-ignore_cassert');
 		const cp = await execFile(exe, args, {
 			cwd: settings.installationFolder,
+			maxBuffer: 2_000_000,
 		});
 		success = true;
 		stdout = cp.stdout;
 	} catch (e: any) {
+		console.error(e);
 		if (e.code === undefined) throw e;
 		stdout = e.stdout || e.toString();
 	}
