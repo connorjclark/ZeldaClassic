@@ -26,8 +26,8 @@ int32_t doImportStr = 0;
 enum {st_none, st_case};
 int32_t special_state = st_none;
 std::ostringstream comment_str;
-// Resets every newline. Used to attach comments on the same line (but after) an identifier.
-ZScript::AST* last_identifier = nullptr;
+// Resets every newline. Used to attach comments on the same line (but after) a declaration.
+ZScript::AST* first_identifier_for_line = nullptr;
 
 // Defined in ffscript.ypp.
 void yymsg(std::string const& message, int32_t row = yyrow, int32_t col = yycol, char const* txt = yytext);
@@ -296,10 +296,10 @@ appx_equal	TOKEN( APPXEQUAL );
 "//".*		/* hit end of file */
 "//".*\n	{
 	NEWLINE;
-	if (last_identifier)
+	if (first_identifier_for_line)
 	{
-		last_identifier->doc_comment = &yytext[2];
-		last_identifier = nullptr;
+		first_identifier_for_line->doc_comment = &yytext[2];
+		first_identifier_for_line = nullptr;
 	}
 	else
 	{
@@ -594,7 +594,7 @@ appx_equal	TOKEN( APPXEQUAL );
  /* Whitespace */
 [ \t\r]*\n	{
 	NEWLINE;
-	last_identifier = nullptr;
+	first_identifier_for_line = nullptr;
 }
 [ \t\r]+	ADVANCE;
 
@@ -614,5 +614,5 @@ void resetLexer() {
 	doImportStr = 0;
 	special_state = st_none;
 	comment_str.str("");
-	last_identifier = nullptr;
+	first_identifier_for_line = nullptr;
 }

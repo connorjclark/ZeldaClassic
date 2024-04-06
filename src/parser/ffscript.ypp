@@ -30,7 +30,7 @@ extern char* yytext;
 extern int32_t yyleng;
 extern int32_t yylex(void);
 extern FILE *yyin, *yyout;
-extern ZScript::AST* last_identifier;
+extern ZScript::AST* first_identifier_for_line;
 extern void resetLexer();
 void yyerror(std::unique_ptr<ASTFile>& root, const char* s);
 void yymsg(string const& message, int32_t row = yyrow, int32_t col = yycol, char const* txt = yytext);
@@ -743,7 +743,7 @@ Data_Element_Array_List :
 			ASTDataDecl* element = new ASTDataDecl(@$);
 			element->name = name->getValue();
 			element->doc_comment = std::move(name->doc_comment);
-			last_identifier = element;
+			if (!first_identifier_for_line) first_identifier_for_line = element;
 			delete name;
 			$$ = element;
 		}
@@ -933,7 +933,7 @@ Class :
 		user_class->location = @$;
 		user_class->name_location = name->location;
 		user_class->doc_comment = std::move(name->doc_comment);
-		last_identifier = user_class;
+		if (!first_identifier_for_line) first_identifier_for_line = user_class;
 		$$ = user_class;
 		delete name;}
 	;
@@ -2033,7 +2033,7 @@ Ambigious_Iden_List:
 		ASTExprIdentifier* identifier = new ASTExprIdentifier(name->getValue(), @$);
 		identifier->componentNodes.push_back(std::shared_ptr<ASTString>(name));
 		identifier->doc_comment = std::move(name->doc_comment);
-		last_identifier = identifier;
+		if (!first_identifier_for_line) first_identifier_for_line = identifier;
 		$$ = identifier;}
 	;
 
