@@ -22,6 +22,10 @@ class Car {
     /** How fast it goes */
     int speed;
 
+    Car(int speed) {
+        this->speed = speed;
+    }
+
 	/** Go fast */
     void vroom() {
         speed = 1;
@@ -30,6 +34,9 @@ class Car {
     void vroom2() {
         vroom();
     }
+}
+
+class IhaveAdefCtor {
 }
 
 // how fancy something looks
@@ -48,8 +55,9 @@ ffc script Metadata {
         printf("%d %d\n", postfix, 1 + x + 2);
         utils::fn(postfix);
         // i am a car
-        auto c = new Car();
+        auto c = new Car(2);
         printf("%d %d %d\n", c->speed, radius, utils::hmm + y + z + Dull + Fancy + Mid);
+        auto d = new IhaveAdefCtor();
     }
 }
 

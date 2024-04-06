@@ -742,8 +742,9 @@ Data_Element_Array_List :
 			ASTString* name = (ASTString*)$1;
 			ASTDataDecl* element = new ASTDataDecl(@$);
 			element->name = name->getValue();
-			element->doc_comment = std::move(name->doc_comment); // TODO ! rm?
+			element->doc_comment = std::move(name->doc_comment);
 			last_identifier = element;
+			delete name;
 			$$ = element;
 		}
 	;
