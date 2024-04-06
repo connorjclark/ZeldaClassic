@@ -24,7 +24,7 @@ ffc script CircularMotion
         fn();
         // hi
         auto c = new Car();
-        printf("%d\n", c->speed);
+        printf("%d %d\n", c->speed, radius);
     }
 }
 

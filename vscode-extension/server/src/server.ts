@@ -154,8 +154,6 @@ documents.onDidChangeContent(change => {
 	processScript(change.document);
 });
 
-let globalTmpDir = '';
-
 // TODO: this should not be necessary. Get path in better OS-agnostic way.
 function cleanupFile(fname:string)
 {
@@ -184,6 +182,10 @@ interface DocumentMetaData {
 }
 const docMetadataMap = new Map<string, DocumentMetaData>();
 
+const globalTmpDir = os.tmpdir();
+const tmpInput = cleanupFile(`${globalTmpDir}/tmp2.zs`);
+const tmpScript = cleanupFile(`${globalTmpDir}/tmp.zs`);
+
 async function processScript(textDocument: TextDocument): Promise<void> {
 	const settings = await getDocumentSettings(textDocument.uri);
 	const text = textDocument.getText();
@@ -202,9 +204,6 @@ async function processScript(textDocument: TextDocument): Promise<void> {
 		return;
 	}
 
-	if (!globalTmpDir) {
-		globalTmpDir = os.tmpdir();
-	}
 	if (settings.defaultIncludePaths)
 	{
 		settings.defaultIncludePaths.forEach(str => {
@@ -218,8 +217,6 @@ async function processScript(textDocument: TextDocument): Promise<void> {
 		});
 	}
 
-	const tmpInput = cleanupFile(`${globalTmpDir}/tmp2.zs`);
-	const tmpScript = cleanupFile(`${globalTmpDir}/tmp.zs`);
 	includeText += `#include "${tmpScript}"\n`;
 	let stdout = '';
 	let success = false;
@@ -512,6 +509,8 @@ connection.onDefinition((p: DefinitionParams) => {
 		return null;
 
 	const symbol = metadata.symbols[identifier.symbol];
+	if (URI.parse(symbol.loc.uri).fsPath === tmpScript)
+		symbol.loc.uri = p.textDocument.uri;
 	return symbol.loc;
 });
 
