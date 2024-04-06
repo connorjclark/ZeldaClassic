@@ -12,6 +12,81 @@ Compile finished with exit code '0' (success)
 {
   "currentFileSymbols": [
     {
+      "name": "Fancy",
+      "kind": 13,
+      "range": {
+        "start": {
+          "line": 37,
+          "character": 4
+        },
+        "end": {
+          "line": 37,
+          "character": 9
+        }
+      },
+      "selectionRange": {
+        "start": {
+          "line": 37,
+          "character": 4
+        },
+        "end": {
+          "line": 37,
+          "character": 9
+        }
+      },
+      "children": []
+    },
+    {
+      "name": "Dull",
+      "kind": 13,
+      "range": {
+        "start": {
+          "line": 39,
+          "character": 4
+        },
+        "end": {
+          "line": 39,
+          "character": 8
+        }
+      },
+      "selectionRange": {
+        "start": {
+          "line": 39,
+          "character": 4
+        },
+        "end": {
+          "line": 39,
+          "character": 8
+        }
+      },
+      "children": []
+    },
+    {
+      "name": "Mid",
+      "kind": 13,
+      "range": {
+        "start": {
+          "line": 40,
+          "character": 4
+        },
+        "end": {
+          "line": 40,
+          "character": 7
+        }
+      },
+      "selectionRange": {
+        "start": {
+          "line": 40,
+          "character": 4
+        },
+        "end": {
+          "line": 40,
+          "character": 7
+        }
+      },
+      "children": []
+    },
+    {
       "name": "postfix",
       "kind": 13,
       "range": {
@@ -62,25 +137,75 @@ Compile finished with exit code '0' (success)
       "children": []
     },
     {
+      "name": "y",
+      "kind": 13,
+      "range": {
+        "start": {
+          "line": 17,
+          "character": 4
+        },
+        "end": {
+          "line": 17,
+          "character": 5
+        }
+      },
+      "selectionRange": {
+        "start": {
+          "line": 17,
+          "character": 4
+        },
+        "end": {
+          "line": 17,
+          "character": 5
+        }
+      },
+      "children": []
+    },
+    {
+      "name": "z",
+      "kind": 13,
+      "range": {
+        "start": {
+          "line": 17,
+          "character": 7
+        },
+        "end": {
+          "line": 17,
+          "character": 12
+        }
+      },
+      "selectionRange": {
+        "start": {
+          "line": 17,
+          "character": 7
+        },
+        "end": {
+          "line": 17,
+          "character": 12
+        }
+      },
+      "children": []
+    },
+    {
       "name": "utils",
       "kind": 3,
       "range": {
         "start": {
-          "line": 45,
+          "line": 56,
           "character": 0
         },
         "end": {
-          "line": 52,
+          "line": 63,
           "character": 1
         }
       },
       "selectionRange": {
         "start": {
-          "line": 45,
+          "line": 56,
           "character": 0
         },
         "end": {
-          "line": 52,
+          "line": 63,
           "character": 1
         }
       },
@@ -90,21 +215,21 @@ Compile finished with exit code '0' (success)
           "kind": 13,
           "range": {
             "start": {
-              "line": 51,
+              "line": 62,
               "character": 8
             },
             "end": {
-              "line": 51,
+              "line": 62,
               "character": 11
             }
           },
           "selectionRange": {
             "start": {
-              "line": 51,
+              "line": 62,
               "character": 8
             },
             "end": {
-              "line": 51,
+              "line": 62,
               "character": 11
             }
           },
@@ -115,21 +240,21 @@ Compile finished with exit code '0' (success)
           "kind": 12,
           "range": {
             "start": {
-              "line": 47,
+              "line": 58,
               "character": 9
             },
             "end": {
-              "line": 47,
+              "line": 58,
               "character": 18
             }
           },
           "selectionRange": {
             "start": {
-              "line": 47,
+              "line": 58,
               "character": 9
             },
             "end": {
-              "line": 47,
+              "line": 58,
               "character": 18
             }
           },
@@ -142,21 +267,21 @@ Compile finished with exit code '0' (success)
       "kind": 2,
       "range": {
         "start": {
-          "line": 33,
+          "line": 44,
           "character": 0
         },
         "end": {
-          "line": 42,
+          "line": 53,
           "character": 1
         }
       },
       "selectionRange": {
         "start": {
-          "line": 33,
+          "line": 44,
           "character": 11
         },
         "end": {
-          "line": 33,
+          "line": 44,
           "character": 19
         }
       },
@@ -166,21 +291,21 @@ Compile finished with exit code '0' (success)
           "kind": 12,
           "range": {
             "start": {
-              "line": 35,
+              "line": 46,
               "character": 9
             },
             "end": {
-              "line": 35,
+              "line": 46,
               "character": 71
             }
           },
           "selectionRange": {
             "start": {
-              "line": 35,
+              "line": 46,
               "character": 9
             },
             "end": {
-              "line": 35,
+              "line": 46,
               "character": 71
             }
           },
@@ -190,21 +315,21 @@ Compile finished with exit code '0' (success)
               "kind": 13,
               "range": {
                 "start": {
-                  "line": 39,
+                  "line": 50,
                   "character": 13
                 },
                 "end": {
-                  "line": 39,
+                  "line": 50,
                   "character": 26
                 }
               },
               "selectionRange": {
                 "start": {
-                  "line": 39,
+                  "line": 50,
                   "character": 13
                 },
                 "end": {
-                  "line": 39,
+                  "line": 50,
                   "character": 26
                 }
               },
@@ -219,21 +344,21 @@ Compile finished with exit code '0' (success)
       "kind": 5,
       "range": {
         "start": {
-          "line": 18,
+          "line": 20,
           "character": 0
         },
         "end": {
-          "line": 30,
+          "line": 32,
           "character": 1
         }
       },
       "selectionRange": {
         "start": {
-          "line": 18,
+          "line": 20,
           "character": 6
         },
         "end": {
-          "line": 18,
+          "line": 20,
           "character": 9
         }
       },
@@ -243,21 +368,21 @@ Compile finished with exit code '0' (success)
           "kind": 13,
           "range": {
             "start": {
-              "line": 20,
+              "line": 22,
               "character": 8
             },
             "end": {
-              "line": 20,
+              "line": 22,
               "character": 13
             }
           },
           "selectionRange": {
             "start": {
-              "line": 20,
+              "line": 22,
               "character": 8
             },
             "end": {
-              "line": 20,
+              "line": 22,
               "character": 13
             }
           },
@@ -268,21 +393,21 @@ Compile finished with exit code '0' (success)
           "kind": 12,
           "range": {
             "start": {
-              "line": 23,
+              "line": 25,
               "character": 9
             },
             "end": {
-              "line": 23,
+              "line": 25,
               "character": 16
             }
           },
           "selectionRange": {
             "start": {
-              "line": 23,
+              "line": 25,
               "character": 9
             },
             "end": {
-              "line": 23,
+              "line": 25,
               "character": 16
             }
           },
@@ -293,21 +418,21 @@ Compile finished with exit code '0' (success)
           "kind": 12,
           "range": {
             "start": {
-              "line": 27,
+              "line": 29,
               "character": 9
             },
             "end": {
-              "line": 27,
+              "line": 29,
               "character": 17
             }
           },
           "selectionRange": {
             "start": {
-              "line": 27,
+              "line": 29,
               "character": 9
             },
             "end": {
-              "line": 27,
+              "line": 29,
               "character": 17
             }
           },
@@ -317,7 +442,7 @@ Compile finished with exit code '0' (success)
     }
   ],
   "symbols": {
-    "31": {
+    "34": {
       "loc": {
         "range": {
           "start": {
@@ -333,7 +458,7 @@ Compile finished with exit code '0' (success)
       },
       "doc": "THIS COMMENT USED"
     },
-    "32": {
+    "35": {
       "loc": {
         "range": {
           "start": {
@@ -353,11 +478,11 @@ Compile finished with exit code '0' (success)
       "loc": {
         "range": {
           "start": {
-            "line": 47,
+            "line": 58,
             "character": 9
           },
           "end": {
-            "line": 47,
+            "line": 58,
             "character": 18
           }
         },
@@ -369,11 +494,11 @@ Compile finished with exit code '0' (success)
       "loc": {
         "range": {
           "start": {
-            "line": 18,
+            "line": 20,
             "character": 6
           },
           "end": {
-            "line": 18,
+            "line": 20,
             "character": 9
           }
         },
@@ -381,15 +506,15 @@ Compile finished with exit code '0' (success)
       },
       "doc": "A car, duh"
     },
-    "1,0": {
+    "2,0": {
       "loc": {
         "range": {
           "start": {
-            "line": 20,
+            "line": 22,
             "character": 8
           },
           "end": {
-            "line": 20,
+            "line": 22,
             "character": 13
           }
         },
@@ -397,15 +522,15 @@ Compile finished with exit code '0' (success)
       },
       "doc": "How fast it goes"
     },
-    "42": {
+    "47": {
       "loc": {
         "range": {
           "start": {
-            "line": 39,
+            "line": 50,
             "character": 13
           },
           "end": {
-            "line": 39,
+            "line": 50,
             "character": 26
           }
         },
@@ -413,30 +538,30 @@ Compile finished with exit code '0' (success)
       },
       "doc": "i am a car"
     },
-    "35": {
+    "40": {
       "loc": {
         "range": {
           "start": {
-            "line": 35,
+            "line": 46,
             "character": 13
           },
           "end": {
-            "line": 35,
+            "line": 46,
             "character": 23
           }
         },
         "uri": "ZQ_BUFFER"
       }
     },
-    "33": {
+    "38": {
       "loc": {
         "range": {
           "start": {
-            "line": 51,
+            "line": 62,
             "character": 8
           },
           "end": {
-            "line": 51,
+            "line": 62,
             "character": 11
           }
         },
@@ -444,15 +569,94 @@ Compile finished with exit code '0' (success)
       },
       "doc": "hmmmmmm"
     },
-    "34": {
+    "36": {
       "loc": {
         "range": {
           "start": {
-            "line": 20,
+            "line": 17,
+            "character": 4
+          },
+          "end": {
+            "line": 17,
+            "character": 5
+          }
+        },
+        "uri": "ZQ_BUFFER"
+      },
+      "doc": "hello world"
+    },
+    "37": {
+      "loc": {
+        "range": {
+          "start": {
+            "line": 17,
+            "character": 7
+          },
+          "end": {
+            "line": 17,
+            "character": 12
+          }
+        },
+        "uri": "ZQ_BUFFER"
+      }
+    },
+    "32": {
+      "loc": {
+        "range": {
+          "start": {
+            "line": 39,
+            "character": 4
+          },
+          "end": {
+            "line": 39,
+            "character": 8
+          }
+        },
+        "uri": "ZQ_BUFFER"
+      },
+      "doc": "absolute trash"
+    },
+    "31": {
+      "loc": {
+        "range": {
+          "start": {
+            "line": 37,
+            "character": 4
+          },
+          "end": {
+            "line": 37,
+            "character": 9
+          }
+        },
+        "uri": "ZQ_BUFFER"
+      },
+      "doc": "top class"
+    },
+    "33": {
+      "loc": {
+        "range": {
+          "start": {
+            "line": 40,
+            "character": 4
+          },
+          "end": {
+            "line": 40,
+            "character": 7
+          }
+        },
+        "uri": "ZQ_BUFFER"
+      },
+      "doc": "meh"
+    },
+    "39": {
+      "loc": {
+        "range": {
+          "start": {
+            "line": 22,
             "character": 8
           },
           "end": {
-            "line": 20,
+            "line": 22,
             "character": 13
           }
         },
@@ -464,11 +668,11 @@ Compile finished with exit code '0' (success)
       "loc": {
         "range": {
           "start": {
-            "line": 23,
+            "line": 25,
             "character": 9
           },
           "end": {
-            "line": 23,
+            "line": 25,
             "character": 16
           }
         },
@@ -480,23 +684,23 @@ Compile finished with exit code '0' (success)
   "identifiers": [
     {
       "loc": {
-        "line": 36,
+        "line": 47,
         "character": 26,
         "length": 7
       },
-      "symbol": "31"
+      "symbol": "34"
     },
     {
       "loc": {
-        "line": 36,
+        "line": 47,
         "character": 39,
         "length": 1
       },
-      "symbol": "32"
+      "symbol": "35"
     },
     {
       "loc": {
-        "line": 37,
+        "line": 48,
         "character": 15,
         "length": 2
       },
@@ -504,15 +708,15 @@ Compile finished with exit code '0' (success)
     },
     {
       "loc": {
-        "line": 37,
+        "line": 48,
         "character": 18,
         "length": 7
       },
-      "symbol": "31"
+      "symbol": "34"
     },
     {
       "loc": {
-        "line": 39,
+        "line": 50,
         "character": 21,
         "length": 3
       },
@@ -520,47 +724,87 @@ Compile finished with exit code '0' (success)
     },
     {
       "loc": {
-        "line": 40,
+        "line": 51,
         "character": 32,
         "length": 5
       },
-      "symbol": "1,0"
+      "symbol": "2,0"
     },
     {
       "loc": {
-        "line": 40,
+        "line": 51,
         "character": 29,
         "length": 1
       },
-      "symbol": "42"
+      "symbol": "47"
     },
     {
       "loc": {
-        "line": 40,
+        "line": 51,
         "character": 39,
         "length": 6
       },
-      "symbol": "35"
+      "symbol": "40"
     },
     {
       "loc": {
-        "line": 40,
+        "line": 51,
         "character": 54,
+        "length": 3
+      },
+      "symbol": "38"
+    },
+    {
+      "loc": {
+        "line": 51,
+        "character": 60,
+        "length": 1
+      },
+      "symbol": "36"
+    },
+    {
+      "loc": {
+        "line": 51,
+        "character": 64,
+        "length": 1
+      },
+      "symbol": "37"
+    },
+    {
+      "loc": {
+        "line": 51,
+        "character": 68,
+        "length": 4
+      },
+      "symbol": "32"
+    },
+    {
+      "loc": {
+        "line": 51,
+        "character": 75,
+        "length": 5
+      },
+      "symbol": "31"
+    },
+    {
+      "loc": {
+        "line": 51,
+        "character": 83,
         "length": 3
       },
       "symbol": "33"
     },
     {
       "loc": {
-        "line": 24,
+        "line": 26,
         "character": 8,
         "length": 5
       },
-      "symbol": "34"
+      "symbol": "39"
     },
     {
       "loc": {
-        "line": 28,
+        "line": 30,
         "character": 8,
         "length": 5
       },
@@ -604,7 +848,18 @@ ZCLASS_READ d2,0
 PUSHVARGR d2
 LOAD d2,0.0008
 PUSHVARGR d2
-PUSHVARGR gd3; InlineFunc[void printf(char32)] Params End
+SETR d2,gd5
+PUSHR d2
+SETR d2,gd3
+POP d3
+ADDR d2,d3
+PUSHR d2
+SETR d2,gd4
+POP d3
+ADDR d2,d3
+ADDV d2,1
+ADDV d2,2
+PUSHVARGR d2; InlineFunc[void printf(char32)] Params End
 PRINTFVARG; InlineFunc[void printf(char32)] Body Start
 POP d5; InlineFunc[void printf(char32)] Body End
 LOAD d3,0
@@ -617,4 +872,6 @@ QUIT; void run(int, int, int, int, int) Body End
 SETV gd1,1; void run() Body Start
 SETV gd2,1
 SETV gd3,0
+SETV gd4,2
+SETV gd5,0
 QUIT; void run() Body End

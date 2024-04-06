@@ -14,6 +14,8 @@ int postfix = 1; // THIS COMMENT USED
  * - list item 3
 */
 int x = 1;
+// hello world
+int y, z = 2;
 
 // A car, duh
 class Car {
@@ -30,6 +32,15 @@ class Car {
     }
 }
 
+// how fancy something looks
+enum Brand {
+    // top class
+    Fancy,
+    // absolute trash
+    Dull,
+    Mid // meh
+};
+
 // a ffc script called Metadata
 ffc script Metadata {
     // run me
@@ -38,7 +49,7 @@ ffc script Metadata {
         utils::fn(postfix);
         // i am a car
         auto c = new Car();
-        printf("%d %d %d\n", c->speed, radius, utils::hmm);
+        printf("%d %d %d\n", c->speed, radius, utils::hmm + y + z + Dull + Fancy + Mid);
     }
 }
 

@@ -713,13 +713,11 @@ Data_List :
 			ASTDataDecl* element = (ASTDataDecl*)$3;
 			list->addDeclaration(element);
 			list->location = @$;
-			// element->doc_comment.clear(); // TODO ! needed?
 			$$ = list;}
 	| Data_Element {
 			ASTDataDecl* element = (ASTDataDecl*)$1;
 			ASTDataDeclList* list = new ASTDataDeclList(@$);
 			list->addDeclaration(element);
-			list->doc_comment = element->doc_comment; // TODO ! needed?
 			$$ = list;}
 	;
 
@@ -1890,32 +1888,40 @@ Enum_Block:
 		ASTString* name = (ASTString*)$3;
 		ASTDataDecl* element = new ASTDataDecl(@$);
 		element->name = name->getValue();
+		element->doc_comment = std::move(name->doc_comment);
 		en->add(element);
+		delete name;
 		$$ = en;}
 	| Enum_Block COMMA IDENTIFIER ASSIGN Expression_Constant {
 		ASTDataEnum* en = (ASTDataEnum*)$1;
 		ASTString* name = (ASTString*)$3;
 		ASTDataDecl* element = new ASTDataDecl(@$);
 		element->name = name->getValue();
+		element->doc_comment = std::move(name->doc_comment);
 		ASTExprConst* value = (ASTExprConst*)$5;
 		element->setInitializer(value);
 		en->add(element);
+		delete name;
 		$$ = en;}
 	| IDENTIFIER {
 		ASTDataEnum* en = new ASTDataEnum(@$);
 		ASTString* name = (ASTString*)$1;
 		ASTDataDecl* element = new ASTDataDecl(@$);
 		element->name = name->getValue();
+		element->doc_comment = std::move(name->doc_comment);
 		en->add(element);
+		delete name;
 		$$ = en;}
 	| IDENTIFIER ASSIGN Expression_Constant {
 		ASTDataEnum* en = new ASTDataEnum(@$);
 		ASTString* name = (ASTString*)$1;
 		ASTDataDecl* element = new ASTDataDecl(@$);
 		element->name = name->getValue();
+		element->doc_comment = std::move(name->doc_comment);
 		ASTExprConst* value = (ASTExprConst*)$3;
 		element->setInitializer(value);
 		en->add(element);
+		delete name;
 		$$ = en;}*/
 
 ////////////////////////////////////////////////////////////////
