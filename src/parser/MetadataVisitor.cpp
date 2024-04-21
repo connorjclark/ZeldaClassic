@@ -50,6 +50,17 @@ enum class SymbolKind
 	TypeParameter,
 };
 
+static std::string make_uri(const std::string& path)
+{
+#ifdef _WIN32
+		std::string uri = "file:///" + path;
+		util::replstr(uri, "\\", "/");
+#else
+		std::string uri = "file://" + path;
+#endif
+	return uri;
+}
+
 static auto LocationData_json(const LocationData& loc)
 {
 	return json{
@@ -129,7 +140,6 @@ static void parseCommentForLinks(std::string& comment, const AST* node)
 	Scope* scope = scope = node->getScope();
 	if (!scope)
 		return;
-
 
 	// identifier, followed by an optional and non-captured "[]" or "()"
 	static std::string p_ident = "([a-zA-Z_][->:a-zA-Z0-9_]*)(?:\\[\\]|\\(\\))?";
@@ -251,7 +261,7 @@ static void parseCommentForLinks(std::string& comment, const AST* node)
 		if (std::getenv("TEST_ZSCRIPT") != nullptr && !path.empty())
 			path = fs::path(path).filename().string();
 		auto args = json{
-			{"file", path},
+			{"file", make_uri(path)},
 			{"position", LocationData_json(*location)},
 		};
 		std::string command = fmt::format("zscript.openLink?{}", url_encode(args.dump()));
@@ -332,17 +342,11 @@ static void appendIdentifier(std::string symbol_id, const AST* symbol_node, cons
 
 	if (!root["symbols"].contains(symbol_id))
 	{
-#ifdef _WIN32
-		std::string uri = "file:///" + symbol_node->location.fname;
-		util::replstr(uri, "\\", "/");
-#else
-		std::string uri = "file://" + symbol_node->location.fname;
-#endif
 		root["symbols"][symbol_id] = {
 			// TODO LocationData_location_json
 			{"loc", {
 				{"range", LocationData_json(symbol_node->location)},
-				{"uri", uri},
+				{"uri", make_uri(symbol_node->location.fname)},
 			}},
 		};
 
