@@ -106,6 +106,7 @@ jobs:
         run: |
             echo "BUILD_FOLDER=build/Coverage" >> "$GITHUB_ENV"
             tar -xvzf ${{ needs.build.outputs.artifact-name }}/${{ needs.build.outputs.package-name }} -C build
+            cp -r build/tmp-src src
 
       - run: sudo apt-get update && sudo apt-get install libopengl0 libglu1 lldb
         if: ${{ contains(inputs.runs-on, 'ubuntu') }}
