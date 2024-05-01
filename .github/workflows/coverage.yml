@@ -22,6 +22,7 @@ jobs:
       config: Coverage
       # TODO yuurand.zplay rng desyncs on frame 449856, because Debug mode.
       extra-args: --replay --frame 1000
+      from-ci-workflow: true
 
   upload-coverage:
     needs: ["collect-coverage"]
