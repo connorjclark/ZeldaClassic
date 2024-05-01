@@ -2,11 +2,9 @@ name: Code Coverage
 
 on:
   workflow_dispatch:
-  # TODO: consider reverting c0e0151c if can't work out why this
-  # is broken now.
-  # push:
-  #   branches: ["main"]
-  #   paths: ["tests/**"]
+  push:
+    # branches: ["main"]
+    paths: ["tests/**"]
 
 env:
   PYTHONUNBUFFERED: "1"
