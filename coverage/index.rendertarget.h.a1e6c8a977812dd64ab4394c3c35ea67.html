@@ -27,7 +27,7 @@
     </tr>
     <tr>
       <th scope="row">Date:</th>
-      <td>2024-05-02 02:29:04</td>
+      <td>2024-05-02 03:25:59</td>
     </tr>
   </table>
 </div>
@@ -73,10 +73,10 @@
       <th>Call count</th>
       <th>Block coverage</th>
     </tr>
-    <tr><td><a href="#l72">ZScriptDrawingRenderTarget::GetBitmapPtr(int) (line 72)</a></td><td>called 34371 times, returned 34371 times</td><td>80.0%</td></tr>
-    <tr><td><a href="#l56">ZScriptDrawingRenderTarget::GetCurrentRenderTarget() (line 56)</a></td><td>called 792389 times, returned 792389 times</td><td>100.0%</td></tr>
-    <tr><td><a href="#l61">ZScriptDrawingRenderTarget::GetTargetBitmap(int) (line 61)</a></td><td>called 832873 times, returned 832873 times</td><td>100.0%</td></tr>
-    <tr><td><a href="#l51">ZScriptDrawingRenderTarget::SetCurrentRenderTarget(int) (line 51)</a></td><td>called 1362891 times, returned 1362891 times</td><td>100.0%</td></tr>
+    <tr><td><a href="#l72">ZScriptDrawingRenderTarget::GetBitmapPtr(int) (line 72)</a></td><td>called 928052 times, returned 928052 times</td><td>80.0%</td></tr>
+    <tr><td><a href="#l56">ZScriptDrawingRenderTarget::GetCurrentRenderTarget() (line 56)</a></td><td>called 97169710 times, returned 97169710 times</td><td>100.0%</td></tr>
+    <tr><td><a href="#l61">ZScriptDrawingRenderTarget::GetTargetBitmap(int) (line 61)</a></td><td>called 98569076 times, returned 98569076 times</td><td>100.0%</td></tr>
+    <tr><td><a href="#l51">ZScriptDrawingRenderTarget::SetCurrentRenderTarget(int) (line 51)</a></td><td>called 6795661 times, returned 6795661 times</td><td>100.0%</td></tr>
     <tr><td><a href="#l34">ZScriptDrawingRenderTarget::ZScriptDrawingRenderTarget() (line 34)</a></td><td>called 262 times, returned 262 times</td><td>100.0%</td></tr>
     <tr><td><a href="#l42">ZScriptDrawingRenderTarget::~ZScriptDrawingRenderTarget() (line 42)</a></td><td>not called</td><td>0.0%</td></tr>
   </table>
@@ -454,7 +454,7 @@
       <td class="lineno"><a id="l51" href="#l51">51</a></td>
       <td class="linebranch">
       </td>
-      <td class="linecount coveredLine">1362891</td>
+      <td class="linecount coveredLine">6795661</td>
       <td class="src coveredLine"><span class="w">    </span><span class="n">_FORCE_INLINE</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="n">SetCurrentRenderTarget</span><span class="p">(</span><span class="kt">int32_t</span><span class="w"> </span><span class="n">target</span><span class="p">)</span></td>
     </tr>
     <tr class="source-line">
@@ -468,14 +468,14 @@
       <td class="lineno"><a id="l53" href="#l53">53</a></td>
       <td class="linebranch">
       </td>
-      <td class="linecount coveredLine">1362891</td>
+      <td class="linecount coveredLine">6795661</td>
       <td class="src coveredLine"><span class="w">        </span><span class="n">_current_target</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">target</span><span class="p">;</span></td>
     </tr>
     <tr class="source-line">
       <td class="lineno"><a id="l54" href="#l54">54</a></td>
       <td class="linebranch">
       </td>
-      <td class="linecount coveredLine">1362891</td>
+      <td class="linecount coveredLine">6795661</td>
       <td class="src coveredLine"><span class="w">    </span><span class="p">}</span></td>
     </tr>
     <tr class="source-line">
@@ -489,7 +489,7 @@
       <td class="lineno"><a id="l56" href="#l56">56</a></td>
       <td class="linebranch">
       </td>
-      <td class="linecount coveredLine">792389</td>
+      <td class="linecount coveredLine">97169710</td>
       <td class="src coveredLine"><span class="w">    </span><span class="n">_FORCE_INLINE</span><span class="w"> </span><span class="kt">int32_t</span><span class="w"> </span><span class="n">GetCurrentRenderTarget</span><span class="p">()</span></td>
     </tr>
     <tr class="source-line">
@@ -503,7 +503,7 @@
       <td class="lineno"><a id="l58" href="#l58">58</a></td>
       <td class="linebranch">
       </td>
-      <td class="linecount coveredLine">792389</td>
+      <td class="linecount coveredLine">97169710</td>
       <td class="src coveredLine"><span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="n">_current_target</span><span class="p">;</span></td>
     </tr>
     <tr class="source-line">
@@ -524,7 +524,7 @@
       <td class="lineno"><a id="l61" href="#l61">61</a></td>
       <td class="linebranch">
       </td>
-      <td class="linecount coveredLine">832873</td>
+      <td class="linecount coveredLine">98569076</td>
       <td class="src coveredLine"><span class="w">    </span><span class="n">_FORCE_INLINE</span><span class="w"> </span><span class="n">BITMAP</span><span class="o">*</span><span class="w"> </span><span class="n">GetTargetBitmap</span><span class="p">(</span><span class="kt">int32_t</span><span class="w"> </span><span class="n">target</span><span class="p">)</span></td>
     </tr>
     <tr class="source-line">
@@ -540,21 +540,21 @@
         <details class="linebranchDetails">
         <summary class="linebranchSummary">3/4</summary>
         <div class="linebranchContents">
-          <div class="takenBranch">&check; Branch 0 taken 26107 times.</div>
-          <div class="takenBranch">&check; Branch 1 taken 806766 times.</div>
+          <div class="takenBranch">&check; Branch 0 taken 6429021 times.</div>
+          <div class="takenBranch">&check; Branch 1 taken 92140055 times.</div>
           <div class="notTakenBranch">&cross; Branch 2 not taken.</div>
-          <div class="takenBranch">&check; Branch 3 taken 26107 times.</div>
+          <div class="takenBranch">&check; Branch 3 taken 6429021 times.</div>
         </div>
         </details>
       </td>
-      <td class="linecount partialCoveredLine">832873</td>
+      <td class="linecount partialCoveredLine">98569076</td>
       <td class="src partialCoveredLine"><span class="w">        </span><span class="k">if</span><span class="p">(</span><span class="n">target</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="mi">0</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="n">target</span><span class="w"> </span><span class="o">&gt;=</span><span class="w"> </span><span class="n">MaxBuffers</span><span class="p">)</span></td>
     </tr>
     <tr class="source-line">
       <td class="lineno"><a id="l64" href="#l64">64</a></td>
       <td class="linebranch">
       </td>
-      <td class="linecount coveredLine">806766</td>
+      <td class="linecount coveredLine">92140055</td>
       <td class="src coveredLine"><span class="w">            </span><span class="k">return</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span></td>
     </tr>
     <tr class="source-line">
@@ -570,19 +570,19 @@
         <details class="linebranchDetails">
         <summary class="linebranchSummary">2/2</summary>
         <div class="linebranchContents">
-          <div class="takenBranch">&check; Branch 0 taken 7 times.</div>
-          <div class="takenBranch">&check; Branch 1 taken 26100 times.</div>
+          <div class="takenBranch">&check; Branch 0 taken 22 times.</div>
+          <div class="takenBranch">&check; Branch 1 taken 6428999 times.</div>
         </div>
         </details>
       </td>
-      <td class="linecount coveredLine">26107</td>
+      <td class="linecount coveredLine">6429021</td>
       <td class="src coveredLine"><span class="w">        </span><span class="k">if</span><span class="p">(</span><span class="o">!</span><span class="n">_bitmap</span><span class="p">[</span><span class="n">target</span><span class="p">])</span></td>
     </tr>
     <tr class="source-line">
       <td class="lineno"><a id="l67" href="#l67">67</a></td>
       <td class="linebranch">
       </td>
-      <td class="linecount coveredLine">7</td>
+      <td class="linecount coveredLine">22</td>
       <td class="src coveredLine"><span class="w">            </span><span class="n">_bitmap</span><span class="p">[</span><span class="n">target</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">create_bitmap_ex</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span><span class="w"> </span><span class="n">BitmapWidth</span><span class="p">,</span><span class="w"> </span><span class="n">BitmapHeight</span><span class="p">);</span></td>
     </tr>
     <tr class="source-line">
@@ -596,14 +596,14 @@
       <td class="lineno"><a id="l69" href="#l69">69</a></td>
       <td class="linebranch">
       </td>
-      <td class="linecount coveredLine">26107</td>
+      <td class="linecount coveredLine">6429021</td>
       <td class="src coveredLine"><span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="n">_bitmap</span><span class="p">[</span><span class="n">target</span><span class="p">];</span></td>
     </tr>
     <tr class="source-line">
       <td class="lineno"><a id="l70" href="#l70">70</a></td>
       <td class="linebranch">
       </td>
-      <td class="linecount coveredLine">832873</td>
+      <td class="linecount coveredLine">98569076</td>
       <td class="src coveredLine"><span class="w">    </span><span class="p">}</span></td>
     </tr>
     <tr class="source-line">
@@ -617,7 +617,7 @@
       <td class="lineno"><a id="l72" href="#l72">72</a></td>
       <td class="linebranch">
       </td>
-      <td class="linecount coveredLine">34371</td>
+      <td class="linecount coveredLine">928052</td>
       <td class="src coveredLine"><span class="w">    </span><span class="n">BITMAP</span><span class="o">*</span><span class="w"> </span><span class="n">GetBitmapPtr</span><span class="p">(</span><span class="kt">int32_t</span><span class="w"> </span><span class="n">target</span><span class="p">)</span></td>
     </tr>
     <tr class="source-line">
@@ -633,14 +633,14 @@
         <details class="linebranchDetails">
         <summary class="linebranchSummary">2/4</summary>
         <div class="linebranchContents">
-          <div class="takenBranch">&check; Branch 0 taken 34371 times.</div>
+          <div class="takenBranch">&check; Branch 0 taken 928052 times.</div>
           <div class="notTakenBranch">&cross; Branch 1 not taken.</div>
           <div class="notTakenBranch">&cross; Branch 2 not taken.</div>
-          <div class="takenBranch">&check; Branch 3 taken 34371 times.</div>
+          <div class="takenBranch">&check; Branch 3 taken 928052 times.</div>
         </div>
         </details>
       </td>
-      <td class="linecount partialCoveredLine">34371</td>
+      <td class="linecount partialCoveredLine">928052</td>
       <td class="src partialCoveredLine"><span class="w">        </span><span class="k">if</span><span class="p">(</span><span class="n">target</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="mi">0</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="n">target</span><span class="w"> </span><span class="o">&gt;=</span><span class="w"> </span><span class="n">MaxBuffers</span><span class="p">)</span></td>
     </tr>
     <tr class="source-line">
@@ -661,14 +661,14 @@
       <td class="lineno"><a id="l77" href="#l77">77</a></td>
       <td class="linebranch">
       </td>
-      <td class="linecount coveredLine">34371</td>
+      <td class="linecount coveredLine">928052</td>
       <td class="src coveredLine"><span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="n">_bitmap</span><span class="p">[</span><span class="n">target</span><span class="p">];</span></td>
     </tr>
     <tr class="source-line">
       <td class="lineno"><a id="l78" href="#l78">78</a></td>
       <td class="linebranch">
       </td>
-      <td class="linecount coveredLine">34371</td>
+      <td class="linecount coveredLine">928052</td>
       <td class="src coveredLine"><span class="w">    </span><span class="p">}</span></td>
     </tr>
     <tr class="source-line">

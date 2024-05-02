@@ -27,7 +27,7 @@
     </tr>
     <tr>
       <th scope="row">Date:</th>
-      <td>2024-05-02 02:29:04</td>
+      <td>2024-05-02 03:25:59</td>
     </tr>
   </table>
 </div>
@@ -41,21 +41,21 @@
     </tr>
     <tr>
       <th scope="row">Lines:</th>
-      <td>7</td>
+      <td>25</td>
       <td>88</td>
-      <td class="coverage-low">8.0%</td>
+      <td class="coverage-low">28.4%</td>
     </tr>
     <tr>
       <th scope="row">Functions:</th>
-      <td>1</td>
       <td>2</td>
-      <td class="coverage-low">50.0%</td>
+      <td>2</td>
+      <td class="coverage-high">100.0%</td>
     </tr>
     <tr>
       <th scope="row">Branches:</th>
-      <td>3</td>
+      <td>8</td>
       <td>44</td>
-      <td class="coverage-low">6.8%</td>
+      <td class="coverage-low">18.2%</td>
     </tr>
   </table>
 </div>
@@ -73,8 +73,8 @@
       <th>Call count</th>
       <th>Block coverage</th>
     </tr>
-    <tr><td><a href="#l46">play_enh_music_crossfade(char const*, char const*, int, int, int, int, int, int, bool) (line 46)</a></td><td>not called</td><td>0.0%</td></tr>
-    <tr><td><a href="#l13">try_zcmusic(char const*, char const*, int, int, int, int) (line 13)</a></td><td>called 19 times, returned 19 times</td><td>66.0%</td></tr>
+    <tr><td><a href="#l46">play_enh_music_crossfade(char const*, char const*, int, int, int, int, int, int, bool) (line 46)</a></td><td>called 5 times, returned 5 times</td><td>19.0%</td></tr>
+    <tr><td><a href="#l13">try_zcmusic(char const*, char const*, int, int, int, int) (line 13)</a></td><td>called 290 times, returned 290 times</td><td>66.0%</td></tr>
   </table>
 </details>
 
@@ -177,7 +177,7 @@
       <td class="lineno"><a id="l13" href="#l13">13</a></td>
       <td class="linebranch">
       </td>
-      <td class="linecount coveredLine">19</td>
+      <td class="linecount coveredLine">290</td>
       <td class="src coveredLine"><span class="kt">bool</span><span class="w"> </span><span class="nf">try_zcmusic</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="kt">char</span><span class="o">*</span><span class="w"> </span><span class="n">filename</span><span class="p">,</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="kt">char</span><span class="o">*</span><span class="w"> </span><span class="n">path</span><span class="p">,</span><span class="w"> </span><span class="kt">int32_t</span><span class="w"> </span><span class="n">track</span><span class="p">,</span><span class="w"> </span><span class="kt">int32_t</span><span class="w"> </span><span class="n">midi</span><span class="p">,</span><span class="w"> </span><span class="kt">int32_t</span><span class="w"> </span><span class="n">vol</span><span class="p">,</span><span class="w"> </span><span class="kt">int32_t</span><span class="w"> </span><span class="n">fadeoutframes</span><span class="p">)</span></td>
     </tr>
     <tr class="source-line">
@@ -191,7 +191,7 @@
       <td class="lineno"><a id="l15" href="#l15">15</a></td>
       <td class="linebranch">
       </td>
-      <td class="linecount coveredLine">19</td>
+      <td class="linecount coveredLine">290</td>
       <td class="src coveredLine"><span class="w">	</span><span class="n">ZCMUSIC</span><span class="o">*</span><span class="w"> </span><span class="n">newzcmusic</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">zcmusic_load_for_quest</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span><span class="w"> </span><span class="n">path</span><span class="p">);</span></td>
     </tr>
     <tr class="source-line">
@@ -215,11 +215,11 @@
         <summary class="linebranchSummary">1/2</summary>
         <div class="linebranchContents">
           <div class="notTakenBranch">&cross; Branch 0 not taken.</div>
-          <div class="takenBranch">&check; Branch 1 taken 19 times.</div>
+          <div class="takenBranch">&check; Branch 1 taken 290 times.</div>
         </div>
         </details>
       </td>
-      <td class="linecount partialCoveredLine">19</td>
+      <td class="linecount partialCoveredLine">290</td>
       <td class="src partialCoveredLine"><span class="w">	</span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">newzcmusic</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="nb">NULL</span><span class="p">)</span></td>
     </tr>
     <tr class="source-line">
@@ -368,19 +368,19 @@
         <details class="linebranchDetails">
         <summary class="linebranchSummary">2/2</summary>
         <div class="linebranchContents">
-          <div class="takenBranch">&check; Branch 0 taken 7 times.</div>
-          <div class="takenBranch">&check; Branch 1 taken 12 times.</div>
+          <div class="takenBranch">&check; Branch 0 taken 180 times.</div>
+          <div class="takenBranch">&check; Branch 1 taken 110 times.</div>
         </div>
         </details>
       </td>
-      <td class="linecount coveredLine">19</td>
+      <td class="linecount coveredLine">290</td>
       <td class="src coveredLine"><span class="w">	</span><span class="k">else</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">midi</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mi">-1000</span><span class="p">)</span></td>
     </tr>
     <tr class="source-line">
       <td class="lineno"><a id="l40" href="#l40">40</a></td>
       <td class="linebranch">
       </td>
-      <td class="linecount coveredLine">12</td>
+      <td class="linecount coveredLine">110</td>
       <td class="src coveredLine"><span class="w">		</span><span class="n">jukebox</span><span class="p">(</span><span class="n">midi</span><span class="p">);</span></td>
     </tr>
     <tr class="source-line">
@@ -401,14 +401,14 @@
       <td class="lineno"><a id="l43" href="#l43">43</a></td>
       <td class="linebranch">
       </td>
-      <td class="linecount coveredLine">19</td>
+      <td class="linecount coveredLine">290</td>
       <td class="src coveredLine"><span class="w">	</span><span class="k">return</span><span class="w"> </span><span class="nb">false</span><span class="p">;</span></td>
     </tr>
     <tr class="source-line">
       <td class="lineno"><a id="l44" href="#l44">44</a></td>
       <td class="linebranch">
       </td>
-      <td class="linecount coveredLine">19</td>
+      <td class="linecount coveredLine">290</td>
       <td class="src coveredLine"><span class="p">}</span></td>
     </tr>
     <tr class="source-line">
@@ -422,8 +422,8 @@
       <td class="lineno"><a id="l46" href="#l46">46</a></td>
       <td class="linebranch">
       </td>
-      <td class="linecount uncoveredLine">&cross;</td>
-      <td class="src uncoveredLine"><span class="kt">bool</span><span class="w"> </span><span class="nf">play_enh_music_crossfade</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="kt">char</span><span class="o">*</span><span class="w"> </span><span class="n">name</span><span class="p">,</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="kt">char</span><span class="o">*</span><span class="w"> </span><span class="n">path</span><span class="p">,</span><span class="w"> </span><span class="kt">int32_t</span><span class="w"> </span><span class="n">track</span><span class="p">,</span><span class="w"> </span><span class="kt">int32_t</span><span class="w"> </span><span class="n">vol</span><span class="p">,</span><span class="w"> </span><span class="kt">int32_t</span><span class="w"> </span><span class="n">fadeinframes</span><span class="p">,</span><span class="w"> </span><span class="kt">int32_t</span><span class="w"> </span><span class="n">fadeoutframes</span><span class="p">,</span><span class="w"> </span><span class="kt">int32_t</span><span class="w"> </span><span class="n">fademiddleframes</span><span class="p">,</span><span class="w"> </span><span class="kt">int32_t</span><span class="w"> </span><span class="n">startpos</span><span class="p">,</span><span class="w"> </span><span class="kt">bool</span><span class="w"> </span><span class="n">revertonfail</span><span class="p">)</span></td>
+      <td class="linecount coveredLine">5</td>
+      <td class="src coveredLine"><span class="kt">bool</span><span class="w"> </span><span class="nf">play_enh_music_crossfade</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="kt">char</span><span class="o">*</span><span class="w"> </span><span class="n">name</span><span class="p">,</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="kt">char</span><span class="o">*</span><span class="w"> </span><span class="n">path</span><span class="p">,</span><span class="w"> </span><span class="kt">int32_t</span><span class="w"> </span><span class="n">track</span><span class="p">,</span><span class="w"> </span><span class="kt">int32_t</span><span class="w"> </span><span class="n">vol</span><span class="p">,</span><span class="w"> </span><span class="kt">int32_t</span><span class="w"> </span><span class="n">fadeinframes</span><span class="p">,</span><span class="w"> </span><span class="kt">int32_t</span><span class="w"> </span><span class="n">fadeoutframes</span><span class="p">,</span><span class="w"> </span><span class="kt">int32_t</span><span class="w"> </span><span class="n">fademiddleframes</span><span class="p">,</span><span class="w"> </span><span class="kt">int32_t</span><span class="w"> </span><span class="n">startpos</span><span class="p">,</span><span class="w"> </span><span class="kt">bool</span><span class="w"> </span><span class="n">revertonfail</span><span class="p">)</span></td>
     </tr>
     <tr class="source-line">
       <td class="lineno"><a id="l47" href="#l47">47</a></td>
@@ -436,8 +436,8 @@
       <td class="lineno"><a id="l48" href="#l48">48</a></td>
       <td class="linebranch">
       </td>
-      <td class="linecount uncoveredLine">&cross;</td>
-      <td class="src uncoveredLine"><span class="w">	</span><span class="kt">double</span><span class="w"> </span><span class="n">fadeoutpct</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">1.0</span><span class="p">;</span></td>
+      <td class="linecount coveredLine">5</td>
+      <td class="src coveredLine"><span class="w">	</span><span class="kt">double</span><span class="w"> </span><span class="n">fadeoutpct</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">1.0</span><span class="p">;</span></td>
     </tr>
     <tr class="source-line">
       <td class="lineno"><a id="l49" href="#l49">49</a></td>
@@ -449,9 +449,16 @@
     <tr class="source-line">
       <td class="lineno"><a id="l50" href="#l50">50</a></td>
       <td class="linebranch">
+        <details class="linebranchDetails">
+        <summary class="linebranchSummary">1/2</summary>
+        <div class="linebranchContents">
+          <div class="notTakenBranch">&cross; Branch 0 not taken.</div>
+          <div class="takenBranch">&check; Branch 1 taken 5 times.</div>
+        </div>
+        </details>
       </td>
-      <td class="linecount uncoveredLine">&cross;</td>
-      <td class="src uncoveredLine"><span class="w">	</span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">zcmixer</span><span class="o">-&gt;</span><span class="n">newtrack</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="nb">NULL</span><span class="p">)</span></td>
+      <td class="linecount partialCoveredLine">5</td>
+      <td class="src partialCoveredLine"><span class="w">	</span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">zcmixer</span><span class="o">-&gt;</span><span class="n">newtrack</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="nb">NULL</span><span class="p">)</span></td>
     </tr>
     <tr class="source-line">
       <td class="lineno"><a id="l51" href="#l51">51</a></td>
@@ -485,15 +492,15 @@
       <td class="lineno"><a id="l55" href="#l55">55</a></td>
       <td class="linebranch">
       </td>
-      <td class="linecount uncoveredLine">&cross;</td>
-      <td class="src uncoveredLine"><span class="w">	</span><span class="n">ZCMUSIC</span><span class="o">*</span><span class="w"> </span><span class="n">oldold</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">zcmixer</span><span class="o">-&gt;</span><span class="n">oldtrack</span><span class="p">;</span></td>
+      <td class="linecount coveredLine">5</td>
+      <td class="src coveredLine"><span class="w">	</span><span class="n">ZCMUSIC</span><span class="o">*</span><span class="w"> </span><span class="n">oldold</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">zcmixer</span><span class="o">-&gt;</span><span class="n">oldtrack</span><span class="p">;</span></td>
     </tr>
     <tr class="source-line">
       <td class="lineno"><a id="l56" href="#l56">56</a></td>
       <td class="linebranch">
       </td>
-      <td class="linecount uncoveredLine">&cross;</td>
-      <td class="src uncoveredLine"><span class="w">	</span><span class="kt">bool</span><span class="w"> </span><span class="n">ret</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">false</span><span class="p">;</span></td>
+      <td class="linecount coveredLine">5</td>
+      <td class="src coveredLine"><span class="w">	</span><span class="kt">bool</span><span class="w"> </span><span class="n">ret</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">false</span><span class="p">;</span></td>
     </tr>
     <tr class="source-line">
       <td class="lineno"><a id="l57" href="#l57">57</a></td>
@@ -505,9 +512,16 @@
     <tr class="source-line">
       <td class="lineno"><a id="l58" href="#l58">58</a></td>
       <td class="linebranch">
+        <details class="linebranchDetails">
+        <summary class="linebranchSummary">1/2</summary>
+        <div class="linebranchContents">
+          <div class="takenBranch">&check; Branch 0 taken 5 times.</div>
+          <div class="notTakenBranch">&cross; Branch 1 not taken.</div>
+        </div>
+        </details>
       </td>
-      <td class="linecount uncoveredLine">&cross;</td>
-      <td class="src uncoveredLine"><span class="w">	</span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">name</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="nb">NULL</span><span class="p">)</span></td>
+      <td class="linecount partialCoveredLine">5</td>
+      <td class="src partialCoveredLine"><span class="w">	</span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">name</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="nb">NULL</span><span class="p">)</span></td>
     </tr>
     <tr class="source-line">
       <td class="lineno"><a id="l59" href="#l59">59</a></td>
@@ -716,22 +730,22 @@
       <td class="lineno"><a id="l88" href="#l88">88</a></td>
       <td class="linebranch">
       </td>
-      <td class="linecount uncoveredLine">&cross;</td>
-      <td class="src uncoveredLine"><span class="w">		</span><span class="n">zcmixer</span><span class="o">-&gt;</span><span class="n">oldtrack</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">zcmusic</span><span class="p">;</span></td>
+      <td class="linecount coveredLine">5</td>
+      <td class="src coveredLine"><span class="w">		</span><span class="n">zcmixer</span><span class="o">-&gt;</span><span class="n">oldtrack</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">zcmusic</span><span class="p">;</span></td>
     </tr>
     <tr class="source-line">
       <td class="lineno"><a id="l89" href="#l89">89</a></td>
       <td class="linebranch">
       </td>
-      <td class="linecount uncoveredLine">&cross;</td>
-      <td class="src uncoveredLine"><span class="w">		</span><span class="n">zcmusic</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">NULL</span><span class="p">;</span></td>
+      <td class="linecount coveredLine">5</td>
+      <td class="src coveredLine"><span class="w">		</span><span class="n">zcmusic</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">NULL</span><span class="p">;</span></td>
     </tr>
     <tr class="source-line">
       <td class="lineno"><a id="l90" href="#l90">90</a></td>
       <td class="linebranch">
       </td>
-      <td class="linecount uncoveredLine">&cross;</td>
-      <td class="src uncoveredLine"><span class="w">		</span><span class="n">zcmixer</span><span class="o">-&gt;</span><span class="n">newtrack</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">NULL</span><span class="p">;</span></td>
+      <td class="linecount coveredLine">5</td>
+      <td class="src coveredLine"><span class="w">		</span><span class="n">zcmixer</span><span class="o">-&gt;</span><span class="n">newtrack</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">NULL</span><span class="p">;</span></td>
     </tr>
     <tr class="source-line">
       <td class="lineno"><a id="l91" href="#l91">91</a></td>
@@ -744,8 +758,8 @@
       <td class="lineno"><a id="l92" href="#l92">92</a></td>
       <td class="linebranch">
       </td>
-      <td class="linecount uncoveredLine">&cross;</td>
-      <td class="src uncoveredLine"><span class="w">		</span><span class="n">ret</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">try_zcmusic</span><span class="p">(</span><span class="n">name</span><span class="p">,</span><span class="w"> </span><span class="n">path</span><span class="p">,</span><span class="w"> </span><span class="n">track</span><span class="p">,</span><span class="w"> </span><span class="mi">-1000</span><span class="p">,</span><span class="w"> </span><span class="n">vol</span><span class="p">,</span><span class="w"> </span><span class="n">fadeoutframes</span><span class="p">);</span></td>
+      <td class="linecount coveredLine">5</td>
+      <td class="src coveredLine"><span class="w">		</span><span class="n">ret</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">try_zcmusic</span><span class="p">(</span><span class="n">name</span><span class="p">,</span><span class="w"> </span><span class="n">path</span><span class="p">,</span><span class="w"> </span><span class="n">track</span><span class="p">,</span><span class="w"> </span><span class="mi">-1000</span><span class="p">,</span><span class="w"> </span><span class="n">vol</span><span class="p">,</span><span class="w"> </span><span class="n">fadeoutframes</span><span class="p">);</span></td>
     </tr>
     <tr class="source-line">
       <td class="lineno"><a id="l93" href="#l93">93</a></td>
@@ -757,9 +771,16 @@
     <tr class="source-line">
       <td class="lineno"><a id="l94" href="#l94">94</a></td>
       <td class="linebranch">
+        <details class="linebranchDetails">
+        <summary class="linebranchSummary">1/2</summary>
+        <div class="linebranchContents">
+          <div class="notTakenBranch">&cross; Branch 0 not taken.</div>
+          <div class="takenBranch">&check; Branch 1 taken 5 times.</div>
+        </div>
+        </details>
       </td>
-      <td class="linecount uncoveredLine">&cross;</td>
-      <td class="src uncoveredLine"><span class="w">		</span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">ret</span><span class="p">)</span></td>
+      <td class="linecount partialCoveredLine">5</td>
+      <td class="src partialCoveredLine"><span class="w">		</span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">ret</span><span class="p">)</span></td>
     </tr>
     <tr class="source-line">
       <td class="lineno"><a id="l95" href="#l95">95</a></td>
@@ -925,9 +946,16 @@
     <tr class="source-line">
       <td class="lineno"><a id="l118" href="#l118">118</a></td>
       <td class="linebranch">
+        <details class="linebranchDetails">
+        <summary class="linebranchSummary">1/2</summary>
+        <div class="linebranchContents">
+          <div class="notTakenBranch">&cross; Branch 0 not taken.</div>
+          <div class="takenBranch">&check; Branch 1 taken 5 times.</div>
+        </div>
+        </details>
       </td>
-      <td class="linecount uncoveredLine">&cross;</td>
-      <td class="src uncoveredLine"><span class="w">		</span><span class="k">else</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">revertonfail</span><span class="p">)</span></td>
+      <td class="linecount partialCoveredLine">5</td>
+      <td class="src partialCoveredLine"><span class="w">		</span><span class="k">else</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">revertonfail</span><span class="p">)</span></td>
     </tr>
     <tr class="source-line">
       <td class="lineno"><a id="l119" href="#l119">119</a></td>
@@ -947,29 +975,29 @@
       <td class="lineno"><a id="l121" href="#l121">121</a></td>
       <td class="linebranch">
       </td>
-      <td class="linecount uncoveredLine">&cross;</td>
-      <td class="src uncoveredLine"><span class="w">			</span><span class="n">zcmusic</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">zcmixer</span><span class="o">-&gt;</span><span class="n">oldtrack</span><span class="p">;</span></td>
+      <td class="linecount coveredLine">5</td>
+      <td class="src coveredLine"><span class="w">			</span><span class="n">zcmusic</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">zcmixer</span><span class="o">-&gt;</span><span class="n">oldtrack</span><span class="p">;</span></td>
     </tr>
     <tr class="source-line">
       <td class="lineno"><a id="l122" href="#l122">122</a></td>
       <td class="linebranch">
       </td>
-      <td class="linecount uncoveredLine">&cross;</td>
-      <td class="src uncoveredLine"><span class="w">			</span><span class="n">zcmixer</span><span class="o">-&gt;</span><span class="n">newtrack</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">NULL</span><span class="p">;</span></td>
+      <td class="linecount coveredLine">5</td>
+      <td class="src coveredLine"><span class="w">			</span><span class="n">zcmixer</span><span class="o">-&gt;</span><span class="n">newtrack</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">NULL</span><span class="p">;</span></td>
     </tr>
     <tr class="source-line">
       <td class="lineno"><a id="l123" href="#l123">123</a></td>
       <td class="linebranch">
       </td>
-      <td class="linecount uncoveredLine">&cross;</td>
-      <td class="src uncoveredLine"><span class="w">			</span><span class="n">zcmixer</span><span class="o">-&gt;</span><span class="n">oldtrack</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">NULL</span><span class="p">;</span></td>
+      <td class="linecount coveredLine">5</td>
+      <td class="src coveredLine"><span class="w">			</span><span class="n">zcmixer</span><span class="o">-&gt;</span><span class="n">oldtrack</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">NULL</span><span class="p">;</span></td>
     </tr>
     <tr class="source-line">
       <td class="lineno"><a id="l124" href="#l124">124</a></td>
       <td class="linebranch">
       </td>
-      <td class="linecount uncoveredLine">&cross;</td>
-      <td class="src uncoveredLine"><span class="w">		</span><span class="p">}</span></td>
+      <td class="linecount coveredLine">5</td>
+      <td class="src coveredLine"><span class="w">		</span><span class="p">}</span></td>
     </tr>
     <tr class="source-line">
       <td class="lineno"><a id="l125" href="#l125">125</a></td>
@@ -995,9 +1023,16 @@
     <tr class="source-line">
       <td class="lineno"><a id="l128" href="#l128">128</a></td>
       <td class="linebranch">
+        <details class="linebranchDetails">
+        <summary class="linebranchSummary">1/2</summary>
+        <div class="linebranchContents">
+          <div class="takenBranch">&check; Branch 0 taken 5 times.</div>
+          <div class="notTakenBranch">&cross; Branch 1 not taken.</div>
+        </div>
+        </details>
       </td>
-      <td class="linecount uncoveredLine">&cross;</td>
-      <td class="src uncoveredLine"><span class="w">	</span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">oldold</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="nb">NULL</span><span class="p">)</span></td>
+      <td class="linecount partialCoveredLine">5</td>
+      <td class="src partialCoveredLine"><span class="w">	</span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">oldold</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="nb">NULL</span><span class="p">)</span></td>
     </tr>
     <tr class="source-line">
       <td class="lineno"><a id="l129" href="#l129">129</a></td>
@@ -1164,8 +1199,8 @@
       <td class="lineno"><a id="l152" href="#l152">152</a></td>
       <td class="linebranch">
       </td>
-      <td class="linecount uncoveredLine">&cross;</td>
-      <td class="src uncoveredLine"><span class="w">	</span><span class="k">return</span><span class="w"> </span><span class="n">ret</span><span class="p">;</span></td>
+      <td class="linecount coveredLine">5</td>
+      <td class="src coveredLine"><span class="w">	</span><span class="k">return</span><span class="w"> </span><span class="n">ret</span><span class="p">;</span></td>
     </tr>
     <tr class="source-line">
       <td class="lineno"><a id="l153" href="#l153">153</a></td>
