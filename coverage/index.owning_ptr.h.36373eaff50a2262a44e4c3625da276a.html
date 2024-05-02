@@ -1,0 +1,1172 @@
+<!DOCTYPE html>
+<html class="theme-blue">
+
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+    <title>ZQuest Classic Coverage Report</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <link rel="stylesheet" href="index.css"/>
+  </head>
+
+  <body>
+    <header>
+      <h1>ZQuest Classic Coverage Report</h1>
+
+      <hr/>
+
+      <div class="summary">
+<div>
+  <table class="legend">
+    <tr>
+      <th scope="row">Directory:</th>
+      <td>src/</td>
+    </tr>
+    <tr>
+      <th scope="row">File:</th>
+      <td>src/parser/owning_ptr.h</td>
+    </tr>
+    <tr>
+      <th scope="row">Date:</th>
+      <td>2024-05-02 01:19:50</td>
+    </tr>
+  </table>
+</div>
+<div>
+  <table class="coverage">
+    <tr>
+      <th></th>
+      <th scope="col">Exec</th>
+      <th scope="col">Total</th>
+      <th scope="col">Coverage</th>
+    </tr>
+    <tr>
+      <th scope="row">Lines:</th>
+      <td>31</td>
+      <td>34</td>
+      <td class="coverage-high">91.2%</td>
+    </tr>
+    <tr>
+      <th scope="row">Functions:</th>
+      <td>100</td>
+      <td>156</td>
+      <td class="coverage-low">64.1%</td>
+    </tr>
+    <tr>
+      <th scope="row">Branches:</th>
+      <td>48</td>
+      <td>132</td>
+      <td class="coverage-low">36.4%</td>
+    </tr>
+  </table>
+</div>
+      </div>
+
+      <hr/>
+    </header>
+
+    <nav>
+<details>
+  <summary>List of functions</summary>
+  <table class="listOfFunctions">
+    <tr>
+      <th>Function (Line)</th>
+      <th>Call count</th>
+      <th>Block coverage</th>
+    </tr>
+    <tr><td><a href="#l37">owning_ptr&lt;ZScript::ASTBlock&gt;::clone() const (line 37)</a></td><td>called 1694 times, returned 1694 times</td><td>75.0%</td></tr>
+    <tr><td><a href="#l48">owning_ptr&lt;ZScript::ASTBlock&gt;::get() (line 48)</a></td><td>called 282147 times, returned 282147 times</td><td>100.0%</td></tr>
+    <tr><td><a href="#l43">owning_ptr&lt;ZScript::ASTBlock&gt;::operator void (owning_ptr&lt;ZScript::ASTBlock&gt;::*)() const() const (line 43)</a></td><td>called 21216 times, returned 21216 times</td><td>100.0%</td></tr>
+    <tr><td><a href="#l28">owning_ptr&lt;ZScript::ASTBlock&gt;::operator=(ZScript::ASTBlock*) (line 28)</a></td><td>called 23257 times, returned 23257 times</td><td>40.0%</td></tr>
+    <tr><td><a href="#l15">owning_ptr&lt;ZScript::ASTBlock&gt;::owning_ptr(ZScript::ASTBlock*) (line 15)</a></td><td>called 79156 times, returned 79156 times</td><td>100.0%</td></tr>
+    <tr><td><a href="#l16">owning_ptr&lt;ZScript::ASTBlock&gt;::owning_ptr(owning_ptr&lt;ZScript::ASTBlock&gt; const&amp;) (line 16)</a></td><td>called 1694 times, returned 1694 times</td><td>100.0%</td></tr>
+    <tr><td><a href="#l12">owning_ptr&lt;ZScript::ASTBlock&gt;::safe_bool_func() const (line 12)</a></td><td>not called</td><td>0.0%</td></tr>
+    <tr><td><a href="#l20">owning_ptr&lt;ZScript::ASTBlock&gt;::~owning_ptr() (line 20)</a></td><td>called 80850 times, returned 80850 times</td><td>100.0%</td></tr>
+    <tr><td><a href="#l37">owning_ptr&lt;ZScript::ASTDataDecl&gt;::clone() const (line 37)</a></td><td>not called</td><td>0.0%</td></tr>
+    <tr><td><a href="#l48">owning_ptr&lt;ZScript::ASTDataDecl&gt;::get() (line 48)</a></td><td>called 18 times, returned 18 times</td><td>100.0%</td></tr>
+    <tr><td><a href="#l43">owning_ptr&lt;ZScript::ASTDataDecl&gt;::operator void (owning_ptr&lt;ZScript::ASTDataDecl&gt;::*)() const() const (line 43)</a></td><td>called 12 times, returned 12 times</td><td>100.0%</td></tr>
+    <tr><td><a href="#l52">owning_ptr&lt;ZScript::ASTDataDecl&gt;::operator-&gt;() (line 52)</a></td><td>called 6 times, returned 6 times</td><td>100.0%</td></tr>
+    <tr><td><a href="#l28">owning_ptr&lt;ZScript::ASTDataDecl&gt;::operator=(ZScript::ASTDataDecl*) (line 28)</a></td><td>called 3 times, returned 3 times</td><td>40.0%</td></tr>
+    <tr><td><a href="#l15">owning_ptr&lt;ZScript::ASTDataDecl&gt;::owning_ptr(ZScript::ASTDataDecl*) (line 15)</a></td><td>called 9502 times, returned 9502 times</td><td>100.0%</td></tr>
+    <tr><td><a href="#l16">owning_ptr&lt;ZScript::ASTDataDecl&gt;::owning_ptr(owning_ptr&lt;ZScript::ASTDataDecl&gt; const&amp;) (line 16)</a></td><td>not called</td><td>0.0%</td></tr>
+    <tr><td><a href="#l12">owning_ptr&lt;ZScript::ASTDataDecl&gt;::safe_bool_func() const (line 12)</a></td><td>not called</td><td>0.0%</td></tr>
+    <tr><td><a href="#l20">owning_ptr&lt;ZScript::ASTDataDecl&gt;::~owning_ptr() (line 20)</a></td><td>called 9502 times, returned 9502 times</td><td>100.0%</td></tr>
+    <tr><td><a href="#l37">owning_ptr&lt;ZScript::ASTDataEnum&gt;::clone() const (line 37)</a></td><td>not called</td><td>0.0%</td></tr>
+    <tr><td><a href="#l48">owning_ptr&lt;ZScript::ASTDataEnum&gt;::get() (line 48)</a></td><td>called 675 times, returned 675 times</td><td>100.0%</td></tr>
+    <tr><td><a href="#l52">owning_ptr&lt;ZScript::ASTDataEnum&gt;::operator-&gt;() (line 52)</a></td><td>called 337 times, returned 337 times</td><td>100.0%</td></tr>
+    <tr><td><a href="#l15">owning_ptr&lt;ZScript::ASTDataEnum&gt;::owning_ptr(ZScript::ASTDataEnum*) (line 15)</a></td><td>called 365 times, returned 365 times</td><td>100.0%</td></tr>
+    <tr><td><a href="#l16">owning_ptr&lt;ZScript::ASTDataEnum&gt;::owning_ptr(owning_ptr&lt;ZScript::ASTDataEnum&gt; const&amp;) (line 16)</a></td><td>not called</td><td>0.0%</td></tr>
+    <tr><td><a href="#l20">owning_ptr&lt;ZScript::ASTDataEnum&gt;::~owning_ptr() (line 20)</a></td><td>called 365 times, returned 365 times</td><td>100.0%</td></tr>
+    <tr><td><a href="#l37">owning_ptr&lt;ZScript::ASTDataType&gt;::clone() const (line 37)</a></td><td>not called</td><td>0.0%</td></tr>
+    <tr><td><a href="#l48">owning_ptr&lt;ZScript::ASTDataType&gt;::get() (line 48)</a></td><td>called 775901 times, returned 775901 times</td><td>100.0%</td></tr>
+    <tr><td><a href="#l43">owning_ptr&lt;ZScript::ASTDataType&gt;::operator void (owning_ptr&lt;ZScript::ASTDataType&gt;::*)() const() const (line 43)</a></td><td>called 107691 times, returned 107691 times</td><td>100.0%</td></tr>
+    <tr><td><a href="#l52">owning_ptr&lt;ZScript::ASTDataType&gt;::operator-&gt;() (line 52)</a></td><td>called 219438 times, returned 219438 times</td><td>100.0%</td></tr>
+    <tr><td><a href="#l28">owning_ptr&lt;ZScript::ASTDataType&gt;::operator=(ZScript::ASTDataType*) (line 28)</a></td><td>called 201247 times, returned 201247 times</td><td>100.0%</td></tr>
+    <tr><td><a href="#l21">owning_ptr&lt;ZScript::ASTDataType&gt;::operator=(owning_ptr&lt;ZScript::ASTDataType&gt; const&amp;) (line 21)</a></td><td>not called</td><td>0.0%</td></tr>
+    <tr><td><a href="#l15">owning_ptr&lt;ZScript::ASTDataType&gt;::owning_ptr(ZScript::ASTDataType*) (line 15)</a></td><td>called 330244 times, returned 330244 times</td><td>100.0%</td></tr>
+    <tr><td><a href="#l16">owning_ptr&lt;ZScript::ASTDataType&gt;::owning_ptr(owning_ptr&lt;ZScript::ASTDataType&gt; const&amp;) (line 16)</a></td><td>not called</td><td>0.0%</td></tr>
+    <tr><td><a href="#l54">owning_ptr&lt;ZScript::ASTDataType&gt;::release() (line 54)</a></td><td>not called</td><td>0.0%</td></tr>
+    <tr><td><a href="#l60">owning_ptr&lt;ZScript::ASTDataType&gt;::reset(ZScript::ASTDataType*) (line 60)</a></td><td>called 2802 times, returned 2802 times</td><td>100.0%</td></tr>
+    <tr><td><a href="#l12">owning_ptr&lt;ZScript::ASTDataType&gt;::safe_bool_func() const (line 12)</a></td><td>not called</td><td>0.0%</td></tr>
+    <tr><td><a href="#l20">owning_ptr&lt;ZScript::ASTDataType&gt;::~owning_ptr() (line 20)</a></td><td>called 330244 times, returned 330244 times</td><td>100.0%</td></tr>
+    <tr><td><a href="#l37">owning_ptr&lt;ZScript::ASTExpr&gt;::clone() const (line 37)</a></td><td>called 98103 times, returned 98103 times</td><td>100.0%</td></tr>
+    <tr><td><a href="#l48">owning_ptr&lt;ZScript::ASTExpr&gt;::get() (line 48)</a></td><td>called 2248787 times, returned 2248787 times</td><td>100.0%</td></tr>
+    <tr><td><a href="#l43">owning_ptr&lt;ZScript::ASTExpr&gt;::operator void (owning_ptr&lt;ZScript::ASTExpr&gt;::*)() const() const (line 43)</a></td><td>called 717123 times, returned 717123 times</td><td>100.0%</td></tr>
+    <tr><td><a href="#l50">owning_ptr&lt;ZScript::ASTExpr&gt;::operator*() (line 50)</a></td><td>called 13091 times, returned 13091 times</td><td>100.0%</td></tr>
+    <tr><td><a href="#l52">owning_ptr&lt;ZScript::ASTExpr&gt;::operator-&gt;() (line 52)</a></td><td>called 1217765 times, returned 1217765 times</td><td>100.0%</td></tr>
+    <tr><td><a href="#l53">owning_ptr&lt;ZScript::ASTExpr&gt;::operator-&gt;() const (line 53)</a></td><td>called 37510 times, returned 37510 times</td><td>100.0%</td></tr>
+    <tr><td><a href="#l28">owning_ptr&lt;ZScript::ASTExpr&gt;::operator=(ZScript::ASTExpr*) (line 28)</a></td><td>called 63868 times, returned 63868 times</td><td>40.0%</td></tr>
+    <tr><td><a href="#l21">owning_ptr&lt;ZScript::ASTExpr&gt;::operator=(owning_ptr&lt;ZScript::ASTExpr&gt; const&amp;) (line 21)</a></td><td>called 9713 times, returned 9713 times</td><td>40.0%</td></tr>
+    <tr><td><a href="#l15">owning_ptr&lt;ZScript::ASTExpr&gt;::owning_ptr(ZScript::ASTExpr*) (line 15)</a></td><td>called 481386 times, returned 481386 times</td><td>100.0%</td></tr>
+    <tr><td><a href="#l16">owning_ptr&lt;ZScript::ASTExpr&gt;::owning_ptr(owning_ptr&lt;ZScript::ASTExpr&gt; const&amp;) (line 16)</a></td><td>called 88389 times, returned 88389 times</td><td>100.0%</td></tr>
+    <tr><td><a href="#l54">owning_ptr&lt;ZScript::ASTExpr&gt;::release() (line 54)</a></td><td>called 188 times, returned 188 times</td><td>100.0%</td></tr>
+    <tr><td><a href="#l60">owning_ptr&lt;ZScript::ASTExpr&gt;::reset(ZScript::ASTExpr*) (line 60)</a></td><td>called 110 times, returned 110 times</td><td>100.0%</td></tr>
+    <tr><td><a href="#l12">owning_ptr&lt;ZScript::ASTExpr&gt;::safe_bool_func() const (line 12)</a></td><td>not called</td><td>0.0%</td></tr>
+    <tr><td><a href="#l20">owning_ptr&lt;ZScript::ASTExpr&gt;::~owning_ptr() (line 20)</a></td><td>called 569775 times, returned 569775 times</td><td>100.0%</td></tr>
+    <tr><td><a href="#l37">owning_ptr&lt;ZScript::ASTExprBoolTree&gt;::clone() const (line 37)</a></td><td>called 6 times, returned 6 times</td><td>75.0%</td></tr>
+    <tr><td><a href="#l48">owning_ptr&lt;ZScript::ASTExprBoolTree&gt;::get() (line 48)</a></td><td>called 3160 times, returned 3160 times</td><td>100.0%</td></tr>
+    <tr><td><a href="#l43">owning_ptr&lt;ZScript::ASTExprBoolTree&gt;::operator void (owning_ptr&lt;ZScript::ASTExprBoolTree&gt;::*)() const() const (line 43)</a></td><td>called 3166 times, returned 3166 times</td><td>100.0%</td></tr>
+    <tr><td><a href="#l28">owning_ptr&lt;ZScript::ASTExprBoolTree&gt;::operator=(ZScript::ASTExprBoolTree*) (line 28)</a></td><td>called 3164 times, returned 3164 times</td><td>40.0%</td></tr>
+    <tr><td><a href="#l15">owning_ptr&lt;ZScript::ASTExprBoolTree&gt;::owning_ptr(ZScript::ASTExprBoolTree*) (line 15)</a></td><td>called 6819 times, returned 6819 times</td><td>100.0%</td></tr>
+    <tr><td><a href="#l16">owning_ptr&lt;ZScript::ASTExprBoolTree&gt;::owning_ptr(owning_ptr&lt;ZScript::ASTExprBoolTree&gt; const&amp;) (line 16)</a></td><td>called 6 times, returned 6 times</td><td>100.0%</td></tr>
+    <tr><td><a href="#l12">owning_ptr&lt;ZScript::ASTExprBoolTree&gt;::safe_bool_func() const (line 12)</a></td><td>not called</td><td>0.0%</td></tr>
+    <tr><td><a href="#l20">owning_ptr&lt;ZScript::ASTExprBoolTree&gt;::~owning_ptr() (line 20)</a></td><td>called 6825 times, returned 6825 times</td><td>100.0%</td></tr>
+    <tr><td><a href="#l37">owning_ptr&lt;ZScript::ASTExprConst&gt;::clone() const (line 37)</a></td><td>not called</td><td>0.0%</td></tr>
+    <tr><td><a href="#l48">owning_ptr&lt;ZScript::ASTExprConst&gt;::get() (line 48)</a></td><td>called 179 times, returned 179 times</td><td>100.0%</td></tr>
+    <tr><td><a href="#l49">owning_ptr&lt;ZScript::ASTExprConst&gt;::get() const (line 49)</a></td><td>not called</td><td>0.0%</td></tr>
+    <tr><td><a href="#l50">owning_ptr&lt;ZScript::ASTExprConst&gt;::operator*() (line 50)</a></td><td>not called</td><td>0.0%</td></tr>
+    <tr><td><a href="#l52">owning_ptr&lt;ZScript::ASTExprConst&gt;::operator-&gt;() (line 52)</a></td><td>called 62 times, returned 62 times</td><td>100.0%</td></tr>
+    <tr><td><a href="#l53">owning_ptr&lt;ZScript::ASTExprConst&gt;::operator-&gt;() const (line 53)</a></td><td>not called</td><td>0.0%</td></tr>
+    <tr><td><a href="#l28">owning_ptr&lt;ZScript::ASTExprConst&gt;::operator=(ZScript::ASTExprConst*) (line 28)</a></td><td>called 22288 times, returned 22288 times</td><td>40.0%</td></tr>
+    <tr><td><a href="#l15">owning_ptr&lt;ZScript::ASTExprConst&gt;::owning_ptr(ZScript::ASTExprConst*) (line 15)</a></td><td>called 35933 times, returned 35933 times</td><td>100.0%</td></tr>
+    <tr><td><a href="#l16">owning_ptr&lt;ZScript::ASTExprConst&gt;::owning_ptr(owning_ptr&lt;ZScript::ASTExprConst&gt; const&amp;) (line 16)</a></td><td>not called</td><td>0.0%</td></tr>
+    <tr><td><a href="#l20">owning_ptr&lt;ZScript::ASTExprConst&gt;::~owning_ptr() (line 20)</a></td><td>called 35933 times, returned 35933 times</td><td>100.0%</td></tr>
+    <tr><td><a href="#l37">owning_ptr&lt;ZScript::ASTExprIdentifier&gt;::clone() const (line 37)</a></td><td>not called</td><td>0.0%</td></tr>
+    <tr><td><a href="#l50">owning_ptr&lt;ZScript::ASTExprIdentifier&gt;::operator*() (line 50)</a></td><td>not called</td><td>0.0%</td></tr>
+    <tr><td><a href="#l52">owning_ptr&lt;ZScript::ASTExprIdentifier&gt;::operator-&gt;() (line 52)</a></td><td>called 34875 times, returned 34875 times</td><td>100.0%</td></tr>
+    <tr><td><a href="#l53">owning_ptr&lt;ZScript::ASTExprIdentifier&gt;::operator-&gt;() const (line 53)</a></td><td>called 36072 times, returned 36072 times</td><td>100.0%</td></tr>
+    <tr><td><a href="#l28">owning_ptr&lt;ZScript::ASTExprIdentifier&gt;::operator=(ZScript::ASTExprIdentifier*) (line 28)</a></td><td>called 35879 times, returned 35879 times</td><td>40.0%</td></tr>
+    <tr><td><a href="#l15">owning_ptr&lt;ZScript::ASTExprIdentifier&gt;::owning_ptr(ZScript::ASTExprIdentifier*) (line 15)</a></td><td>called 35879 times, returned 35879 times</td><td>100.0%</td></tr>
+    <tr><td><a href="#l16">owning_ptr&lt;ZScript::ASTExprIdentifier&gt;::owning_ptr(owning_ptr&lt;ZScript::ASTExprIdentifier&gt; const&amp;) (line 16)</a></td><td>not called</td><td>0.0%</td></tr>
+    <tr><td><a href="#l20">owning_ptr&lt;ZScript::ASTExprIdentifier&gt;::~owning_ptr() (line 20)</a></td><td>called 35879 times, returned 35879 times</td><td>100.0%</td></tr>
+    <tr><td><a href="#l37">owning_ptr&lt;ZScript::ASTExprVarInitializer&gt;::clone() const (line 37)</a></td><td>not called</td><td>0.0%</td></tr>
+    <tr><td><a href="#l48">owning_ptr&lt;ZScript::ASTExprVarInitializer&gt;::get() (line 48)</a></td><td>called 723548 times, returned 723548 times</td><td>100.0%</td></tr>
+    <tr><td><a href="#l43">owning_ptr&lt;ZScript::ASTExprVarInitializer&gt;::operator void (owning_ptr&lt;ZScript::ASTExprVarInitializer&gt;::*)() const() const (line 43)</a></td><td>not called</td><td>0.0%</td></tr>
+    <tr><td><a href="#l28">owning_ptr&lt;ZScript::ASTExprVarInitializer&gt;::operator=(ZScript::ASTExprVarInitializer*) (line 28)</a></td><td>called 66292 times, returned 66292 times</td><td>40.0%</td></tr>
+    <tr><td><a href="#l15">owning_ptr&lt;ZScript::ASTExprVarInitializer&gt;::owning_ptr(ZScript::ASTExprVarInitializer*) (line 15)</a></td><td>called 186601 times, returned 186601 times</td><td>100.0%</td></tr>
+    <tr><td><a href="#l12">owning_ptr&lt;ZScript::ASTExprVarInitializer&gt;::safe_bool_func() const (line 12)</a></td><td>not called</td><td>0.0%</td></tr>
+    <tr><td><a href="#l20">owning_ptr&lt;ZScript::ASTExprVarInitializer&gt;::~owning_ptr() (line 20)</a></td><td>called 186601 times, returned 186601 times</td><td>100.0%</td></tr>
+    <tr><td><a href="#l37">owning_ptr&lt;ZScript::ASTFile&gt;::clone() const (line 37)</a></td><td>not called</td><td>0.0%</td></tr>
+    <tr><td><a href="#l48">owning_ptr&lt;ZScript::ASTFile&gt;::get() (line 48)</a></td><td>called 7289 times, returned 7289 times</td><td>100.0%</td></tr>
+    <tr><td><a href="#l28">owning_ptr&lt;ZScript::ASTFile&gt;::operator=(ZScript::ASTFile*) (line 28)</a></td><td>called 1413 times, returned 1413 times</td><td>40.0%</td></tr>
+    <tr><td><a href="#l15">owning_ptr&lt;ZScript::ASTFile&gt;::owning_ptr(ZScript::ASTFile*) (line 15)</a></td><td>called 1413 times, returned 1413 times</td><td>100.0%</td></tr>
+    <tr><td><a href="#l16">owning_ptr&lt;ZScript::ASTFile&gt;::owning_ptr(owning_ptr&lt;ZScript::ASTFile&gt; const&amp;) (line 16)</a></td><td>not called</td><td>0.0%</td></tr>
+    <tr><td><a href="#l20">owning_ptr&lt;ZScript::ASTFile&gt;::~owning_ptr() (line 20)</a></td><td>called 1413 times, returned 1413 times</td><td>100.0%</td></tr>
+    <tr><td><a href="#l37">owning_ptr&lt;ZScript::ASTFloat&gt;::clone() const (line 37)</a></td><td>called 15732 times, returned 15732 times</td><td>75.0%</td></tr>
+    <tr><td><a href="#l48">owning_ptr&lt;ZScript::ASTFloat&gt;::get() (line 48)</a></td><td>called 309599 times, returned 309599 times</td><td>100.0%</td></tr>
+    <tr><td><a href="#l43">owning_ptr&lt;ZScript::ASTFloat&gt;::operator void (owning_ptr&lt;ZScript::ASTFloat&gt;::*)() const() const (line 43)</a></td><td>called 118165 times, returned 118165 times</td><td>100.0%</td></tr>
+    <tr><td><a href="#l52">owning_ptr&lt;ZScript::ASTFloat&gt;::operator-&gt;() (line 52)</a></td><td>called 113888 times, returned 113888 times</td><td>100.0%</td></tr>
+    <tr><td><a href="#l15">owning_ptr&lt;ZScript::ASTFloat&gt;::owning_ptr(ZScript::ASTFloat*) (line 15)</a></td><td>called 127380 times, returned 127380 times</td><td>100.0%</td></tr>
+    <tr><td><a href="#l16">owning_ptr&lt;ZScript::ASTFloat&gt;::owning_ptr(owning_ptr&lt;ZScript::ASTFloat&gt; const&amp;) (line 16)</a></td><td>called 15732 times, returned 15732 times</td><td>100.0%</td></tr>
+    <tr><td><a href="#l12">owning_ptr&lt;ZScript::ASTFloat&gt;::safe_bool_func() const (line 12)</a></td><td>not called</td><td>0.0%</td></tr>
+    <tr><td><a href="#l20">owning_ptr&lt;ZScript::ASTFloat&gt;::~owning_ptr() (line 20)</a></td><td>called 143112 times, returned 143112 times</td><td>100.0%</td></tr>
+    <tr><td><a href="#l37">owning_ptr&lt;ZScript::ASTFuncDecl&gt;::clone() const (line 37)</a></td><td>not called</td><td>0.0%</td></tr>
+    <tr><td><a href="#l48">owning_ptr&lt;ZScript::ASTFuncDecl&gt;::get() (line 48)</a></td><td>called 4417 times, returned 4417 times</td><td>100.0%</td></tr>
+    <tr><td><a href="#l43">owning_ptr&lt;ZScript::ASTFuncDecl&gt;::operator void (owning_ptr&lt;ZScript::ASTFuncDecl&gt;::*)() const() const (line 43)</a></td><td>called 3 times, returned 3 times</td><td>100.0%</td></tr>
+    <tr><td><a href="#l28">owning_ptr&lt;ZScript::ASTFuncDecl&gt;::operator=(ZScript::ASTFuncDecl*) (line 28)</a></td><td>called 3 times, returned 3 times</td><td>40.0%</td></tr>
+    <tr><td><a href="#l15">owning_ptr&lt;ZScript::ASTFuncDecl&gt;::owning_ptr(ZScript::ASTFuncDecl*) (line 15)</a></td><td>called 1052 times, returned 1052 times</td><td>100.0%</td></tr>
+    <tr><td><a href="#l16">owning_ptr&lt;ZScript::ASTFuncDecl&gt;::owning_ptr(owning_ptr&lt;ZScript::ASTFuncDecl&gt; const&amp;) (line 16)</a></td><td>not called</td><td>0.0%</td></tr>
+    <tr><td><a href="#l12">owning_ptr&lt;ZScript::ASTFuncDecl&gt;::safe_bool_func() const (line 12)</a></td><td>not called</td><td>0.0%</td></tr>
+    <tr><td><a href="#l20">owning_ptr&lt;ZScript::ASTFuncDecl&gt;::~owning_ptr() (line 20)</a></td><td>called 1052 times, returned 1052 times</td><td>100.0%</td></tr>
+    <tr><td><a href="#l37">owning_ptr&lt;ZScript::ASTImportDecl&gt;::clone() const (line 37)</a></td><td>not called</td><td>0.0%</td></tr>
+    <tr><td><a href="#l50">owning_ptr&lt;ZScript::ASTImportDecl&gt;::operator*() (line 50)</a></td><td>not called</td><td>0.0%</td></tr>
+    <tr><td><a href="#l15">owning_ptr&lt;ZScript::ASTImportDecl&gt;::owning_ptr(ZScript::ASTImportDecl*) (line 15)</a></td><td>not called</td><td>0.0%</td></tr>
+    <tr><td><a href="#l16">owning_ptr&lt;ZScript::ASTImportDecl&gt;::owning_ptr(owning_ptr&lt;ZScript::ASTImportDecl&gt; const&amp;) (line 16)</a></td><td>not called</td><td>0.0%</td></tr>
+    <tr><td><a href="#l20">owning_ptr&lt;ZScript::ASTImportDecl&gt;::~owning_ptr() (line 20)</a></td><td>not called</td><td>0.0%</td></tr>
+    <tr><td><a href="#l37">owning_ptr&lt;ZScript::ASTNumberLiteral&gt;::clone() const (line 37)</a></td><td>not called</td><td>0.0%</td></tr>
+    <tr><td><a href="#l48">owning_ptr&lt;ZScript::ASTNumberLiteral&gt;::get() (line 48)</a></td><td>called 8268 times, returned 8268 times</td><td>100.0%</td></tr>
+    <tr><td><a href="#l52">owning_ptr&lt;ZScript::ASTNumberLiteral&gt;::operator-&gt;() (line 52)</a></td><td>not called</td><td>0.0%</td></tr>
+    <tr><td><a href="#l15">owning_ptr&lt;ZScript::ASTNumberLiteral&gt;::owning_ptr(ZScript::ASTNumberLiteral*) (line 15)</a></td><td>called 3228 times, returned 3228 times</td><td>100.0%</td></tr>
+    <tr><td><a href="#l16">owning_ptr&lt;ZScript::ASTNumberLiteral&gt;::owning_ptr(owning_ptr&lt;ZScript::ASTNumberLiteral&gt; const&amp;) (line 16)</a></td><td>not called</td><td>0.0%</td></tr>
+    <tr><td><a href="#l20">owning_ptr&lt;ZScript::ASTNumberLiteral&gt;::~owning_ptr() (line 20)</a></td><td>called 3228 times, returned 3228 times</td><td>66.0%</td></tr>
+    <tr><td><a href="#l37">owning_ptr&lt;ZScript::ASTRange&gt;::clone() const (line 37)</a></td><td>not called</td><td>0.0%</td></tr>
+    <tr><td><a href="#l48">owning_ptr&lt;ZScript::ASTRange&gt;::get() (line 48)</a></td><td>not called</td><td>0.0%</td></tr>
+    <tr><td><a href="#l52">owning_ptr&lt;ZScript::ASTRange&gt;::operator-&gt;() (line 52)</a></td><td>not called</td><td>0.0%</td></tr>
+    <tr><td><a href="#l15">owning_ptr&lt;ZScript::ASTRange&gt;::owning_ptr(ZScript::ASTRange*) (line 15)</a></td><td>not called</td><td>0.0%</td></tr>
+    <tr><td><a href="#l16">owning_ptr&lt;ZScript::ASTRange&gt;::owning_ptr(owning_ptr&lt;ZScript::ASTRange&gt; const&amp;) (line 16)</a></td><td>not called</td><td>0.0%</td></tr>
+    <tr><td><a href="#l20">owning_ptr&lt;ZScript::ASTRange&gt;::~owning_ptr() (line 20)</a></td><td>not called</td><td>0.0%</td></tr>
+    <tr><td><a href="#l37">owning_ptr&lt;ZScript::ASTScriptType&gt;::clone() const (line 37)</a></td><td>not called</td><td>0.0%</td></tr>
+    <tr><td><a href="#l48">owning_ptr&lt;ZScript::ASTScriptType&gt;::get() (line 48)</a></td><td>called 107 times, returned 107 times</td><td>100.0%</td></tr>
+    <tr><td><a href="#l50">owning_ptr&lt;ZScript::ASTScriptType&gt;::operator*() (line 50)</a></td><td>called 273 times, returned 273 times</td><td>100.0%</td></tr>
+    <tr><td><a href="#l52">owning_ptr&lt;ZScript::ASTScriptType&gt;::operator-&gt;() (line 52)</a></td><td>not called</td><td>0.0%</td></tr>
+    <tr><td><a href="#l28">owning_ptr&lt;ZScript::ASTScriptType&gt;::operator=(ZScript::ASTScriptType*) (line 28)</a></td><td>called 28 times, returned 28 times</td><td>40.0%</td></tr>
+    <tr><td><a href="#l15">owning_ptr&lt;ZScript::ASTScriptType&gt;::owning_ptr(ZScript::ASTScriptType*) (line 15)</a></td><td>called 54 times, returned 54 times</td><td>100.0%</td></tr>
+    <tr><td><a href="#l16">owning_ptr&lt;ZScript::ASTScriptType&gt;::owning_ptr(owning_ptr&lt;ZScript::ASTScriptType&gt; const&amp;) (line 16)</a></td><td>not called</td><td>0.0%</td></tr>
+    <tr><td><a href="#l20">owning_ptr&lt;ZScript::ASTScriptType&gt;::~owning_ptr() (line 20)</a></td><td>called 54 times, returned 54 times</td><td>100.0%</td></tr>
+    <tr><td><a href="#l37">owning_ptr&lt;ZScript::ASTStmt&gt;::clone() const (line 37)</a></td><td>not called</td><td>0.0%</td></tr>
+    <tr><td><a href="#l48">owning_ptr&lt;ZScript::ASTStmt&gt;::get() (line 48)</a></td><td>called 35017 times, returned 35017 times</td><td>100.0%</td></tr>
+    <tr><td><a href="#l43">owning_ptr&lt;ZScript::ASTStmt&gt;::operator void (owning_ptr&lt;ZScript::ASTStmt&gt;::*)() const() const (line 43)</a></td><td>called 16047 times, returned 16047 times</td><td>100.0%</td></tr>
+    <tr><td><a href="#l50">owning_ptr&lt;ZScript::ASTStmt&gt;::operator*() (line 50)</a></td><td>not called</td><td>0.0%</td></tr>
+    <tr><td><a href="#l28">owning_ptr&lt;ZScript::ASTStmt&gt;::operator=(ZScript::ASTStmt*) (line 28)</a></td><td>not called</td><td>0.0%</td></tr>
+    <tr><td><a href="#l15">owning_ptr&lt;ZScript::ASTStmt&gt;::owning_ptr(ZScript::ASTStmt*) (line 15)</a></td><td>called 6822 times, returned 6822 times</td><td>100.0%</td></tr>
+    <tr><td><a href="#l16">owning_ptr&lt;ZScript::ASTStmt&gt;::owning_ptr(owning_ptr&lt;ZScript::ASTStmt&gt; const&amp;) (line 16)</a></td><td>not called</td><td>0.0%</td></tr>
+    <tr><td><a href="#l12">owning_ptr&lt;ZScript::ASTStmt&gt;::safe_bool_func() const (line 12)</a></td><td>not called</td><td>0.0%</td></tr>
+    <tr><td><a href="#l20">owning_ptr&lt;ZScript::ASTStmt&gt;::~owning_ptr() (line 20)</a></td><td>called 6822 times, returned 6822 times</td><td>100.0%</td></tr>
+    <tr><td><a href="#l37">owning_ptr&lt;ZScript::ASTString&gt;::clone() const (line 37)</a></td><td>called 11931 times, returned 11931 times</td><td>75.0%</td></tr>
+    <tr><td><a href="#l48">owning_ptr&lt;ZScript::ASTString&gt;::get() (line 48)</a></td><td>called 1 time, returned 1 time</td><td>100.0%</td></tr>
+    <tr><td><a href="#l43">owning_ptr&lt;ZScript::ASTString&gt;::operator void (owning_ptr&lt;ZScript::ASTString&gt;::*)() const() const (line 43)</a></td><td>not called</td><td>0.0%</td></tr>
+    <tr><td><a href="#l52">owning_ptr&lt;ZScript::ASTString&gt;::operator-&gt;() (line 52)</a></td><td>called 137828 times, returned 137828 times</td><td>100.0%</td></tr>
+    <tr><td><a href="#l53">owning_ptr&lt;ZScript::ASTString&gt;::operator-&gt;() const (line 53)</a></td><td>called 633827 times, returned 633827 times</td><td>100.0%</td></tr>
+    <tr><td><a href="#l28">owning_ptr&lt;ZScript::ASTString&gt;::operator=(ZScript::ASTString*) (line 28)</a></td><td>called 187813 times, returned 187813 times</td><td>40.0%</td></tr>
+    <tr><td><a href="#l21">owning_ptr&lt;ZScript::ASTString&gt;::operator=(owning_ptr&lt;ZScript::ASTString&gt; const&amp;) (line 21)</a></td><td>called 1 time, returned 1 time</td><td>40.0%</td></tr>
+    <tr><td><a href="#l15">owning_ptr&lt;ZScript::ASTString&gt;::owning_ptr(ZScript::ASTString*) (line 15)</a></td><td>called 231133 times, returned 231133 times</td><td>100.0%</td></tr>
+    <tr><td><a href="#l16">owning_ptr&lt;ZScript::ASTString&gt;::owning_ptr(owning_ptr&lt;ZScript::ASTString&gt; const&amp;) (line 16)</a></td><td>called 11930 times, returned 11930 times</td><td>100.0%</td></tr>
+    <tr><td><a href="#l12">owning_ptr&lt;ZScript::ASTString&gt;::safe_bool_func() const (line 12)</a></td><td>not called</td><td>0.0%</td></tr>
+    <tr><td><a href="#l20">owning_ptr&lt;ZScript::ASTString&gt;::~owning_ptr() (line 20)</a></td><td>called 243063 times, returned 243063 times</td><td>100.0%</td></tr>
+    <tr><td><a href="#l37">owning_ptr&lt;ZScript::DataType&gt;::clone() const (line 37)</a></td><td>not called</td><td>0.0%</td></tr>
+    <tr><td><a href="#l50">owning_ptr&lt;ZScript::DataType&gt;::operator*() (line 50)</a></td><td>called 537789 times, returned 537789 times</td><td>100.0%</td></tr>
+    <tr><td><a href="#l52">owning_ptr&lt;ZScript::DataType&gt;::operator-&gt;() (line 52)</a></td><td>called 250550 times, returned 250550 times</td><td>100.0%</td></tr>
+    <tr><td><a href="#l15">owning_ptr&lt;ZScript::DataType&gt;::owning_ptr(ZScript::DataType*) (line 15)</a></td><td>called 278405 times, returned 278405 times</td><td>100.0%</td></tr>
+    <tr><td><a href="#l16">owning_ptr&lt;ZScript::DataType&gt;::owning_ptr(owning_ptr&lt;ZScript::DataType&gt; const&amp;) (line 16)</a></td><td>not called</td><td>0.0%</td></tr>
+    <tr><td><a href="#l60">owning_ptr&lt;ZScript::DataType&gt;::reset(ZScript::DataType*) (line 60)</a></td><td>called 249885 times, returned 249885 times</td><td>100.0%</td></tr>
+    <tr><td><a href="#l20">owning_ptr&lt;ZScript::DataType&gt;::~owning_ptr() (line 20)</a></td><td>called 278405 times, returned 278405 times</td><td>100.0%</td></tr>
+  </table>
+</details>
+
+    </nav>
+
+    <main>
+<div class="file-source">
+  <table>
+    <tr>
+      <th align="right">Line</th>
+      <th align="right">Branch</th>
+      <th align="right">Exec</th>
+      <th align="left">Source</th>
+    </tr>
+    <tr class="source-line">
+      <td class="lineno"><a id="l1" href="#l1">1</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount "></td>
+      <td class="src "><span class="cp">#ifndef ZSCRIPT_OWNING_PTR_H</span></td>
+    </tr>
+    <tr class="source-line">
+      <td class="lineno"><a id="l2" href="#l2">2</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount "></td>
+      <td class="src "><span class="cp">#define ZSCRIPT_OWNING_PTR_H</span></td>
+    </tr>
+    <tr class="source-line">
+      <td class="lineno"><a id="l3" href="#l3">3</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount "></td>
+      <td class="src "></td>
+    </tr>
+    <tr class="source-line">
+      <td class="lineno"><a id="l4" href="#l4">4</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount "></td>
+      <td class="src "><span class="c1">////////////////////////////////////////////////////////////////</span></td>
+    </tr>
+    <tr class="source-line">
+      <td class="lineno"><a id="l5" href="#l5">5</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount "></td>
+      <td class="src "><span class="c1">// owning_ptr - Owns its pointer, calls clone() on copy</span></td>
+    </tr>
+    <tr class="source-line">
+      <td class="lineno"><a id="l6" href="#l6">6</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount "></td>
+      <td class="src "></td>
+    </tr>
+    <tr class="source-line">
+      <td class="lineno"><a id="l7" href="#l7">7</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount "></td>
+      <td class="src "><span class="n">template</span><span class="w"> </span><span class="o">&lt;</span><span class="n">class</span><span class="w"> </span><span class="n">Type</span><span class="o">&gt;</span></td>
+    </tr>
+    <tr class="source-line">
+      <td class="lineno"><a id="l8" href="#l8">8</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount "></td>
+      <td class="src "><span class="n">class</span><span class="w"> </span><span class="n">owning_ptr</span></td>
+    </tr>
+    <tr class="source-line">
+      <td class="lineno"><a id="l9" href="#l9">9</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount "></td>
+      <td class="src "><span class="p">{</span></td>
+    </tr>
+    <tr class="source-line">
+      <td class="lineno"><a id="l10" href="#l10">10</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount "></td>
+      <td class="src "><span class="w">	</span><span class="c1">// Safe bool idiom.</span></td>
+    </tr>
+    <tr class="source-line">
+      <td class="lineno"><a id="l11" href="#l11">11</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount "></td>
+      <td class="src "><span class="w">	</span><span class="k">typedef</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="p">(</span><span class="n">owning_ptr</span><span class="o">::*</span><span class="n">safe_bool_type</span><span class="p">)</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="k">const</span><span class="p">;</span></td>
+    </tr>
+    <tr class="source-line">
+      <td class="lineno"><a id="l12" href="#l12">12</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount uncoveredLine">&cross;</td>
+      <td class="src uncoveredLine"><span class="w">	</span><span class="kt">void</span><span class="w"> </span><span class="nf">safe_bool_func</span><span class="p">()</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="p">{}</span></td>
+    </tr>
+    <tr class="source-line">
+      <td class="lineno"><a id="l13" href="#l13">13</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount "></td>
+      <td class="src "><span class="w">	</span></td>
+    </tr>
+    <tr class="source-line">
+      <td class="lineno"><a id="l14" href="#l14">14</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount "></td>
+      <td class="src "><span class="n">public</span><span class="o">:</span></td>
+    </tr>
+    <tr class="source-line">
+      <td class="lineno"><a id="l15" href="#l15">15</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount coveredLine">1815372</td>
+      <td class="src coveredLine"><span class="w">	</span><span class="n">explicit</span><span class="w"> </span><span class="n">owning_ptr</span><span class="p">(</span><span class="n">Type</span><span class="o">*</span><span class="w"> </span><span class="n">p</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">nullptr</span><span class="p">)</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="n">data_</span><span class="p">(</span><span class="n">p</span><span class="p">)</span><span class="w"> </span><span class="p">{}</span></td>
+    </tr>
+    <tr class="source-line">
+      <td class="lineno"><a id="l16" href="#l16">16</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount coveredLine">117751</td>
+      <td class="src coveredLine"><span class="w">	</span><span class="n">owning_ptr</span><span class="p">(</span><span class="n">owning_ptr</span><span class="w"> </span><span class="k">const</span><span class="o">&amp;</span><span class="w"> </span><span class="n">other</span><span class="p">)</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="n">data_</span><span class="p">(</span><span class="n">other</span><span class="p">.</span><span class="n">clone</span><span class="p">())</span><span class="w"> </span><span class="p">{}</span></td>
+    </tr>
+    <tr class="source-line">
+      <td class="lineno"><a id="l17" href="#l17">17</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount "></td>
+      <td class="src "><span class="w">	</span><span class="n">template</span><span class="w"> </span><span class="o">&lt;</span><span class="n">class</span><span class="w"> </span><span class="n">OtherType</span><span class="o">&gt;</span></td>
+    </tr>
+    <tr class="source-line">
+      <td class="lineno"><a id="l18" href="#l18">18</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount "></td>
+      <td class="src "><span class="w">	</span><span class="n">owning_ptr</span><span class="p">(</span><span class="n">owning_ptr</span><span class="o">&lt;</span><span class="n">OtherType</span><span class="o">&gt;</span><span class="w"> </span><span class="k">const</span><span class="o">&amp;</span><span class="w"> </span><span class="n">other</span><span class="p">)</span></td>
+    </tr>
+    <tr class="source-line">
+      <td class="lineno"><a id="l19" href="#l19">19</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount "></td>
+      <td class="src "><span class="w">			</span><span class="o">:</span><span class="w"> </span><span class="n">data_</span><span class="p">(</span><span class="n">other</span><span class="p">.</span><span class="n">clone</span><span class="p">())</span><span class="w"> </span><span class="p">{}</span></td>
+    </tr>
+    <tr class="source-line">
+      <td class="lineno"><a id="l20" href="#l20">20</a></td>
+      <td class="linebranch">
+        <details class="linebranchDetails">
+        <summary class="linebranchSummary">26/38</summary>
+        <div class="linebranchContents">
+          <div class="takenBranch">&check; Branch 0 taken 243063 times.</div>
+          <div class="notTakenBranch">&cross; Branch 1 not taken.</div>
+          <div class="takenBranch">&check; Branch 2 taken 22342 times.</div>
+          <div class="takenBranch">&check; Branch 3 taken 13591 times.</div>
+          <div class="takenBranch">&check; Branch 4 taken 3 times.</div>
+          <div class="takenBranch">&check; Branch 5 taken 9499 times.</div>
+          <div class="takenBranch">&check; Branch 6 taken 520819 times.</div>
+          <div class="takenBranch">&check; Branch 7 taken 48956 times.</div>
+          <div class="takenBranch">&check; Branch 8 taken 4527 times.</div>
+          <div class="takenBranch">&check; Branch 9 taken 2295 times.</div>
+          <div class="notTakenBranch">&cross; Branch 10 not taken.</div>
+          <div class="notTakenBranch">&cross; Branch 11 not taken.</div>
+          <div class="takenBranch">&check; Branch 12 taken 225201 times.</div>
+          <div class="takenBranch">&check; Branch 13 taken 105043 times.</div>
+          <div class="takenBranch">&check; Branch 14 taken 54 times.</div>
+          <div class="notTakenBranch">&cross; Branch 15 not taken.</div>
+          <div class="takenBranch">&check; Branch 16 taken 3 times.</div>
+          <div class="takenBranch">&check; Branch 17 taken 1049 times.</div>
+          <div class="takenBranch">&check; Branch 18 taken 35523 times.</div>
+          <div class="takenBranch">&check; Branch 19 taken 45327 times.</div>
+          <div class="takenBranch">&check; Branch 20 taken 35879 times.</div>
+          <div class="notTakenBranch">&cross; Branch 21 not taken.</div>
+          <div class="takenBranch">&check; Branch 22 taken 66292 times.</div>
+          <div class="takenBranch">&check; Branch 23 taken 120309 times.</div>
+          <div class="takenBranch">&check; Branch 24 taken 143112 times.</div>
+          <div class="notTakenBranch">&cross; Branch 25 not taken.</div>
+          <div class="notTakenBranch">&cross; Branch 26 not taken.</div>
+          <div class="takenBranch">&check; Branch 27 taken 3228 times.</div>
+          <div class="takenBranch">&check; Branch 28 taken 1413 times.</div>
+          <div class="notTakenBranch">&cross; Branch 29 not taken.</div>
+          <div class="notTakenBranch">&cross; Branch 30 not taken.</div>
+          <div class="notTakenBranch">&cross; Branch 31 not taken.</div>
+          <div class="takenBranch">&check; Branch 32 taken 365 times.</div>
+          <div class="notTakenBranch">&cross; Branch 33 not taken.</div>
+          <div class="takenBranch">&check; Branch 34 taken 3164 times.</div>
+          <div class="takenBranch">&check; Branch 35 taken 3661 times.</div>
+          <div class="takenBranch">&check; Branch 36 taken 278405 times.</div>
+          <div class="notTakenBranch">&cross; Branch 37 not taken.</div>
+        </div>
+        </details>
+      </td>
+      <td class="linecount partialCoveredLine">1933123</td>
+      <td class="src partialCoveredLine"><span class="w">	</span><span class="o">~</span><span class="n">owning_ptr</span><span class="p">()</span><span class="w"> </span><span class="p">{</span><span class="n">delete</span><span class="w"> </span><span class="n">data_</span><span class="p">;}</span></td>
+    </tr>
+    <tr class="source-line">
+      <td class="lineno"><a id="l21" href="#l21">21</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount coveredLine">9714</td>
+      <td class="src coveredLine"><span class="w">	</span><span class="n">owning_ptr</span><span class="o">&amp;</span><span class="w"> </span><span class="n">operator</span><span class="o">=</span><span class="p">(</span><span class="n">owning_ptr</span><span class="w"> </span><span class="k">const</span><span class="o">&amp;</span><span class="w"> </span><span class="n">rhs</span><span class="p">)</span></td>
+    </tr>
+    <tr class="source-line">
+      <td class="lineno"><a id="l22" href="#l22">22</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount "></td>
+      <td class="src "><span class="w">	</span><span class="p">{</span></td>
+    </tr>
+    <tr class="source-line">
+      <td class="lineno"><a id="l23" href="#l23">23</a></td>
+      <td class="linebranch">
+        <details class="linebranchDetails">
+        <summary class="linebranchSummary">2/6</summary>
+        <div class="linebranchContents">
+          <div class="notTakenBranch">&cross; Branch 0 not taken.</div>
+          <div class="notTakenBranch">&cross; Branch 1 not taken.</div>
+          <div class="takenBranch">&check; Branch 2 taken 1 times.</div>
+          <div class="notTakenBranch">&cross; Branch 3 not taken.</div>
+          <div class="takenBranch">&check; Branch 4 taken 9713 times.</div>
+          <div class="notTakenBranch">&cross; Branch 5 not taken.</div>
+        </div>
+        </details>
+      </td>
+      <td class="linecount partialCoveredLine">9714</td>
+      <td class="src partialCoveredLine"><span class="w">		</span><span class="k">if</span><span class="p">(</span><span class="n">data_</span><span class="p">)</span></td>
+    </tr>
+    <tr class="source-line">
+      <td class="lineno"><a id="l24" href="#l24">24</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount uncoveredLine">&cross;</td>
+      <td class="src uncoveredLine"><span class="w">			</span><span class="n">delete</span><span class="w"> </span><span class="n">data_</span><span class="p">;</span></td>
+    </tr>
+    <tr class="source-line">
+      <td class="lineno"><a id="l25" href="#l25">25</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount coveredLine">9714</td>
+      <td class="src coveredLine"><span class="w">		</span><span class="n">data_</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">rhs</span><span class="p">.</span><span class="n">clone</span><span class="p">();</span></td>
+    </tr>
+    <tr class="source-line">
+      <td class="lineno"><a id="l26" href="#l26">26</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount coveredLine">9714</td>
+      <td class="src coveredLine"><span class="w">		</span><span class="k">return</span><span class="w"> </span><span class="o">*</span><span class="n">this</span><span class="p">;</span></td>
+    </tr>
+    <tr class="source-line">
+      <td class="lineno"><a id="l27" href="#l27">27</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount "></td>
+      <td class="src "><span class="w">	</span><span class="p">}</span></td>
+    </tr>
+    <tr class="source-line">
+      <td class="lineno"><a id="l28" href="#l28">28</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount coveredLine">605255</td>
+      <td class="src coveredLine"><span class="w">	</span><span class="n">owning_ptr</span><span class="o">&amp;</span><span class="w"> </span><span class="n">operator</span><span class="o">=</span><span class="p">(</span><span class="n">Type</span><span class="o">*</span><span class="w"> </span><span class="n">pointer</span><span class="p">)</span></td>
+    </tr>
+    <tr class="source-line">
+      <td class="lineno"><a id="l29" href="#l29">29</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount "></td>
+      <td class="src "><span class="w">	</span><span class="p">{</span></td>
+    </tr>
+    <tr class="source-line">
+      <td class="lineno"><a id="l30" href="#l30">30</a></td>
+      <td class="linebranch">
+        <details class="linebranchDetails">
+        <summary class="linebranchSummary">8/18</summary>
+        <div class="linebranchContents">
+          <div class="takenBranch">&check; Branch 0 taken 202634 times.</div>
+          <div class="takenBranch">&check; Branch 1 taken 26 times.</div>
+          <div class="takenBranch">&check; Branch 2 taken 257269 times.</div>
+          <div class="notTakenBranch">&cross; Branch 3 not taken.</div>
+          <div class="takenBranch">&check; Branch 4 taken 87125 times.</div>
+          <div class="notTakenBranch">&cross; Branch 5 not taken.</div>
+          <div class="takenBranch">&check; Branch 6 taken 3 times.</div>
+          <div class="notTakenBranch">&cross; Branch 7 not taken.</div>
+          <div class="takenBranch">&check; Branch 8 taken 35879 times.</div>
+          <div class="notTakenBranch">&cross; Branch 9 not taken.</div>
+          <div class="takenBranch">&check; Branch 10 taken 22291 times.</div>
+          <div class="notTakenBranch">&cross; Branch 11 not taken.</div>
+          <div class="takenBranch">&check; Branch 12 taken 28 times.</div>
+          <div class="notTakenBranch">&cross; Branch 13 not taken.</div>
+          <div class="notTakenBranch">&cross; Branch 14 not taken.</div>
+          <div class="notTakenBranch">&cross; Branch 15 not taken.</div>
+          <div class="notTakenBranch">&cross; Branch 16 not taken.</div>
+          <div class="notTakenBranch">&cross; Branch 17 not taken.</div>
+        </div>
+        </details>
+      </td>
+      <td class="linecount partialCoveredLine">605255</td>
+      <td class="src partialCoveredLine"><span class="w">		</span><span class="k">if</span><span class="p">(</span><span class="n">data_</span><span class="p">)</span></td>
+    </tr>
+    <tr class="source-line">
+      <td class="lineno"><a id="l31" href="#l31">31</a></td>
+      <td class="linebranch">
+        <details class="linebranchDetails">
+        <summary class="linebranchSummary">1/18</summary>
+        <div class="linebranchContents">
+          <div class="takenBranch">&check; Branch 0 taken 26 times.</div>
+          <div class="notTakenBranch">&cross; Branch 1 not taken.</div>
+          <div class="notTakenBranch">&cross; Branch 2 not taken.</div>
+          <div class="notTakenBranch">&cross; Branch 3 not taken.</div>
+          <div class="notTakenBranch">&cross; Branch 4 not taken.</div>
+          <div class="notTakenBranch">&cross; Branch 5 not taken.</div>
+          <div class="notTakenBranch">&cross; Branch 6 not taken.</div>
+          <div class="notTakenBranch">&cross; Branch 7 not taken.</div>
+          <div class="notTakenBranch">&cross; Branch 8 not taken.</div>
+          <div class="notTakenBranch">&cross; Branch 9 not taken.</div>
+          <div class="notTakenBranch">&cross; Branch 10 not taken.</div>
+          <div class="notTakenBranch">&cross; Branch 11 not taken.</div>
+          <div class="notTakenBranch">&cross; Branch 12 not taken.</div>
+          <div class="notTakenBranch">&cross; Branch 13 not taken.</div>
+          <div class="notTakenBranch">&cross; Branch 14 not taken.</div>
+          <div class="notTakenBranch">&cross; Branch 15 not taken.</div>
+          <div class="notTakenBranch">&cross; Branch 16 not taken.</div>
+          <div class="notTakenBranch">&cross; Branch 17 not taken.</div>
+        </div>
+        </details>
+      </td>
+      <td class="linecount partialCoveredLine">26</td>
+      <td class="src partialCoveredLine"><span class="w">			</span><span class="n">delete</span><span class="w"> </span><span class="n">data_</span><span class="p">;</span></td>
+    </tr>
+    <tr class="source-line">
+      <td class="lineno"><a id="l32" href="#l32">32</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount coveredLine">605255</td>
+      <td class="src coveredLine"><span class="w">		</span><span class="n">data_</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">pointer</span><span class="p">;</span></td>
+    </tr>
+    <tr class="source-line">
+      <td class="lineno"><a id="l33" href="#l33">33</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount coveredLine">605255</td>
+      <td class="src coveredLine"><span class="w">		</span><span class="k">return</span><span class="w"> </span><span class="o">*</span><span class="n">this</span><span class="p">;</span></td>
+    </tr>
+    <tr class="source-line">
+      <td class="lineno"><a id="l34" href="#l34">34</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount "></td>
+      <td class="src "><span class="w">	</span><span class="p">}</span></td>
+    </tr>
+    <tr class="source-line">
+      <td class="lineno"><a id="l35" href="#l35">35</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount "></td>
+      <td class="src "></td>
+    </tr>
+    <tr class="source-line">
+      <td class="lineno"><a id="l36" href="#l36">36</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount "></td>
+      <td class="src "><span class="w">	</span><span class="c1">// Return a clone of the contents, or nullptr if none.</span></td>
+    </tr>
+    <tr class="source-line">
+      <td class="lineno"><a id="l37" href="#l37">37</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount coveredLine">127466</td>
+      <td class="src coveredLine"><span class="w">	</span><span class="n">Type</span><span class="o">*</span><span class="w"> </span><span class="n">clone</span><span class="p">()</span><span class="w"> </span><span class="k">const</span></td>
+    </tr>
+    <tr class="source-line">
+      <td class="lineno"><a id="l38" href="#l38">38</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount "></td>
+      <td class="src "><span class="w">	</span><span class="p">{</span></td>
+    </tr>
+    <tr class="source-line">
+      <td class="lineno"><a id="l39" href="#l39">39</a></td>
+      <td class="linebranch">
+        <details class="linebranchDetails">
+        <summary class="linebranchSummary">6/38</summary>
+        <div class="linebranchContents">
+          <div class="notTakenBranch">&cross; Branch 0 not taken.</div>
+          <div class="notTakenBranch">&cross; Branch 1 not taken.</div>
+          <div class="takenBranch">&check; Branch 2 taken 15732 times.</div>
+          <div class="notTakenBranch">&cross; Branch 3 not taken.</div>
+          <div class="notTakenBranch">&cross; Branch 4 not taken.</div>
+          <div class="notTakenBranch">&cross; Branch 5 not taken.</div>
+          <div class="notTakenBranch">&cross; Branch 6 not taken.</div>
+          <div class="notTakenBranch">&cross; Branch 7 not taken.</div>
+          <div class="notTakenBranch">&cross; Branch 8 not taken.</div>
+          <div class="takenBranch">&check; Branch 9 taken 1694 times.</div>
+          <div class="notTakenBranch">&cross; Branch 10 not taken.</div>
+          <div class="notTakenBranch">&cross; Branch 11 not taken.</div>
+          <div class="notTakenBranch">&cross; Branch 12 not taken.</div>
+          <div class="notTakenBranch">&cross; Branch 13 not taken.</div>
+          <div class="notTakenBranch">&cross; Branch 14 not taken.</div>
+          <div class="notTakenBranch">&cross; Branch 15 not taken.</div>
+          <div class="notTakenBranch">&cross; Branch 16 not taken.</div>
+          <div class="notTakenBranch">&cross; Branch 17 not taken.</div>
+          <div class="notTakenBranch">&cross; Branch 18 not taken.</div>
+          <div class="notTakenBranch">&cross; Branch 19 not taken.</div>
+          <div class="notTakenBranch">&cross; Branch 20 not taken.</div>
+          <div class="notTakenBranch">&cross; Branch 21 not taken.</div>
+          <div class="notTakenBranch">&cross; Branch 22 not taken.</div>
+          <div class="notTakenBranch">&cross; Branch 23 not taken.</div>
+          <div class="notTakenBranch">&cross; Branch 24 not taken.</div>
+          <div class="notTakenBranch">&cross; Branch 25 not taken.</div>
+          <div class="notTakenBranch">&cross; Branch 26 not taken.</div>
+          <div class="notTakenBranch">&cross; Branch 27 not taken.</div>
+          <div class="notTakenBranch">&cross; Branch 28 not taken.</div>
+          <div class="takenBranch">&check; Branch 29 taken 6 times.</div>
+          <div class="notTakenBranch">&cross; Branch 30 not taken.</div>
+          <div class="notTakenBranch">&cross; Branch 31 not taken.</div>
+          <div class="takenBranch">&check; Branch 32 taken 11931 times.</div>
+          <div class="notTakenBranch">&cross; Branch 33 not taken.</div>
+          <div class="takenBranch">&check; Branch 34 taken 86433 times.</div>
+          <div class="takenBranch">&check; Branch 35 taken 11670 times.</div>
+          <div class="notTakenBranch">&cross; Branch 36 not taken.</div>
+          <div class="notTakenBranch">&cross; Branch 37 not taken.</div>
+        </div>
+        </details>
+      </td>
+      <td class="linecount partialCoveredLine">127466</td>
+      <td class="src partialCoveredLine"><span class="w">		</span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">data_</span><span class="p">)</span><span class="w"> </span><span class="k">return</span><span class="w"> </span><span class="n">data_</span><span class="o">-&gt;</span><span class="n">clone</span><span class="p">();</span></td>
+    </tr>
+    <tr class="source-line">
+      <td class="lineno"><a id="l40" href="#l40">40</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount coveredLine">13370</td>
+      <td class="src coveredLine"><span class="w">		</span><span class="k">return</span><span class="w"> </span><span class="n">nullptr</span><span class="p">;</span></td>
+    </tr>
+    <tr class="source-line">
+      <td class="lineno"><a id="l41" href="#l41">41</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount coveredLine">127466</td>
+      <td class="src coveredLine"><span class="w">	</span><span class="p">}</span></td>
+    </tr>
+    <tr class="source-line">
+      <td class="lineno"><a id="l42" href="#l42">42</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount "></td>
+      <td class="src "></td>
+    </tr>
+    <tr class="source-line">
+      <td class="lineno"><a id="l43" href="#l43">43</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount coveredLine">983423</td>
+      <td class="src coveredLine"><span class="w">	</span><span class="n">operator</span><span class="w"> </span><span class="n">safe_bool_type</span><span class="p">()</span><span class="w"> </span><span class="k">const</span></td>
+    </tr>
+    <tr class="source-line">
+      <td class="lineno"><a id="l44" href="#l44">44</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount "></td>
+      <td class="src "><span class="w">	</span><span class="p">{</span></td>
+    </tr>
+    <tr class="source-line">
+      <td class="lineno"><a id="l45" href="#l45">45</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount coveredLine">983423</td>
+      <td class="src coveredLine"><span class="w">		</span><span class="k">return</span><span class="w"> </span><span class="n">data_</span><span class="w"> </span><span class="o">?</span><span class="w"> </span><span class="o">&amp;</span><span class="n">owning_ptr</span><span class="o">::</span><span class="n">safe_bool_func</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="n">nullptr</span><span class="p">;</span></td>
+    </tr>
+    <tr class="source-line">
+      <td class="lineno"><a id="l46" href="#l46">46</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount "></td>
+      <td class="src "><span class="w">	</span><span class="p">}</span></td>
+    </tr>
+    <tr class="source-line">
+      <td class="lineno"><a id="l47" href="#l47">47</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount "></td>
+      <td class="src "></td>
+    </tr>
+    <tr class="source-line">
+      <td class="lineno"><a id="l48" href="#l48">48</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount coveredLine">4399113</td>
+      <td class="src coveredLine"><span class="w">	</span><span class="n">Type</span><span class="o">*</span><span class="w"> </span><span class="n">get</span><span class="p">()</span><span class="w"> </span><span class="p">{</span><span class="k">return</span><span class="w"> </span><span class="n">data_</span><span class="p">;}</span></td>
+    </tr>
+    <tr class="source-line">
+      <td class="lineno"><a id="l49" href="#l49">49</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount uncoveredLine">&cross;</td>
+      <td class="src uncoveredLine"><span class="w">	</span><span class="n">Type</span><span class="w"> </span><span class="k">const</span><span class="o">*</span><span class="w"> </span><span class="n">get</span><span class="p">()</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="p">{</span><span class="k">return</span><span class="w"> </span><span class="n">data_</span><span class="p">;}</span></td>
+    </tr>
+    <tr class="source-line">
+      <td class="lineno"><a id="l50" href="#l50">50</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount coveredLine">551153</td>
+      <td class="src coveredLine"><span class="w">	</span><span class="n">Type</span><span class="o">&amp;</span><span class="w"> </span><span class="n">operator</span><span class="o">*</span><span class="p">()</span><span class="w"> </span><span class="p">{</span><span class="k">return</span><span class="w"> </span><span class="o">*</span><span class="n">data_</span><span class="p">;}</span></td>
+    </tr>
+    <tr class="source-line">
+      <td class="lineno"><a id="l51" href="#l51">51</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount "></td>
+      <td class="src "><span class="w">	</span><span class="n">Type</span><span class="w"> </span><span class="k">const</span><span class="o">&amp;</span><span class="w"> </span><span class="n">operator</span><span class="o">*</span><span class="p">()</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="p">{</span><span class="k">return</span><span class="w"> </span><span class="o">*</span><span class="n">data_</span><span class="p">;}</span></td>
+    </tr>
+    <tr class="source-line">
+      <td class="lineno"><a id="l52" href="#l52">52</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount coveredLine">1974749</td>
+      <td class="src coveredLine"><span class="w">	</span><span class="n">Type</span><span class="o">*</span><span class="w"> </span><span class="n">operator</span><span class="o">-&gt;</span><span class="p">()</span><span class="w"> </span><span class="p">{</span><span class="k">return</span><span class="w"> </span><span class="n">data_</span><span class="p">;}</span></td>
+    </tr>
+    <tr class="source-line">
+      <td class="lineno"><a id="l53" href="#l53">53</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount coveredLine">707409</td>
+      <td class="src coveredLine"><span class="w">	</span><span class="n">Type</span><span class="w"> </span><span class="k">const</span><span class="o">*</span><span class="w"> </span><span class="n">operator</span><span class="o">-&gt;</span><span class="p">()</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="p">{</span><span class="k">return</span><span class="w"> </span><span class="n">data_</span><span class="p">;}</span></td>
+    </tr>
+    <tr class="source-line">
+      <td class="lineno"><a id="l54" href="#l54">54</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount coveredLine">188</td>
+      <td class="src coveredLine"><span class="w">	</span><span class="n">Type</span><span class="o">*</span><span class="w"> </span><span class="n">release</span><span class="p">()</span></td>
+    </tr>
+    <tr class="source-line">
+      <td class="lineno"><a id="l55" href="#l55">55</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount "></td>
+      <td class="src "><span class="w">	</span><span class="p">{</span></td>
+    </tr>
+    <tr class="source-line">
+      <td class="lineno"><a id="l56" href="#l56">56</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount coveredLine">188</td>
+      <td class="src coveredLine"><span class="w">		</span><span class="n">Type</span><span class="o">*</span><span class="w"> </span><span class="n">temp</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">data_</span><span class="p">;</span></td>
+    </tr>
+    <tr class="source-line">
+      <td class="lineno"><a id="l57" href="#l57">57</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount coveredLine">188</td>
+      <td class="src coveredLine"><span class="w">		</span><span class="n">data_</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">nullptr</span><span class="p">;</span></td>
+    </tr>
+    <tr class="source-line">
+      <td class="lineno"><a id="l58" href="#l58">58</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount coveredLine">188</td>
+      <td class="src coveredLine"><span class="w">		</span><span class="k">return</span><span class="w"> </span><span class="n">temp</span><span class="p">;</span></td>
+    </tr>
+    <tr class="source-line">
+      <td class="lineno"><a id="l59" href="#l59">59</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount "></td>
+      <td class="src "><span class="w">	</span><span class="p">}</span></td>
+    </tr>
+    <tr class="source-line">
+      <td class="lineno"><a id="l60" href="#l60">60</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount coveredLine">252797</td>
+      <td class="src coveredLine"><span class="w">	</span><span class="kt">void</span><span class="w"> </span><span class="n">reset</span><span class="p">(</span><span class="n">Type</span><span class="o">*</span><span class="w"> </span><span class="n">p</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">nullptr</span><span class="p">)</span></td>
+    </tr>
+    <tr class="source-line">
+      <td class="lineno"><a id="l61" href="#l61">61</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount "></td>
+      <td class="src "><span class="w">	</span><span class="p">{</span></td>
+    </tr>
+    <tr class="source-line">
+      <td class="lineno"><a id="l62" href="#l62">62</a></td>
+      <td class="linebranch">
+        <details class="linebranchDetails">
+        <summary class="linebranchSummary">3/4</summary>
+        <div class="linebranchContents">
+          <div class="notTakenBranch">&cross; Branch 0 not taken.</div>
+          <div class="takenBranch">&check; Branch 1 taken 249995 times.</div>
+          <div class="takenBranch">&check; Branch 2 taken 1394 times.</div>
+          <div class="takenBranch">&check; Branch 3 taken 1408 times.</div>
+        </div>
+        </details>
+      </td>
+      <td class="linecount partialCoveredLine">252797</td>
+      <td class="src partialCoveredLine"><span class="w">		</span><span class="k">if</span><span class="p">(</span><span class="n">data_</span><span class="p">)</span></td>
+    </tr>
+    <tr class="source-line">
+      <td class="lineno"><a id="l63" href="#l63">63</a></td>
+      <td class="linebranch">
+        <details class="linebranchDetails">
+        <summary class="linebranchSummary">2/4</summary>
+        <div class="linebranchContents">
+          <div class="takenBranch">&check; Branch 0 taken 249995 times.</div>
+          <div class="notTakenBranch">&cross; Branch 1 not taken.</div>
+          <div class="takenBranch">&check; Branch 2 taken 1408 times.</div>
+          <div class="notTakenBranch">&cross; Branch 3 not taken.</div>
+        </div>
+        </details>
+      </td>
+      <td class="linecount partialCoveredLine">251403</td>
+      <td class="src partialCoveredLine"><span class="w">			</span><span class="n">delete</span><span class="w"> </span><span class="n">data_</span><span class="p">;</span></td>
+    </tr>
+    <tr class="source-line">
+      <td class="lineno"><a id="l64" href="#l64">64</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount coveredLine">252797</td>
+      <td class="src coveredLine"><span class="w">		</span><span class="n">data_</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">p</span><span class="p">;</span></td>
+    </tr>
+    <tr class="source-line">
+      <td class="lineno"><a id="l65" href="#l65">65</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount coveredLine">252797</td>
+      <td class="src coveredLine"><span class="w">	</span><span class="p">}</span></td>
+    </tr>
+    <tr class="source-line">
+      <td class="lineno"><a id="l66" href="#l66">66</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount "></td>
+      <td class="src "><span class="w">	</span></td>
+    </tr>
+    <tr class="source-line">
+      <td class="lineno"><a id="l67" href="#l67">67</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount "></td>
+      <td class="src "><span class="n">private</span><span class="o">:</span></td>
+    </tr>
+    <tr class="source-line">
+      <td class="lineno"><a id="l68" href="#l68">68</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount "></td>
+      <td class="src "><span class="w">	</span><span class="n">Type</span><span class="o">*</span><span class="w"> </span><span class="n">data_</span><span class="p">;</span></td>
+    </tr>
+    <tr class="source-line">
+      <td class="lineno"><a id="l69" href="#l69">69</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount "></td>
+      <td class="src "><span class="p">};</span></td>
+    </tr>
+    <tr class="source-line">
+      <td class="lineno"><a id="l70" href="#l70">70</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount "></td>
+      <td class="src "></td>
+    </tr>
+    <tr class="source-line">
+      <td class="lineno"><a id="l71" href="#l71">71</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount "></td>
+      <td class="src "><span class="n">template</span><span class="w"> </span><span class="o">&lt;</span><span class="n">class</span><span class="w"> </span><span class="n">Type</span><span class="p">,</span><span class="w"> </span><span class="n">class</span><span class="w"> </span><span class="n">Type2</span><span class="o">&gt;</span></td>
+    </tr>
+    <tr class="source-line">
+      <td class="lineno"><a id="l72" href="#l72">72</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount "></td>
+      <td class="src "><span class="kt">bool</span><span class="w"> </span><span class="n">operator</span><span class="o">==</span><span class="p">(</span><span class="n">owning_ptr</span><span class="o">&lt;</span><span class="n">Type</span><span class="o">&gt;</span><span class="w"> </span><span class="k">const</span><span class="o">&amp;</span><span class="w"> </span><span class="n">lhs</span><span class="p">,</span><span class="w"> </span><span class="n">owning_ptr</span><span class="o">&lt;</span><span class="n">Type2</span><span class="o">&gt;</span><span class="w"> </span><span class="k">const</span><span class="o">&amp;</span><span class="w"> </span><span class="n">rhs</span><span class="p">)</span></td>
+    </tr>
+    <tr class="source-line">
+      <td class="lineno"><a id="l73" href="#l73">73</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount "></td>
+      <td class="src "><span class="p">{</span></td>
+    </tr>
+    <tr class="source-line">
+      <td class="lineno"><a id="l74" href="#l74">74</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount "></td>
+      <td class="src "><span class="w">	</span><span class="k">return</span><span class="w"> </span><span class="n">lhs</span><span class="p">.</span><span class="n">get</span><span class="p">()</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="n">rhs</span><span class="p">.</span><span class="n">get</span><span class="p">();</span></td>
+    </tr>
+    <tr class="source-line">
+      <td class="lineno"><a id="l75" href="#l75">75</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount "></td>
+      <td class="src "><span class="p">}</span></td>
+    </tr>
+    <tr class="source-line">
+      <td class="lineno"><a id="l76" href="#l76">76</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount "></td>
+      <td class="src "></td>
+    </tr>
+    <tr class="source-line">
+      <td class="lineno"><a id="l77" href="#l77">77</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount "></td>
+      <td class="src "><span class="n">template</span><span class="w"> </span><span class="o">&lt;</span><span class="n">class</span><span class="w"> </span><span class="n">Type</span><span class="p">,</span><span class="w"> </span><span class="n">class</span><span class="w"> </span><span class="n">Type2</span><span class="o">&gt;</span></td>
+    </tr>
+    <tr class="source-line">
+      <td class="lineno"><a id="l78" href="#l78">78</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount "></td>
+      <td class="src "><span class="kt">bool</span><span class="w"> </span><span class="n">operator</span><span class="o">!=</span><span class="p">(</span><span class="n">owning_ptr</span><span class="o">&lt;</span><span class="n">Type</span><span class="o">&gt;</span><span class="w"> </span><span class="k">const</span><span class="o">&amp;</span><span class="w"> </span><span class="n">lhs</span><span class="p">,</span><span class="w"> </span><span class="n">owning_ptr</span><span class="o">&lt;</span><span class="n">Type2</span><span class="o">&gt;</span><span class="w"> </span><span class="k">const</span><span class="o">&amp;</span><span class="w"> </span><span class="n">rhs</span><span class="p">)</span></td>
+    </tr>
+    <tr class="source-line">
+      <td class="lineno"><a id="l79" href="#l79">79</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount "></td>
+      <td class="src "><span class="p">{</span></td>
+    </tr>
+    <tr class="source-line">
+      <td class="lineno"><a id="l80" href="#l80">80</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount "></td>
+      <td class="src "><span class="w">	</span><span class="k">return</span><span class="w"> </span><span class="n">lhs</span><span class="p">.</span><span class="n">get</span><span class="p">()</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="n">rhs</span><span class="p">.</span><span class="n">get</span><span class="p">();</span></td>
+    </tr>
+    <tr class="source-line">
+      <td class="lineno"><a id="l81" href="#l81">81</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount "></td>
+      <td class="src "><span class="p">}</span></td>
+    </tr>
+    <tr class="source-line">
+      <td class="lineno"><a id="l82" href="#l82">82</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount "></td>
+      <td class="src "></td>
+    </tr>
+    <tr class="source-line">
+      <td class="lineno"><a id="l83" href="#l83">83</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount "></td>
+      <td class="src "><span class="n">template</span><span class="w"> </span><span class="o">&lt;</span><span class="n">class</span><span class="w"> </span><span class="n">Type</span><span class="p">,</span><span class="w"> </span><span class="n">class</span><span class="w"> </span><span class="n">Type2</span><span class="o">&gt;</span></td>
+    </tr>
+    <tr class="source-line">
+      <td class="lineno"><a id="l84" href="#l84">84</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount "></td>
+      <td class="src "><span class="kt">bool</span><span class="w"> </span><span class="n">operator</span><span class="o">==</span><span class="p">(</span><span class="n">owning_ptr</span><span class="o">&lt;</span><span class="n">Type</span><span class="o">&gt;</span><span class="w"> </span><span class="k">const</span><span class="o">&amp;</span><span class="w"> </span><span class="n">lhs</span><span class="p">,</span><span class="w"> </span><span class="n">Type2</span><span class="o">*</span><span class="w"> </span><span class="n">rhs</span><span class="p">)</span></td>
+    </tr>
+    <tr class="source-line">
+      <td class="lineno"><a id="l85" href="#l85">85</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount "></td>
+      <td class="src "><span class="p">{</span></td>
+    </tr>
+    <tr class="source-line">
+      <td class="lineno"><a id="l86" href="#l86">86</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount "></td>
+      <td class="src "><span class="w">	</span><span class="k">return</span><span class="w"> </span><span class="n">lhs</span><span class="p">.</span><span class="n">get</span><span class="p">()</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="n">rhs</span><span class="p">;</span></td>
+    </tr>
+    <tr class="source-line">
+      <td class="lineno"><a id="l87" href="#l87">87</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount "></td>
+      <td class="src "><span class="p">}</span></td>
+    </tr>
+    <tr class="source-line">
+      <td class="lineno"><a id="l88" href="#l88">88</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount "></td>
+      <td class="src "></td>
+    </tr>
+    <tr class="source-line">
+      <td class="lineno"><a id="l89" href="#l89">89</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount "></td>
+      <td class="src "><span class="n">template</span><span class="w"> </span><span class="o">&lt;</span><span class="n">class</span><span class="w"> </span><span class="n">Type</span><span class="p">,</span><span class="w"> </span><span class="n">class</span><span class="w"> </span><span class="n">Type2</span><span class="o">&gt;</span></td>
+    </tr>
+    <tr class="source-line">
+      <td class="lineno"><a id="l90" href="#l90">90</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount "></td>
+      <td class="src "><span class="kt">bool</span><span class="w"> </span><span class="n">operator</span><span class="o">!=</span><span class="p">(</span><span class="n">owning_ptr</span><span class="o">&lt;</span><span class="n">Type</span><span class="o">&gt;</span><span class="w"> </span><span class="k">const</span><span class="o">&amp;</span><span class="w"> </span><span class="n">lhs</span><span class="p">,</span><span class="w"> </span><span class="n">Type2</span><span class="o">*</span><span class="w"> </span><span class="n">rhs</span><span class="p">)</span></td>
+    </tr>
+    <tr class="source-line">
+      <td class="lineno"><a id="l91" href="#l91">91</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount "></td>
+      <td class="src "><span class="p">{</span></td>
+    </tr>
+    <tr class="source-line">
+      <td class="lineno"><a id="l92" href="#l92">92</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount "></td>
+      <td class="src "><span class="w">	</span><span class="k">return</span><span class="w"> </span><span class="n">lhs</span><span class="p">.</span><span class="n">get</span><span class="p">()</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="n">rhs</span><span class="p">;</span></td>
+    </tr>
+    <tr class="source-line">
+      <td class="lineno"><a id="l93" href="#l93">93</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount "></td>
+      <td class="src "><span class="p">}</span></td>
+    </tr>
+    <tr class="source-line">
+      <td class="lineno"><a id="l94" href="#l94">94</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount "></td>
+      <td class="src "></td>
+    </tr>
+    <tr class="source-line">
+      <td class="lineno"><a id="l95" href="#l95">95</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount "></td>
+      <td class="src "><span class="n">template</span><span class="w"> </span><span class="o">&lt;</span><span class="n">class</span><span class="w"> </span><span class="n">Type</span><span class="p">,</span><span class="w"> </span><span class="n">class</span><span class="w"> </span><span class="n">Type2</span><span class="o">&gt;</span></td>
+    </tr>
+    <tr class="source-line">
+      <td class="lineno"><a id="l96" href="#l96">96</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount "></td>
+      <td class="src "><span class="kt">bool</span><span class="w"> </span><span class="n">operator</span><span class="o">==</span><span class="p">(</span><span class="n">Type</span><span class="o">*</span><span class="w"> </span><span class="n">lhs</span><span class="p">,</span><span class="w"> </span><span class="n">owning_ptr</span><span class="o">&lt;</span><span class="n">Type2</span><span class="o">&gt;</span><span class="w"> </span><span class="k">const</span><span class="o">&amp;</span><span class="w"> </span><span class="n">rhs</span><span class="p">)</span></td>
+    </tr>
+    <tr class="source-line">
+      <td class="lineno"><a id="l97" href="#l97">97</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount "></td>
+      <td class="src "><span class="p">{</span></td>
+    </tr>
+    <tr class="source-line">
+      <td class="lineno"><a id="l98" href="#l98">98</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount "></td>
+      <td class="src "><span class="w">	</span><span class="k">return</span><span class="w"> </span><span class="n">lhs</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="n">rhs</span><span class="p">.</span><span class="n">get</span><span class="p">();</span></td>
+    </tr>
+    <tr class="source-line">
+      <td class="lineno"><a id="l99" href="#l99">99</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount "></td>
+      <td class="src "><span class="p">}</span></td>
+    </tr>
+    <tr class="source-line">
+      <td class="lineno"><a id="l100" href="#l100">100</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount "></td>
+      <td class="src "></td>
+    </tr>
+    <tr class="source-line">
+      <td class="lineno"><a id="l101" href="#l101">101</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount "></td>
+      <td class="src "><span class="n">template</span><span class="w"> </span><span class="o">&lt;</span><span class="n">class</span><span class="w"> </span><span class="n">Type</span><span class="p">,</span><span class="w"> </span><span class="n">class</span><span class="w"> </span><span class="n">Type2</span><span class="o">&gt;</span></td>
+    </tr>
+    <tr class="source-line">
+      <td class="lineno"><a id="l102" href="#l102">102</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount "></td>
+      <td class="src "><span class="kt">bool</span><span class="w"> </span><span class="n">operator</span><span class="o">!=</span><span class="p">(</span><span class="n">Type</span><span class="o">*</span><span class="w"> </span><span class="n">lhs</span><span class="p">,</span><span class="w"> </span><span class="n">owning_ptr</span><span class="o">&lt;</span><span class="n">Type2</span><span class="o">&gt;</span><span class="w"> </span><span class="k">const</span><span class="o">&amp;</span><span class="w"> </span><span class="n">rhs</span><span class="p">)</span></td>
+    </tr>
+    <tr class="source-line">
+      <td class="lineno"><a id="l103" href="#l103">103</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount "></td>
+      <td class="src "><span class="p">{</span></td>
+    </tr>
+    <tr class="source-line">
+      <td class="lineno"><a id="l104" href="#l104">104</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount "></td>
+      <td class="src "><span class="w">	</span><span class="k">return</span><span class="w"> </span><span class="n">lhs</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="n">rhs</span><span class="p">.</span><span class="n">get</span><span class="p">();</span></td>
+    </tr>
+    <tr class="source-line">
+      <td class="lineno"><a id="l105" href="#l105">105</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount "></td>
+      <td class="src "><span class="p">}</span></td>
+    </tr>
+    <tr class="source-line">
+      <td class="lineno"><a id="l106" href="#l106">106</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount "></td>
+      <td class="src "></td>
+    </tr>
+    <tr class="source-line">
+      <td class="lineno"><a id="l107" href="#l107">107</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount "></td>
+      <td class="src "><span class="cp">#endif</span></td>
+    </tr>
+    <tr class="source-line">
+      <td class="lineno"><a id="l108" href="#l108">108</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount "></td>
+      <td class="src "></td>
+    </tr>
+  </table>
+</div>
+      <hr/>
+    </main>
+
+    <footer>
+      Generated by: <a href="http://gcovr.com/en/7.2">GCOVR (Version 7.2)</a>
+    </footer>
+  </body>
+</html>
