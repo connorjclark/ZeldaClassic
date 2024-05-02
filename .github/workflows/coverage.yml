@@ -40,6 +40,9 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           path: coverage-json
+      
+      - run: ls
+      - run: cp -r coverage-json/generated-source-files/* src/
 
       - name: Generate coverage report
         run: bash tests/generate_coverage_report.sh --add-tracefile "coverage-json/**/coverage.json"
