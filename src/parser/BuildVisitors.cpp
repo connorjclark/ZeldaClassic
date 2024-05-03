@@ -1960,7 +1960,7 @@ void BuildOpcodes::caseExprCall(ASTExprCall& host, void* param)
 			if(destructor && !destructor->isNil())
 			{
 				Function* destructor = destr[0];
-				addOpcode(new OSetImmediate(new VarArgument(EXP1),
+				addOpcode(new OSetImmediateLabel(new VarArgument(EXP1),
 					new LabelArgument(destructor->getLabel(), true)));
 			}
 			else addOpcode(new OSetImmediate(new VarArgument(EXP1),
@@ -2080,19 +2080,19 @@ void BuildOpcodes::caseExprCall(ASTExprCall& host, void* param)
 			if (optarg->empty())
 				break;
 
-			Argument const* destreg = ocode->getArgument();
+			VarArgument const* destreg = ocode->getArgument();
 			//Optimize
 			Opcode* lastop = optarg->back().get();
 			if(OPushRegister* tmp = dynamic_cast<OPushRegister*>(lastop))
 			{
-				Argument const* arg = tmp->getArgument();
+				VarArgument const* arg = tmp->getArgument();
 				if(*arg == *destreg) //Same register!
 				{
 					optarg->pop_back();
 				}
 				else //Different register
 				{
-					Argument* a = arg->clone();
+					VarArgument* a = arg->clone();
 					optarg->pop_back();
 					addOpcode(new OSetRegister(destreg->clone(), a));
 				}
@@ -2102,7 +2102,7 @@ void BuildOpcodes::caseExprCall(ASTExprCall& host, void* param)
 			}
 			else if(OPushImmediate* tmp = dynamic_cast<OPushImmediate*>(lastop))
 			{
-				Argument* arg = tmp->getArgument()->clone();
+				LiteralArgument* arg = tmp->getArgument()->clone();
 				optarg->pop_back();
 				addOpcode(new OSetImmediate(destreg->clone(), arg));
 				if(++it == funcCode.end())
@@ -3723,14 +3723,16 @@ void BuildOpcodes::stringLiteralDeclaration(
 	{
 		addOpcode(new OAllocateGlobalMemImmediate(
 						  new VarArgument(EXP1),
-						  new LiteralArgument(size * 10000L)));
+						  new LiteralArgument(size * 10000L),
+						  new LiteralArgument(0)));
 		addOpcode(new OSetRegister(new GlobalArgument(*globalId),
 								   new VarArgument(EXP1)));
 	}
 	else
 	{
 		addOpcode(new OAllocateMemImmediate(new VarArgument(EXP1),
-											new LiteralArgument(size * 10000L)));
+											new LiteralArgument(size * 10000L),
+											new LiteralArgument(0)));
 		int32_t offset = manager.getStackOffset(false);
 		addOpcode(new OStore(new VarArgument(EXP1), new LiteralArgument(offset)));
 		// Register for cleanup.
@@ -3769,7 +3771,8 @@ void BuildOpcodes::stringLiteralFree(
 	// Allocate.
 	addOpcode2(init, new OAllocateMemImmediate(
 						   new VarArgument(EXP1),
-						   new LiteralArgument(size * 10000L)));
+						   new LiteralArgument(size * 10000L),
+						   new LiteralArgument(0)));
 	addOpcode2(init, new OStore(new VarArgument(EXP1),
 									  new LiteralArgument(offset)));
 
@@ -3958,7 +3961,8 @@ void BuildOpcodes::arrayLiteralFree(
 
 	addOpcode2(context.initCode,
 			new OAllocateMemImmediate(new VarArgument(EXP1),
-									  new LiteralArgument(size * 10000L)));
+									  new LiteralArgument(size * 10000L),
+									  new LiteralArgument(0)));
 	addOpcode2(context.initCode,
 			new OStore(new VarArgument(EXP1),
 							   new LiteralArgument(offset)));
@@ -4125,8 +4129,8 @@ void BuildOpcodes::buildPostOp(ASTExpr* operand, void* param, vector<shared_ptr<
 
 void BuildOpcodes::push_param(bool varg)
 {
-	Argument* reg = nullptr;
-	Argument* lit = nullptr;
+	VarArgument* reg = nullptr;
+	LiteralArgument* lit = nullptr;
 	//Try to optimize, instead of just blindly pushing EXP1
 	auto* optarg = opcodeTargets.back();
 	Opcode* lastop = optarg->back().get();
@@ -4179,7 +4183,7 @@ optional<int> BuildOpcodes::eatSetCompare()
 {
 	if(OSetCompare* setcmp = dynamic_cast<OSetCompare*>(backOpcode()))
 	{
-		auto cmp = static_cast<LiteralArgument*>(setcmp->getSecondArgument())->value;
+		auto cmp = setcmp->getSecondArgument()->value;
 		backTarget().pop_back(); //erase the OSetCompare
 		return cmp;
 	}
