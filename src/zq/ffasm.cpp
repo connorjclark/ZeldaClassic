@@ -305,7 +305,6 @@ int32_t parse_script_string(script_data **script, string const& scriptstr, bool 
 	
 	for(int32_t i=0; i<num_commands; ++i)
 	{
-		auto& sc = zasm.emplace_back();
 		if(stop)
 		{
 			break;
@@ -426,6 +425,8 @@ int32_t parse_script_string(script_data **script, string const& scriptstr, bool 
 				--i; continue;
 			}
 			meta_done = true;
+
+			auto& sc = zasm.emplace_back();
 			
 			int32_t k=0, l=0;
 			
@@ -535,6 +536,8 @@ int32_t parse_script_string(script_data **script, string const& scriptstr, bool 
 			}
 		}
 	}
+
+	(*script)->zasm_script->size = zasm.size();
 
 	if(report_success && success) //(!stop) // stop is never true here
 	{
