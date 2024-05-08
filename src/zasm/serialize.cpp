@@ -7,8 +7,6 @@
 #include <string>
 #include <fmt/format.h>
 
-extern script_variable variable_list[];
-
 std::string zasm_var_to_string(int32_t var)
 {
 	const auto& [sv, w] = get_script_variable(var);

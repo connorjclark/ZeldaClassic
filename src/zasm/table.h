@@ -48,8 +48,8 @@ struct script_variable
     word maxcount;
 };
 
-script_command* get_script_command(int command);
-script_command* get_script_command(const std::string& name);
+const script_command* get_script_command(int command);
+const script_command* get_script_command(const std::string& name);
 std::pair<const script_variable*, int> get_script_variable(int var);
 std::optional<int> get_script_variable(const std::string& var_name);
 

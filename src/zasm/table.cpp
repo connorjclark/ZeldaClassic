@@ -15,9 +15,11 @@
 #define CMPSET   ARGFL_COMPARE_SET
 #define UNIMPL   ARGFL_UNIMPL
 
-script_command command_list[NUMCOMMANDS+1]=
+static script_command null_command = {"0xFFFF", (ASM_DEFINE)0xFFFF, 0, {ARGTY::UNUSED_REG, ARGTY::UNUSED_REG, ARGTY::UNUSED_REG}};
+
+static constexpr script_command command_list[]=
 {
-	//name args arg1 arg2 more
+	//name command args arg1 arg2 more
 	{ "SETV", SETV, 2, { REG_W, NUM }, 0, 0 },
 	{ "SETR", SETR, 2, { REG_W, REG_R }, 0, 0 },
 	{ "ADDR", ADDR, 2, { REG_RW, REG_R }, 0, 0 },
@@ -275,7 +277,7 @@ script_command command_list[NUMCOMMANDS+1]=
 	{ "RESUMEMUSIC", RESUMEMUSIC, 0, {}, 0, 0 },
 	{ "LWPNARRPTR", LWPNARRPTR, 1, { REG_RW }, 0, 0 },
 	{ "EWPNARRPTR", EWPNARRPTR, 1, { REG_RW }, 0, 0 },
-	{ "EWPNARRPTR", EWPNARRPTR, 1, { REG_RW }, 0, 0 },
+	{ "ITEMARRPTR", ITEMARRPTR, 1, { REG_RW }, 0, 0 },
 	{ "IDATAARRPTR", IDATAARRPTR, 1, { REG_RW }, 0, 0 },
 	{ "FFCARRPTR", FFCARRPTR, 1, { REG_RW }, 0, 0 },
 	{ "BOOLARRPTR", BOOLARRPTR, 1, { REG_RW }, 0, 0 },
@@ -1204,12 +1206,9 @@ script_command command_list[NUMCOMMANDS+1]=
 	{ "STORE_OBJECT", STORE_OBJECT, 2, { REG_R, NUM }, 0, 0 },
 	{ "GC", GC, 0, { }, 0, 0 },
 	{ "SET_OBJECT", SET_OBJECT, 2, { REG_W, REG_R }, 0, 0 },
-
-	{"0xFFFF", (ASM_DEFINE)0xFFFF, 0, {ARGTY::UNUSED_REG, ARGTY::UNUSED_REG, ARGTY::UNUSED_REG}},
-	{ "", NOP, 0, {}, 0, 0 }
 };
 
-script_variable variable_list[]=
+static constexpr script_variable variable_list[]=
 {
 	//name id maxcount
 	{ "D", D(0), 8},
@@ -2918,50 +2917,66 @@ script_variable variable_list[]=
 	{ "COMBODTRIGSTUN", COMBODTRIGSTUN, 0 },
 	{ "COMBODTRIGBUNNY", COMBODTRIGBUNNY, 0 },
 	{ "COMBODTRIGPUSHTIME", COMBODTRIGPUSHTIME, 0 },
-
-	{ " ", -1, 0 }
 };
 
-script_command* get_script_command(int command)
+// Don't rely on `command_list` to be indexed by command index.
+static constexpr auto sort_script_commands()
 {
-	for (int i = 0; i < NUMCOMMANDS; i++)
+	std::array<const script_command*, NUMCOMMANDS> sc_by_command{};
+	bool seen[NUMCOMMANDS] = {};
+	for (auto& sc : command_list)
 	{
-		if (command_list[i].command == command)
-			return &command_list[i];
+		if (seen[sc.command])
+			throw "Duplicate command found";
+		seen[sc.command] = true;
+		sc_by_command[sc.command] = &sc;
 	}
+	return sc_by_command;
+}
+static constexpr auto sc_by_command = sort_script_commands();
 
-	return nullptr;
+const script_command* get_script_command(int command)
+{
+	if (command == 0xFFFF)
+		return &null_command;
+	if (command >= NUMCOMMANDS)
+		return nullptr;
+
+	return sc_by_command[command];
 }
 
-script_command* get_script_command(const std::string& name)
+const script_command* get_script_command(const std::string& name)
 {
-	for (int i = 0; i < NUMCOMMANDS; i++)
+	for (auto& sc : command_list)
 	{
-		if (command_list[i].name == name)
-			return &command_list[i];
+		if (sc.name == name)
+			return &sc;
 	}
+
+	if (name == "0xFFFF")
+		return &null_command;
 
 	return nullptr;
 }
 
 std::pair<const script_variable*, int> get_script_variable(int32_t var)
 {
-	for (int32_t q = 0; variable_list[q].id != -1; ++q)
+	for (auto& sv : variable_list)
 	{
-		if (variable_list[q].maxcount > 0)
+		if (sv.maxcount > 0)
 		{
-			int32_t start = variable_list[q].id;
-			if (var >= start && var < start + variable_list[q].maxcount)
+			int32_t start = sv.id;
+			if (var >= start && var < start + sv.maxcount)
 			{
-				for(int32_t w = 0; w < variable_list[q].maxcount; ++w)
+				for(int32_t w = 0; w < sv.maxcount; ++w)
 				{
 					if (var != start + w) continue;
 
-					return {&variable_list[q], w};
+					return {&sv, w};
 				}
 			}
 		}
-		else if (variable_list[q].id == var) return {&variable_list[q], 0};
+		else if (sv.id == var) return {&sv, 0};
 	}
 
 	return {nullptr, 0};
