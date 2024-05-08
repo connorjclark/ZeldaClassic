@@ -645,8 +645,8 @@ int32_t parse_script_section(char const* combuf, char const* const* argbufs, ffs
 	// TODO: should use get_script_command(string)
 	for(int32_t i=0; i<NUMCOMMANDS&&!found_command; ++i)
 	{
-		auto& sc = get_script_command(i);
-		if(strcmp(combuf,sc.name)==0)
+		auto sc = get_script_command(i);
+		if(strcmp(combuf,sc->name)==0)
 		{
 			found_command=true;
 			zas.command = i;
@@ -670,15 +670,15 @@ int32_t parse_script_section(char const* combuf, char const* const* argbufs, ffs
 			}
 			auto& op = zas;
 			int *args[] = {&op.arg1, &op.arg2, &op.arg3};
-			for(int q = (is_goto ? 1 : 0); q < sc.args; ++q)
+			for(int q = (is_goto ? 1 : 0); q < sc->args; ++q)
 			{
-				if(!handle_arg(sc.arg_type[q], argbufs[q], *(args[q])))
+				if(!handle_arg(sc->arg_type[q], argbufs[q], *(args[q])))
 				{
 					retcode = ERR_PARAM1+q;
 					return 0;
 				}
 			}
-			if(byte b = sc.arr_type)
+			if(byte b = sc->arr_type)
 			{
 				if(!(b&0x1) != !sptr) //string
 				{
