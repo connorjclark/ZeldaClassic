@@ -364,11 +364,11 @@ bool hit_walkflag(int32_t x,int32_t y,int32_t cnt);
 bool solpush_walkflag(int32_t x, int32_t y, int32_t cnt, solid_object const* ign = nullptr);
 void map_bkgsfx(bool on);
 void toggle_switches(dword flags, bool entry);
-void toggle_switches(dword flags, bool entry, mapscr* m, int screen);
+void toggle_switches(dword flags, bool entry, mapscr* m);
 void toggle_gswitches(int32_t state, bool entry);
-void toggle_gswitches(int32_t state, bool entry, mapscr* base_scr, int screen);
-void toggle_gswitches(bool* states, bool entry, mapscr* base_scr, int screen);
-void toggle_gswitches_load(mapscr* base_scr, int screen);
+void toggle_gswitches(int32_t state, bool entry, mapscr* base_scr);
+void toggle_gswitches(bool* states, bool entry, mapscr* base_scr);
+void toggle_gswitches_load(mapscr* base_scr);
 void run_gswitch_timers();
 void onload_gswitch_timers();
 

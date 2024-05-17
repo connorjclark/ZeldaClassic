@@ -18572,7 +18572,7 @@ static void loadguys(mapscr* scr)
 		addguy(dx+120,dy+62,gFAIRY,-14,false,guyscr);
 	}
 
-	loaditem(scr, screen, dx, dy);
+	loaditem(scr, dx, dy);
 
 	// Collecting a rupee in a '10 Rupees' screen sets the mITEM screen state if
 	// it doesn't appear in a Cave/Item Cellar, and the mSPECIALITEM screen state if it does.
@@ -18603,8 +18603,9 @@ void loadguys()
 	});
 }
 
-void loaditem(mapscr* scr, int screen, int offx, int offy)
+void loaditem(mapscr* scr, int offx, int offy)
 {
+	int screen = scr->screen;
 	byte Item = 0;
 	
 	if(screen<128)

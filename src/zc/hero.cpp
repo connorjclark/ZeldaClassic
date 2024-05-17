@@ -32075,7 +32075,7 @@ void HeroClass::ganon_intro()
     271 GANON out, HERO face up
     */
     loaded_guys=true;
-    loaditem(tmpscr, currscr, offx, offy);
+    loaditem(tmpscr, offx, offy);
     
     if(game->lvlitems[dlevel]&liBOSS)
     {

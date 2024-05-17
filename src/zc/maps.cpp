@@ -5712,8 +5712,8 @@ void load_a_screen_and_layers(int dmap, int map, int screen, int ldir)
 	}
 
 	int destlvl = DMaps[dmap].level;
-	toggle_switches(game->lvlswitches[destlvl], true, base_scr, screen);
-	toggle_gswitches_load(base_scr, screen);
+	toggle_switches(game->lvlswitches[destlvl], true, base_scr);
+	toggle_gswitches_load(base_scr);
 
 	int mi = currmap*MAPSCRSNORMAL + screen;
 	bool should_check_for_state_things = (screen < 0x80) && mi < MAXMAPS*MAPSCRSNORMAL;
@@ -6150,8 +6150,8 @@ void loadscr_old(int32_t tmp,int32_t destdmap, int32_t screen,int32_t ldir,bool 
 		}
 	}
 	
-	toggle_switches(game->lvlswitches[destlvl], true, tmp == 0 ? tmpscr : &special_warp_return_screen, tmp == 0 ? cur_origin_screen_index : homescr);
-	toggle_gswitches_load(tmp == 0 ? tmpscr : &special_warp_return_screen, tmp == 0 ? cur_origin_screen_index : homescr);
+	toggle_switches(game->lvlswitches[destlvl], true, tmp == 0 ? tmpscr : &special_warp_return_screen);
+	toggle_gswitches_load(tmp == 0 ? tmpscr : &special_warp_return_screen);
 	
 	if(game->maps[(currmap*MAPSCRSNORMAL)+screen]&mLOCKBLOCK)			  // if special stuff done before
 	{
@@ -6975,12 +6975,14 @@ void toggle_switches(dword flags, bool entry)
 	if(!flags) return; //No flags to toggle
 
 	for_every_screen_in_region([&](mapscr* scr, int screen, unsigned int region_scr_x, unsigned int region_scr_y) {
-		toggle_switches(flags, entry, scr, screen);
+		toggle_switches(flags, entry, scr);
 	});
 }
-void toggle_switches(dword flags, bool entry, mapscr* m, int screen)
+void toggle_switches(dword flags, bool entry, mapscr* m)
 {
 	if(!flags) return; //No flags to toggle
+
+	int screen = m->screen;
 	bool iscurscr = m==tmpscr;
 
 	for_every_rpos_in_screen(m, [&](const rpos_handle_t& rpos_handle) {
@@ -7109,18 +7111,20 @@ void toggle_switches(dword flags, bool entry, mapscr* m, int screen)
 void toggle_gswitches(int32_t state, bool entry)
 {
 	for_every_screen_in_region([&](mapscr* scr, int screen, unsigned int region_scr_x, unsigned int region_scr_y) {
-		toggle_gswitches(state, entry, scr, screen);
+		toggle_gswitches(state, entry, scr);
 	});
 }
-void toggle_gswitches(int32_t state, bool entry, mapscr* base_scr, int screen)
+void toggle_gswitches(int32_t state, bool entry, mapscr* base_scr)
 {
 	bool states[256] = {false};
 	states[state] = true;
-	toggle_gswitches(states, entry, base_scr, base_scr->screen);
+	toggle_gswitches(states, entry, base_scr);
 }
-void toggle_gswitches(bool* states, bool entry, mapscr* base_scr, int screen)
+void toggle_gswitches(bool* states, bool entry, mapscr* base_scr)
 {
 	if(!states) return;
+
+	int screen = base_scr->screen;
 	bool iscurscr = base_scr==tmpscr;
 	byte togglegrid[176] = {0};
 	for(int32_t lyr = 0; lyr < 7; ++lyr)
@@ -7250,14 +7254,14 @@ void toggle_gswitches(bool* states, bool entry, mapscr* base_scr, int screen)
 		}
 	}
 }
-void toggle_gswitches_load(mapscr* base_scr, int screen)
+void toggle_gswitches_load(mapscr* base_scr)
 {
 	bool states[256];
 	for(auto q = 0; q < 256; ++q)
 	{
 		states[q] = game->gswitch_timers[q] != 0;
 	}
-	toggle_gswitches(states, true, base_scr, screen);
+	toggle_gswitches(states, true, base_scr);
 }
 void run_gswitch_timers()
 {
@@ -7275,7 +7279,7 @@ void run_gswitch_timers()
 		++it;
 	}
 	for_every_screen_in_region([&](mapscr* scr, int screen, unsigned int region_scr_x, unsigned int region_scr_y) {
-		toggle_gswitches(states, false, scr, screen);
+		toggle_gswitches(states, false, scr);
 	});
 }
 void onload_gswitch_timers() //Reset all timers that were counting down, no trigger necessary
