@@ -19195,8 +19195,10 @@ void script_side_load_enemies()
 	sle_clk = 0;
 }
 
-static void side_load_enemies(mapscr* scr, int screen)
+static void side_load_enemies(mapscr* scr)
 {
+	int screen = scr->screen;
+
 	if(!script_sle && sle_clk==0)
 	{
 		sle_pattern = scr->pattern;
@@ -19726,7 +19728,7 @@ void loadenemies()
 
 		if (scr->pattern==pSIDES || scr->pattern==pSIDESR)
 		{
-			side_load_enemies(scr, screen);
+			side_load_enemies(scr);
 			return;
 		}
 
