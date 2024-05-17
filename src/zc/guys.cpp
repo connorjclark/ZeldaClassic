@@ -21585,8 +21585,9 @@ static int count_guys_from_screen(int screen)
 }
 
 // messy code to do the enemy-carrying-the-item thing
-static void roaming_item(mapscr* scr, int screen)
+static void roaming_item(mapscr* scr)
 {
+	int screen = scr->screen;
 	ScreenItemState item_state = screen_item_get_state(screen);
 	bool loaded_enemies = loaded_enemies_for_screen.contains(screen);
 	if(!(item_state == ScreenItemState::CarriedByEnemy || item_state == ScreenItemState::MustGiveToEnemy) || !loaded_enemies)
@@ -21683,7 +21684,7 @@ static void roaming_item(mapscr* scr, int screen)
 void roaming_item()
 {
 	for_every_screen_in_region([&](mapscr* scr, int screen, unsigned int region_scr_x, unsigned int region_scr_y) {
-		roaming_item(scr, screen);
+		roaming_item(scr);
 	});
 }
 

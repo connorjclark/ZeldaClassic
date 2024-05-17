@@ -24057,13 +24057,13 @@ void HeroClass::checkspecial()
 				else if(opendoors<0)
 					++opendoors;
 				else if((--opendoors)==0)
-					openshutters(scr, screen);
+					openshutters(scr);
 					
 				break;
 			}
 		if(!has_shutter && !opendoors && loaded_enemies && !(scr->flags&fSHUTTERS) && !hasmainguy)
 		{
-			openshutters(scr, screen);
+			openshutters(scr);
 		}
 
     	// set boss flag when boss is gone

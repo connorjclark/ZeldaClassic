@@ -5614,7 +5614,7 @@ void showbombeddoor(BITMAP *dest, int32_t side)
     }
 }
 
-void openshutters(mapscr* scr, int screen)
+void openshutters(mapscr* scr)
 {
 	bool opened_door = false;
 	for(int32_t i=0; i<4; i++)
