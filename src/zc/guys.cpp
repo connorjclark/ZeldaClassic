@@ -18449,8 +18449,9 @@ void addfires()
 	}
 }
 
-void loadguys(mapscr* scr, int screen)
+static void loadguys(mapscr* scr)
 {
+	byte screen = scr->screen;
 	byte Guy=0;
 	// When in caves/item rooms, use mSPECIALITEM and ipONETIME2
 	// Else use mITEM and ipONETIME
@@ -18598,7 +18599,7 @@ void loadguys()
 	screen_item_clear_state();
 
 	for_every_screen_in_region([&](mapscr* scr, int screen, unsigned int region_scr_x, unsigned int region_scr_y) {
-		loadguys(scr, screen);
+		loadguys(scr);
 	});
 }
 

@@ -5983,7 +5983,8 @@ void loadscr_old(int32_t tmp,int32_t destdmap, int32_t screen,int32_t ldir,bool 
 
 	mapscr previous_scr = tmp == 0 ? *tmpscr : special_warp_return_screen;
 	mapscr* scr = tmp == 0 ? tmpscr : &special_warp_return_screen;
-	*scr = TheMaps[currmap*MAPSCRS+screen];
+	const mapscr* source = get_canonical_scr(currmap, screen);
+	*scr = *source;
 	if (tmp == 0)
 		hero_scr = scr;
 	if (!tmp)
@@ -5995,17 +5996,17 @@ void loadscr_old(int32_t tmp,int32_t destdmap, int32_t screen,int32_t ldir,bool 
 		}
 	
 	scr->valid |= mVALID; //layer 0 is always valid
-	memcpy(scr->data, TheMaps[currmap*MAPSCRS+screen].data, sizeof(scr->data));
-	memcpy(scr->sflag, TheMaps[currmap*MAPSCRS+screen].sflag, sizeof(scr->sflag));
-	memcpy(scr->cset, TheMaps[currmap*MAPSCRS+screen].cset, sizeof(scr->cset));
+	memcpy(scr->data, source->data, sizeof(scr->data));
+	memcpy(scr->sflag, source->sflag, sizeof(scr->sflag));
+	memcpy(scr->cset, source->cset, sizeof(scr->cset));
 
-	if ( TheMaps[currmap*MAPSCRS+screen].script > 0 )
+	if ( source->script > 0 )
 	{
-		scr->script = TheMaps[currmap*MAPSCRS+screen].script;
-		al_trace("The screen script id is: %d \n", TheMaps[currmap*MAPSCRS+screen].script);
+		scr->script = source->script;
+		al_trace("The screen script id is: %d \n", source->script);
 		for ( int32_t q = 0; q < 8; q++ )
 		{
-			scr->screeninitd[q] = TheMaps[currmap*MAPSCRS+screen].screeninitd[q];
+			scr->screeninitd[q] = source->screeninitd[q];
 		}
 		FFCore.reset_script_engine_data(ScriptType::Screen, screen);
 	}
@@ -7092,7 +7093,7 @@ void toggle_switches(dword flags, bool entry, mapscr* m, int screen)
 	
 	if(iscurscr)
 	{
-		int screen_index_offset = get_region_screen_index_offset(screen);
+		int screen_index_offset = get_region_screen_index_offset(m->screen);
 		word c = m->numFFC();
 		for (uint8_t q = 0; q < c; ++q)
 		{
@@ -7100,7 +7101,7 @@ void toggle_switches(dword flags, bool entry, mapscr* m, int screen)
 			newcombo const& cmb = combobuf[m->ffcs[q].data];
 			if((cmb.triggerflags[3] & combotriggerTRIGLEVELSTATE) && cmb.trig_lstate < 32)
 				if(flags&(1<<cmb.trig_lstate))
-					do_trigger_combo_ffc({m, (uint8_t)screen, ffc_id, q, &m->ffcs[q]}, ctrigSWITCHSTATE);
+					do_trigger_combo_ffc({m, m->screen, ffc_id, q, &m->ffcs[q]}, ctrigSWITCHSTATE);
 		}
 	}
 }
@@ -7115,7 +7116,7 @@ void toggle_gswitches(int32_t state, bool entry, mapscr* base_scr, int screen)
 {
 	bool states[256] = {false};
 	states[state] = true;
-	toggle_gswitches(states, entry, base_scr, screen);
+	toggle_gswitches(states, entry, base_scr, base_scr->screen);
 }
 void toggle_gswitches(bool* states, bool entry, mapscr* base_scr, int screen)
 {
