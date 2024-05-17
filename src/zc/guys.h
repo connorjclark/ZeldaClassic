@@ -889,7 +889,7 @@ void never_return(int32_t screen, int32_t index);
 bool hasBoss();
 bool slowguy(int32_t id);
 bool ok2add(int32_t id);
-void load_default_enemies(mapscr* scr, int screen);
+void load_default_enemies(mapscr* scr);
 void nsp(bool random);
 int32_t next_side_pos(int32_t screen, bool random);
 bool can_side_load(int32_t id);

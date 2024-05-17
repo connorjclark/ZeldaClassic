@@ -18451,7 +18451,7 @@ void addfires()
 
 static void loadguys(mapscr* scr)
 {
-	byte screen = scr->screen;
+	int screen = scr->screen;
 	byte Guy=0;
 	// When in caves/item rooms, use mSPECIALITEM and ipONETIME2
 	// Else use mITEM and ipONETIME
@@ -18798,14 +18798,14 @@ static void activate_fireball_statue(const rpos_handle_t& rpos_handle)
 	}
 }
 
-static void activate_fireball_statues(mapscr* scr, int screen)
+static void activate_fireball_statues(mapscr* scr)
 {
 	if (!(scr->enemyflags&efFIREBALLS))
 	{
 		return;
 	}
 
-	for_every_rpos_in_screen(scr, screen, [&](const rpos_handle_t& rpos_handle) {
+	for_every_rpos_in_screen(scr, [&](const rpos_handle_t& rpos_handle) {
 		if (rpos_handle.layer == 0)
 		{
 			activate_fireball_statue(rpos_handle);
@@ -18813,8 +18813,9 @@ static void activate_fireball_statues(mapscr* scr, int screen)
 	});
 }
 
-void load_default_enemies(mapscr* scr, int screen)
+void load_default_enemies(mapscr* scr)
 {
+	int screen = scr->screen;
 	auto [dx, dy] = translate_screen_coordinates_to_world(screen);
 
 	wallm_load_clk=frame-80;
@@ -19205,7 +19206,7 @@ static void side_load_enemies(mapscr* scr, int screen)
 		bool reload=true;
 		bool unbeatablereload = true;
 		
-		load_default_enemies(scr, screen);
+		load_default_enemies(scr);
 		
 		for(int32_t i=0; i<6; i++)
 			if(visited[i]==s)
@@ -19414,8 +19415,9 @@ rpos_t placeenemy(mapscr* scr, int32_t i, int32_t offx, int32_t offy)
 	return rpos_t::None;
 }
 
-void spawnEnemy(mapscr* scr, int screen, int& pos, int& clk, int offx, int offy, int& fastguys, int& i, int& guycnt, int& loadcnt)
+void spawnEnemy(mapscr* scr, int& pos, int& clk, int offx, int offy, int& fastguys, int& i, int& guycnt, int& loadcnt)
 {
+	int screen = scr->screen;
 	int x = 0;
 	int y = 0;
 	bool placed=false;
@@ -19630,7 +19632,7 @@ bool scriptloadenemies()
 	for(; i<loadcnt && tmpscr->enemy[i]>0; i++)
 	{
 		int32_t preguycount = guys.Count(); //I'm not experienced enough to know if this is an awful hack but it feels like one.
-		spawnEnemy(tmpscr, currscr, pos, clk, x, y, fastguys, i, guycnt, loadcnt);
+		spawnEnemy(tmpscr, pos, clk, x, y, fastguys, i, guycnt, loadcnt);
 		if (guys.Count() > preguycount)
 		{
 			if (!get_qr(qr_ENEMIES_DONT_SCRIPT_FIRST_FRAME))
@@ -19778,8 +19780,8 @@ void loadenemies()
 			loadcnt = 10; //All enemies also need to be respawned.
 
 		// do enemies that are always loaded
-		load_default_enemies(scr, screen);
-		activate_fireball_statues(scr, screen);
+		load_default_enemies(scr);
+		activate_fireball_statues(scr);
 
 		int32_t pos=zc_oldrand()%9; //This sets up a variable for spawnEnemy to edit  so as to spawn the enemies pseudo-randomly.
 		int32_t clk=-15,fastguys=0; //clk being negative means the enemy is in it's spawn poof.
@@ -19787,7 +19789,7 @@ void loadenemies()
 		for(; i<loadcnt && scr->enemy[i]>0; i++)
 		{
 			int32_t preguycount = guys.Count(); //I'm not experienced enough to know if this is an awful hack but it feels like one.
-			spawnEnemy(scr, screen, pos, clk, region_scr_x*256, region_scr_y*176, fastguys, i, guycnt, loadcnt);
+			spawnEnemy(scr, pos, clk, region_scr_x*256, region_scr_y*176, fastguys, i, guycnt, loadcnt);
 			if (guys.Count() > preguycount)
 			{
 				if (!get_qr(qr_ENEMIES_DONT_SCRIPT_FIRST_FRAME))

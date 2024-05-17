@@ -23977,7 +23977,7 @@ void HeroClass::checkspecial()
 			// Enemies have been defeated.
 
 			// generic 'Enemies->' trigger
-			for_every_rpos_in_screen(scr, screen, [&](const rpos_handle_t& rpos_handle) {
+			for_every_rpos_in_screen(scr, [&](const rpos_handle_t& rpos_handle) {
 				auto& cmb = rpos_handle.combo();	
 				if (cmb.triggerflags[2] & combotriggerENEMIESKILLED)
 				{

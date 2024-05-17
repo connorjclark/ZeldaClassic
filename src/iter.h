@@ -217,9 +217,10 @@ ZC_FORCE_INLINE std::optional<ffc_handle_t> find_ffc(T&& fn)
 // Callback function: void fn(const pos_handle_t& pos_handle_t)
 template<typename T>
 requires std::is_invocable_v<T, const rpos_handle_t&>
-ZC_FORCE_INLINE void for_every_rpos_in_screen(mapscr* scr, int screen, T&& fn)
+ZC_FORCE_INLINE void for_every_rpos_in_screen(mapscr* scr, T&& fn)
 {
 	rpos_handle_t rpos_handle;
+	int screen = scr->screen;
 	rpos_handle.screen = screen;
 	rpos_t base_rpos = POS_TO_RPOS(0, z3_get_region_relative_dx(screen), z3_get_region_relative_dy(screen));
 	for (int lyr = 0; lyr <= 6; ++lyr)
@@ -238,14 +239,15 @@ ZC_FORCE_INLINE void for_every_rpos_in_screen(mapscr* scr, int screen, T&& fn)
 
 template<typename T>
 requires std::is_invocable_v<T, const ffc_handle_t&>
-ZC_FORCE_INLINE void for_every_ffc_in_screen(mapscr* scr, int screen, T&& fn)
+ZC_FORCE_INLINE void for_every_ffc_in_screen(mapscr* scr, T&& fn)
 {
+	byte screen = scr->screen;
 	int screen_index_offset = get_region_screen_index_offset(screen);
-	int c = scr->numFFC();
-	for (uint8_t i = 0; i < c; i++)
+	int num_ffc = scr->numFFC();
+	for (uint8_t i = 0; i < num_ffc; i++)
 	{
 		uint16_t id = screen_index_offset * MAXFFCS + i;
-		ffc_handle_t ffc_handle = {scr, (uint8_t)screen, id, i, &scr->ffcs[i]};
+		ffc_handle_t ffc_handle = {scr, screen, id, i, &scr->ffcs[i]};
 		fn(ffc_handle);
 	}
 }

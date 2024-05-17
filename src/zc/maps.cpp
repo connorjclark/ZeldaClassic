@@ -2747,13 +2747,13 @@ void trigger_secrets_for_screen_internal(int32_t screen, mapscr *s, bool do_comb
 
 	if (do_combo_triggers)
 	{
-		for_every_rpos_in_screen(s, screen, [&](const rpos_handle_t& rpos_handle) {
+		for_every_rpos_in_screen(s, [&](const rpos_handle_t& rpos_handle) {
 			if (rpos_handle.combo().triggerflags[2] & combotriggerSECRETSTR)
 				do_trigger_combo(rpos_handle, ctrigSECRETS);
 		});
 		if (!get_qr(qr_OLD_FFC_FUNCTIONALITY))
 		{
-			for_every_ffc_in_screen(s, screen, [&](const ffc_handle_t& ffc_handle) {
+			for_every_ffc_in_screen(s, [&](const ffc_handle_t& ffc_handle) {
 				if (ffc_handle.combo().triggerflags[2] & combotriggerSECRETSTR)
 					do_trigger_combo_ffc(ffc_handle);
 			});
@@ -5625,7 +5625,7 @@ void openshutters(mapscr* scr, int screen)
 			opened_door = true;
 		}
 
-	for_every_rpos_in_screen(scr, screen, [&](const rpos_handle_t& rpos_handle) {
+	for_every_rpos_in_screen(scr, [&](const rpos_handle_t& rpos_handle) {
 		auto& cmb = rpos_handle.combo();	
 		if (cmb.triggerflags[0] & combotriggerSHUTTER)
 		{
@@ -5634,7 +5634,7 @@ void openshutters(mapscr* scr, int screen)
 	});
 	if (!get_qr(qr_OLD_FFC_FUNCTIONALITY))
 	{
-		for_every_ffc_in_screen(scr, screen, [&](const ffc_handle_t& ffc_handle) {
+		for_every_ffc_in_screen(scr, [&](const ffc_handle_t& ffc_handle) {
 			auto& cmb = ffc_handle.combo();
 			if(cmb.triggerflags[0] & combotriggerSHUTTER)
 				do_trigger_combo_ffc(ffc_handle);
@@ -6983,7 +6983,7 @@ void toggle_switches(dword flags, bool entry, mapscr* m, int screen)
 	if(!flags) return; //No flags to toggle
 	bool iscurscr = m==tmpscr;
 
-	for_every_rpos_in_screen(m, screen, [&](const rpos_handle_t& rpos_handle) {
+	for_every_rpos_in_screen(m, [&](const rpos_handle_t& rpos_handle) {
 		byte togglegrid[176] = {0};
 		mapscr* scr = rpos_handle.scr;
 		int lyr = rpos_handle.layer;
