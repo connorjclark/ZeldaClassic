@@ -284,11 +284,11 @@ bool remove_xdoors_mi(mapscr *s, int32_t scr, int32_t mi, uint dir, uint ind, bo
 void clear_xdoors(mapscr *s, int32_t scr, bool triggers = false);
 void clear_xdoors_mi(mapscr *s, int32_t scr, int32_t mi, bool triggers = false);
 
-bool remove_lockblocks(mapscr* s, int32_t screen);
-bool remove_bosslockblocks(mapscr* s, int32_t screen);
-bool remove_chests(mapscr* s, int32_t screen);
-bool remove_lockedchests(mapscr* s, int32_t screen);
-bool remove_bosschests(mapscr* s, int32_t screen);
+bool remove_lockblocks(mapscr* s);
+bool remove_bosslockblocks(mapscr* s);
+bool remove_chests(mapscr* s);
+bool remove_lockedchests(mapscr* s);
+bool remove_bosschests(mapscr* s);
 
 bool overheadcombos(mapscr *s);
 void delete_fireball_shooter(const rpos_handle_t& rpos_handle);

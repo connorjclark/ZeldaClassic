@@ -2328,6 +2328,7 @@ bool reveal_hidden_stairs(mapscr *s, int32_t screen, bool redraw)
     return false;
 }
 
+// TODO z3 remove screen
 bool remove_screenstatecombos2(mapscr *s, int32_t screen, bool do_layers, int32_t what1, int32_t what2)
 {
 	if (screen >= 128) s = &special_warp_return_screen;
@@ -2538,12 +2539,14 @@ bool remove_xdoors_mi(mapscr *s, int32_t screen, int32_t mi, uint dir, uint ind,
 	return didit;
 }
 
+// TODO z3 rm scr
 void clear_xdoors(mapscr *s, int32_t scr, bool triggers)
 {
 	int mi = (currmap*MAPSCRSNORMAL) + (scr >= 0x80 ? homescr : scr);
 	clear_xdoors_mi(s, scr, mi, triggers);
 }
 
+// TODO z3 rm scr
 void clear_xdoors_mi(mapscr *s, int32_t scr, int32_t mi, bool triggers)
 {
 	for (int q = 0; q < 32; ++q)
@@ -2552,29 +2555,29 @@ void clear_xdoors_mi(mapscr *s, int32_t scr, int32_t mi, bool triggers)
 	}
 }
 
-bool remove_lockblocks(mapscr* s, int32_t screen)
+bool remove_lockblocks(mapscr* s)
 {
-    return remove_screenstatecombos2(s, screen, true, cLOCKBLOCK, cLOCKBLOCK2);
+    return remove_screenstatecombos2(s, s->screen, true, cLOCKBLOCK, cLOCKBLOCK2);
 }
 
-bool remove_bosslockblocks(mapscr* s, int32_t screen)
+bool remove_bosslockblocks(mapscr* s)
 {
-    return remove_screenstatecombos2(s, screen, true, cBOSSLOCKBLOCK, cBOSSLOCKBLOCK2);
+    return remove_screenstatecombos2(s, s->screen, true, cBOSSLOCKBLOCK, cBOSSLOCKBLOCK2);
 }
 
-bool remove_chests(mapscr* s, int32_t screen)
+bool remove_chests(mapscr* s)
 {
-    return remove_screenstatecombos2(s, screen, true, cCHEST, cCHEST2);
+    return remove_screenstatecombos2(s, s->screen, true, cCHEST, cCHEST2);
 }
 
-bool remove_lockedchests(mapscr* s, int32_t screen)
+bool remove_lockedchests(mapscr* s)
 {
-    return remove_screenstatecombos2(s, screen, true, cLOCKEDCHEST, cLOCKEDCHEST2);
+    return remove_screenstatecombos2(s, s->screen, true, cLOCKEDCHEST, cLOCKEDCHEST2);
 }
 
-bool remove_bosschests(mapscr* s, int32_t screen)
+bool remove_bosschests(mapscr* s)
 {
-    return remove_screenstatecombos2(s, screen, true, cBOSSCHEST, cBOSSCHEST2);
+    return remove_screenstatecombos2(s, s->screen, true, cBOSSCHEST, cBOSSCHEST2);
 }
 
 
@@ -5725,27 +5728,27 @@ void load_a_screen_and_layers(int dmap, int map, int screen, int ldir)
 	{
 		if (game->maps[mi]&mLOCKBLOCK)
 		{
-			remove_lockblocks(base_scr, screen);
+			remove_lockblocks(base_scr);
 		}
 		
 		if (game->maps[mi]&mBOSSLOCKBLOCK)
 		{
-			remove_bosslockblocks(base_scr, screen);
+			remove_bosslockblocks(base_scr);
 		}
 		
 		if (game->maps[mi]&mCHEST)
 		{
-			remove_chests(base_scr, screen);
+			remove_chests(base_scr);
 		}
 		
 		if (game->maps[mi]&mLOCKEDCHEST)
 		{
-			remove_lockedchests(base_scr, screen);
+			remove_lockedchests(base_scr);
 		}
 		
 		if (game->maps[mi]&mBOSSCHEST)
 		{
-			remove_bosschests(base_scr, screen);
+			remove_bosschests(base_scr);
 		}
 		
 		clear_xdoors_mi(base_scr, screen, mi, true);
@@ -6159,27 +6162,27 @@ void loadscr_old(int32_t tmp,int32_t destdmap, int32_t screen,int32_t ldir,bool 
 	
 	if(game->maps[(currmap*MAPSCRSNORMAL)+screen]&mLOCKBLOCK)			  // if special stuff done before
 	{
-		remove_lockblocks(scr, screen);
+		remove_lockblocks(scr);
 	}
 	
 	if(game->maps[(currmap*MAPSCRSNORMAL)+screen]&mBOSSLOCKBLOCK)		  // if special stuff done before
 	{
-		remove_bosslockblocks(scr, screen);
+		remove_bosslockblocks(scr);
 	}
 	
 	if(game->maps[(currmap*MAPSCRSNORMAL)+screen]&mCHEST)			  // if special stuff done before
 	{
-		remove_chests(scr, screen);
+		remove_chests(scr);
 	}
 	
 	if(game->maps[(currmap*MAPSCRSNORMAL)+screen]&mLOCKEDCHEST)			  // if special stuff done before
 	{
-		remove_lockedchests(scr, screen);
+		remove_lockedchests(scr);
 	}
 	
 	if(game->maps[(currmap*MAPSCRSNORMAL)+screen]&mBOSSCHEST)			  // if special stuff done before
 	{
-		remove_bosschests(scr, screen);
+		remove_bosschests(scr);
 	}
 	
 	clear_xdoors(scr, screen, true);
@@ -6339,27 +6342,27 @@ void loadscr2(int32_t tmp,int32_t scr,int32_t)
 	
 	if(game->maps[(currmap*MAPSCRSNORMAL)+scr]&mLOCKBLOCK)			  // if special stuff done before
 	{
-		remove_lockblocks(&screen, scr);
+		remove_lockblocks(&screen);
 	}
 	
 	if(game->maps[(currmap*MAPSCRSNORMAL)+scr]&mBOSSLOCKBLOCK)		  // if special stuff done before
 	{
-		remove_bosslockblocks(&screen, scr);
+		remove_bosslockblocks(&screen);
 	}
 	
 	if(game->maps[(currmap*MAPSCRSNORMAL)+scr]&mCHEST)			  // if special stuff done before
 	{
-		remove_chests(&screen, scr);
+		remove_chests(&screen);
 	}
 	
 	if(game->maps[(currmap*MAPSCRSNORMAL)+scr]&mLOCKEDCHEST)			  // if special stuff done before
 	{
-		remove_lockedchests(&screen, scr);
+		remove_lockedchests(&screen);
 	}
 	
 	if(game->maps[(currmap*MAPSCRSNORMAL)+scr]&mBOSSCHEST)			  // if special stuff done before
 	{
-		remove_bosschests(&screen, scr);
+		remove_bosschests(&screen);
 	}
 	
 	clear_xdoors(&screen, scr);

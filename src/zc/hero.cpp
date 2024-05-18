@@ -21628,7 +21628,7 @@ void HeroClass::oldchecklockblock()
 	else
 	{
 		setmapflag(rpos_handle.scr, mLOCKBLOCK);
-		remove_lockblocks(rpos_handle.scr, rpos_handle.screen);
+		remove_lockblocks(rpos_handle.scr);
 	}
 	if ( cmb3.usrflags&cflag3 )
 	{
@@ -21793,7 +21793,7 @@ void HeroClass::oldcheckbosslockblock()
 	else
 	{
 		setmapflag(cmb_screen_index, mBOSSLOCKBLOCK);
-		remove_bosslockblocks(get_scr(cmb_screen_index), cmb_screen_index);
+		remove_bosslockblocks(get_scr(cmb_screen_index));
 	}
 	if ( (combobuf[cid].attribytes[3]) )
 		sfx(combobuf[cid].attribytes[3]);
@@ -24076,17 +24076,17 @@ void HeroClass::checkspecial()
 
 		if (getmapflag(screen, mCHEST))              // if special stuff done before
 		{
-			remove_chests(scr, screen);
+			remove_chests(scr);
 		}
 		
 		if(getmapflag(screen, mLOCKEDCHEST))              // if special stuff done before
 		{
-			remove_lockedchests(scr, screen);
+			remove_lockedchests(scr);
 		}
 		
 		if(getmapflag(screen, mBOSSCHEST))              // if special stuff done before
 		{
-			remove_bosschests(scr, screen);
+			remove_bosschests(scr);
 		}
 
 		clear_xdoors(scr, screen, true);

@@ -1210,7 +1210,7 @@ bool trigger_lockblock(const rpos_handle_t& rpos_handle)
 				break;
 			}
 			setmapflag(rpos_handle.scr, mLOCKBLOCK);
-			remove_lockblocks(rpos_handle.scr, rpos_handle.screen);
+			remove_lockblocks(rpos_handle.scr);
 			break;
 			
 		case cBOSSLOCKBLOCK:
@@ -1243,7 +1243,7 @@ bool trigger_lockblock(const rpos_handle_t& rpos_handle)
 				break;
 			}
 			setmapflag(rpos_handle.scr, mBOSSLOCKBLOCK);
-			remove_bosslockblocks(rpos_handle.scr, rpos_handle.screen);
+			remove_bosslockblocks(rpos_handle.scr);
 			break;
 		}
 		default: return false;
@@ -1272,7 +1272,7 @@ bool trigger_lockblock_ffc(const ffc_handle_t& ffc_handle)
 				break;
 			}
 			setmapflag(ffc_handle.scr, mLOCKBLOCK);
-			remove_lockblocks(ffc_handle.scr, ffc_handle.screen);
+			remove_lockblocks(ffc_handle.scr);
 			break;
 			
 		case cBOSSLOCKBLOCK:
@@ -1305,7 +1305,7 @@ bool trigger_lockblock_ffc(const ffc_handle_t& ffc_handle)
 				break;
 			}
 			setmapflag(ffc_handle.scr, mBOSSLOCKBLOCK);
-			remove_bosslockblocks(ffc_handle.scr, ffc_handle.screen);
+			remove_bosslockblocks(ffc_handle.scr);
 			break;
 		}
 		default: return false;
