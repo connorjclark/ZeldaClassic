@@ -3616,15 +3616,15 @@ bool HeroClass::checkstab()
 						}
 						
 						if(pickup&ipONETIME) // set mITEM for one-time-only items
-							setmapflag(scr, screen, mITEM);
+							setmapflag(screen, mITEM);
 						else if(pickup&ipONETIME2) // set mSPECIALITEM flag for other one-time-only items
-							setmapflag(scr, screen, (currscr < 128 && get_qr(qr_ITEMPICKUPSETSBELOW)) ? mITEM : mSPECIALITEM);
+							setmapflag(screen, (currscr < 128 && get_qr(qr_ITEMPICKUPSETSBELOW)) ? mITEM : mSPECIALITEM);
 						
 						if(ptr->pickupexstate > -1 && ptr->pickupexstate < 32)
 							setxmapflag(screen, 1<<ptr->pickupexstate);
 						if(pickup&ipSECRETS)								// Trigger secrets if this item has the secret pickup
 						{
-							if (scr->flags9&fITEMSECRETPERM) setmapflag(scr, screen, mSECRET);
+							if (scr->flags9&fITEMSECRETPERM) setmapflag(screen, mSECRET);
 							trigger_secrets_for_screen(TriggerSource::ItemsSecret, screen, false);
 						}
 						//!DIMI

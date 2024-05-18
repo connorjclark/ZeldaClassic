@@ -2600,7 +2600,7 @@ void handle_trigger_results(mapscr* scr, newcombo const& cmb, int32_t cx, int32_
 				sfx(scr->secretsfx);
 		}
 		if(canPermSecret(currdmap, screen) && !(scr->flags5&fTEMPSECRETS) && !getmapflag(screen, mSECRET))
-			setmapflag(scr, screen, mSECRET);
+			setmapflag(screen, mSECRET);
 	}
 	
 	if (cmb.triggerflags[3] & combotriggerLEVELSTATE)
