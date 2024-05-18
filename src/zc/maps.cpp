@@ -1704,7 +1704,8 @@ void update_combo_cycling()
 		initialized=true;
 	}
 
-	for_every_screen_in_region([&](mapscr* scr, int screen, unsigned int region_scr_x, unsigned int region_scr_y) {
+	for_every_screen_in_region([&](mapscr* scr, unsigned int region_scr_x, unsigned int region_scr_y) {
+		int screen = scr->screen;
 		int32_t x;
 		std::set<uint16_t> restartanim;
 		std::set<uint16_t> restartanim2;
@@ -4369,7 +4370,8 @@ static void for_every_nearby_screen(const nearby_screens_t& nearby_screens, cons
 
 static void for_every_screen_in_region_check_viewport(const std::function <void (std::array<screen_handle_t, 7>, int, int, int, bool)>& fn)
 {
-	for_every_screen_in_region([&](mapscr* base_scr, int screen, unsigned int region_scr_x, unsigned int region_scr_y) {
+	for_every_screen_in_region([&](mapscr* base_scr, unsigned int region_scr_x, unsigned int region_scr_y) {
+		int screen = base_scr->screen;
 		std::array<screen_handle_t, 7> screen_handles;
 		screen_handles[0] = {base_scr, base_scr, currmap, screen, 0};
 		for (int i = 1; i < 7; i++)
@@ -6974,7 +6976,7 @@ void toggle_switches(dword flags, bool entry)
 {
 	if(!flags) return; //No flags to toggle
 
-	for_every_screen_in_region([&](mapscr* scr, int screen, unsigned int region_scr_x, unsigned int region_scr_y) {
+	for_every_screen_in_region([&](mapscr* scr, unsigned int region_scr_x, unsigned int region_scr_y) {
 		toggle_switches(flags, entry, scr);
 	});
 }
@@ -7110,7 +7112,7 @@ void toggle_switches(dword flags, bool entry, mapscr* m)
 
 void toggle_gswitches(int32_t state, bool entry)
 {
-	for_every_screen_in_region([&](mapscr* scr, int screen, unsigned int region_scr_x, unsigned int region_scr_y) {
+	for_every_screen_in_region([&](mapscr* scr, unsigned int region_scr_x, unsigned int region_scr_y) {
 		toggle_gswitches(state, entry, scr);
 	});
 }
@@ -7278,7 +7280,7 @@ void run_gswitch_timers()
 			}
 		++it;
 	}
-	for_every_screen_in_region([&](mapscr* scr, int screen, unsigned int region_scr_x, unsigned int region_scr_y) {
+	for_every_screen_in_region([&](mapscr* scr, unsigned int region_scr_x, unsigned int region_scr_y) {
 		toggle_gswitches(states, false, scr);
 	});
 }

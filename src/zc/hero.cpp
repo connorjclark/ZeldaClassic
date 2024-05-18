@@ -23965,7 +23965,8 @@ void HeroClass::checkspecial()
 {
     checktouchblk();
 
-	for_every_screen_in_region([&](mapscr* scr, int screen, unsigned int region_scr_x, unsigned int region_scr_y) {
+	for_every_screen_in_region([&](mapscr* scr, unsigned int region_scr_x, unsigned int region_scr_y) {
+		int screen = scr->screen;
 		bool hasmainguy = hasMainGuy(screen);
 		bool loaded_enemies = loaded_enemies_for_screen.contains(screen);
 		if (!loaded_enemies || hasmainguy)
@@ -27970,11 +27971,11 @@ void HeroClass::run_scrolling_script_int(bool waitdraw)
 
 		if (FFCore.getQuestHeaderInfo(vZelda) >= 0x255 && !FFCore.system_suspend[susptSCREENSCRIPTS])
 		{
-			for_every_screen_in_region([&](mapscr* scr, int screen, unsigned int region_scr_x, unsigned int region_scr_y) {
-				if (scr->script != 0 && FFCore.waitdraw(ScriptType::Screen, screen) && scr->preloadscript)
+			for_every_screen_in_region([&](mapscr* scr, unsigned int region_scr_x, unsigned int region_scr_y) {
+				if (scr->script != 0 && FFCore.waitdraw(ScriptType::Screen, scr->screen) && scr->preloadscript)
 				{
-					ZScriptVersion::RunScript(ScriptType::Screen, scr->script, screen);  
-					FFCore.waitdraw(ScriptType::Screen, screen) = 0;
+					ZScriptVersion::RunScript(ScriptType::Screen, scr->script, scr->screen);  
+					FFCore.waitdraw(ScriptType::Screen, scr->screen) = 0;
 				}
 			});
 		}
@@ -27989,10 +27990,10 @@ void HeroClass::run_scrolling_script_int(bool waitdraw)
 	{
 		if (FFCore.getQuestHeaderInfo(vZelda) >= 0x255 && !FFCore.system_suspend[susptSCREENSCRIPTS])
 		{
-			for_every_screen_in_region([&](mapscr* scr, int screen, unsigned int region_scr_x, unsigned int region_scr_y) {
+			for_every_screen_in_region([&](mapscr* scr, unsigned int region_scr_x, unsigned int region_scr_y) {
 				if (scr->script != 0 && scr->preloadscript)
 				{
-					ZScriptVersion::RunScript(ScriptType::Screen, scr->script, screen);
+					ZScriptVersion::RunScript(ScriptType::Screen, scr->script, scr->screen);
 				}
 			});
 		}
@@ -28664,11 +28665,11 @@ void HeroClass::scrollscr(int32_t scrolldir, int32_t destscr, int32_t destdmap)
 
 		if (FFCore.getQuestHeaderInfo(vZelda) >= 0x255 && !FFCore.system_suspend[susptSCREENSCRIPTS])
 		{
-			for_every_screen_in_region([&](mapscr* scr, int screen, unsigned int region_scr_x, unsigned int region_scr_y) {
-				if (scr->script != 0 && FFCore.waitdraw(ScriptType::Screen, screen))
+			for_every_screen_in_region([&](mapscr* scr, unsigned int region_scr_x, unsigned int region_scr_y) {
+				if (scr->script != 0 && FFCore.waitdraw(ScriptType::Screen, scr->screen))
 				{
-					ZScriptVersion::RunScript(ScriptType::Screen, scr->script, screen);  
-					FFCore.waitdraw(ScriptType::Screen, screen) = 0;
+					ZScriptVersion::RunScript(ScriptType::Screen, scr->script, scr->screen);  
+					FFCore.waitdraw(ScriptType::Screen, scr->screen) = 0;
 				}
 			});
 		}

@@ -18598,7 +18598,7 @@ void loadguys()
 	}
 	screen_item_clear_state();
 
-	for_every_screen_in_region([&](mapscr* scr, int screen, unsigned int region_scr_x, unsigned int region_scr_y) {
+	for_every_screen_in_region([&](mapscr* scr, unsigned int region_scr_x, unsigned int region_scr_y) {
 		loadguys(scr);
 	});
 }
@@ -19664,7 +19664,8 @@ void loadenemies()
 		if(visited[i]==s)
 			beenhere = true;
 	
-	for_every_screen_in_region([&](mapscr* scr, int screen, unsigned int region_scr_x, unsigned int region_scr_y) {
+	for_every_screen_in_region([&](mapscr* scr, unsigned int region_scr_x, unsigned int region_scr_y) {
+		int screen = scr->screen;
 		if (loaded_enemies_for_screen.contains(screen))
 			return;
 
@@ -21685,7 +21686,7 @@ static void roaming_item(mapscr* scr)
 
 void roaming_item()
 {
-	for_every_screen_in_region([&](mapscr* scr, int screen, unsigned int region_scr_x, unsigned int region_scr_y) {
+	for_every_screen_in_region([&](mapscr* scr, unsigned int region_scr_x, unsigned int region_scr_y) {
 		roaming_item(scr);
 	});
 }
