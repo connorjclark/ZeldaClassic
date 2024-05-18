@@ -3145,7 +3145,7 @@ bool trigger_secrets_if_flag(int32_t x, int32_t y, int32_t flag, bool setflag)
 	
 	if (setflag && canPermSecret(currdmap, screen))
 		if(!(scr->flags5&fTEMPSECRETS))
-			setmapflag(scr, screen, mSECRET);
+			setmapflag(screen, mSECRET);
 
 	return true;
 }
@@ -3519,7 +3519,7 @@ void bombdoor(int32_t x,int32_t y)
     {
         scr->door[0]=dBOMBED;
         putdoor(scrollbuf,0,0,dBOMBED);
-        setmapflag(scr, screen, mDOOR_UP);
+        setmapflag(screen, mDOOR_UP);
         markBmap(-1, screen);
         
         if(auto v = nextscr(screen, up))
@@ -3533,7 +3533,7 @@ void bombdoor(int32_t x,int32_t y)
     {
         scr->door[1]=dBOMBED;
         putdoor(scrollbuf,0,1,dBOMBED);
-        setmapflag(rpos_handle.scr, screen, mDOOR_DOWN);
+        setmapflag(screen, mDOOR_DOWN);
         markBmap(-1, rpos_handle.screen);
         
         if(auto v = nextscr(rpos_handle.screen, down))
@@ -3547,7 +3547,7 @@ void bombdoor(int32_t x,int32_t y)
     {
         scr->door[2]=dBOMBED;
         putdoor(scrollbuf,0,2,dBOMBED);
-        setmapflag(rpos_handle.scr, screen, mDOOR_LEFT);
+        setmapflag(screen, mDOOR_LEFT);
         markBmap(-1, rpos_handle.screen);
         
         if(auto v = nextscr(rpos_handle.screen, left))
@@ -3561,7 +3561,7 @@ void bombdoor(int32_t x,int32_t y)
     {
         scr->door[3]=dBOMBED;
         putdoor(scrollbuf,0,3,dBOMBED);
-        setmapflag(scr, screen, mDOOR_RIGHT);
+        setmapflag(screen, mDOOR_RIGHT);
         markBmap(-1, rpos_handle.screen);
         
         if(auto v = nextscr(rpos_handle.screen, right))
