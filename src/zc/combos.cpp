@@ -2579,9 +2579,10 @@ bool handle_trigger_conditionals(newcombo const& cmb, int32_t cx, int32_t cy, bo
 	}
 	return true;
 }
-void handle_trigger_results(mapscr* scr, int screen, newcombo const& cmb, int32_t cx, int32_t cy, bool& hasitem, bool& used_bit,
+void handle_trigger_results(mapscr* scr, newcombo const& cmb, int32_t cx, int32_t cy, bool& hasitem, bool& used_bit,
 	int32_t special)
 {
+	int screen = scr->screen;
 	if(cmb.triggerflags[3]&combotriggerTOGGLEDARK)
 	{
 		toggle_lights(pal_litOVERRIDE);
@@ -2928,7 +2929,7 @@ bool do_trigger_combo(const rpos_handle_t& rpos_handle, int32_t special, weapon*
 		if(!check_bit)
 		{
 			mapscr* base_scr = rpos_handle.layer == 0 ? rpos_handle.scr : get_layer_scr_allow_scrolling(currmap, rpos_handle.screen, -1);
-			handle_trigger_results(base_scr, rpos_handle.screen, cmb, cx, cy, hasitem, used_bit, special);
+			handle_trigger_results(base_scr, cmb, cx, cy, hasitem, used_bit, special);
 			
 			if(cmb.trigchange)
 			{
@@ -3124,7 +3125,7 @@ bool do_trigger_combo_ffc(const ffc_handle_t& ffc_handle, int32_t special, weapo
 		
 		if(!check_bit)
 		{
-			handle_trigger_results(ffc_handle.scr, ffc_handle.screen, cmb, cx, cy, hasitem, used_bit, special);
+			handle_trigger_results(ffc_handle.scr, cmb, cx, cy, hasitem, used_bit, special);
 			
 			if(cmb.trigchange)
 			{
