@@ -28223,6 +28223,7 @@ void HeroClass::calc_darkroom_hero(int32_t x1, int32_t y1)
 	handle_lighting(hx, hy, lamp.misc1, lamp.misc2, dir, darkscr_bmp_z3);
 }
 
+// TODO z3 get screens up front
 static void for_every_nearby_screen_during_scroll(
 	const std::vector<mapscr*>& old_temporary_screens,
 	const std::function <void (std::array<screen_handle_t, 7>, int, int, int, bool)>& fn)
