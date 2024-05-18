@@ -1401,6 +1401,11 @@ void eventlog_mapflags()
 }
 
 // set specific flag
+void setmapflag(mapscr* scr, int32_t flag)
+{
+	int mi = (currmap * MAPSCRSNORMAL) + (scr->screen >= 0x80 ? homescr : scr->screen);
+	setmapflag_mi(scr, mi, flag);
+}
 void setmapflag(int32_t screen, int32_t flag)
 {
 	int mi = (currmap * MAPSCRSNORMAL) + (screen >= 0x80 ? homescr : screen);
@@ -1540,6 +1545,7 @@ bool getmapflag(int32_t screen, int32_t flag)
     return (game->maps[mi] & flag) != 0;
 }
 
+// TODO z3 take mapscr*
 void setxmapflag(int32_t screen, uint32_t flag)
 {
 	int mi = (currmap * MAPSCRSNORMAL) + (screen >= 0x80 ? homescr : screen);
@@ -3140,7 +3146,7 @@ bool trigger_secrets_if_flag(int32_t x, int32_t y, int32_t flag, bool setflag)
 	
 	if (setflag && canPermSecret(currdmap, screen))
 		if(!(scr->flags5&fTEMPSECRETS))
-			setmapflag(screen, mSECRET);
+			setmapflag(scr, mSECRET);
 
 	return true;
 }
@@ -3514,7 +3520,7 @@ void bombdoor(int32_t x,int32_t y)
     {
         scr->door[0]=dBOMBED;
         putdoor(scrollbuf,0,0,dBOMBED);
-        setmapflag(screen, mDOOR_UP);
+        setmapflag(scr, mDOOR_UP);
         markBmap(-1, screen);
         
         if(auto v = nextscr(screen, up))
@@ -3528,7 +3534,7 @@ void bombdoor(int32_t x,int32_t y)
     {
         scr->door[1]=dBOMBED;
         putdoor(scrollbuf,0,1,dBOMBED);
-        setmapflag(screen, mDOOR_DOWN);
+        setmapflag(scr, mDOOR_DOWN);
         markBmap(-1, rpos_handle.screen);
         
         if(auto v = nextscr(rpos_handle.screen, down))
@@ -3542,7 +3548,7 @@ void bombdoor(int32_t x,int32_t y)
     {
         scr->door[2]=dBOMBED;
         putdoor(scrollbuf,0,2,dBOMBED);
-        setmapflag(screen, mDOOR_LEFT);
+        setmapflag(scr, mDOOR_LEFT);
         markBmap(-1, rpos_handle.screen);
         
         if(auto v = nextscr(rpos_handle.screen, left))
@@ -3556,7 +3562,7 @@ void bombdoor(int32_t x,int32_t y)
     {
         scr->door[3]=dBOMBED;
         putdoor(scrollbuf,0,3,dBOMBED);
-        setmapflag(screen, mDOOR_RIGHT);
+        setmapflag(scr, mDOOR_RIGHT);
         markBmap(-1, rpos_handle.screen);
         
         if(auto v = nextscr(rpos_handle.screen, right))

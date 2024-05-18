@@ -3616,15 +3616,15 @@ bool HeroClass::checkstab()
 						}
 						
 						if(pickup&ipONETIME) // set mITEM for one-time-only items
-							setmapflag(screen, mITEM);
+							setmapflag(scr, mITEM);
 						else if(pickup&ipONETIME2) // set mSPECIALITEM flag for other one-time-only items
-							setmapflag(screen, (currscr < 128 && get_qr(qr_ITEMPICKUPSETSBELOW)) ? mITEM : mSPECIALITEM);
+							setmapflag(scr, (currscr < 128 && get_qr(qr_ITEMPICKUPSETSBELOW)) ? mITEM : mSPECIALITEM);
 						
 						if(ptr->pickupexstate > -1 && ptr->pickupexstate < 32)
 							setxmapflag(screen, 1<<ptr->pickupexstate);
 						if(pickup&ipSECRETS)								// Trigger secrets if this item has the secret pickup
 						{
-							if (scr->flags9&fITEMSECRETPERM) setmapflag(screen, mSECRET);
+							if (scr->flags9&fITEMSECRETPERM) setmapflag(scr, mSECRET);
 							trigger_secrets_for_screen(TriggerSource::ItemsSecret, screen, false);
 						}
 						//!DIMI
@@ -21627,7 +21627,7 @@ void HeroClass::oldchecklockblock()
 	}
 	else
 	{
-		setmapflag(rpos_handle.screen, mLOCKBLOCK);
+		setmapflag(rpos_handle.scr, mLOCKBLOCK);
 		remove_lockblocks(rpos_handle.scr);
 	}
 	if ( cmb3.usrflags&cflag3 )
@@ -21785,15 +21785,16 @@ void HeroClass::oldcheckbosslockblock()
 		FFCore.deallocateAllScriptOwned(ScriptType::Item,(key_item));
 	}
 	
+	mapscr* scr = get_scr(cmb_screen_index);
 	if(cmb.usrflags&cflag16)
 	{
 		setxmapflag(cmb_screen_index, 1<<cmb.attribytes[5]);
-		remove_xstatecombos(get_scr(cmb_screen_index), 1<<cmb.attribytes[5]);
+		remove_xstatecombos(scr, 1<<cmb.attribytes[5]);
 	}
 	else
 	{
-		setmapflag(cmb_screen_index, mBOSSLOCKBLOCK);
-		remove_bosslockblocks(get_scr(cmb_screen_index));
+		setmapflag(scr, mBOSSLOCKBLOCK);
+		remove_bosslockblocks(scr);
 	}
 	if ( (combobuf[cid].attribytes[3]) )
 		sfx(combobuf[cid].attribytes[3]);
@@ -21898,11 +21899,11 @@ void HeroClass::oldcheckchest(int32_t type)
 		case cLOCKEDCHEST:
 			if(!usekey()) return;
 			
-			setmapflag(found_screen_index, mLOCKEDCHEST);
+			setmapflag(scr, mLOCKEDCHEST);
 			break;
 			
 		case cCHEST:
-			setmapflag(found_screen_index, mCHEST);
+			setmapflag(scr, mCHEST);
 			break;
 			
 		case cBOSSCHEST:
@@ -21923,7 +21924,7 @@ void HeroClass::oldcheckchest(int32_t type)
 				ZScriptVersion::RunScript(ScriptType::Item, itemsbuf[i].script, i);
 				FFCore.deallocateAllScriptOwned(ScriptType::Item,(key_item));
 			}
-			setmapflag(found_screen_index, mBOSSCHEST);
+			setmapflag(scr, mBOSSCHEST);
 			break;
 	}
 	
@@ -24025,7 +24026,7 @@ void HeroClass::checkspecial()
 				{
 					if (guysbuf[i].family==eeTRAP&&guysbuf[i].misc2)
 						if (guys.idCount(i, screen) && !getmapflag(screen, mTMPNORET))
-							setmapflag(screen, mTMPNORET);
+							setmapflag(scr, mTMPNORET);
 				}
 				// clear enemies and open secret
 				if (!did_secret && (scr->flags2&fCLEARSECRET))

@@ -18666,7 +18666,7 @@ void never_return(int32_t screen, int32_t index)
 		}
 		
 doit:
-	setmapflag(screen, mNEVERRET);
+	setmapflag(get_scr(screen), mNEVERRET);
 dontdoit:
 	return;
 }
