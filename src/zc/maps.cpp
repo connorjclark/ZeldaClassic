@@ -4368,7 +4368,7 @@ static void for_every_nearby_screen(const nearby_screens_t& nearby_screens, cons
 		fn(nearby_screen.screen_handles, nearby_screen.screen, nearby_screen.offx, nearby_screen.offy);
 }
 
-static void for_every_screen_in_region_check_viewport(const std::function <void (std::array<screen_handle_t, 7>, int, int, int, bool)>& fn)
+static void for_every_screen_in_region_check_viewport(const std::function <void (std::array<screen_handle_t, 7>, int, int, bool)>& fn)
 {
 	for_every_screen_in_region([&](mapscr* base_scr, unsigned int region_scr_x, unsigned int region_scr_y) {
 		int screen = base_scr->screen;
@@ -4384,7 +4384,7 @@ static void for_every_screen_in_region_check_viewport(const std::function <void 
 		int offy = region_scr_y * 176;
 		bool in_viewport = viewport.intersects_with(offx, offy, offx + 256, offy + 256);
 
-		fn(screen_handles, screen, offx, offy, in_viewport);
+		fn(screen_handles, offx, offy, in_viewport);
 	});
 }
 
@@ -4527,8 +4527,9 @@ void draw_screen(bool showhero, bool runGeneric)
 		}
 	}
 	
-	for_every_screen_in_region_check_viewport([&](std::array<screen_handle_t, 7> screen_handles, int screen, int offx, int offy, bool in_viewport) {
+	for_every_screen_in_region_check_viewport([&](std::array<screen_handle_t, 7> screen_handles, int offx, int offy, bool in_viewport) {
 		mapscr* base_scr = screen_handles[0].base_scr;
+		int screen = base_scr->screen;
 
 		if (in_viewport)
 		{
@@ -4913,8 +4914,9 @@ void draw_screen(bool showhero, bool runGeneric)
 		color_map = &trans_table;
 	}
 
-	for_every_screen_in_region_check_viewport([&](std::array<screen_handle_t, 7> screen_handles, int screen, int offx, int offy, bool in_viewport) {
+	for_every_screen_in_region_check_viewport([&](std::array<screen_handle_t, 7> screen_handles, int offx, int offy, bool in_viewport) {
 		mapscr* base_scr = screen_handles[0].base_scr;
+		int screen = base_scr->screen;
 
 		if (in_viewport)
 		{
