@@ -22291,7 +22291,7 @@ void HeroClass::checksigns() //Also checks for generic trigger buttons
 	}
 	
 	int32_t found = -1;
-	int32_t found_scr = -1;
+	int32_t found_screen = -1;
 	std::optional<ffc_handle_t> foundffc;
 	int32_t found_lyr = 0;
 	bool found_sign = false;
@@ -22302,7 +22302,7 @@ void HeroClass::checksigns() //Also checks for generic trigger buttons
 		|| tmp_cmb->triggerbtn) && _effectflag(bx,by,1, -1))
 	{
 		found = tmp_cid;
-		found_scr = scr;
+		found_screen = scr;
 		fx = bx; fy = by;
 		for (int32_t i = 0; i <= 1; ++i)
 		{
@@ -22323,7 +22323,7 @@ void HeroClass::checksigns() //Also checks for generic trigger buttons
 		|| tmp_cmb->triggerbtn) && _effectflag(bx2,by2,1, -1))
 	{
 		found = tmp_cid;
-		found_scr = scr;
+		found_screen = scr;
 		fx = bx2; fy = by2;
 		for (int32_t i = 0; i <= 1; ++i)
 		{
@@ -22366,7 +22366,7 @@ void HeroClass::checksigns() //Also checks for generic trigger buttons
 				|| tmp_cmb->triggerbtn) && _effectflag(bx,by,1, i))
 			{
 				found = tmp_cid;
-				found_scr = scr;
+				found_screen = scr;
 				found_lyr = i+1;
 				fx = bx; fy = by;
 				if (i == 0)
@@ -22388,7 +22388,7 @@ void HeroClass::checksigns() //Also checks for generic trigger buttons
 				|| tmp_cmb->triggerbtn) && _effectflag(bx2,by2,1, i))
 			{
 				found = tmp_cid;
-				found_scr = scr;
+				found_screen = scr;
 				found_lyr = i+1;
 				fx = bx2; fy = by2;
 				if (i == 0)
@@ -22454,7 +22454,7 @@ void HeroClass::checksigns() //Also checks for generic trigger buttons
 		}
 		else if(pushing < 8 || pushing%8) goto endsigns; //Not pushing against sign enough
 		
-		trigger_sign(cmb, foundffc ? foundffc->screen : found_scr);
+		trigger_sign(cmb, foundffc ? foundffc->screen : found_screen);
 		didsign = true;
 	}
 endsigns:
