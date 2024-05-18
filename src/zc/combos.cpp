@@ -1304,7 +1304,7 @@ bool trigger_lockblock_ffc(const ffc_handle_t& ffc_handle)
 				remove_xstatecombos(ffc_handle.scr, 1<<cmb.attribytes[5]);
 				break;
 			}
-			setmapflag(ffc_handle.scr, ffc_handle.scr->screen, mBOSSLOCKBLOCK);
+			setmapflag(ffc_handle.scr->screen, mBOSSLOCKBLOCK);
 			remove_bosslockblocks(ffc_handle.scr);
 			break;
 		}
