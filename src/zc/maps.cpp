@@ -1401,9 +1401,9 @@ void eventlog_mapflags()
 }
 
 // set specific flag
-void setmapflag(mapscr* scr, int32_t screen, int32_t flag)
+void setmapflag(mapscr* scr, int32_t flag)
 {
-	int mi = (currmap * MAPSCRSNORMAL) + (screen >= 0x80 ? homescr : screen);
+	int mi = (currmap * MAPSCRSNORMAL) + (scr->screen >= 0x80 ? homescr : scr->screen);
 	setmapflag_mi(scr, mi, flag);
 }
 void setmapflag(int32_t screen, int32_t flag)
@@ -3142,7 +3142,7 @@ bool trigger_secrets_if_flag(int32_t x, int32_t y, int32_t flag, bool setflag)
 	
 	if (setflag && canPermSecret(currdmap, screen))
 		if(!(scr->flags5&fTEMPSECRETS))
-			setmapflag(scr, screen, mSECRET);
+			setmapflag(scr, mSECRET);
 
 	return true;
 }

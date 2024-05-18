@@ -296,7 +296,7 @@ void do_generic_combo(const rpos_handle_t& rpos_handle, weapon *w, int32_t wid,
 		}
 		if((combobuf[cid].usrflags&cflag14)) //drop enemy
 		{
-			addenemy(rpos_handle.screen,x,y,(combobuf[cid].attribytes[4]),((combobuf[cid].usrflags&cflag13) ? 0 : -15));
+			addenemy(rpos_handle.scr->screen,x,y,(combobuf[cid].attribytes[4]),((combobuf[cid].usrflags&cflag13) ? 0 : -15));
 		}
 	}
 	w->rposes_checked.insert({rpos_handle.layer, rpos_handle.rpos});
@@ -3733,13 +3733,13 @@ bool weapon::animate(int32_t index)
 						pstr_flags = ev[3] / 10000;
 						
 						if(pickup&ipONETIME) // set mITEM for one-time-only items
-							setmapflag(scr, screen, mITEM);
+							setmapflag(scr, mITEM);
 						else if(pickup&ipONETIME2) // set mSPECIALITEM flag for other one-time-only items
-							setmapflag(scr, screen, (screen < 128 && get_qr(qr_ITEMPICKUPSETSBELOW)) ? mITEM : mSPECIALITEM);
+							setmapflag(scr, (screen < 128 && get_qr(qr_ITEMPICKUPSETSBELOW)) ? mITEM : mSPECIALITEM);
 						
 						if(pickup&ipSECRETS)								// Trigger secrets if this item has the secret pickup
 						{
-							if(scr->flags9&fITEMSECRETPERM) setmapflag(scr, screen, mSECRET);
+							if(scr->flags9&fITEMSECRETPERM) setmapflag(scr, mSECRET);
 							trigger_secrets_for_screen(TriggerSource::ItemsSecret, screen, false);
 						}
 						//!DIMI
