@@ -989,7 +989,7 @@ bool trigger_chest(const rpos_handle_t& rpos_handle)
 			if(cmb.usrflags&cflag16)
 			{
 				setxmapflag(screen, 1<<cmb.attribytes[5]);
-				remove_xstatecombos(rpos_handle.scr, screen, 1<<cmb.attribytes[5]);
+				remove_xstatecombos(rpos_handle.scr, 1<<cmb.attribytes[5]);
 				break;
 			}
 			setmapflag(rpos_handle.scr, mLOCKEDCHEST);
@@ -999,7 +999,7 @@ bool trigger_chest(const rpos_handle_t& rpos_handle)
 			if(cmb.usrflags&cflag16)
 			{
 				setxmapflag(screen, 1<<cmb.attribytes[5]);
-				remove_xstatecombos(rpos_handle.scr, screen, 1<<cmb.attribytes[5]);
+				remove_xstatecombos(rpos_handle.scr, 1<<cmb.attribytes[5]);
 				break;
 			}
 			setmapflag(rpos_handle.scr, mCHEST);
@@ -1030,7 +1030,7 @@ bool trigger_chest(const rpos_handle_t& rpos_handle)
 			if(cmb.usrflags&cflag16)
 			{
 				setxmapflag(screen, 1<<cmb.attribytes[5]);
-				remove_xstatecombos(rpos_handle.scr, screen, 1<<cmb.attribytes[5]);
+				remove_xstatecombos(rpos_handle.scr, 1<<cmb.attribytes[5]);
 				break;
 			}
 			setmapflag(rpos_handle.scr, mBOSSCHEST);
@@ -1103,7 +1103,7 @@ bool trigger_chest_ffc(const ffc_handle_t& ffc_handle)
 			if(cmb.usrflags&cflag16)
 			{
 				setxmapflag(ffc_handle.screen, 1<<cmb.attribytes[5]);
-				remove_xstatecombos(ffc_handle.scr, ffc_handle.screen, 1<<cmb.attribytes[5]);
+				remove_xstatecombos(ffc_handle.scr, 1<<cmb.attribytes[5]);
 				break;
 			}
 			setmapflag(ffc_handle.scr, mLOCKEDCHEST);
@@ -1113,7 +1113,7 @@ bool trigger_chest_ffc(const ffc_handle_t& ffc_handle)
 			if(cmb.usrflags&cflag16)
 			{
 				setxmapflag(ffc_handle.screen, 1<<cmb.attribytes[5]);
-				remove_xstatecombos(ffc_handle.scr, ffc_handle.screen, 1<<cmb.attribytes[5]);
+				remove_xstatecombos(ffc_handle.scr, 1<<cmb.attribytes[5]);
 				break;
 			}
 			setmapflag(ffc_handle.scr, mCHEST);
@@ -1144,7 +1144,7 @@ bool trigger_chest_ffc(const ffc_handle_t& ffc_handle)
 			if(cmb.usrflags&cflag16)
 			{
 				setxmapflag(ffc_handle.screen, 1<<cmb.attribytes[5]);
-				remove_xstatecombos(ffc_handle.scr, ffc_handle.screen, 1<<cmb.attribytes[5]);
+				remove_xstatecombos(ffc_handle.scr, 1<<cmb.attribytes[5]);
 				break;
 			}
 			setmapflag(ffc_handle.scr, mBOSSCHEST);
@@ -1206,7 +1206,7 @@ bool trigger_lockblock(const rpos_handle_t& rpos_handle)
 			if(cmb.usrflags&cflag16)
 			{
 				setxmapflag(rpos_handle.screen, 1<<cmb.attribytes[5]);
-				remove_xstatecombos(rpos_handle.scr, rpos_handle.screen, 1<<cmb.attribytes[5], false);
+				remove_xstatecombos(rpos_handle.scr, 1<<cmb.attribytes[5], false);
 				break;
 			}
 			setmapflag(rpos_handle.scr, mLOCKBLOCK);
@@ -1239,7 +1239,7 @@ bool trigger_lockblock(const rpos_handle_t& rpos_handle)
 			if(cmb.usrflags&cflag16)
 			{
 				setxmapflag(rpos_handle.screen, 1<<cmb.attribytes[5]);
-				remove_xstatecombos(rpos_handle.scr, rpos_handle.screen, 1<<cmb.attribytes[5], false);
+				remove_xstatecombos(rpos_handle.scr, 1<<cmb.attribytes[5], false);
 				break;
 			}
 			setmapflag(rpos_handle.scr, mBOSSLOCKBLOCK);
@@ -1268,7 +1268,7 @@ bool trigger_lockblock_ffc(const ffc_handle_t& ffc_handle)
 			if(cmb.usrflags&cflag16)
 			{
 				setxmapflag(ffc_handle.screen, 1<<cmb.attribytes[5]);
-				remove_xstatecombos(ffc_handle.scr, ffc_handle.screen, 1<<cmb.attribytes[5]);
+				remove_xstatecombos(ffc_handle.scr, 1<<cmb.attribytes[5]);
 				break;
 			}
 			setmapflag(ffc_handle.scr, mLOCKBLOCK);
@@ -1301,7 +1301,7 @@ bool trigger_lockblock_ffc(const ffc_handle_t& ffc_handle)
 			if(cmb.usrflags&cflag16)
 			{
 				setxmapflag(ffc_handle.screen, 1<<cmb.attribytes[5]);
-				remove_xstatecombos(ffc_handle.scr, ffc_handle.screen, 1<<cmb.attribytes[5]);
+				remove_xstatecombos(ffc_handle.scr, 1<<cmb.attribytes[5]);
 				break;
 			}
 			setmapflag(ffc_handle.scr, mBOSSLOCKBLOCK);

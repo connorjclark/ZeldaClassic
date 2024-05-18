@@ -25,6 +25,7 @@ struct screen_handle_t
 
 struct rpos_handle_t
 {
+	// TODO z3
 	// rpos_handle_t(mapscr* scr, int32_t screen, int32_t layer, rpos_t rpos): scr(scr), screen(screen), layer(layer), rpos(rpos)
 	// {
 	// 	pos = (int)rpos % 176;

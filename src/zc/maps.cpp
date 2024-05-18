@@ -2385,10 +2385,10 @@ bool remove_screenstatecombos2(mapscr *s, int32_t screen, bool do_layers, int32_
 	return didit;
 }
 
-bool remove_xstatecombos(mapscr *s, int32_t screen, byte xflag, bool triggers)
+bool remove_xstatecombos(mapscr *s, byte xflag, bool triggers)
 {
-	int mi = (currmap * MAPSCRSNORMAL) + (screen >= 0x80 ? homescr : screen);
-	return remove_xstatecombos_mi(s, screen, mi, xflag, triggers);
+	int mi = (currmap * MAPSCRSNORMAL) + (s->screen >= 0x80 ? homescr : s->screen);
+	return remove_xstatecombos_mi(s, s->screen, mi, xflag, triggers);
 }
 bool remove_xstatecombos_mi(mapscr *s, int32_t screen, int32_t mi, byte xflag, bool triggers)
 {
@@ -3515,7 +3515,7 @@ void bombdoor(int32_t x,int32_t y)
     {
         scr->door[0]=dBOMBED;
         putdoor(scrollbuf,0,0,dBOMBED);
-        setmapflag(rpos_handle.screen, mDOOR_UP);
+        setmapflag(rpos_handle.scr, mDOOR_UP);
         markBmap(-1, rpos_handle.screen);
         
         if(auto v = nextscr(rpos_handle.screen, up))
@@ -3529,7 +3529,7 @@ void bombdoor(int32_t x,int32_t y)
     {
         scr->door[1]=dBOMBED;
         putdoor(scrollbuf,0,1,dBOMBED);
-        setmapflag(rpos_handle.screen, mDOOR_DOWN);
+        setmapflag(rpos_handle.scr, mDOOR_DOWN);
         markBmap(-1, rpos_handle.screen);
         
         if(auto v = nextscr(rpos_handle.screen, down))
@@ -3543,7 +3543,7 @@ void bombdoor(int32_t x,int32_t y)
     {
         scr->door[2]=dBOMBED;
         putdoor(scrollbuf,0,2,dBOMBED);
-        setmapflag(rpos_handle.screen, mDOOR_LEFT);
+        setmapflag(rpos_handle.scr, mDOOR_LEFT);
         markBmap(-1, rpos_handle.screen);
         
         if(auto v = nextscr(rpos_handle.screen, left))
@@ -3557,7 +3557,7 @@ void bombdoor(int32_t x,int32_t y)
     {
         scr->door[3]=dBOMBED;
         putdoor(scrollbuf,0,3,dBOMBED);
-        setmapflag(rpos_handle.screen, mDOOR_RIGHT);
+        setmapflag(rpos_handle.scr, mDOOR_RIGHT);
         markBmap(-1, rpos_handle.screen);
         
         if(auto v = nextscr(rpos_handle.screen, right))

@@ -21623,7 +21623,7 @@ void HeroClass::oldchecklockblock()
 	if(cmb.usrflags&cflag16)
 	{
 		setxmapflag(rpos_handle.screen, 1<<cmb.attribytes[5]);
-		remove_xstatecombos(rpos_handle.scr, rpos_handle.screen, 1<<cmb.attribytes[5], false);
+		remove_xstatecombos(rpos_handle.scr, 1<<cmb.attribytes[5], false);
 	}
 	else
 	{
@@ -21788,7 +21788,7 @@ void HeroClass::oldcheckbosslockblock()
 	if(cmb.usrflags&cflag16)
 	{
 		setxmapflag(cmb_screen_index, 1<<cmb.attribytes[5]);
-		remove_xstatecombos(get_scr(cmb_screen_index), cmb_screen_index, 1<<cmb.attribytes[5]);
+		remove_xstatecombos(get_scr(cmb_screen_index), 1<<cmb.attribytes[5]);
 	}
 	else
 	{
