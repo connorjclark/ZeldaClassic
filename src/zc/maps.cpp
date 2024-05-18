@@ -436,10 +436,10 @@ rpos_handle_t get_rpos_handle_for_screen(int screen, int layer, int pos)
 
 // Return a pos_handle_t for a screen-specific `pos` (0-175).
 // Use this instead of the other `get_pos_handle_for_screen` if you already have a reference to the screen.
-rpos_handle_t get_rpos_handle_for_screen(mapscr* scr, int screen, int layer, int pos)
+rpos_handle_t get_rpos_handle_for_screen(mapscr* scr, int layer, int pos)
 {
 	DCHECK_LAYER_ZERO_INDEX(layer);
-	return {scr, screen, layer, POS_TO_RPOS(pos, screen), pos};
+	return {scr, scr->screen, layer, POS_TO_RPOS(pos, scr->screen), pos};
 }
 
 void change_rpos_handle_layer(rpos_handle_t& rpos_handle, int layer)
@@ -2792,7 +2792,7 @@ void trigger_secrets_for_screen_internal(int32_t screen, mapscr *s, bool do_comb
 					if(msflag!=0)
 						ft=msflag;
 					
-					auto rpos_handle = get_rpos_handle_for_screen(s, screen, 0, i);
+					auto rpos_handle = get_rpos_handle_for_screen(s, 0, i);
 					screen_combo_modify_preroutine(rpos_handle);
 					if(ft==sSECNEXT)
 					{
@@ -2930,7 +2930,7 @@ void trigger_secrets_for_screen_internal(int32_t screen, mapscr *s, bool do_comb
 				
 				if((checkflag > 15)&&(checkflag < 32)) //If we've got a 16->32 flag change the combo
 				{
-					auto rpos_handle = get_rpos_handle_for_screen(s, screen, 0, i);
+					auto rpos_handle = get_rpos_handle_for_screen(s, 0, i);
 					screen_combo_modify_preroutine(rpos_handle);
 					s->data[i] = s->secretcombo[checkflag-16+4];
 					s->cset[i] = s->secretcset[checkflag-16+4];

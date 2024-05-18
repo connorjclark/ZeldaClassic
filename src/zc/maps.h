@@ -135,7 +135,7 @@ mapscr* get_screen_layer_for_rpos(rpos_t rpos, int layer);
 rpos_handle_t get_rpos_handle(rpos_t rpos, int layer);
 rpos_handle_t get_rpos_handle_for_world_xy(int x, int y, int layer);
 rpos_handle_t get_rpos_handle_for_screen(int screen, int layer, int pos);
-rpos_handle_t get_rpos_handle_for_screen(mapscr* scr, int screen, int layer, int pos);
+rpos_handle_t get_rpos_handle_for_screen(mapscr* scr, int layer, int pos);
 void change_rpos_handle_layer(rpos_handle_t& rpos_handle, int layer);
 combined_handle_t get_combined_handle_for_world_xy(int x, int y, int layer);
 mapscr* get_screen_for_world_xy(int x, int y);
