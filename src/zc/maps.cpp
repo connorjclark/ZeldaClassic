@@ -1401,9 +1401,9 @@ void eventlog_mapflags()
 }
 
 // set specific flag
-void setmapflag(mapscr* scr, int32_t flag)
+void setmapflag(mapscr* scr, int32_t screen, int32_t flag)
 {
-	int mi = (currmap * MAPSCRSNORMAL) + (scr->screen >= 0x80 ? homescr : scr->screen);
+	int mi = (currmap * MAPSCRSNORMAL) + (screen >= 0x80 ? homescr : screen);
 	setmapflag_mi(scr, mi, flag);
 }
 void setmapflag(int32_t screen, int32_t flag)
@@ -3145,7 +3145,7 @@ bool trigger_secrets_if_flag(int32_t x, int32_t y, int32_t flag, bool setflag)
 	
 	if (setflag && canPermSecret(currdmap, screen))
 		if(!(scr->flags5&fTEMPSECRETS))
-			setmapflag(scr, mSECRET);
+			setmapflag(scr, screen, mSECRET);
 
 	return true;
 }
@@ -3511,6 +3511,7 @@ void bombdoor(int32_t x,int32_t y)
 
 	auto rpos_handle = get_rpos_handle_for_world_xy(x, y, 0);
 	mapscr* scr = rpos_handle.scr;
+	int screen = scr->screen;
 	auto [x0, y0] = translate_screen_coordinates_to_world(rpos_handle.screen);
 	#define CHECK_RECT(x,y,rx1,ry1,rx2,ry2) (isinRect(x,y,x0+rx1,y0+ry1,x0+rx2,y0+ry2))
 
@@ -3518,10 +3519,10 @@ void bombdoor(int32_t x,int32_t y)
     {
         scr->door[0]=dBOMBED;
         putdoor(scrollbuf,0,0,dBOMBED);
-        setmapflag(rpos_handle.scr, mDOOR_UP);
-        markBmap(-1, rpos_handle.screen);
+        setmapflag(scr, screen, mDOOR_UP);
+        markBmap(-1, screen);
         
-        if(auto v = nextscr(rpos_handle.screen, up))
+        if(auto v = nextscr(screen, up))
         {
             setmapflag_mi(*v, mDOOR_DOWN);
             markBmap(-1,*v-(get_currdmap()<<7));
@@ -3532,7 +3533,7 @@ void bombdoor(int32_t x,int32_t y)
     {
         scr->door[1]=dBOMBED;
         putdoor(scrollbuf,0,1,dBOMBED);
-        setmapflag(rpos_handle.scr, mDOOR_DOWN);
+        setmapflag(rpos_handle.scr, screen, mDOOR_DOWN);
         markBmap(-1, rpos_handle.screen);
         
         if(auto v = nextscr(rpos_handle.screen, down))
@@ -3546,7 +3547,7 @@ void bombdoor(int32_t x,int32_t y)
     {
         scr->door[2]=dBOMBED;
         putdoor(scrollbuf,0,2,dBOMBED);
-        setmapflag(rpos_handle.scr, mDOOR_LEFT);
+        setmapflag(rpos_handle.scr, screen, mDOOR_LEFT);
         markBmap(-1, rpos_handle.screen);
         
         if(auto v = nextscr(rpos_handle.screen, left))
@@ -3560,7 +3561,7 @@ void bombdoor(int32_t x,int32_t y)
     {
         scr->door[3]=dBOMBED;
         putdoor(scrollbuf,0,3,dBOMBED);
-        setmapflag(rpos_handle.scr, mDOOR_RIGHT);
+        setmapflag(scr, screen, mDOOR_RIGHT);
         markBmap(-1, rpos_handle.screen);
         
         if(auto v = nextscr(rpos_handle.screen, right))
