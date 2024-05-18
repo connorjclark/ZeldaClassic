@@ -24036,7 +24036,7 @@ void HeroClass::checkspecial()
 					
 					if (scr->flags4&fENEMYSCRTPERM && canPermSecret(currdmap, screen))
 					{
-						if (!(scr->flags5&fTEMPSECRETS)) setmapflag(screen, mSECRET);
+						if (!(scr->flags5&fTEMPSECRETS)) setmapflag(scr, mSECRET);
 					}
 					
 					sfx(scr->secretsfx);

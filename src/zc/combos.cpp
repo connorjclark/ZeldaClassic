@@ -1089,7 +1089,6 @@ bool trigger_chest(const rpos_handle_t& rpos_handle)
 
 bool trigger_chest_ffc(const ffc_handle_t& ffc_handle)
 {
-	mapscr* base_scr = ffc_handle.scr;
 	int screen = ffc_handle.screen;
 
 	auto& cmb = ffc_handle.combo();
@@ -1105,21 +1104,21 @@ bool trigger_chest_ffc(const ffc_handle_t& ffc_handle)
 			
 			if(cmb.usrflags&cflag16)
 			{
-				setxmapflag(ffc_handle.screen, 1<<cmb.attribytes[5]);
+				setxmapflag(screen, 1<<cmb.attribytes[5]);
 				remove_xstatecombos(ffc_handle.scr, 1<<cmb.attribytes[5]);
 				break;
 			}
-			setmapflag(ffc_handle.screen, mLOCKEDCHEST);
+			setmapflag(ffc_handle.scr, mLOCKEDCHEST);
 			break;
 			
 		case cCHEST:
 			if(cmb.usrflags&cflag16)
 			{
-				setxmapflag(ffc_handle.screen, 1<<cmb.attribytes[5]);
+				setxmapflag(screen, 1<<cmb.attribytes[5]);
 				remove_xstatecombos(ffc_handle.scr, 1<<cmb.attribytes[5]);
 				break;
 			}
-			setmapflag(ffc_handle.screen, mCHEST);
+			setmapflag(ffc_handle.scr, mCHEST);
 			break;
 			
 		case cBOSSCHEST:
@@ -1146,11 +1145,11 @@ bool trigger_chest_ffc(const ffc_handle_t& ffc_handle)
 			
 			if(cmb.usrflags&cflag16)
 			{
-				setxmapflag(ffc_handle.screen, 1<<cmb.attribytes[5]);
+				setxmapflag(screen, 1<<cmb.attribytes[5]);
 				remove_xstatecombos(ffc_handle.scr, 1<<cmb.attribytes[5]);
 				break;
 			}
-			setmapflag(ffc_handle.screen, mBOSSCHEST);
+			setmapflag(screen, mBOSSCHEST);
 			break;
 	}
 	
