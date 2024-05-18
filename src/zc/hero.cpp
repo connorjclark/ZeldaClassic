@@ -21627,7 +21627,7 @@ void HeroClass::oldchecklockblock()
 	}
 	else
 	{
-		setmapflag(rpos_handle.scr, rpos_handle.screen, mLOCKBLOCK);
+		setmapflag(rpos_handle.screen, mLOCKBLOCK);
 		remove_lockblocks(rpos_handle.scr);
 	}
 	if ( cmb3.usrflags&cflag3 )
@@ -24254,7 +24254,7 @@ void HeroClass::checkspecial2(int32_t *ls)
 						
 						if(!(rpos_handle.scr->flags5&fTEMPSECRETS))
 						{
-							setmapflag(rpos_handle.scr, rpos_handle.screen, mSECRET);
+							setmapflag(rpos_handle.screen, mSECRET);
 						}
 						sfx(warpsound,pan((int32_t)x));
 						trigger_secrets_for_screen(TriggerSource::Unspecified, rpos_handle.screen, false);
@@ -24985,7 +24985,7 @@ void HeroClass::checkspecial2(int32_t *ls)
 			
 			if(type==cTRIGFLAG && canPermSecret(currdmap, rpos_handle.screen))
 			{ 
-				if(!(rpos_handle.scr->flags5&fTEMPSECRETS)) setmapflag(rpos_handle.scr, rpos_handle.screen, mSECRET);
+				if(!(rpos_handle.scr->flags5&fTEMPSECRETS)) setmapflag(rpos_handle.screen, mSECRET);
 				
 				trigger_secrets_for_screen(TriggerSource::Unspecified, rpos_handle.screen, false);
 			}
