@@ -24986,7 +24986,7 @@ void HeroClass::checkspecial2(int32_t *ls)
 			
 			if(type==cTRIGFLAG && canPermSecret(currdmap, rpos_handle.screen))
 			{ 
-				if(!(rpos_handle.scr->flags5&fTEMPSECRETS)) setmapflag(rpos_handle.screen, mSECRET);
+				if(!(rpos_handle.scr->flags5&fTEMPSECRETS)) setmapflag(rpos_handle.scr, mSECRET);
 				
 				trigger_secrets_for_screen(TriggerSource::Unspecified, rpos_handle.screen, false);
 			}
@@ -30764,12 +30764,12 @@ void HeroClass::checkitems(int32_t index)
 	int32_t pstr_flags = ptr->pickup_string_flags;
 	int32_t linked_parent = ptr->linked_parent;
 	// `screen_spawned` is probably same as `heroscr`, but could not be if the item moved around.
-	int32_t item_screen_index = ptr->screen_spawned;
-	mapscr* item_screen = get_scr(item_screen_index);
+	int32_t item_screen = ptr->screen_spawned;
+	mapscr* item_scr = get_scr(item_screen);
 
 	// For items grabbed while in a special screen.
 	if (currscr >= 128)
-		item_screen = &special_warp_return_screen;
+		item_scr = &special_warp_return_screen;
 
 	if(ptr->fallclk > 0) return; //Don't pick up a falling item
 	
@@ -30785,7 +30785,7 @@ void HeroClass::checkitems(int32_t index)
 		}
 	}
 	
-	bool bottledummy = (pickup&ipCHECK) && item_screen->room == rBOTTLESHOP;
+	bool bottledummy = (pickup&ipCHECK) && item_scr->room == rBOTTLESHOP;
 	
 	if(bottledummy) //Dummy bullshit! 
 	{
@@ -30817,7 +30817,7 @@ void HeroClass::checkitems(int32_t index)
 				((item*)items.spr(i))->pickup=ipDUMMY+ipFADE;
 		}
 		
-		int32_t slot = game->fillBottle(QMisc.bottle_shop_types[item_screen->catchall].fill[PriceIndex]);
+		int32_t slot = game->fillBottle(QMisc.bottle_shop_types[item_scr->catchall].fill[PriceIndex]);
 		id2 = find_bottle_for_slot(slot);
 		ptr->id = id2;
 		holdid = id2;
@@ -30836,7 +30836,7 @@ void HeroClass::checkitems(int32_t index)
 				
 		if(pickup&ipENEMY)                                        // item was being carried by enemy
 			if(more_carried_items()<=1)  // 1 includes this own item.
-				screen_item_clear_state(item_screen_index);
+				screen_item_clear_state(item_screen);
 				
 		if(pickup&ipDUMMY)                                        // dummy item (usually a rupee)
 		{
@@ -30882,7 +30882,7 @@ void HeroClass::checkitems(int32_t index)
 		} while(nextitem > -1);
 		
 		if(pickup&ipCHECK)                                        // check restrictions
-			switch(item_screen->room)
+			switch(item_scr->room)
 			{
 			case rSP_ITEM:                                        // special item
 				if(!canget(id2)) // These ones always need the Hearts Required check
@@ -30918,7 +30918,7 @@ void HeroClass::checkitems(int32_t index)
 				
 				for(int32_t i=0; i<3; i++)
 				{
-					if(QMisc.shop[item_screen->catchall].hasitem[i] != 0)
+					if(QMisc.shop[item_scr->catchall].hasitem[i] != 0)
 					{
 						++count;
 					}
@@ -30957,7 +30957,7 @@ void HeroClass::checkitems(int32_t index)
 		
 		if(pickup&ipONETIME)    // set mITEM for one-time-only items
 		{
-			setmapflag(item_screen_index, mITEM);
+			setmapflag(item_scr, mITEM);
 
 			//Okay so having old source files is a godsend. You wanna know why?
 			//Because the issue here was never to so with the wrong flag being set; no it's always been setting the right flag.
@@ -30983,17 +30983,17 @@ void HeroClass::checkitems(int32_t index)
 			*/
 		}
 		else if(pickup&ipONETIME2)                                // set mSPECIALITEM flag for other one-time-only items
-			setmapflag(item_screen_index, (currscr < 128 && get_qr(qr_ITEMPICKUPSETSBELOW)) ? mITEM : mSPECIALITEM);
+			setmapflag(item_scr, (currscr < 128 && get_qr(qr_ITEMPICKUPSETSBELOW)) ? mITEM : mSPECIALITEM);
 		
 		if(exstate > -1 && exstate < 32)
 		{
-			setxmapflag(item_screen_index, 1<<exstate);
+			setxmapflag(item_screen, 1<<exstate);
 		}
 
 		if(pickup&ipSECRETS)                                // Trigger secrets if this item has the secret pickup
 		{
-			if (item_screen->flags9&fITEMSECRETPERM) setmapflag(item_screen_index, mSECRET);
-			trigger_secrets_for_screen(TriggerSource::ItemsSecret, item_screen_index, false);
+			if (item_scr->flags9&fITEMSECRETPERM) setmapflag(item_scr, mSECRET);
+			trigger_secrets_for_screen(TriggerSource::ItemsSecret, item_screen, false);
 		}
 
 		collectitem_script(id2);
@@ -31015,8 +31015,8 @@ void HeroClass::checkitems(int32_t index)
 		
 		clear_bitmap(pricesdisplaybuf);
 		
-		if(get_qr(qr_OLDPICKUP) || ((item_screen->room==rSP_ITEM || item_screen->room==rRP_HC || item_screen->room==rTAKEONE) && (pickup&ipONETIME2)) || 
-		(get_qr(qr_SHOP_ITEMS_VANISH) && (item_screen->room==rBOTTLESHOP || item_screen->room==rSHOP) && (pickup&ipCHECK)))
+		if(get_qr(qr_OLDPICKUP) || ((item_scr->room==rSP_ITEM || item_scr->room==rRP_HC || item_scr->room==rTAKEONE) && (pickup&ipONETIME2)) || 
+		(get_qr(qr_SHOP_ITEMS_VANISH) && (item_scr->room==rBOTTLESHOP || item_scr->room==rSHOP) && (pickup&ipCHECK)))
 		{
 			fadeclk=66;
 		}
@@ -31069,13 +31069,13 @@ void HeroClass::checkitems(int32_t index)
 			int32_t shop_pstr = 0;
 			if (PriceIndex > -1) 
 			{
-				switch(item_screen->room)
+				switch(item_scr->room)
 				{
 					case rSHOP:
-						shop_pstr = QMisc.shop[item_screen->catchall].str[PriceIndex];
+						shop_pstr = QMisc.shop[item_scr->catchall].str[PriceIndex];
 						break;
 					case rBOTTLESHOP:
-						shop_pstr = QMisc.bottle_shop_types[item_screen->catchall].str[PriceIndex];
+						shop_pstr = QMisc.bottle_shop_types[item_scr->catchall].str[PriceIndex];
 						break;
 				}
 			}
@@ -31088,12 +31088,12 @@ void HeroClass::checkitems(int32_t index)
 				else pstr = 0;
 				if(shop_pstr)
 				{
-					donewmsg(item_screen, shop_pstr);
+					donewmsg(item_scr, shop_pstr);
 					enqueued_str = pstr;
 				}
 				else if(pstr)
 				{
-					donewmsg(item_screen, pstr);
+					donewmsg(item_scr, pstr);
 				}
 			}
 			
@@ -31187,7 +31187,7 @@ void HeroClass::checkitems(int32_t index)
 		//show the info string
 		//non-held
 		//if ( pstr > 0 ) //&& itemsbuf[index].pstring < msg_count && ( ( itemsbuf[index].pickup_string_flags&itemdataPSTRING_ALWAYS || (!(FFCore.GetItemMessagePlayed(index))) ) ) )
-		int32_t shop_pstr = ( item_screen->room == rSHOP && PriceIndex>=0 && QMisc.shop[item_screen->catchall].str[PriceIndex] > 0 ) ? QMisc.shop[item_screen->catchall].str[PriceIndex] : 0;
+		int32_t shop_pstr = ( item_scr->room == rSHOP && PriceIndex>=0 && QMisc.shop[item_scr->catchall].str[PriceIndex] > 0 ) ? QMisc.shop[item_scr->catchall].str[PriceIndex] : 0;
 		if ( (pstr > 0 && pstr < msg_count) || (shop_pstr > 0 && shop_pstr < msg_count) )
 		{
 			if ( (pstr > 0 && pstr < msg_count) && ( (!(pstr_flags&itemdataPSTRING_IP_HOLDUP)) && ( pstr_flags&itemdataPSTRING_NOMARK || pstr_flags&itemdataPSTRING_ALWAYS || (!(FFCore.GetItemMessagePlayed(id2))) ) ) )
@@ -31197,12 +31197,12 @@ void HeroClass::checkitems(int32_t index)
 			else pstr = 0;
 			if(shop_pstr)
 			{
-				donewmsg(item_screen, shop_pstr);
+				donewmsg(item_scr, shop_pstr);
 				enqueued_str = pstr;
 			}
 			else if(pstr)
 			{
-				donewmsg(item_screen, pstr);
+				donewmsg(item_scr, pstr);
 			}
 		}
 		
