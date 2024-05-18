@@ -14414,7 +14414,7 @@ bool eLanmola::animate(int32_t index)
 		clk2=19;
 		x=guys.spr(index+1)->x;
 		y=guys.spr(index+1)->y;
-		setmapflag(screen_spawned, mTMPNORET);
+		setmapflag(get_scr(screen_spawned), mTMPNORET);
 	}
 	
 	//this enemy is invincible.. BUT scripts don't know that, and can "kill" it by setting the hp negative.

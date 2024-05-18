@@ -24255,7 +24255,7 @@ void HeroClass::checkspecial2(int32_t *ls)
 						
 						if(!(rpos_handle.scr->flags5&fTEMPSECRETS))
 						{
-							setmapflag(rpos_handle.screen, mSECRET);
+							setmapflag(rpos_handle.scr, mSECRET);
 						}
 						sfx(warpsound,pan((int32_t)x));
 						trigger_secrets_for_screen(TriggerSource::Unspecified, rpos_handle.screen, false);

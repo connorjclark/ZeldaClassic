@@ -1403,7 +1403,8 @@ void eventlog_mapflags()
 // set specific flag
 void setmapflag(mapscr* scr, int32_t flag)
 {
-	int mi = (currmap * MAPSCRSNORMAL) + (scr->screen >= 0x80 ? homescr : scr->screen);
+	if (scr->screen >= 0x80) scr = &special_warp_return_screen;
+	int mi = (currmap * MAPSCRSNORMAL) + scr->screen;
 	setmapflag_mi(scr, mi, flag);
 }
 void setmapflag(int32_t screen, int32_t flag)

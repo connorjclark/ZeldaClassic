@@ -975,7 +975,7 @@ bool trigger_warp(newcombo const& cmb)
 bool trigger_chest(const rpos_handle_t& rpos_handle)
 {
 	mapscr* base_scr = rpos_handle.layer == 0 ? rpos_handle.scr : get_scr(rpos_handle.screen);
-	int screen = base_scr->screen;
+	int screen = rpos_handle.screen;
 
 	auto& cmb = rpos_handle.combo();	
 	switch(cmb.type)
@@ -992,7 +992,7 @@ bool trigger_chest(const rpos_handle_t& rpos_handle)
 				remove_xstatecombos(rpos_handle.scr, 1<<cmb.attribytes[5]);
 				break;
 			}
-			setmapflag(rpos_handle.screen, mLOCKEDCHEST);
+			setmapflag(base_scr, mLOCKEDCHEST);
 			break;
 			
 		case cCHEST:
@@ -1002,7 +1002,7 @@ bool trigger_chest(const rpos_handle_t& rpos_handle)
 				remove_xstatecombos(rpos_handle.scr, 1<<cmb.attribytes[5]);
 				break;
 			}
-			setmapflag(rpos_handle.screen, mCHEST);
+			setmapflag(base_scr, mCHEST);
 			break;
 			
 		case cBOSSCHEST:
@@ -1033,7 +1033,7 @@ bool trigger_chest(const rpos_handle_t& rpos_handle)
 				remove_xstatecombos(rpos_handle.scr, 1<<cmb.attribytes[5]);
 				break;
 			}
-			setmapflag(rpos_handle.screen, mBOSSCHEST);
+			setmapflag(base_scr, mBOSSCHEST);
 			break;
 	}
 	
@@ -1089,6 +1089,9 @@ bool trigger_chest(const rpos_handle_t& rpos_handle)
 
 bool trigger_chest_ffc(const ffc_handle_t& ffc_handle)
 {
+	mapscr* base_scr = ffc_handle.scr;
+	int screen = ffc_handle.screen;
+
 	auto& cmb = ffc_handle.combo();
 	int32_t cid = ffc_handle.data();
 	switch(cmb.type)
@@ -1193,6 +1196,9 @@ bool trigger_chest_ffc(const ffc_handle_t& ffc_handle)
 bool trigger_lockblock(const rpos_handle_t& rpos_handle)
 {
 	DCHECK(rpos_handle.rpos <= region_max_rpos);
+	// TODO z3 rpos_handle.base_scr()
+	mapscr* base_scr = rpos_handle.layer == 0 ? rpos_handle.scr : get_scr(rpos_handle.screen);
+	int screen = rpos_handle.screen;
 	
 	auto& cmb = rpos_handle.combo();	
 	switch(cmb.type)
@@ -1205,11 +1211,11 @@ bool trigger_lockblock(const rpos_handle_t& rpos_handle)
 			}
 			if(cmb.usrflags&cflag16)
 			{
-				setxmapflag(rpos_handle.screen, 1<<cmb.attribytes[5]);
+				setxmapflag(screen, 1<<cmb.attribytes[5]);
 				remove_xstatecombos(rpos_handle.scr, 1<<cmb.attribytes[5], false);
 				break;
 			}
-			setmapflag(rpos_handle.screen, mLOCKBLOCK);
+			setmapflag(base_scr, mLOCKBLOCK);
 			remove_lockblocks(rpos_handle.scr);
 			break;
 			
@@ -1238,11 +1244,11 @@ bool trigger_lockblock(const rpos_handle_t& rpos_handle)
 			
 			if(cmb.usrflags&cflag16)
 			{
-				setxmapflag(rpos_handle.screen, 1<<cmb.attribytes[5]);
+				setxmapflag(screen, 1<<cmb.attribytes[5]);
 				remove_xstatecombos(rpos_handle.scr, 1<<cmb.attribytes[5], false);
 				break;
 			}
-			setmapflag(rpos_handle.screen, mBOSSLOCKBLOCK);
+			setmapflag(base_scr, mBOSSLOCKBLOCK);
 			remove_bosslockblocks(rpos_handle.scr);
 			break;
 		}
@@ -1271,7 +1277,7 @@ bool trigger_lockblock_ffc(const ffc_handle_t& ffc_handle)
 				remove_xstatecombos(ffc_handle.scr, 1<<cmb.attribytes[5]);
 				break;
 			}
-			setmapflag(ffc_handle.screen, mLOCKBLOCK);
+			setmapflag(ffc_handle.scr, mLOCKBLOCK);
 			remove_lockblocks(ffc_handle.scr);
 			break;
 			
@@ -1304,7 +1310,7 @@ bool trigger_lockblock_ffc(const ffc_handle_t& ffc_handle)
 				remove_xstatecombos(ffc_handle.scr, 1<<cmb.attribytes[5]);
 				break;
 			}
-			setmapflag(ffc_handle.scr->screen, mBOSSLOCKBLOCK);
+			setmapflag(ffc_handle.scr, mBOSSLOCKBLOCK);
 			remove_bosslockblocks(ffc_handle.scr);
 			break;
 		}
