@@ -205,7 +205,6 @@ std::optional<ffc_handle_t> getFFCAt(int32_t x, int32_t y);
 void eventlog_mapflags();
 
 void setmapflag(mapscr* scr, int32_t flag);
-void setmapflag(int32_t screen, int32_t flag);
 // TODO z3 remove
 void setmapflag(int32_t flag);
 void setmapflag_mi(int32_t mi2, int32_t flag);

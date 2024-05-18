@@ -1149,7 +1149,7 @@ bool trigger_chest_ffc(const ffc_handle_t& ffc_handle)
 				remove_xstatecombos(ffc_handle.scr, 1<<cmb.attribytes[5]);
 				break;
 			}
-			setmapflag(screen, mBOSSCHEST);
+			setmapflag(ffc_handle.scr, mBOSSCHEST);
 			break;
 	}
 	
@@ -2605,7 +2605,7 @@ void handle_trigger_results(mapscr* scr, newcombo const& cmb, int32_t cx, int32_
 				sfx(scr->secretsfx);
 		}
 		if(canPermSecret(currdmap, screen) && !(scr->flags5&fTEMPSECRETS) && !getmapflag(screen, mSECRET))
-			setmapflag(screen, mSECRET);
+			setmapflag(scr, mSECRET);
 	}
 	
 	if (cmb.triggerflags[3] & combotriggerLEVELSTATE)

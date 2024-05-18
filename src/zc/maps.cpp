@@ -1407,12 +1407,6 @@ void setmapflag(mapscr* scr, int32_t flag)
 	int mi = (currmap * MAPSCRSNORMAL) + scr->screen;
 	setmapflag_mi(scr, mi, flag);
 }
-void setmapflag(int32_t screen, int32_t flag)
-{
-	int mi = (currmap * MAPSCRSNORMAL) + (screen >= 0x80 ? homescr : screen);
-	mapscr* scr = get_scr(screen >= 0x80 ? homescr : screen);
-	setmapflag_mi(scr, mi, flag);
-}
 void setmapflag(int32_t flag)
 {
     setmapflag_mi(tmpscr, (currmap*MAPSCRSNORMAL)+homescr, flag);
