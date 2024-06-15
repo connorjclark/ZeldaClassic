@@ -5557,7 +5557,7 @@ void draw_screenunit(int32_t unit, int32_t flags)
 				for(int32_t i=MAXFFCS-1; i>=0; i--)
 				{
 					ffcdata& ff = ffscr->ffcs[i];
-					if(ff.data !=0 && (CurrentLayer<2 || (ff.flags&ffOVERLAY)))
+					if(ff.data !=0 && (CurrentLayer<2 || (ff.flags&ffc_overlay)))
 					{
 						auto x = ff.x+(showedges?16:0);
 						auto y = ff.y+(showedges?16:0);
@@ -10022,7 +10022,7 @@ void domouse()
 		static int mapscr_tooltip_id = ttip_register_id();
 		bool did_ffttip = false;
 		for(int32_t i=MAXFFCS-1; i>=0; i--)
-			if(Map.CurrScr()->ffcs[i].data !=0 && (CurrentLayer<2 || (Map.CurrScr()->ffcs[i].flags&ffOVERLAY)))
+			if(Map.CurrScr()->ffcs[i].data !=0 && (CurrentLayer<2 || (Map.CurrScr()->ffcs[i].flags&ffc_overlay)))
 			{
 				int32_t ffx = Map.CurrScr()->ffcs[i].x.getFloor();
 				int32_t ffy = Map.CurrScr()->ffcs[i].y.getFloor();
@@ -10597,7 +10597,7 @@ void domouse()
 				
 				// Move FFCs
 				for(int32_t i=MAXFFCS-1; i>=0; i--)
-					if(Map.CurrScr()->ffcs[i].data !=0 && (CurrentLayer<2 || (Map.CurrScr()->ffcs[i].flags&ffOVERLAY)))
+					if(Map.CurrScr()->ffcs[i].data !=0 && (CurrentLayer<2 || (Map.CurrScr()->ffcs[i].flags&ffc_overlay)))
 					{
 						int32_t ffx = Map.CurrScr()->ffcs[i].x.getFloor();
 						int32_t ffy = Map.CurrScr()->ffcs[i].y.getFloor();
@@ -10689,7 +10689,7 @@ void domouse()
 					if(clickedffc || !(Map.CurrScr()->valid&mVALID))
 						continue;
 						
-					if(data!=0 && (CurrentLayer<2 || (Map.CurrScr()->ffcs[i].flags&ffOVERLAY)))
+					if(data!=0 && (CurrentLayer<2 || (Map.CurrScr()->ffcs[i].flags&ffc_overlay)))
 					{
 						int32_t ffx = Map.CurrScr()->ffcs[i].x.getFloor();
 						int32_t ffy = Map.CurrScr()->ffcs[i].y.getFloor();
@@ -10748,7 +10748,7 @@ void domouse()
 												.th = 1,
 												.ew = 16,
 												.eh = 16,
-												.flags = 0,
+												.flags = ffc_none,
 												.inita = 10000,
 												.initd = 0,
 											});
@@ -28502,7 +28502,7 @@ bool checkCost(int32_t ctr, int32_t amnt)
 		case crSBOMBS:
 		{
 			if(current_item_power(itype_bombbag)
-				&& itemsbuf[current_item_id(itype_bombbag)].flags & ITEM_FLAG1)
+				&& itemsbuf[current_item_id(itype_bombbag)].flags & item_flag1)
 				return true;
 			break;
 		}
