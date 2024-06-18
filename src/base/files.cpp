@@ -1,74 +1,90 @@
 #include "base/files.h"
 #include "base/fonts.h"
-#include "base/util.h"
 #include "base/zsys.h"
-#include "base/zc_alleg.h"
-#include "allegro5/allegro_native_dialog.h"
 #include "nfd.h"
+#include <cstddef>
 #include <dispatch/dispatch.h>
 #include <dispatch/queue.h>
 #include <optional>
 
-extern char temppath[4096];
+char temppath[4096];
 
-static std::optional<std::string> open_dialog(std::string prompt, std::string initial_path, std::string ext, int mode)
+static bool init_dialog()
 {
-	ALLEGRO_FILECHOOSER* dialog = al_create_native_file_dialog(initial_path.c_str(), prompt.c_str(), ext.c_str(), mode);
-	if (!dialog)
-	{
-		return std::nullopt;
-	}
-	if (!al_show_native_file_dialog(all_get_display(), dialog))
-	{
-		al_destroy_native_file_dialog(dialog);
-		return std::nullopt;
-	}
-	if (al_get_native_file_dialog_count(dialog) != 1)
-	{
-		al_destroy_native_file_dialog(dialog);
-		return std::nullopt;
-	}
-	std::string path = al_get_native_file_dialog_path(dialog, 0);
-	if (path.empty())
-	{
-		al_destroy_native_file_dialog(dialog);
-		return std::nullopt;
-	}
-
-	al_destroy_native_file_dialog(dialog);
-	return path;
-}
-
-static std::optional<std::string> open_dialog2(std::string prompt, std::string initial_path, std::string ext, int mode)
-{
-	static bool initialized;
+	static bool initialized, tried;
 	if (!initialized)
 	{
-		NFD_Init();
+		if (tried)
+			return false;
+
+		tried = true;
+		auto result = NFD_Init();
+		if (result != NFD_OKAY)
+		{
+			Z_error("Error: %s", NFD_GetError());
+			return false;
+		}
 		atexit(NFD_Quit);
 		initialized = true;
 	}
 
+	return true;
+}
+
+static std::vector<nfdfilteritem_t> create_filter_list(std::string ext, EXT_LIST *list)
+{
+	if (list == nullptr)
+		return {{"", ext.c_str()}};
+
+	std::vector<nfdfilteritem_t> result;
+	for (EXT_LIST* cur = list; cur->ext != nullptr; cur++)
+		result.push_back({cur->text, cur->ext});
+	return result;
+}
+
+enum class FileMode
+{
+	Save,
+	Open,
+};
+
+static std::optional<std::string> open_native_dialog_impl(std::string initial_path, std::vector<nfdfilteritem_t> filters, FileMode mode)
+{
+	const char* initial_path_ = initial_path.empty() ? nullptr : initial_path.c_str();
+	nfdchar_t *outPath;
+	nfdresult_t result = mode == FileMode::Save ?
+		NFD_SaveDialog(&outPath, filters.data(), filters.size(), initial_path_, nullptr) :
+		NFD_OpenDialog(&outPath, filters.data(), filters.size(), initial_path_);
+	if (result == NFD_OKAY)
+	{
+		std::string path = outPath;
+		NFD_FreePath(outPath);
+		return path;
+	}
+
+	return std::nullopt;
+}
+
+static std::optional<std::string> open_native_dialog(std::string initial_path, std::vector<nfdfilteritem_t> filters, FileMode mode)
+{
+	NFD_ClearError();
+	if (!init_dialog())
+		return std::nullopt;
+
+#ifdef __APPLE__
 	__block std::string path;
-	__block bool error;
 	dispatch_sync(dispatch_get_main_queue(), ^{
-		nfdchar_t *outPath;
-		nfdfilteritem_t filterItem[2] = { { "Source code", "c,cpp,cc" }, { "Headers", "h,hpp" } };
-		nfdresult_t result = NFD_OpenDialog(&outPath, filterItem, 2, NULL);
-		if (result == NFD_OKAY)
-		{
-			path = outPath;
-			NFD_FreePath(outPath);
-		}
-		else if (result == NFD_ERROR)
-		{
-			error = true;
-		}
+		if (auto r = open_native_dialog_impl(initial_path, filters, mode))
+			path = *r;
     });
+#else
+	if (auto r = open_native_dialog_impl(initial_path, filters, mode))
+		path = *r;
+#endif
 
 	if (path.empty())
 	{
-		if (error)
+		if (strlen(NFD_GetError()))
 			Z_error("Error: %s", NFD_GetError());
 		return std::nullopt;
 	}
@@ -115,27 +131,6 @@ static bool getname(std::string prompt, std::string ext, EXT_LIST *list, std::st
     return ret != 0;
 }
 
-static std::string parse_ext(std::string ext, EXT_LIST *list)
-{
-	if (list == nullptr)
-	{
-		util::replchar(ext, ',', ';');
-		return ext;
-	}
-
-	ext = "";
-	EXT_LIST* cur = list;
-	while (cur->ext != nullptr)
-	{
-		ext += cur->ext;
-		cur++;
-		if (cur->ext != nullptr)
-			ext += ';';
-	}
-
-	return ext;
-}
-
 std::optional<std::string> prompt_for_existing_file(std::string prompt, std::string ext, EXT_LIST *list, std::string initial_path, bool usefilename)
 {
 	if (!usefilename)
@@ -146,7 +141,7 @@ std::optional<std::string> prompt_for_existing_file(std::string prompt, std::str
 			return std::nullopt;
 		return temppath;
 	}
-	return open_dialog2(prompt, initial_path, parse_ext(ext, list), ALLEGRO_FILECHOOSER_FILE_MUST_EXIST);
+	return open_native_dialog(initial_path, create_filter_list(ext, list), FileMode::Open);
 }
 
 std::optional<std::string> prompt_for_new_file(std::string prompt, std::string ext, EXT_LIST *list, std::string initial_path, bool usefilename)
@@ -159,7 +154,7 @@ std::optional<std::string> prompt_for_new_file(std::string prompt, std::string e
 			return std::nullopt;
 		return temppath;
 	}
-	return open_dialog2(prompt, initial_path, parse_ext(ext, list), ALLEGRO_FILECHOOSER_SAVE);
+	return open_native_dialog(initial_path, create_filter_list(ext, list), FileMode::Save);
 }
 
 bool prompt_for_existing_file_compat(std::string prompt, std::string ext, EXT_LIST *list, std::string initial_path, bool usefilename)

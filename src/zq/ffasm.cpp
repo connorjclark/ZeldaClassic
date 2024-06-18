@@ -22,7 +22,7 @@ using namespace util;
 using std::string;
 using std::ostringstream;
 
-extern char *datapath, *temppath;
+extern char *datapath;
 
 int32_t ffparse(char const* string)
 {
