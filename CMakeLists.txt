@@ -462,6 +462,7 @@ set(zcbase_sources
 	src/base/cpool.cpp
 	src/base/cpos_info.cpp
 	src/base/dmap.cpp
+	src/base/files.cpp
 	src/base/fonts.cpp
 	src/base/general.cpp
 	src/base/gui.cpp
