@@ -1,8 +1,12 @@
 #include "base/files.h"
 #include "base/fonts.h"
 #include "base/util.h"
+#include "base/zsys.h"
 #include "base/zc_alleg.h"
 #include "allegro5/allegro_native_dialog.h"
+#include "nfd.h"
+#include <dispatch/dispatch.h>
+#include <dispatch/queue.h>
 #include <optional>
 
 extern char temppath[4096];
@@ -32,6 +36,43 @@ static std::optional<std::string> open_dialog(std::string prompt, std::string in
 	}
 
 	al_destroy_native_file_dialog(dialog);
+	return path;
+}
+
+static std::optional<std::string> open_dialog2(std::string prompt, std::string initial_path, std::string ext, int mode)
+{
+	static bool initialized;
+	if (!initialized)
+	{
+		NFD_Init();
+		atexit(NFD_Quit);
+		initialized = true;
+	}
+
+	__block std::string path;
+	__block bool error;
+	dispatch_sync(dispatch_get_main_queue(), ^{
+		nfdchar_t *outPath;
+		nfdfilteritem_t filterItem[2] = { { "Source code", "c,cpp,cc" }, { "Headers", "h,hpp" } };
+		nfdresult_t result = NFD_OpenDialog(&outPath, filterItem, 2, NULL);
+		if (result == NFD_OKAY)
+		{
+			path = outPath;
+			NFD_FreePath(outPath);
+		}
+		else if (result == NFD_ERROR)
+		{
+			error = true;
+		}
+    });
+
+	if (path.empty())
+	{
+		if (error)
+			Z_error("Error: %s", NFD_GetError());
+		return std::nullopt;
+	}
+
 	return path;
 }
 
@@ -105,7 +146,7 @@ std::optional<std::string> prompt_for_existing_file(std::string prompt, std::str
 			return std::nullopt;
 		return temppath;
 	}
-	return open_dialog(prompt, initial_path, parse_ext(ext, list), ALLEGRO_FILECHOOSER_FILE_MUST_EXIST);
+	return open_dialog2(prompt, initial_path, parse_ext(ext, list), ALLEGRO_FILECHOOSER_FILE_MUST_EXIST);
 }
 
 std::optional<std::string> prompt_for_new_file(std::string prompt, std::string ext, EXT_LIST *list, std::string initial_path, bool usefilename)
@@ -118,7 +159,7 @@ std::optional<std::string> prompt_for_new_file(std::string prompt, std::string e
 			return std::nullopt;
 		return temppath;
 	}
-	return open_dialog(prompt, initial_path, parse_ext(ext, list), ALLEGRO_FILECHOOSER_SAVE);
+	return open_dialog2(prompt, initial_path, parse_ext(ext, list), ALLEGRO_FILECHOOSER_SAVE);
 }
 
 bool prompt_for_existing_file_compat(std::string prompt, std::string ext, EXT_LIST *list, std::string initial_path, bool usefilename)

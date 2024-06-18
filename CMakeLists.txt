@@ -177,7 +177,15 @@ endif()
 
 FetchContent_Declare(json URL https://github.com/nlohmann/json/releases/download/v3.11.3/json.tar.xz)
 FetchContent_MakeAvailable(json)
-# target_link_libraries(foo PRIVATE nlohmann_json::nlohmann_json)
+
+FetchContent_Declare(
+	nativefiledialog
+	GIT_REPOSITORY
+		https://github.com/btzy/nativefiledialog-extended
+	GIT_TAG
+		17b6e8ce219c0677f94b63636abb9296b28841ca
+)
+FetchContent_MakeAvailable(nativefiledialog) # exposed as nfd
 
 #############################################################
 # Allegro
@@ -494,7 +502,7 @@ if (EMSCRIPTEN)
     list(APPEND zcbase_sources src/base/emscripten_utils.cpp)
 endif()
 add_library(zcbase STATIC ${zcbase_sources})
-target_link_libraries(zcbase PUBLIC allegro_with_legacy fmt)
+target_link_libraries(zcbase PUBLIC allegro_with_legacy fmt nfd)
 target_include_directories(zcbase PUBLIC src)
 if(NOT WIN32)
 	target_include_directories(zcbase PUBLIC include/pstream)
