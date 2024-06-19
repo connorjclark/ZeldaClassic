@@ -46,7 +46,6 @@ static bool init_dialog()
 
 	return true;
 }
-#endif
 
 // In allegro 4 `parse_extension_string` allows , ; and space, despite only documenting that ; is supported.
 // Convert to `,` which is what NFD expects.
@@ -111,7 +110,6 @@ static std::optional<std::string> open_native_dialog_impl(FileMode mode, std::st
 
 static std::optional<std::string> open_native_dialog(FileMode mode, std::string initial_path, std::vector<filteritem_t>& filters)
 {
-#ifndef __EMSCRIPTEN__
 	NFD_ClearError();
 	if (!init_dialog())
 		return std::nullopt;
@@ -140,10 +138,8 @@ static std::optional<std::string> open_native_dialog(FileMode mode, std::string 
 	}
 
 	return path;
-#else
-	return std::nullopt;
-#endif
 }
+#endif
 
 static void trim_filename(std::string& path)
 {
@@ -191,8 +187,12 @@ std::optional<std::string> prompt_for_existing_file(std::string prompt, std::str
 		}
 	}
 
+#ifndef __EMSCRIPTEN__
 	auto filters = create_filter_list(ext, list);
 	return open_native_dialog(FileMode::Open, initial_path, filters);
+#else
+	return std::nullopt;
+#endif
 }
 
 std::optional<std::string> prompt_for_existing_folder(std::string prompt, std::string initial_path, std::string ext)
@@ -218,8 +218,12 @@ std::optional<std::string> prompt_for_existing_folder(std::string prompt, std::s
 		}
 	}
 
+#ifndef __EMSCRIPTEN__
 	std::vector<filteritem_t> filters;
 	return open_native_dialog(FileMode::Folder, initial_path, filters);
+#else
+	return std::nullopt;
+#endif
 }
 
 std::optional<std::string> prompt_for_new_file(std::string prompt, std::string ext, EXT_LIST *list, std::string initial_path, bool usefilename)
@@ -238,8 +242,12 @@ std::optional<std::string> prompt_for_new_file(std::string prompt, std::string e
 		}
 	}
 
+#ifndef __EMSCRIPTEN__
 	auto filters = create_filter_list(ext, list);
 	return open_native_dialog(FileMode::Save, initial_path, filters);
+#else
+	return std::nullopt;
+#endif
 }
 
 bool prompt_for_existing_file_compat(std::string prompt, std::string ext, EXT_LIST *list, std::string initial_path, bool usefilename)
