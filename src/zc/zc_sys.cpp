@@ -61,6 +61,7 @@
 #include "base/misctypes.h"
 #include "music_playback.h"
 #include <base/new_menu.h>
+#include <base/files.h>
 
 #ifdef __EMSCRIPTEN__
 #include "base/emscripten_utils.h"
@@ -6056,13 +6057,13 @@ static int32_t handle_on_load_replay(ReplayMode mode)
 		line_3.c_str(),
 		"OK","Nevermind",13,27,get_zc_font(font_lfont)) == 1)
 	{
-		char replay_path[2048];
-		strcpy(replay_path, "replays/");
+		std::string replay_path = "replays/";
 		if(ctrl && devpwd())
-			strcpy(replay_path, "../../tests/replays");
-		if (jwin_file_select_ex(
-				fmt::format("Load Replay ({})", REPLAY_EXTENSION).c_str(),
-				replay_path, REPLAY_EXTENSION.c_str(), 2048, -1, -1, get_zc_font(font_lfont)) == 0)
+			replay_path = "../../tests/replays/";
+		std::string prompt = fmt::format("Load Replay ({})", REPLAY_EXTENSION);
+		if (auto result = prompt_for_existing_file(prompt, REPLAY_EXTENSION, nullptr, replay_path))
+			replay_path = *result;
+		else
 			return D_CLOSE;
 
 		replay_quit();
@@ -6099,16 +6100,18 @@ int32_t onSaveReplay()
 				"The official replay file will be untouched.",
 				"Do you wish to continue?",
 				"Yes","No",13,27,get_zc_font(font_lfont)) != 1)
-			return D_CLOSE;
+			{
+				return D_CLOSE;
+			}
 
-			char replay_path[2048];
-			strcpy(replay_path, replay_get_replay_path().string().c_str());
-			if (jwin_file_select_ex(
-					fmt::format("Save Replay ({})", REPLAY_EXTENSION).c_str(),
-					replay_path, REPLAY_EXTENSION.c_str(), 2048, -1, -1, get_zc_font(font_lfont)) == 0)
+			std::string replay_path = replay_get_replay_path().string();
+			std::string prompt = fmt::format("Save Replay ({})", REPLAY_EXTENSION);
+			if (auto result = prompt_for_new_file(prompt, REPLAY_EXTENSION, nullptr, replay_path))
+				replay_path = *result;
+			else
 				return D_CLOSE;
 
-			if (fileexists(replay_path))
+			if (fileexists(replay_path.c_str()))
 			{
 				jwin_alert("Save Replay", "You cannot overwrite an existing file.",
 					NULL,NULL,"OK",NULL,13,27,get_zc_font(font_lfont));
@@ -6322,40 +6325,36 @@ int32_t d_savemidi_proc(int32_t msg,DIALOG *d,int32_t c)
 		}
 		
 		--i;
-		
-		// get file name
-		
-		int32_t  sel=0;
-		//struct ffblk f;
+
 		char title[40] = "Save MIDI: ";
-		char fname[2048];
-	memset(fname,0,2048);
 		static EXT_LIST list[] =
 		{
 			{ (char *)"MIDI files (*.mid)", (char *)"mid" },
-			{ (char *)"HTML files (*.html, *.html)", (char *)"htm html" },
 			{ NULL,								  NULL }
 		};
 		
 		strcpy(title+11, tunes[i].title);
 	title[39] = '\0';
-		
-		if(jwin_file_browse_ex(title, fname, list, &sel, 2048, -1, -1, get_zc_font(font_lfont))==0)
+
+		std::string fname;
+		if (auto result = prompt_for_new_file(title, "", list, "tune.mid"))
+			fname = *result;
+		else
 			goto done;
 			
-		if(exists(fname))
+		if(exists(fname.c_str()))
 		{
-			if(jwin_alert(title, fname, "already exists.", "Overwrite it?", "&Yes","&No",'y','n',get_zc_font(font_lfont))==2)
+			if(jwin_alert(title, fname.c_str(), "already exists.", "Overwrite it?", "&Yes","&No",'y','n',get_zc_font(font_lfont))==2)
 				goto done;
 		}
 		
 		// save midi i
 		
-		if(save_midi(fname, (MIDI*)tunes[i].data) != 0)
-			jwin_alert(title, "Error saving MIDI to", fname, NULL, "Darn", NULL,13,27,get_zc_font(font_lfont));
+		if (save_midi(fname.c_str(), (MIDI*)tunes[i].data) != 0)
+			jwin_alert(title, "Error saving MIDI to", fname.c_str(), NULL, "Darn", NULL,13,27,get_zc_font(font_lfont));
 			
 done:
-		chop_path(fname);
+		chop_path(fname.data());
 		ret = D_REDRAW;
 	}
 	

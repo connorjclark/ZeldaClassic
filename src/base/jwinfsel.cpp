@@ -1111,6 +1111,8 @@ static int32_t fs_elist_proc(int32_t msg, DIALOG *d, int32_t c)
 }
 
 /* jwin_dfile_select_ex:
+  *  NOTE: do not call directly, see base/files.h
+  *
   *  Same as jwin_file_select_ex except that it returns TRUE on OK, even
   *  if the selected path doesn't include a file name.
   *  This is for getting directories instead of files, so a blank filename isn't an issue.
@@ -1280,6 +1282,8 @@ std::string derelativize_path(std::string src_path)
 }
 
 /* jwin_file_browse_ex:
+  *  NOTE: do not call directly, see base/files.h
+  *
   *  Same as jwin_file_select but it lets you give it a list of
   *  possible extensions to choose from.
   */

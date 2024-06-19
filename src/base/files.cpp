@@ -49,10 +49,13 @@ static bool init_dialog()
 
 // In allegro 4 `parse_extension_string` allows , ; and space, despite only documenting that ; is supported.
 // Convert to `,` which is what NFD expects.
+// Allegro also ignores a leading dot.
 static void normalize_extension_string(std::string& str)
 {
 	util::replchar(str, ';', ',');
 	util::replchar(str, ' ', ',');
+	if (str.starts_with('.'))
+		str = str.substr(1);
 }
 
 struct filteritem_t
