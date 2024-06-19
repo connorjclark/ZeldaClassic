@@ -525,6 +525,7 @@ std::shared_ptr<GUI::Widget> LauncherDialog::view()
 				TabRef(name = "ZC Player", Row(framed = true,
 					Rows<2>(fitParent = true,
 						CONFIG_CHECKBOX("Fullscreen",App::zelda,"zeldadx","fullscreen",0),
+						CONFIG_CHECKBOX_I("Native File Dialog",App::zelda,"gui","native_file_dialog",0,"Use the file dialog provided by the OS for all file picker prompts."),
 						CONFIG_CHECKBOX("Skip titlescreen",App::zelda,"zeldadx","skip_title",0),
 						CONFIG_CHECKBOX("Disable Resizing",App::zelda,"gui","disable_window_resizing",0),
 						CONFIG_CHECKBOX("Cap FPS",App::zelda,"zeldadx","throttlefps",1),
@@ -593,6 +594,7 @@ std::shared_ptr<GUI::Widget> LauncherDialog::view()
 				TabRef(name = "ZC Editor", Row(framed = true,
 					Rows<2>(fitParent = true,
 						CONFIG_CHECKBOX_I("Fullscreen",App::zquest,"zquest","fullscreen",0,"Exactly stable."),
+						CONFIG_CHECKBOX_I("Native File Dialog",App::zquest,"gui","native_file_dialog",0,"Use the file dialog provided by the OS for all file picker prompts."),
 						CONFIG_CHECKBOX("Disable Resizing",App::zquest,"gui","disable_window_resizing",0),
 						CONFIG_CHECKBOX("Show FPS",App::zquest,"zquest","showfps",0),
 						CONFIG_CHECKBOX("Disable Sound",App::zquest,"zquest","nosound",0),
@@ -606,10 +608,10 @@ std::shared_ptr<GUI::Widget> LauncherDialog::view()
 						CONFIG_CHECKBOX("Palette Cycle",App::zquest,"zquest","cycle_on",1),
 						CONFIG_CHECKBOX_I("Reload Last Quest",App::zquest,"zquest","open_last_quest",1,"On launching, immediately attempt to open the last file edited."),
 						CONFIG_CHECKBOX("Save Paths",App::zquest,"zquest","save_paths",1),
-						CONFIG_CHECKBOX_I("Show Misalignments",App::zquest,"zquest","show_misalignments",0,"Shows blinking arrows on the sides of the screen where the solidity does not match across the screen border."),
-						CONFIG_CHECKBOX("Tile Protection",App::zquest,"zquest","tile_protection",1)
+						CONFIG_CHECKBOX_I("Show Misalignments",App::zquest,"zquest","show_misalignments",0,"Shows blinking arrows on the sides of the screen where the solidity does not match across the screen border.")
 					),
 					Rows<2>(fitParent = true,
+						CONFIG_CHECKBOX("Tile Protection",App::zquest,"zquest","tile_protection",1),
 						CONFIG_CHECKBOX("Uncompressed Autosaves",App::zquest,"zquest","uncompressed_auto_saves",1),
 						CONFIG_CHECKBOX_I("Warn on Init Script Change",App::zquest,"zquest","warn_initscript_changes",1,"When compiling ZScript, receive a warning when the global init script changes (which may break existing save files for the quest)"),
 						CONFIG_CHECKBOX_I("Show Ruleset Dialog on New Quest",App::zquest,"zquest","rulesetdialog",0,"On creating a 'New' quest, automatically pop up the 'Pick Ruleset' menu. (This can be found any time at 'Quest->Options->Pick Ruleset')"),
