@@ -14,6 +14,13 @@
 
 char temppath[4096];
 
+static bool use_native_file_dialog;
+
+void set_always_use_native_file_dialog(bool active)
+{
+	use_native_file_dialog = active;
+}
+
 static bool init_dialog()
 {
 	static bool initialized, tried;
@@ -141,32 +148,25 @@ static void trim_filename(std::string& path)
 
 static bool USE_OLD = true;
 
-static bool getname_nogo(std::string prompt, std::string ext, EXT_LIST *list, std::string initial_path, bool usefilename)
+static int getname_nogo(std::string prompt, std::string ext, EXT_LIST *list, std::string initial_path, bool usefilename)
 {
-    int ret = 0;
     int sel = 0;
-
     if (list == NULL)
-    {
-        ret = jwin_file_select_ex(prompt.c_str(), temppath, ext.c_str(), 2048, -1, -1, get_zc_font(font_lfont));
-    }
+        return jwin_file_select_ex(prompt.c_str(), temppath, ext.c_str(), 2048, -1, -1, get_zc_font(font_lfont));
     else
-    {
-        ret = jwin_file_browse_ex(prompt.c_str(), temppath, list, &sel, 2048, -1, -1, get_zc_font(font_lfont));
-    }
-
-    return ret != 0;
+        return jwin_file_browse_ex(prompt.c_str(), temppath, list, &sel, 2048, -1, -1, get_zc_font(font_lfont));
 }
 
-static bool getname(std::string prompt, std::string ext, EXT_LIST *list, std::string initial_path, bool usefilename)
+static int getname(std::string prompt, std::string ext, EXT_LIST *list, std::string initial_path, bool usefilename)
 {
 	extern BITMAP *tmp_scr;
     blit(screen,tmp_scr,0,0,0,0,screen->w,screen->h);
-    int32_t ret=0;
-    ret = getname_nogo(prompt,ext,list,initial_path,usefilename);
+    int ret = getname_nogo(prompt,ext,list,initial_path,usefilename);
     blit(tmp_scr,screen,0,0,0,0,screen->w,screen->h);
-    return ret != 0;
+    return ret;
 }
+
+#define FS_EXPLORER 6
 
 std::optional<std::string> prompt_for_existing_file(std::string prompt, std::string ext, EXT_LIST *list, std::string initial_path, bool usefilename)
 {
@@ -175,9 +175,13 @@ std::optional<std::string> prompt_for_existing_file(std::string prompt, std::str
 
 	if (USE_OLD)
 	{
-		if (!getname(prompt, ext, list, initial_path, usefilename))
-			return std::nullopt;
-		return temppath;
+		int ret = getname(prompt, ext, list, initial_path, usefilename);
+		if (ret != FS_EXPLORER)
+		{
+			if (!ret)
+				return std::nullopt;
+			return temppath;
+		}
 	}
 
 	auto filters = create_filter_list(ext, list);
@@ -214,9 +218,13 @@ std::optional<std::string> prompt_for_new_file(std::string prompt, std::string e
 
 	if (USE_OLD)
 	{
-		if (!getname(prompt, ext, list, initial_path, usefilename))
-			return std::nullopt;
-		return temppath;
+		int ret = getname(prompt, ext, list, initial_path, usefilename);
+		if (ret != FS_EXPLORER)
+		{
+			if (!ret)
+				return std::nullopt;
+			return temppath;
+		}
 	}
 
 	auto filters = create_filter_list(ext, list);

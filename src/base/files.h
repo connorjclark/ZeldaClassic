@@ -7,6 +7,11 @@
 
 extern char temppath[4096];
 
+// When set to true, the methods in this file will always directly open the OS file select dialog.
+// When false, instead the classic jwinfsel allegro 4 dialog will be used. However, the user may still select
+// a button in that dialog to use the native dialog.
+void set_always_use_native_file_dialog(bool active);
+
 // ext is semicolon separated list of file types. Ex: qst;qsu
 //   Note: space and comma is allowed to, since that is what allegro 4 does in `parse_extension_string` despite only documenting that `;` is supported.
 // Prefer `list` to provide labels associated with a group of extensions. When `list` is set, `ext` is ignored.
