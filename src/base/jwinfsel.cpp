@@ -772,8 +772,8 @@ static void stretch_dialog(DIALOG *d, int32_t width, int32_t height, int32_t sho
     d[FS_TYPES].w   = d[FS_OK].x - 2*hpad;
     d[FS_FILES].w   = d[FS_TYPES].w;
     d[FS_FILES].x   = d[FS_TYPES].x;
-	d[FS_EXPLORER].w = 45;
-    d[FS_EXPLORER].x = width - 50;
+    d[FS_EXPLORER].w = d[FS_CANCEL].w;
+    d[FS_EXPLORER].x = d[FS_CANCEL].x;
     d[FS_DISKS].w   = d[FS_OK].w;
     d[FS_DISKS].x   = d[FS_OK].x;
     d[FS_YIELD].x   = 0;
@@ -799,7 +799,7 @@ static void stretch_dialog(DIALOG *d, int32_t width, int32_t height, int32_t sho
     d[FS_FILES].h   = ((((d[FS_WIN].h - 2*vpad - d[FS_EDIT].y - d[FS_EDIT].h - (show_extlist?(d[FS_TYPES].h+vpad):0))-8)/font_h)*font_h)+8;
     d[FS_FILES].y   = (show_extlist?d[FS_TYPES].y:d[FS_WIN].h)-vpad-d[FS_FILES].h;
     d[FS_EXPLORER].h = d[FS_OK].h;
-    d[FS_EXPLORER].y = d[FS_OK].y;
+    d[FS_EXPLORER].y = d[FS_OK].y - vpad/2 - d[FS_OK].h;
     d[FS_DISKS].y   = d[FS_FILES].y;
     d[FS_DISKS].h   = font_h+8;
     d[FS_YIELD].y   = 0;
