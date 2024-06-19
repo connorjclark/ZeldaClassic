@@ -953,6 +953,9 @@ int32_t jwin_file_select_ex(AL_CONST char *message, char *path, AL_CONST char *e
     file_selector[FS_OK].dp = (void*)get_config_text("OK");
     file_selector[FS_CANCEL].dp = (void*)get_config_text("Cancel");
     file_selector[FS_EXPLORER].dp = (void*)EXPLORER_LABEL;
+#ifdef __EMSCRIPTEN__
+    file_selector[FS_EXPLORER].flags |= D_HIDDEN;
+#endif
     
     /* Set default attributes. */
     memcpy(attrb_state, default_attrb_state, sizeof(default_attrb_state));
@@ -1151,6 +1154,9 @@ int32_t jwin_dfile_select_ex(AL_CONST char *message, char *path, AL_CONST char *
     file_selector[FS_OK].dp = (void*)get_config_text("OK");
     file_selector[FS_CANCEL].dp = (void*)get_config_text("Cancel");
     file_selector[FS_EXPLORER].dp = (void*)EXPLORER_LABEL;
+#ifdef __EMSCRIPTEN__
+    file_selector[FS_EXPLORER].flags |= D_HIDDEN;
+#endif
     
     /* Set default attributes. */
     memcpy(attrb_state, default_attrb_state, sizeof(default_attrb_state));
@@ -1316,7 +1322,10 @@ int32_t jwin_file_browse_ex(AL_CONST char *message, char *path, EXT_LIST *list, 
     file_selector[FS_OK].dp = (void*)get_config_text("OK");
     file_selector[FS_CANCEL].dp = (void*)get_config_text("Cancel");
     file_selector[FS_EXPLORER].dp = (void*)EXPLORER_LABEL;
-    
+#ifdef __EMSCRIPTEN__
+    file_selector[FS_EXPLORER].flags |= D_HIDDEN;
+#endif
+
     fext_list = list;
     const char* ext2 = list[*list_sel].ext == NULL ? "" : list[*list_sel].ext;
     fext = (char*) malloc(strlen(ext2) + 1);

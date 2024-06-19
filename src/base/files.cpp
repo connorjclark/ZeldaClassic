@@ -1,11 +1,14 @@
 #include "base/files.h"
 #include "base/fonts.h"
 #include "base/zsys.h"
-#include "nfd.h"
 #include <string>
 #include <cstddef>
 #include <optional>
 #include <fmt/format.h>
+
+#ifndef __EMSCRIPTEN__
+#include "nfd.h"
+#endif
 
 #ifdef __APPLE__
 #include <dispatch/dispatch.h>
@@ -21,6 +24,7 @@ void set_always_use_native_file_dialog(bool active)
 	use_native_file_dialog = active;
 }
 
+#ifndef __EMSCRIPTEN__
 static bool init_dialog()
 {
 	static bool initialized, tried;
@@ -42,6 +46,7 @@ static bool init_dialog()
 
 	return true;
 }
+#endif
 
 // In allegro 4 `parse_extension_string` allows , ; and space, despite only documenting that ; is supported.
 // Convert to `,` which is what NFD expects.
@@ -106,6 +111,7 @@ static std::optional<std::string> open_native_dialog_impl(FileMode mode, std::st
 
 static std::optional<std::string> open_native_dialog(FileMode mode, std::string initial_path, std::vector<filteritem_t>& filters)
 {
+#ifndef __EMSCRIPTEN__
 	NFD_ClearError();
 	if (!init_dialog())
 		return std::nullopt;
@@ -134,6 +140,9 @@ static std::optional<std::string> open_native_dialog(FileMode mode, std::string 
 	}
 
 	return path;
+#else
+	return std::nullopt;
+#endif
 }
 
 static void trim_filename(std::string& path)
@@ -145,8 +154,6 @@ static void trim_filename(std::string& path)
 	while (i >= 0 && path[i] != '\\' && path[i] != '/')
 		path[i--] = 0;
 }
-
-static bool USE_OLD = true;
 
 static int getname_nogo(std::string prompt, std::string ext, EXT_LIST *list, std::string initial_path, bool usefilename)
 {
@@ -173,7 +180,7 @@ std::optional<std::string> prompt_for_existing_file(std::string prompt, std::str
 	if (!usefilename)
 		trim_filename(initial_path);
 
-	if (USE_OLD)
+	if (!use_native_file_dialog)
 	{
 		int ret = getname(prompt, ext, list, initial_path, usefilename);
 		if (ret != FS_EXPLORER)
@@ -190,21 +197,25 @@ std::optional<std::string> prompt_for_existing_file(std::string prompt, std::str
 
 std::optional<std::string> prompt_for_existing_folder(std::string prompt, std::string initial_path, std::string ext)
 {
-	if (USE_OLD)
+	if (!use_native_file_dialog)
 	{
 		extern BITMAP *tmp_scr;
 		blit(screen,tmp_scr,0,0,0,0,screen->w,screen->h);
 
 		char path[2048];
 		strcpy(path, initial_path.c_str());
-		if (!jwin_dfile_select_ex(prompt.c_str(), path, ext.c_str(), 2048, -1, -1, get_zc_font(font_lfont)))
+		int ret = jwin_dfile_select_ex(prompt.c_str(), path, ext.c_str(), 2048, -1, -1, get_zc_font(font_lfont));
+		if (ret != FS_EXPLORER)
 		{
-			blit(tmp_scr,screen,0,0,0,0,screen->w,screen->h);
-			return std::nullopt;
-		}
+			if (!jwin_dfile_select_ex(prompt.c_str(), path, ext.c_str(), 2048, -1, -1, get_zc_font(font_lfont)))
+			{
+				blit(tmp_scr,screen,0,0,0,0,screen->w,screen->h);
+				return std::nullopt;
+			}
 
-		blit(tmp_scr,screen,0,0,0,0,screen->w,screen->h);
-		return path;
+			blit(tmp_scr,screen,0,0,0,0,screen->w,screen->h);
+			return path;
+		}
 	}
 
 	std::vector<filteritem_t> filters;
@@ -216,7 +227,7 @@ std::optional<std::string> prompt_for_new_file(std::string prompt, std::string e
 	if (!usefilename)
 		trim_filename(initial_path);
 
-	if (USE_OLD)
+	if (!use_native_file_dialog)
 	{
 		int ret = getname(prompt, ext, list, initial_path, usefilename);
 		if (ret != FS_EXPLORER)
