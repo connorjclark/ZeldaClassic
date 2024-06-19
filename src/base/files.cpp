@@ -2,10 +2,16 @@
 #include "base/fonts.h"
 #include "base/zsys.h"
 #include "nfd.h"
+#include <sstream>
+#include <string>
 #include <cstddef>
+#include <optional>
+#include <fmt/format.h>
+
+#ifdef __APPLE__
 #include <dispatch/dispatch.h>
 #include <dispatch/queue.h>
-#include <optional>
+#endif
 
 char temppath[4096];
 
@@ -31,14 +37,53 @@ static bool init_dialog()
 	return true;
 }
 
-static std::vector<nfdfilteritem_t> create_filter_list(std::string ext, EXT_LIST *list)
+// In allegro 4 `parse_extension_string` allows , ; and space, despite only documenting that ; is supported.
+static std::vector<std::string> split_extension_string(std::string str)
+{
+	std::vector<std::string> result;
+	std::stringstream ss(str);
+	std::string line;
+	while (getline(ss, line)) 
+	{
+		size_t prev = 0, pos;
+		while ((pos = line.find_first_of(";, ", prev)) != std::string::npos)
+		{
+			if (pos > prev)
+				result.push_back(line.substr(prev, pos-prev));
+			prev = pos+1;
+		}
+		if (prev < line.length())
+			result.push_back(line.substr(prev, std::string::npos));
+	}
+	return result;
+}
+
+static void normalize_extension_string(std::string& str)
+{
+	util::replchar(str, ';', ',');
+	util::replchar(str, ' ', ',');
+}
+
+struct filteritem_t
+{
+	std::string text, ext;
+};
+
+static std::vector<filteritem_t> create_filter_list(std::string ext, EXT_LIST *list)
 {
 	if (list == nullptr)
-		return {{"", ext.c_str()}};
+	{
+		normalize_extension_string(ext);
+		return {{"", ext}};
+	}
 
-	std::vector<nfdfilteritem_t> result;
+	std::vector<filteritem_t> result;
 	for (EXT_LIST* cur = list; cur->ext != nullptr; cur++)
-		result.push_back({cur->text, cur->ext});
+	{
+		std::string ext = cur->ext;
+		normalize_extension_string(ext);
+		result.push_back({cur->text, ext});
+	}
 	return result;
 }
 
@@ -65,26 +110,31 @@ static std::optional<std::string> open_native_dialog_impl(std::string initial_pa
 	return std::nullopt;
 }
 
-static std::optional<std::string> open_native_dialog(std::string initial_path, std::vector<nfdfilteritem_t> filters, FileMode mode)
+static std::optional<std::string> open_native_dialog(std::string initial_path, std::vector<filteritem_t>& filters, FileMode mode)
 {
 	NFD_ClearError();
 	if (!init_dialog())
 		return std::nullopt;
+	
+	std::vector<nfdfilteritem_t> filters_nfd;
+	for (auto& filter : filters)
+		filters_nfd.push_back({filter.text.c_str(), filter.ext.c_str()});
 
 #ifdef __APPLE__
 	__block std::string path;
 	dispatch_sync(dispatch_get_main_queue(), ^{
 		if (auto r = open_native_dialog_impl(initial_path, filters, mode))
 			path = *r;
-    });
+	});
 #else
-	if (auto r = open_native_dialog_impl(initial_path, filters, mode))
+	std::string path;
+	if (auto r = open_native_dialog_impl(initial_path, filters_nfd, mode))
 		path = *r;
 #endif
 
 	if (path.empty())
 	{
-		if (strlen(NFD_GetError()))
+		if (NFD_GetError())
 			Z_error("Error: %s", NFD_GetError());
 		return std::nullopt;
 	}
@@ -141,7 +191,8 @@ std::optional<std::string> prompt_for_existing_file(std::string prompt, std::str
 			return std::nullopt;
 		return temppath;
 	}
-	return open_native_dialog(initial_path, create_filter_list(ext, list), FileMode::Open);
+	auto filters = create_filter_list(ext, list);
+	return open_native_dialog(initial_path, filters, FileMode::Open);
 }
 
 std::optional<std::string> prompt_for_new_file(std::string prompt, std::string ext, EXT_LIST *list, std::string initial_path, bool usefilename)
@@ -154,7 +205,8 @@ std::optional<std::string> prompt_for_new_file(std::string prompt, std::string e
 			return std::nullopt;
 		return temppath;
 	}
-	return open_native_dialog(initial_path, create_filter_list(ext, list), FileMode::Save);
+	auto filters = create_filter_list(ext, list);
+	return open_native_dialog(initial_path, filters, FileMode::Save);
 }
 
 bool prompt_for_existing_file_compat(std::string prompt, std::string ext, EXT_LIST *list, std::string initial_path, bool usefilename)
