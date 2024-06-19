@@ -2,6 +2,7 @@
 
 #include "allegro/gfx.h"
 #include "allegro5/joystick.h"
+#include "base/files.h"
 #include "base/render.h"
 #include "zalleg/zalleg.h"
 #include "base/qrs.h"
@@ -5974,45 +5975,6 @@ static DIALOG triforce_dlg[] =
 	{ NULL,				 0,	0,	0,	0,   0,	   0,	   0,	   0,		  0,			 0,	   NULL,						   NULL,  NULL }
 };
 
-bool zc_getname(const char *prompt,const char *ext,EXT_LIST *list,const char *def,bool usefilename)
-{
-	go();
-	int32_t ret=0;
-	ret = zc_getname_nogo(prompt,ext,list,def,usefilename);
-	comeback();
-	return ret != 0;
-}
-
-
-bool zc_getname_nogo(const char *prompt,const char *ext,EXT_LIST *list,const char *def,bool usefilename)
-{
-	if(def!=modulepath)
-		strcpy(modulepath,def);
-		
-	if(!usefilename)
-	{
-		int32_t i=(int32_t)strlen(modulepath);
-		
-		while(i>=0 && modulepath[i]!='\\' && modulepath[i]!='/')
-			modulepath[i--]=0;
-	}
-	
-	//  int32_t ret = file_select_ex(prompt,modulepath,ext,255,-1,-1);
-	int32_t ret=0;
-	int32_t sel=0;
-	
-	if(list==NULL)
-	{
-		ret = jwin_file_select_ex(prompt,modulepath,ext,2048,-1,-1,get_zc_font(font_lfont));
-	}
-	else
-	{
-		ret = jwin_file_browse_ex(prompt, modulepath, list, &sel, 2048, -1, -1, get_zc_font(font_lfont));
-	}
-	
-	return ret!=0;
-}
-
 int32_t onToggleRecordingNewSaves()
 {
 	if (zc_get_config("zeldadx", "replay_new_saves", false))
@@ -7160,15 +7122,13 @@ int32_t onClock()
 
 int32_t onQstPath()
 {
-	char path[2048];
-	
+	char initial_path[2048];
 	chop_path(qstdir);
-	strcpy(path,qstdir);
+	strcpy(initial_path, qstdir);
 	
-	go();
-	
-	if(jwin_dfile_select_ex("Quest File Directory", path, "qst", 2048, -1, -1, get_zc_font(font_lfont)))
+	if (auto result = prompt_for_existing_folder("Quest File Directory", initial_path, "qst"))
 	{
+		char* path = result->data();
 		chop_path(path);
 		fix_filename_case(path);
 		fix_filename_slashes(path);
@@ -7177,8 +7137,7 @@ int32_t onQstPath()
 		zc_set_config("zeldadx","quest_dir",qstdir);
 		flush_config_file();
 	}
-	
-	comeback();
+
 	return D_O_K;
 }
 

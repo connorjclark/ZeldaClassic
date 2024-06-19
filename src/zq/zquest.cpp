@@ -3739,16 +3739,6 @@ int32_t onGotoPage()
     return D_O_K;
 }
 
-bool getname(const char *prompt,const char *ext,EXT_LIST *list,const char *def,bool usefilename)
-{
-    go();
-    int32_t ret=0;
-    ret = getname_nogo(prompt,ext,list,def,usefilename);
-    comeback();
-    return ret != 0;
-}
-
-
 bool getname_nogo(const char *prompt,const char *ext,EXT_LIST *list,const char *def,bool usefilename)
 {
     if(def!=temppath)

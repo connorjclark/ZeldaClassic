@@ -1,4 +1,5 @@
 #include "allegro5/allegro_native_dialog.h"
+#include "base/files.h"
 #include "base/version.h"
 #include "base/zc_alleg.h"
 #include "launcher/launcher_dialog.h"
@@ -564,15 +565,16 @@ std::shared_ptr<GUI::Widget> LauncherDialog::view()
 						Button(hAlign = 1.0, forceFitH = true,
 							text = "Select Save Folder", onPressFunc = [&]()
 							{
-								char save_folder[4096] = {0};
-								strncpy(save_folder, zc_get_config("zeldadx", "save_folder", "saves", App::zelda), 4096);
-								if(jwin_dfile_select_ex("Save Folder", save_folder, "", 2048, -1, -1, get_zc_font(font_lfont)))
+								char cur_save_folder[4096] = {0};
+								strncpy(cur_save_folder, zc_get_config("zeldadx", "save_folder", "saves", App::zelda), 4096);
+								if (auto result = prompt_for_existing_folder("Save Folder", cur_save_folder))
 								{
-									const char* ext = get_extension(save_folder);
+									std::string save_folder = *result;
+									const char* ext = get_extension(save_folder.c_str());
 									if (strlen(ext))
 										return;
 									char path[4096] = {0};
-									relativize_path(path, save_folder);
+									relativize_path(path, save_folder.c_str());
 									tf_savefile->setText(path);
 									zc_set_config("zeldadx", "save_folder", path, App::zelda);
 								}
@@ -647,7 +649,7 @@ std::shared_ptr<GUI::Widget> LauncherDialog::view()
 					tf_theme[0] = TextField(read_only = true, maxLength = 255),
 					Button(text = "Browse", fitParent = true, onPressFunc = [&]()
 						{
-							if(getname("Load Theme", "ztheme", NULL, zthemepath, false))
+							if(prompt_for_existing_file_compat("Load Theme", "ztheme", NULL, zthemepath, false))
 							{
 								char path[4096] = {0};
 								relativize_path(path, temppath);
@@ -687,7 +689,7 @@ std::shared_ptr<GUI::Widget> LauncherDialog::view()
 					tf_theme[1] = TextField(read_only = true, maxLength = 255),
 					Button(text = "Browse", fitParent = true, onPressFunc = [&]()
 						{
-							if(getname("Load Theme", "ztheme", NULL, zthemepath, false))
+							if(prompt_for_existing_file_compat("Load Theme", "ztheme", NULL, zthemepath, false))
 							{
 								char path[4096] = {0};
 								relativize_path(path, temppath);
@@ -728,7 +730,7 @@ std::shared_ptr<GUI::Widget> LauncherDialog::view()
 					tf_theme[2] = TextField(read_only = true, maxLength = 255),
 					Button(text = "Browse", fitParent = true, onPressFunc = [&]()
 						{
-							if(getname("Load Theme", "ztheme", NULL, zthemepath, false))
+							if(prompt_for_existing_file_compat("Load Theme", "ztheme", NULL, zthemepath, false))
 							{
 								char path[4096] = {0};
 								relativize_path(path, temppath);
