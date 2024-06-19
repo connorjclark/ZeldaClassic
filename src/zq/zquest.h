@@ -342,8 +342,6 @@ int32_t onIncreaseCSet();
 int32_t onDecreaseCSet();
 int32_t onGotoPage();
 
-bool getname_nogo(const char *prompt,const char *ext,EXT_LIST *list,const char *def,bool usefilename);
-
 int32_t playZCForever();
 int32_t playTune1();
 int32_t playTune2();

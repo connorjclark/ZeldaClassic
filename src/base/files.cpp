@@ -2,7 +2,6 @@
 #include "base/fonts.h"
 #include "base/zsys.h"
 #include "nfd.h"
-#include <sstream>
 #include <string>
 #include <cstddef>
 #include <optional>
@@ -38,26 +37,7 @@ static bool init_dialog()
 }
 
 // In allegro 4 `parse_extension_string` allows , ; and space, despite only documenting that ; is supported.
-static std::vector<std::string> split_extension_string(std::string str)
-{
-	std::vector<std::string> result;
-	std::stringstream ss(str);
-	std::string line;
-	while (getline(ss, line)) 
-	{
-		size_t prev = 0, pos;
-		while ((pos = line.find_first_of(";, ", prev)) != std::string::npos)
-		{
-			if (pos > prev)
-				result.push_back(line.substr(prev, pos-prev));
-			prev = pos+1;
-		}
-		if (prev < line.length())
-			result.push_back(line.substr(prev, std::string::npos));
-	}
-	return result;
-}
-
+// Convert to `,` which is what NFD expects.
 static void normalize_extension_string(std::string& str)
 {
 	util::replchar(str, ';', ',');

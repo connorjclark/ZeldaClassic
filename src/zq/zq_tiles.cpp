@@ -5274,8 +5274,7 @@ void grab_tile(int32_t tile,int32_t &cs)
 			
 		if(dofile)
 		{
-		
-			if(getname_nogo("Load File",NULL,list,imagepath,true))
+			if (prompt_for_existing_file_compat("Load File", "", list, imagepath, true))
 			{
 				zc_set_palette(RAMpal);
 				pal=0;

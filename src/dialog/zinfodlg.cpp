@@ -577,7 +577,7 @@ bool load_zi(zinfo& tzi)
 		{ NULL, NULL }
 	};
 	
-	if(!prompt_for_existing_file_compat("Load File",NULL,extlist,filepath,true))
+	if(!prompt_for_existing_file_compat("Load File","",extlist,filepath,true))
 		return false;
 	PACKFILE *inf=pack_fopen_password(temppath, F_READ, "");
 	if(!inf) return false;
