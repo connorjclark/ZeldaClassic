@@ -125,7 +125,7 @@ int32_t parse_script_string(script_data **script, string const& scriptstr, bool 
 {
 	// TODO: refactor to just take a script_data*
 	ASSERT(*script);
-	auto& zasm = (*script)->zasm_script->zasm;
+	auto& zasm = (*script)->_zasm_script->zasm;
 	saved=false;
 	string buffer;
 	char combuf[SUBBUFSZ] = {0};
@@ -539,7 +539,7 @@ int32_t parse_script_string(script_data **script, string const& scriptstr, bool 
 	}
 
 	if (success)
-		(*script)->zasm_script->size = zasm.size();
+		(*script)->_zasm_script->size = zasm.size();
 
 	if(report_success && success) //(!stop) // stop is never true here
 	{

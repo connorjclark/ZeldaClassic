@@ -446,7 +446,7 @@ dword getNumGlobalArrays()
 {
 	word ret = 0;
 
-	auto script = globalscripts[GLOBAL_SCRIPT_INIT]->zasm_script;
+	auto script = globalscripts[GLOBAL_SCRIPT_INIT]->_zasm_script;
 	if (!script)
 		return 0;
 

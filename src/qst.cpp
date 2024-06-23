@@ -13008,7 +13008,7 @@ int32_t read_one_ffscript(PACKFILE *f, zquestheader *, int32_t script_index, wor
 
 	zasm_script_id id = zasm_scripts.size();
 	auto& zs = zasm_scripts.emplace_back(std::make_shared<zasm_script>(id, (*script)->name(), std::move(zasm)));
-	(*script)->zasm_script = zs;
+	(*script)->_zasm_script = zs;
 
 	return 0;
 }

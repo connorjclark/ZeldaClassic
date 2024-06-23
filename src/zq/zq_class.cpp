@@ -10723,9 +10723,10 @@ int32_t writestrings_tsv(PACKFILE *f)
     new_return(0);
 }
 
+std::string parse_msg_str(std::string const& s);
+
 void parse_strings_tsv(std::string tsv)
 {
-	std::string parse_msg_str(std::string const& s);
 	std::map<std::string, std::function<void(MsgStr&, const std::string&)>> fields = {
 		{ "message", [](auto& msg, auto& text){ msg.s = parse_msg_str(text); } },
 		{ "next", [](auto& msg, auto& text){ msg.nextstring = std::stoi(text); } },
@@ -13099,7 +13100,7 @@ int32_t write_one_ffscript(PACKFILE *f, zquestheader *Header, int32_t i, script_
     Header=Header;
     i=i;
     
-    size_t num_commands = (*script)->zasm_script ? (*script)->zasm_script->size : 0;
+    size_t num_commands = (*script)->_zasm_script ? (*script)->_zasm_script->size : 0;
     
     if(!p_iputl(num_commands,f))
     {
@@ -13214,7 +13215,7 @@ int32_t write_one_ffscript(PACKFILE *f, zquestheader *Header, int32_t i, script_
 	
     for(int32_t j=0; j<num_commands; j++)
     {
-        auto& zas = (*script)->zasm_script->zasm[j];
+        auto& zas = (*script)->_zasm_script->zasm[j];
         if(!p_iputw(zas.command,f))
         {
             new_return(20);

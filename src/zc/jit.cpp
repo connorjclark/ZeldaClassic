@@ -177,9 +177,9 @@ static void create_compile_tasks(script_data *scripts[], size_t start, size_t ma
 	for (size_t i = start; i < max; i++)
 	{
 		auto script = scripts[i];
-		if (script && script->valid() && !compiled_functions.contains(script->zasm_script->id))
+		if (script && script->valid() && !compiled_functions.contains(script->_zasm_script->id))
 		{
-			pending_scripts.push_back(script->zasm_script.get());
+			pending_scripts.push_back(script->_zasm_script.get());
 		}
 	}
 }

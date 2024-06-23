@@ -1783,7 +1783,7 @@ struct script_data
 	// The zasm instructions used by this script.
 	// In quests before 3.0, each script had its own chunk of zasm.
 	// Since 3.0 all scripts share the same chunk.
-	std::shared_ptr<zasm_script> zasm_script = nullptr;
+	std::shared_ptr<zasm_script> _zasm_script = nullptr;
 	zasm_meta meta;
 	script_id id;
 
@@ -1799,12 +1799,12 @@ struct script_data
 	
 	bool valid() const
 	{
-		return zasm_script && zasm_script->valid();
+		return _zasm_script && _zasm_script->valid();
 	}
 	
 	void disable()
 	{
-		zasm_script = nullptr;
+		_zasm_script = nullptr;
 	}
 };
 

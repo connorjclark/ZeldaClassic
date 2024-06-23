@@ -36333,20 +36333,20 @@ int32_t run_script(ScriptType type, const word script, const int32_t i)
 	JittedScriptHandle* jitted_script = nullptr;
 	if (jit_is_enabled())
 	{
-		auto key = std::make_pair(curscript->zasm_script.get(), ri);
+		auto key = std::make_pair(curscript->_zasm_script.get(), ri);
 		auto it = jitted_scripts.find(key);
 		if (it == jitted_scripts.end())
 		{
-			jitted_scripts[key] = jitted_script = jit_create_script_handle(curscript->zasm_script.get(), ri);
+			jitted_scripts[key] = jitted_script = jit_create_script_handle(curscript->_zasm_script.get(), ri);
 		}
 		else
 		{
 			jitted_script = it->second;
 		}
 	}
-	else if (zasm_optimize_enabled() && curscript->valid() && !curscript->zasm_script->optimized)
+	else if (zasm_optimize_enabled() && curscript->valid() && !curscript->_zasm_script->optimized)
 	{
-		zasm_optimize_and_log(curscript->zasm_script.get());
+		zasm_optimize_and_log(curscript->_zasm_script.get());
 	}
 
 	runtime_script_debug_handle = nullptr;
@@ -36355,7 +36355,7 @@ int32_t run_script(ScriptType type, const word script, const int32_t i)
 		if (!script_debug_handles.contains(curscript->id))
 		{
 			script_debug_handles.emplace(curscript->id, ScriptDebugHandle(
-				curscript->zasm_script.get(), ScriptDebugHandle::OutputSplit::ByFrame, curscript->name()));
+				curscript->_zasm_script.get(), ScriptDebugHandle::OutputSplit::ByFrame, curscript->name()));
 		}
 		runtime_script_debug_handle = &script_debug_handles.at(curscript->id);
 		runtime_script_debug_handle->update_file();
@@ -36472,7 +36472,7 @@ int32_t run_script_int(bool is_jitted)
 	bool is_debugging = script_debug_is_runtime_debugging() == 2;
 	bool increment = true;
 	static std::vector<ffscript> empty_zasm = {{0xFFFF}};
-	const auto& zasm = curscript->valid() ? curscript->zasm_script->zasm : empty_zasm;
+	const auto& zasm = curscript->valid() ? curscript->_zasm_script->zasm : empty_zasm;
 	word scommand = zasm[ri->pc].command;
 	bool hit_invalid_zasm = false;
 	bool no_dealloc = false;
