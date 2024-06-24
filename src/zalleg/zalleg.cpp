@@ -141,15 +141,21 @@ void zalleg_setup_allegro(App id, int argc, char **argv)
 		}
 	}
 
+	Z_message("OK 1\n");
+
 	if (!zcm.init(true))
 	{
 		Z_error_fatal("ZC Player I/O Error: No module definitions found. Please check your settings in %s.cfg.\n", "zc");
 	}
 
+	Z_message("OK 2\n");
+
 	render_set_debug(zc_get_config("graphics","render_debug",0));
 	set_always_use_native_file_dialog(zc_get_config("gui","native_file_dialog",0));
 
 	packfile_password(datapwd);
+
+	Z_message("OK 3\n");
 
 	Z_message("Fonts.Dat...");
 	char fontsdat_sig[52]={0};
