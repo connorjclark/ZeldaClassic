@@ -105,16 +105,16 @@ if(APPLE AND WANT_MAC_DEBUG_FILES)
 	endif()
 endif()
 
-if(LINUX)
-	find_program(EU_STRIP_PROGRAM eu-strip)
-	if (EU_STRIP_PROGRAM)
-		foreach(lang C CXX)
-			foreach(var LINK_EXECUTABLE CREATE_SHARED_LIBRARY)
-				set(CMAKE_${lang}_${var} "${CMAKE_${lang}_${var}}" "${EU_STRIP_PROGRAM} --strip-debug -f <TARGET>.debug <TARGET>")
-			endforeach()
-		endforeach()
-	endif()
-endif()
+# if(LINUX)
+# 	find_program(EU_STRIP_PROGRAM eu-strip)
+# 	if (EU_STRIP_PROGRAM)
+# 		foreach(lang C CXX)
+# 			foreach(var LINK_EXECUTABLE CREATE_SHARED_LIBRARY)
+# 				set(CMAKE_${lang}_${var} "${CMAKE_${lang}_${var}}" "${EU_STRIP_PROGRAM} --strip-debug -f <TARGET>.debug <TARGET>")
+# 			endforeach()
+# 		endforeach()
+# 	endif()
+# endif()
 
 function(enable_unity_build UB_SUFFIX SOURCE_VARIABLE_NAME)
   set(files ${${SOURCE_VARIABLE_NAME}})
@@ -137,16 +137,17 @@ endfunction(enable_unity_build)
 #############################################################
 
 if(NOT EMSCRIPTEN)
-	FetchContent_Declare(
-		zlib
-		GIT_REPOSITORY
-			https://github.com/Mizux/zlib.git
-		GIT_TAG
-			19d7d6b32ee3af4ed4bdec415f42f518c93b5025
-		FIND_PACKAGE_ARGS NAMES ZLIB
-	)
+	# FetchContent_Declare(
+	# 	zlib
+	# 	GIT_REPOSITORY
+	# 		https://github.com/Mizux/zlib.git
+	# 	GIT_TAG
+	# 		19d7d6b32ee3af4ed4bdec415f42f518c93b5025
+	# 	FIND_PACKAGE_ARGS NAMES ZLIB
+	# )
 	set(BUILD_SHARED_LIBS ON)
-	FetchContent_MakeAvailable(zlib)
+	# FetchContent_MakeAvailable(zlib)
+	find_package(ZLIB REQUIRED)
 
 	if(NOT ZLIB_LIBRARIES)
 		set(ZLIB_INCLUDE_DIR ${zlib_SOURCE_DIR} ${zlib_BINARY_DIR})
@@ -154,19 +155,20 @@ if(NOT EMSCRIPTEN)
 		set(ZLIB_LIBRARIES ZLIB::ZLIB)
 	endif()
 
-	set(PNG_BUILD_ZLIB ON CACHE BOOL "")
-	set(PNG_STATIC OFF CACHE BOOL "")
-	set(PNG_TESTS OFF CACHE BOOL "")
-	set(WANT_IMAGE_PNG OFF)
-	FetchContent_Declare(
-		png
-		GIT_REPOSITORY
-			https://github.com/glennrp/libpng.git
-		GIT_TAG
-			v1.6.38
-		FIND_PACKAGE_ARGS NAMES PNG
-	)
-	FetchContent_MakeAvailable(png)
+	# set(PNG_BUILD_ZLIB ON CACHE BOOL "")
+	# set(PNG_STATIC OFF CACHE BOOL "")
+	# set(PNG_TESTS OFF CACHE BOOL "")
+	# set(WANT_IMAGE_PNG OFF)
+	# FetchContent_Declare(
+	# 	png
+	# 	GIT_REPOSITORY
+	# 		https://github.com/glennrp/libpng.git
+	# 	GIT_TAG
+	# 		v1.6.38
+	# 	FIND_PACKAGE_ARGS NAMES PNG
+	# )
+	# FetchContent_MakeAvailable(png)
+	find_package(PNG REQUIRED)
 
 	if(NOT PNG_LIBRARIES)
 		set(PNG_LIBRARIES png)
@@ -1161,3 +1163,19 @@ endif()
 if(EMSCRIPTEN)
 	add_subdirectory(web)
 endif()
+
+
+# install(TARGETS zplayer zeditor zscript zlauncher
+# 	RUNTIME DESTINATION bin
+# 	LIBRARY DESTINATION lib
+# 	ARCHIVE DESTINATION lib/zquestclassic)
+
+
+add_executable(test_program main_test.cpp)
+target_link_libraries(test_program PUBLIC gme)
+
+install(TARGETS test_program
+	RUNTIME DESTINATION bin
+	LIBRARY DESTINATION lib
+	ARCHIVE DESTINATION lib/zquestclassic)
+
