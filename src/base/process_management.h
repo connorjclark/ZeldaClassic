@@ -27,6 +27,14 @@ static uint32_t __dummy_;
 	#define ZLAUNCHER_FILE "zlauncher.exe"
 	#define ZUPDATER_FILE "zupdater.exe"
 	#define PYTHON "pythonw"
+#elif defined(ALLEGRO_LINUX) && !defined(LEGACY_LINUX_PACKAGING)
+	// TODO: update build.yml packaging to not rely on this.
+	#define ZPLAYER_FILE "./bin/zplayer"
+	#define ZEDITOR_FILE "./bin/zeditor"
+	#define ZSCRIPT_FILE "./bin/zscript"
+	#define ZLAUNCHER_FILE "./bin/zlauncher"
+	#define ZUPDATER_FILE "./bin/zupdater"
+	#define PYTHON "python"
 #else
 	#define ZPLAYER_FILE "./zplayer"
 	#define ZEDITOR_FILE "./zeditor"
