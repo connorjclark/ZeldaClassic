@@ -159,18 +159,17 @@ endif()
 #############################################################
 
 if(NOT EMSCRIPTEN)
-	# FetchContent_Declare(
-	# 	zlib
-	# 	GIT_REPOSITORY
-	# 		https://github.com/Mizux/zlib.git
-	# 	GIT_TAG
-	# 		19d7d6b32ee3af4ed4bdec415f42f518c93b5025
-	# 	FIND_PACKAGE_ARGS NAMES ZLIB
-	#   EXCLUDE_FROM_ALL
-	# )
+	FetchContent_Declare(
+		zlib
+		GIT_REPOSITORY
+			https://github.com/Mizux/zlib.git
+		GIT_TAG
+			19d7d6b32ee3af4ed4bdec415f42f518c93b5025
+		FIND_PACKAGE_ARGS NAMES ZLIB
+	  EXCLUDE_FROM_ALL
+	)
 	set(BUILD_SHARED_LIBS ON)
-	# FetchContent_MakeAvailable(zlib)
-	find_package(ZLIB REQUIRED)
+	FetchContent_MakeAvailable(zlib)
 
 	if(NOT ZLIB_LIBRARIES)
 		set(ZLIB_INCLUDE_DIR ${zlib_SOURCE_DIR} ${zlib_BINARY_DIR})
@@ -178,21 +177,20 @@ if(NOT EMSCRIPTEN)
 		set(ZLIB_LIBRARIES ZLIB::ZLIB)
 	endif()
 
-	# set(PNG_BUILD_ZLIB ON CACHE BOOL "")
-	# set(PNG_STATIC OFF CACHE BOOL "")
-	# set(PNG_TESTS OFF CACHE BOOL "")
-	# set(WANT_IMAGE_PNG OFF)
-	# FetchContent_Declare(
-	# 	png
-	# 	GIT_REPOSITORY
-	# 		https://github.com/glennrp/libpng.git
-	# 	GIT_TAG
-	# 		v1.6.38
-	# 	FIND_PACKAGE_ARGS NAMES PNG
-	#   EXCLUDE_FROM_ALL
-	# )
-	# FetchContent_MakeAvailable(png)
-	find_package(PNG REQUIRED)
+	set(PNG_BUILD_ZLIB ON CACHE BOOL "")
+	set(PNG_STATIC OFF CACHE BOOL "")
+	set(PNG_TESTS OFF CACHE BOOL "")
+	set(WANT_IMAGE_PNG OFF)
+	FetchContent_Declare(
+		png
+		GIT_REPOSITORY
+			https://github.com/glennrp/libpng.git
+		GIT_TAG
+			v1.6.38
+		FIND_PACKAGE_ARGS NAMES PNG
+	  EXCLUDE_FROM_ALL
+	)
+	FetchContent_MakeAvailable(png)
 
 	if(NOT PNG_LIBRARIES)
 		set(PNG_LIBRARIES png)
