@@ -165,7 +165,6 @@ if(NOT EMSCRIPTEN)
 			https://github.com/Mizux/zlib.git
 		GIT_TAG
 			19d7d6b32ee3af4ed4bdec415f42f518c93b5025
-		FIND_PACKAGE_ARGS NAMES ZLIB
 	  EXCLUDE_FROM_ALL
 	)
 	set(BUILD_SHARED_LIBS ON)
@@ -187,7 +186,6 @@ if(NOT EMSCRIPTEN)
 			https://github.com/glennrp/libpng.git
 		GIT_TAG
 			v1.6.38
-		FIND_PACKAGE_ARGS NAMES PNG
 	  EXCLUDE_FROM_ALL
 	)
 	FetchContent_MakeAvailable(png)
