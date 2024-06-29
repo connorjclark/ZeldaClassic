@@ -219,6 +219,56 @@ if (NOT EMSCRIPTEN)
 	zc_install_targets(nfd)
 endif()
 
+FetchContent_Declare(imgui_external
+	URL https://github.com/ocornut/imgui/archive/refs/tags/v1.90.8.tar.gz
+	EXCLUDE_FROM_ALL
+)
+FetchContent_MakeAvailable(imgui_external)
+
+add_library(imgui
+	${imgui_external_SOURCE_DIR}/imgui.cpp
+	${imgui_external_SOURCE_DIR}/imgui_draw.cpp
+	${imgui_external_SOURCE_DIR}/imgui_tables.cpp
+	${imgui_external_SOURCE_DIR}/imgui_widgets.cpp
+	${imgui_external_SOURCE_DIR}/imgui_demo.cpp
+	${imgui_external_SOURCE_DIR}/backends/imgui_impl_allegro5.cpp
+)
+target_include_directories(imgui PUBLIC ${imgui_external_SOURCE_DIR})
+
+# https://code.qt.io/qt/qt5.git
+
+# FetchContent_Declare(
+# 	Qt6
+# 	GIT_REPOSITORY
+# 		https://code.qt.io/qt/qt5.git
+# 	GIT_TAG
+# 		v6.7.2
+# 	GIT_SHALLOW TRUE
+# 	EXCLUDE_FROM_ALL
+# )
+# FetchContent_MakeAvailable(Qt6)
+
+# # find_package(Qt6 REQUIRED COMPONENTS Core)
+# qt_standard_project_setup()
+
+find_package(Qt6 REQUIRED COMPONENTS Quick Gui)
+# qt_standard_project_setup()
+set(CMAKE_AUTOMOC ON)
+set(CMAKE_AUTORCC ON)
+set(CMAKE_AUTOUIC ON)
+# qt_standard_project_setup(REQUIRES 6.5)
+
+qt_add_executable(helloworld
+    src/launcher2/launcher_qt.cpp
+)
+
+qt_add_qml_module(nameHere
+    URI gui
+    VERSION 1.0
+    QML_FILES resources/qml/hw.qml)
+
+target_link_libraries(helloworld PRIVATE Qt6::Gui Qt6::Quick)
+
 #############################################################
 # Allegro
 #############################################################
@@ -862,6 +912,21 @@ set_property(TARGET zlauncher PROPERTY VS_DPI_AWARE "PerMonitor")
 target_link_libraries(zlauncher PRIVATE zalleg zcbase zcgui zconsolelogger ${LAUNCHERLIBSEXTRA})
 
 #############################################################
+# Launcher (new)
+#############################################################
+
+if(MSVC)
+	list(APPEND LAUNCHEREXTRASOURCES zl_icon.rc)
+elseif(LINUX)
+	list(APPEND LAUNCHEREXTRASOURCES zl_icon.c)
+endif()
+
+add_executable(zlauncher2 src/launcher2/launcher.cpp)
+target_compile_definitions(zlauncher2 PRIVATE IS_LAUNCHER)
+set_property(TARGET zlauncher2 PROPERTY VS_DPI_AWARE "PerMonitor")
+target_link_libraries(zlauncher2 PRIVATE zalleg imgui)
+
+#############################################################
 # Standalone
 #############################################################
 
@@ -935,7 +1000,7 @@ endif()
 # Misc.
 #############################################################
 
-set(zc_targets zeditor zplayer zlauncher zalleg zcbase zcgui zcsound zscript zconsolelogger zupdater)
+set(zc_targets zeditor zplayer zlauncher zlauncher2 zalleg zcbase zcgui zcsound zscript zconsolelogger zupdater)
 set(zc_clang_errors
 	-Werror=array-bounds
 	-Werror=format
@@ -1164,7 +1229,7 @@ if(CMAKE_GENERATOR MATCHES "Visual Studio")
 
 	# Organize into folders
 	set_property(GLOBAL PROPERTY USE_FOLDERS ON)
-	set_target_properties(zplayer zeditor zscript zlauncher zupdater package package_no_archive PROPERTIES FOLDER "")
+	set_target_properties(zplayer zeditor zscript zlauncher zlauncher2 zupdater package package_no_archive PROPERTIES FOLDER "")
 	set_target_properties(run_replay_tests_all run_replay_tests_basic run_replay_tests_all_1s run_replay_tests_all_10s run_replay_tests_all_100s PROPERTIES FOLDER "Replay Tests")
 	set_target_properties(zcbase zalleg zcgui zcsound PROPERTIES FOLDER "Our Libraries")
 	set_target_properties(gme dumb aldmb PROPERTIES FOLDER Sound)
@@ -1207,4 +1272,4 @@ if(EMSCRIPTEN)
 	add_subdirectory(web)
 endif()
 
-zc_install_targets(allegro allegro-legacy allegro_with_legacy zlauncher zplayer zeditor zscript zcsound ${SOUNDLIBS})
+zc_install_targets(allegro allegro-legacy allegro_with_legacy zlauncher zlauncher2 zplayer zeditor zscript zcsound ${SOUNDLIBS})
