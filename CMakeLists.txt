@@ -219,8 +219,12 @@ if (NOT EMSCRIPTEN)
 	zc_install_targets(nfd)
 endif()
 
-FetchContent_Declare(imgui_external
-	URL https://github.com/ocornut/imgui/archive/refs/tags/v1.90.8.tar.gz
+FetchContent_Declare(
+	imgui_external
+	GIT_REPOSITORY
+		https://github.com/connorjclark/imgui
+	GIT_TAG
+		8b5d08c84c8693afe28d7837f8b4cf6dc1bc5939
 	EXCLUDE_FROM_ALL
 )
 FetchContent_MakeAvailable(imgui_external)
@@ -234,6 +238,8 @@ add_library(imgui
 	${imgui_external_SOURCE_DIR}/backends/imgui_impl_allegro5.cpp
 )
 target_include_directories(imgui PUBLIC ${imgui_external_SOURCE_DIR})
+target_link_libraries(imgui PUBLIC allegro allegro_primitives)
+target_compile_definitions(imgui PUBLIC ImDrawIdx=int)
 
 # https://code.qt.io/qt/qt5.git
 
@@ -251,23 +257,23 @@ target_include_directories(imgui PUBLIC ${imgui_external_SOURCE_DIR})
 # # find_package(Qt6 REQUIRED COMPONENTS Core)
 # qt_standard_project_setup()
 
-find_package(Qt6 REQUIRED COMPONENTS Quick Gui)
+# find_package(Qt6 REQUIRED COMPONENTS Quick Gui)
 # qt_standard_project_setup()
-set(CMAKE_AUTOMOC ON)
-set(CMAKE_AUTORCC ON)
-set(CMAKE_AUTOUIC ON)
+# set(CMAKE_AUTOMOC ON)
+# set(CMAKE_AUTORCC ON)
+# set(CMAKE_AUTOUIC ON)
 # qt_standard_project_setup(REQUIRES 6.5)
 
-qt_add_executable(helloworld
-    src/launcher2/launcher_qt.cpp
-)
+# qt_add_executable(helloworld
+#     src/launcher2/launcher_qt.cpp
+# )
 
-qt_add_qml_module(nameHere
-    URI gui
-    VERSION 1.0
-    QML_FILES resources/qml/hw.qml)
+# qt_add_qml_module(nameHere
+#     URI gui
+#     VERSION 1.0
+#     QML_FILES resources/qml/hw.qml)
 
-target_link_libraries(helloworld PRIVATE Qt6::Gui Qt6::Quick)
+# target_link_libraries(helloworld PRIVATE Qt6::Gui Qt6::Quick)
 
 #############################################################
 # Allegro

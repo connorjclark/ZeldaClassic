@@ -1,5 +1,6 @@
 // #include "zalleg/zalleg.h"
 
+#include "allegro5/monitor.h"
 #include "base/zc_alleg.h"
 #include "imgui.h"
 #include "backends/imgui_impl_allegro5.h"
@@ -18,12 +19,15 @@ int main(int argc, char* argv[])
 	// 	// Z_error_fatal("Failed to init allegro: %s\n%s\n", "allegro_init", allegro_error);
 	// }
 
+	int dpi = al_get_monitor_dpi(0);
+	float scale = (float)al_get_monitor_dpi(0) / 96;
+
     al_install_keyboard();
     al_install_mouse();
     al_init_primitives_addon();
-    al_set_new_display_option(ALLEGRO_VSYNC, 1, ALLEGRO_SUGGEST);
+    al_set_new_display_option(ALLEGRO_VSYNC, 0, ALLEGRO_SUGGEST);
     al_set_new_display_flags(ALLEGRO_RESIZABLE);
-    ALLEGRO_DISPLAY* display = al_create_display(1280, 720);
+    ALLEGRO_DISPLAY* display = al_create_display(1280 * scale, 720 * scale);
     al_set_window_title(display, "Dear ImGui Allegro 5 example");
     ALLEGRO_EVENT_QUEUE* queue = al_create_event_queue();
     al_register_event_source(queue, al_get_display_event_source(display));
@@ -51,7 +55,7 @@ int main(int argc, char* argv[])
     // - Use '#define IMGUI_ENABLE_FREETYPE' in your imconfig file to use Freetype for higher quality font rendering.
     // - Read 'docs/FONTS.md' for more instructions and details.
     // - Remember that in C/C++ if you want to include a backslash \ in a string literal you need to write a double backslash \\ !
-    //io.Fonts->AddFontDefault();
+    io.Fonts->AddFontDefault()->Scale = scale;
     //io.Fonts->AddFontFromFileTTF("c:\\Windows\\Fonts\\segoeui.ttf", 18.0f);
     //io.Fonts->AddFontFromFileTTF("../../misc/fonts/DroidSans.ttf", 16.0f);
     //io.Fonts->AddFontFromFileTTF("../../misc/fonts/Roboto-Medium.ttf", 16.0f);
@@ -65,6 +69,7 @@ int main(int argc, char* argv[])
 
     // Main loop
     bool running = true;
+	int c = 0;
     while (running)
     {
         // Poll and handle events (inputs, window resize, etc.)
@@ -87,51 +92,59 @@ int main(int argc, char* argv[])
         }
 
         // Start the Dear ImGui frame
-        // ImGui_ImplAllegro5_NewFrame();
-        // ImGui::NewFrame();
+		if (c == 0)
+		{
+			c = 10;
+			ImGui_ImplAllegro5_NewFrame();
+			ImGui::NewFrame();
 
-        // // 1. Show the big demo window (Most of the sample code is in ImGui::ShowDemoWindow()! You can browse its code to learn more about Dear ImGui!).
-        // if (show_demo_window)
-        //     ImGui::ShowDemoWindow(&show_demo_window);
+			// 1. Show the big demo window (Most of the sample code is in ImGui::ShowDemoWindow()! You can browse its code to learn more about Dear ImGui!).
+			if (show_demo_window)
+				ImGui::ShowDemoWindow(&show_demo_window);
 
-        // // 2. Show a simple window that we create ourselves. We use a Begin/End pair to create a named window.
-        // {
-        //     static float f = 0.0f;
-        //     static int counter = 0;
+			// 2. Show a simple window that we create ourselves. We use a Begin/End pair to create a named window.
+			{
+				static float f = 0.0f;
+				static int counter = 0;
 
-        //     ImGui::Begin("Hello, world!");                          // Create a window called "Hello, world!" and append into it.
+				ImGui::Begin("Hello, world!", nullptr, ImGuiWindowFlags_AlwaysAutoResize);                          // Create a window called "Hello, world!" and append into it.
 
-        //     ImGui::Text("This is some useful text.");               // Display some text (you can use a format strings too)
-        //     ImGui::Checkbox("Demo Window", &show_demo_window);      // Edit bools storing our window open/close state
-        //     ImGui::Checkbox("Another Window", &show_another_window);
+				ImGui::Text("This is some useful text.");               // Display some text (you can use a format strings too)
+				ImGui::Checkbox("Demo Window", &show_demo_window);      // Edit bools storing our window open/close state
+				ImGui::Checkbox("Another Window", &show_another_window);
 
-        //     ImGui::SliderFloat("float", &f, 0.0f, 1.0f);            // Edit 1 float using a slider from 0.0f to 1.0f
-        //     ImGui::ColorEdit3("clear color", (float*)&clear_color); // Edit 3 floats representing a color
+				ImGui::SliderFloat("float", &f, 0.0f, 1.0f);            // Edit 1 float using a slider from 0.0f to 1.0f
+				ImGui::ColorEdit3("clear color", (float*)&clear_color); // Edit 3 floats representing a color
 
-        //     if (ImGui::Button("Button"))                            // Buttons return true when clicked (most widgets return true when edited/activated)
-        //         counter++;
-        //     ImGui::SameLine();
-        //     ImGui::Text("counter = %d", counter);
+				if (ImGui::Button("Button"))                            // Buttons return true when clicked (most widgets return true when edited/activated)
+					counter++;
+				ImGui::SameLine();
+				ImGui::Text("counter = %d", counter);
 
-        //     ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
-        //     ImGui::End();
-        // }
+				ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
+				ImGui::End();
+			}
 
-        // // 3. Show another simple window.
-        // if (show_another_window)
-        // {
-        //     ImGui::Begin("Another Window", &show_another_window);   // Pass a pointer to our bool variable (the window will have a closing button that will clear the bool when clicked)
-        //     ImGui::Text("Hello from another window!");
-        //     if (ImGui::Button("Close Me"))
-        //         show_another_window = false;
-        //     ImGui::End();
-        // }
+			// 3. Show another simple window.
+			if (show_another_window)
+			{
+				ImGui::Begin("Another Window", &show_another_window);   // Pass a pointer to our bool variable (the window will have a closing button that will clear the bool when clicked)
+				ImGui::Text("Hello from another window!");
+				if (ImGui::Button("Close Me"))
+					show_another_window = false;
+				ImGui::End();
+			}
 
-        // Rendering
-        // ImGui::Render();
+			// Rendering
+			ImGui::Render();
+		}
+		else
+		{
+			c -= 1;
+		}
+
         al_clear_to_color(al_map_rgba_f(clear_color.x * clear_color.w, clear_color.y * clear_color.w, clear_color.z * clear_color.w, clear_color.w));
-        // ImGui_ImplAllegro5_RenderDrawData(ImGui::GetDrawData());
-        al_wait_for_vsync();
+        ImGui_ImplAllegro5_RenderDrawData(ImGui::GetDrawData());
         al_flip_display();
     }
 
