@@ -3,9 +3,9 @@
 #include "allegro5/monitor.h"
 #include "base/zc_alleg.h"
 #include "imgui.h"
+#include "imgui_internal.h"
 #include "backends/imgui_impl_allegro5.h"
 
-static ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
 static float scale;
 
 void draw(ImGuiIO& io)
@@ -18,14 +18,24 @@ void draw(ImGuiIO& io)
     // }
 
     // c = 10;
+
+
     ImGui_ImplAllegro5_NewFrame();
     ImGui::NewFrame();
+
+    // ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.f);
+    // ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
+    // ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0, 0));
 
     static float f = 0.0f;
     static int counter = 0;
     static bool my_tool_active = true;
 
-    ImGui::Begin("Hello, world!", &my_tool_active, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings);                          // Create a window called "Hello, world!" and append into it.
+    auto pos = ImGui::GetMainViewport()->Pos;
+    pos.x = 0;
+    pos.y += 10;
+    ImGui::SetNextWindowPos(pos);
+    ImGui::Begin(" ", &my_tool_active, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings);
 
     if (ImGui::BeginMainMenuBar())
     {
@@ -39,20 +49,45 @@ void draw(ImGuiIO& io)
         ImGui::EndMainMenuBar();
     }
 
-    ImGui::Text("This is some useful text.");               // Display some text (you can use a format strings too)
+    ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(0, 0, 0, 255));
+    ImGui::BeginGroup();
+    {
+        ImGui::GetFont()->Scale *= 2;
+        ImGui::PushFont(ImGui::GetFont());
+        ImGui::GetFont()->Scale /= 2;
 
-    ImGui::SliderFloat("float", &f, 0.0f, 1.0f);            // Edit 1 float using a slider from 0.0f to 1.0f
-    ImGui::ColorEdit3("clear color", (float*)&clear_color); // Edit 3 floats representing a color
+        ImGui::AlignTextToFramePadding();
 
-    if (ImGui::Button("Button"))                            // Buttons return true when clicked (most widgets return true when edited/activated)
-        counter++;
+        ImGui::TextUnformatted("ZQuest Classic");
+
+        bool b;
+        if (ImGui::Button("Play"))
+            b = true;
+        if (ImGui::Button("Create"))
+            b = true;
+        if (ImGui::Button("Settings"))
+            b = true;
+        if (ImGui::Button("Help"))
+            b = true;
+
+        ImGui::PopFont();
+    }
+    ImGui::EndGroup();
+    ImGui::PopStyleColor(1);
+
     ImGui::SameLine();
-    ImGui::Text("counter = %d", counter);
 
-    ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
+    ImGui::BeginGroup();
+    {
+        ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(0, 0, 0, 255));
+        ImGui::TextUnformatted("Foo");
+        ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
+        ImGui::PopStyleColor(1);
+    }
+    ImGui::EndGroup();
+
+
     ImGui::End();
-
-    // Rendering
     ImGui::Render();
 }
 
@@ -90,6 +125,7 @@ int main(int argc, char* argv[])
     ImGui::CreateContext();
     ImGuiIO& io = ImGui::GetIO(); (void)io;
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;  // Enable Keyboard Controls
+    io.ConfigFlags |= ImGuiConfigFlags_DockingEnable; // Enable Docking
 
     ImGui::StyleColorsDark();
 
@@ -121,7 +157,7 @@ int main(int argc, char* argv[])
 
         draw(io);
 
-        al_clear_to_color(al_map_rgba_f(clear_color.x * clear_color.w, clear_color.y * clear_color.w, clear_color.z * clear_color.w, clear_color.w));
+        al_clear_to_color(al_map_rgb(0, 0, 0));
         ImGui_ImplAllegro5_RenderDrawData(ImGui::GetDrawData());
         al_flip_display();
     }
