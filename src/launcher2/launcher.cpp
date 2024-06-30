@@ -49,7 +49,7 @@ void draw(ImGuiIO& io)
         ImGui::EndMainMenuBar();
     }
 
-    ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(0, 0, 0, 255));
+    // ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(0, 0, 0, 255));
     ImGui::BeginGroup();
     {
         ImGui::GetFont()->Scale *= 2;
@@ -73,16 +73,16 @@ void draw(ImGuiIO& io)
         ImGui::PopFont();
     }
     ImGui::EndGroup();
-    ImGui::PopStyleColor(1);
+    // ImGui::PopStyleColor(1);
 
     ImGui::SameLine();
 
     ImGui::BeginGroup();
     {
-        ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(0, 0, 0, 255));
+        // ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(0, 0, 0, 255));
         ImGui::TextUnformatted("Foo");
         ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
-        ImGui::PopStyleColor(1);
+        // ImGui::PopStyleColor(1);
     }
     ImGui::EndGroup();
 
