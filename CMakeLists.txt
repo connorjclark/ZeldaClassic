@@ -235,11 +235,23 @@ add_library(imgui
 	${imgui_external_SOURCE_DIR}/imgui_tables.cpp
 	${imgui_external_SOURCE_DIR}/imgui_widgets.cpp
 	${imgui_external_SOURCE_DIR}/imgui_demo.cpp
+	${imgui_external_SOURCE_DIR}/misc/freetype/imgui_freetype.cpp
 	${imgui_external_SOURCE_DIR}/backends/imgui_impl_allegro5.cpp
 )
 target_include_directories(imgui PUBLIC ${imgui_external_SOURCE_DIR})
 target_link_libraries(imgui PUBLIC allegro allegro_primitives)
 target_compile_definitions(imgui PUBLIC ImDrawIdx=int)
+
+find_package(Freetype REQUIRED)
+if (Freetype_FOUND)
+	target_link_libraries(imgui PUBLIC ${FREETYPE_LIBRARIES})
+	target_include_directories(imgui PUBLIC ${FREETYPE_INCLUDE_DIRS})
+	target_compile_definitions(imgui PUBLIC IMGUI_ENABLE_FREETYPE)
+elseif(ZC_OFFICIAL)
+	message(FATAL_ERROR "[imgui] Freetype font not installed, bailing")
+else()
+	message(WARNING "[imgui] Freetype font not installed, using lower quality font rendering")
+endif()
 
 # https://code.qt.io/qt/qt5.git
 
@@ -254,26 +266,26 @@ target_compile_definitions(imgui PUBLIC ImDrawIdx=int)
 # )
 # FetchContent_MakeAvailable(Qt6)
 
-# # find_package(Qt6 REQUIRED COMPONENTS Core)
+# find_package(Qt6 REQUIRED COMPONENTS Core)
 # qt_standard_project_setup()
 
-# find_package(Qt6 REQUIRED COMPONENTS Quick Gui)
+find_package(Qt6 REQUIRED COMPONENTS Quick Gui)
 # qt_standard_project_setup()
-# set(CMAKE_AUTOMOC ON)
-# set(CMAKE_AUTORCC ON)
-# set(CMAKE_AUTOUIC ON)
+set(CMAKE_AUTOMOC ON)
+set(CMAKE_AUTORCC ON)
+set(CMAKE_AUTOUIC ON)
 # qt_standard_project_setup(REQUIRES 6.5)
 
-# qt_add_executable(helloworld
-#     src/launcher2/launcher_qt.cpp
-# )
+qt_add_executable(helloworld
+    src/launcher2/launcher_qt.cpp
+)
 
-# qt_add_qml_module(nameHere
-#     URI gui
-#     VERSION 1.0
-#     QML_FILES resources/qml/hw.qml)
+qt_add_qml_module(nameHere
+    URI gui
+    VERSION 1.0
+    QML_FILES resources/qml/hw.qml)
 
-# target_link_libraries(helloworld PRIVATE Qt6::Gui Qt6::Quick)
+target_link_libraries(helloworld PRIVATE Qt6::Gui Qt6::Quick)
 
 #############################################################
 # Allegro
