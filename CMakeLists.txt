@@ -253,39 +253,96 @@ else()
 	message(WARNING "[imgui] Freetype font not installed, using lower quality font rendering")
 endif()
 
-# https://code.qt.io/qt/qt5.git
-
-# FetchContent_Declare(
-# 	Qt6
-# 	GIT_REPOSITORY
-# 		https://code.qt.io/qt/qt5.git
-# 	GIT_TAG
-# 		v6.7.2
-# 	GIT_SHALLOW TRUE
-# 	EXCLUDE_FROM_ALL
-# )
-# FetchContent_MakeAvailable(Qt6)
-
-# find_package(Qt6 REQUIRED COMPONENTS Core)
-# qt_standard_project_setup()
-
-find_package(Qt6 REQUIRED COMPONENTS Quick Gui)
-# qt_standard_project_setup()
-set(CMAKE_AUTOMOC ON)
-set(CMAKE_AUTORCC ON)
-set(CMAKE_AUTOUIC ON)
-# qt_standard_project_setup(REQUIRES 6.5)
-
-qt_add_executable(helloworld
-    src/launcher2/launcher_qt.cpp
+FetchContent_Declare(
+	rmlui_external
+	GIT_REPOSITORY
+		https://github.com/mikke89/RmlUi
+	GIT_TAG
+		e02ff487a5d61bcfd795cfbb1bc2e41911ce2892
+	EXCLUDE_FROM_ALL
 )
+set(RMLUI_SHELL ON)
+FetchContent_MakeAvailable(rmlui_external)
 
-qt_add_qml_module(nameHere
-    URI gui
-    VERSION 1.0
-    QML_FILES resources/qml/hw.qml)
+# Duplicate RmlUi's rmlui_backend_SDL_GL3, just to specify "SDL2_image::SDL2_image-static".
+# See https://stackoverflow.com/questions/75551185/cmake-using-sdl2-and-sdl2-image-via-fetchcontent
+find_package("OpenGL" "3")
+add_library(zc_rmlui_backend_SDL_GL3 INTERFACE)
+target_sources(zc_rmlui_backend_SDL_GL3 INTERFACE
+	"${rmlui_external_SOURCE_DIR}/Backends/RmlUi_Platform_SDL.cpp"
+	"${rmlui_external_SOURCE_DIR}/Backends/RmlUi_Renderer_GL3.cpp"
+	"${rmlui_external_SOURCE_DIR}/Backends/RmlUi_Backend_SDL_GL3.cpp"
+	"${rmlui_external_SOURCE_DIR}/Backends/RmlUi_Platform_SDL.h"
+	"${rmlui_external_SOURCE_DIR}/Backends/RmlUi_Renderer_GL3.h"
+	"${rmlui_external_SOURCE_DIR}/Backends/RmlUi_Include_GL3.h"
+)
+target_link_libraries(zc_rmlui_backend_SDL_GL3 INTERFACE rmlui_backend_common_headers OpenGL::GL SDL2::SDL2 SDL2_image::SDL2_image-static)
+if(UNIX)
+	# The OpenGL 3 renderer implementation uses dlopen/dlclose
+	# This is required in some UNIX and UNIX-like operating systems to load shared object files at runtime
+	target_link_libraries(zc_rmlui_backend_SDL_GL3 INTERFACE ${CMAKE_DL_LIBS})
+endif()
+# ---- end
 
-target_link_libraries(helloworld PRIVATE Qt6::Gui Qt6::Quick)
+FetchContent_Declare(
+	SDL2main
+	GIT_REPOSITORY
+		https://github.com/libsdl-org/SDL
+	GIT_TAG
+		release-2.26.3
+	GIT_SHALLOW TRUE
+	# EXCLUDE_FROM_ALL
+	OVERRIDE_FIND_PACKAGE
+)
+set(SDL2IMAGE_INSTALL OFF)
+set(BUILD_SHARED_LIBS FALSE)
+set(SDL2IMAGE_SAMPLES OFF)
+FetchContent_MakeAvailable(SDL2main)
+
+FetchContent_Declare(
+    SDL2_image
+    GIT_REPOSITORY  https://github.com/libsdl-org/SDL_image
+    GIT_TAG         release-2.6.3
+	GIT_SHALLOW TRUE
+	# EXCLUDE_FROM_ALL
+	OVERRIDE_FIND_PACKAGE
+)
+FetchContent_MakeAvailable(SDL2_image)
+
+
+# # https://code.qt.io/qt/qt5.git
+
+# # FetchContent_Declare(
+# # 	Qt6
+# # 	GIT_REPOSITORY
+# # 		https://code.qt.io/qt/qt5.git
+# # 	GIT_TAG
+# # 		v6.7.2
+# # 	GIT_SHALLOW TRUE
+# # 	EXCLUDE_FROM_ALL
+# # )
+# # FetchContent_MakeAvailable(Qt6)
+
+# # find_package(Qt6 REQUIRED COMPONENTS Core)
+# # qt_standard_project_setup()
+
+# find_package(Qt6 REQUIRED COMPONENTS Quick Gui)
+# # qt_standard_project_setup()
+# set(CMAKE_AUTOMOC ON)
+# set(CMAKE_AUTORCC ON)
+# set(CMAKE_AUTOUIC ON)
+# # qt_standard_project_setup(REQUIRES 6.5)
+
+# qt_add_executable(helloworld
+#     src/launcher2/launcher_qt.cpp
+# )
+
+# qt_add_qml_module(nameHere
+#     URI gui
+#     VERSION 1.0
+#     QML_FILES resources/qml/hw.qml)
+
+# target_link_libraries(helloworld PRIVATE Qt6::Gui Qt6::Quick)
 
 #############################################################
 # Allegro
@@ -933,16 +990,17 @@ target_link_libraries(zlauncher PRIVATE zalleg zcbase zcgui zconsolelogger ${LAU
 # Launcher (new)
 #############################################################
 
-if(MSVC)
-	list(APPEND LAUNCHEREXTRASOURCES zl_icon.rc)
-elseif(LINUX)
-	list(APPEND LAUNCHEREXTRASOURCES zl_icon.c)
-endif()
-
 add_executable(zlauncher_imgui src/launcher2/launcher_imgui.cpp)
 target_compile_definitions(zlauncher_imgui PRIVATE IS_LAUNCHER)
 set_property(TARGET zlauncher_imgui PROPERTY VS_DPI_AWARE "PerMonitor")
 target_link_libraries(zlauncher_imgui PRIVATE zalleg imgui)
+
+add_executable(zlauncher_rmlui src/launcher2/launcher_rmlui.cpp)
+target_compile_definitions(zlauncher_rmlui PRIVATE IS_LAUNCHER)
+set_property(TARGET zlauncher_rmlui PROPERTY VS_DPI_AWARE "PerMonitor")
+# rmlui_backend_SDL_GL3
+target_link_libraries(zlauncher_rmlui PRIVATE rmlui zc_rmlui_backend_SDL_GL3 SDL2::SDL2)
+target_include_directories(zlauncher_rmlui PRIVATE ${SDL2_INCLUDE_DIR} ${rmlui_external_SOURCE_DIR}/Backends)
 
 #############################################################
 # Standalone
@@ -1018,7 +1076,7 @@ endif()
 # Misc.
 #############################################################
 
-set(zc_targets zeditor zplayer zlauncher zlauncher_imgui zalleg zcbase zcgui zcsound zscript zconsolelogger zupdater)
+set(zc_targets zeditor zplayer zlauncher zlauncher_imgui zlauncher_rmlui zalleg zcbase zcgui zcsound zscript zconsolelogger zupdater)
 set(zc_clang_errors
 	-Werror=array-bounds
 	-Werror=format
