@@ -939,10 +939,10 @@ elseif(LINUX)
 	list(APPEND LAUNCHEREXTRASOURCES zl_icon.c)
 endif()
 
-add_executable(zlauncher2 src/launcher2/launcher.cpp)
-target_compile_definitions(zlauncher2 PRIVATE IS_LAUNCHER)
-set_property(TARGET zlauncher2 PROPERTY VS_DPI_AWARE "PerMonitor")
-target_link_libraries(zlauncher2 PRIVATE zalleg imgui)
+add_executable(zlauncher_imgui src/launcher2/launcher_imgui.cpp)
+target_compile_definitions(zlauncher_imgui PRIVATE IS_LAUNCHER)
+set_property(TARGET zlauncher_imgui PROPERTY VS_DPI_AWARE "PerMonitor")
+target_link_libraries(zlauncher_imgui PRIVATE zalleg imgui)
 
 #############################################################
 # Standalone
@@ -1018,7 +1018,7 @@ endif()
 # Misc.
 #############################################################
 
-set(zc_targets zeditor zplayer zlauncher zlauncher2 zalleg zcbase zcgui zcsound zscript zconsolelogger zupdater)
+set(zc_targets zeditor zplayer zlauncher zlauncher_imgui zalleg zcbase zcgui zcsound zscript zconsolelogger zupdater)
 set(zc_clang_errors
 	-Werror=array-bounds
 	-Werror=format
@@ -1247,7 +1247,7 @@ if(CMAKE_GENERATOR MATCHES "Visual Studio")
 
 	# Organize into folders
 	set_property(GLOBAL PROPERTY USE_FOLDERS ON)
-	set_target_properties(zplayer zeditor zscript zlauncher zlauncher2 zupdater package package_no_archive PROPERTIES FOLDER "")
+	set_target_properties(zplayer zeditor zscript zlauncher zlauncher_imgui zupdater package package_no_archive PROPERTIES FOLDER "")
 	set_target_properties(run_replay_tests_all run_replay_tests_basic run_replay_tests_all_1s run_replay_tests_all_10s run_replay_tests_all_100s PROPERTIES FOLDER "Replay Tests")
 	set_target_properties(zcbase zalleg zcgui zcsound PROPERTIES FOLDER "Our Libraries")
 	set_target_properties(gme dumb aldmb PROPERTIES FOLDER Sound)
@@ -1290,4 +1290,4 @@ if(EMSCRIPTEN)
 	add_subdirectory(web)
 endif()
 
-zc_install_targets(allegro allegro-legacy allegro_with_legacy zlauncher zlauncher2 zplayer zeditor zscript zcsound ${SOUNDLIBS})
+zc_install_targets(allegro allegro-legacy allegro_with_legacy zlauncher zlauncher_imgui zplayer zeditor zscript zcsound ${SOUNDLIBS})
