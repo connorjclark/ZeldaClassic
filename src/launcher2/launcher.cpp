@@ -23,10 +23,6 @@ void draw(ImGuiIO& io)
     ImGui_ImplAllegro5_NewFrame();
     ImGui::NewFrame();
 
-    // ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.f);
-    // ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
-    // ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0, 0));
-
     static float f = 0.0f;
     static int counter = 0;
     static bool my_tool_active = true;
@@ -46,7 +42,6 @@ void draw(ImGuiIO& io)
     //     ImGui::EndMainMenuBar();
     // }
 
-    // ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(0, 0, 0, 255));
     ImGui::BeginGroup();
     {
         ImGui::GetFont()->Scale *= 1.5;
@@ -70,7 +65,6 @@ void draw(ImGuiIO& io)
         ImGui::PopFont();
     }
     ImGui::EndGroup();
-    // ImGui::PopStyleColor(1);
 
     ImGui::SameLine();
 
@@ -78,13 +72,11 @@ void draw(ImGuiIO& io)
     {
         auto GroupStartPos = ImGui::GetCursorScreenPos();
         GroupStartPos.y = 0;
+
         ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(0, 0, 0, 255));
         ImGui::TextUnformatted("Play");
         ImGui::Text("%.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
 
-        auto PanelHeight = 500;
-
-        // Draw the rounded-corner background inside the group
         ImGui::GetBackgroundDrawList()->AddRectFilled(
             GroupStartPos,
             ImVec2(
@@ -98,7 +90,6 @@ void draw(ImGuiIO& io)
         ImGui::PopStyleColor(1);
     }
     ImGui::EndGroup();
-
 
     ImGui::End();
     ImGui::Render();
