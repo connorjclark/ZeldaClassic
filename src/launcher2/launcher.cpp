@@ -31,30 +31,27 @@ void draw(ImGuiIO& io)
     static int counter = 0;
     static bool my_tool_active = true;
 
-    auto pos = ImGui::GetMainViewport()->Pos;
-    pos.x = 0;
-    pos.y += 10;
-    ImGui::SetNextWindowPos(pos);
-    ImGui::Begin(" ", &my_tool_active, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings);
+    ImGui::SetNextWindowPos(ImVec2(0, 0));
+    ImGui::Begin(" ", &my_tool_active, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings);
 
-    if (ImGui::BeginMainMenuBar())
-    {
-        if (ImGui::BeginMenu("File"))
-        {
-            if (ImGui::MenuItem("Open..", "Ctrl+O")) { /* Do stuff */ }
-            if (ImGui::MenuItem("Save", "Ctrl+S"))   { /* Do stuff */ }
-            if (ImGui::MenuItem("Close", "Ctrl+W"))  { my_tool_active = false; }
-            ImGui::EndMenu();
-        }
-        ImGui::EndMainMenuBar();
-    }
+    // if (ImGui::BeginMainMenuBar())
+    // {
+    //     if (ImGui::BeginMenu("File"))
+    //     {
+    //         if (ImGui::MenuItem("Open..", "Ctrl+O")) { /* Do stuff */ }
+    //         if (ImGui::MenuItem("Save", "Ctrl+S"))   { /* Do stuff */ }
+    //         if (ImGui::MenuItem("Close", "Ctrl+W"))  { my_tool_active = false; }
+    //         ImGui::EndMenu();
+    //     }
+    //     ImGui::EndMainMenuBar();
+    // }
 
     // ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(0, 0, 0, 255));
     ImGui::BeginGroup();
     {
-        ImGui::GetFont()->Scale *= 2;
+        ImGui::GetFont()->Scale *= 1.5;
         ImGui::PushFont(ImGui::GetFont());
-        ImGui::GetFont()->Scale /= 2;
+        ImGui::GetFont()->Scale /= 1.5;
 
         ImGui::AlignTextToFramePadding();
 
@@ -79,10 +76,26 @@ void draw(ImGuiIO& io)
 
     ImGui::BeginGroup();
     {
-        // ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(0, 0, 0, 255));
-        ImGui::TextUnformatted("Foo");
-        ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
-        // ImGui::PopStyleColor(1);
+        auto GroupStartPos = ImGui::GetCursorScreenPos();
+        GroupStartPos.y = 0;
+        ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(0, 0, 0, 255));
+        ImGui::TextUnformatted("Play");
+        ImGui::Text("%.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
+
+        auto PanelHeight = 500;
+
+        // Draw the rounded-corner background inside the group
+        ImGui::GetBackgroundDrawList()->AddRectFilled(
+            GroupStartPos,
+            ImVec2(
+                10000,
+                10000
+            ),
+            IM_COL32(200, 200, 200, 255),
+            5.0f,
+            ImDrawFlags_RoundCornersNone
+        );
+        ImGui::PopStyleColor(1);
     }
     ImGui::EndGroup();
 
@@ -131,7 +144,7 @@ int main(int argc, char* argv[])
 
     ImGui_ImplAllegro5_Init(display);
 
-    io.Fonts->AddFontDefault()->Scale = scale;
+    io.Fonts->AddFontDefault()->Scale = scale * 2;
 
     bool running = true;
     while (running)
