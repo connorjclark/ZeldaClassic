@@ -224,7 +224,7 @@ FetchContent_Declare(
 	GIT_REPOSITORY
 		https://github.com/connorjclark/imgui
 	GIT_TAG
-		8b5d08c84c8693afe28d7837f8b4cf6dc1bc5939
+		3fec562da1d5af5f5c35e236e3e843ef0eadbcf3
 	EXCLUDE_FROM_ALL
 )
 FetchContent_MakeAvailable(imgui_external)
