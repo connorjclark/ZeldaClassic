@@ -641,7 +641,7 @@ static void set_version()
 	version = std::stoi(version_str);
 }
 
-static void load_replay(std::filesystem::path path)
+static void load_replay(std::filesystem::path path, bool only_meta = false)
 {
 #ifdef __EMSCRIPTEN__
     if (em_is_lazy_file(path))
@@ -693,6 +693,9 @@ static void load_replay(std::filesystem::path path)
 
         if (!done_with_meta && type != TypeMeta)
         {
+			if (only_meta)
+				return;
+
             done_with_meta = true;
             set_version();
             if (version < 5)
@@ -1187,6 +1190,13 @@ std::string replay_mode_to_string(ReplayMode mode)
 		case ReplayMode::ManualTakeover: return "manual_takeover";
 	}
 	return "unknown";
+}
+
+void replay_load_meta(std::filesystem::path path)
+{
+	meta_map.clear();
+	bool only_meta = true;
+	load_replay(path, only_meta);
 }
 
 void replay_start(ReplayMode mode_, std::filesystem::path path, int frame)

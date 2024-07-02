@@ -219,6 +219,8 @@ if (NOT EMSCRIPTEN)
 	zc_install_targets(nfd)
 endif()
 
+find_package(CURL)
+
 #############################################################
 # Allegro
 #############################################################
@@ -539,7 +541,7 @@ if (EMSCRIPTEN)
 endif()
 add_library(zcbase STATIC ${zcbase_sources})
 target_link_libraries(zcbase PUBLIC allegro_with_legacy fmt)
-target_include_directories(zcbase PUBLIC src)
+target_include_directories(zcbase PUBLIC src include/nonstd)
 if(NOT WIN32)
 	target_include_directories(zcbase PUBLIC include/pstream)
 endif()
@@ -744,7 +746,14 @@ add_executable(zplayer ${ZELDA_CORE_SOURCES} ${ZELDA_GUI_SOURCES} ${ZELDA_SPRITE
 target_compile_definitions(zplayer PRIVATE IS_PLAYER)
 set_property(TARGET zplayer PROPERTY VS_DPI_AWARE "PerMonitor")
 target_include_directories(zplayer PRIVATE include/xxhash)
-target_link_libraries(zplayer PRIVATE allegro_with_legacy zasm)
+target_link_libraries(zplayer PRIVATE allegro_with_legacy zasm nlohmann_json::nlohmann_json)
+if(CURL_FOUND)
+	target_link_libraries(zplayer PRIVATE CURL::libcurl)
+	target_sources(zplayer PRIVATE src/zc/replay_upload.cpp)
+	target_compile_definitions(zplayer PRIVATE HAS_CURL)
+else()
+	message(WARNING "libcurl not found - disabling replay_upload.cpp")
+endif()
 
 if(WIN32)
 	target_link_libraries(zplayer PRIVATE zalleg zconsolelogger zcbase zcgui zcsound websocket winmm ${IMAGELIBS} ${ZELDALIBSEXTRA})
@@ -890,7 +899,6 @@ if(WIN32)
 	target_link_options(zupdater PRIVATE "/SUBSYSTEM:WINDOWS")
 endif()
 
-find_package(CURL)
 if(CURL_FOUND AND WIN32)
 	message(STATUS "Using curl for zupdater")
 
