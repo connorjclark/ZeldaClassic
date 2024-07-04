@@ -1,36 +1,31 @@
 import json
 import os
-import subprocess
 
 from http import HTTPStatus
 from pathlib import Path
 from typing import Dict, List, Tuple
 
 import boto3
-import requests
 
 from flask import Flask, flash, redirect, request, url_for
 from werkzeug.exceptions import HTTPException
 
-data_dir = Path(os.environ.get('DATA_DIR', '.tmp/api_server'))
-replays_dir = data_dir / 'replays'
+script_dir = Path(os.path.dirname(os.path.realpath(__file__)))
+root_dir = script_dir.parent
 
 app = Flask(__name__)
-app.config['S3_ACCESS_KEY_ID'] = os.environ['S3_ACCESS_KEY']
-app.config['S3_SECRET_ACCESS_KEY'] = os.environ['S3_SECRET_ACCESS_KEY']
-app.config['S3_URL'] = 'https://nyc3.digitaloceanspaces.com'
-app.config['S3_REGION'] = 'ny3'
-app.config['S3_BUCKET'] = 'zc-replays'
+app.config.from_prefixed_env()
+
 bucket_name = app.config['S3_BUCKET']
+data_dir = Path(app.config['DATA_DIR'])
+replays_dir = data_dir / 'replays'
+
 
 def load_manifest():
-    r = requests.get('https://data.zquestclassic.com/manifest.json')
     manifest_path = data_dir / 'manifest.json'
-    with open(manifest_path, 'wb') as f:
-        f.write(r.content)
-
     manifest = json.loads(manifest_path.read_text())
     qst_hash_dict = {}
+    quests = []
     for entry_id, qst in manifest.items():
         if not entry_id.startswith('quests'):
             continue
@@ -41,19 +36,21 @@ def load_manifest():
                     qst_hash = release['resourceHashes'][i]
                     path = f'{entry_id}/{release["name"]}/{resource}'
                     qst_hash_dict[qst_hash] = path
-    return qst_hash_dict
+                    # quests.append({'name': qst['name'], 'filename': resource, 'hash': qst_hash})
+                    quests.append({'hash': qst_hash})
+    return quests, qst_hash_dict
+
 
 def connect_s3():
     session = boto3.session.Session()
-    s3 = session.client('s3',
-                            region_name=app.config['S3_REGION'],
-                            endpoint_url=app.config['S3_URL'],
-                            aws_access_key_id=app.config['S3_ACCESS_KEY_ID'],
-                            aws_secret_access_key=app.config['S3_SECRET_ACCESS_KEY'])
-    print(f'syncing {bucket_name} ...')
-    data_dir.mkdir(exist_ok=True, parents=True)
-    subprocess.check_call(f's3cmd sync --no-preserve --acl-public s3://{bucket_name}/ {data_dir}/'.split(' '))
-    return s3
+    return session.client(
+        's3',
+        region_name=app.config['S3_REGION'],
+        endpoint_url=app.config['S3_URL'],
+        aws_access_key_id=app.config['S3_ACCESS_KEY'],
+        aws_secret_access_key=app.config['S3_SECRET_ACCESS_KEY'],
+    )
+
 
 def parse_meta(replay_text: str) -> Dict[str, str]:
     meta = {}
@@ -85,8 +82,9 @@ def parse_replay(replay_text: str) -> Tuple[Dict[str, str], List[str]]:
 
     return meta, steps
 
+
 s3 = connect_s3()
-qst_hash_dict = load_manifest()
+quest_list, qst_hash_dict = load_manifest()
 
 replay_guid_to_path = {}
 for path in data_dir.rglob('*.zplay'):
@@ -95,7 +93,7 @@ for path in data_dir.rglob('*.zplay'):
 
 @app.route('/api/v1/quests', methods=['GET'])
 def quests():
-    return [{'hash': key, 'TEST': 1} for key in qst_hash_dict.keys()]
+    return quest_list
 
 
 @app.route('/api/v1/replays/<guid>/length')
@@ -147,7 +145,9 @@ def replays():
         # Replays are append-only.
         for i, existing_step in enumerate(existing_steps):
             if existing_step != steps[i]:
-                return {'error': 'replay is different than current'}, HTTPStatus.CONFLICT
+                return {
+                    'error': 'replay is different than current'
+                }, HTTPStatus.CONFLICT
 
     path.parent.mkdir(exist_ok=True)
     path.write_text(data)
@@ -160,12 +160,14 @@ def replays():
 def handle_exception(e):
     """Return JSON instead of HTML for HTTP errors."""
     response = e.get_response()
-    response.data = json.dumps({
-        "code": e.code,
-        "name": e.name,
-        "description": e.description,
-    })
-    response.content_type = "application/json"
+    response.data = json.dumps(
+        {
+            'code': e.code,
+            'name': e.name,
+            'description': e.description,
+        }
+    )
+    response.content_type = 'application/json'
     return response
 
 

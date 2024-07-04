@@ -140,3 +140,5 @@ output/
 changelogs/nightly.txt
 src/base/version_header.h
 venv
+
+api_server/secrets.sh
