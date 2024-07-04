@@ -7,14 +7,16 @@ from pathlib import Path
 from typing import Dict, List, Tuple
 
 import boto3
+import requests
 
 from flask import Flask, flash, redirect, request, url_for
 from werkzeug.exceptions import HTTPException
 
-replays_dir = Path('.tmp/api_server/replays')
+data_dir = Path(os.environ.get('DATA_DIR', '.tmp/api_server'))
+replays_dir = data_dir / 'replays'
 
 app = Flask(__name__)
-app.config['S3_ACCESS_KEY_ID'] = 'DO00NWBCY2Z2HAZH6CC8'
+app.config['S3_ACCESS_KEY_ID'] = os.environ['S3_ACCESS_KEY']
 app.config['S3_SECRET_ACCESS_KEY'] = os.environ['S3_SECRET_ACCESS_KEY']
 app.config['S3_URL'] = 'https://nyc3.digitaloceanspaces.com'
 app.config['S3_REGION'] = 'ny3'
@@ -22,7 +24,11 @@ app.config['S3_BUCKET'] = 'zc-replays'
 bucket_name = app.config['S3_BUCKET']
 
 def load_manifest():
-    manifest_path = Path('.tmp/database/manifest.json')
+    r = requests.get('https://data.zquestclassic.com/manifest.json')
+    manifest_path = data_dir / 'manifest.json'
+    with open(manifest_path, 'wb') as f:
+        f.write(r.content)
+
     manifest = json.loads(manifest_path.read_text())
     qst_hash_dict = {}
     for entry_id, qst in manifest.items():
@@ -45,8 +51,8 @@ def connect_s3():
                             aws_access_key_id=app.config['S3_ACCESS_KEY_ID'],
                             aws_secret_access_key=app.config['S3_SECRET_ACCESS_KEY'])
     print(f'syncing {bucket_name} ...')
-    replays_dir.mkdir(exist_ok=True, parents=True)
-    subprocess.check_call(f's3cmd sync --no-preserve --acl-public s3://{bucket_name}/ {replays_dir}/'.split(' '))
+    data_dir.mkdir(exist_ok=True, parents=True)
+    subprocess.check_call(f's3cmd sync --no-preserve --acl-public s3://{bucket_name}/ {data_dir}/'.split(' '))
     return s3
 
 def parse_meta(replay_text: str) -> Dict[str, str]:
@@ -83,7 +89,7 @@ s3 = connect_s3()
 qst_hash_dict = load_manifest()
 
 replay_guid_to_path = {}
-for path in replays_dir.rglob('*.zplay'):
+for path in data_dir.rglob('*.zplay'):
     replay_guid_to_path[path.stem] = path
 
 
@@ -131,7 +137,7 @@ def replays():
         return {'error': 'unknown qst'}, HTTPStatus.BAD_REQUEST
 
     key = f'{qst_hash}/{guid}.zplay'
-    path = replays_dir / key
+    path = data_dir / key
     status = HTTPStatus.CREATED
     if path.exists():
         status = HTTPStatus.OK
