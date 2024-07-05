@@ -16,6 +16,7 @@
 #include "base/zdefs.h"
 #include "music_playback.h"
 #include "sound/zcmusic.h"
+#include "zc/replay.h"
 #include "zc/zc_sys.h"
 #include "zc/zelda.h"
 #include "base/zsys.h"
@@ -1596,12 +1597,9 @@ void titlescreen(int32_t lsave)
 	{
 		actual_titlescreen();
 	}
-	
-	if (replay_get_mode() == ReplayMode::Record)
-	{
-		replay_save();
-		replay_stop();
-	}
+
+	if (replay_is_active())
+		replay_quit();
 
 	if(!Quit)
 	{
