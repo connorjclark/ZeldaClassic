@@ -23,6 +23,7 @@
 
 #include <stdlib.h>
 
+#include "zc/replay_upload.h"
 #include "zc/zasm_optimize.h"
 #include "zc/zasm_utils.h"
 #include "zscriptversion.h"
@@ -1558,8 +1559,8 @@ int32_t load_quest(gamedata *g, bool report, byte printmetadata)
 
 std::string create_replay_path_for_save(const gamedata_header& header)
 {
-	std::filesystem::path replay_file_dir = zc_get_config("zeldadx", "replay_file_dir", "replays/");
-	std::filesystem::create_directory(replay_file_dir);
+	fs::path replay_file_dir = zc_get_config("zeldadx", "replay_file_dir", "replays/");
+	fs::create_directory(replay_file_dir);
 	std::string filename_prefix = fmt::format("{}-{}", header.title, header.name);
 	sanitize(filename_prefix);
 	return create_new_file_path(replay_file_dir, filename_prefix, REPLAY_EXTENSION).string();
@@ -1743,6 +1744,14 @@ int32_t init_game()
 	if (replay_is_active())
 	{
 		replay_set_meta("qst_title", game->header.title);
+
+		if (!replay_has_meta("guid"))
+		{
+			uint8_t bytes[16];
+			for (int i = 0; i < 16; i++)
+				bytes[i] = rand();
+			replay_set_meta("guid", util::make_hex_string(std::begin(bytes), std::end(bytes)));
+		}
 
 		std::optional<std::string> previous_hash;
 		if (replay_has_meta("qst_hash"))
@@ -4283,6 +4292,12 @@ int main(int argc, char **argv)
 		return get_qr(qr_SCRIPTERRLOG) || DEVLEVEL > 0;
 	});
 
+	if (used_switch(argc, argv, "-upload-replays"))
+	{
+		replay_upload();
+		return 0;
+	}
+
 	int only_arg = used_switch(argc, argv, "-only");
 	if (only_arg)
 	{
@@ -5460,6 +5475,10 @@ void quit_game()
 	if(qstpath) free(qstpath);
 
 	FFCore.shutdown();
+
+#ifdef HAS_CURL
+	replay_upload_auto();
+#endif
 }
 
 bool isSideViewGravity(int32_t t)

@@ -27,8 +27,9 @@ enum ReplayMode
 };
 
 std::string replay_mode_to_string(ReplayMode mode);
-void replay_start(ReplayMode mode_, std::filesystem::path path_, int frame);
-void replay_continue(std::filesystem::path path_);
+void replay_load_meta(std::filesystem::path path);
+void replay_start(ReplayMode mode_, std::filesystem::path path, int frame);
+void replay_continue(std::filesystem::path path);
 void replay_poll();
 bool replay_add_snapshot_frame(std::string frames_shorthand);
 void replay_peek_quit();
