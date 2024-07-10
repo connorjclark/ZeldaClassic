@@ -1,4 +1,6 @@
 #include "base/zc_alleg.h"
+#include "a5alleg.h"
+#include "allegro5/bitmap.h"
 
 PACKFILE *pack_fopen_password(const char *filename, const char *mode, const char *password)
 {
@@ -23,14 +25,27 @@ bool alleg4_save_bitmap(BITMAP* source, int scale, const char* filename, AL_CONS
 	{
 		int w = source->w;
 		int h = source->h;
-		scaled = create_bitmap_ex(8, w*scale, h*scale);
+		scaled = create_bitmap_ex(bitmap_color_depth(source), w*scale, h*scale);
 		stretch_blit(source, scaled, 0, 0, w, h, 0, 0, w*scale, h*scale);
 	}
 
-	PALETTE default_pal;
-	if (!pal)
-		get_palette(default_pal);
-	int result = save_bitmap(filename, scaled ? scaled : source, pal ? pal : default_pal);
+	bool result;
+	if (bitmap_color_depth(source) == 32)
+	{
+		BITMAP* a4bmp = scaled ? scaled : source;
+		ALLEGRO_BITMAP* a5bmp = al_create_bitmap(a4bmp->w, a4bmp->h);
+		all_render_a5_bitmap(a4bmp, a5bmp);
+		result = al_save_bitmap(filename, a5bmp);
+		al_destroy_bitmap(a5bmp);
+	}
+	else
+	{
+		PALETTE default_pal;
+		if (!pal)
+			get_palette(default_pal);
+		result = save_bitmap(filename, scaled ? scaled : source, pal ? pal : default_pal) == 0;
+	}
+
 	destroy_bitmap(scaled);
-	return result == 0;
+	return result;
 }

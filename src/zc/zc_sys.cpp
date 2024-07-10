@@ -3836,8 +3836,8 @@ void draw_fuzzy(int32_t fuzz)
 
 void updatescr(bool allowwavy)
 {
-	static BITMAP *wavybuf = create_bitmap_ex(8,256,224);
-	static BITMAP *panorama = create_bitmap_ex(8,256,224);
+	static BITMAP *wavybuf = create_bitmap_ex(32,256,224);
+	static BITMAP *panorama = create_bitmap_ex(32,256,224);
 		
 	if(toogam)
 	{
@@ -4020,7 +4020,7 @@ int32_t onNonGUISnapshot()
 
 	if ((tmpscr->flags3&fNOSUBSCR && !(tmpscr->flags3&fNOSUBSCROFFSET)) && !(key[KEY_ALT]))
 	{
-		BITMAP *b = create_bitmap_ex(8,256,168);
+		BITMAP *b = create_bitmap_ex(bitmap_color_depth(framebuf),256,168);
 		clear_to_color(b,0);
 		blit(framebuf,b,0,passive_subscreen_height/2,0,0,256,168);
 		alleg4_save_bitmap(b, SnapshotScale, buf, realpal ? temppal : RAMpal);

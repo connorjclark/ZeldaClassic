@@ -590,7 +590,6 @@ static ALLEGRO_COLOR a5_get_color(int depth, int color)
             g = getg32(color);
             b = getb32(color);
             a = geta32(color);
-            a = 0xFF;
             break;
         }
     }
@@ -697,9 +696,9 @@ static void render_other_32(BITMAP * bp)
 
     for(i = 0; i < bp->h; i++)
     {
+        line_32 = (uint32_t *)(bp->line[i]);
         for(j = 0; j < bp->w; j++)
         {
-            line_32 = (uint32_t *)(bp->line[i]);
             al_put_pixel(j, i, a5_get_color(32, line_32[j]));
         }
     }

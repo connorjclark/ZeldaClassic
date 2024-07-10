@@ -7,6 +7,7 @@
 #include "base/combo.h"
 #include "tiles.h"
 #include "items.h"
+#include <allegro/internal/aintern.h>
 
 extern RGB_MAP rgb_table;
 extern COLOR_MAP trans_table;
@@ -1849,6 +1850,64 @@ static void draw_tile16_unified(BITMAP* dest, int cl, int ct, int cr, int cb, co
     }
 }
 
+static void draw_tile8_unified_32b(BITMAP* dest, int cl, int ct, int cr, int cb, const byte *si, int32_t x, int32_t y, int32_t cset, int32_t flip)
+{
+	extern PALETTE RAMpal;
+
+	for (int32_t dy = 0; dy < 8; ++dy)
+	{
+		for (int32_t dx = 0; dx < 8; ++dx)
+		{
+			int destx = x + (flip&1 ? 7 - dx : dx);
+			int desty = y + (flip&2 ? 7 - dy : dy);
+			uint32_t* line_32 = (uint32_t *)(dest->line[desty]);
+			if (destx >= cl && desty >= ct && destx < cr && desty < cb)
+			{
+				if (*si)
+				{
+					auto& col = RAMpal[*si + cset];
+					uint8_t r = col.r * 4;
+					uint8_t g = col.g * 4;
+					uint8_t b = col.b * 4;
+					int color = (r) + (g << 8) + (b << 16);
+					line_32[destx] = color;
+				}
+			}
+			si++;
+		}
+		si += 8;
+	}
+}
+
+static void draw_tile16_unified_32b(BITMAP* dest, int cl, int ct, int cr, int cb, const byte *si, int32_t x, int32_t y, int32_t cset, int32_t flip, bool transparency)
+{
+	extern PALETTE RAMpal;
+
+	for (int32_t dy = 0; dy < 16; ++dy)
+	{
+		for (int32_t dx = 0; dx < 16; ++dx)
+		{
+			int destx = x + dx;
+			int desty = y + (flip&2 ? 15 - dy : dy);
+			uint32_t* line_32 = (uint32_t *)(dest->line[desty]);
+			if (destx >= cl && desty >= ct && destx < cr && desty < cb)
+			{
+				if (!transparency || *si)
+				{
+					auto& col = RAMpal[*si + cset];
+					uint8_t r = col.r * 4;
+					uint8_t g = col.g * 4;
+					uint8_t b = col.b * 4;
+					int color = (r) + (g << 8) + (b << 16);
+					line_32[destx] = color;
+				}
+			}
+
+			si++;
+		}
+	}
+}
+
 void puttile8(BITMAP* dest,int32_t tile,int32_t x,int32_t y,int32_t cset,int32_t flip)
 {
     if(x<0 || y<0)
@@ -2082,6 +2141,12 @@ void overtile8(BITMAP* dest,int32_t tile,int32_t x,int32_t y,int32_t cset,int32_
     const byte *bytes = get_tile_bytes(tile>>2, 0);
     const byte *si = bytes + ((tile&2)<<6) + ((tile&1)<<3);
 
+	if (bitmap_color_depth(dest) == 32)
+	{
+		draw_tile8_unified_32b(dest, cl, ct, cr, cb, si, x, y, cset, flip);
+		return;
+	}
+
     // 0: fast, no bounds checking
     // 1: slow, bounds checking
     int draw_mode = x < cl || y < ct || x >= cr-8 || y >= cb-8 ? 1 : 0;
@@ -2199,6 +2264,12 @@ void puttile16(BITMAP* dest,int32_t tile,int32_t x,int32_t y,int32_t cset,int32_
     cset &= 15;
     cset <<= CSET_SHFT;
     const byte *bytes = get_tile_bytes(tile, flip&5);
+
+	if (bitmap_color_depth(dest) == 32)
+	{
+		draw_tile16_unified_32b(dest, cl, ct, cr, cb, bytes, x, y, cset, flip, false);
+		return;
+	}
 
     // 0: fast, no bounds checking
     // 1: slow, bounds checking
@@ -2479,6 +2550,12 @@ void overtile16(BITMAP* dest,int32_t tile,int32_t x,int32_t y,int32_t cset,int32
 	cset <<= CSET_SHFT;
 	const byte *si = get_tile_bytes(tile, flip&5);
 	byte *di;
+
+	if (bitmap_color_depth(dest) == 32)
+	{
+		draw_tile16_unified_32b(dest, cl, ct, cr, cb, si, x, y, cset, flip, true);
+		return;
+	}
 
 	// 0: fast, no bounds checking
 	// 1: slow, bounds checking

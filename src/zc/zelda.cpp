@@ -4481,20 +4481,20 @@ int main(int argc, char **argv)
 	
 	// allocate bitmap buffers
 	set_color_depth(8);
-	framebuf  = create_bitmap_ex(8,256,224);
+	framebuf  = create_bitmap_ex(32,256,224);
 	menu_bmp  = create_bitmap_ex(8,640,480);
-	scrollbuf = create_bitmap_ex(8,512,406);
+	scrollbuf = create_bitmap_ex(32,512,406);
 	screen2   = create_bitmap_ex(8,320,240);
 	tmp_scr   = create_bitmap_ex(8,320,240);
 	tmp_bmp   = create_bitmap_ex(8,32,32);
 	prim_bmp  = create_bitmap_ex(8,512,512);
-	msg_bg_display_buf = create_bitmap_ex(8,256, 176);
-	msg_txt_display_buf = create_bitmap_ex(8,256, 176);
+	msg_bg_display_buf = create_bitmap_ex(32,256, 176);
+	msg_txt_display_buf = create_bitmap_ex(32,256, 176);
 	msg_bg_bmp_buf = create_bitmap_ex(8, 512+16, 512+16);
 	msg_txt_bmp_buf = create_bitmap_ex(8, 512+16, 512+16);
-	msg_menu_bmp_buf = create_bitmap_ex(8, 512+16, 512+16);
+	msg_menu_bmp_buf = create_bitmap_ex(32, 512+16, 512+16);
 	msg_portrait_bmp_buf = create_bitmap_ex(8, 256, 256);
-	msg_portrait_display_buf = create_bitmap_ex(8, 256, 256);
+	msg_portrait_display_buf = create_bitmap_ex(32, 256, 256);
 	pricesdisplaybuf = create_bitmap_ex(8,256, 176);
 	script_menu_buf = create_bitmap_ex(8,256,224);
 	f6_menu_buf = create_bitmap_ex(8,256,224);
