@@ -31417,7 +31417,7 @@ void setup_red_screen_old()
         //do an AND masked blit for messages on top of layers
         if(!(msg_txt_display_buf->clip) || !(msg_bg_display_buf->clip) || !(pricesdisplaybuf->clip) || !(msg_portrait_display_buf->clip))
         {
-			BITMAP* subbmp = create_bitmap_ex(8,256,168);
+			BITMAP* subbmp = create_bitmap_ex(32,256,168);
 			clear_bitmap(subbmp);
 			if(!(msg_txt_display_buf->clip) || !(msg_bg_display_buf->clip) || !(msg_portrait_display_buf->clip))
 			{
@@ -31503,36 +31503,7 @@ void HeroClass::heroDeathAnimation()
 		Paused=false;
 	}
     
-    /*
-	game->set_deaths(zc_min(game->get_deaths()+1,999));
-	dir=down;
-	music_stop();
-	
-	attackclk=hclk=superman=0;
-	scriptcoldet = true;
-    
-	for(int32_t i=0; i<32; i++) miscellaneous[i] = 0;
-    
-	
-    
-	playing_field_offset=56; // otherwise, red_shift() may go past the bottom of the screen
-	quakeclk=wavy=0;
-    
-	//in original Z1, Hero marker vanishes at death.
-	//code in subscr.cpp, put_passive_subscr checks the following value.
-	//color 255 is a GUI color, so quest makers shouldn't be using this value.
-	//Also, subscreen is static after death in Z1.
-	int32_t tmp_hero_dot = QMisc.colors.hero_dot;
-	QMisc.colors.hero_dot = 255;
-	//doesn't work
-	//scrollbuf is tampered with by draw_screen()
-	//put_passive_subscr(scrollbuf, 256, passive_subscreen_offset, false, false);//save this and reuse it.
-	BITMAP *subscrbmp = create_bitmap_ex(8, framebuf->w, framebuf->h);
-	clear_bitmap(subscrbmp);
-	put_passive_subscr(subscrbmp, 0, passive_subscreen_offset, false, sspUP);
-	QMisc.colors.hero_dot = tmp_hero_dot;
-    */
-	BITMAP *subscrbmp = create_bitmap_ex(8, framebuf->w, framebuf->h);
+	BITMAP *subscrbmp = create_bitmap_ex(32, framebuf->w, framebuf->h);
 				clear_bitmap(subscrbmp);
 				//get rid off all sprites but Hero
 				guys.clear();

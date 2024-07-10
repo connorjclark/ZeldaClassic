@@ -510,9 +510,9 @@ bool subscrpg_animate(byte from, byte to, SubscrTransition const& transition, ZC
 	subscr_anim = &parent;
 	if(transition.type != sstrINSTANT)
 	{
-		subscr_pg_bmp1 = create_bitmap_ex(8,SUBSCR_ACTIVE_WIDTH,SUBSCR_ACTIVE_HEIGHT);
-		subscr_pg_bmp2 = create_bitmap_ex(8,SUBSCR_ACTIVE_WIDTH,SUBSCR_ACTIVE_HEIGHT);
-		subscr_pg_subbmp = create_bitmap_ex(8,SUBSCR_ACTIVE_WIDTH,SUBSCR_ACTIVE_HEIGHT);
+		subscr_pg_bmp1 = create_bitmap_ex(32,SUBSCR_ACTIVE_WIDTH,SUBSCR_ACTIVE_HEIGHT);
+		subscr_pg_bmp2 = create_bitmap_ex(32,SUBSCR_ACTIVE_WIDTH,SUBSCR_ACTIVE_HEIGHT);
+		subscr_pg_subbmp = create_bitmap_ex(32,SUBSCR_ACTIVE_WIDTH,SUBSCR_ACTIVE_HEIGHT);
 	}
 	return true;
 }
@@ -906,7 +906,7 @@ bool SubscrTransition::draw(BITMAP* dest, BITMAP* p1, BITMAP* p2, int dx, int dy
 	if(type <= 0 || type >= sstrMAX)
 		return true; //invalid animation
 	if(!subscr_pg_subbmp)
-		subscr_pg_subbmp = create_bitmap_ex(8,SUBSCR_ACTIVE_WIDTH,SUBSCR_ACTIVE_HEIGHT);
+		subscr_pg_subbmp = create_bitmap_ex(32,SUBSCR_ACTIVE_WIDTH,SUBSCR_ACTIVE_HEIGHT);
 	clear_bitmap(subscr_pg_subbmp);
 	switch(type)
 	{
@@ -3991,7 +3991,7 @@ void SW_Selector::draw(BITMAP* dest, int32_t xofs, int32_t yofs, SubscrPage& pag
 			}
 		}
 	}
-	BITMAP* tmpbmp = create_bitmap_ex(8,sw,sh);
+	BITMAP* tmpbmp = create_bitmap_ex(32,sw,sh);
 	for(int32_t j=0; j<4; ++j)
 	{
 		clear_bitmap(tmpbmp);

@@ -49,3 +49,8 @@ bool alleg4_save_bitmap(BITMAP* source, int scale, const char* filename, AL_CONS
 	destroy_bitmap(scaled);
 	return result;
 }
+
+void clear_maskable_bitmap(BITMAP* bmp)
+{
+	clear_to_color(bmp, bitmap_mask_color(bmp));
+}

@@ -760,7 +760,7 @@ void msg_bg(MsgStr const& msg)
 }
 void msg_prt()
 {
-	clear_bitmap(msg_portrait_bmp_buf);
+	clear_maskable_bitmap(msg_portrait_bmp_buf);
 	if(prt_tile > 0 && prt_th > 0 && prt_tw > 0)
 	{
 		draw_block_flip(msg_portrait_bmp_buf,0,0,prt_tile,prt_cset,
@@ -771,17 +771,16 @@ void blit_msgstr_bg(BITMAP* dest, int32_t sx, int32_t sy, int32_t dx, int32_t dy
 {
 	if(MsgStrings[msgstr].stringflags & STRINGFLAG_TRANS_BG)
 	{
-		BITMAP* subbmp = create_bitmap_ex(8,w,h);
+		BITMAP* subbmp = create_bitmap_ex(32,w,h);
 		if(subbmp)
 		{
 			color_map = &trans_table2;
-			clear_bitmap(subbmp);
+			clear_maskable_bitmap(subbmp);
 			masked_blit(msg_bg_display_buf, subbmp, sx, sy, 0, 0, w, h);
 			draw_trans_sprite(dest, subbmp, dx, dy);
 			destroy_bitmap(subbmp);
 			color_map = &trans_table;
 		}
-		//zc_trans_blit(dest, msg_bg_display_buf, sx, sy, dx, dy, w, h);
 	}
 	else
 	{
@@ -792,11 +791,11 @@ void blit_msgstr_fg(BITMAP* dest, int32_t sx, int32_t sy, int32_t dx, int32_t dy
 {
 	if(MsgStrings[msgstr].stringflags & STRINGFLAG_TRANS_FG)
 	{
-		BITMAP* subbmp = create_bitmap_ex(8,w,h);
+		BITMAP* subbmp = create_bitmap_ex(32,w,h);
 		if(subbmp)
 		{
 			color_map = &trans_table2;
-			clear_bitmap(subbmp);
+			clear_maskable_bitmap(subbmp);
 			masked_blit(msg_txt_display_buf, subbmp, sx, sy, 0, 0, w, h);
 			draw_trans_sprite(dest, subbmp, dx, dy);
 			destroy_bitmap(subbmp);
@@ -840,20 +839,20 @@ void donewmsg(int32_t str)
     
     if(introclk==0 || (introclk>=72 && dmapmsgclk==0))
 	{
-        clear_bitmap(msg_bg_display_buf);
-        clear_bitmap(msg_txt_display_buf);
+        clear_maskable_bitmap(msg_bg_display_buf);
+        clear_maskable_bitmap(msg_txt_display_buf);
 	}
         
-    clear_bitmap(msg_bg_display_buf);
+    clear_maskable_bitmap(msg_bg_display_buf);
     set_clip_state(msg_bg_display_buf, 1);
-	clear_bitmap(msg_portrait_display_buf);
+	clear_maskable_bitmap(msg_portrait_display_buf);
     set_clip_state(msg_portrait_display_buf, 1);
-    clear_bitmap(msg_txt_display_buf);
+    clear_maskable_bitmap(msg_txt_display_buf);
     set_clip_state(msg_txt_display_buf, 1);
-    clear_bitmap(msg_txt_bmp_buf);
-    clear_bitmap(msg_menu_bmp_buf);
-    clear_bitmap(msg_bg_bmp_buf);
-    clear_bitmap(msg_portrait_bmp_buf);
+    clear_maskable_bitmap(msg_txt_bmp_buf);
+    clear_maskable_bitmap(msg_menu_bmp_buf);
+    clear_maskable_bitmap(msg_bg_bmp_buf);
+    clear_maskable_bitmap(msg_portrait_bmp_buf);
     msgclk=msgpos=msgptr=0;
     msgspace=true;
     msg_w=MsgStrings[msgstr].w;
@@ -890,11 +889,11 @@ void dismissmsg()
 	prt_tile=0;
     msg_onscreen = msg_active = false;
     //Hero.finishedmsg(); //Not possible?
-    clear_bitmap(msg_bg_display_buf);
+    clear_maskable_bitmap(msg_bg_display_buf);
     set_clip_state(msg_bg_display_buf, 1);
-    clear_bitmap(msg_txt_display_buf);
+    clear_maskable_bitmap(msg_txt_display_buf);
     set_clip_state(msg_txt_display_buf, 1);
-    clear_bitmap(msg_portrait_display_buf);
+    clear_maskable_bitmap(msg_portrait_display_buf);
     set_clip_state(msg_portrait_display_buf, 1);
 	clr_msg_data();
 }
@@ -1042,15 +1041,15 @@ void ALLOFF(bool messagesToo, bool decorationsToo, bool force)
 {
     if(messagesToo)
     {
-        clear_bitmap(msg_bg_display_buf);
+        clear_maskable_bitmap(msg_bg_display_buf);
         set_clip_state(msg_bg_display_buf, 1);
-        clear_bitmap(msg_txt_display_buf);
+        clear_maskable_bitmap(msg_txt_display_buf);
         set_clip_state(msg_txt_display_buf, 1);
-        clear_bitmap(msg_portrait_display_buf);
+        clear_maskable_bitmap(msg_portrait_display_buf);
         set_clip_state(msg_portrait_display_buf, 1);
     }
     
-    clear_bitmap(pricesdisplaybuf);
+    clear_maskable_bitmap(pricesdisplaybuf);
     set_clip_state(pricesdisplaybuf, 1);
     
     if(items.idCount(iPile))
@@ -3560,13 +3559,12 @@ void game_loop()
 			Hero.finishedmsg();
 			dmapmsgclk=0;
 			introclk=72;
-			clear_bitmap(msg_bg_display_buf);
+			clear_maskable_bitmap(msg_bg_display_buf);
 			set_clip_state(msg_bg_display_buf, 1);
-			clear_bitmap(msg_txt_display_buf);
+			clear_maskable_bitmap(msg_txt_display_buf);
 			set_clip_state(msg_txt_display_buf, 1);
-			clear_bitmap(msg_portrait_display_buf);
+			clear_maskable_bitmap(msg_portrait_display_buf);
 			set_clip_state(msg_portrait_display_buf, 1);
-			//    clear_bitmap(pricesdisplaybuf);
 		}
 		
 		FFCore.runGenericPassiveEngine(SCR_TIMING_POST_STRINGS);
@@ -4484,24 +4482,24 @@ int main(int argc, char **argv)
 	framebuf  = create_bitmap_ex(32,256,224);
 	menu_bmp  = create_bitmap_ex(8,640,480);
 	scrollbuf = create_bitmap_ex(32,512,406);
-	screen2   = create_bitmap_ex(8,320,240);
-	tmp_scr   = create_bitmap_ex(8,320,240);
-	tmp_bmp   = create_bitmap_ex(8,32,32);
-	prim_bmp  = create_bitmap_ex(8,512,512);
+	screen2   = create_bitmap_ex(32,320,240);
+	tmp_scr   = create_bitmap_ex(32,320,240);
+	tmp_bmp   = create_bitmap_ex(32,32,32);
+	prim_bmp  = create_bitmap_ex(32,512,512);
 	msg_bg_display_buf = create_bitmap_ex(32,256, 176);
 	msg_txt_display_buf = create_bitmap_ex(32,256, 176);
-	msg_bg_bmp_buf = create_bitmap_ex(8, 512+16, 512+16);
-	msg_txt_bmp_buf = create_bitmap_ex(8, 512+16, 512+16);
+	msg_bg_bmp_buf = create_bitmap_ex(32, 512+16, 512+16);
+	msg_txt_bmp_buf = create_bitmap_ex(32, 512+16, 512+16);
 	msg_menu_bmp_buf = create_bitmap_ex(32, 512+16, 512+16);
-	msg_portrait_bmp_buf = create_bitmap_ex(8, 256, 256);
+	msg_portrait_bmp_buf = create_bitmap_ex(32, 256, 256);
 	msg_portrait_display_buf = create_bitmap_ex(32, 256, 256);
-	pricesdisplaybuf = create_bitmap_ex(8,256, 176);
-	script_menu_buf = create_bitmap_ex(8,256,224);
-	f6_menu_buf = create_bitmap_ex(8,256,224);
-	darkscr_bmp_curscr = create_bitmap_ex(8, 256, 176);
-	darkscr_bmp_curscr_trans = create_bitmap_ex(8, 256, 176);
-	darkscr_bmp_scrollscr = create_bitmap_ex(8, 256, 176);
-	darkscr_bmp_scrollscr_trans = create_bitmap_ex(8, 256, 176);
+	pricesdisplaybuf = create_bitmap_ex(32,256, 176);
+	script_menu_buf = create_bitmap_ex(32,256,224);
+	f6_menu_buf = create_bitmap_ex(32,256,224);
+	darkscr_bmp_curscr = create_bitmap_ex(32, 256, 176);
+	darkscr_bmp_curscr_trans = create_bitmap_ex(32, 256, 176);
+	darkscr_bmp_scrollscr = create_bitmap_ex(32, 256, 176);
+	darkscr_bmp_scrollscr_trans = create_bitmap_ex(32, 256, 176);
 	lightbeam_bmp = create_bitmap_ex(8, 256, 176);
 	
 	if(!framebuf || !scrollbuf || !tmp_bmp || !tmp_scr
@@ -4514,13 +4512,13 @@ int main(int argc, char **argv)
 	clear_bitmap(lightbeam_bmp);
 	clear_bitmap(scrollbuf);
 	clear_bitmap(framebuf);
-	clear_bitmap(msg_bg_display_buf);
+	clear_maskable_bitmap(msg_bg_display_buf);
 	set_clip_state(msg_bg_display_buf, 1);
-	clear_bitmap(msg_txt_display_buf);
+	clear_maskable_bitmap(msg_txt_display_buf);
 	set_clip_state(msg_txt_display_buf, 1);
-	clear_bitmap(msg_portrait_display_buf);
+	clear_maskable_bitmap(msg_portrait_display_buf);
 	set_clip_state(msg_portrait_display_buf, 1);
-	clear_bitmap(pricesdisplaybuf);
+	clear_maskable_bitmap(pricesdisplaybuf);
 	set_clip_state(pricesdisplaybuf, 1);
 	
 	Z_message("Initializing music... ");
