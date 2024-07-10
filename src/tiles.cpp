@@ -579,6 +579,134 @@ static const byte* get_tile_bytes(int32_t tile, int32_t flip)
     return unpackbuf;
 }
 
+// A (slow) function to handle any tile8 draw.
+static void draw_tile8_unified(BITMAP* dest, int cl, int ct, int cr, int cb, const byte *si, int32_t x, int32_t y, int32_t cset, int32_t flip)
+{
+    for (int32_t dy = 0; dy < 8; ++dy)
+    {
+        for (int32_t dx = 0; dx < 8; ++dx)
+        {
+            int destx = x + (flip&1 ? 7 - dx : dx);
+            int desty = y + (flip&2 ? 7 - dy : dy);
+            if (destx >= cl && desty >= ct && destx < cr && desty < cb)
+            {
+                if (*si) dest->line[desty][destx] = *si + cset;
+            }
+            si++;
+        }
+        si += 8;
+    }
+}
+// TODO: tried to maybe make this faster, but it isn't quite right.
+// static void draw_tile8_unified(BITMAP* dest, byte *si, int32_t x, int32_t y, int32_t cset, int32_t flip, bool transparency)
+// {
+//     bool fh = flip&1;
+//     bool fv = flip&2;
+//     int dx = fh ? -1 : 1;
+//     int dy = fv ? -1 : 1;
+//     int x0 = x + (fh ? 7 : 0);
+//     int y0 = y + (fv ? 7 : 0);
+//     int x1 = x0 + dx * 8;
+//     int y1 = y0 + dy * 8;
+
+//     int x_s = std::clamp(x0, 0, dest->w - 1);
+//     int y_s = std::clamp(y0, 0, dest->h - 1);
+//     int x_e = std::clamp(x1, -1, dest->w);
+//     int y_e = std::clamp(y1, -1, dest->h);
+
+//     int skipx_before = std::abs(std::clamp(x0, 0, dest->w) - x0);
+//     int skipx_after = std::abs(x_e - x1);
+//     int skipy_before = std::abs(std::clamp(y0, 0, dest->h) - y0);
+
+//     si += skipy_before * 16;
+
+//     for (int32_t y2 = y_s; y2 != y_e; y2 += dy)
+//     {
+//         si += skipx_before;
+//         for (int32_t x2 = x_s; x2 != x_e; x2 += dx)
+//         {
+//             if (!transparency || *si) dest->line[y2][x2] = *si + cset;
+//             si++;
+//         }
+//         si += 8 + skipx_after;
+//     }
+// }
+
+static void draw_tile16_unified(BITMAP* dest, int cl, int ct, int cr, int cb, const byte *si, int32_t x, int32_t y, int32_t cset, int32_t flip, bool transparency)
+{
+    for (int32_t dy = 0; dy < 16; ++dy)
+    {
+        for (int32_t dx = 0; dx < 16; ++dx)
+        {
+            int destx = x + dx;
+            int desty = y + (flip&2 ? 15 - dy : dy);
+            if (destx >= cl && desty >= ct && destx < cr && desty < cb)
+            {
+                if (!transparency || *si) dest->line[desty][destx] = *si + cset;
+            }
+            si++;
+        }
+    }
+}
+
+static void draw_tile8_unified_32b(BITMAP* dest, int cl, int ct, int cr, int cb, const byte *si, int32_t x, int32_t y, int32_t cset, int32_t flip)
+{
+	extern PALETTE RAMpal;
+
+	for (int32_t dy = 0; dy < 8; ++dy)
+	{
+		for (int32_t dx = 0; dx < 8; ++dx)
+		{
+			int destx = x + (flip&1 ? 7 - dx : dx);
+			int desty = y + (flip&2 ? 7 - dy : dy);
+			uint32_t* line_32 = (uint32_t *)(dest->line[desty]);
+			if (destx >= cl && desty >= ct && destx < cr && desty < cb)
+			{
+				if (*si)
+				{
+					auto& col = RAMpal[*si + cset];
+					uint8_t r = col.r * 4;
+					uint8_t g = col.g * 4;
+					uint8_t b = col.b * 4;
+					int color = (r) + (g << 8) + (b << 16);
+					line_32[destx] = color;
+				}
+			}
+			si++;
+		}
+		si += 8;
+	}
+}
+
+static void draw_tile16_unified_32b(BITMAP* dest, int cl, int ct, int cr, int cb, const byte *si, int32_t x, int32_t y, int32_t cset, int32_t flip, bool transparency)
+{
+	extern PALETTE RAMpal;
+
+	for (int32_t dy = 0; dy < 16; ++dy)
+	{
+		for (int32_t dx = 0; dx < 16; ++dx)
+		{
+			int destx = x + dx;
+			int desty = y + (flip&2 ? 15 - dy : dy);
+			uint32_t* line_32 = (uint32_t *)(dest->line[desty]);
+			if (destx >= cl && desty >= ct && destx < cr && desty < cb)
+			{
+				if (!transparency || *si)
+				{
+					auto& col = RAMpal[*si + cset];
+					uint8_t r = col.r * 4;
+					uint8_t g = col.g * 4;
+					uint8_t b = col.b * 4;
+					int color = (r) + (g << 8) + (b << 16);
+					line_32[destx] = color;
+				}
+			}
+
+			si++;
+		}
+	}
+}
+
 // unpacks from tilebuf to unpackbuf
 void unpack_tile(tiledata *buf, int32_t tile, int32_t flip, bool force)
 {
@@ -1153,17 +1281,26 @@ void puttiletranslucent16(BITMAP* dest,int32_t tile,int32_t x,int32_t y,int32_t 
 
 void overtiletranslucent16(BITMAP* dest,int32_t tile,int32_t x,int32_t y,int32_t cset,int32_t flip,int32_t opacity)
 {
-    //these are here to bypass compiler warnings about unused arguments
-    opacity=opacity;
-    
-    if(x<-15 || y<-15)
-        return;
-        
-    if(y > dest->h)
-        return;
-        
-    if(y == dest->h && x > dest->w)
-        return;
+    int cl = 0;
+    int ct = 0;
+    int cr = dest->w;
+    int cb = dest->h;
+    if (dest->clip)
+    {
+        cl = dest->cl;
+        ct = dest->ct;
+        cr = dest->cr;
+        cb = dest->cb;
+    }
+
+    if (x + 16 < cl)
+		return;
+	if (x > cr)
+		return;
+	if (y + 16 < ct)
+		return;
+	if (y > cb)
+		return;
         
     if(tile<0 || tile>=NEWMAXTILES)
     {
@@ -1185,6 +1322,14 @@ void overtiletranslucent16(BITMAP* dest,int32_t tile,int32_t x,int32_t y,int32_t
     cset <<= CSET_SHFT;
 
     const byte* si = get_tile_bytes(tile, flip&5);
+
+	if (bitmap_color_depth(dest) == 32)
+	{
+		// TODO ! gotta use trans_table.data
+		draw_tile16_unified_32b(dest, cl, ct, cr, cb, si, x, y, cset, flip, true);
+		return;
+	}
+
     byte *di;
     
     if((flip&2)==0)
@@ -1779,134 +1924,6 @@ void overcomboblocktranslucent(BITMAP *dest, int32_t x, int32_t y, int32_t cmbda
 }
 
 //shnarf
-
-// A (slow) function to handle any tile8 draw.
-static void draw_tile8_unified(BITMAP* dest, int cl, int ct, int cr, int cb, const byte *si, int32_t x, int32_t y, int32_t cset, int32_t flip)
-{
-    for (int32_t dy = 0; dy < 8; ++dy)
-    {
-        for (int32_t dx = 0; dx < 8; ++dx)
-        {
-            int destx = x + (flip&1 ? 7 - dx : dx);
-            int desty = y + (flip&2 ? 7 - dy : dy);
-            if (destx >= cl && desty >= ct && destx < cr && desty < cb)
-            {
-                if (*si) dest->line[desty][destx] = *si + cset;
-            }
-            si++;
-        }
-        si += 8;
-    }
-}
-// TODO: tried to maybe make this faster, but it isn't quite right.
-// static void draw_tile8_unified(BITMAP* dest, byte *si, int32_t x, int32_t y, int32_t cset, int32_t flip, bool transparency)
-// {
-//     bool fh = flip&1;
-//     bool fv = flip&2;
-//     int dx = fh ? -1 : 1;
-//     int dy = fv ? -1 : 1;
-//     int x0 = x + (fh ? 7 : 0);
-//     int y0 = y + (fv ? 7 : 0);
-//     int x1 = x0 + dx * 8;
-//     int y1 = y0 + dy * 8;
-
-//     int x_s = std::clamp(x0, 0, dest->w - 1);
-//     int y_s = std::clamp(y0, 0, dest->h - 1);
-//     int x_e = std::clamp(x1, -1, dest->w);
-//     int y_e = std::clamp(y1, -1, dest->h);
-
-//     int skipx_before = std::abs(std::clamp(x0, 0, dest->w) - x0);
-//     int skipx_after = std::abs(x_e - x1);
-//     int skipy_before = std::abs(std::clamp(y0, 0, dest->h) - y0);
-
-//     si += skipy_before * 16;
-
-//     for (int32_t y2 = y_s; y2 != y_e; y2 += dy)
-//     {
-//         si += skipx_before;
-//         for (int32_t x2 = x_s; x2 != x_e; x2 += dx)
-//         {
-//             if (!transparency || *si) dest->line[y2][x2] = *si + cset;
-//             si++;
-//         }
-//         si += 8 + skipx_after;
-//     }
-// }
-
-static void draw_tile16_unified(BITMAP* dest, int cl, int ct, int cr, int cb, const byte *si, int32_t x, int32_t y, int32_t cset, int32_t flip, bool transparency)
-{
-    for (int32_t dy = 0; dy < 16; ++dy)
-    {
-        for (int32_t dx = 0; dx < 16; ++dx)
-        {
-            int destx = x + dx;
-            int desty = y + (flip&2 ? 15 - dy : dy);
-            if (destx >= cl && desty >= ct && destx < cr && desty < cb)
-            {
-                if (!transparency || *si) dest->line[desty][destx] = *si + cset;
-            }
-            si++;
-        }
-    }
-}
-
-static void draw_tile8_unified_32b(BITMAP* dest, int cl, int ct, int cr, int cb, const byte *si, int32_t x, int32_t y, int32_t cset, int32_t flip)
-{
-	extern PALETTE RAMpal;
-
-	for (int32_t dy = 0; dy < 8; ++dy)
-	{
-		for (int32_t dx = 0; dx < 8; ++dx)
-		{
-			int destx = x + (flip&1 ? 7 - dx : dx);
-			int desty = y + (flip&2 ? 7 - dy : dy);
-			uint32_t* line_32 = (uint32_t *)(dest->line[desty]);
-			if (destx >= cl && desty >= ct && destx < cr && desty < cb)
-			{
-				if (*si)
-				{
-					auto& col = RAMpal[*si + cset];
-					uint8_t r = col.r * 4;
-					uint8_t g = col.g * 4;
-					uint8_t b = col.b * 4;
-					int color = (r) + (g << 8) + (b << 16);
-					line_32[destx] = color;
-				}
-			}
-			si++;
-		}
-		si += 8;
-	}
-}
-
-static void draw_tile16_unified_32b(BITMAP* dest, int cl, int ct, int cr, int cb, const byte *si, int32_t x, int32_t y, int32_t cset, int32_t flip, bool transparency)
-{
-	extern PALETTE RAMpal;
-
-	for (int32_t dy = 0; dy < 16; ++dy)
-	{
-		for (int32_t dx = 0; dx < 16; ++dx)
-		{
-			int destx = x + dx;
-			int desty = y + (flip&2 ? 15 - dy : dy);
-			uint32_t* line_32 = (uint32_t *)(dest->line[desty]);
-			if (destx >= cl && desty >= ct && destx < cr && desty < cb)
-			{
-				if (!transparency || *si)
-				{
-					auto& col = RAMpal[*si + cset];
-					uint8_t r = col.r * 4;
-					uint8_t g = col.g * 4;
-					uint8_t b = col.b * 4;
-					int color = (r) + (g << 8) + (b << 16);
-					line_32[destx] = color;
-				}
-			}
-
-			si++;
-		}
-	}
-}
 
 void puttile8(BITMAP* dest,int32_t tile,int32_t x,int32_t y,int32_t cset,int32_t flip)
 {

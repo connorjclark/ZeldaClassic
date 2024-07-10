@@ -34619,9 +34619,9 @@ int32_t FFScript::do_get_internal_uid_eweapon(int32_t index)
 
 void FFScript::AlloffLimited(int32_t flagset)
 {
-	clear_bitmap(msg_txt_display_buf);
-	clear_bitmap(msg_bg_display_buf);
-	clear_bitmap(msg_portrait_display_buf);
+	clear_maskable_bitmap(msg_txt_display_buf);
+	clear_maskable_bitmap(msg_bg_display_buf);
+	clear_maskable_bitmap(msg_portrait_display_buf);
 	set_clip_state(msg_txt_display_buf, 1);
 	set_clip_state(msg_bg_display_buf, 1);
 	set_clip_state(msg_portrait_display_buf, 1);

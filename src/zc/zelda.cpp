@@ -801,7 +801,6 @@ void blit_msgstr_fg(BITMAP* dest, int32_t sx, int32_t sy, int32_t dx, int32_t dy
 			destroy_bitmap(subbmp);
 			color_map = &trans_table;
 		}
-		//zc_trans_blit(dest, msg_txt_display_buf, sx, sy, dx, dy, w, h);
 	}
 	else
 	{

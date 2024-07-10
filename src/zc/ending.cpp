@@ -254,8 +254,8 @@ void ending()
 		if(Quit) return;
 	}
 	
-	clear_bitmap(msg_txt_display_buf);
-	clear_bitmap(msg_bg_display_buf);
+	clear_maskable_bitmap(msg_txt_display_buf);
+	clear_maskable_bitmap(msg_bg_display_buf);
 	draw_screen(tmpscr);
 	advanceframe(true);
 	
@@ -639,8 +639,8 @@ void ending_scripted()
 	chainlinks.clear();
 	decorations.clear();
 	kill_subscr_items();
-	clear_bitmap(msg_txt_display_buf);
-	clear_bitmap(msg_bg_display_buf);
+	clear_maskable_bitmap(msg_txt_display_buf);
+	clear_maskable_bitmap(msg_bg_display_buf);
 	dismissmsg();
 	ALLOFF(true, true);
     
@@ -669,8 +669,8 @@ void ending_scripted()
 		if(Quit) return;
 	}
     
-	clear_bitmap(msg_txt_display_buf);
-	clear_bitmap(msg_bg_display_buf);
+	clear_maskable_bitmap(msg_txt_display_buf);
+	clear_maskable_bitmap(msg_bg_display_buf);
 	draw_screen(tmpscr);
 	advanceframe(true);
     

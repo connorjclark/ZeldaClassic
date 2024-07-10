@@ -4,6 +4,7 @@
 
 #include "base/qrs.h"
 #include "base/dmap.h"
+#include "base/zc_alleg.h"
 #include "zc/hero.h"
 #include "zc/guys.h"
 #include "subscr.h"
@@ -29153,11 +29154,11 @@ void HeroClass::scrollscr(int32_t scrolldir, int32_t destscr, int32_t destdmap)
 	} //end main scrolling loop
 	currdmap = olddmap;
 	
-	clear_bitmap(msg_txt_display_buf);
+	clear_maskable_bitmap(msg_txt_display_buf);
 	set_clip_state(msg_txt_display_buf, 1);
-	clear_bitmap(msg_bg_display_buf);
+	clear_maskable_bitmap(msg_bg_display_buf);
 	set_clip_state(msg_bg_display_buf, 1);
-	clear_bitmap(msg_portrait_display_buf);
+	clear_maskable_bitmap(msg_portrait_display_buf);
 	set_clip_state(msg_portrait_display_buf, 1);
 	
 	//Move hero to the other side of the screen if scrolling's not turned on
@@ -29843,8 +29844,8 @@ void dospecialmoney(int32_t index)
 		 game->change_drupy(0);   
 	    }
         }
-        rectfill(msg_bg_display_buf, 0, 0, msg_bg_display_buf->w, 80, 0);
-        rectfill(msg_txt_display_buf, 0, 0, msg_txt_display_buf->w, 80, 0);
+        rectfill(msg_bg_display_buf, 0, 0, msg_bg_display_buf->w, 80, bitmap_mask_color(msg_bg_display_buf));
+        rectfill(msg_txt_display_buf, 0, 0, msg_txt_display_buf->w, 80, bitmap_mask_color(msg_txt_display_buf));
         donewmsg(QMisc.info[tmpscr[tmp].catchall].str[priceindex]);
         clear_bitmap(pricesdisplaybuf);
         set_clip_state(pricesdisplaybuf, 1);
@@ -31418,7 +31419,7 @@ void setup_red_screen_old()
         if(!(msg_txt_display_buf->clip) || !(msg_bg_display_buf->clip) || !(pricesdisplaybuf->clip) || !(msg_portrait_display_buf->clip))
         {
 			BITMAP* subbmp = create_bitmap_ex(32,256,168);
-			clear_bitmap(subbmp);
+			clear_maskable_bitmap(subbmp);
 			if(!(msg_txt_display_buf->clip) || !(msg_bg_display_buf->clip) || !(msg_portrait_display_buf->clip))
 			{
 				masked_blit(framebuf, subbmp, 0, playing_field_offset, 0, 0, 256, 168);
