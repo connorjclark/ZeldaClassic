@@ -1,6 +1,7 @@
 #include "zc/zc_sys.h"
 
 #include "allegro/gfx.h"
+#include "allegro/inline/gfx.inl"
 #include "allegro5/joystick.h"
 #include "base/files.h"
 #include "base/render.h"
@@ -1845,8 +1846,9 @@ void open_black_opening(int32_t x, int32_t y, bool wait, int32_t shape)
 
 void black_opening(BITMAP *dest,int32_t x,int32_t y,int32_t a,int32_t max_a)
 {
-	clear_to_color(tmp_scr,BLACK);
+	clear_to_color(tmp_scr, bitmap_color_depth(tmp_scr) == 32 ? 0 : BLACK);
 	int32_t w=256, h=224;
+	int mask = bitmap_mask_color(tmp_scr);
 	
 	switch(black_opening_shape)
 	{
@@ -1855,7 +1857,7 @@ void black_opening(BITMAP *dest,int32_t x,int32_t y,int32_t a,int32_t max_a)
 		double new_w=(w/2)+abs(w/2-x);
 		double new_h=(h/2)+abs(h/2-y);
 		double b=sqrt(((new_w*new_w)/4)+(new_h*new_h));
-		ellipsefill(tmp_scr,x,y,int32_t(2*a*b/max_a)/8*8,int32_t(a*b/max_a)/8*8,0);
+		ellipsefill(tmp_scr,x,y,int32_t(2*a*b/max_a)/8*8,int32_t(a*b/max_a)/8*8,mask);
 		break;
 	}
 	
@@ -1875,7 +1877,7 @@ void black_opening(BITMAP *dest,int32_t x,int32_t y,int32_t a,int32_t max_a)
 		triangle(tmp_scr, x+int32_t(zc::math::Cos(a0)*r), y-int32_t(zc::math::Sin(a0)*r),
 				 x+int32_t(zc::math::Cos(a2)*r), y-int32_t(zc::math::Sin(a2)*r),
 				 x+int32_t(zc::math::Cos(a4)*r), y-int32_t(zc::math::Sin(a4)*r),
-				 0);
+				 mask);
 		break;
 	}
 	
@@ -1927,7 +1929,7 @@ void black_opening(BITMAP *dest,int32_t x,int32_t y,int32_t a,int32_t max_a)
 		double new_h=(h/2)+abs(h/2-y);
 		int32_t r=int32_t(sqrt((new_w*new_w)+(new_h*new_h))*a/max_a);
 		//circlefill(tmp_scr,x,y,a<<3,0);
-		circlefill(tmp_scr,x,y,r,0);
+		circlefill(tmp_scr,x,y,r,mask);
 		break;
 	}
 	}
