@@ -675,6 +675,16 @@ static void draw_tile16_unified(BITMAP* dest, int cl, int ct, int cr, int cb, co
     }
 }
 
+static inline uint32_t mixcolor(uint8_t bg_r, uint8_t bg_g, uint8_t bg_b, uint8_t fg_r, uint8_t fg_g, uint8_t fg_b, uint8_t alpha_int)
+{
+	double alpha = alpha_int / 255.0;
+	double alpha_i = 1.0 - alpha;
+	uint8_t r = ((bg_r * alpha) + (alpha_i * fg_r));
+	uint8_t g = ((bg_g * alpha) + (alpha_i * fg_g));
+	uint8_t b = ((bg_b * alpha) + (alpha_i * fg_b));
+	return r + (g << 8) + (b << 16);
+}
+
 static void draw_tile8_unified_32b(BITMAP* dest, int cl, int ct, int cr, int cb, const byte *si, int32_t x, int32_t y, int32_t cset, int32_t flip)
 {
 	extern PALETTE RAMpal;
@@ -694,8 +704,7 @@ static void draw_tile8_unified_32b(BITMAP* dest, int cl, int ct, int cr, int cb,
 					uint8_t r = col.r * 4;
 					uint8_t g = col.g * 4;
 					uint8_t b = col.b * 4;
-					int color = (r) + (g << 8) + (b << 16);
-					line_32[destx] = color;
+					line_32[destx] = r + (g << 8) + (b << 16);
 				}
 			}
 			si++;
@@ -704,7 +713,7 @@ static void draw_tile8_unified_32b(BITMAP* dest, int cl, int ct, int cr, int cb,
 	}
 }
 
-static void draw_tile16_unified_32b(BITMAP* dest, int cl, int ct, int cr, int cb, const byte *si, int32_t x, int32_t y, int32_t cset, int32_t flip, bool transparency)
+static inline void draw_tile16_unified_32b(BITMAP* dest, int cl, int ct, int cr, int cb, const byte *si, int32_t x, int32_t y, int32_t cset, int32_t flip, bool over, int opacity = 255)
 {
 	extern PALETTE RAMpal;
 
@@ -717,14 +726,23 @@ static void draw_tile16_unified_32b(BITMAP* dest, int cl, int ct, int cr, int cb
 			uint32_t* line_32 = (uint32_t *)(dest->line[desty]);
 			if (destx >= cl && desty >= ct && destx < cr && desty < cb)
 			{
-				if (!transparency || *si)
+				if (over && !*si)
 				{
-					auto& col = RAMpal[*si + cset];
-					uint8_t r = col.r * 4;
-					uint8_t g = col.g * 4;
-					uint8_t b = col.b * 4;
-					int color = (r) + (g << 8) + (b << 16);
-					line_32[destx] = color;
+					si++;
+					continue;
+				}
+
+				auto& col = RAMpal[*si + cset];
+				uint8_t r = col.r * 4;
+				uint8_t g = col.g * 4;
+				uint8_t b = col.b * 4;
+
+				if (opacity == 255)
+					line_32[destx] = r + (g << 8) + (b << 16);
+				else
+				{
+					uint32_t bg = line_32[destx];
+					line_32[destx] = mixcolor(r, g, b, bg, bg >> 8, bg >> 16, opacity);
 				}
 			}
 
@@ -1211,9 +1229,8 @@ void puttiletranslucent16(BITMAP* dest,int32_t tile,int32_t x,int32_t y,int32_t 
 
     if (bitmap_color_depth(dest) == 32)
     {
-        // TODO ! opacity
-		bool transparency = false;
-        draw_tile16_unified_32b(dest, cl, ct, cr, cb, si, x, y, cset, flip, transparency);
+        bool over = false;
+        draw_tile16_unified_32b(dest, cl, ct, cr, cb, si, x, y, cset, flip, over, opacity);
         return;
     }
 
@@ -1335,8 +1352,8 @@ void overtiletranslucent16(BITMAP* dest,int32_t tile,int32_t x,int32_t y,int32_t
 
     if (bitmap_color_depth(dest) == 32)
     {
-        // TODO ! gotta use trans_table.data
-        draw_tile16_unified_32b(dest, cl, ct, cr, cb, si, x, y, cset, flip, true);
+        bool over = true;
+        draw_tile16_unified_32b(dest, cl, ct, cr, cb, si, x, y, cset, flip, over, opacity);
         return;
     }
 
@@ -2170,7 +2187,8 @@ void puttile16(BITMAP* dest,int32_t tile,int32_t x,int32_t y,int32_t cset,int32_
 
     if (bitmap_color_depth(dest) == 32)
     {
-        draw_tile16_unified_32b(dest, cl, ct, cr, cb, bytes, x, y, cset, flip, false);
+        bool over = false;
+        draw_tile16_unified_32b(dest, cl, ct, cr, cb, bytes, x, y, cset, flip, over);
         return;
     }
 
@@ -2434,7 +2452,8 @@ void overtile16(BITMAP* dest,int32_t tile,int32_t x,int32_t y,int32_t cset,int32
 
 	if (bitmap_color_depth(dest) == 32)
 	{
-		draw_tile16_unified_32b(dest, cl, ct, cr, cb, si, x, y, cset, flip, true);
+		bool over = true;
+		draw_tile16_unified_32b(dest, cl, ct, cr, cb, si, x, y, cset, flip, over);
 		return;
 	}
 
