@@ -8,6 +8,7 @@
 #include "tiles.h"
 #include "items.h"
 #include <allegro/internal/aintern.h>
+#include <tuple>
 
 extern RGB_MAP rgb_table;
 extern COLOR_MAP trans_table;
@@ -558,6 +559,31 @@ bool write_tile(tiledata *buf, BITMAP* src, int32_t dest, int32_t x, int32_t y, 
 	reset_tile(buf, dest, is8bit ? tf8Bit : tf4Bit);
 	pack_tile(buf, unpackbuf, dest);
     return true;
+}
+
+static inline auto get_bounds(int size, BITMAP* bmp, int32_t x, int32_t y)
+{
+	int cl = 0;
+	int ct = 0;
+	int cr = bmp->w;
+	int cb = bmp->h;
+	if (bmp->clip)
+	{
+		cl = bmp->cl;
+		ct = bmp->ct;
+		cr = bmp->cr;
+		cb = bmp->cb;
+	}
+	bool in_bounds = true;
+	if (x + size < cl)
+		in_bounds = false;
+	if (x > cr)
+		in_bounds = false;
+	if (y + size < ct)
+		in_bounds = false;
+	if (y > cb)
+		in_bounds = false;
+	return std::make_tuple(in_bounds, cl, ct, cr, cb);
 }
 
 // For the editor only, grabbing code mades weird assumptions where it deletes the first tile
@@ -1163,25 +1189,8 @@ void overtiletranslucent8(BITMAP* dest,int32_t tile,int32_t x,int32_t y,int32_t 
 
 void puttiletranslucent16(BITMAP* dest,int32_t tile,int32_t x,int32_t y,int32_t cset,int32_t flip,int32_t opacity)
 {
-    int cl = 0;
-    int ct = 0;
-    int cr = dest->w;
-    int cb = dest->h;
-    if (dest->clip)
-    {
-        cl = dest->cl;
-        ct = dest->ct;
-        cr = dest->cr;
-        cb = dest->cb;
-    }
-
-    if (x + 16 < cl)
-        return;
-    if (x > cr)
-        return;
-    if (y + 16 < ct)
-        return;
-    if (y > cb)
+    auto [in_bounds, cl, ct, cr, cb] = get_bounds(16, dest, x, y);
+    if (!in_bounds)
         return;
         
     if(tile<0 || tile>=NEWMAXTILES)
@@ -1200,13 +1209,13 @@ void puttiletranslucent16(BITMAP* dest,int32_t tile,int32_t x,int32_t y,int32_t 
 
     const byte* si = get_tile_bytes(tile, flip&5);
 
-    // TODO !
-    // if (bitmap_color_depth(dest) == 32)
-    // {
-    //     // TODO ! gotta use trans_table.data
-    //     draw_tile16_unified_32b(dest, cl, ct, cr, cb, si, x, y, cset, flip, true);
-    //     return;
-    // }
+    if (bitmap_color_depth(dest) == 32)
+    {
+        // TODO ! opacity
+		bool transparency = false;
+        draw_tile16_unified_32b(dest, cl, ct, cr, cb, si, x, y, cset, flip, transparency);
+        return;
+    }
 
     byte *di;
     
@@ -1299,27 +1308,10 @@ void puttiletranslucent16(BITMAP* dest,int32_t tile,int32_t x,int32_t y,int32_t 
 
 void overtiletranslucent16(BITMAP* dest,int32_t tile,int32_t x,int32_t y,int32_t cset,int32_t flip,int32_t opacity)
 {
-    int cl = 0;
-    int ct = 0;
-    int cr = dest->w;
-    int cb = dest->h;
-    if (dest->clip)
-    {
-        cl = dest->cl;
-        ct = dest->ct;
-        cr = dest->cr;
-        cb = dest->cb;
-    }
+    auto [in_bounds, cl, ct, cr, cb] = get_bounds(16, dest, x, y);
+    if (!in_bounds)
+        return;
 
-    if (x + 16 < cl)
-		return;
-	if (x > cr)
-		return;
-	if (y + 16 < ct)
-		return;
-	if (y > cb)
-		return;
-        
     if(tile<0 || tile>=NEWMAXTILES)
     {
         rectfill(dest,x,y,x+15,y+15,0);
@@ -1450,15 +1442,10 @@ void overtiletranslucent16(BITMAP* dest,int32_t tile,int32_t x,int32_t y,int32_t
 
 void overtilecloaked16(BITMAP* dest,int32_t tile,int32_t x,int32_t y,int32_t flip)
 {
-    if(x<-15 || y<-15)
+    auto [in_bounds, cl, ct, cr, cb] = get_bounds(16, dest, x, y);
+    if (!in_bounds)
         return;
-        
-    if(y > dest->h)
-        return;
-        
-    if(y == dest->h && x > dest->w)
-        return;
-        
+
     if(tile<0 || tile>=NEWMAXTILES)
     {
         rectfill(dest,x,y,x+15,y+15,0);
@@ -1633,60 +1620,6 @@ void draw_cloaked_sprite(BITMAP* dest,BITMAP* src,int32_t x,int32_t y)
 			}
 		}
 	}
-}
-
-void putblocktranslucent8(BITMAP *dest,int32_t tile,int32_t x,int32_t y,int32_t csets[],int32_t flip,int32_t mask,int32_t opacity)
-{
-    int32_t t[4];
-    
-    for(int32_t i=0; i<4; ++i)
-        t[i]=tile+i;
-        
-    switch(mask)
-    {
-    case 1:
-        puttiletranslucent8(dest,tile,x,y,csets[0],flip,opacity);
-        break;
-        
-    case 3:
-        if(flip&2)
-        {
-            zc_swap(t[0],t[1]);
-        }
-        
-        puttiletranslucent8(dest,t[0],x,y,  csets[0],flip,opacity);
-        puttiletranslucent8(dest,t[1],x,y+8,csets[1],flip,opacity);
-        break;
-        
-    case 5:
-        if(flip&1)
-        {
-            zc_swap(t[0],t[1]);
-        }
-        
-        puttiletranslucent8(dest,t[0],x,  y,csets[0],flip,opacity);
-        puttiletranslucent8(dest,t[1],x+8,y,csets[1],flip,opacity);
-        break;
-        
-    case 15:
-        if(flip&1)
-        {
-            zc_swap(t[0],t[1]);
-            zc_swap(t[2],t[3]);
-        }
-        
-        if(flip&2)
-        {
-            zc_swap(t[0],t[2]);
-            zc_swap(t[1],t[3]);
-        }
-        
-        puttiletranslucent8(dest,t[0],x,  y,  csets[0],flip,opacity);
-        puttiletranslucent8(dest,t[1],x+8,y,  csets[1],flip,opacity);
-        puttiletranslucent8(dest,t[2],x,  y+8,csets[2],flip,opacity);
-        puttiletranslucent8(dest,t[3],x+8,y+8,csets[3],flip,opacity);
-        break;
-    }
 }
 
 void overblocktranslucent8(BITMAP *dest,int32_t tile,int32_t x,int32_t y,int32_t csets[],int32_t flip,int32_t mask,int32_t opacity)
@@ -1880,27 +1813,6 @@ int32_t combo_tile(int32_t cmbdat, int32_t x, int32_t y)
     return combo_tile(c, x, y);
 }
 
-void putcombotranslucent(BITMAP* dest,int32_t x,int32_t y,int32_t cmbdat,int32_t cset,int32_t opacity)
-{
-    const newcombo& c = combobuf[cmbdat];
-    int32_t drawtile=combo_tile(c, x, y);
-    
-    if(!(c.csets&0xF0) || !(c.csets&0x0F) || (newtilebuf[drawtile].format>tf4Bit))
-        puttiletranslucent16(dest,drawtile,x,y,cset,c.flip,opacity);
-    else
-    {
-        int32_t csets[4];
-        int32_t cofs = c.csets&15;
-        if(cofs&8)
-            cofs |= ~int32_t(0xF);
-            
-        for(int32_t i=0; i<4; ++i)
-            csets[i] = c.csets&(16<<i) ? WRAP_CS2(cset, cofs) : cset;
-            
-        putblocktranslucent8(dest,drawtile<<2,x,y,csets,c.flip,15,opacity);
-    }
-}
-
 void overcombotranslucent(BITMAP* dest,int32_t x,int32_t y,int32_t cmbdat,int32_t cset,int32_t opacity)
 {
     overcomboblocktranslucent(dest, x, y, cmbdat, cset, 1, 1, opacity);
@@ -1945,15 +1857,10 @@ void overcomboblocktranslucent(BITMAP *dest, int32_t x, int32_t y, int32_t cmbda
 
 void puttile8(BITMAP* dest,int32_t tile,int32_t x,int32_t y,int32_t cset,int32_t flip)
 {
-    if(x<0 || y<0)
+    auto [in_bounds, cl, ct, cr, cb] = get_bounds(8, dest, x, y);
+    if (!in_bounds)
         return;
-        
-    if(y > dest->h-8)
-        return;
-        
-    if(y == dest->h-8 && x > dest->w-8)
-        return;
-        
+
     if(newtilebuf[tile>>2].format>tf4Bit)
     {
         cset=0;
@@ -2046,13 +1953,8 @@ void puttile8(BITMAP* dest,int32_t tile,int32_t x,int32_t y,int32_t cset,int32_t
 
 void oldputtile8(BITMAP* dest,int32_t tile,int32_t x,int32_t y,int32_t cset,int32_t flip)
 {
-    if(x<-7 || y<-7)
-        return;
-        
-    if(y > dest->h)
-        return;
-        
-    if(y == dest->h && x > dest->w)
+    auto [in_bounds, cl, ct, cr, cb] = get_bounds(8, dest, x, y);
+    if (!in_bounds)
         return;
         
     if(newtilebuf[tile>>2].format>tf4Bit)
@@ -2140,27 +2042,10 @@ void oldputtile8(BITMAP* dest,int32_t tile,int32_t x,int32_t y,int32_t cset,int3
 
 void overtile8(BITMAP* dest,int32_t tile,int32_t x,int32_t y,int32_t cset,int32_t flip)
 {
-    int cl = 0;
-    int ct = 0;
-    int cr = dest->w;
-    int cb = dest->h;
-    if (dest->clip)
-    {
-        cl = dest->cl;
-        ct = dest->ct;
-        cr = dest->cr;
-        cb = dest->cb;
-    }
+    auto [in_bounds, cl, ct, cr, cb] = get_bounds(8, dest, x, y);
+    if (!in_bounds)
+        return;
 
-	if (x + 8 < cl)
-		return;
-	if (x > cr)
-		return;
-	if (y + 8 < ct)
-		return;
-	if (y > cb)
-		return;
-        
     if(blank_tile_quarters_table[tile])
     {
         return;
@@ -2264,26 +2149,9 @@ void overtile8(BITMAP* dest,int32_t tile,int32_t x,int32_t y,int32_t cset,int32_
 
 void puttile16(BITMAP* dest,int32_t tile,int32_t x,int32_t y,int32_t cset,int32_t flip) //fixed
 {
-    int cl = 0;
-    int ct = 0;
-    int cr = dest->w;
-    int cb = dest->h;
-    if (dest->clip)
-    {
-        cl = dest->cl;
-        ct = dest->ct;
-        cr = dest->cr;
-        cb = dest->cb;
-    }
-
-    if (x + 16 < cl)
-		return;
-	if (x > cr)
-		return;
-	if (y + 16 < ct)
-		return;
-	if (y > cb)
-		return;
+    auto [in_bounds, cl, ct, cr, cb] = get_bounds(16, dest, x, y);
+    if (!in_bounds)
+        return;
         
     if(tile<0 || tile>=NEWMAXTILES)
     {
@@ -2403,15 +2271,10 @@ void puttile16(BITMAP* dest,int32_t tile,int32_t x,int32_t y,int32_t cset,int32_
 
 void oldputtile16(BITMAP* dest,int32_t tile,int32_t x,int32_t y,int32_t cset,int32_t flip) //fixed
 {
-    if(x<-15 || y<-15)
+    auto [in_bounds, cl, ct, cr, cb] = get_bounds(16, dest, x, y);
+    if (!in_bounds)
         return;
-        
-    if(y > dest->h)
-        return;
-        
-    if(y == dest->h && x > dest->w)
-        return;
-        
+
     if(tile<0 || tile>=NEWMAXTILES)
     {
         rectfill(dest,x,y,x+15,y+15,0);
@@ -2546,25 +2409,8 @@ void overtileblock16(BITMAP* _Dest, int32_t tile, int32_t x, int32_t y, int32_t 
 }
 void overtile16(BITMAP* dest,int32_t tile,int32_t x,int32_t y,int32_t cset,int32_t flip)
 {
-	int cl = 0;
-	int ct = 0;
-	int cr = dest->w;
-	int cb = dest->h;
-	if (dest->clip)
-	{
-		cl = dest->cl;
-		ct = dest->ct;
-		cr = dest->cr;
-		cb = dest->cb;
-	}
-
-	if (x + 16 < cl)
-		return;
-	if (x > cr)
-		return;
-	if (y + 16 < ct)
-		return;
-	if (y > cb)
+	auto [in_bounds, cl, ct, cr, cb] = get_bounds(16, dest, x, y);
+	if (!in_bounds)
 		return;
 		
 	if(tile<0 || tile>=NEWMAXTILES)
@@ -2663,13 +2509,8 @@ void overtile16_scale(BITMAP* dest,int32_t tile,int32_t x,int32_t y,int32_t cset
 
 void drawtile16_cs2(BITMAP *dest,int32_t tile,int32_t x,int32_t y,int32_t cset[],int32_t flip,bool over)
 {
-    if(x<-15 || y<-15)
-        return;
-
-    if(y > dest->h)
-        return;
-
-    if(y == dest->h && x > dest->w)
+    auto [in_bounds, cl, ct, cr, cb] = get_bounds(16, dest, x, y);
+    if (!in_bounds)
         return;
 
     if(tile<0 || tile>=NEWMAXTILES)
@@ -2716,7 +2557,6 @@ void putcombo(BITMAP* dest,int32_t x,int32_t y,int32_t cmbdat,int32_t cset)
     
     if(!(c.csets&0xF0) || !(c.csets&0x0F) || (newtilebuf[drawtile].format>tf4Bit))
         puttile16(dest,drawtile,x,y,cset,c.flip);
-    //    puttile16(dest,c.drawtile,x,y,cset,c.flip);
     else
     {
         int32_t csets[4];

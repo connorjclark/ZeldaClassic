@@ -24668,12 +24668,8 @@ int32_t edit_layers(mapscr* tempscr)
                 tempscr->layerscreen[x]=0;
             }
             
-            //      tempscr->layeropacity[x]=layerdata_dlg[(x*9)+8+19].flags & D_SELECTED ? 128:255;
             tempscr->layeropacity[x]=layerdata_dlg[(x*3)+2+12].flags & D_SELECTED ? 128:255;
         }
-        
-        //  } else if (ret>72&&ret<79) {
-        //    return (ret-72);
     }
     
     return ret;

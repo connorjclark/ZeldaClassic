@@ -1545,9 +1545,6 @@ void reset_scr(int32_t scr)
     
     for(int32_t i=0; i<6; i++)
     {
-        //these will be uncommented later
-        //TheMaps[scr].layerxsize[i]=16;
-        //TheMaps[scr].layerysize[i]=11;
         TheMaps[scr].layeropacity[i]=255;
     }
     
