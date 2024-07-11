@@ -1735,14 +1735,14 @@ subscreen_object default_subscreen_passive[ssdtMAX][2][21]= //[zinit.subscreen][
 
 void textout_styled_aligned_ex(BITMAP *bmp, const FONT *f, const char *s, int32_t x, int32_t y, int32_t textstyle, int32_t alignment, int32_t color, int32_t shadow, int32_t bg)
 {
-	if (bitmap_color_depth(bmp) == 32)
-	{
-		auto& col = RAMpal[color];
-		uint8_t r = col.r * 4;
-		uint8_t g = col.g * 4;
-		uint8_t b = col.b * 4;
-		color = (r) + (g << 8) + (b << 16);
-	}
+    if (bitmap_color_depth(bmp) == 32)
+    {
+        auto& col = RAMpal[color];
+        uint8_t r = col.r * 4;
+        uint8_t g = col.g * 4;
+        uint8_t b = col.b * 4;
+        color = (r) + (g << 8) + (b << 16);
+    }
 
     switch(alignment)
     {

@@ -1099,7 +1099,7 @@ void sprite::draw(BITMAP* dest)
 		yofs = tyoffs;
 		return;
 	}
-	BITMAP* sprBMP2 = create_bitmap_ex(32,256,256); //run after above failsafe, so that we always destroy it
+	BITMAP* sprBMP2 = zc_create_bitmap(256,256); //run after above failsafe, so that we always destroy it
 	int32_t e = extend>=3 ? 3 : extend;
 	int32_t flip_type = ((scriptflip > -1) ? scriptflip : flip);
 	isspawning = false;
@@ -1110,12 +1110,12 @@ void sprite::draw(BITMAP* dest)
 		{
 			case 1:
 			{
-				BITMAP *temp = create_bitmap_ex(32,16,32);
+				BITMAP *temp = zc_create_bitmap(16,32);
 				blit(dest, temp, sx, sy-16, 0, 0, 16, 32);
 				//clear_bitmap(temp);
 				if ( sprBMP2 ) clear_bitmap(sprBMP2);
             
-				BITMAP *temp2 = create_bitmap_ex(32, 16, 32);
+				BITMAP *temp2 = zc_create_bitmap( 16, 32);
 				clear_bitmap(temp2);
 				//Draw sprite tiles to the temp (scratch) bitmap.
 				overtile16(temp2,TILEBOUND(((scripttile > -1) ? scripttile : tile)-TILES_PER_ROW),0,0,cs,((scriptflip > -1) ? scriptflip : flip));
@@ -1156,13 +1156,13 @@ void sprite::draw(BITMAP* dest)
 			}
 			case 2:
 			{
-				BITMAP *temp = create_bitmap_ex(32,48,32);
-				BITMAP *temp2 = create_bitmap_ex(32, 32, 32);
+				BITMAP *temp = zc_create_bitmap(48,32);
+				BITMAP *temp2 = zc_create_bitmap( 32, 32);
 				blit(dest, temp, sx-16, sy-16, 0, 0, 48, 32);
 				//clear_bitmap(temp);
 				clear_bitmap(sprBMP2);
 
-				BITMAP* temp3 = create_bitmap_ex(32, 32, 32);
+				BITMAP* temp3 = zc_create_bitmap( 32, 32);
 				clear_bitmap(temp3);
             
 				overtile16(temp3,TILEBOUND(((scripttile > -1) ? scripttile : tile)-TILES_PER_ROW),16,0,cs,((scriptflip > -1) ? scriptflip : flip));
@@ -1218,8 +1218,8 @@ void sprite::draw(BITMAP* dest)
 				{
 					case 1:
 					{
-						BITMAP* sprBMP = create_bitmap_ex(32,txsz*16,tysz*16);
-						//BITMAP* sprBMP2 = create_bitmap_ex(32,256,256);
+						BITMAP* sprBMP = zc_create_bitmap(txsz*16,tysz*16);
+						//BITMAP* sprBMP2 = zc_create_bitmap(256,256);
 						clear_bitmap(sprBMP);
 						clear_bitmap(sprBMP2);
 						for(int32_t i=0; i<tysz; i++)
@@ -1267,8 +1267,8 @@ void sprite::draw(BITMAP* dest)
                 
 					case 2:
 					{
-						BITMAP* sprBMP = create_bitmap_ex(32,txsz*16,tysz*16);
-						//BITMAP* sprBMP2 = create_bitmap_ex(32,256,256);
+						BITMAP* sprBMP = zc_create_bitmap(txsz*16,tysz*16);
+						//BITMAP* sprBMP2 = zc_create_bitmap(256,256);
 						clear_bitmap(sprBMP);
 						clear_bitmap(sprBMP2);
 						for(int32_t i=tysz-1; i>=0; i--)
@@ -1315,8 +1315,8 @@ void sprite::draw(BITMAP* dest)
                 
 					case 3:
 					{
-						BITMAP* sprBMP = create_bitmap_ex(32,txsz*16,tysz*16);
-						//BITMAP* sprBMP2 = create_bitmap_ex(32,256,256);
+						BITMAP* sprBMP = zc_create_bitmap(txsz*16,tysz*16);
+						//BITMAP* sprBMP2 = zc_create_bitmap(256,256);
 						clear_bitmap(sprBMP);
 						clear_bitmap(sprBMP2);
 						for(int32_t i=tysz-1; i>=0; i--)
@@ -1363,8 +1363,8 @@ void sprite::draw(BITMAP* dest)
                 
 					case 0:
 					{
-						BITMAP* sprBMP = create_bitmap_ex(32,txsz*16,tysz*16);
-						//BITMAP* sprBMP2 = create_bitmap_ex(32,256,256);
+						BITMAP* sprBMP = zc_create_bitmap(txsz*16,tysz*16);
+						//BITMAP* sprBMP2 = zc_create_bitmap(256,256);
 						clear_bitmap(sprBMP);
 						clear_bitmap(sprBMP2);
 						
@@ -1416,8 +1416,8 @@ void sprite::draw(BITMAP* dest)
 			}
 			case 0:
 			{
-				BITMAP* sprBMP = create_bitmap_ex(32,txsz*16,tysz*16);
-				//BITMAP* sprBMP2 = create_bitmap_ex(32,256,256);
+				BITMAP* sprBMP = zc_create_bitmap(txsz*16,tysz*16);
+				//BITMAP* sprBMP2 = zc_create_bitmap(256,256);
 				clear_bitmap(sprBMP);
 				clear_bitmap(sprBMP2);
 				overtile16(sprBMP,TILEBOUND(scripttile > -1 ? scripttile : tile),0,0,cs,((scriptflip > -1) ? scriptflip : flip));
@@ -1614,7 +1614,7 @@ void sprite::drawzcboss(BITMAP* dest)
 		switch(e)
 		{
 		case 1:
-			temp = create_bitmap_ex(32,16,32);
+			temp = zc_create_bitmap(16,32);
 			blit(dest, temp, sx, sy-16, 0, 0, 16, 32);
             
 			if(drawstyle==0 || drawstyle==3)
@@ -1667,7 +1667,7 @@ void sprite::drawzcboss(BITMAP* dest)
 			break;
             
 		case 2:
-			temp = create_bitmap_ex(32,48,32);
+			temp = zc_create_bitmap(48,32);
 			blit(dest, temp, sx-16, sy-16, 0, 0, 48, 32);
             
 			if(drawstyle==0 || drawstyle==3)

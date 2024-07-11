@@ -1163,16 +1163,25 @@ void overtiletranslucent8(BITMAP* dest,int32_t tile,int32_t x,int32_t y,int32_t 
 
 void puttiletranslucent16(BITMAP* dest,int32_t tile,int32_t x,int32_t y,int32_t cset,int32_t flip,int32_t opacity)
 {
-    //these are here to bypass compiler warnings about unused arguments
-    opacity=opacity;
-    
-    if(x<-15 || y<-15)
+    int cl = 0;
+    int ct = 0;
+    int cr = dest->w;
+    int cb = dest->h;
+    if (dest->clip)
+    {
+        cl = dest->cl;
+        ct = dest->ct;
+        cr = dest->cr;
+        cb = dest->cb;
+    }
+
+    if (x + 16 < cl)
         return;
-        
-    if(y > dest->h)
+    if (x > cr)
         return;
-        
-    if(y == dest->h && x > dest->w)
+    if (y + 16 < ct)
+        return;
+    if (y > cb)
         return;
         
     if(tile<0 || tile>=NEWMAXTILES)
@@ -1190,6 +1199,15 @@ void puttiletranslucent16(BITMAP* dest,int32_t tile,int32_t x,int32_t y,int32_t 
     cset <<= CSET_SHFT;
 
     const byte* si = get_tile_bytes(tile, flip&5);
+
+    // TODO !
+    // if (bitmap_color_depth(dest) == 32)
+    // {
+    //     // TODO ! gotta use trans_table.data
+    //     draw_tile16_unified_32b(dest, cl, ct, cr, cb, si, x, y, cset, flip, true);
+    //     return;
+    // }
+
     byte *di;
     
     if(flip&1)
@@ -1323,12 +1341,12 @@ void overtiletranslucent16(BITMAP* dest,int32_t tile,int32_t x,int32_t y,int32_t
 
     const byte* si = get_tile_bytes(tile, flip&5);
 
-	if (bitmap_color_depth(dest) == 32)
-	{
-		// TODO ! gotta use trans_table.data
-		draw_tile16_unified_32b(dest, cl, ct, cr, cb, si, x, y, cset, flip, true);
-		return;
-	}
+    if (bitmap_color_depth(dest) == 32)
+    {
+        // TODO ! gotta use trans_table.data
+        draw_tile16_unified_32b(dest, cl, ct, cr, cb, si, x, y, cset, flip, true);
+        return;
+    }
 
     byte *di;
     
@@ -2158,11 +2176,11 @@ void overtile8(BITMAP* dest,int32_t tile,int32_t x,int32_t y,int32_t cset,int32_
     const byte *bytes = get_tile_bytes(tile>>2, 0);
     const byte *si = bytes + ((tile&2)<<6) + ((tile&1)<<3);
 
-	if (bitmap_color_depth(dest) == 32)
-	{
-		draw_tile8_unified_32b(dest, cl, ct, cr, cb, si, x, y, cset, flip);
-		return;
-	}
+    if (bitmap_color_depth(dest) == 32)
+    {
+        draw_tile8_unified_32b(dest, cl, ct, cr, cb, si, x, y, cset, flip);
+        return;
+    }
 
     // 0: fast, no bounds checking
     // 1: slow, bounds checking
@@ -2282,11 +2300,11 @@ void puttile16(BITMAP* dest,int32_t tile,int32_t x,int32_t y,int32_t cset,int32_
     cset <<= CSET_SHFT;
     const byte *bytes = get_tile_bytes(tile, flip&5);
 
-	if (bitmap_color_depth(dest) == 32)
-	{
-		draw_tile16_unified_32b(dest, cl, ct, cr, cb, bytes, x, y, cset, flip, false);
-		return;
-	}
+    if (bitmap_color_depth(dest) == 32)
+    {
+        draw_tile16_unified_32b(dest, cl, ct, cr, cb, bytes, x, y, cset, flip, false);
+        return;
+    }
 
     // 0: fast, no bounds checking
     // 1: slow, bounds checking

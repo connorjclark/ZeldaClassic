@@ -50,6 +50,25 @@ bool alleg4_save_bitmap(BITMAP* source, int scale, const char* filename, AL_CONS
 	return result;
 }
 
+static int bitmap_depth = 8;
+
+void zc_set_bitmap_depth(int depth)
+{
+	assert(depth == 8 || depth == 32);
+	bitmap_depth = depth;
+}
+
+int zc_get_bitmap_depth()
+{
+	return bitmap_depth;
+}
+
+BITMAP* zc_create_bitmap(int width, int height)
+{
+	assert(bitmap_depth == 8 || bitmap_depth == 32);
+	return create_bitmap_ex(bitmap_depth, width, height);
+}
+
 void clear_maskable_bitmap(BITMAP* bmp)
 {
 	clear_to_color(bmp, bitmap_mask_color(bmp));

@@ -1,7 +1,6 @@
 #include "zc/zc_sys.h"
 
 #include "allegro/gfx.h"
-#include "allegro/inline/gfx.inl"
 #include "allegro5/joystick.h"
 #include "base/files.h"
 #include "base/render.h"
@@ -3838,8 +3837,8 @@ void draw_fuzzy(int32_t fuzz)
 
 void updatescr(bool allowwavy)
 {
-	static BITMAP *wavybuf = create_bitmap_ex(32,256,224);
-	static BITMAP *panorama = create_bitmap_ex(32,256,224);
+	static BITMAP *wavybuf = zc_create_bitmap(256,224);
+	static BITMAP *panorama = zc_create_bitmap(256,224);
 		
 	if(toogam)
 	{

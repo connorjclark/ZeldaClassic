@@ -771,7 +771,7 @@ void blit_msgstr_bg(BITMAP* dest, int32_t sx, int32_t sy, int32_t dx, int32_t dy
 {
 	if(MsgStrings[msgstr].stringflags & STRINGFLAG_TRANS_BG)
 	{
-		BITMAP* subbmp = create_bitmap_ex(32,w,h);
+		BITMAP* subbmp = zc_create_bitmap(w,h);
 		if(subbmp)
 		{
 			color_map = &trans_table2;
@@ -791,7 +791,7 @@ void blit_msgstr_fg(BITMAP* dest, int32_t sx, int32_t sy, int32_t dx, int32_t dy
 {
 	if(MsgStrings[msgstr].stringflags & STRINGFLAG_TRANS_FG)
 	{
-		BITMAP* subbmp = create_bitmap_ex(32,w,h);
+		BITMAP* subbmp = zc_create_bitmap(w,h);
 		if(subbmp)
 		{
 			color_map = &trans_table2;
@@ -4478,27 +4478,28 @@ int main(int argc, char **argv)
 	
 	// allocate bitmap buffers
 	set_color_depth(8);
-	framebuf  = create_bitmap_ex(32,256,224);
+	// zc_set_bitmap_depth(32); // TODO !
+	framebuf  = zc_create_bitmap(256,224);
 	menu_bmp  = create_bitmap_ex(8,640,480);
-	scrollbuf = create_bitmap_ex(32,512,406);
-	screen2   = create_bitmap_ex(32,320,240);
-	tmp_scr   = create_bitmap_ex(32,320,240);
-	tmp_bmp   = create_bitmap_ex(32,32,32);
-	prim_bmp  = create_bitmap_ex(32,512,512);
-	msg_bg_display_buf = create_bitmap_ex(32,256, 176);
-	msg_txt_display_buf = create_bitmap_ex(32,256, 176);
-	msg_bg_bmp_buf = create_bitmap_ex(32, 512+16, 512+16);
-	msg_txt_bmp_buf = create_bitmap_ex(32, 512+16, 512+16);
-	msg_menu_bmp_buf = create_bitmap_ex(32, 512+16, 512+16);
-	msg_portrait_bmp_buf = create_bitmap_ex(32, 256, 256);
-	msg_portrait_display_buf = create_bitmap_ex(32, 256, 256);
-	pricesdisplaybuf = create_bitmap_ex(32,256, 176);
-	script_menu_buf = create_bitmap_ex(32,256,224);
-	f6_menu_buf = create_bitmap_ex(32,256,224);
-	darkscr_bmp_curscr = create_bitmap_ex(32, 256, 176);
-	darkscr_bmp_curscr_trans = create_bitmap_ex(32, 256, 176);
-	darkscr_bmp_scrollscr = create_bitmap_ex(32, 256, 176);
-	darkscr_bmp_scrollscr_trans = create_bitmap_ex(32, 256, 176);
+	scrollbuf = zc_create_bitmap(512,406);
+	screen2   = zc_create_bitmap(320,240);
+	tmp_scr   = zc_create_bitmap(320,240);
+	tmp_bmp   = zc_create_bitmap(32,32);
+	prim_bmp  = zc_create_bitmap(512,512);
+	msg_bg_display_buf = zc_create_bitmap(256, 176);
+	msg_txt_display_buf = zc_create_bitmap(256, 176);
+	msg_bg_bmp_buf = zc_create_bitmap( 512+16, 512+16);
+	msg_txt_bmp_buf = zc_create_bitmap( 512+16, 512+16);
+	msg_menu_bmp_buf = zc_create_bitmap( 512+16, 512+16);
+	msg_portrait_bmp_buf = zc_create_bitmap( 256, 256);
+	msg_portrait_display_buf = zc_create_bitmap( 256, 256);
+	pricesdisplaybuf = zc_create_bitmap(256, 176);
+	script_menu_buf = zc_create_bitmap(256,224);
+	f6_menu_buf = zc_create_bitmap(256,224);
+	darkscr_bmp_curscr = zc_create_bitmap( 256, 176);
+	darkscr_bmp_curscr_trans = zc_create_bitmap( 256, 176);
+	darkscr_bmp_scrollscr = zc_create_bitmap( 256, 176);
+	darkscr_bmp_scrollscr_trans = zc_create_bitmap( 256, 176);
 	lightbeam_bmp = create_bitmap_ex(8, 256, 176);
 	
 	if(!framebuf || !scrollbuf || !tmp_bmp || !tmp_scr

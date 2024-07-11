@@ -31418,7 +31418,7 @@ void setup_red_screen_old()
         //do an AND masked blit for messages on top of layers
         if(!(msg_txt_display_buf->clip) || !(msg_bg_display_buf->clip) || !(pricesdisplaybuf->clip) || !(msg_portrait_display_buf->clip))
         {
-			BITMAP* subbmp = create_bitmap_ex(32,256,168);
+			BITMAP* subbmp = zc_create_bitmap(256,168);
 			clear_maskable_bitmap(subbmp);
 			if(!(msg_txt_display_buf->clip) || !(msg_bg_display_buf->clip) || !(msg_portrait_display_buf->clip))
 			{
@@ -31504,7 +31504,7 @@ void HeroClass::heroDeathAnimation()
 		Paused=false;
 	}
     
-	BITMAP *subscrbmp = create_bitmap_ex(32, framebuf->w, framebuf->h);
+	BITMAP *subscrbmp = zc_create_bitmap( framebuf->w, framebuf->h);
 				clear_bitmap(subscrbmp);
 				//get rid off all sprites but Hero
 				guys.clear();

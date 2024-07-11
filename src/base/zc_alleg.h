@@ -38,4 +38,10 @@ bool alleg4_save_bitmap(BITMAP* bitmap, int scale, const char* filename, AL_CONS
 
 void clear_maskable_bitmap(BITMAP* bmp);
 
+void zc_set_bitmap_depth(int depth);
+int zc_get_bitmap_depth();
+
+// Returns either an 8-bit or 32-bit bitmap, based on the value given set by `zc_set_bitmap_depth`.
+BITMAP* zc_create_bitmap(int width, int height);
+
 #endif
