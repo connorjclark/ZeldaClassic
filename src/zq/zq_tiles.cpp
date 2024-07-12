@@ -57,6 +57,8 @@ static void massRecolorApply(int32_t tile);
 extern int32_t last_droplist_sel;
 extern int32_t TilePgCursorCol, CmbPgCursorCol;
 
+static int32_t _selected_tile=-1, _selected_tcset=-1;
+
 int32_t ex=0;
 int32_t nextcombo_fake_click=0;
 int32_t invcol=0;
@@ -5809,15 +5811,22 @@ static void set_tile_color_depth_8()
 {
 	select_tile_color_depth_cb(tf8Bit);
 }
+static void set_tile_color_depth_32()
+{
+	select_tile_color_depth_cb(tf32Bit);
+}
+
 enum
 {
 	MENUID_SELTILE_COLOR_DEPTH_4_BIT,
 	MENUID_SELTILE_COLOR_DEPTH_8_BIT,
+	MENUID_SELTILE_COLOR_DEPTH_32_BIT,
 };
 static NewMenu select_tile_color_depth_menu
 {
 	{ "4-bit", set_tile_color_depth_4, MENUID_SELTILE_COLOR_DEPTH_4_BIT },
 	{ "8-bit", set_tile_color_depth_8, MENUID_SELTILE_COLOR_DEPTH_8_BIT },
+	{ "32-bit (RGBA)", set_tile_color_depth_32, MENUID_SELTILE_COLOR_DEPTH_32_BIT },
 };
 
 //returns the row the tile is in on its page
@@ -8523,6 +8532,8 @@ static void do_convert_tile(int32_t tile, int32_t tile2, int32_t cs, bool rect_s
 		num_bits = 4;
 	else if (format == tf8Bit)
 		num_bits = 8;
+	else if (format == tf32Bit)
+		num_bits = 32;
 	else assert(false);
 
 	char buf[80];
@@ -8918,7 +8929,6 @@ int32_t writetilefile(PACKFILE *f, int32_t index, int32_t count)
 	
 }
 
-static int32_t _selected_tile=-1, _selected_tcset=-1;
 int32_t select_tile(int32_t &tile,int32_t &flip,int32_t type,int32_t &cs,bool edit_cs,int32_t exnow, bool always_use_flip)
 {
 	popup_zqdialog_start();
@@ -10185,6 +10195,8 @@ REDRAW:
 			int current_tile_format = MENUID_SELTILE_COLOR_DEPTH_4_BIT;
 			if (newtilebuf[tile].format == tf8Bit)
 				current_tile_format = MENUID_SELTILE_COLOR_DEPTH_8_BIT;
+			else if (newtilebuf[tile].format == tf32Bit)
+				current_tile_format = MENUID_SELTILE_COLOR_DEPTH_32_BIT;
 			select_tile_color_depth_menu.select_only_uid(current_tile_format);
 			select_tile_color_depth_cb = [&](int format){
 				if (newtilebuf[tile].format == format)
