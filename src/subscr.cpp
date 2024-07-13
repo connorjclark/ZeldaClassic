@@ -2304,14 +2304,14 @@ void drawgrid(BITMAP *dest,int32_t x,int32_t y,int32_t c1,int32_t c2)
             if(c2==-1)
             {
                 if(dl&0x80)
-                    rectfill(dest,(x2*8)+x,(y2*4)+y,(x2*8)+x+6,(y2*4)+y+2,c1);
+                    zc_rectfill(dest,(x2*8)+x,(y2*4)+y,(x2*8)+x+6,(y2*4)+y+2,c1);
             }
             else
             {
-                rectfill(dest,(x2*8)+x,(y2*4)+y,(x2*8)+x+6,(y2*4)+y+2,c2);
+                zc_rectfill(dest,(x2*8)+x,(y2*4)+y,(x2*8)+x+6,(y2*4)+y+2,c2);
                 
                 if(dl&0x80)
-                    rectfill(dest,(x2*8)+x+2,(y2*4)+y,(x2*8)+x+4,(y2*4)+y+2,c1);
+                    zc_rectfill(dest,(x2*8)+x+2,(y2*4)+y,(x2*8)+x+4,(y2*4)+y+2,c1);
             }
             
             dl<<=1;

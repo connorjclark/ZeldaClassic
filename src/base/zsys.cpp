@@ -1714,34 +1714,6 @@ void safe_rect(BITMAP *bmp, int x1, int y1, int x2, int y2, int color, int thick
 		safe_rect(bmp,x1+q,y1+q,x2-q,y2-q,color);
 }
 
-//computes the positive gcd of two integers (using Euclid's algorithm)
-
-int32_t gcd(int32_t a, int32_t b)
-{
-    a = abs(a);
-    b = abs(b);
-    
-    if(b == 0)
-        return a;
-        
-    int32_t res = a%b;
-    
-    while(res != 0)
-    {
-        a = b;
-        b = res;
-        res = a%b;
-    }
-    
-    return b;
-}
-
-//computes the positive lcm of two integers
-int32_t lcm(int32_t a, int32_t b)
-{
-    return a*b/gcd(a,b);
-}
-
 size_t count_digits(int32_t n)
 {
     return std::to_string(n).size();

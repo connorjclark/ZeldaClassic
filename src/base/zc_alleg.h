@@ -43,5 +43,9 @@ int zc_get_bitmap_depth();
 
 // Returns either an 8-bit or 32-bit bitmap, based on the value given set by `zc_set_bitmap_depth`.
 BITMAP* zc_create_bitmap(int width, int height);
+int zc_color(BITMAP* bmp, int color);
+
+void zc_rectfill(BITMAP* bmp, int x1, int y1, int x2, int y2, int color);
+void zc_rect(BITMAP* bmp, int x1, int y1, int x2, int y2, int color);
 
 #endif

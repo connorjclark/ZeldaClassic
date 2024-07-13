@@ -699,13 +699,7 @@ static void draw_tile8_unified_32b(BITMAP* dest, int cl, int ct, int cr, int cb,
 			if (destx >= cl && desty >= ct && destx < cr && desty < cb)
 			{
 				if (*si)
-				{
-					auto& col = RAMpal[*si + cset];
-					uint8_t r = col.r * 4;
-					uint8_t g = col.g * 4;
-					uint8_t b = col.b * 4;
-					line_32[destx] = r + (g << 8) + (b << 16);
-				}
+					line_32[destx] = getpalcolor(*si + cset);
 			}
 			si++;
 		}
@@ -926,28 +920,18 @@ void pack_tiledata(byte *dest, byte *src, byte format)
         break;
 
     case tf8Bit:
-        // TODO: Could this just be a memcpy ...
-        for(int32_t si=0; si<32; si++)
-        {
-            *di = src[si*8];
-            ++di;
-            *di = src[si*8+1];
-            ++di;
-            *di = src[si*8+2];
-            ++di;
-            *di = src[si*8+3];
-            ++di;
-            *di = src[si*8+4];
-            ++di;
-            *di = src[si*8+5];
-            ++di;
-            *di = src[si*8+6];
-            ++di;
-            *di = src[si*8+7];
-            ++di;
-        }
-        
-        break;
+		memcpy(dest, src, tilesize(format));
+		break;
+
+	// case tf32Bit:
+	// 	uint32_t* px = (uint32_t*)di;
+	// 	for (int32_t si=0; si<256; si++)
+	// 	{
+	// 		int color = getpalcolor(src[si]);
+	// 		*px = color;
+	// 		px++;
+	// 	}
+    //     break;
     }
 }
 

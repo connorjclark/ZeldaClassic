@@ -1,6 +1,8 @@
 #include "base/zc_alleg.h"
 #include "a5alleg.h"
+#include "allegro/inline/gfx.inl"
 #include "allegro5/bitmap.h"
+#include "tiles.h"
 
 PACKFILE *pack_fopen_password(const char *filename, const char *mode, const char *password)
 {
@@ -69,7 +71,24 @@ BITMAP* zc_create_bitmap(int width, int height)
 	return create_bitmap_ex(bitmap_depth, width, height);
 }
 
+int zc_color(BITMAP* bmp, int color)
+{
+	if (bitmap_color_depth(bmp) == 32)
+		color = getpalcolor(color);
+	return color;
+}
+
 void clear_maskable_bitmap(BITMAP* bmp)
 {
 	clear_to_color(bmp, bitmap_mask_color(bmp));
+}
+
+void zc_rectfill(BITMAP* bmp, int x1, int y1, int x2, int y2, int color)
+{
+	rectfill(bmp, x1, y1, x2, y2, zc_color(bmp, color));
+}
+
+void zc_rect(BITMAP* bmp, int x1, int y1, int x2, int y2, int color)
+{
+	rect(bmp, x1, y1, x2, y2, zc_color(bmp, color));
 }

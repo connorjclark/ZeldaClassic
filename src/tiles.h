@@ -5,7 +5,6 @@
 #include "base/zdefs.h"
 #include "base/combo.h"
 
-//extern byte *tilebuf;
 extern tiledata *newtilebuf, *grabtilebuf;
 extern int32_t animated_combo_table[MAXCOMBOS][2];             //[0]=position in act2, [1]=original tile
 extern int32_t animated_combo_table4[MAXCOMBOS][2];            //[0]=combo, [1]=clock
@@ -90,5 +89,14 @@ bool is_valid_format(byte format);
 int32_t tilesize(byte format);
 int32_t comboa_lmasktotal(byte layermask);
 
-#endif                                                      // _ZC_TILES_H_
- 
+inline uint32_t getpalcolor(int color)
+{
+	extern PALETTE RAMpal;
+	auto& col = RAMpal[color];
+	uint8_t r = col.r * 4;
+	uint8_t g = col.g * 4;
+	uint8_t b = col.b * 4;
+	return r + (g << 8) + (b << 16);
+}
+
+#endif

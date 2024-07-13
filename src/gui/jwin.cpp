@@ -205,10 +205,10 @@ void jwin_draw_frame(BITMAP *dest,int32_t x,int32_t y,int32_t w,int32_t h,int32_
 			break;
 	}
 	
-	if(c1) c1 = scheme[*c1];
-	if(c2) c2 = scheme[*c2];
-	if(c3) c3 = scheme[*c3];
-	if(c4) c4 = scheme[*c4];
+	if(c1) c1 = zc_color(dest, scheme[*c1]);
+	if(c2) c2 = zc_color(dest, scheme[*c2]);
+	if(c3) c3 = zc_color(dest, scheme[*c3]);
+	if(c4) c4 = zc_color(dest, scheme[*c4]);
 	switch (style)
 	{
 		case FR_RED:
@@ -307,27 +307,32 @@ void jwin_draw_frag_frame(BITMAP* dest, int x1, int y1, int w, int h, int fw, in
 	int yc = y1+fh-1;
 	int x2 = x1+w-1;
 	int y2 = y1+h-1;
+
+	c1 = zc_color(dest, scheme[c1]);
+	c2 = zc_color(dest, scheme[c2]);
+	c3 = zc_color(dest, scheme[c3]);
+	c4 = zc_color(dest, scheme[c4]);
+
+	zc_rectfill(dest, x1, y1, x2, yc, vc(0));
+	zc_rectfill(dest, x1, yc, xc, y2, vc(0));
 	
-	rectfill(dest, x1, y1, x2, yc, vc(0));
-	rectfill(dest, x1, yc, xc, y2, vc(0));
-	
-    _allegro_hline(dest, x1-2, y1-2, x2+2, scheme[c1]);
-    _allegro_hline(dest, x1-1, y1-1, x2+1, scheme[c2]);
+    _allegro_hline(dest, x1-2, y1-2, x2+2, c1);
+    _allegro_hline(dest, x1-1, y1-1, x2+1, c2);
     
-    _allegro_vline(dest, x1-2, y1-2, y2+2, scheme[c1]);
-    _allegro_vline(dest, x1-1, y1-1, y2+1, scheme[c2]);
+    _allegro_vline(dest, x1-2, y1-2, y2+2, c1);
+    _allegro_vline(dest, x1-1, y1-1, y2+1, c2);
     
-    _allegro_hline(dest, x1-2, y2+2, xc+2, scheme[c3]);
-    _allegro_hline(dest, x1-1, y2+1, xc+1, scheme[c4]);
+    _allegro_hline(dest, x1-2, y2+2, xc+2, c3);
+    _allegro_hline(dest, x1-1, y2+1, xc+1, c4);
 	
-    _allegro_vline(dest, x2+2, y1-2, yc+2, scheme[c3]);
-    _allegro_vline(dest, x2+1, y1-1, yc+1, scheme[c4]);
+    _allegro_vline(dest, x2+2, y1-2, yc+2, c3);
+    _allegro_vline(dest, x2+1, y1-1, yc+1, c4);
 	
-    _allegro_hline(dest, xc+2, yc+2, x2+2, scheme[c3]);
-    _allegro_hline(dest, xc+1, yc+1, x2+1, scheme[c4]);
+    _allegro_hline(dest, xc+2, yc+2, x2+2, c3);
+    _allegro_hline(dest, xc+1, yc+1, x2+1, c4);
 	
-    _allegro_vline(dest, xc+2, yc+2, y2+2, scheme[c3]);
-    _allegro_vline(dest, xc+1, yc+1, y2+1, scheme[c4]);
+    _allegro_vline(dest, xc+2, yc+2, y2+2, c3);
+    _allegro_vline(dest, xc+1, yc+1, y2+1, c4);
 }
 void jwin_draw_minimap_frame(BITMAP *dest,int x,int y,int w,int h,int scrsz,int style)
 {
@@ -339,7 +344,7 @@ void jwin_draw_minimap_frame(BITMAP *dest,int x,int y,int w,int h,int scrsz,int 
   */
 void jwin_draw_win(BITMAP *dest,int32_t x,int32_t y,int32_t w,int32_t h,int32_t frame)
 {
-	rectfill(dest,zc_max(x,0),zc_max(y,0),zc_min(x+w-1, dest->w-1),zc_min(y+h-1, dest->h-1),scheme[jcBOX]);
+	zc_rectfill(dest,zc_max(x,0),zc_max(y,0),zc_min(x+w-1, dest->w-1),zc_min(y+h-1, dest->h-1),scheme[jcBOX]);
 	jwin_draw_frame(dest, x, y, w, h, frame);
 }
 
@@ -389,28 +394,6 @@ int32_t mix_value(int32_t c1,int32_t c2,int32_t pos,int32_t max)
         
     return (c2 - c1) * pos / max + c1;
 }
-
-/*  mix_color:
-  *   Returns a mix of the colors c1 and c2 with pos==0 being c1,
-  *   pos==max being c2, pos==max/2 being half way between c1 and c2, etc.
-  *
-  static int32_t mix_color(int32_t c1,int32_t c2,int32_t pos,int32_t max)
-  {
-  int32_t c;
-
-  if(bitmap_color_depth(screen) == 8)
-  c = mix_value(c1, c2, pos, max);
-  else
-  {
-  int32_t r = mix_value(getr(c1), getr(c2), pos, max);
-  int32_t g = mix_value(getg(c1), getg(c2), pos, max);
-  int32_t b = mix_value(getb(c1), getb(c2), pos, max);
-  c = makecol(r,g,b);
-  }
-
-  return c;
-  }
-  */
 
 char *shorten_string(char *dest, char const* src, FONT *usefont, int32_t maxchars, int32_t maxwidth)
 {
@@ -642,6 +625,8 @@ static bool no_hline = false;
   */
 int32_t gui_textout_ln(BITMAP *bmp, FONT *f, unsigned const char *s, int32_t x, int32_t y, int32_t color, int32_t bg, int32_t pos)
 {
+	color = zc_color(bmp, color);
+
     char tmp[1024];
     int32_t c = 0;
     int32_t len;
@@ -649,7 +634,6 @@ int32_t gui_textout_ln(BITMAP *bmp, FONT *f, unsigned const char *s, int32_t x, 
     int32_t max_len = 0;
     int32_t hline_pos;
     int32_t xx = x;
-	bool is_scr = bmp == screen;
     
 	while(s[c])
     {
@@ -1047,7 +1031,7 @@ void jwin_draw_text_button(BITMAP *dest, int32_t x, int32_t y, int32_t w, int32_
         jwin_draw_button(dest, x, y, w, h, 0, 0);
     else
     {
-        rect(dest, x, y, x+w-1, y+h-1, scheme[jcDARK]);
+        zc_rect(dest, x, y, x+w-1, y+h-1, scheme[jcDARK]);
         jwin_draw_button(dest, x+1, y+1, w-2, h-2, 0, 0);
     }
     
@@ -1056,6 +1040,7 @@ void jwin_draw_text_button(BITMAP *dest, int32_t x, int32_t y, int32_t w, int32_
 	{
 		drawstring = false;
 		int col = jwin_pal[(flags & D_DISABLED) ? jcLIGHT : jcBOXFG];
+		col = zc_color(dest, col);
 		int aw = w/4, ah = h/4;
 		int woff = (aw/2)+1, hoff = (ah/2)+1;
 		int x1 = x+w/2, x2 = x+(w-aw)/2;
@@ -1096,16 +1081,16 @@ void jwin_draw_text_button(BITMAP *dest, int32_t x, int32_t y, int32_t w, int32_
 	if(drawstring)
 	{
 		if(!(flags & D_DISABLED))
-			gui_textout_ex(dest, str, x+w/2+g, y+(h-text_height(font))/2+g, scheme[jcBOXFG], -1, TRUE);
+			gui_textout_ex(dest, str, x+w/2+g, y+(h-text_height(font))/2+g, zc_color(dest, scheme[jcBOXFG]), -1, TRUE);
 		else
 		{
-			gui_textout_ex(dest, str, x+w/2+1,y+(h-text_height(font))/2+1, scheme[jcLIGHT], -1, TRUE);
-			gui_textout_ex(dest, str, x+w/2,  y+(h-text_height(font))/2, scheme[jcDISABLED_FG], -1, TRUE);
+			gui_textout_ex(dest, str, x+w/2+1,y+(h-text_height(font))/2+1, zc_color(dest, scheme[jcLIGHT]), -1, TRUE);
+			gui_textout_ex(dest, str, x+w/2,  y+(h-text_height(font))/2, zc_color(dest, scheme[jcDISABLED_FG]), -1, TRUE);
 		}
 	}
     
     if(show_dotted_rect&&(flags & D_GOTFOCUS))
-        dotted_rect(dest, x+4, y+4, x+w-5, y+h-5, scheme[jcDARK], scheme[jcBOX]);
+        dotted_rect(dest, x+4, y+4, x+w-5, y+h-5, zc_color(dest, scheme[jcDARK]), zc_color(dest, scheme[jcBOX]));
 }
 
 int icon_proportion(int icon,int s1,int s2)
@@ -9084,6 +9069,7 @@ int32_t d_jwinbutton_proc(int32_t msg, DIALOG *d, int32_t)
 //Misc bitmap drawing
 void draw_x(BITMAP* dest, int x1, int y1, int x2, int y2, int color)
 {
+	color = zc_color(dest, color);
 	line(dest, x1, y1, x2, y2, color);
 	line(dest, x1, y2, x2, y1, color);
 }
@@ -9096,8 +9082,9 @@ void draw_check(BITMAP* dest, int x1, int y1, int x2, int y2, int c)
 		zc_swap(y2,y1);
 	int x3 = ((x2-x1)/2)+x1;
 	int y3 = y2-(x3-x1);
-	line(dest, x1, y3, x3, y2, c);
-	line(dest, x3, y2, x2, y1, c);
+	int color = zc_color(dest, c);
+	line(dest, x1, y3, x3, y2, color);
+	line(dest, x3, y2, x2, y1, color);
 }
 
 void draw_checkerboard(BITMAP* dest, int x, int y, int sz, optional<int> cb_sz, int offx, int offy)
@@ -9105,7 +9092,8 @@ void draw_checkerboard(BITMAP* dest, int x, int y, int sz, optional<int> cb_sz, 
 	if(!cb_sz)
 		cb_sz = sz/2;
 	int ox = -x+offx, oy = -y+offy;
-	ditherrectfill(dest, x, y, x+sz-1, y+sz-1, vc(CheckerCol1), dithChecker, *cb_sz, ox, oy, vc(CheckerCol2));
+	int color = zc_color(dest, vc(CheckerCol2));
+	ditherrectfill(dest, x, y, x+sz-1, y+sz-1, vc(CheckerCol1), dithChecker, *cb_sz, ox, oy, color);
 }
 
 int32_t d_vsync_proc(int32_t msg,DIALOG *d,int32_t c)
@@ -9169,12 +9157,14 @@ void draw_checkbox(BITMAP *dest,int x,int y,int sz,bool value)
 void draw_checkbox(BITMAP *dest,int x,int y,int wid,int hei,bool value)
 {
 	jwin_draw_frame(dest, x, y, wid, hei, FR_DEEP);
-	rectfill(dest, x+2, y+2, x+wid-3, y+hei-3, jwin_pal[jcTEXTBG]);
+	int color = zc_color(dest, jwin_pal[jcTEXTBG]);
+	rectfill(dest, x+2, y+2, x+wid-3, y+hei-3, color);
 	
 	if(value)
 	{
-		line(dest, x+2, y+2, x+wid-3, y+hei-3, jwin_pal[jcTEXTFG]);
-		line(dest, x+2, y+hei-3, x+wid-3, y+2, jwin_pal[jcTEXTFG]);
+		color = zc_color(dest, jwin_pal[jcTEXTFG]);
+		line(dest, x+2, y+2, x+wid-3, y+hei-3, color);
+		line(dest, x+2, y+hei-3, x+wid-3, y+2, color);
 	}
 }
 void draw_dis_checkbox(BITMAP *dest,int x,int y,int wid,int hei,bool value)
@@ -9183,8 +9173,9 @@ void draw_dis_checkbox(BITMAP *dest,int x,int y,int wid,int hei,bool value)
 	
 	if(value)
 	{
-		line(dest, x+2, y+2, x+wid-3, y+hei-3, jwin_pal[jcTEXTFG]);
-		line(dest, x+2, y+hei-3, x+wid-3, y+2, jwin_pal[jcTEXTFG]);
+		int color = zc_color(dest, jwin_pal[jcTEXTFG]);
+		line(dest, x+2, y+2, x+wid-3, y+hei-3, color);
+		line(dest, x+2, y+hei-3, x+wid-3, y+2, color);
 	}
 }
 

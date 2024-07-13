@@ -73,14 +73,13 @@ void setZScriptVersion(int32_t) { } //bleh...
 #include "zc_list_data.h"
 #include "gui/editbox.h"
 #include "zq/zq_misc.h"
-#include "zq/zq_tiles.h"                                       // tile and combo code
+#include "zq/zq_tiles.h"
 
 #include "zq/zquest.h"
 #include "zq/zquestdat.h"
 #include "zq/ffasm.h"
 #include "zq/render.h"
 
-// the following are used by both zelda.cc and zquest.cc
 #include "base/zdefs.h"
 #include "base/qrs.h"
 #include "tiles.h"
@@ -101,7 +100,7 @@ void setZScriptVersion(int32_t) { } //bleh...
 #include "zc/ffscript.h"
 #include "gui/EditboxNew.h"
 #include "sfx.h"
-#include "zq/zq_custom.h" // custom items and guys
+#include "zq/zq_custom.h"
 #include "zq/zq_strings.h"
 #include "zq/questReport.h"
 #include "zq/ffasmexport.h"
@@ -5056,12 +5055,12 @@ void drawpanel()
 	if(prv_mode)
 	{
 		jwin_draw_frame(menu1,0,preview_panel.y,preview_panel.x+preview_panel.w, preview_panel.h, FR_WIN);
-		rectfill(menu1,preview_panel.x,preview_panel.y+2,preview_panel.x+preview_panel.w-3,preview_panel.y+preview_panel.h-3,jwin_pal[jcBOX]);
+		zc_rectfill(menu1,preview_panel.x,preview_panel.y+2,preview_panel.x+preview_panel.w-3,preview_panel.y+preview_panel.h-3,jwin_pal[jcBOX]);
 	}
 	else
 	{
 		auto& sqr = main_panel;
-		rectfill(menu1,sqr.x,sqr.y,sqr.x+sqr.w-1,sqr.y+sqr.h-1, jwin_pal[jcBOX]);
+		zc_rectfill(menu1,sqr.x,sqr.y,sqr.x+sqr.w-1,sqr.y+sqr.h-1, jwin_pal[jcBOX]);
 		refresh(rSCRMAP);
 		jwin_draw_frame(menu1,sqr.x,sqr.y,sqr.w,sqr.h, FR_WIN);
 		
@@ -5082,7 +5081,7 @@ void drawpanel()
 			draw_sqr_frame(itemsqr_pos);
 			if(scr->hasitem && scr->item > 0)
 			{
-				rectfill(menu1,itemsqr_pos.x+2,itemsqr_pos.y+2,itemsqr_pos.x+itemsqr_pos.tw()-3,itemsqr_pos.y+itemsqr_pos.th()-3,0);
+				zc_rectfill(menu1,itemsqr_pos.x+2,itemsqr_pos.y+2,itemsqr_pos.x+itemsqr_pos.tw()-3,itemsqr_pos.y+itemsqr_pos.th()-3,0);
 				overtile16_scale(menu1, itemsbuf[scr->item].tile,itemsqr_pos.x+2,itemsqr_pos.y+2,itemsbuf[scr->item].csets&15,0,itemsqr_pos.tw()-4,itemsqr_pos.th()-4);
 			}
 			else draw_sqr_icon(itemsqr_pos, icon_bmp[0][coord_frame]);
@@ -5140,13 +5139,13 @@ void drawpanel()
 		{
 			if(ep.fw > -1)
 			{
-				rectfill(menu1, ep.x, ep.y, ep.x+ep.tw()-1,ep.y+ep.th()-1,vc(0));
-				rectfill(menu1, ep.x+ep.fw, ep.y+ep.fh, ep.x+ep.tw()-1, ep.y+ep.th()-1, jwin_pal[jcBOX]);
+				zc_rectfill(menu1, ep.x, ep.y, ep.x+ep.tw()-1,ep.y+ep.th()-1,vc(0));
+				zc_rectfill(menu1, ep.x+ep.fw, ep.y+ep.fh, ep.x+ep.tw()-1, ep.y+ep.th()-1, jwin_pal[jcBOX]);
 				jwin_draw_frag_frame(menu1, ep.x, ep.y, ep.tw(), ep.th(), ep.fw, ep.fh, FR_DEEP);
 			}
 			else
 			{
-				rectfill(menu1, ep.x, ep.y, ep.x+ep.tw()-1,ep.y+ep.th()-1,vc(0));
+				zc_rectfill(menu1, ep.x, ep.y, ep.x+ep.tw()-1,ep.y+ep.th()-1,vc(0));
 				draw_sqr_frame(ep);
 			}
 			for(int32_t i=0; i< 10 && Map.CurrScr()->enemy[i]!=0; i++)
@@ -5165,7 +5164,7 @@ void drawpanel()
 
 void show_screen_error(const char *str, int32_t i, int32_t c)
 {
-    rectfill(menu1, screrrorpos.x-text_length(get_zc_font(font_lfont_l),str),screrrorpos.y-(i*16),screrrorpos.x,screrrorpos.y-((i-1)*16)-4,vc(0));
+    zc_rectfill(menu1, screrrorpos.x-text_length(get_zc_font(font_lfont_l),str),screrrorpos.y-(i*16),screrrorpos.x,screrrorpos.y-((i-1)*16)-4,vc(0));
     textout_shadowed_ex(menu1,get_zc_font(font_lfont_l), str,screrrorpos.x-text_length(get_zc_font(font_lfont_l),str),screrrorpos.y-(i*16),c,vc(0),-1);
 }
 
@@ -5292,7 +5291,7 @@ void draw_screenunit(int32_t unit, int32_t flags)
 			auto txt_x = real_mini_sqr->x+2+8*real_mini_sqr->xscale;
 			auto txt_y = real_mini_sqr->y+2+8*real_mini_sqr->yscale;
 			
-			rectfill(menu1, mini_sqr->x-1, mini_sqr->y-2,mini_sqr->x+mini_sqr->w-1,mini_sqr->y+mini_sqr->h-1,jwin_pal[jcBOX]);
+			zc_rectfill(menu1, mini_sqr->x-1, mini_sqr->y-2,mini_sqr->x+mini_sqr->w-1,mini_sqr->y+mini_sqr->h-1,jwin_pal[jcBOX]);
 			if(zoomed_minimap)
 				jwin_draw_frame(menu1, mini_sqr->x-1, mini_sqr->y-2,mini_sqr->w,mini_sqr->h,FR_WIN);
 			jwin_draw_minimap_frame(menu1,real_mini_sqr->x,real_mini_sqr->y,real_mini_sqr->tw(), real_mini_sqr->th(), real_mini_sqr->xscale, FR_DEEP);
@@ -5862,7 +5861,7 @@ void draw_screenunit(int32_t unit, int32_t flags)
 		{
 			auto real_h = combolist_window.h;
 			jwin_draw_frame(menu1,combolist_window.x,combolist_window.y,combolist_window.w,real_h, FR_WIN);
-			rectfill(menu1,combolist_window.x+2,combolist_window.y+2,combolist_window.x+combolist_window.w-3,combolist_window.y+real_h-3,jwin_pal[jcBOX]);
+			zc_rectfill(menu1,combolist_window.x+2,combolist_window.y+2,combolist_window.x+combolist_window.w-3,combolist_window.y+real_h-3,jwin_pal[jcBOX]);
 			
 			//Scrollers
 			for(int32_t c = 0; c < num_combo_cols; ++c)
@@ -5917,14 +5916,14 @@ void draw_screenunit(int32_t unit, int32_t flags)
 				for(int32_t c = 0; c < num_combo_cols; ++c)
 				{
 					auto& pos = comboaliaslist[c];
-					rectfill(menu1,pos.x,pos.y,pos.x+(pos.w*pos.xscale)-1,pos.y+(pos.h*pos.yscale)-1,0);
+					zc_rectfill(menu1,pos.x,pos.y,pos.x+(pos.w*pos.xscale)-1,pos.y+(pos.h*pos.yscale)-1,0);
 					jwin_draw_frame(menu1,pos.x-2,pos.y-2,(pos.w*pos.xscale)+4,(pos.h*pos.yscale)+4,FR_DEEP);
 				}
 				
 				auto& prev = comboalias_preview;
 				jwin_draw_frame(menu1, prev.x-2, prev.y-2, prev.w+4, prev.h+4,FR_DEEP);
 				
-				BITMAP *prv = create_bitmap_ex(8,64,64);
+				BITMAP *prv = zc_create_bitmap(64,64);
 				clear_bitmap(prv);
 				int32_t scalefactor = 1;
 				
@@ -5997,7 +5996,7 @@ void draw_screenunit(int32_t unit, int32_t flags)
 				for(int32_t c = 0; c < num_combo_cols; ++c)
 				{
 					auto& pos = comboaliaslist[c];
-					rectfill(menu1,pos.x,pos.y,pos.x+(pos.w*pos.xscale)-1,pos.y+(pos.h*pos.yscale)-1,0);
+					zc_rectfill(menu1,pos.x,pos.y,pos.x+(pos.w*pos.xscale)-1,pos.y+(pos.h*pos.yscale)-1,0);
 					jwin_draw_frame(menu1,pos.x-2,pos.y-2,(pos.w*comboaliaslist[c].xscale)+4,(pos.h*comboaliaslist[c].yscale)+4,FR_DEEP);
 				}
 				
@@ -6052,7 +6051,7 @@ void draw_screenunit(int32_t unit, int32_t flags)
 				{
 					jwin_draw_frame(menu1,combopool_preview.x-2,combopool_preview.y-2,
 						combopool_preview.w+4,real_height+4,FR_DEEP);
-					rectfill(menu1,combopool_preview.x,combopool_preview.y,
+					zc_rectfill(menu1,combopool_preview.x,combopool_preview.y,
 						combopool_preview.x+combopool_preview.w-1,
 						combopool_preview.y+real_height-1,vc(0));
 					draw_text_button(menu1,combopool_prevbtn.x,combopool_prevbtn.y,
@@ -6110,7 +6109,7 @@ void draw_screenunit(int32_t unit, int32_t flags)
 				for (int32_t c = 0; c < num_combo_cols; ++c)
 				{
 					auto& pos = comboaliaslist[c];
-					rectfill(menu1, pos.x, pos.y, pos.x + (pos.w * pos.xscale) - 1, pos.y + (pos.h * pos.yscale) - 1, 0);
+					zc_rectfill(menu1, pos.x, pos.y, pos.x + (pos.w * pos.xscale) - 1, pos.y + (pos.h * pos.yscale) - 1, 0);
 					jwin_draw_frame(menu1, pos.x - 2, pos.y - 2, (pos.w * comboaliaslist[c].xscale) + 4, (pos.h * comboaliaslist[c].yscale) + 4, FR_DEEP);
 				}
 
@@ -6175,7 +6174,7 @@ void draw_screenunit(int32_t unit, int32_t flags)
 				for(int32_t c = 0; c < num_combo_cols; ++c)
 				{
 					auto& pos = combolist[c];
-					rectfill(menu1,pos.x,pos.y,pos.x+(pos.w*pos.xscale)-1,pos.y+(pos.h*pos.yscale)-1,0);
+					zc_rectfill(menu1,pos.x,pos.y,pos.x+(pos.w*pos.xscale)-1,pos.y+(pos.h*pos.yscale)-1,0);
 					jwin_draw_frame(menu1,pos.x-2,pos.y-2,(pos.w*pos.xscale)+4,(pos.h*pos.yscale)+4,FR_DEEP);
 				}
 				
@@ -6330,7 +6329,7 @@ void draw_screenunit(int32_t unit, int32_t flags)
 					}
 					else
 					{
-						rectfill(menu1, combo_preview2.x,combo_preview2.y, combo_preview2.x+32,combo_preview2.y+combo_preview2.h,vc(0));
+						zc_rectfill(menu1, combo_preview2.x,combo_preview2.y, combo_preview2.x+32,combo_preview2.y+combo_preview2.h,vc(0));
 						safe_rect(menu1, combo_preview2.x,combo_preview2.y, combo_preview2.x+32,combo_preview2.y+combo_preview2.h,vc(15));
 						line(menu1, combo_preview2.x,combo_preview2.y, combo_preview2.x+32,combo_preview2.y+combo_preview2.h,vc(15));
 						line(menu1, combo_preview2.x,combo_preview2.y+combo_preview2.h, combo_preview2.x+32,combo_preview2.y,vc(15));
@@ -6374,9 +6373,9 @@ void draw_screenunit(int32_t unit, int32_t flags)
 			font = get_zc_font(font_lfont_l);
 				
 			jwin_draw_frame(menu1,favorites_window.x,favorites_window.y,favorites_window.w,favorites_window.h, FR_WIN);
-			rectfill(menu1,favorites_window.x+2,favorites_window.y+2,favorites_window.x+favorites_window.w-3,favorites_window.y+favorites_window.h-3,jwin_pal[jcBOX]);
+			zc_rectfill(menu1,favorites_window.x+2,favorites_window.y+2,favorites_window.x+favorites_window.w-3,favorites_window.y+favorites_window.h-3,jwin_pal[jcBOX]);
 			jwin_draw_frame(menu1,favorites_list.x-2,favorites_list.y-2,(favorites_list.w*favorites_list.xscale)+4,(favorites_list.h*favorites_list.yscale)+4, FR_DEEP);
-			rectfill(menu1,favorites_list.x,favorites_list.y,favorites_list.x+(favorites_list.w*favorites_list.xscale)-1,favorites_list.y+(favorites_list.h*favorites_list.yscale)-1,jwin_pal[jcBOXFG]);
+			zc_rectfill(menu1,favorites_list.x,favorites_list.y,favorites_list.x+(favorites_list.w*favorites_list.xscale)-1,favorites_list.y+(favorites_list.h*favorites_list.yscale)-1,jwin_pal[jcBOXFG]);
 				
 			textprintf_ex(menu1,get_zc_font(font_lfont_l),favorites_list.x-2,favorites_list.y-15,jwin_pal[jcBOXFG],-1,is_compact ? "Favorites" : "Favorite Combos");
 			BITMAP* subb = create_bitmap_ex(8,16,16);
@@ -6475,9 +6474,9 @@ void draw_screenunit(int32_t unit, int32_t flags)
 		case rCOMMANDS:
 		{
 			jwin_draw_frame(menu1,commands_window.x,commands_window.y,commands_window.w,commands_window.h, FR_WIN);
-			rectfill(menu1,commands_window.x+2,commands_window.y+2,commands_window.x+commands_window.w-3,commands_window.y+commands_window.h-3,jwin_pal[jcBOX]);
+			zc_rectfill(menu1,commands_window.x+2,commands_window.y+2,commands_window.x+commands_window.w-3,commands_window.y+commands_window.h-3,jwin_pal[jcBOX]);
 			jwin_draw_frame(menu1,commands_list.x-2,commands_list.y-2,(commands_list.w*commands_list.xscale)+4,(commands_list.h*commands_list.yscale)+4, FR_DEEP);
-			rectfill(menu1,commands_list.x,commands_list.y,commands_list.x+(commands_list.w*commands_list.xscale)-1,commands_list.y+(commands_list.h*commands_list.yscale)-1,jwin_pal[jcBOXFG]);
+			zc_rectfill(menu1,commands_list.x,commands_list.y,commands_list.x+(commands_list.w*commands_list.xscale)-1,commands_list.y+(commands_list.h*commands_list.yscale)-1,jwin_pal[jcBOXFG]);
 			font=get_custom_font(CFONT_FAVCMD);
 			
 			for(int32_t cmd=0; cmd<(commands_list.w*commands_list.h); ++cmd)
@@ -6558,7 +6557,7 @@ void refresh(int32_t flags, bool update)
 	FONT* tfont = font;
 	font = get_custom_font(CFONT_GUI);
 	jwin_draw_frame(menu1,layer_panel.x,layer_panel.y,layer_panel.w,layer_panel.h,FR_DEEP);
-	rectfill(menu1,layer_panel.x,layer_panel.y,layer_panel.x+layer_panel.w-1,layer_panel.y+layer_panel.h-1,jwin_pal[jcBOX]);
+	zc_rectfill(menu1,layer_panel.x,layer_panel.y,layer_panel.x+layer_panel.w-1,layer_panel.y+layer_panel.h-1,jwin_pal[jcBOX]);
 	
 	for(int32_t i=0; i<=6; ++i)
 	{
@@ -6590,7 +6589,7 @@ void refresh(int32_t flags, bool update)
 	{
 		for(int32_t i=0; i<256; i++)
 		{
-			rectfill(menu1,((i&15)<<2)+256,((i>>4)<<2)+176,((i&15)<<2)+259,((i>>4)<<2)+179,i);
+			zc_rectfill(menu1,((i&15)<<2)+256,((i>>4)<<2)+176,((i&15)<<2)+259,((i>>4)<<2)+179,i);
 		}
 	}
 	{ //Show top-left info
@@ -14203,7 +14202,7 @@ void drawdmap(int32_t dmap)
     {
     case dmDNGN:
     case dmCAVE:
-        clear_bitmap(dmapbmp_small);
+        clear_maskable_bitmap(dmapbmp_small);
         
         if(DMaps[dmap].minimap_2_tile)
             ;
@@ -14212,14 +14211,13 @@ void drawdmap(int32_t dmap)
                 drawgrid(dmapbmp_small,0,y,DMaps[dmap].grid[y>>2], DMaps[dmap].flags&dmfMINIMAPCOLORFIX ? mc.cave_fg : mc.dngn_fg, -1, -1);
                 
         c=DMaps[dmap].compass;
-        //  rectfill(dmapbmp,(c&15)*8+3,(c>>4)*4+1,(c&15)*8+5,(c>>4)*4+3,dvc(2*4));
-        rectfill(dmapbmp_small,(c&15)*8+3,(c>>4)*4+1,(c&15)*8+5,(c>>4)*4+3,vc(4));
+        zc_rectfill(dmapbmp_small,(c&15)*8+3,(c>>4)*4+1,(c&15)*8+5,(c>>4)*4+3,vc(4));
         c=DMaps[dmap].cont;
-        rectfill(dmapbmp_small,(c&15)*8+3,(c>>4)*4+1,(c&15)*8+5,(c>>4)*4+3,vc(10));
+        zc_rectfill(dmapbmp_small,(c&15)*8+3,(c>>4)*4+1,(c&15)*8+5,(c>>4)*4+3,vc(10));
         break;
         
     case dmOVERW:
-        clear_bitmap(dmapbmp_small);
+        clear_maskable_bitmap(dmapbmp_small);
         
         if(DMaps[dmap].minimap_2_tile)
             ;
@@ -14228,11 +14226,11 @@ void drawdmap(int32_t dmap)
                 drawovergrid(dmapbmp_small,1,y,DMaps[dmap].grid[y>>2],mc.overw_bg,vc(0));
                 
         c=DMaps[dmap].cont;
-        rectfill(dmapbmp_small,(c&15)*4+1,(c>>4)*4+1,(c&15)*4+3,(c>>4)*4+3,vc(10));
+        zc_rectfill(dmapbmp_small,(c&15)*4+1,(c>>4)*4+1,(c&15)*4+3,(c>>4)*4+3,vc(10));
         break;
         
     case dmBSOVERW:
-        clear_bitmap(dmapbmp_small);
+        clear_maskable_bitmap(dmapbmp_small);
         
         if(DMaps[dmap].minimap_2_tile)
             ;
@@ -14242,18 +14240,16 @@ void drawdmap(int32_t dmap)
                 drawgrid_s(dmapbmp_small,0,y,DMaps[dmap].grid[y>>2],mc.bs_goal,mc.bs_dk,vc(14));
                 
         c=DMaps[dmap].cont;
-        rectfill(dmapbmp_small,(c&15)*8+3,(c>>4)*4+1,(c&15)*8+5,(c>>4)*4+3,vc(10));
+        zc_rectfill(dmapbmp_small,(c&15)*8+3,(c>>4)*4+1,(c&15)*8+5,(c>>4)*4+3,vc(10));
         break;
     }
 }
 
 void drawdmap_screen(int32_t x, int32_t y, int32_t w, int32_t h, int32_t dmap)
 {
-    BITMAP *tempbmp = create_bitmap_ex(8,w,h);
+    BITMAP *tempbmp = zc_create_bitmap(w,h);
     clear_to_color(tempbmp, vc(0));
     zcolors mc=QMisc.colors;
-    
-//  rectfill(tempbmp,x,y,x+w-1,y+h-1,vc(0));
 
     if(DMaps[dmap].minimap_2_tile)
     {
@@ -14272,7 +14268,6 @@ void drawdmap_screen(int32_t x, int32_t y, int32_t w, int32_t h, int32_t dmap)
     
     blit(tempbmp,screen,0,0,x,y,w,h);
     destroy_bitmap(tempbmp);
-    
 }
 
 int32_t d_dmaplist_proc(int32_t msg,DIALOG *d,int32_t c)
@@ -14281,7 +14276,6 @@ int32_t d_dmaplist_proc(int32_t msg,DIALOG *d,int32_t c)
     {
         int32_t dmap = d->d1;
         int32_t xy[6] = {44,92,128,100,128,110};
-        //int32_t *xy = (int32_t*)(d->dp3);
         float temp_scale = 1.5;
         
         drawdmap(dmap);
@@ -14391,7 +14385,6 @@ const char *dmapscriptdroplist(int32_t index, int32_t *list_size)
 //droplist like the dialog proc, naming scheme for this stuff is awful...
 static ListData dmapscript_list(dmapscriptdroplist, &a4fonts[font_pfont]);
 
-//int32_t selectdmapxy[6] = {90,142,164,150,164,160};
 int32_t selectdmapxy[6] = {44,92,128,100,128,110};
 
 static ListData dmap_list(dmaplist, &font);
@@ -25528,6 +25521,14 @@ template <typename ...Params>
 	Z_error_fatal(format, std::forward<Params>(params)...);
 }
 
+static void init_bitmap(BITMAP** bmp, int32_t w, int32_t h)
+{
+	if(*bmp)
+		destroy_bitmap(*bmp);
+	*bmp = zc_create_bitmap(w,h);
+	clear_bitmap(*bmp);
+}
+
 int32_t main(int32_t argc,char **argv)
 {
 	int test_zc_arg = used_switch(argc, argv, "-test-zc");
@@ -25954,9 +25955,9 @@ int32_t main(int32_t argc,char **argv)
 #endif
 	
 	position_mouse(zq_screen_w/2,zq_screen_h/2);
-	
-	dmapbmp_small = create_bitmap_ex(8,65,33);
-	dmapbmp_large = create_bitmap_ex(8,177,81);
+
+	init_bitmap(&dmapbmp_small, 65, 33);
+	init_bitmap(&dmapbmp_large, 177, 81);
 	
 	if(!screen2 || !tmp_scr || !menu1 || !menu3 || !dmapbmp_large || !dmapbmp_large || !brushbmp || !brushscreen)// || !brushshadowbmp )
 	{
@@ -26304,13 +26305,6 @@ int32_t main(int32_t argc,char **argv)
 }
 END_OF_MAIN()
 
-void init_bitmap(BITMAP** bmp, int32_t w, int32_t h)
-{
-	if(*bmp)
-		destroy_bitmap(*bmp);
-	*bmp = create_bitmap_ex(8,w,h);
-	clear_bitmap(*bmp);
-}
 void load_size_poses()
 {
 	ttip_uninstall_all();
@@ -26941,6 +26935,7 @@ void load_size_poses()
 	current_cautolist = vbound(current_cautolist, 0, num_combo_cols - 1);
 	
 	//Generate bitmaps
+	zc_set_bitmap_depth(32); // TODO !
 	init_bitmap(&mapscreenbmp,16*(showedges?18:16),16*(showedges?13:11));
 	init_bitmap(&brushbmp,256*mapscreensize,176*mapscreensize);
 	init_bitmap(&brushscreen,(256+(showedges?16:0))*mapscreensize,(176+(showedges?16:0))*mapscreensize);
@@ -27911,7 +27906,7 @@ void textbox_out(BITMAP* dest, FONT* font, int x, int y, int fg, int bg, char co
 	
 	int bw = txbox.w*txbox.xscale;
 	int bh = txbox.h*txbox.yscale;
-	BITMAP* outbmp = create_bitmap_ex(8, bw, bh);
+	BITMAP* outbmp = zc_create_bitmap(bw, bh);
 	clear_to_color(outbmp, bg);
 	
 	char temp = 0;
@@ -27933,7 +27928,7 @@ void textbox_out(BITMAP* dest, FONT* font, int x, int y, int fg, int bg, char co
 		
 		temp = tmpstr[t];
 		tmpstr[t]=0;
-		gui_textout_ln(outbmp, font, (ucc*)tmpstr, ax, (line*txbox.yscale), fg, -1, align);
+		gui_textout_ln(outbmp, font, (ucc*)tmpstr, ax, (line*txbox.yscale), getpalcolor(fg), -1, align);
 		tmpstr[t]=temp;
 		++line;
 		

@@ -10,6 +10,7 @@
 #include "base/gui.h"
 #include "base/combo.h"
 #include "base/msgstr.h"
+#include "base/zc_alleg.h"
 #include "base/zdefs.h"
 #include "zq/zquestdat.h"
 #include "zq/zq_tiles.h"
@@ -688,8 +689,7 @@ void draw_selecting_outline(BITMAP *dest, int32_t x, int32_t y, int32_t scale2)
 	int32_t x2=zc_max(selecting_x1,selecting_x2);
 	int32_t y1=zc_min(selecting_y1,selecting_y2);
 	int32_t y2=zc_max(selecting_y1,selecting_y2);
-	
-//  rect(dest, x+(x1*scale2), y+(y1*scale2), x+((x2+1)*scale2), y+((y2+1)*scale2), 255);
+
 	for(int32_t i=1; i<18; ++i)
 	{
 		for(int32_t j=1; j<18; ++j)
@@ -719,7 +719,6 @@ void draw_selecting_outline(BITMAP *dest, int32_t x, int32_t y, int32_t scale2)
 	}
 	
 	drawing_mode(DRAW_MODE_SOLID, NULL, 0, 0);
-	//  selection_anchor=(selection_anchor+1)%64;
 }
 
 void unfloat_selection();
@@ -788,7 +787,6 @@ bool is_in_selection(int32_t x, int32_t y)
 
 void zoomtile16(BITMAP *dest,int32_t tile,int32_t x,int32_t y,int32_t cset,int32_t flip,int32_t m)
 {
-	//  rectfill(dest,x,y,x+(16*m),y+(16*m),gridmode==gm_light?jwin_pal[jcMEDLT]:jwin_pal[jcDARK]);
 	int gridcol = gridmode==gm_light?vc(7):vc(8);
 	
 	cset <<= 4;
@@ -924,8 +922,8 @@ void draw_layer_button(BITMAP *dest,int32_t x,int32_t y,int32_t w,int32_t h,cons
 	{
 		++len; ++hei;
 	}
-	BITMAP* tmp = create_bitmap_ex(8,len,hei);
-	clear_bitmap(tmp);
+	BITMAP* tmp = zc_create_bitmap(len,hei);
+	clear_maskable_bitmap(tmp);
 	if(dis)
 	{
 		textout_ex(tmp,font,buf,1,1,jwin_pal[jcLIGHT],-1);
@@ -1340,8 +1338,8 @@ void update_tool_cursor()
 void draw_edit_scr(int32_t tile,int32_t flip,int32_t cs,byte *oldtile, bool create_tbar)
 {
 	PALETTE tpal;
-	static BITMAP *tbar = create_bitmap_ex(8,zq_screen_w-6, 18);
-	static BITMAP *preview_bmp = create_bitmap_ex(8, 64, 64);
+	static BITMAP *tbar = zc_create_bitmap(zq_screen_w-6, 18);
+	static BITMAP *preview_bmp = zc_create_bitmap(64, 64);
 	jwin_draw_win(screen2, 0, 0, zq_screen_w, zq_screen_h, FR_WIN);
 	
 	if(!create_tbar)
@@ -1481,7 +1479,7 @@ void draw_edit_scr(int32_t tile,int32_t flip,int32_t cs,byte *oldtile, bool crea
 			for(int32_t i=0; i<cpalette_4.w*cpalette_4.h; i++)
 			{
 				size_and_pos const& s = cpalette_4.subsquare(i);
-				rectfill(screen2,s.x,s.y,s.x+s.w-1,s.y+s.h-1,CSET(cs)+i);
+				zc_rectfill(screen2,s.x,s.y,s.x+s.w-1,s.y+s.h-1,CSET(cs)+i);
 			}
 			
 			little_x(screen2,cpalette_4.x+1,cpalette_4.y+1,invcol,cpalette_4.xscale-5,cpalette_4.yscale-5);
@@ -1493,7 +1491,7 @@ void draw_edit_scr(int32_t tile,int32_t flip,int32_t cs,byte *oldtile, bool crea
 			for(int32_t i=0; i<cpalette_8.w*cpalette_8.h; ++i)
 			{
 				size_and_pos const& s = cpalette_8.subsquare(i);
-				rectfill(screen2,s.x,s.y,s.x+s.w-1,s.y+s.h-1,i);
+				zc_rectfill(screen2,s.x,s.y,s.x+s.w-1,s.y+s.h-1,i);
 			}
 			
 			little_x(screen2,cpalette_8.x+1,cpalette_8.y+1,invcol,cpalette_8.xscale-5,cpalette_8.yscale-5);
@@ -1501,8 +1499,8 @@ void draw_edit_scr(int32_t tile,int32_t flip,int32_t cs,byte *oldtile, bool crea
 	}
 	
 	rect(screen2, bg_prev.x, bg_prev.y, bg_prev.x+bg_prev.w-1, bg_prev.y+bg_prev.h-1, jwin_pal[jcTEXTFG]);
-	rectfill(screen2, bg_prev.x+1, bg_prev.y+1, bg_prev.x+bg_prev.w-2, bg_prev.y+bg_prev.h-2, jwin_pal[jcTEXTBG]);
-	rectfill(screen2, bg_prev.x+3, bg_prev.y+3, bg_prev.x+bg_prev.w-4, bg_prev.y+bg_prev.h-4, c2+((newtilebuf[tile].format==tf4Bit)?CSET(cs):0));
+	zc_rectfill(screen2, bg_prev.x+1, bg_prev.y+1, bg_prev.x+bg_prev.w-2, bg_prev.y+bg_prev.h-2, jwin_pal[jcTEXTBG]);
+	zc_rectfill(screen2, bg_prev.x+3, bg_prev.y+3, bg_prev.x+bg_prev.w-4, bg_prev.y+bg_prev.h-4, c2+((newtilebuf[tile].format==tf4Bit)?CSET(cs):0));
 	
 	if(c2==0)
 	{
@@ -1510,8 +1508,8 @@ void draw_edit_scr(int32_t tile,int32_t flip,int32_t cs,byte *oldtile, bool crea
 	}
 	
 	rect(screen2, fg_prev.x, fg_prev.y, fg_prev.x+fg_prev.w-1, fg_prev.y+fg_prev.h-1, jwin_pal[jcTEXTFG]);
-	rectfill(screen2, fg_prev.x+1, fg_prev.y+1, fg_prev.x+fg_prev.w-2, fg_prev.y+fg_prev.h-2, jwin_pal[jcTEXTBG]);
-	rectfill(screen2, fg_prev.x+3, fg_prev.y+3, fg_prev.x+fg_prev.w-4, fg_prev.y+fg_prev.h-4, c1+((newtilebuf[tile].format==tf4Bit)?CSET(cs):0));
+	zc_rectfill(screen2, fg_prev.x+1, fg_prev.y+1, fg_prev.x+fg_prev.w-2, fg_prev.y+fg_prev.h-2, jwin_pal[jcTEXTBG]);
+	zc_rectfill(screen2, fg_prev.x+3, fg_prev.y+3, fg_prev.x+fg_prev.w-4, fg_prev.y+fg_prev.h-4, c1+((newtilebuf[tile].format==tf4Bit)?CSET(cs):0));
 	
 	if(c1==0)
 	{
@@ -1612,7 +1610,7 @@ void draw_edit_scr(int32_t tile,int32_t flip,int32_t cs,byte *oldtile, bool crea
 					highlight_sqr(screen2, 0xED, mainsqr.x, csqr.y, mainsqr.w*mainsqr.xscale, csqr.h, hlthick); //row
 				}
 				highlight_sqr(screen2, 0xED, csqr.x-borderthick, csqr.y-borderthick, csqr.w+borderthick*2, csqr.h+borderthick*2, hlthick); //square hl
-				rectfill(screen2, csqr.x-extraborder, csqr.y-extraborder, csqr.x+csqr.w-1+extraborder, csqr.y+csqr.h-1+extraborder, realcol); //square color
+				zc_rectfill(screen2, csqr.x-extraborder, csqr.y-extraborder, csqr.x+csqr.w-1+extraborder, csqr.y+csqr.h-1+extraborder, realcol); //square color
 				if(xcolor)
 					little_x(screen2, csqr.x-extraborder+4, csqr.y-extraborder+4, invcol, csqr.w+(extraborder*2)-8, csqr.h+(extraborder*2)-8); //transparent X
 				highlight_sqr(screen2, hlcol, csqr.x-extraborder, csqr.y-extraborder, csqr.w+extraborder*2, csqr.h+extraborder*2, 1); //highlight border
@@ -1628,8 +1626,8 @@ void draw_edit_scr(int32_t tile,int32_t flip,int32_t cs,byte *oldtile, bool crea
 			gui_textout_ln(screen2,font,(unsigned char*)buf,hover_info.x,hover_info.y+(0),jwin_pal[jcBOXFG],jwin_pal[jcBOX],0);
 			
 			rect(screen2, hov_prev.x, hov_prev.y, hov_prev.x+hov_prev.w-1, hov_prev.y+hov_prev.h-1, jwin_pal[jcTEXTFG]);
-			rectfill(screen2, hov_prev.x+1, hov_prev.y+1, hov_prev.x+hov_prev.w-2, hov_prev.y+hov_prev.h-2, jwin_pal[jcTEXTBG]);
-			rectfill(screen2, hov_prev.x+3, hov_prev.y+3, hov_prev.x+hov_prev.w-4, hov_prev.y+hov_prev.h-4, realcol);
+			zc_rectfill(screen2, hov_prev.x+1, hov_prev.y+1, hov_prev.x+hov_prev.w-2, hov_prev.y+hov_prev.h-2, jwin_pal[jcTEXTBG]);
+			zc_rectfill(screen2, hov_prev.x+3, hov_prev.y+3, hov_prev.x+hov_prev.w-4, hov_prev.y+hov_prev.h-4, realcol);
 			if(xcolor)
 				little_x(screen2, hov_prev.x+1, hov_prev.y+1, invcol, hov_prev.w-2, hov_prev.h-2);
 		}
@@ -3526,8 +3524,8 @@ void draw_grab_scr(int32_t tile,int32_t cs,byte *newtile,int32_t black,int32_t w
 	
 	int32_t yofs=0;
 	//clear_to_color(screen2,bg);
-	rectfill(screen2, 0, 0, 319, 159, black);
-	rectfill(screen2,0,162,319,239,jwin_pal[jcBOX]);
+	zc_rectfill(screen2, 0, 0, 319, 159, black);
+	zc_rectfill(screen2,0,162,319,239,jwin_pal[jcBOX]);
 	_allegro_hline(screen2, 0, 160, 319, jwin_pal[jcMEDLT]);
 	_allegro_hline(screen2, 0, 161, 319, jwin_pal[jcLIGHT]);
 	yofs=3;
@@ -3790,24 +3788,11 @@ void draw_grab_scr(int32_t tile,int32_t cs,byte *newtile,int32_t black,int32_t w
 	puttile16(screen2,tile,208,192+yofs,cs,0);
 	overtile16(screen2,tile,232,192+yofs,cs,0);
 	
-	rectfill(screen2,184,168+yofs,191,175+yofs,grabmask&1?vc(12):vc(7));
-	rectfill(screen2,192,168+yofs,199,175+yofs,grabmask&2?vc(12):vc(7));
-	rectfill(screen2,184,176+yofs,191,183+yofs,grabmask&4?vc(12):vc(7));
-	rectfill(screen2,192,176+yofs,199,183+yofs,grabmask&8?vc(12):vc(7));
-	
-	// rect(screen2,183,167,200,184,dvc(7*2));
-	// rect(screen2,207,167,224,184,dvc(7*2));
-	// rect(screen2,231,167,248,184,dvc(7*2));
-	// rect(screen2,207,191,224,208,dvc(7*2));
-	// rect(screen2,231,191,248,208,dvc(7*2));
-	
-	/*
-	  rect(screen2,183,167,200,184,vc(14));
-	  rect(screen2,207,167,224,184,vc(14));
-	  rect(screen2,231,167,248,184,vc(14));
-	  rect(screen2,207,191,224,208,vc(14));
-	  rect(screen2,231,191,248,208,vc(14));
-	*/
+	zc_rectfill(screen2,184,168+yofs,191,175+yofs,grabmask&1?vc(12):vc(7));
+	zc_rectfill(screen2,192,168+yofs,199,175+yofs,grabmask&2?vc(12):vc(7));
+	zc_rectfill(screen2,184,176+yofs,191,183+yofs,grabmask&4?vc(12):vc(7));
+	zc_rectfill(screen2,192,176+yofs,199,183+yofs,grabmask&8?vc(12):vc(7));
+
 	jwin_draw_frame(screen2,182,166+yofs,20,20,FR_DEEP);
 	jwin_draw_frame(screen2,206,166+yofs,20,20,FR_DEEP);
 	jwin_draw_frame(screen2,230,166+yofs,20,20,FR_DEEP);
@@ -5463,7 +5448,7 @@ void draw_tiles(int32_t first,int32_t cs, int32_t f)
 void draw_tiles(BITMAP* dest,int32_t first,int32_t cs, int32_t f, bool large, bool true_empty)
 {
 	clear_bitmap(dest);
-	BITMAP *buf = create_bitmap_ex(8,16,16);
+	BITMAP *buf = zc_create_bitmap(16,16);
 	
 	int32_t w = 16;
 	int32_t h = 16;
@@ -5534,6 +5519,10 @@ void draw_tiles(BITMAP* dest,int32_t first,int32_t cs, int32_t f, bool large, bo
 		{
 			textprintf_ex(dest,get_zc_font(font_z3smallfont),(x)+l-3,(y)+l-3,vc(int32_t((f%32)/6)+10),-1,"8");
 		}
+		if((f%32)<=16 && large && !HIDE_8BIT_MARKER && newtilebuf[first+i].format==tf32Bit)
+		{
+			textprintf_ex(dest,get_zc_font(font_z3smallfont),(x)+l-8,(y)+l-3,vc(int32_t((f%32)/6)+10),-1,"32");
+		}
 	}
 	
 	destroy_bitmap(buf);
@@ -5546,7 +5535,7 @@ void tile_info_0(int32_t tile,int32_t tile2,int32_t cs,int32_t copy,int32_t copy
 	int32_t mul = 2;
 	FONT *tfont = get_zc_font(font_pfont);
 	
-	rectfill(screen2,0,210*2,(320*2)-1,(240*2),jwin_pal[jcBOX]);
+	zc_rectfill(screen2,0,210*2,(320*2)-1,(240*2),jwin_pal[jcBOX]);
 	_allegro_hline(screen2, 0, (210*2)-2, (320*2)-1, jwin_pal[jcMEDLT]);
 	_allegro_hline(screen2, 0, (210*2)-1, (320*2)-1, jwin_pal[jcLIGHT]);
 	tfont = get_zc_font(font_lfont_l);
@@ -5587,7 +5576,7 @@ void tile_info_0(int32_t tile,int32_t tile2,int32_t cs,int32_t copy,int32_t copy
 		}
 		else
 		{
-			rectfill(screen2, 34*mul, (216*mul)+yofs, (34+15)*mul, ((216+15)*mul)+yofs, vc(0));
+			zc_rectfill(screen2, 34*mul, (216*mul)+yofs, (34+15)*mul, ((216+15)*mul)+yofs, vc(0));
 			rect(screen2, 34*mul, (216*mul)+yofs, (34+15)*mul, ((216+15)*mul)+yofs, vc(15));
 			line(screen2, 34*mul, (216*mul)+yofs, (34+15)*mul, ((216+15)*mul)+yofs, vc(15));
 			line(screen2, 34*mul, ((216+15)*mul)+yofs, (34+15)*mul, (216*mul)+yofs, vc(15));
@@ -5658,7 +5647,7 @@ void tile_info_1(int32_t oldtile,int32_t oldflip,int32_t oldcs,int32_t tile,int3
 	int32_t mul = 2;
 	FONT *tfont = get_zc_font(font_pfont);
 	
-	rectfill(screen2,0,210*2,(320*2)-1,(240*2),jwin_pal[jcBOX]);
+	zc_rectfill(screen2,0,210*2,(320*2)-1,(240*2),jwin_pal[jcBOX]);
 	_allegro_hline(screen2, 0, (210*2)-2, (320*2)-1, jwin_pal[jcMEDLT]);
 	_allegro_hline(screen2, 0, (210*2)-1, (320*2)-1, jwin_pal[jcLIGHT]);
 	tfont = get_zc_font(font_lfont_l);
@@ -5688,7 +5677,7 @@ void tile_info_1(int32_t oldtile,int32_t oldflip,int32_t oldcs,int32_t tile,int3
 		}
 		else
 		{
-			rectfill(screen2, 124*mul, (216*mul)+yofs, (124+15)*mul, ((216+15)*mul)+yofs, vc(0));
+			zc_rectfill(screen2, 124*mul, (216*mul)+yofs, (124+15)*mul, ((216+15)*mul)+yofs, vc(0));
 			rect(screen2, 124*mul, (216*mul)+yofs, (124+15)*mul, ((216+15)*mul)+yofs, vc(15));
 			line(screen2, 124*mul, (216*mul)+yofs, (124+15)*mul, ((216+15)*mul)+yofs, vc(15));
 			line(screen2, 124*mul, ((216+15)*mul)+yofs, (124+15)*mul, (216*mul)+yofs, vc(15));
@@ -8482,6 +8471,41 @@ void convert_tile(int32_t t, int32_t bp2, int32_t cs, bool shift, bool alt)
 		}
 		
 		break;
+	
+	case tf32Bit:
+		switch(newtilebuf[t].format)
+		{
+			case tf4Bit:
+			{
+				unpack_tile(newtilebuf, t, 0, true);
+				reset_tile(newtilebuf, t, tf32Bit);
+
+				uint32_t* px = (uint32_t*)newtilebuf[t].data;
+				for (int32_t si=0; si<256; si++)
+				{
+					int color = getpalcolor(unpackbuf[si] + cs);
+					*px = color;
+					px++;
+				}
+				break;
+			}
+			
+			case tf8Bit:
+			{
+				unpack_tile(newtilebuf, t, 0, true);
+				reset_tile(newtilebuf, t, tf32Bit);
+
+				uint32_t* px = (uint32_t*)newtilebuf[t].data;
+				for (int32_t si=0; si<256; si++)
+				{
+					int color = getpalcolor(unpackbuf[si]);
+					*px = color;
+					px++;
+				}
+				break;
+			}
+		}
+		break;
 	}
 }
 
@@ -10511,7 +10535,7 @@ void combo_info(int32_t tile,int32_t tile2,int32_t cs,int32_t copy,int32_t copyc
 	int32_t mul = 2;
 	FONT *tfont = get_zc_font(font_lfont_l);
 	
-	rectfill(screen2,0,210*2,(320*2)-1,(240*2)-1,jwin_pal[jcBOX]);
+	zc_rectfill(screen2,0,210*2,(320*2)-1,(240*2)-1,jwin_pal[jcBOX]);
 	_allegro_hline(screen2, 0, (210*2)-2, (320*2)-1, jwin_pal[jcMEDLT]);
 	_allegro_hline(screen2, 0, (210*2)-1, (320*2)-1, jwin_pal[jcLIGHT]);
 	
@@ -10550,7 +10574,7 @@ void combo_info(int32_t tile,int32_t tile2,int32_t cs,int32_t copy,int32_t copyc
 		}
 		else
 		{
-			rectfill(screen2, (31*mul), (216*mul)+yofs, (31*mul)+31, (216*mul)+yofs+31, vc(0));
+			zc_rectfill(screen2, (31*mul), (216*mul)+yofs, (31*mul)+31, (216*mul)+yofs+31, vc(0));
 			rect(screen2, (31*mul), (216*mul)+yofs, (31*mul)+31, (216*mul)+yofs+31, vc(15));
 			line(screen2, (31*mul), (216*mul)+yofs, (31*mul)+31, (216*mul)+yofs+31, vc(15));
 			line(screen2, (31*mul), (216*mul)+yofs+31, (31*mul)+31, (216*mul)+yofs, vc(15));
@@ -10606,7 +10630,7 @@ void combo_info(int32_t tile,int32_t tile2,int32_t cs,int32_t copy,int32_t copyc
 			}
 			else
 			{
-				rectfill(screen2, (136*mul), (216*mul)+yofs, (136*mul)+31, (216*mul)+yofs+31, vc(0));
+				zc_rectfill(screen2, (136*mul), (216*mul)+yofs, (136*mul)+31, (216*mul)+yofs+31, vc(0));
 				rect(screen2, (136*mul), (216*mul)+yofs, (136*mul)+31, (216*mul)+yofs+31, vc(15));
 				line(screen2, (136*mul), (216*mul)+yofs, (136*mul)+31, (216*mul)+yofs+31, vc(15));
 				line(screen2, (136*mul), (216*mul)+yofs+31, (136*mul)+31, (216*mul)+yofs, vc(15));
