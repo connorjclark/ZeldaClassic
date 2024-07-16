@@ -678,12 +678,15 @@ static void render_other_16(BITMAP * bp)
 static void render_other_24(BITMAP * bp)
 {
     int i, j;
+    int mask = bitmap_mask_color(bp);
 
     for(i = 0; i < bp->h; i++)
     {
         for(j = 0; j < bp->w; j++)
         {
-            al_put_pixel(j, i, a5_get_color(24, _getpixel24(bp, j, i)));
+            int pixel24 = _getpixel24(bp, j, i);
+            ALLEGRO_COLOR color = pixel24 == mask ? al_map_rgba(0, 0, 0, 0) : a5_get_color(24, pixel24);
+            al_put_pixel(j, i, color);
         }
     }
 }

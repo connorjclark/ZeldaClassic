@@ -5442,16 +5442,16 @@ bool tile_is_used(int32_t tile)
 	return used_tile_table[tile];
 }
 
-// TODO ! rm offx,y
 // TODO ! test exporting image still works
-void draw_tiles(BITMAP* dest, int32_t offx, int32_t offy, int32_t first,int32_t cs, int32_t f)
+void draw_tiles(BITMAP* dest, int32_t first,int32_t cs, int32_t f)
 {
-	draw_tiles(dest, offx, offy, first, cs, f, true);
+	draw_tiles(dest, first, cs, f, true);
 }
-void draw_tiles(BITMAP* dest, int32_t offx, int32_t offy, int32_t first,int32_t cs, int32_t f, bool large, bool true_empty)
+void draw_tiles(BITMAP* dest, int32_t first,int32_t cs, int32_t f, bool large, bool true_empty)
 {
-	clear_bitmap(dest);
-	BITMAP *buf = create_bitmap_ex(32, 16, 16);
+	static BITMAP *buf32 = create_bitmap_ex(32, 16, 16);
+	static BITMAP *buf24 = create_bitmap_ex(24, 16, 16);
+	static BITMAP *buf8 = create_bitmap_ex(8, 16, 16);
 
 	int vc0 = zc_color(dest, vc(0));
 	int vc15 = zc_color(dest, vc(15));
@@ -5476,9 +5476,6 @@ void draw_tiles(BITMAP* dest, int32_t offx, int32_t offy, int32_t first,int32_t 
 			y*=2;
 			l*=2;
 		}
-
-		x += offx;
-		y += offy;
 		
 		l-=2;
 		
@@ -5514,8 +5511,17 @@ void draw_tiles(BITMAP* dest, int32_t offx, int32_t offy, int32_t first,int32_t 
 		}
 		else
 		{
-			puttile16(buf,first+i,0,0,cs,0);
-			stretch_blit(buf,dest,0,0,16,16,x,y,w,h);
+			if (bitmap_color_depth(dest) == 8)
+			{
+				puttile16(buf8,first+i,0,0,cs,0);
+				stretch_blit(buf8,dest,0,0,16,16,x,y,w,h);
+			}
+			else
+			{
+				puttile16(buf32,first+i,0,0,cs,0);
+				blit(buf32, buf24, 0, 0, 0, 0, buf32->w, buf32->h);
+				stretch_blit(buf24,dest,0,0,16,16,x,y,w,h);
+			}
 		}
 		
 		if((f%32)<=16 && large && !HIDE_8BIT_MARKER && newtilebuf[first+i].format==tf8Bit)
@@ -5527,46 +5533,47 @@ void draw_tiles(BITMAP* dest, int32_t offx, int32_t offy, int32_t first,int32_t 
 			textprintf_ex(dest,get_zc_font(font_z3smallfont),(x)+l-8,(y)+l-3,vc(int32_t((f%32)/6)+10),-1,"32");
 		}
 	}
-
-	w = 16 * TILES_PER_ROW;
-	h = 16 * TILE_ROWS_PER_PAGE;
-	if (large)
-	{
-		w *= 2;
-		h *= 2;
-	}
-	zc_fill_alpha_channel(dest, offx, offy, offx + w, offy + h);
-
-	destroy_bitmap(buf);
 }
 
-static void overlay_8bit_bitmap_on_32bit(BITMAP* source, BITMAP* dest, int x = 0, int y = 0)
+static void overlay_8bit_bitmap(BITMAP* source, BITMAP* dest, int x = 0, int y = 0)
 {
-	static int mask;
-	mask = bitmap_mask_color(source);
-	auto blender32 = [](unsigned long x, unsigned long y, unsigned long n){
-		if (x == mask) return y;
-		return (unsigned long)getpalcolor(x) + (255 << 24);
-	};
+	// if (bitmap_color_depth(dest) != 32)
+	{
+		drawing_mode(DRAW_MODE_TRANS, NULL, 0, 0);
+		int prior = get_color_conversion();
+		set_color_conversion(COLORCONV_KEEP_TRANS);
+		blit(source, dest, 0, 0, x, y, source->w, source->h);
+		solid_mode();
+		set_color_conversion(prior);
+		return;
+	}
 
-	drawing_mode(DRAW_MODE_TRANS, NULL, 0, 0);
-	set_blender_mode_ex(_blender_black, _blender_black, _blender_black,
-		blender32,
-		_blender_black, _blender_black, _blender_black,
-		0, 0, 0, 0);
-	draw_trans_sprite(dest, source, x, y);
-	solid_mode();
+	// static int mask;
+	// mask = bitmap_mask_color(source);
+	// auto blender32 = [](unsigned long x, unsigned long y, unsigned long n){
+	// 	if (x == mask) return y;
+	// 	return (unsigned long)getpalcolor(x) + (255 << 24);
+	// };
+
+	// drawing_mode(DRAW_MODE_TRANS, NULL, 0, 0);
+	// set_blender_mode_ex(_blender_black, _blender_black, _blender_black,
+	// 	blender32,
+	// 	_blender_black, _blender_black, _blender_black,
+	// 	0, 0, 0, 0);
+	// draw_trans_sprite(dest, source, x, y);
+	// solid_mode();
 }
 
 void tile_info_0(BITMAP* dest, int32_t tile,int32_t tile2,int32_t cs,int32_t copy,int32_t copycnt,int32_t page,bool rect_sel)
 {
-	assert(bitmap_color_depth(dest) == 32);
+	assert(bitmap_color_depth(dest) == 24);
 
-	static BITMAP* tile_bmp = create_bitmap_ex(32, 16, 16);
-	static BITMAP* bmp = create_bitmap_ex(32, screen->w, screen->h);
+	static BITMAP* tile_bmp32 = create_bitmap_ex(32, 16, 16);
+	static BITMAP* tile_bmp24 = create_bitmap_ex(24, 16, 16);
+	static BITMAP* bmp = create_bitmap_ex(24, screen->w, screen->h);
 
 	BITMAP* ui_bmp = screen2;
-	clear_maskable_bitmap(ui_bmp);
+	clear_bitmap(ui_bmp);
 	clear_maskable_bitmap(bmp);
 
 	int32_t yofs=3;
@@ -5583,8 +5590,9 @@ void tile_info_0(BITMAP* dest, int32_t tile,int32_t tile2,int32_t cs,int32_t cop
 	int32_t coldiff=TILECOL(copy)-TILECOL(copy+copycnt-1);
 	if(copy>=0)
 	{
-		puttile16(tile_bmp,rect_sel&&coldiff>0?copy-coldiff:copy,0,0,cs,0);
-		stretch_blit(tile_bmp,bmp,0,0,16,16,34*mul,216*mul+yofs,16*mul,16*mul);
+		puttile16(tile_bmp32,rect_sel&&coldiff>0?copy-coldiff:copy,0,0,cs,0);
+		blit(tile_bmp32, tile_bmp24, 0, 0, 0, 0, tile_bmp32->w, tile_bmp32->h);
+		stretch_blit(tile_bmp24,bmp,0,0,16,16,34*mul,216*mul+yofs,16*mul,16*mul);
 		
 		if(copycnt>1)
 		{
@@ -5624,8 +5632,9 @@ void tile_info_0(BITMAP* dest, int32_t tile,int32_t tile2,int32_t cs,int32_t cop
 	
 	// Current tile
 	jwin_draw_frame(ui_bmp,(104*mul)-2,(216*mul+yofs)-2,(16*mul)+4,(16*mul)+4,FR_DEEP);
-	puttile16(tile_bmp,tile,0,0,cs,0);
-	stretch_blit(tile_bmp,bmp,0,0,16,16,104*mul,216*mul+yofs,16*mul,16*mul);
+	puttile16(tile_bmp32,tile,0,0,cs,0);
+	blit(tile_bmp32, tile_bmp24, 0, 0, 0, 0, tile_bmp32->w, tile_bmp32->h);
+	stretch_blit(tile_bmp24,bmp,0,0,16,16,104*mul,216*mul+yofs,16*mul,16*mul);
 	
 	// Current selection mode
 	jwin_draw_frame(ui_bmp,(127*mul)-2,(216*mul+yofs)-2,(16*mul)+4,(16*mul)+4,FR_DEEP);
@@ -5672,19 +5681,19 @@ void tile_info_0(BITMAP* dest, int32_t tile,int32_t tile2,int32_t cs,int32_t cop
 	int32_t screen_xofs=window_xofs+6;
 	int32_t screen_yofs=window_yofs+25;
 
-	overlay_8bit_bitmap_on_32bit(ui_bmp, dest, screen_xofs, screen_yofs);
+	blit(ui_bmp, dest, 0, 0, screen_xofs, screen_yofs, w, h);
 	masked_blit(bmp, dest, 0, 0, screen_xofs, screen_yofs, w, h);
 }
 
 void tile_info_1(BITMAP* dest, int32_t oldtile,int32_t oldflip,int32_t oldcs,int32_t tile,int32_t flip,int32_t cs,int32_t copy,int32_t page, bool always_use_flip)
 {
-	assert(bitmap_color_depth(dest) == 32);
+	assert(bitmap_color_depth(dest) == 24);
 
 	static BITMAP* tile_bmp = create_bitmap_ex(32, 16, 16);
-	static BITMAP* bmp = create_bitmap_ex(32, screen->w, screen->h);
+	static BITMAP* bmp = create_bitmap_ex(24, screen->w, screen->h);
 
 	BITMAP* ui_bmp = screen2;
-	clear_maskable_bitmap(ui_bmp);
+	clear_bitmap(ui_bmp);
 	clear_maskable_bitmap(bmp);
 
 	int32_t yofs=3;
@@ -5772,7 +5781,7 @@ void tile_info_1(BITMAP* dest, int32_t oldtile,int32_t oldflip,int32_t oldcs,int
 	int32_t screen_xofs=window_xofs+6;
 	int32_t screen_yofs=window_yofs+25;
 
-	overlay_8bit_bitmap_on_32bit(ui_bmp, dest, screen_xofs, screen_yofs);
+	blit(ui_bmp, dest, 0, 0, screen_xofs, screen_yofs, w, h);
 	masked_blit(bmp, dest, 0, 0, screen_xofs, screen_yofs, w, h);
 }
 
@@ -8977,7 +8986,7 @@ int32_t writetilefile(PACKFILE *f, int32_t index, int32_t count)
 
 int32_t select_tile(int32_t &tile,int32_t &flip,int32_t type,int32_t &cs,bool edit_cs,int32_t exnow, bool always_use_flip)
 {
-	popup_zqdialog_next_bpp(32);
+	popup_zqdialog_next_bpp(24);
 	popup_zqdialog_start();
 	reset_combo_animations();
 	reset_combo_animations2();
@@ -9016,7 +9025,7 @@ int32_t select_tile(int32_t &tile,int32_t &flip,int32_t type,int32_t &cs,bool ed
 	draw_tile_list_window(ui_bmp);
 
 	int32_t f=0;
-	static BITMAP* tiles_bmp = create_bitmap_ex(32, screen->w, screen->h);
+	static BITMAP* tiles_bmp = create_bitmap_ex(24, screen->w, screen->h);
 
 	go_tiles();
 	
@@ -9126,7 +9135,7 @@ int32_t select_tile(int32_t &tile,int32_t &flip,int32_t type,int32_t &cs,bool ed
 						PALETTE temppal;
 						get_palette(temppal);
 						BITMAP *tempbmp=create_bitmap_ex(8,16*TILES_PER_ROW, 16*TILE_ROWS_PER_PAGE);
-						draw_tiles(tempbmp,0,0,first,cs,f,false,true);
+						draw_tiles(tempbmp,first,cs,f,false,true);
 						save_bitmap(getSnapName(), tempbmp, RAMpal);
 						destroy_bitmap(tempbmp);
 						
@@ -10097,7 +10106,7 @@ int32_t select_tile(int32_t &tile,int32_t &flip,int32_t type,int32_t &cs,bool ed
 						PALETTE temppal;
 						get_palette(temppal);
 						BITMAP *tempbmp=create_bitmap_ex(8,16*TILES_PER_ROW, 16*TILE_ROWS_PER_PAGE);
-						draw_tiles(tempbmp,0,0,first,cs,f,false,true);
+						draw_tiles(tempbmp,first,cs,f,false,true);
 						save_bitmap(temppath, tempbmp, RAMpal);
 						destroy_bitmap(tempbmp);
 					}
@@ -10178,8 +10187,8 @@ REDRAW:
 			redraw = true;
 		}
 
-		clear_bitmap(screen);
-		overlay_8bit_bitmap_on_32bit(ui_bmp, screen);
+		clear_maskable_bitmap(screen);
+		overlay_8bit_bitmap(ui_bmp, screen);
 
 		if(type==0)
 			tile_info_0(screen,tile,tile2,cs,copy,copycnt,first/TILES_PER_PAGE,rect_sel);
@@ -10187,11 +10196,8 @@ REDRAW:
 			tile_info_1(screen,otile,oflip,ocs,tile,flip,cs,copy,first/TILES_PER_PAGE, always_use_flip);
 
 		if(redraw)
-		{
-			draw_tiles(tiles_bmp, 0, 0, first, cs, f);
-		}
+			draw_tiles(tiles_bmp, first, cs, f);
 		blit(tiles_bmp, screen, 0, 0, screen_xofs, screen_yofs, 2*16*TILES_PER_ROW, 2*16*TILE_ROWS_PER_PAGE);
-		zc_fill_alpha_channel(screen, screen_xofs, screen_yofs, screen_xofs + w, screen_yofs + h);
 
 		if(f&8)
 		{
