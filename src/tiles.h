@@ -89,14 +89,4 @@ bool is_valid_format(byte format);
 int32_t tilesize(byte format);
 int32_t comboa_lmasktotal(byte layermask);
 
-inline uint32_t getpalcolor(int color)
-{
-	extern PALETTE RAMpal;
-	auto& col = RAMpal[color];
-	uint8_t r = col.r * 4;
-	uint8_t g = col.g * 4;
-	uint8_t b = col.b * 4;
-	return r + (g << 8) + (b << 16);
-}
-
 #endif

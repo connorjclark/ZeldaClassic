@@ -249,13 +249,8 @@ if(close_button_quit) \
 }
 
 // system colors
-#define lc1(x) ((x)+192)                                    // offset to 'level bg color' x (row 12)
-#define lc2(x) ((x)+208)                                    // offset to 'level fg color' x (row 13)
 #define vc(x)  ((x)+224)                                    // offset to 'VGA color' x (row 14)
 #define dvc(x) ((x)+240)                                    // offset to dark 'VGA color' x (row 15)
-#define r_lc1(x) ((x)-192)
-#define r_lc2(x) ((x)-208)
-#define r_vc(x)  ((x)-224)
 #define r_dvc(x) ((x)-240)
 #define BLACK         253
 #define WHITE         254

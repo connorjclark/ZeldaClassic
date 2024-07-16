@@ -43,9 +43,26 @@ int zc_get_bitmap_depth();
 
 // Returns either an 8-bit or 32-bit bitmap, based on the value given set by `zc_set_bitmap_depth`.
 BITMAP* zc_create_bitmap(int width, int height);
+// Fills alpha channel of 32-bit bitmap with 255. Does nothing for other bitmaps.
+// Resets a4 drawing mode to DRAW_MODE_SOLID.
+void zc_fill_alpha_channel(BITMAP* bmp, int x1, int y1, int x2, int y2);
 int zc_color(BITMAP* bmp, int color);
+int zc_color(int color);
+int col32(int color);
 
 void zc_rectfill(BITMAP* bmp, int x1, int y1, int x2, int y2, int color);
 void zc_rect(BITMAP* bmp, int x1, int y1, int x2, int y2, int color);
+void zc_line(BITMAP* bmp, int x1, int y1, int x2, int y2, int color);
+void zc_allegro_hline(BITMAP* bmp, int x1, int y, int x2, int color);
+
+inline uint32_t getpalcolor(int color)
+{
+	extern PALETTE _current_palette;
+	auto& col = _current_palette[color];
+	uint8_t r = col.r * 4;
+	uint8_t g = col.g * 4;
+	uint8_t b = col.b * 4;
+	return r + (g << 8) + (b << 16);
+}
 
 #endif

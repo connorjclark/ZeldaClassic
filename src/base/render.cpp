@@ -1,8 +1,10 @@
 #include "render.h"
 #include "a5alleg.h"
+#include "allegro/inline/gfx.inl"
 #include "allegro5/bitmap.h"
 #include "allegro5/display.h"
 #include "base/zapp.h"
+#include "base/zc_alleg.h"
 #include "base/zdefs.h"
 #include "base/fonts.h"
 #include <fmt/format.h>
@@ -717,17 +719,26 @@ static RenderTreeItem* get_active_dialog(bool forTint = false)
 	}
 	return nullptr;
 }
+
+static int next_dialog_bpp;
+void popup_zqdialog_next_bpp(int bpp)
+{
+	next_dialog_bpp = bpp;
+}
+
 void popup_zqdialog_start(string name, uint tagid, int x, int y, int w, int h, int transp)
 {
+	if(!next_dialog_bpp) next_dialog_bpp = 8;
 	if(w < 0) w = zq_screen_w;
 	if(h < 0) h = zq_screen_h;
 	if(!zqdialog_bg_bmp)
 		zqdialog_bg_bmp = screen;
-	BITMAP* tmp_bmp = create_bitmap_ex(8, w, h);
+	BITMAP* tmp_bmp = create_bitmap_ex(next_dialog_bpp, w, h);
+	next_dialog_bpp = 8;
 	
 	if(tmp_bmp)
 	{
-		if(transp > 0)
+		if (bitmap_color_depth(tmp_bmp) != 32 && transp > 0)
 			clear_to_color(tmp_bmp, transp);
 		else clear_bitmap(tmp_bmp);
 		screen = tmp_bmp;

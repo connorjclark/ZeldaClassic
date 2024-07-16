@@ -5923,7 +5923,7 @@ void draw_screenunit(int32_t unit, int32_t flags)
 				auto& prev = comboalias_preview;
 				jwin_draw_frame(menu1, prev.x-2, prev.y-2, prev.w+4, prev.h+4,FR_DEEP);
 				
-				BITMAP *prv = zc_create_bitmap(64,64);
+				BITMAP *prv = create_bitmap_ex(8,64,64);
 				clear_bitmap(prv);
 				int32_t scalefactor = 1;
 				
@@ -14247,7 +14247,7 @@ void drawdmap(int32_t dmap)
 
 void drawdmap_screen(int32_t x, int32_t y, int32_t w, int32_t h, int32_t dmap)
 {
-    BITMAP *tempbmp = zc_create_bitmap(w,h);
+    BITMAP *tempbmp = create_bitmap_ex(8,w,h);
     clear_to_color(tempbmp, vc(0));
     zcolors mc=QMisc.colors;
 
@@ -25525,7 +25525,7 @@ static void init_bitmap(BITMAP** bmp, int32_t w, int32_t h)
 {
 	if(*bmp)
 		destroy_bitmap(*bmp);
-	*bmp = zc_create_bitmap(w,h);
+	*bmp = create_bitmap_ex(8,w,h);
 	clear_bitmap(*bmp);
 }
 
@@ -25870,8 +25870,6 @@ int32_t main(int32_t argc,char **argv)
 	zcmusic_init();
 	zcmixer = zcmixer_create();
 	install_int_ex([](){ zcmusic_poll(); }, MSEC_TO_TIMER(25));
-
-	set_color_depth(8);
 	
 	set_close_button_callback((void (*)()) hit_close_button);
 	
@@ -26026,6 +26024,8 @@ int32_t main(int32_t argc,char **argv)
 
 		exit(0);
 	}
+
+	set_color_depth(32);
 
 	if (!is_headless())
 	{
@@ -26935,7 +26935,6 @@ void load_size_poses()
 	current_cautolist = vbound(current_cautolist, 0, num_combo_cols - 1);
 	
 	//Generate bitmaps
-	zc_set_bitmap_depth(32); // TODO !
 	init_bitmap(&mapscreenbmp,16*(showedges?18:16),16*(showedges?13:11));
 	init_bitmap(&brushbmp,256*mapscreensize,176*mapscreensize);
 	init_bitmap(&brushscreen,(256+(showedges?16:0))*mapscreensize,(176+(showedges?16:0))*mapscreensize);
@@ -27906,7 +27905,7 @@ void textbox_out(BITMAP* dest, FONT* font, int x, int y, int fg, int bg, char co
 	
 	int bw = txbox.w*txbox.xscale;
 	int bh = txbox.h*txbox.yscale;
-	BITMAP* outbmp = zc_create_bitmap(bw, bh);
+	BITMAP* outbmp = create_bitmap_ex(8, bw, bh);
 	clear_to_color(outbmp, bg);
 	
 	char temp = 0;

@@ -71,11 +71,36 @@ BITMAP* zc_create_bitmap(int width, int height)
 	return create_bitmap_ex(bitmap_depth, width, height);
 }
 
+void zc_fill_alpha_channel(BITMAP* bmp, int x1, int y1, int x2, int y2)
+{
+	if (bitmap_color_depth(bmp) != 32)
+		return;
+
+	set_write_alpha_blender();
+	drawing_mode(DRAW_MODE_TRANS, NULL, 0, 0);
+	rectfill(bmp, x1, y1, x2, y2, 255);
+	solid_mode();
+}
+
 int zc_color(BITMAP* bmp, int color)
 {
 	if (bitmap_color_depth(bmp) == 32)
+		color = getpalcolor(color) + (255 << 24);
+	if (bitmap_color_depth(bmp) == 24)
 		color = getpalcolor(color);
 	return color;
+}
+
+int zc_color(int color)
+{
+	if (bitmap_depth == 32)
+		color = getpalcolor(color) + (255 << 24);
+	return color;
+}
+
+int col32(int color)
+{
+	return getpalcolor(color);
 }
 
 void clear_maskable_bitmap(BITMAP* bmp)
@@ -91,4 +116,14 @@ void zc_rectfill(BITMAP* bmp, int x1, int y1, int x2, int y2, int color)
 void zc_rect(BITMAP* bmp, int x1, int y1, int x2, int y2, int color)
 {
 	rect(bmp, x1, y1, x2, y2, zc_color(bmp, color));
+}
+
+void zc_line(BITMAP* bmp, int x1, int y1, int x2, int y2, int color)
+{
+	line(bmp, x1, y1, x2, y2, zc_color(bmp, color));
+}
+
+void zc_allegro_hline(BITMAP* bmp, int x1, int y, int x2, int color)
+{
+	_allegro_hline(bmp, x1, y, x2, zc_color(bmp, color));
 }

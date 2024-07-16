@@ -1338,8 +1338,8 @@ void update_tool_cursor()
 void draw_edit_scr(int32_t tile,int32_t flip,int32_t cs,byte *oldtile, bool create_tbar)
 {
 	PALETTE tpal;
-	static BITMAP *tbar = zc_create_bitmap(zq_screen_w-6, 18);
-	static BITMAP *preview_bmp = zc_create_bitmap(64, 64);
+	static BITMAP *tbar = create_bitmap_ex(8, zq_screen_w-6, 18);
+	static BITMAP *preview_bmp = create_bitmap_ex(8, 64, 64);
 	jwin_draw_win(screen2, 0, 0, zq_screen_w, zq_screen_h, FR_WIN);
 	
 	if(!create_tbar)
@@ -5441,28 +5441,33 @@ bool tile_is_used(int32_t tile)
 {
 	return used_tile_table[tile];
 }
-void draw_tiles(int32_t first,int32_t cs, int32_t f)
+
+// TODO ! rm offx,y
+// TODO ! test exporting image still works
+void draw_tiles(BITMAP* dest, int32_t offx, int32_t offy, int32_t first,int32_t cs, int32_t f)
 {
-	draw_tiles(screen2, first, cs, f, true);
+	draw_tiles(dest, offx, offy, first, cs, f, true);
 }
-void draw_tiles(BITMAP* dest,int32_t first,int32_t cs, int32_t f, bool large, bool true_empty)
+void draw_tiles(BITMAP* dest, int32_t offx, int32_t offy, int32_t first,int32_t cs, int32_t f, bool large, bool true_empty)
 {
 	clear_bitmap(dest);
-	BITMAP *buf = zc_create_bitmap(16,16);
-	
-	int32_t w = 16;
-	int32_t h = 16;
-	
+	BITMAP *buf = create_bitmap_ex(32, 16, 16);
+
+	int vc0 = zc_color(dest, vc(0));
+	int vc15 = zc_color(dest, vc(15));
+	int w = 16;
+	int h = 16;
+
 	if(large)
 	{
 		w *=2;
 		h *=2;
 	}
-	
+
 	for(int32_t i=0; i<TILES_PER_PAGE; i++)                       // 13 rows, leaving 32 pixels from y=208 to y=239
 	{
-		int32_t x = (i%TILES_PER_ROW)<<4;
-		int32_t y = (i/TILES_PER_ROW)<<4;
+		int32_t x = ((i%TILES_PER_ROW)<<4);
+		int32_t y = ((i/TILES_PER_ROW)<<4);
 		int32_t l = 16;
 		
 		if(large)
@@ -5471,6 +5476,9 @@ void draw_tiles(BITMAP* dest,int32_t first,int32_t cs, int32_t f, bool large, bo
 			y*=2;
 			l*=2;
 		}
+
+		x += offx;
+		y += offy;
 		
 		l-=2;
 		
@@ -5490,22 +5498,17 @@ void draw_tiles(BITMAP* dest,int32_t first,int32_t cs, int32_t f, bool large, bo
 					{
 						for(int32_t dx=0; dx<=l+1; dx++)
 						{
-							dest->line[dy+(y)][dx+(x)]=vc((((zc_oldrand()%100)/50)?0:8)+(((zc_oldrand()%100)/50)?0:7));
+							int color = zc_color(dest, vc((((zc_oldrand()%100)/50)?0:8)+(((zc_oldrand()%100)/50)?0:7)));
+							putpixel(dest, y + dy, x + dx, color);
 						}
 					}
 				}
 				else
 				{
-					for(int32_t dy=0; dy<=l+1; dy++)
-					{
-						for(int32_t dx=0; dx<=l+1; dx++)
-						{
-							dest->line[dy+(y)][dx+(x)]=vc(0);
-						}
-					}
-					rect(dest, (x)+1,(y)+1, (x)+l, (y)+l, vc(15));
-					line(dest, (x)+1,(y)+1, (x)+l, (y)+l, vc(15));
-					line(dest, (x)+1,(y)+l, (x)+l, (y)+1,  vc(15));
+					rectfill(dest, x, y, x + w, y + h, vc0);
+					rect(dest, (x)+1,(y)+1, (x)+l, (y)+l, vc15);
+					line(dest, (x)+1,(y)+1, (x)+l, (y)+l, vc15);
+					line(dest, (x)+1,(y)+l, (x)+l, (y)+1,  vc15);
 				}
 			}
 		}
@@ -5524,45 +5527,80 @@ void draw_tiles(BITMAP* dest,int32_t first,int32_t cs, int32_t f, bool large, bo
 			textprintf_ex(dest,get_zc_font(font_z3smallfont),(x)+l-8,(y)+l-3,vc(int32_t((f%32)/6)+10),-1,"32");
 		}
 	}
-	
+
+	w = 16 * TILES_PER_ROW;
+	h = 16 * TILE_ROWS_PER_PAGE;
+	if (large)
+	{
+		w *= 2;
+		h *= 2;
+	}
+	zc_fill_alpha_channel(dest, offx, offy, offx + w, offy + h);
+
 	destroy_bitmap(buf);
 }
 
-void tile_info_0(int32_t tile,int32_t tile2,int32_t cs,int32_t copy,int32_t copycnt,int32_t page,bool rect_sel)
+static void overlay_8bit_bitmap_on_32bit(BITMAP* source, BITMAP* dest, int x = 0, int y = 0)
 {
+	static int mask;
+	mask = bitmap_mask_color(source);
+	auto blender32 = [](unsigned long x, unsigned long y, unsigned long n){
+		if (x == mask) return y;
+		return (unsigned long)getpalcolor(x) + (255 << 24);
+	};
+
+	drawing_mode(DRAW_MODE_TRANS, NULL, 0, 0);
+	set_blender_mode_ex(_blender_black, _blender_black, _blender_black,
+		blender32,
+		_blender_black, _blender_black, _blender_black,
+		0, 0, 0, 0);
+	draw_trans_sprite(dest, source, x, y);
+	solid_mode();
+}
+
+void tile_info_0(BITMAP* dest, int32_t tile,int32_t tile2,int32_t cs,int32_t copy,int32_t copycnt,int32_t page,bool rect_sel)
+{
+	assert(bitmap_color_depth(dest) == 32);
+
+	static BITMAP* tile_bmp = create_bitmap_ex(32, 16, 16);
+	static BITMAP* bmp = create_bitmap_ex(32, screen->w, screen->h);
+
+	BITMAP* ui_bmp = screen2;
+	clear_maskable_bitmap(ui_bmp);
+	clear_maskable_bitmap(bmp);
+
 	int32_t yofs=3;
-	BITMAP *buf = create_bitmap_ex(8,16,16);
 	int32_t mul = 2;
 	FONT *tfont = get_zc_font(font_pfont);
-	
-	zc_rectfill(screen2,0,210*2,(320*2)-1,(240*2),jwin_pal[jcBOX]);
-	_allegro_hline(screen2, 0, (210*2)-2, (320*2)-1, jwin_pal[jcMEDLT]);
-	_allegro_hline(screen2, 0, (210*2)-1, (320*2)-1, jwin_pal[jcLIGHT]);
+
+	rectfill(ui_bmp,0,210*2,(320*2)-1,(240*2),jwin_pal[jcBOX]);
+	_allegro_hline(ui_bmp, 0, (210*2)-2, (320*2)-1, jwin_pal[jcMEDLT]);
+	_allegro_hline(ui_bmp, 0, (210*2)-1, (320*2)-1, jwin_pal[jcLIGHT]);
 	tfont = get_zc_font(font_lfont_l);
 	
 	// Copied tile and numbers
-	jwin_draw_frame(screen2,(34*mul)-2,((216*mul)+yofs)-2,(16*mul)+4,(16*mul)+4,FR_DEEP);
+	jwin_draw_frame(ui_bmp,(34*mul)-2,((216*mul)+yofs)-2,(16*mul)+4,(16*mul)+4,FR_DEEP);
 	int32_t coldiff=TILECOL(copy)-TILECOL(copy+copycnt-1);
 	if(copy>=0)
 	{
-		puttile16(buf,rect_sel&&coldiff>0?copy-coldiff:copy,0,0,cs,0);
-		stretch_blit(buf,screen2,0,0,16,16,34*mul,216*mul+yofs,16*mul,16*mul);
+		puttile16(tile_bmp,rect_sel&&coldiff>0?copy-coldiff:copy,0,0,cs,0);
+		stretch_blit(tile_bmp,bmp,0,0,16,16,34*mul,216*mul+yofs,16*mul,16*mul);
 		
 		if(copycnt>1)
 		{
-			textprintf_right_ex(screen2,tfont,28*mul,(216*mul)+yofs,jwin_pal[jcBOXFG],jwin_pal[jcBOX],"%d-",copy);
-			textprintf_right_ex(screen2,tfont,24*mul,(224*mul)+yofs,jwin_pal[jcBOXFG],jwin_pal[jcBOX],"%d",copy+copycnt-1);
+			textprintf_right_ex(ui_bmp,tfont,28*mul,(216*mul)+yofs,jwin_pal[jcBOXFG],jwin_pal[jcBOX],"%d-",copy);
+			textprintf_right_ex(ui_bmp,tfont,24*mul,(224*mul)+yofs,jwin_pal[jcBOXFG],jwin_pal[jcBOX],"%d",copy+copycnt-1);
 		}
 		else
 		{
-			textprintf_right_ex(screen2,tfont,24*mul,(220*mul)+yofs,jwin_pal[jcBOXFG],jwin_pal[jcBOX],"%d",copy);
+			textprintf_right_ex(ui_bmp,tfont,24*mul,(220*mul)+yofs,jwin_pal[jcBOXFG],jwin_pal[jcBOX],"%d",copy);
 		}
 	}
 	else // No tiles copied
 	{
 		if (InvalidBG == 2)
 		{
-			draw_checkerboard(screen2, 34 * mul, 216 * mul + yofs, 16 * mul);
+			draw_checkerboard(ui_bmp, 34 * mul, 216 * mul + yofs, 16 * mul);
 		}
 		else if(InvalidBG == 1)
 		{
@@ -5570,28 +5608,28 @@ void tile_info_0(int32_t tile,int32_t tile2,int32_t cs,int32_t copy,int32_t copy
 			{
 				for(int32_t dx=0; dx<16*mul; dx++)
 				{
-					screen2->line[(216*mul+yofs+dy)][36*mul+dx]=vc((((zc_oldrand()%100)/50)?0:8)+(((zc_oldrand()%100)/50)?0:7));
+					int color = vc((((zc_oldrand()%100)/50)?0:8)+(((zc_oldrand()%100)/50)?0:7));
+					putpixel(ui_bmp, 36*mul+dx, 216*mul+yofs+dy, color);
 				}
 			}
 		}
 		else
 		{
-			zc_rectfill(screen2, 34*mul, (216*mul)+yofs, (34+15)*mul, ((216+15)*mul)+yofs, vc(0));
-			rect(screen2, 34*mul, (216*mul)+yofs, (34+15)*mul, ((216+15)*mul)+yofs, vc(15));
-			line(screen2, 34*mul, (216*mul)+yofs, (34+15)*mul, ((216+15)*mul)+yofs, vc(15));
-			line(screen2, 34*mul, ((216+15)*mul)+yofs, (34+15)*mul, (216*mul)+yofs, vc(15));
+			rectfill(ui_bmp, 34*mul, (216*mul)+yofs, (34+15)*mul, ((216+15)*mul)+yofs, vc(0));
+			rect(ui_bmp, 34*mul, (216*mul)+yofs, (34+15)*mul, ((216+15)*mul)+yofs, vc(15));
+			line(ui_bmp, 34*mul, (216*mul)+yofs, (34+15)*mul, ((216+15)*mul)+yofs, vc(15));
+			line(ui_bmp, 34*mul, ((216+15)*mul)+yofs, (34+15)*mul, (216*mul)+yofs, vc(15));
 		}
 	}
 	
-	
 	// Current tile
-	jwin_draw_frame(screen2,(104*mul)-2,(216*mul+yofs)-2,(16*mul)+4,(16*mul)+4,FR_DEEP);
-	puttile16(buf,tile,0,0,cs,0);
-	stretch_blit(buf,screen2,0,0,16,16,104*mul,216*mul+yofs,16*mul,16*mul);
+	jwin_draw_frame(ui_bmp,(104*mul)-2,(216*mul+yofs)-2,(16*mul)+4,(16*mul)+4,FR_DEEP);
+	puttile16(tile_bmp,tile,0,0,cs,0);
+	stretch_blit(tile_bmp,bmp,0,0,16,16,104*mul,216*mul+yofs,16*mul,16*mul);
 	
 	// Current selection mode
-	jwin_draw_frame(screen2,(127*mul)-2,(216*mul+yofs)-2,(16*mul)+4,(16*mul)+4,FR_DEEP);
-	stretch_blit(select_bmp[rect_sel?1:0],screen2,0,0,16,16,127*mul,216*mul+yofs,16*mul,16*mul);
+	jwin_draw_frame(ui_bmp,(127*mul)-2,(216*mul+yofs)-2,(16*mul)+4,(16*mul)+4,FR_DEEP);
+	stretch_blit(select_bmp[rect_sel?1:0],ui_bmp,0,0,16,16,127*mul,216*mul+yofs,16*mul,16*mul);
 	
 	if(tile>tile2)
 	{
@@ -5607,23 +5645,23 @@ void tile_info_0(int32_t tile,int32_t tile2,int32_t cs,int32_t copy,int32_t copy
 	}
 	
 	// Current tile and CSet text
-	textprintf_ex(screen2,tfont,55*mul,216*mul+yofs,jwin_pal[jcBOXFG],jwin_pal[jcBOX],"cs: %d",cs);
-	textprintf_right_ex(screen2,tfont,99*mul,216*mul+yofs,jwin_pal[jcBOXFG],jwin_pal[jcBOX],"tile:");
-	textprintf_right_ex(screen2,tfont,99*mul,224*mul+yofs,jwin_pal[jcBOXFG],jwin_pal[jcBOX],"%d%s",tile,tbuf);
+	textprintf_ex(ui_bmp,tfont,55*mul,216*mul+yofs,jwin_pal[jcBOXFG],jwin_pal[jcBOX],"cs: %d",cs);
+	textprintf_right_ex(ui_bmp,tfont,99*mul,216*mul+yofs,jwin_pal[jcBOXFG],jwin_pal[jcBOX],"tile:");
+	textprintf_right_ex(ui_bmp,tfont,99*mul,224*mul+yofs,jwin_pal[jcBOXFG],jwin_pal[jcBOX],"%d%s",tile,tbuf);
 	
 	FONT *tf = font;
 	font = tfont;
 	
-	draw_text_button(screen2,150*mul,213*mul+yofs,28*mul,21*mul,"&Grab",jwin_pal[jcBOXFG],jwin_pal[jcBOX],0,true);
-	draw_text_button(screen2,(150+28)*mul,213*mul+yofs,28*mul,21*mul,"&Edit",jwin_pal[jcBOXFG],jwin_pal[jcBOX],0,true);
-	draw_text_button(screen2,(150+28*2)*mul,213*mul+yofs,28*mul,21*mul,"Export",jwin_pal[jcBOXFG],jwin_pal[jcBOX],0,true);
-	draw_text_button(screen2,(150+28*3)*mul,213*mul+yofs,28*mul,21*mul,"Recolor",jwin_pal[jcBOXFG],jwin_pal[jcBOX],0,true);
-	draw_text_button(screen2,(150+28*4)*mul,213*mul+yofs,28*mul,21*mul,"Done",jwin_pal[jcBOXFG],jwin_pal[jcBOX],0,true);
+	draw_text_button(ui_bmp,150*mul,213*mul+yofs,28*mul,21*mul,"&Grab",jwin_pal[jcBOXFG],jwin_pal[jcBOX],0,true);
+	draw_text_button(ui_bmp,(150+28)*mul,213*mul+yofs,28*mul,21*mul,"&Edit",jwin_pal[jcBOXFG],jwin_pal[jcBOX],0,true);
+	draw_text_button(ui_bmp,(150+28*2)*mul,213*mul+yofs,28*mul,21*mul,"Export",jwin_pal[jcBOXFG],jwin_pal[jcBOX],0,true);
+	draw_text_button(ui_bmp,(150+28*3)*mul,213*mul+yofs,28*mul,21*mul,"Recolor",jwin_pal[jcBOXFG],jwin_pal[jcBOX],0,true);
+	draw_text_button(ui_bmp,(150+28*4)*mul,213*mul+yofs,28*mul,21*mul,"Done",jwin_pal[jcBOXFG],jwin_pal[jcBOX],0,true);
 	
-	jwin_draw_icon(screen2,(305*mul+4),220*mul-6+yofs,jwin_pal[jcBOXFG],BTNICON_ARROW_UP,6,true);
-	textprintf_ex(screen2,tfont,293*mul,220*mul+yofs,jwin_pal[jcBOXFG],jwin_pal[jcBOX],"p:");
-	textprintf_centre_ex(screen2,tfont,(305*mul+4),220*mul+yofs,jwin_pal[jcBOXFG],jwin_pal[jcBOX],"%d",page);
-	jwin_draw_icon(screen2,(305*mul+4),228*mul+3+yofs,jwin_pal[jcBOXFG],BTNICON_ARROW_DOWN,6,true);
+	jwin_draw_icon(ui_bmp,(305*mul+4),220*mul-6+yofs,jwin_pal[jcBOXFG],BTNICON_ARROW_UP,6,true);
+	textprintf_ex(ui_bmp,tfont,293*mul,220*mul+yofs,jwin_pal[jcBOXFG],jwin_pal[jcBOX],"p:");
+	textprintf_centre_ex(ui_bmp,tfont,(305*mul+4),220*mul+yofs,jwin_pal[jcBOXFG],jwin_pal[jcBOX],"%d",page);
+	jwin_draw_icon(ui_bmp,(305*mul+4),228*mul+3+yofs,jwin_pal[jcBOXFG],BTNICON_ARROW_DOWN,6,true);
 	
 	font = tf;
 
@@ -5633,37 +5671,43 @@ void tile_info_0(int32_t tile,int32_t tile2,int32_t cs,int32_t copy,int32_t copy
 	int32_t window_yofs=(zq_screen_h-h-25-6)>>1;
 	int32_t screen_xofs=window_xofs+6;
 	int32_t screen_yofs=window_yofs+25;
-	
-	custom_vsync();
-	blit(screen2,screen,0,0,screen_xofs,screen_yofs,w,h);
-	SCRFIX();
-	destroy_bitmap(buf);
+
+	overlay_8bit_bitmap_on_32bit(ui_bmp, dest, screen_xofs, screen_yofs);
+	masked_blit(bmp, dest, 0, 0, screen_xofs, screen_yofs, w, h);
 }
 
-void tile_info_1(int32_t oldtile,int32_t oldflip,int32_t oldcs,int32_t tile,int32_t flip,int32_t cs,int32_t copy,int32_t page, bool always_use_flip)
+void tile_info_1(BITMAP* dest, int32_t oldtile,int32_t oldflip,int32_t oldcs,int32_t tile,int32_t flip,int32_t cs,int32_t copy,int32_t page, bool always_use_flip)
 {
+	assert(bitmap_color_depth(dest) == 32);
+
+	static BITMAP* tile_bmp = create_bitmap_ex(32, 16, 16);
+	static BITMAP* bmp = create_bitmap_ex(32, screen->w, screen->h);
+
+	BITMAP* ui_bmp = screen2;
+	clear_maskable_bitmap(ui_bmp);
+	clear_maskable_bitmap(bmp);
+
 	int32_t yofs=3;
-	BITMAP *buf = create_bitmap_ex(8,16,16);
 	int32_t mul = 2;
 	FONT *tfont = get_zc_font(font_pfont);
 	
-	zc_rectfill(screen2,0,210*2,(320*2)-1,(240*2),jwin_pal[jcBOX]);
-	_allegro_hline(screen2, 0, (210*2)-2, (320*2)-1, jwin_pal[jcMEDLT]);
-	_allegro_hline(screen2, 0, (210*2)-1, (320*2)-1, jwin_pal[jcLIGHT]);
+	rectfill(ui_bmp,0,210*2,(320*2)-1,(240*2),jwin_pal[jcBOX]);
+	_allegro_hline(ui_bmp, 0, (210*2)-2, (320*2)-1, jwin_pal[jcMEDLT]);
+	_allegro_hline(ui_bmp, 0, (210*2)-1, (320*2)-1, jwin_pal[jcLIGHT]);
 	tfont = get_zc_font(font_lfont_l);
 	
-	jwin_draw_frame(screen2,(124*mul)-2,((216*mul)+yofs)-2,(16*mul)+4,(16*mul)+4,FR_DEEP);
+	jwin_draw_frame(ui_bmp,(124*mul)-2,((216*mul)+yofs)-2,(16*mul)+4,(16*mul)+4,FR_DEEP);
 	
 	if(copy>=0)
 	{
-		puttile16(buf,copy,0,0,cs,flip);
-		stretch_blit(buf,screen2,0,0,16,16,124*mul,216*mul+yofs,16*mul,16*mul);
+		puttile16(tile_bmp,copy,0,0,cs,flip);
+		stretch_blit(tile_bmp,bmp,0,0,16,16,124*mul,216*mul+yofs,16*mul,16*mul);
 	}
 	else
 	{
 		if (InvalidBG == 2)
 		{
-			draw_checkerboard(screen2, 124 * mul, 216 * mul + yofs, 16 * mul);
+			draw_checkerboard(ui_bmp, 124 * mul, 216 * mul + yofs, 16 * mul);
 		}
 		else if(InvalidBG == 1)
 		{
@@ -5671,56 +5715,55 @@ void tile_info_1(int32_t oldtile,int32_t oldflip,int32_t oldcs,int32_t tile,int3
 			{
 				for(int32_t dx=0; dx<16*mul; dx++)
 				{
-					screen2->line[216*mul+yofs+dy][124*mul+dx]=vc((((zc_oldrand()%100)/50)?0:8)+(((zc_oldrand()%100)/50)?0:7));
+					ui_bmp->line[216*mul+yofs+dy][124*mul+dx]=vc((((zc_oldrand()%100)/50)?0:8)+(((zc_oldrand()%100)/50)?0:7));
 				}
 			}
 		}
 		else
 		{
-			zc_rectfill(screen2, 124*mul, (216*mul)+yofs, (124+15)*mul, ((216+15)*mul)+yofs, vc(0));
-			rect(screen2, 124*mul, (216*mul)+yofs, (124+15)*mul, ((216+15)*mul)+yofs, vc(15));
-			line(screen2, 124*mul, (216*mul)+yofs, (124+15)*mul, ((216+15)*mul)+yofs, vc(15));
-			line(screen2, 124*mul, ((216+15)*mul)+yofs, (124+15)*mul, (216*mul)+yofs, vc(15));
+			rectfill(ui_bmp, 124*mul, (216*mul)+yofs, (124+15)*mul, ((216+15)*mul)+yofs, vc(0));
+			rect(ui_bmp, 124*mul, (216*mul)+yofs, (124+15)*mul, ((216+15)*mul)+yofs, vc(15));
+			line(ui_bmp, 124*mul, (216*mul)+yofs, (124+15)*mul, ((216+15)*mul)+yofs, vc(15));
+			line(ui_bmp, 124*mul, ((216+15)*mul)+yofs, (124+15)*mul, (216*mul)+yofs, vc(15));
 		}
 	}
 	
-	jwin_draw_frame(screen2,(8*mul)-2,(216*mul+yofs)-2,(16*mul)+4,(16*mul)+4,FR_DEEP);
-	puttile16(buf,oldtile,0,0, oldcs, oldflip);
-	stretch_blit(buf,screen2,0,0,16,16,8*mul,216*mul+yofs,16*mul,16*mul);
+	jwin_draw_frame(ui_bmp,(8*mul)-2,(216*mul+yofs)-2,(16*mul)+4,(16*mul)+4,FR_DEEP);
+	puttile16(tile_bmp,oldtile,0,0, oldcs, oldflip);
+	stretch_blit(tile_bmp,bmp,0,0,16,16,8*mul,216*mul+yofs,16*mul,16*mul);
 	
-	textprintf_right_ex(screen2,tfont,56*mul,212*mul+yofs,jwin_pal[jcBOXFG],jwin_pal[jcBOX],"Old Tile:");
-	textprintf_ex(screen2,tfont,60*mul,212*mul+yofs,jwin_pal[jcBOXFG],jwin_pal[jcBOX],"%d",oldtile);
+	textprintf_right_ex(ui_bmp,tfont,56*mul,212*mul+yofs,jwin_pal[jcBOXFG],jwin_pal[jcBOX],"Old Tile:");
+	textprintf_ex(ui_bmp,tfont,60*mul,212*mul+yofs,jwin_pal[jcBOXFG],jwin_pal[jcBOX],"%d",oldtile);
 	
-	textprintf_right_ex(screen2,tfont,56*mul,220*mul+yofs,jwin_pal[jcBOXFG],jwin_pal[jcBOX],"CSet:");
-	textprintf_ex(screen2,tfont,60*mul,220*mul+yofs,jwin_pal[jcBOXFG],jwin_pal[jcBOX],"%d",oldcs);
+	textprintf_right_ex(ui_bmp,tfont,56*mul,220*mul+yofs,jwin_pal[jcBOXFG],jwin_pal[jcBOX],"CSet:");
+	textprintf_ex(ui_bmp,tfont,60*mul,220*mul+yofs,jwin_pal[jcBOXFG],jwin_pal[jcBOX],"%d",oldcs);
 	
 	if(oldflip > 0 || always_use_flip)  // Suppress Flip for this usage
 	{
-		textprintf_right_ex(screen2,tfont,56*mul,228*mul+yofs,jwin_pal[jcBOXFG],jwin_pal[jcBOX],"Flip:");
-		textprintf_ex(screen2,tfont,60*mul,228*mul+yofs,jwin_pal[jcBOXFG],jwin_pal[jcBOX],"%d",oldflip);
+		textprintf_right_ex(ui_bmp,tfont,56*mul,228*mul+yofs,jwin_pal[jcBOXFG],jwin_pal[jcBOX],"Flip:");
+		textprintf_ex(ui_bmp,tfont,60*mul,228*mul+yofs,jwin_pal[jcBOXFG],jwin_pal[jcBOX],"%d",oldflip);
 	}
 	
-	jwin_draw_frame(screen2,(148*mul)-2,(216*mul+yofs)-2,(16*mul)+4,(16*mul)+4,FR_DEEP);
-	puttile16(buf,tile,0,0, cs,
+	jwin_draw_frame(ui_bmp,(148*mul)-2,(216*mul+yofs)-2,(16*mul)+4,(16*mul)+4,FR_DEEP);
+	puttile16(tile_bmp,tile,0,0, cs,
 			  (oldflip>0 || always_use_flip)?flip:0); // Suppress Flip for this usage
-	stretch_blit(buf,screen2,0,0,16,16,148*mul,216*mul+yofs,16*mul,16*mul);
+	stretch_blit(tile_bmp,bmp,0,0,16,16,148*mul,216*mul+yofs,16*mul,16*mul);
 	
-	textprintf_right_ex(screen2,tfont,201*mul,212*mul+yofs,jwin_pal[jcBOXFG],jwin_pal[jcBOX],"New Tile:");
-	textprintf_ex(screen2,tfont,205*mul,212*mul+yofs,jwin_pal[jcBOXFG],jwin_pal[jcBOX],"%d",tile);
-	textprintf_right_ex(screen2,tfont,201*mul,220*mul+yofs,jwin_pal[jcBOXFG],jwin_pal[jcBOX],"CSet:");
-	textprintf_ex(screen2,tfont,205*mul,220*mul+yofs,jwin_pal[jcBOXFG],jwin_pal[jcBOX],"%d",cs);
+	textprintf_right_ex(ui_bmp,tfont,201*mul,212*mul+yofs,jwin_pal[jcBOXFG],jwin_pal[jcBOX],"New Tile:");
+	textprintf_ex(ui_bmp,tfont,205*mul,212*mul+yofs,jwin_pal[jcBOXFG],jwin_pal[jcBOX],"%d",tile);
+	textprintf_right_ex(ui_bmp,tfont,201*mul,220*mul+yofs,jwin_pal[jcBOXFG],jwin_pal[jcBOX],"CSet:");
+	textprintf_ex(ui_bmp,tfont,205*mul,220*mul+yofs,jwin_pal[jcBOXFG],jwin_pal[jcBOX],"%d",cs);
 	
 	if(oldflip > 0 || always_use_flip)  // Suppress Flip for this usage
 	{
-		textprintf_right_ex(screen2,tfont,201*mul,228*mul+yofs,jwin_pal[jcBOXFG],jwin_pal[jcBOX],"Flip:");
-		textprintf_ex(screen2,tfont,205*mul,228*mul+yofs,jwin_pal[jcBOXFG],jwin_pal[jcBOX],"%d",flip);
+		textprintf_right_ex(ui_bmp,tfont,201*mul,228*mul+yofs,jwin_pal[jcBOXFG],jwin_pal[jcBOX],"Flip:");
+		textprintf_ex(ui_bmp,tfont,205*mul,228*mul+yofs,jwin_pal[jcBOXFG],jwin_pal[jcBOX],"%d",flip);
 	}
 	
-	jwin_draw_icon(screen2,(305*mul+4),220*mul-6+yofs,jwin_pal[jcBOXFG],BTNICON_ARROW_UP,6,true);
-	textprintf_ex(screen2,tfont,293*mul,220*mul+yofs,jwin_pal[jcBOXFG],jwin_pal[jcBOX],"p:");
-	textprintf_centre_ex(screen2,tfont,309*mul,220*mul+yofs,jwin_pal[jcBOXFG],jwin_pal[jcBOX],"%d",page);
-	jwin_draw_icon(screen2,(305*mul+4),228*mul+3+yofs,jwin_pal[jcBOXFG],BTNICON_ARROW_DOWN,6,true);
-	
+	jwin_draw_icon(ui_bmp,(305*mul+4),220*mul-6+yofs,jwin_pal[jcBOXFG],BTNICON_ARROW_UP,6,true);
+	textprintf_ex(ui_bmp,tfont,293*mul,220*mul+yofs,jwin_pal[jcBOXFG],jwin_pal[jcBOX],"p:");
+	textprintf_centre_ex(ui_bmp,tfont,309*mul,220*mul+yofs,jwin_pal[jcBOXFG],jwin_pal[jcBOX],"%d",page);
+	jwin_draw_icon(ui_bmp,(305*mul+4),228*mul+3+yofs,jwin_pal[jcBOXFG],BTNICON_ARROW_DOWN,6,true);
 
 	int32_t w = 640;
 	int32_t h = 480;
@@ -5728,31 +5771,10 @@ void tile_info_1(int32_t oldtile,int32_t oldflip,int32_t oldcs,int32_t tile,int3
 	int32_t window_yofs=(zq_screen_h-h-25-6)>>1;
 	int32_t screen_xofs=window_xofs+6;
 	int32_t screen_yofs=window_yofs+25;
-	
-	custom_vsync();
-	blit(screen2,screen,0,0,screen_xofs,screen_yofs,w,h);
-	SCRFIX();
-	destroy_bitmap(buf);
+
+	overlay_8bit_bitmap_on_32bit(ui_bmp, dest, screen_xofs, screen_yofs);
+	masked_blit(bmp, dest, 0, 0, screen_xofs, screen_yofs, w, h);
 }
-/*
-void reset_tile(tiledata *buf, int32_t t, int32_t format=1)
-{
-  buf[t].format=format;
-  if (buf[t].data!=NULL)
-  {
-	free(buf[t].data);
-  }
-  buf[t].data=(byte *)malloc(tilesize(buf[t].format));
-  if (buf[t].data==NULL)
-  {
-	Z_error_fatal("Unable to initialize tile #%d.\n", t);
-  }
-  for(int32_t i=0; i<tilesize(buf[t].format); i++)
-  {
-	buf[t].data[i]=0;
-  }
-}
-*/
 
 int32_t hide_used()
 {
@@ -8523,19 +8545,19 @@ static DIALOG create_relational_tiles_dlg[] =
 	{ NULL,                  0,    0,     0,      0,   0,                  0,                0,       0,          0,             0,       NULL, NULL,  NULL }
 };
 
-void draw_tile_list_window()
+void draw_tile_list_window(BITMAP* dest)
 {
 	int32_t w = 640;
 	int32_t h = 480;
 	
 	int32_t window_xofs=(zq_screen_w-w-12)>>1;
 	int32_t window_yofs=(zq_screen_h-h-25-6)>>1;
-	jwin_draw_win(screen, window_xofs, window_yofs, w+6+6, h+25+6, FR_WIN);
-	jwin_draw_frame(screen, window_xofs+4, window_yofs+23, w+2+2, h+4+2-64,  FR_DEEP);
+	jwin_draw_win(dest, window_xofs, window_yofs, w+6+6, h+25+6, FR_WIN);
+	jwin_draw_frame(dest, window_xofs+4, window_yofs+23, w+2+2, h+4+2-64,  FR_DEEP);
 	
 	FONT *oldfont = font;
 	font = get_zc_font(font_lfont);
-	jwin_draw_titlebar(screen, window_xofs+3, window_yofs+3, w+6, 18, "Select Tile", true);
+	jwin_draw_titlebar(dest, window_xofs+3, window_yofs+3, w+6, 18, "Select Tile", true);
 	font=oldfont;
 	return;
 }
@@ -8955,6 +8977,7 @@ int32_t writetilefile(PACKFILE *f, int32_t index, int32_t count)
 
 int32_t select_tile(int32_t &tile,int32_t &flip,int32_t type,int32_t &cs,bool edit_cs,int32_t exnow, bool always_use_flip)
 {
+	popup_zqdialog_next_bpp(32);
 	popup_zqdialog_start();
 	reset_combo_animations();
 	reset_combo_animations2();
@@ -8984,20 +9007,17 @@ int32_t select_tile(int32_t &tile,int32_t &flip,int32_t type,int32_t &cs,bool ed
 	int32_t panel_yofs=3;
 	int32_t mul = 2;
 	FONT *tfont = get_zc_font(font_lfont_l);
-	
-	draw_tile_list_window();
+
+	static BITMAP* ui_bmp;
+	if (!ui_bmp)
+		ui_bmp = create_bitmap_ex(8, screen->w, screen->h);
+
+	clear_bitmap(ui_bmp);
+	draw_tile_list_window(ui_bmp);
+
 	int32_t f=0;
-	draw_tiles(first,cs,f);
-	
-	if(type==0)
-	{
-		tile_info_0(tile,tile2,cs,copy,copycnt,first/TILES_PER_PAGE,rect_sel);
-	}
-	else
-	{
-		tile_info_1(otile,oflip,ocs,tile,flip,cs,copy,first/TILES_PER_PAGE, always_use_flip);
-	}
-	
+	static BITMAP* tiles_bmp = create_bitmap_ex(32, screen->w, screen->h);
+
 	go_tiles();
 	
 	while(gui_mouse_b())
@@ -9106,7 +9126,7 @@ int32_t select_tile(int32_t &tile,int32_t &flip,int32_t type,int32_t &cs,bool ed
 						PALETTE temppal;
 						get_palette(temppal);
 						BITMAP *tempbmp=create_bitmap_ex(8,16*TILES_PER_ROW, 16*TILE_ROWS_PER_PAGE);
-						draw_tiles(tempbmp,first,cs,f,false,true);
+						draw_tiles(tempbmp,0,0,first,cs,f,false,true);
 						save_bitmap(getSnapName(), tempbmp, RAMpal);
 						destroy_bitmap(tempbmp);
 						
@@ -9567,7 +9587,7 @@ int32_t select_tile(int32_t &tile,int32_t &flip,int32_t type,int32_t &cs,bool ed
 					if(type==0)
 					{
 						edit_tile(tile,flip,cs);
-						draw_tile_list_window();
+						draw_tile_list_window(ui_bmp);
 						redraw=true;
 					}
 					
@@ -9577,7 +9597,7 @@ int32_t select_tile(int32_t &tile,int32_t &flip,int32_t type,int32_t &cs,bool ed
 					if(type==0)
 					{
 						grab_tile(tile,cs);
-						draw_tile_list_window();
+						draw_tile_list_window(ui_bmp);
 						redraw=true;
 					}
 					
@@ -9990,7 +10010,7 @@ int32_t select_tile(int32_t &tile,int32_t &flip,int32_t type,int32_t &cs,bool ed
 						if(type==0)
 						{
 							edit_tile(tile,flip,cs);
-							draw_tile_list_window();
+							draw_tile_list_window(ui_bmp);
 							redraw=true;
 						}
 						else
@@ -10042,7 +10062,7 @@ int32_t select_tile(int32_t &tile,int32_t &flip,int32_t type,int32_t &cs,bool ed
 				{
 					font = tf;
 					grab_tile(tile,cs);
-					draw_tile_list_window();
+					draw_tile_list_window(ui_bmp);
 					position_mouse_z(0);
 					redraw=true;
 				}
@@ -10058,7 +10078,7 @@ int32_t select_tile(int32_t &tile,int32_t &flip,int32_t type,int32_t &cs,bool ed
 				{
 					font = tf;
 					edit_tile(tile,flip,cs);
-					draw_tile_list_window();
+					draw_tile_list_window(ui_bmp);
 					redraw=true;
 				}
 				
@@ -10077,7 +10097,7 @@ int32_t select_tile(int32_t &tile,int32_t &flip,int32_t type,int32_t &cs,bool ed
 						PALETTE temppal;
 						get_palette(temppal);
 						BITMAP *tempbmp=create_bitmap_ex(8,16*TILES_PER_ROW, 16*TILE_ROWS_PER_PAGE);
-						draw_tiles(tempbmp,first,cs,f,false,true);
+						draw_tiles(tempbmp,0,0,first,cs,f,false,true);
 						save_bitmap(temppath, tempbmp, RAMpal);
 						destroy_bitmap(tempbmp);
 					}
@@ -10157,13 +10177,25 @@ REDRAW:
 			otl2 = tile2;
 			redraw = true;
 		}
-			
+
+		clear_bitmap(screen);
+		overlay_8bit_bitmap_on_32bit(ui_bmp, screen);
+
+		if(type==0)
+			tile_info_0(screen,tile,tile2,cs,copy,copycnt,first/TILES_PER_PAGE,rect_sel);
+		else
+			tile_info_1(screen,otile,oflip,ocs,tile,flip,cs,copy,first/TILES_PER_PAGE, always_use_flip);
+
 		if(redraw)
 		{
-			draw_tiles(first,cs,f);
+			draw_tiles(tiles_bmp, 0, 0, first, cs, f);
 		}
+		blit(tiles_bmp, screen, 0, 0, screen_xofs, screen_yofs, 2*16*TILES_PER_ROW, 2*16*TILE_ROWS_PER_PAGE);
+		zc_fill_alpha_channel(screen, screen_xofs, screen_yofs, screen_xofs + w, screen_yofs + h);
+
 		if(f&8)
 		{
+			int cursor_color = getpalcolor(vc(TilePgCursorCol));
 			if(rect_sel)
 			{
 				for(int32_t i=zc_min(TILEROW(tile),TILEROW(tile2))*TILES_PER_ROW+
@@ -10175,9 +10207,9 @@ REDRAW:
 							TILECOL(i)>=zc_min(TILECOL(tile),TILECOL(tile2)) &&
 							TILECOL(i)<=zc_max(TILECOL(tile),TILECOL(tile2)))
 					{
-						int32_t x=TILECOL(i)<<(5);
-						int32_t y=TILEROW(i-first)<<(5);
-						safe_rect(screen2,x,y,x+(16*mul)-1,y+(16*mul)-1,vc(TilePgCursorCol),2);
+						int32_t x = screen_xofs + (TILECOL(i)<<(5));
+						int32_t y = screen_yofs + (TILEROW(i-first)<<(5));
+						safe_rect(screen,x,y,x+(16*mul)-1,y+(16*mul)-1,cursor_color,2);
 					}
 				}
 			}
@@ -10187,19 +10219,14 @@ REDRAW:
 				{
 					if(i>=first && i<first+TILES_PER_PAGE)
 					{
-						int32_t x=TILECOL(i)<<(5);
-						int32_t y=TILEROW(i-first)<<(5);
-						safe_rect(screen2,x,y,x+(16*mul)-1,y+(16*mul)-1,vc(TilePgCursorCol),2);
+						int32_t x = screen_xofs + (TILECOL(i)<<(5));
+						int32_t y = screen_yofs + (TILEROW(i-first)<<(5));
+						safe_rect(screen,x,y,x+(16*mul)-1,y+(16*mul)-1,cursor_color,2);
 					}
 				}
 			}
 		}
-		
-		if(type==0)
-			tile_info_0(tile,tile2,cs,copy,copycnt,first/TILES_PER_PAGE,rect_sel);
-		else
-			tile_info_1(otile,oflip,ocs,tile,flip,cs,copy,first/TILES_PER_PAGE, always_use_flip);
-			
+
 		if(type==2)
 		{
 			char cbuf[16];
@@ -10255,12 +10282,12 @@ REDRAW:
 				{ "Edit", [&]()
 					{
 						edit_tile(tile, flip, cs);
-						draw_tile_list_window();
+						draw_tile_list_window(ui_bmp);
 					} },
 				{ "Grab", [&]()
 					{
 						grab_tile(tile, cs);
-						draw_tile_list_window();
+						draw_tile_list_window(ui_bmp);
 						position_mouse_z(0);
 					} },
 				{ "Scale", [&]()
@@ -10390,6 +10417,7 @@ REDRAW:
 			r_click = false;
 			goto REDRAW;
 		}
+
 		update_hw_screen();
 	}
 	while(!done);
