@@ -180,8 +180,8 @@ jobs:
         with:
           path: release-packages
 
-      - name: Generate changelog
-        run: python scripts/generate_changelog.py --format markdown --from ${{ needs.create-tag.outputs.previous-release-version }} --for-nightly=${{ github.event.inputs.version-type == 'nightly' }} --version ${{ needs.create-tag.outputs.release-version }} > new_changelog.md
+      # - name: Generate changelog
+      #   run: python scripts/generate_changelog.py --format markdown --from ${{ needs.create-tag.outputs.previous-release-version }} --for-nightly=${{ github.event.inputs.version-type == 'nightly' }} --version ${{ needs.create-tag.outputs.release-version }} > new_changelog.md
 
       - name: Release
         uses: softprops/action-gh-release@v1
@@ -193,7 +193,7 @@ jobs:
           prerelease: ${{ github.event.inputs.version-type == 'nightly' }}
           fail_on_unmatched_files: true
           generate_release_notes: false
-          body_path: new_changelog.md
+          # body_path: new_changelog.md
 
       - name: Setup Sentry CLI
         if: inputs.sentry
