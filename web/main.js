@@ -101,7 +101,8 @@ globalThis.ZC = {
     scriptPath = PATH.join('/root-fs', scriptPath);
     consolePath = PATH.join('/root-fs', consolePath);
 
-    const {default: ZScript} = await import('./zscript.mjs' + (Math.random() ? '' : ''));
+    const zscriptPath = './zscript.mjs';
+    const {default: ZScript} = await import(zscriptPath);
     let onExitPromiseResolve;
     const onExitPromise = new Promise(resolve => onExitPromiseResolve = resolve);
     await ZScript({
