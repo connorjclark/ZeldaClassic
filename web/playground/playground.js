@@ -14,6 +14,41 @@ const code = `ffc script OldMan
 }
 `;
 
+async function runZscriptCompiler(scriptPath, consolePath, qr) {
+    let onExitPromiseResolve;
+    const onExitPromise = new Promise(resolve => onExitPromiseResolve = resolve);
+    let instance;
+    instance = await ZScript({noInitialRun: true});
+    console.log(instance.FS);
+    // await ZScript(instance = {
+    //     preRun(zscript) {
+    //         instance.FS.mkdirTree('/root-fs');
+    //         instance.FS.writeFile('/root-fs/tmp.zs', code);
+
+    //         scriptPath = '/root-fs/' + scriptPath;
+    //         consolePath = '/root-fs/' + consolePath;
+
+    //         // For some reason `set_config_file` errors if the file doesn't exist ...
+    //         if (!instance.FS.analyzePath('/local/zscript.cfg').exists) instance.FS.writeFile('/local/zscript.cfg', '');
+
+    //         zscript.instance.FS.mkdir('/root-fs');
+    //         zscript.instance.FS.mount(PROXYFS, {
+    //             root: '/',
+    //             fs: instance.FS,
+    //         }, '/root-fs');
+    //         zscript.instance.FS.chdir('/root-fs');
+    //     },
+    //     onExit: onExitPromiseResolve,
+    //     arguments: ['-linked', '-input', scriptPath, '-console', consolePath, '-qr', qr],
+    // });
+
+    // const exitCode = await onExitPromise;
+    // // Not necessary, but avoids lag when playing the sfx.
+    // await new Promise(resolve => setTimeout(resolve, 100));
+    // console.log(exitCode);
+    // return { exitCode };
+};
+
 export async function main() {
     await loadWASM({
         data: await fetch('onig.wasm').then(r => r.arrayBuffer())
@@ -40,11 +75,28 @@ export async function main() {
     });
 
     const languages = new Map([['zscript', 'source.zscript']]);
-    await wireTmGrammars(monaco, registry, languages, editor)
+    await wireTmGrammars(monaco, registry, languages, editor);
 
-    // FS.writeFile('/root-fs/tmp.zs', code);
-    // runZscriptCompiler('/root-fs/tmp.zs');
+    runZscriptCompiler('/root-fs/tmp.zs', '/root-fs/out.txt', '');
+    // const cb = () => {
+    // };
+    // if (!window.Module) {
+    //     document.addEventListener('DOMContentLoaded', cb);
+    // } else {
+    //     cb();
+    // }
 }
+
+// window.Module = window.Module || {};
+// Module.noInitialRun = true;
+// Module = Object.assign(Module, {
+//     preRun: () => {
+//         console.log('i');
+//     },
+//     onRuntimeInitialized: () => {
+//         console.log('done', FS);
+//     }
+// });
 
 self.MonacoEnvironment = {
     getWorkerUrl: function (moduleId, label) {

@@ -639,7 +639,7 @@ function goFullscreen() {
 }
 
 // Don't run this in the workers.
-if (typeof window !== 'undefined') {
+if (typeof window !== 'undefined' && TARGET !== 'playground') {
   main().catch(err => {
     console.error(err);
     document.querySelector('.content').textContent = err.toString();
