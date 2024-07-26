@@ -2821,7 +2821,7 @@ std::string ASTStringLiteral::asString() const
 
 DataTypeArray const* ASTStringLiteral::getReadType(Scope* scope, CompileErrorHandler* errorHandler)
 {
-	return &DataType::STRING;
+	return DataType::STRING;
 }
 
 

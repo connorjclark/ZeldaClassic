@@ -384,7 +384,7 @@ def do_web_packaging():
     zscript_data_files = [
         *glob(resources_dir, 'include/**/*'),
         *glob(resources_dir, 'headers/**/*'),
-        resources_dir / 'base_config/zscript.cfg',
+        *files(resources_dir, ['base_config/zscript.cfg']),
     ]
     copy_files_to_package(zscript_data_files, packages_dir / 'web_zscript_data')
     subprocess.check_call(

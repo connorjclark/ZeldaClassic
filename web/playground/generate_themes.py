@@ -1,3 +1,7 @@
+# monaco's built-in themes aren't powereful enough to handle TM tokens
+# so this script grabs some VS Code themes and converts them
+# https://github.com/Nishkalkashyap/monaco-vscode-textmate-theme-converter#monaco-vscode-textmate-theme-converter
+
 import json
 import os
 import subprocess

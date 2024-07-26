@@ -214,7 +214,12 @@ static unique_ptr<ScriptsData> _compile_helper(string const& filename, bool incl
 }
 unique_ptr<ScriptsData> ZScript::compile(string const& filename, bool include_metadata)
 {
+	DataType::STRING = DataTypeArray::create(DataType::CHAR);
+
 	auto ret = _compile_helper(filename, include_metadata);
+
+	DataTypeArray::created_arr_types.clear();
+
 	if(!ignore_asserts)
 		for(BasicCompileError const& error : casserts)
 			error.handle();

@@ -297,16 +297,6 @@ int32_t main(int32_t argc, char **argv)
 		}
 	}
 	
-	int32_t console_path_index = used_switch(argc, argv, "-console");
-	if (linked && !console_path_index)
-	{
-		zconsole_error("%s", "Error: missing required flag: -console");
-		return 1;
-	}
-	if(console_path_index)
-		console_path = argv[console_path_index + 1];
-	else console_path = "";
-	
 	int32_t zasm_out_index = used_switch(argc, argv, "-zasm");
 	bool zasm_out_append = used_switch(argc, argv, "-append");
 	bool zasm_commented = used_switch(argc, argv, "-commented");
@@ -322,22 +312,12 @@ int32_t main(int32_t argc, char **argv)
 		zconsole_error("%s", "Error: failed to load base config");
 		return 1;
 	}
-
 	zscript_load_user_config("zscript.cfg");
 
-	int32_t script_path_index = used_switch(argc, argv, "-input");
-	if (!script_path_index)
-	{
-		zconsole_error("%s", "Error: missing required flag: -input");
-		return 1;
-	}
-	
-	if(console_path.size())
-	{
-		FILE *console=fopen(console_path.c_str(), "w");
-		fclose(console);
-	}
-	
+	// TODO: remove this feature.
+	std::string runstr = zscript_get_config_string("run_string", "run");
+	strncpy(FFCore.scriptRunString, runstr.c_str(), sizeof(FFCore.scriptRunString));
+
 	bool has_qrs = false;
 	if(int32_t qr_hex_index = used_switch(argc, argv, "-qr"))
 	{
@@ -360,16 +340,36 @@ int32_t main(int32_t argc, char **argv)
 		unpack_qrs();
 	}
 
+	int32_t script_path_index = used_switch(argc, argv, "-input");
+	if (!script_path_index)
+	{
+		zconsole_error("%s", "Error: missing required flag: -input");
+		return 1;
+	}
 	std::string script_path = argv[script_path_index + 1];
+
+	int32_t console_path_index = used_switch(argc, argv, "-console");
+	if (linked && !console_path_index)
+	{
+		zconsole_error("%s", "Error: missing required flag: -console");
+		return 1;
+	}
+	if(console_path_index)
+		console_path = argv[console_path_index + 1];
+	else console_path = "";
+	
+	if(console_path.size())
+	{
+		FILE *console=fopen(console_path.c_str(), "w");
+		fclose(console);
+	}
+
 	int32_t syncthing = 0;
 	
 	if(linked)
 	{
 		cph->write(&syncthing, sizeof(int32_t));
 	}
-	
-	std::string runstr = zscript_get_config_string("run_string", "run");
-	strncpy(FFCore.scriptRunString, runstr.c_str(), sizeof(FFCore.scriptRunString));
 
 	int32_t include_paths_index = used_switch(argc, argv, "-include");
 	if (include_paths_index)
@@ -459,6 +459,31 @@ int32_t main(int32_t argc, char **argv)
 	return res;
 }
 END_OF_MAIN()
+
+#ifdef __EMSCRIPTEN__
+extern "C" int compile_script()
+{
+	std::string runstr = "run";
+	strncpy(FFCore.scriptRunString, runstr.c_str(), sizeof(FFCore.scriptRunString));
+
+	updateIncludePaths();
+
+	ConsoleWrite = nullptr;
+	console_path = "out.txt";
+	FILE *console=fopen(console_path.c_str(), "w");
+	fclose(console);
+
+	std::string script_path = "tmp.zs";
+	bool metadata = false;
+	bool has_qrs = false;
+	ZScript::ScriptParser::initialize(has_qrs);
+	unique_ptr<ZScript::ScriptsData> result(compile(script_path, metadata));
+	if (!result)
+		zconsole_info("%s", "Failure!");
+	int32_t res = (result ? 0 : (zscript_failcode ? zscript_failcode : -1));
+	return res;
+}
+#endif
 
 // TODO: make this not needed to compile...
 bool DragAspect = false;

@@ -28,14 +28,15 @@
 
   <script>
     var TARGET = "playground";
+    window.ZC_Constants = {
+      files: [],
+    };
   </script>
 
   <script type="module">
     import ZScript from './zscript.mjs';
     window.ZScript = ZScript;
   </script>
-  <script src="./zplayer.data.js"></script>
-  <script src="./zeditor.data.js"></script>
   <script src="./zscript.data.js"></script>
   <script src="./playground.js"></script>
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-36Y8HGSBRW"></script>
