@@ -16,7 +16,7 @@ esbuild.build({
   alias: {
     'onigasm': 'vscode-oniguruma',
   },
-  minify: false,
+  // minify: true,
 });
 
 fs.copyFileSync(`${import.meta.dirname}/playground/index.html`, `${import.meta.dirname}/dist/index.html`);
