@@ -4,7 +4,7 @@ import { loadWASM } from 'vscode-oniguruma'
 import { Registry } from 'monaco-textmate'
 import { wireTmGrammars } from 'monaco-editor-textmate'
 import * as theme from './themes/solarized-dark-color-theme.json';
-import { parseZscriptOutput } from './parse_zscript_output';
+import { parseZscriptOutput } from './parse_zscript_output.js';
 
 const code = `ffc script OldMan
 {
@@ -25,20 +25,15 @@ const debounce = (callback, wait) => {
     };
 }
 
-let moduleInitialized;
 async function makeZScriptModule() {
-    if (moduleInitialized) return;
-
     Module.noInitialRun = true;
     await ZScript(Module);
     Module.compileScript = Module.cwrap('compile_script', 'int', []);
-    moduleInitialized = true;
 }
 
 async function runZscriptCompiler(code) {
     const consolePath = 'out.txt';
 
-    await makeZScriptModule(); // TODO move
     Module.FS.writeFile('tmp.zs', code);
 
     const exitCode = await Module.compileScript();
@@ -77,6 +72,8 @@ export async function main() {
     const languages = new Map([['zscript', 'source.zscript']]);
     await wireTmGrammars(monaco, registry, languages, editor);
 
+    await makeZScriptModule();
+
     async function onContentUpdated() {
         const result = await runZscriptCompiler(editor.getModel().getValue());
         const markers = result.diagnostics.map(d => {
@@ -92,6 +89,7 @@ export async function main() {
         monaco.editor.setModelMarkers(editor.getModel(), '', markers);
     }
     editor.getModel().onDidChangeContent(debounce(onContentUpdated, 500));
+    await onContentUpdated();
 }
 
 self.MonacoEnvironment = {

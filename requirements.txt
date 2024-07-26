@@ -45,7 +45,6 @@ six==1.16.0
 sortedcontainers==2.4.0
 soupsieve==2.5
 urllib3==2.2.1
-uWSGI==2.0.26
 watchdog==4.0.0
 windows-curses==2.3.2; platform_system == "Windows"
 Werkzeug==3.0.3

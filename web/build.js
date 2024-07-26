@@ -1,4 +1,4 @@
-import * as esbuild from 'esbuild';
+import esbuild from 'esbuild';
 import fs from 'fs';
 
 esbuild.build({
