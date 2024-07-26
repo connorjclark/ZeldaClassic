@@ -1,4 +1,5 @@
 import * as esbuild from 'esbuild';
+import fs from 'fs';
 
 esbuild.build({
   entryPoints: {
@@ -17,3 +18,6 @@ esbuild.build({
   },
   minify: false,
 });
+
+fs.copyFileSync(`${import.meta.dirname}/playground/index.html`, `${import.meta.dirname}/dist/index.html`);
+fs.cpSync(`${import.meta.dirname}/playground/themes`, `${import.meta.dirname}/dist/themes`, { recursive: true });

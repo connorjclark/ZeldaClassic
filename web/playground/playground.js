@@ -3,7 +3,7 @@ import * as monaco from 'monaco-editor';
 import { loadWASM } from 'vscode-oniguruma'
 import { Registry } from 'monaco-textmate'
 import { wireTmGrammars } from 'monaco-editor-textmate'
-import * as theme from './theme.json';
+import * as theme from './themes/solarized-dark-color-theme.json';
 
 const code = `ffc script OldMan
 {
@@ -65,12 +65,12 @@ export async function main() {
 
     // monaco's built-in themes aren't powereful enough to handle TM tokens
     // https://github.com/Nishkalkashyap/monaco-vscode-textmate-theme-converter#monaco-vscode-textmate-theme-converter
-    monaco.editor.defineTheme('vs-code-theme-converted', theme);
+    monaco.editor.defineTheme('dark-vs', theme);
 
     const editor = monaco.editor.create(document.querySelector('.root'), {
         value: code,
         language: 'zscript',
-        theme: 'vs-code-theme-converted',
+        theme: 'dark-vs',
         automaticLayout: true,
     });
 
@@ -87,17 +87,6 @@ export async function main() {
     // }
 }
 
-// window.Module = window.Module || {};
-// Module.noInitialRun = true;
-// Module = Object.assign(Module, {
-//     preRun: () => {
-//         console.log('i');
-//     },
-//     onRuntimeInitialized: () => {
-//         console.log('done', FS);
-//     }
-// });
-
 self.MonacoEnvironment = {
     getWorkerUrl: function (moduleId, label) {
         return "./editor.worker.js";
@@ -109,4 +98,3 @@ monaco.languages.register({
 });
 
 main();
-
