@@ -105,4 +105,5 @@ for f in tmp_dir.glob('*.json'):
     content = json.loads(dest.read_text())
     theme_metdata = get_theme_metadata(dest)
     content['base'] = theme_metdata['uiTheme']
+    content['inherit'] = True
     dest.write_text(json.dumps(content, indent=2))

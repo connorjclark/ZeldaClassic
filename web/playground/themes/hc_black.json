@@ -1,5 +1,5 @@
 {
-  "inherit": false,
+  "inherit": true,
   "base": "hc-black",
   "colors": {
     "editor.background": "#000000",

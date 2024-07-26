@@ -1,5 +1,5 @@
 {
-  "inherit": false,
+  "inherit": true,
   "base": "vs",
   "colors": {
     "focusBorder": "#b49471",

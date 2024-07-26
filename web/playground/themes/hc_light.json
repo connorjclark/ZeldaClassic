@@ -1,5 +1,5 @@
 {
-  "inherit": false,
+  "inherit": true,
   "base": "hc-light",
   "colors": {
     "actionBar.toggledBackground": "#dddddd"

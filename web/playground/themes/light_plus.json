@@ -1,5 +1,5 @@
 {
-  "inherit": false,
+  "inherit": true,
   "base": "vs",
   "colors": {
     "checkbox.border": "#919191",
