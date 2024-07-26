@@ -27,6 +27,10 @@
 #include "sentry.h"
 #endif
 
+#ifdef __EMSCRIPTEN__
+#include "base/emscripten_utils.h"
+#endif
+
 using std::unique_ptr;
 using std::shared_ptr;
 using namespace ZScript;
@@ -94,6 +98,13 @@ static unique_ptr<ScriptsData> _compile_helper(string const& filename, bool incl
 	{
 		zconsole_info("%s", "Pass 1: Parsing");
 		zconsole_idle();
+
+#ifdef __EMSCRIPTEN__
+    if (em_is_lazy_file(filename))
+    {
+        em_fetch_file(filename);
+    }
+#endif
 
 		unique_ptr<ASTFile> root(parseFile(filename, true));
 		if(zscript_error_out) return nullptr;
@@ -340,6 +351,14 @@ bool ScriptParser::preprocess_one(ASTImportDecl& importDecl, int32_t reclimit)
 		return false;
 	}
 	if(importDecl.isDisabled()) return true;
+
+#ifdef __EMSCRIPTEN__
+    if (em_is_lazy_file(filename))
+    {
+        em_fetch_file(filename);
+    }
+#endif
+
 	unique_ptr<ASTFile> imported(parseFile(filename));
 	if (!imported.get())
 	{

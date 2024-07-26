@@ -381,6 +381,25 @@ def do_web_packaging():
         ]
     )
 
+    zscript_data_files = [
+        *glob(resources_dir, 'include/**/*'),
+        *glob(resources_dir, 'headers/**/*'),
+        resources_dir / 'base_config/zscript.cfg',
+    ]
+    copy_files_to_package(zscript_data_files, packages_dir / 'web_zscript_data')
+    subprocess.check_call(
+        [
+            'python',
+            emcc_dir / 'tools/file_packager.py',
+            build_dir / 'zscript.data',
+            '--no-node',
+            '--preload',
+            f'{packages_dir}/web_zscript_data@/',
+            '--use-preload-cache',
+            f'--js-output={build_dir / "zscript.data.js"}',
+        ]
+    )
+
 
 if 'TEST' in os.environ:
     import unittest

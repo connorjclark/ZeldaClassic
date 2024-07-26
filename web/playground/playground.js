@@ -17,36 +17,46 @@ const code = `ffc script OldMan
 async function runZscriptCompiler(scriptPath, consolePath, qr) {
     let onExitPromiseResolve;
     const onExitPromise = new Promise(resolve => onExitPromiseResolve = resolve);
-    let instance;
-    instance = await ZScript({noInitialRun: true});
-    console.log(instance.FS);
-    // await ZScript(instance = {
-    //     preRun(zscript) {
-    //         instance.FS.mkdirTree('/root-fs');
-    //         instance.FS.writeFile('/root-fs/tmp.zs', code);
 
-    //         scriptPath = '/root-fs/' + scriptPath;
-    //         consolePath = '/root-fs/' + consolePath;
+    Module.preRun.push(() => {
+        // Module.FS.mkdirTree('/root-fs');
+        Module.FS.writeFile(scriptPath, code);
+        // console.log(Module.FS.readdir('/include'));
 
-    //         // For some reason `set_config_file` errors if the file doesn't exist ...
-    //         if (!instance.FS.analyzePath('/local/zscript.cfg').exists) instance.FS.writeFile('/local/zscript.cfg', '');
+        // scriptPath = scriptPath;
+        // consolePath = consolePath;
 
-    //         zscript.instance.FS.mkdir('/root-fs');
-    //         zscript.instance.FS.mount(PROXYFS, {
-    //             root: '/',
-    //             fs: instance.FS,
-    //         }, '/root-fs');
-    //         zscript.instance.FS.chdir('/root-fs');
-    //     },
-    //     onExit: onExitPromiseResolve,
-    //     arguments: ['-linked', '-input', scriptPath, '-console', consolePath, '-qr', qr],
-    // });
+        // For some reason `set_config_file` errors if the file doesn't exist ...
+        // if (!Module.FS.analyzePath('/local/zscript.cfg').exists) Module.FS.writeFile('/local/zscript.cfg', '');
 
-    // const exitCode = await onExitPromise;
-    // // Not necessary, but avoids lag when playing the sfx.
-    // await new Promise(resolve => setTimeout(resolve, 100));
-    // console.log(exitCode);
-    // return { exitCode };
+        // Module.FS.mkdir('/root-fs');
+        // Module.FS.mount(PROXYFS, {
+        //     root: '/',
+        //     fs: Module.FS,
+        // }, '/root-fs');
+        // Module.FS.chdir('/root-fs');
+    });
+    // Module.postRun = () => {
+    //     console.log(Module.FS.readdir('/include'));
+    //     console.log(123);
+    // }
+    Module.arguments = ['-unlinked', '-input', scriptPath,
+        // TODO
+        // '-qr', qr
+    ];
+    try {
+        await ZScript(Module);
+    } finally {
+        Module.preRun.unshift();
+    }
+
+    const exitCode = await onExitPromise;
+    // Not necessary, but avoids lag when playing the sfx.
+    await new Promise(resolve => setTimeout(resolve, 100));
+    // const output = new TextDecoder().decode(module.FS.readFile(consolePath));
+    // console.log(exitCode, output);
+
+    return { exitCode };
 };
 
 export async function main() {
@@ -77,7 +87,7 @@ export async function main() {
     const languages = new Map([['zscript', 'source.zscript']]);
     await wireTmGrammars(monaco, registry, languages, editor);
 
-    runZscriptCompiler('/root-fs/tmp.zs', '/root-fs/out.txt', '');
+    runZscriptCompiler('tmp.zs', 'out.txt', '');
     // const cb = () => {
     // };
     // if (!window.Module) {
