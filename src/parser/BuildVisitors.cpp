@@ -329,14 +329,16 @@ void BuildOpcodes::caseBlock(ASTBlock &host, void *param)
 	{
 		host.setScope(scope->makeChild());
 	}
-	scope = host.getScope();
 	
 	OpcodeContext *c = (OpcodeContext *)param;
 
 	int32_t startRefCount = arrayRefs.size();
+	scope = host.getScope();
 
 	for (auto it = host.statements.begin(); it != host.statements.end(); ++it)
 		literal_visit(*it, param);
+
+	assert(host.getScope() == scope);
 
 	deallocateRefsUntilCount(startRefCount);
 	while ((int32_t)arrayRefs.size() > startRefCount)
@@ -400,8 +402,9 @@ void BuildOpcodes::caseStmtIf(ASTStmtIf &host, void *param)
 				while ((int32_t)arrayRefs.size() > startRefCount)
 					arrayRefs.pop_back();
 				
-				scope = scope->getParent();
 			} //Either true or false, it's constant, so no checks required.
+
+			scope = scope->getParent();
 			return;
 		}
 		
@@ -436,8 +439,6 @@ void BuildOpcodes::caseStmtIf(ASTStmtIf &host, void *param)
 		
 		while ((int32_t)arrayRefs.size() > startRefCount)
 			arrayRefs.pop_back();
-		
-		scope = scope->getParent();
 	}
 	else
 	{
@@ -449,6 +450,8 @@ void BuildOpcodes::caseStmtIf(ASTStmtIf &host, void *param)
 				visit(host.thenStatement.get(), param);
 				commentAt(targ_sz, fmt::format("{}({}) #{} [Opt:AlwaysOn]",ifstr,truestr,ifid));
 			} //Either true or false, it's constant, so no checks required.
+
+			scope = scope->getParent();
 			return;
 		}
 		//run the test
@@ -480,6 +483,8 @@ void BuildOpcodes::caseStmtIf(ASTStmtIf &host, void *param)
 		//nop
 		addOpcode(new ONoOp(endif));
 	}
+
+	scope = scope->getParent();
 }
 
 void BuildOpcodes::caseStmtIfElse(ASTStmtIfElse &host, void *param)
