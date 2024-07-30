@@ -19,7 +19,7 @@ def print_run_target(message):
     prefix = 'run_target.py >'
     for line in message.splitlines(keepends=True):
         print(prefix, line, end='', file=sys.stderr)
-    print()
+    print(prefix, file=sys.stderr)
 
 
 def get_debug_method():

@@ -61,12 +61,13 @@ class TestZScript(ZCTestCase):
             '-json',
             '-metadata',
         ]
-        p = run_target.run('zscript', args, env={**os.environ, 'TEST_ZSCRIPT': '1'})
+        p = run_target.run(
+            'zscript',
+            args,
+            env={**os.environ, 'TEST_ZSCRIPT': '1', 'ZC_DISABLE_LLDB': '1'},
+        )
         stderr = p.stderr.replace(str(script_path), script_path.name)
         stdout = p.stdout.replace(str(script_path), script_path.name)
-        stderr = ''.join(
-            [l for l in stderr.splitlines(keepends=True) if not l.startswith('run_target.py >')]
-        )
 
         if p.returncode:
             return f'stderr:\n\n{stderr}\n\nstdout:\n\n{stdout}'
