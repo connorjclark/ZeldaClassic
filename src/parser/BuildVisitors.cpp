@@ -338,7 +338,8 @@ void BuildOpcodes::caseBlock(ASTBlock &host, void *param)
 	for (auto it = host.statements.begin(); it != host.statements.end(); ++it)
 		literal_visit(*it, param);
 
-	assert(host.getScope() == scope);
+	if (host.getScope() != scope)
+		throw compile_exception("host.getScope() != scope");
 
 	deallocateRefsUntilCount(startRefCount);
 	while ((int32_t)arrayRefs.size() > startRefCount)
@@ -439,9 +440,13 @@ void BuildOpcodes::caseStmtIf(ASTStmtIf &host, void *param)
 		
 		while ((int32_t)arrayRefs.size() > startRefCount)
 			arrayRefs.pop_back();
+
+		scope = scope->getParent();
 	}
 	else
 	{
+		auto orig_scope = scope;
+
 		if(auto val = host.condition->getCompileTimeValue(this, scope))
 		{
 			if((inv) == (*val==0)) //True, so go straight to the 'then'
@@ -450,8 +455,7 @@ void BuildOpcodes::caseStmtIf(ASTStmtIf &host, void *param)
 				visit(host.thenStatement.get(), param);
 				commentAt(targ_sz, fmt::format("{}({}) #{} [Opt:AlwaysOn]",ifstr,truestr,ifid));
 			} //Either true or false, it's constant, so no checks required.
-
-			scope = scope->getParent();
+			scope = orig_scope;
 			return;
 		}
 		//run the test
@@ -482,9 +486,8 @@ void BuildOpcodes::caseStmtIf(ASTStmtIf &host, void *param)
 		commentStartEnd(targ_sz, fmt::format("{}() #{} Body",ifstr,ifid));
 		//nop
 		addOpcode(new ONoOp(endif));
+		scope = orig_scope;
 	}
-
-	scope = scope->getParent();
 }
 
 void BuildOpcodes::caseStmtIfElse(ASTStmtIfElse &host, void *param)
@@ -583,6 +586,8 @@ void BuildOpcodes::caseStmtIfElse(ASTStmtIfElse &host, void *param)
 	}
 	else
 	{
+		auto orig_scope = scope;
+
 		if(auto val = host.condition->getCompileTimeValue(this, scope))
 		{
 			auto targ_sz = commentTarget();
@@ -597,6 +602,7 @@ void BuildOpcodes::caseStmtIfElse(ASTStmtIfElse &host, void *param)
 				commentAt(targ_sz, fmt::format("{}({}) #{} [Opt:AlwaysOff]",ifstr,falsestr,ifid));
 			}
 			//Either way, ignore the rest and return.
+			scope = orig_scope;
 			return;
 		}
 		//run the test
@@ -632,6 +638,7 @@ void BuildOpcodes::caseStmtIfElse(ASTStmtIfElse &host, void *param)
 		visit(host.elseStatement.get(), param);
 		commentStartEnd(targ_sz, fmt::format("{}() #{} Else",ifstr,ifid));
 		addOpcode(new ONoOp(endif));
+		scope = orig_scope;
 	}
 }
 
