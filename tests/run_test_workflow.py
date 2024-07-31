@@ -290,6 +290,7 @@ if __name__ == '__main__':
         commit = create_compare_git_ref(gh, args.repo, args.commit)
     else:
         commit = find_baseline_commit(gh, args.repo)
+    commit = '01a0077c45c111adf8ed934179cc13ca855d7311'
 
     if args.test_results:
         test_results_paths = []
