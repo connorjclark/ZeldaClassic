@@ -274,6 +274,7 @@ void pause_dlg_tint(bool pause);
 bool dlg_tint_paused();
 
 bool render_timer_start(int freq = 60);
+void render_timer_ignore_next();
 void render_timer_wait();
 bool render_fake_vsync_check();
 

@@ -27296,6 +27296,7 @@ void run_zq_frame()
 	}
 	
 	domouse();
+	render_timer_ignore_next();
 	custom_vsync();
 	refresh(rCLEAR|rALL);
 }
