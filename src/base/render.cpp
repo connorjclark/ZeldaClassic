@@ -998,11 +998,6 @@ bool render_timer_start(int freq)
 	return true;
 }
 
-void render_timer_ignore_next()
-{
-	render_timer_counter = 1;
-}
-
 void render_timer_wait()
 {
 	al_lock_mutex(render_timer_mutex);
