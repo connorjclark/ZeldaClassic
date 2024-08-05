@@ -23,6 +23,9 @@ def print_run_target(message):
 
 
 def get_debug_method():
+    if 'ZC_DISABLE_DEBUG' in os.environ:
+        return {'method': DEBUG_METHOD_NONE}
+
     debug_method = _get_debug_method()
     if debug_method['method'] == DEBUG_METHOD_NONE and platform.system() != 'Windows':
         print_run_target('WARNING: if there is a crash, you will not see a backtrace')
@@ -30,9 +33,6 @@ def get_debug_method():
 
 
 def _get_debug_method():
-    if 'ZC_DISABLE_DEBUG' in os.environ:
-        return {'method': DEBUG_METHOD_NONE}
-
     def can_use_python_lldb():
         if 'ZC_DISABLE_LLDB' in os.environ:
             return False
