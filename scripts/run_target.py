@@ -30,6 +30,9 @@ def get_debug_method():
 
 
 def _get_debug_method():
+    if 'ZC_DISABLE_DEBUG' in os.environ:
+        return {'method': DEBUG_METHOD_NONE}
+
     def can_use_python_lldb():
         if 'ZC_DISABLE_LLDB' in os.environ:
             return False

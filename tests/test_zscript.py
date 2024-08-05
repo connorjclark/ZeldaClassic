@@ -64,7 +64,7 @@ class TestZScript(ZCTestCase):
         p = run_target.run(
             'zscript',
             args,
-            env={**os.environ, 'TEST_ZSCRIPT': '1', 'ZC_DISABLE_LLDB': '1'},
+            env={**os.environ, 'TEST_ZSCRIPT': '1', 'ZC_DISABLE_DEBUG': '1'},
         )
         stderr = p.stderr.replace(str(script_path), script_path.name).strip()
         stdout = p.stdout.replace(str(script_path), script_path.name)
