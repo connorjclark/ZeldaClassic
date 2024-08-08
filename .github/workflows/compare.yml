@@ -36,11 +36,13 @@ jobs:
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 artifact_id: artifact.id,
-                archive_format: 'tar',
+                archive_format: 'zip',
               });
               let fs = require('fs');
-              fs.writeFileSync(`${process.env.GITHUB_WORKSPACE}/test-results/${artifact.name}.tar`, Buffer.from(download.data));
+              fs.writeFileSync(`${process.env.GITHUB_WORKSPACE}/test-results/${artifact.name}.zip`, Buffer.from(download.data));
             }
+      - run: unzip '*.zip'
+        working-directory: test-results
 
       - name: Install Node.js 18.x
         uses: actions/setup-node@v3
