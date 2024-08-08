@@ -17,8 +17,23 @@ jobs:
       REPLAY_FAILURE_DISCORD_WEBHOOK: ${{ secrets.REPLAY_FAILURE_DISCORD_WEBHOOK }}
 
     steps:
+      - name: Install Node.js 18.x
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18.x
+      - name: git clone
+        uses: actions/checkout@v4
+        with:
+          # Need history to find baseline commit.
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11.4'
+          cache: pip
+      - run: pip install -r requirements.txt
+
       - run: mkdir test-results
-      - name: 'Download artifact'
+      - name: Download artifacts
         uses: actions/github-script@v6
         with:
           script: |
@@ -43,21 +58,6 @@ jobs:
             }
       - run: for f in *.zip; do unzip $f -d ${f%.*}; done
         working-directory: test-results
-
-      - name: Install Node.js 18.x
-        uses: actions/setup-node@v3
-        with:
-          node-version: 18.x
-      - name: git clone
-        uses: actions/checkout@v4
-        with:
-          # Need history to find baseline commit.
-          fetch-depth: 0
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.11.4'
-          cache: pip
-      - run: pip install -r requirements.txt
 
       - name: Collect baseline
         run: python3 tests/run_test_workflow.py --test_results test-results --repo ${{ github.repository }} --token ${{ secrets.GITHUB_TOKEN }}
