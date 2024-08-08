@@ -1,6 +1,7 @@
 #include <cstring>
 #include <set>
 #include <stdio.h>
+  
 
 #include "base/qrs.h"
 #include "base/dmap.h"
@@ -2316,7 +2317,7 @@ weapon* find_first_wtype(int wtype)
 }
 void HeroClass::draw(BITMAP* dest)
 {
-	// if (dest) return;
+	if (dest) return;   
 
 	/*{
 		char buf[36];
