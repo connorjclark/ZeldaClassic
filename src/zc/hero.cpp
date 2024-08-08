@@ -2316,7 +2316,7 @@ weapon* find_first_wtype(int wtype)
 }
 void HeroClass::draw(BITMAP* dest)
 {
-	if (dest) return;
+	if (dest) return;   
 
 	/*{
 		char buf[36];
