@@ -1284,7 +1284,7 @@ struct item_drop_object
 #define OVERRIDE_DRAW_Y_OFFSET	0x00000100
 #define OVERRIDE_DRAW_Z_OFFSET	0x00000200
 
-#define MAX_NPC_ATTRIBUTES 31
+#define MAX_NPC_ATTRIBUTES 32
 
 struct guydata
 {
@@ -1306,7 +1306,7 @@ struct guydata
     
     int16_t  rate, hrate, step, homing, grumble, item_set;
     
-	int32_t attributes[32]; //refactored this into an array, no more madness.
+	int32_t attributes[MAX_NPC_ATTRIBUTES];
     int16_t  bgsfx, bosspal, extend;
     byte defense[edefLAST255];
     byte  hitsfx, deadsfx;
@@ -1319,8 +1319,8 @@ struct guydata
     int32_t hxofs,hyofs,hxsz,hysz,hzsz;
     int32_t txsz,tysz;
     byte scriptdefense[scriptDEFLAST]; //old 2.future quest file crossover support. 
-    int32_t wpnsprite; //wpnsprite is new for 2.6 -Z
-    int32_t SIZEflags;; //Flags for size panel offsets. The user must enable these to override defaults. 
+    int32_t wpnsprite;
+    int32_t SIZEflags; //Flags for size panel offsets. The user must enable these to override defaults. 
     int32_t frozentile, frozencset, frozenclock;
     int16_t frozenmisc[10];
     //v 34
