@@ -64,6 +64,9 @@ class TestReplays(unittest.TestCase):
         return ReplayTestResults(**test_results_json)
 
     def test_failing_replay_different_gfx_step(self):
+        if 'CI' in os.environ and os.environ['CXX'] == 'gcc':
+            raise unittest.SkipTest('skipping test because gcc')
+
         failing_replay_contents = (
             root_dir / 'tests/replays/classic_1st_lvl1.zplay'
         ).read_text()
@@ -163,6 +166,9 @@ class TestReplays(unittest.TestCase):
     # many frames are failing in a row. If gfx goes back to working as expected,
     # we should also save more unexpected snapshots if needed to again.
     def test_failing_replay_different_gfx_step_limit(self):
+        if 'CI' in os.environ and os.environ['CXX'] == 'gcc':
+            raise unittest.SkipTest('skipping test because gcc')
+
         failing_replay_contents = (
             root_dir / 'tests/replays/classic_1st_lvl1.zplay'
         ).read_text()

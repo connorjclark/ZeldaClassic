@@ -159,6 +159,8 @@ jobs:
       - if: ${{ matrix.shard_index == 1 && inputs.from-ci-workflow }}
         name: Run Python tests
         run: bash .github/workflows/run_python.sh -m unittest discover tests
+        env:
+          CXX: ${{ inputs.compiler }}
 
       - name: Generate coverage json
         if: inputs.config == 'Coverage'
