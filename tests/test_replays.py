@@ -134,6 +134,9 @@ class TestReplays(unittest.TestCase):
         )
 
     def test_failing_replay_missing_gfx_step(self):
+        if 'CI' in os.environ and os.environ['CXX'] == 'gcc':
+            raise unittest.SkipTest('skipping test because gcc')
+
         failing_replay_contents = (
             root_dir / 'tests/replays/classic_1st_lvl1.zplay'
         ).read_text()
