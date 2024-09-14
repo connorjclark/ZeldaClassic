@@ -592,15 +592,11 @@ if ("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang" OR "${CMAKE_CXX_COMPILER_ID}" STR
 		message("Linking TBB")
         target_link_libraries(poolSTL_tbb INTERFACE TBB::tbb)
     else()
-        message("No TBB")
+        message("No TBB - using poolSTL fallback")
         # Prevent including <execution>, as doing that requires linking against TBB on newer GCC/Clang.
         # User code must not #include <execution> either.
         target_compile_definitions(poolSTL_tbb INTERFACE POOLSTL_STD_SUPPLEMENT_NO_INCLUDE)
-        if (MINGW)
-            # extra hack!
-            # MinGW declares support, so override poolSTL's auto-detection to enable the supplement.
-            target_compile_definitions(poolSTL_tbb INTERFACE POOLSTL_STD_SUPPLEMENT_FORCE)
-        endif()
+		target_compile_definitions(poolSTL_tbb INTERFACE POOLSTL_STD_SUPPLEMENT_FORCE)
     endif()
 endif()
 
