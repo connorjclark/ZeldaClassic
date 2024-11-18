@@ -2140,7 +2140,7 @@ enum
 
 // TODO: we would like to remove the module system / loading from datafiles eventually.
 
-enum { zelda_dat, zquest_dat, fonts_dat, sfx_dat };
+enum { zelda_dat, fonts_dat, sfx_dat };
 
 enum {
     sels_tile_frame, sels_tile_questicon_1A, sels_tile_questicon_1B, sels_tile_questicon_2A,
