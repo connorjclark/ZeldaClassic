@@ -318,7 +318,6 @@ def do_web_packaging():
             'assets/zc/ZC_Icon_Medium_Editor.png',
             'docs/zquest.txt',
             'docs/zstrings.txt',
-            'modules/classic/classic_zquest.dat',
         ],
     )
     lazy_files = list(
