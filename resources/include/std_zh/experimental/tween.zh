@@ -1,0 +1,93 @@
+// https://docs.godotengine.org/en/stable/classes/class_tween.html#class-tween-method-interpolate-value is nice
+
+enum EaseType {
+	EASE_IN,
+	EASE_OUT
+};
+
+enum TransitionType {
+	TRANS_LINEAR,
+	TRANS_SINE,
+	TRANS_QUINT
+};
+
+enum VariableType {
+	X,
+	Y
+};
+
+class VariableTweener {
+	VariableType variable;
+	int initial;
+	int final;
+	int duration;
+	EaseType ease;
+	TransitionType trans;
+}
+
+int GetVariable(sprite sprite, VariableType variable) {
+	switch (variable) {
+		case X: return sprite->X;
+		case Y: return sprite->Y;
+	}
+
+	return 0;
+}
+
+void SetVariable(sprite sprite, VariableType variable, int value) {
+	switch (variable) {
+		case X: sprite->X = value; break;
+		case Y: sprite->Y = value; break;
+	}
+}
+
+int Apply(EaseType ease, TransitionType trans, int time, int initial, int delta, int duration) {
+	int c = delta;
+	int t = time;
+	int d = duration;
+	int b = initial;
+
+	if (trans == TRANS_LINEAR) {
+		return c * t / d + b;
+	}
+
+	return initial;
+}
+
+class Tween {
+	sprite sprite;
+	VariableTweener[] tweeners;
+	EaseType default_ease;
+	TransitionType default_trans;
+	int start_frame;
+
+	Tween() {
+		start_frame = Game->Time;
+	}
+
+	VariableTweener tween(VariableType variable, int final_value, int duration) {
+		VariableTweener tweener = new VariableTweener();
+		tweener->variable = variable;
+		tweener->initial = GetVariable(sprite, variable);
+		tweener->final = final_value;
+		tweener->ease = default_ease;
+		tweener->trans = default_trans;
+		ArrayPushBack(tweeners, tweener);
+		return tweener;
+	}
+
+	void update() {
+		// TODO ! broken?
+		// for (tweener : tweeners) {	
+		// }
+
+		int dt = Game->Time - start_frame;
+
+		for (int i = 0; i < SizeOfArray(tweeners); i++) {
+			auto tweener = tweeners[i];
+			int delta_value = tweener->final - tweener->initial;
+			int value = Apply(tweener->ease, tweener->trans, dt, tweener->initial, delta_value, tweener->duration);
+			SetVariable(sprite, tweener->variable, value);
+		}
+	}
+}
