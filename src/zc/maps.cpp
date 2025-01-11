@@ -2692,8 +2692,15 @@ void trigger_secrets_for_screen(TriggerSource source, int32_t screen, mapscr *s,
 void trigger_secrets_for_screen_internal(int32_t screen, mapscr *scr, bool do_combo_triggers, bool high16only, int32_t single, bool do_replay_comment)
 {
 	DCHECK(screen != -1 || scr);
-	if (!scr) scr = get_scr(screen);
-	if (screen == -1) screen = cur_screen;
+	// if (!scr) scr = get_scr(screen);
+	// if (screen == -1) screen = cur_screen;
+	if (!scr)
+	{
+		scr = get_scr(screen);
+		screen = scr->screen;
+		// TODO z3 ...
+	}
+	else if (screen == -1) screen = cur_screen;
 
 	// No real reason for "do_replay_comment" to exist - I just did not want to update many replays when fixing
 	// slopes in sideview mode (which required loading nearby screens in loadscr).
