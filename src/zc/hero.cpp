@@ -28834,9 +28834,14 @@ void HeroClass::scrollscr(int32_t scrolldir, int32_t dest_screen, int32_t destdm
 	// expose previous screen to scripting.
 	special_warp_return_scr = *tmpscr;
 	
-	for(int32_t i = 0; i < 6; i++)
+	for(int32_t i = 1; i <= 6; i++)
 	{
-		special_warp_return_scr_layers[i] = tmpscr2[i];
+		// special_warp_return_scr_layers[i] = tmpscr2[i];
+		mapscr* scr = get_scr_layer_valid(cur_screen, i);
+		if (scr)
+			special_warp_return_scr_layers[i - 1] = *scr;
+		else
+			special_warp_return_scr_layers[i - 1] = {};
 	}
 
 	// Between here and until calling loadscr to get the new region, some scripts can run and modify
