@@ -25505,6 +25505,7 @@ bool HeroClass::dowarp(const mapscr* scr, int32_t type, int32_t index, int32_t w
 					   (combobuf[MAPCOMBO(x,y-16)].type==cCAVED)||(combobuf[MAPCOMBO(x,y-16)].type==cCAVE2D));
 			blackscr(30,b2?false:true);
 			loadscr(wdmap, destscr, up, false);
+			scr = hero_scr;
 			//preloaded freeform combos
 			ffscript_engine(true);
 			dir=up;
@@ -25558,6 +25559,7 @@ bool HeroClass::dowarp(const mapscr* scr, int32_t type, int32_t index, int32_t w
 
 			bool no_x80_dir = true; // TODO: is this necessary?
 			loadscr(wdmap, 0x80, down, false, no_x80_dir);
+			scr = hero_scr;
 			if ( dontdraw < 2 ) {  dontdraw=1; }
 			draw_screen(false);
 			fade(0xB,true,true);
@@ -25635,6 +25637,7 @@ bool HeroClass::dowarp(const mapscr* scr, int32_t type, int32_t index, int32_t w
 		blackscr(30,true);
 		bool no_x80_dir = true;
 		loadscr(wdmap, 0x81, down, false, no_x80_dir);
+		scr = hero_scr;
 		//preloaded freeform combos
 		ffscript_engine(true);
 		if ( dontdraw < 2 ) { dontdraw=1; }
@@ -25937,6 +25940,7 @@ bool HeroClass::dowarp(const mapscr* scr, int32_t type, int32_t index, int32_t w
 		}
 
 		scrollscr(sdir, wscr+DMaps[wdmap].xoff, wdmap);
+		scr = hero_scr;
 
 		reset_hookshot();
 		if(reposition_sword_postwarp)
@@ -26008,6 +26012,7 @@ bool HeroClass::dowarp(const mapscr* scr, int32_t type, int32_t index, int32_t w
 		scrolling_map = cur_map;
 		cur_map = DMaps[wdmap].map;
 		scrollscr(index, wscr+DMaps[wdmap].xoff, wdmap);
+		scr = hero_scr;
 		reset_hookshot();
 		cur_dmap=wdmap;
 		dlevel=DMaps[cur_dmap].level;
@@ -26152,6 +26157,7 @@ bool HeroClass::dowarp(const mapscr* scr, int32_t type, int32_t index, int32_t w
 		
 		int prevscr = cur_screen;
 		loadscr(cur_dmap, wscr + DMaps[cur_dmap].xoff, -1, overlay);
+		scr=hero_scr;
 		lightingInstant(); // Also sets naturaldark
 
 		// In the case where we did not call ALLOFF, preserve the "enemies have spawned"
