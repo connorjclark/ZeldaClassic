@@ -1943,7 +1943,6 @@ int32_t init_game()
 	lastentrance_dmap = cur_dmap;
 	cur_map = DMaps[cur_dmap].map;
 	dlevel = DMaps[cur_dmap].level;
-	mark_visited(cur_screen);
 	
 	game->lvlitems[9] &= ~liBOSS;
 	
@@ -1984,6 +1983,7 @@ int32_t init_game()
 	}
 	
 	loadscr(cur_dmap, cur_screen, -1, false);
+	mark_visited(cur_screen);
 	
 	//preloaded freeform combos
 	//ffscript_engine(true); Can't do this here! Global arrays haven't been allocated yet... ~Joe
