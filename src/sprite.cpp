@@ -11,6 +11,7 @@
 #include <fmt/format.h>
 #include "base/misctypes.h"
 #include "drawing.h"
+#include "zc/zelda.h"
 
 #ifdef IS_PLAYER
 #include "zc/hero.h"
@@ -1057,8 +1058,12 @@ void sprite::draw(BITMAP* dest)
 		yofs = tyoffs;
 		return;
 	}
-	int32_t e = extend>=3 ? 3 : extend;
-	int32_t flip_type = ((scriptflip > -1) ? scriptflip : flip);
+
+	int e = extend >= 3 ? 3 : extend;
+	int draw_tile = scripttile > -1 ? scripttile : tile;
+	// 1 = horizontal, 2 = vertical, 3 = both
+	int draw_flip = scriptflip > -1 ? scriptflip : flip;
+
 	isspawning = false;
 	#define TILEBOUND(t) vbound(t,0,NEWMAXTILES)
 	if(clk>=0)
@@ -1068,327 +1073,305 @@ void sprite::draw(BITMAP* dest)
 
 		switch(e)
 		{
+			case 0:
 			case 1:
-			{
-				static BITMAP *temp = create_bitmap_ex(8, 16, 32);
-				blit(dest, temp, sx, sy-16, 0, 0, 16, 32);
-
-				static BITMAP *temp2 = create_bitmap_ex(8, 16, 32);
-				clear_bitmap(temp2);
-
-				//Draw sprite tiles to the temp (scratch) bitmap.
-				overtile16(temp2,TILEBOUND(((scripttile > -1) ? scripttile : tile)-TILES_PER_ROW),0,0,cs,((scriptflip > -1) ? scriptflip : flip));
-				overtile16(temp2,TILEBOUND((scripttile > -1) ? scripttile : tile),0,16,cs,((scriptflip > -1) ? scriptflip : flip));
-
-				//Recolor for flicker animations
-				if (sprite_flicker_color)
-					SPRITE_MONOCOLOR(temp2);
-
-				masked_blit(temp2, temp, 0, 0, 0, 0, 16, 32);
-
-				//Blit to the screen...
-				if ( rotation )
-				{	
-					//First rotating and scaling as needed to a scratch-bitmap.
-					if ( scale ) 
-					{
-						double new_scale = scale / 100.0;
-						rotate_scaled_sprite(sprBMP2, temp, 0, 0, deg_to_fixed(rotation),ftofix(new_scale));
-					}
-					else rotate_sprite(sprBMP2, temp, 0, 0, deg_to_fixed(rotation));
-					doSpriteDraw(drawstyle, dest, sprBMP2, sx, sy);
-				}
-				else
-				{
-					if ( scale ) 
-					{
-						double new_scale = scale / 100.0;
-						rotate_scaled_sprite(sprBMP2, temp, 0, 0, deg_to_fixed(0),ftofix(new_scale));
-						doSpriteDraw(drawstyle, dest, sprBMP2, sx, sy);
-					}
-					else doSpriteDraw(drawstyle, dest, temp, sx, sy-16);
-				}
-				break;
-			}
 			case 2:
-			{
-				static BITMAP *temp = create_bitmap_ex(8, 48, 32);
-				blit(dest, temp, sx-16, sy-16, 0, 0, 48, 32);
-
-				static BITMAP *temp2 = create_bitmap_ex(8, 32, 32);
-				static BITMAP* temp3 = create_bitmap_ex(8, 32, 32);
-
-				clear_bitmap(temp3);
-				overtile16(temp3,TILEBOUND(((scripttile > -1) ? scripttile : tile)-TILES_PER_ROW),16,0,cs,((scriptflip > -1) ? scriptflip : flip));
-				overtile16(temp3,TILEBOUND(((scripttile > -1) ? scripttile : tile)-TILES_PER_ROW-( ( scriptflip > -1 ) ? ( scriptflip ? -1 : 1 ) : ( flip?-1:1 ) )),0,0,cs,((scriptflip > -1) ? scriptflip : flip));
-				overtile16(temp3,TILEBOUND(((scripttile > -1) ? scripttile : tile)-TILES_PER_ROW+( ( scriptflip > -1 ) ? ( scriptflip ? -1 : 1 ) : ( flip?-1:1 ) )),32,0,cs,((scriptflip > -1) ? scriptflip : flip));
-				overtile16(temp3,TILEBOUND(((scripttile > -1) ? scripttile : tile)),16,16,cs,((scriptflip > -1) ? scriptflip : flip));
-				overtile16(temp3,TILEBOUND(((scripttile > -1) ? scripttile : tile)-( ( scriptflip > -1 ) ? ( scriptflip ? -1 : 1 ) : ( flip?-1:1 ) )),0,16,cs,((scriptflip > -1) ? scriptflip : flip));
-				overtile16(temp3,TILEBOUND(((scripttile > -1) ? scripttile : tile)+( ( scriptflip > -1 ) ? ( scriptflip ? -1 : 1 ) : ( flip?-1:1 ) )),32,16,cs,((scriptflip > -1) ? scriptflip : flip));
-				
-				//Recolor for flicker animations
-				if (sprite_flicker_color)
-					SPRITE_MONOCOLOR(temp3);
-
-				masked_blit(temp3, temp, 0, 0, 0, 0, 32, 32);
-
-				if ( rotation )
-				{
-					if ( scale ) 
-					{
-						double new_scale = scale / 100.0;
-						rotate_scaled_sprite(sprBMP2, temp, 0, 0, deg_to_fixed(rotation),ftofix(new_scale));
-					}
-					else rotate_sprite(sprBMP2, temp, 0, 0, deg_to_fixed(rotation));
-					blit(sprBMP2, temp2, 8, 0, 0, 0, 32, 32);
-					doSpriteDraw(drawstyle, dest, sprBMP2, sx, sy);
-				}
-				else
-				{
-					if ( scale ) 
-					{
-						double new_scale = scale / 100.0;
-						rotate_scaled_sprite(sprBMP2, temp, 0, 0, deg_to_fixed(0),ftofix(new_scale));
-						blit(sprBMP2, temp2, 8, 0, 0, 0, 32, 32);
-						doSpriteDraw(drawstyle, dest, sprBMP2, sx, sy);
-					}
-					else 
-					{
-						blit(temp, temp2, 8, 0, 0, 0, 32, 32);
-						doSpriteDraw(drawstyle, dest, temp2, sx-8, sy-16);
-					}
-				}
-				break;
-			}
 			case 3:
 			{
-				int32_t tileToDraw;
-            
-				switch(flip_type)
+				// TODO ! needed for cloaked/phantom draws? add that as a test case to tests/scripts/playground/auto/sprites.zs
+				// blit(dest, temp, sx-16, sy-16, 0, 0, 32, 32);     + masked blit ...
+
+				BITMAP* bmp;
+				int txsz;
+				int tysz;
+				int top_left_tile;
+				if (e == 0)
 				{
-					case 1:
-					{
-						BITMAP* sprBMP = create_bitmap_ex(8,txsz*16,tysz*16);
-						clear_bitmap(sprBMP);
-						for(int32_t i=0; i<tysz; i++)
-						{
-							for(int32_t j=txsz-1; j>=0; j--)
-							{
-								tileToDraw=((scripttile > -1) ? scripttile : tile)+(i*TILES_PER_ROW)+j;
-							
-								if(tileToDraw%TILES_PER_ROW<j) // Wrapped around
-									tileToDraw+=TILES_PER_ROW*(tysz-1);
-							    
-								overtile16(sprBMP,tileToDraw,0+(txsz-j-1)*16,0+i*16,cs,((scriptflip > -1) ? scriptflip : flip));
-							}
-						}
+					top_left_tile = draw_tile;
+					txsz = 1;
+					tysz = 1;
 
-						//Recolor for flicker animations
-						if (sprite_flicker_color)
-							SPRITE_MONOCOLOR(sprBMP);
-
-						if ( rotation )
-						{
-							if ( scale ) 
-							{
-								double new_scale = scale / 100.0;
-								rotate_scaled_sprite(sprBMP2, sprBMP, 0, 0, deg_to_fixed(rotation),ftofix(new_scale));
-							}
-							else rotate_sprite(sprBMP2, sprBMP, 0, 0, deg_to_fixed(rotation));
-							doSpriteDraw(drawstyle, dest, sprBMP2, sx, sy);
-							
-						}
-						else
-						{
-							if ( scale ) 
-							{
-								double new_scale = scale / 100.0;
-								rotate_scaled_sprite(sprBMP2, sprBMP, 0, 0, deg_to_fixed(0),ftofix(new_scale));
-								doSpriteDraw(drawstyle, dest, sprBMP2, sx, sy);
-							}
-							else doSpriteDraw(drawstyle, dest, sprBMP, sx, sy);
-						}
-							
-						destroy_bitmap(sprBMP);
-					} //end extend == 3 && flip == 1
-					break;
-                
-					case 2:
-					{
-						BITMAP* sprBMP = create_bitmap_ex(8,txsz*16,tysz*16);
-						clear_bitmap(sprBMP);
-						for(int32_t i=tysz-1; i>=0; i--)
-						{
-							for(int32_t j=0; j<txsz; j++)
-							{
-								tileToDraw=((scripttile > -1) ? scripttile : tile)+(i*TILES_PER_ROW)+j;
-							
-								if(tileToDraw%TILES_PER_ROW<j)
-									tileToDraw+=TILES_PER_ROW*(tysz-1);
-							    
-								overtile16(sprBMP,tileToDraw,0+j*16,0+(tysz-i-1)*16,cs,((scriptflip > -1) ? scriptflip : flip));
-							}
-						}
-
-						//Recolor for flicker animations
-						if (sprite_flicker_color)
-							SPRITE_MONOCOLOR(sprBMP);
-
-						if ( rotation )
-						{
-							if ( scale ) 
-							{
-								double new_scale = scale / 100.0;
-								rotate_scaled_sprite(sprBMP2, sprBMP, 0, 0, deg_to_fixed(rotation),ftofix(new_scale));
-							}
-							else rotate_sprite(sprBMP2, sprBMP, 0, 0, deg_to_fixed(rotation));
-							doSpriteDraw(drawstyle, dest, sprBMP2, sx, sy);
-						}
-						else
-						{
-							if ( scale ) 
-							{
-								double new_scale = scale / 100.0;
-								rotate_scaled_sprite(sprBMP2, sprBMP, 0, 0, deg_to_fixed(0),ftofix(new_scale));
-								doSpriteDraw(drawstyle, dest, sprBMP2, sx, sy);
-							}
-							else doSpriteDraw(drawstyle, dest, sprBMP, sx, sy);
-						}
-							
-						destroy_bitmap(sprBMP);
-					}//end extend == 3 &7 flip == 2
-					break;
-                
-					case 3:
-					{
-						BITMAP* sprBMP = create_bitmap_ex(8,txsz*16,tysz*16);
-						clear_bitmap(sprBMP);
-						for(int32_t i=tysz-1; i>=0; i--)
-						{
-							for(int32_t j=txsz-1; j>=0; j--)
-							{
-								tileToDraw=((scripttile > -1) ? scripttile : tile)+(i*TILES_PER_ROW)+j;
-							
-								if(tileToDraw%TILES_PER_ROW<j)
-									tileToDraw+=TILES_PER_ROW*(tysz-1);
-							    
-								overtile16(sprBMP,tileToDraw,0+(txsz-j-1)*16,0+(tysz-i-1)*16,cs,((scriptflip > -1) ? scriptflip : flip));
-							}
-						}
-
-						//Recolor for flicker animations
-						if (sprite_flicker_color)
-							SPRITE_MONOCOLOR(sprBMP);
-
-						if ( rotation )
-						{
-							if ( scale ) 
-							{
-								double new_scale = scale / 100.0;
-								rotate_scaled_sprite(sprBMP2, sprBMP, 0, 0, deg_to_fixed(rotation),ftofix(new_scale));
-							}
-							else rotate_sprite(sprBMP2, sprBMP, 0, 0, deg_to_fixed(rotation));
-							doSpriteDraw(drawstyle, dest, sprBMP2, sx, sy);
-						}
-						else
-						{
-							if ( scale ) 
-							{
-								double new_scale = scale / 100.0;
-								rotate_scaled_sprite(sprBMP2, sprBMP, 0, 0, deg_to_fixed(0),ftofix(new_scale));
-								doSpriteDraw(drawstyle, dest, sprBMP2, sx, sy);
-							}
-							else doSpriteDraw(drawstyle, dest, sprBMP, sx, sy);
-						}
-							
-						destroy_bitmap(sprBMP);
-					} //end extend == 3 && flip == 3
-					break;
-                
-					case 0:
-					{
-						BITMAP* sprBMP = create_bitmap_ex(8,txsz*16,tysz*16);
-						clear_bitmap(sprBMP);
-						
-						for(int32_t i=0; i<tysz; i++)
-						{
-							for(int32_t j=0; j<txsz; j++)
-							{
-								tileToDraw=((scripttile > -1) ? scripttile : tile)+(i*TILES_PER_ROW)+j;
-
-								if(tileToDraw%TILES_PER_ROW<j)
-									tileToDraw+=TILES_PER_ROW*(tysz-1);
-
-								overtile16(sprBMP,tileToDraw,0+j*16,0+i*16,cs,((scriptflip > -1) ? scriptflip : flip));
-							}
-						}
-
-						//Recolor for flicker animations
-						if (sprite_flicker_color)
-							SPRITE_MONOCOLOR(sprBMP);
-
-						//rotate_scaled_sprite(sprBMP2, sprBMP, 0, 0, 0,ftofix(new_scale));
-						if ( rotation )
-						{
-							if ( scale ) 
-							{
-								double new_scale = scale / 100.0;
-								rotate_scaled_sprite(sprBMP2, sprBMP, 0, 0, deg_to_fixed(rotation),ftofix(new_scale));
-							}
-							else rotate_sprite(sprBMP2, sprBMP, 0, 0, deg_to_fixed(rotation));
-							doSpriteDraw(drawstyle, dest, sprBMP2, sx, sy);
-						}
-						else
-						{
-							if ( scale ) 
-							{
-								double new_scale = scale / 100.0;
-								rotate_scaled_sprite(sprBMP2, sprBMP, 0, 0, deg_to_fixed(0),ftofix(new_scale));
-								doSpriteDraw(drawstyle, dest, sprBMP2, sx, sy);
-							}
-							else doSpriteDraw(drawstyle, dest, sprBMP, sx, sy);
-						}
-						
-						destroy_bitmap(sprBMP);
-                
-						break;
-					} //end extend == 0 && flip == 3
+					static BITMAP* bmp0 = create_bitmap_ex(8, 16, 16);
+					bmp = bmp0;
 				}
-				break;
-			}
-			case 0:
-			{
-				BITMAP* sprBMP = create_bitmap_ex(8,txsz*16,tysz*16);
-				clear_bitmap(sprBMP);
-				overtile16(sprBMP,TILEBOUND(scripttile > -1 ? scripttile : tile),0,0,cs,((scriptflip > -1) ? scriptflip : flip));
-				
+				else if (e == 1)
+				{
+					top_left_tile = draw_tile - TILES_PER_ROW;
+					txsz = 1;
+					tysz = 2;
+
+					static BITMAP* bmp1 = create_bitmap_ex(8, 16, 32);
+					bmp = bmp1;
+				}
+				else if (e == 2)
+				{
+					top_left_tile = draw_tile - TILES_PER_ROW;
+					txsz = 2; // TODO ! it's actually like, 1.5 ... try using 3 here, and apply an offset in drawing loop
+					tysz = 2;
+
+					static BITMAP* bmp2 = create_bitmap_ex(8, 32, 32);
+					bmp = bmp2;
+				}
+				else if (e == 3)
+				{
+					top_left_tile = draw_tile;
+					txsz = this->txsz;
+					tysz = this->tysz;
+
+					static BITMAP* bmp3;
+					if (!bmp3 || bmp3->w != txsz*16 || bmp3->h != tysz*16)
+					{
+						destroy_bitmap(bmp3);
+						bmp3 = create_bitmap_ex(8, txsz*16, tysz*16);
+					}
+					bmp = bmp3;
+				} else abort();
+
+				clear_bitmap(bmp);
+
+				int offx = (draw_flip&1) ? (txsz - 1) * -16 : 0;
+				int offy = (tysz - 1) * -16;
+				if (e == 3)
+				{
+					offx = 0;
+					offy = 0;
+				}
+
+				int top_left_tile_row = top_left_tile / TILES_PER_ROW;
+
+				for (int dx = 0; dx < txsz; dx++)
+				{
+					for (int dy = 0; dy < tysz; dy++)
+					{
+						int t = top_left_tile + TILES_PER_ROW*dy + (draw_flip ? txsz-1-dx : dx);
+						// Wrap around the end of the tile page, jumping the appropriate number of rows.
+						if (e == 3)
+						{
+							// TODO ! maybe right? no replays rely on this wrapping feature.
+							int row = t / TILES_PER_ROW;
+							t += (row - top_left_tile_row - dy) * (tysz - 1) * TILES_PER_ROW;
+						}
+						overtile16(bmp, TILEBOUND(t), dx*16, dy*16, cs, draw_flip);
+					}
+				}
+
 				//Recolor for flicker animations
 				if (sprite_flicker_color)
-					SPRITE_MONOCOLOR(sprBMP);
+					SPRITE_MONOCOLOR(bmp);
 
-				if ( rotation )
+				if (scale)
 				{
-					if ( scale ) 
-					{
-						double new_scale = scale / 100.0;
-						rotate_scaled_sprite(sprBMP2, sprBMP, 0, 0, deg_to_fixed(rotation),ftofix(new_scale));
-					}
-					else rotate_sprite(sprBMP2, sprBMP, 0, 0, deg_to_fixed(rotation));
-					doSpriteDraw(drawstyle, dest, sprBMP2, sx, sy);
+					double new_scale = scale / 100.0;
+					rotate_scaled_sprite(sprBMP2, bmp, 0, 0, deg_to_fixed(rotation), ftofix(new_scale));
+					doSpriteDraw(drawstyle, dest, sprBMP2, sx + offx, sy + offy);
+				}
+				else if (rotation)
+				{
+					rotate_sprite(sprBMP2, bmp, 0, 0, deg_to_fixed(rotation));
+					doSpriteDraw(drawstyle, dest, sprBMP2, sx + offx, sy + offy);
 				}
 				else
 				{
-					if ( scale ) 
-					{
-						double new_scale = scale / 100.0;
-						rotate_scaled_sprite(sprBMP2, sprBMP, 0, 0, deg_to_fixed(0),ftofix(new_scale));
-						doSpriteDraw(drawstyle, dest, sprBMP2, sx, sy);
-					}
-					else doSpriteDraw(drawstyle, dest, sprBMP, sx, sy);
+					doSpriteDraw(drawstyle, dest, bmp, sx + offx, sy + offy);
 				}
-				if ( sprBMP ) destroy_bitmap(sprBMP);
 				break;
 			}
+			// case 3:
+			// {
+			// 	int32_t tileToDraw;
+            
+			// 	switch (draw_flip)
+			// 	{
+			// 		case 1:
+			// 		{
+			// 			BITMAP* sprBMP = create_bitmap_ex(8,txsz*16,tysz*16);
+			// 			clear_bitmap(sprBMP);
+			// 			for(int32_t i=0; i<tysz; i++)
+			// 			{
+			// 				for(int32_t j=txsz-1; j>=0; j--)
+			// 				{
+			// 					tileToDraw=((scripttile > -1) ? scripttile : tile)+(i*TILES_PER_ROW)+j;
+							
+			// 					if(tileToDraw%TILES_PER_ROW<j) // Wrapped around
+			// 						tileToDraw+=TILES_PER_ROW*(tysz-1);
+							    
+			// 					overtile16(sprBMP,tileToDraw,0+(txsz-j-1)*16,0+i*16,cs,((scriptflip > -1) ? scriptflip : flip));
+			// 				}
+			// 			}
+
+			// 			//Recolor for flicker animations
+			// 			if (sprite_flicker_color)
+			// 				SPRITE_MONOCOLOR(sprBMP);
+
+			// 			if ( rotation )
+			// 			{
+			// 				if ( scale ) 
+			// 				{
+			// 					double new_scale = scale / 100.0;
+			// 					rotate_scaled_sprite(sprBMP2, sprBMP, 0, 0, deg_to_fixed(rotation),ftofix(new_scale));
+			// 				}
+			// 				else rotate_sprite(sprBMP2, sprBMP, 0, 0, deg_to_fixed(rotation));
+			// 				doSpriteDraw(drawstyle, dest, sprBMP2, sx, sy);
+							
+			// 			}
+			// 			else
+			// 			{
+			// 				if ( scale ) 
+			// 				{
+			// 					double new_scale = scale / 100.0;
+			// 					rotate_scaled_sprite(sprBMP2, sprBMP, 0, 0, deg_to_fixed(0),ftofix(new_scale));
+			// 					doSpriteDraw(drawstyle, dest, sprBMP2, sx, sy);
+			// 				}
+			// 				else doSpriteDraw(drawstyle, dest, sprBMP, sx, sy);
+			// 			}
+							
+			// 			destroy_bitmap(sprBMP);
+			// 		} //end extend == 3 && flip == 1
+			// 		break;
+                
+			// 		case 2:
+			// 		{
+			// 			BITMAP* sprBMP = create_bitmap_ex(8,txsz*16,tysz*16);
+			// 			clear_bitmap(sprBMP);
+			// 			for(int32_t i=tysz-1; i>=0; i--)
+			// 			{
+			// 				for(int32_t j=0; j<txsz; j++)
+			// 				{
+			// 					tileToDraw=((scripttile > -1) ? scripttile : tile)+(i*TILES_PER_ROW)+j;
+							
+			// 					if(tileToDraw%TILES_PER_ROW<j)
+			// 						tileToDraw+=TILES_PER_ROW*(tysz-1);
+							    
+			// 					overtile16(sprBMP,tileToDraw,0+j*16,0+(tysz-i-1)*16,cs,((scriptflip > -1) ? scriptflip : flip));
+			// 				}
+			// 			}
+
+			// 			//Recolor for flicker animations
+			// 			if (sprite_flicker_color)
+			// 				SPRITE_MONOCOLOR(sprBMP);
+
+			// 			if ( rotation )
+			// 			{
+			// 				if ( scale ) 
+			// 				{
+			// 					double new_scale = scale / 100.0;
+			// 					rotate_scaled_sprite(sprBMP2, sprBMP, 0, 0, deg_to_fixed(rotation),ftofix(new_scale));
+			// 				}
+			// 				else rotate_sprite(sprBMP2, sprBMP, 0, 0, deg_to_fixed(rotation));
+			// 				doSpriteDraw(drawstyle, dest, sprBMP2, sx, sy);
+			// 			}
+			// 			else
+			// 			{
+			// 				if ( scale ) 
+			// 				{
+			// 					double new_scale = scale / 100.0;
+			// 					rotate_scaled_sprite(sprBMP2, sprBMP, 0, 0, deg_to_fixed(0),ftofix(new_scale));
+			// 					doSpriteDraw(drawstyle, dest, sprBMP2, sx, sy);
+			// 				}
+			// 				else doSpriteDraw(drawstyle, dest, sprBMP, sx, sy);
+			// 			}
+							
+			// 			destroy_bitmap(sprBMP);
+			// 		}//end extend == 3 &7 flip == 2
+			// 		break;
+                
+			// 		case 3:
+			// 		{
+			// 			BITMAP* sprBMP = create_bitmap_ex(8,txsz*16,tysz*16);
+			// 			clear_bitmap(sprBMP);
+			// 			for(int32_t i=tysz-1; i>=0; i--)
+			// 			{
+			// 				for(int32_t j=txsz-1; j>=0; j--)
+			// 				{
+			// 					tileToDraw=((scripttile > -1) ? scripttile : tile)+(i*TILES_PER_ROW)+j;
+							
+			// 					if(tileToDraw%TILES_PER_ROW<j)
+			// 						tileToDraw+=TILES_PER_ROW*(tysz-1);
+							    
+			// 					overtile16(sprBMP,tileToDraw,0+(txsz-j-1)*16,0+(tysz-i-1)*16,cs,((scriptflip > -1) ? scriptflip : flip));
+			// 				}
+			// 			}
+
+			// 			//Recolor for flicker animations
+			// 			if (sprite_flicker_color)
+			// 				SPRITE_MONOCOLOR(sprBMP);
+
+			// 			if ( rotation )
+			// 			{
+			// 				if ( scale ) 
+			// 				{
+			// 					double new_scale = scale / 100.0;
+			// 					rotate_scaled_sprite(sprBMP2, sprBMP, 0, 0, deg_to_fixed(rotation),ftofix(new_scale));
+			// 				}
+			// 				else rotate_sprite(sprBMP2, sprBMP, 0, 0, deg_to_fixed(rotation));
+			// 				doSpriteDraw(drawstyle, dest, sprBMP2, sx, sy);
+			// 			}
+			// 			else
+			// 			{
+			// 				if ( scale ) 
+			// 				{
+			// 					double new_scale = scale / 100.0;
+			// 					rotate_scaled_sprite(sprBMP2, sprBMP, 0, 0, deg_to_fixed(0),ftofix(new_scale));
+			// 					doSpriteDraw(drawstyle, dest, sprBMP2, sx, sy);
+			// 				}
+			// 				else doSpriteDraw(drawstyle, dest, sprBMP, sx, sy);
+			// 			}
+							
+			// 			destroy_bitmap(sprBMP);
+			// 		} //end extend == 3 && flip == 3
+			// 		break;
+                
+			// 		case 0:
+			// 		{
+			// 			BITMAP* sprBMP = create_bitmap_ex(8,txsz*16,tysz*16);
+			// 			clear_bitmap(sprBMP);
+						
+			// 			for(int32_t i=0; i<tysz; i++)
+			// 			{
+			// 				for(int32_t j=0; j<txsz; j++)
+			// 				{
+			// 					tileToDraw=((scripttile > -1) ? scripttile : tile)+(i*TILES_PER_ROW)+j;
+
+			// 					if(tileToDraw%TILES_PER_ROW<j)
+			// 						tileToDraw+=TILES_PER_ROW*(tysz-1);
+
+			// 					overtile16(sprBMP,tileToDraw,0+j*16,0+i*16,cs,((scriptflip > -1) ? scriptflip : flip));
+			// 				}
+			// 			}
+
+			// 			//Recolor for flicker animations
+			// 			if (sprite_flicker_color)
+			// 				SPRITE_MONOCOLOR(sprBMP);
+
+			// 			//rotate_scaled_sprite(sprBMP2, sprBMP, 0, 0, 0,ftofix(new_scale));
+			// 			if ( rotation )
+			// 			{
+			// 				if ( scale ) 
+			// 				{
+			// 					double new_scale = scale / 100.0;
+			// 					rotate_scaled_sprite(sprBMP2, sprBMP, 0, 0, deg_to_fixed(rotation),ftofix(new_scale));
+			// 				}
+			// 				else rotate_sprite(sprBMP2, sprBMP, 0, 0, deg_to_fixed(rotation));
+			// 				doSpriteDraw(drawstyle, dest, sprBMP2, sx, sy);
+			// 			}
+			// 			else
+			// 			{
+			// 				if ( scale ) 
+			// 				{
+			// 					double new_scale = scale / 100.0;
+			// 					rotate_scaled_sprite(sprBMP2, sprBMP, 0, 0, deg_to_fixed(0),ftofix(new_scale));
+			// 					doSpriteDraw(drawstyle, dest, sprBMP2, sx, sy);
+			// 				}
+			// 				else doSpriteDraw(drawstyle, dest, sprBMP, sx, sy);
+			// 			}
+						
+			// 			destroy_bitmap(sprBMP);
+                
+			// 			break;
+			// 		} //end extend == 0 && flip == 3
+			// 	}
+			// 	break;
+			// }
 			break; //Aye, we break switch(e) here.
 		}
 	} //end if(clk>=0)
