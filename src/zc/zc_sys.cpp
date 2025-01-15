@@ -2,9 +2,11 @@
 
 #include "allegro/gfx.h"
 #include "allegro/gui.h"
+#include "allegro/inline/draw.inl"
 #include "allegro5/joystick.h"
 #include "base/files.h"
 #include "base/render.h"
+#include "base/zdefs.h"
 #include "zalleg/zalleg.h"
 #include "base/qrs.h"
 #include "base/dmap.h"
@@ -871,7 +873,7 @@ qword trianglelines[16]=
 	0x00000000000000FDULL,
 };
 
-word screen_triangles[28][32];
+word screen_triangles[29][32];
 
 // the ULL suffixes are to prevent this warning:
 // warning: integer constant is too large for "int32_t" type
@@ -1572,8 +1574,8 @@ void close_black_opening(int32_t x, int32_t y, bool wait, int32_t shape)
 {
 	black_opening_shape= (shape>-1 ? shape : choose_opening_shape());
 	
-	int32_t w=256, h=224;
-	int32_t blockrows=28, blockcolumns=32;
+	int32_t w=framebuf->w, h=framebuf->h;
+	int32_t blockrows=29, blockcolumns=32;
 	int32_t xoffset=(x-(w/2))/8, yoffset=(y-(h/2))/8;
 	
 	for(int32_t blockrow=0; blockrow<blockrows; ++blockrow)  //30
@@ -1617,8 +1619,8 @@ void open_black_opening(int32_t x, int32_t y, bool wait, int32_t shape)
 {
 	black_opening_shape= (shape>-1 ? shape : choose_opening_shape());
 	
-	int32_t w=256, h=224;
-	int32_t blockrows=28, blockcolumns=32;
+	int32_t w=framebuf->w, h=framebuf->h;
+	int32_t blockrows=29, blockcolumns=32;
 	int32_t xoffset=(x-(w/2))/8, yoffset=(y-(h/2))/8;
 	
 	for(int32_t blockrow=0; blockrow<blockrows; ++blockrow)  //30
@@ -1658,7 +1660,7 @@ void open_black_opening(int32_t x, int32_t y, bool wait, int32_t shape)
 void black_opening(BITMAP *dest,int32_t x,int32_t y,int32_t a,int32_t max_a)
 {
 	clear_to_color(tmp_scr,BLACK);
-	int32_t w=256, h=224;
+	int32_t w=dest->w, h=dest->h;
 	
 	switch(black_opening_shape)
 	{
@@ -1695,7 +1697,7 @@ void black_opening(BITMAP *dest,int32_t x,int32_t y,int32_t a,int32_t max_a)
 	{
 		int32_t distance=zc_max(abs(w/2-x),abs(h/2-y))/8;
 		
-		for(int32_t blockrow=0; blockrow<28; ++blockrow)  //30
+		for(int32_t blockrow=0; blockrow<29; ++blockrow)  //30
 		{
 			for(int32_t linerow=0; linerow<8; ++linerow)
 			{
@@ -1707,10 +1709,6 @@ void black_opening(BITMAP *dest,int32_t x,int32_t y,int32_t a,int32_t max_a)
 								  [zc_min(zc_max((((31+distance)*(max_a-a)/max_a)+((screen_triangles[blockrow][blockcolumn]&0x0FFF)-0x0100)-(15+distance)),0),15)]
 								  [linerow];
 					++triangleline;
-					
-					if(linerow==0)
-					{
-					}
 				}
 			}
 		}
@@ -3530,7 +3528,7 @@ void draw_lens_over()
 		last_width=width;
 	}
 	
-	masked_blit(lens_scr, framebuf, 288-(HeroX()+8), 240-playing_field_offset-(HeroY()+8), 0, playing_field_offset, 256, 168);
+	masked_blit(lens_scr, framebuf, 288-(HeroX()+8), 240-playing_field_offset-(HeroY()+8), 0, playing_field_offset, 256, 168+8);
 	do_primitives(framebuf, SPLAYER_LENS_OVER, tmpscr, 0, playing_field_offset);
 }
 
@@ -3541,12 +3539,12 @@ void draw_wavy(BITMAP *source, BITMAP *target, int32_t amplitude, bool interpol)
 	//recreating a big bitmap every frame is highly sluggish.
 	static BITMAP *wavebuf = create_bitmap_ex(8,288,240-original_playing_field_offset);
 	clear_to_color(wavebuf, BLACK);
-	blit(source,wavebuf,0,original_playing_field_offset,16,0,256,224-original_playing_field_offset);
+	blit(source,wavebuf,0,original_playing_field_offset,16,0,256,224+8-original_playing_field_offset);
 	
 	int32_t ofs;
 	amplitude = zc_min(2048,amplitude); // some arbitrary limit to prevent crashing
 	if(flash_reduction_enabled() && !get_qr(qr_WAVY_NO_EPILEPSY)) amplitude = zc_min(16,amplitude);
-	int32_t amp2=168;
+	int32_t amp2=168+8;
 	if(flash_reduction_enabled() && !get_qr(qr_WAVY_NO_EPILEPSY_2)) amp2*=2;
 	int32_t i=frame%amp2;
 	
@@ -3593,11 +3591,11 @@ void draw_fuzzy(int32_t fuzz)
 		
 	firsty = 1;
 	
-	for(y=0; y<224;)
+	for(y=0; y<224+8;)
 	{
 		start = &(scrollbuf->line[y][256]);
 		
-		for(dy=0; dy<ystep && dy+y<224; dy++)
+		for(dy=0; dy<ystep && dy+y<224+8; dy++)
 		{
 			si = start;
 			di = &(framebuf->line[y+dy][0]);
@@ -3636,8 +3634,8 @@ void draw_fuzzy(int32_t fuzz)
 
 void updatescr(bool allowwavy)
 {
-	static BITMAP *wavybuf = create_bitmap_ex(8,256,224);
-	static BITMAP *panorama = create_bitmap_ex(8,256,224);
+	static BITMAP *wavybuf = create_bitmap_ex(8,framebuf->w,framebuf->h);
+	static BITMAP *panorama = create_bitmap_ex(8,framebuf->w,framebuf->h);
 		
 	if(toogam)
 	{
@@ -3732,7 +3730,7 @@ void updatescr(bool allowwavy)
 		wavy = (DMaps[currdmap].flags&dmfWAVY ? 4 : 0);
 	}
 	
-	blit(framebuf, wavybuf, 0, 0, 0, 0, 256, 224);
+	blit(framebuf, wavybuf, 0, 0, 0, 0, framebuf->w, framebuf->h);
 	
 	if(wavy && Playing && allowwavy)
 	{
@@ -3747,11 +3745,11 @@ void updatescr(bool allowwavy)
 	if(Playing && msgpos && !screenscrolling)
 	{
 		if(!(msg_bg_display_buf->clip))
-			blit_msgstr_bg(framebuf,0,0,0,playing_field_offset,256,168);
+			blit_msgstr_bg(framebuf,0,0,0,playing_field_offset,256,176);
 		if(!(msg_portrait_display_buf->clip))
-			blit_msgstr_prt(framebuf,0,0,0,playing_field_offset,256,168);
+			blit_msgstr_prt(framebuf,0,0,0,playing_field_offset,256,176);
 		if(!(msg_txt_display_buf->clip))
-			blit_msgstr_fg(framebuf,0,0,0,playing_field_offset,256,168);
+			blit_msgstr_fg(framebuf,0,0,0,playing_field_offset,256,176);
 	}
 	
 	bool nosubscr = (tmpscr->flags3&fNOSUBSCR && !(tmpscr->flags3&fNOSUBSCROFFSET));
@@ -3759,14 +3757,16 @@ void updatescr(bool allowwavy)
 	if(nosubscr)
 	{
 		rectfill(panorama,0,0,255,passive_subscreen_height/2,0);
-		rectfill(panorama,0,168+passive_subscreen_height/2,255,168+passive_subscreen_height-1,0);
-		blit(wavybuf,panorama,0,playing_field_offset,0,passive_subscreen_height/2,256,224-passive_subscreen_height);
+		rectfill(panorama,0,176+passive_subscreen_height/2,255,176+passive_subscreen_height-1,0);
+		blit(wavybuf,panorama,0,playing_field_offset,0,passive_subscreen_height/2,256,framebuf->h-passive_subscreen_height);
 	}
 	
 	//TODO: Optimize blit 'overcalls' -Gleeok
 	BITMAP *source = nosubscr ? panorama : wavybuf;
-	blit(source,framebuf,0,0,0,0,256,224);
-	
+	blit(source, framebuf, 0, 0, 0, 0, framebuf->w, framebuf->h);
+	if (!show_bottom_8px)
+		rectfill(framebuf, 0, framebuf->h - 8, framebuf->w, framebuf->h, BLACK);
+
 	update_hw_screen();
 }
 
@@ -3806,9 +3806,9 @@ int32_t onNonGUISnapshot()
 
 	if ((tmpscr->flags3&fNOSUBSCR && !(tmpscr->flags3&fNOSUBSCROFFSET)) && !(key[KEY_ALT]))
 	{
-		BITMAP *b = create_bitmap_ex(8,256,168);
+		BITMAP *b = create_bitmap_ex(8,256,168+8);
 		clear_to_color(b,0);
-		blit(framebuf,b,0,passive_subscreen_height/2,0,0,256,168);
+		blit(framebuf,b,0,passive_subscreen_height/2,0,0,256,168+8);
 		alleg4_save_bitmap(b, SnapshotScale, buf, realpal ? temppal : RAMpal);
 		destroy_bitmap(b);
 	}
@@ -4565,7 +4565,7 @@ void advanceframe(bool allowwavy, bool sfxcleanup, bool allowF6Script)
 void zapout()
 {
 	set_clip_rect(scrollbuf, 0, 0, scrollbuf->w, scrollbuf->h);
-	blit(framebuf,scrollbuf,0,0,256,0,256,224);
+	blit(framebuf,scrollbuf,0,0,256,0,256,224+8);
 	
 	FFCore.runGenericPassiveEngine(SCR_TIMING_END_FRAME);
 	script_drawing_commands.Clear();
@@ -4588,7 +4588,7 @@ void zapin()
 	FFCore.warpScriptCheck();
 	draw_screen(tmpscr);
 	set_clip_rect(scrollbuf, 0, 0, scrollbuf->w, scrollbuf->h);
-	blit(framebuf,scrollbuf,0,0,256,0,256,224);
+	blit(framebuf,scrollbuf,0,0,256,0,256,224+8);
 	
 	// zap out
 	FFCore.runGenericPassiveEngine(SCR_TIMING_END_FRAME);
@@ -4609,9 +4609,9 @@ void wavyout(bool showhero)
 {
 	draw_screen(tmpscr, showhero);
 	
-	BITMAP *wavebuf = create_bitmap_ex(8,288,224);
+	BITMAP *wavebuf = create_bitmap_ex(8,288,framebuf->h);
 	clear_to_color(wavebuf,0);
-	blit(framebuf,wavebuf,0,0,16,0,256,224);
+	blit(framebuf,wavebuf,0,0,16,0,framebuf->w,framebuf->h);
 	
 	static PALETTE wavepal;
 	
@@ -4620,9 +4620,10 @@ void wavyout(bool showhero)
 	
 	int32_t wavelength=4;
 	double palpos=0, palstep=4, palstop=126;
-	
+	int height = 168; // TODO ! replay
+
 	FFCore.runGenericPassiveEngine(SCR_TIMING_END_FRAME);
-	for(int32_t i=0; i<168; i+=wavelength)
+	for(int32_t i=0; i<height; i+=wavelength)
 	{
 		for(int32_t l=0; l<256; l++)
 		{
@@ -4644,7 +4645,7 @@ void wavyout(bool showhero)
 			update_hw_pal = true;
 		}
 		
-		for(int32_t j=0; j+playing_field_offset<224; j++)
+		for(int32_t j=0; j+playing_field_offset<224+8; j++)
 		{
 			for(int32_t k=0; k<256; k++)
 			{
@@ -4652,7 +4653,7 @@ void wavyout(bool showhero)
 				
 				if((j<i)&&(j&1))
 				{
-					ofs=int32_t(zc::math::Sin((double(i+j)*2*PI/168.0))*amplitude);
+					ofs=int32_t(zc::math::Sin((double(i+j)*2*PI/height))*amplitude);
 				}
 				
 				framebuf->line[j+playing_field_offset][k]=wavebuf->line[j+playing_field_offset][k+ofs+16];
@@ -4675,9 +4676,9 @@ void wavyin()
 {
 	draw_screen(tmpscr);
 	
-	BITMAP *wavebuf = create_bitmap_ex(8,288,224);
+	BITMAP *wavebuf = create_bitmap_ex(8,288,framebuf->h);
 	clear_to_color(wavebuf,0);
-	blit(framebuf,wavebuf,0,0,16,0,256,224);
+	blit(framebuf,wavebuf,0,0,16,0,framebuf->w,framebuf->h);
 	
 	static PALETTE wavepal;
 
@@ -4686,9 +4687,10 @@ void wavyin()
 	int32_t amplitude=8;
 	int32_t wavelength=4;
 	double palpos=168, palstep=4, palstop=126;
+	int height = 168; // TODO ! replay
 	
 	FFCore.runGenericPassiveEngine(SCR_TIMING_END_FRAME);
-	for(int32_t i=0; i<168; i+=wavelength)
+	for(int32_t i=0; i<height; i+=wavelength)
 	{
 		for(int32_t l=0; l<256; l++)
 		{
@@ -4710,15 +4712,15 @@ void wavyin()
 			update_hw_pal = true;
 		}
 		
-		for(int32_t j=0; j+playing_field_offset<224; j++)
+		for(int32_t j=0; j+playing_field_offset<224+8; j++)
 		{
 			for(int32_t k=0; k<256; k++)
 			{
 				ofs=0;
 				
-				if((j<(167-i))&&(j&1))
+				if((j<(167+8-i))&&(j&1))
 				{
-					ofs=int32_t(zc::math::Sin((double(i+j)*2*PI/168.0))*amplitude);
+					ofs=int32_t(zc::math::Sin((double(i+j)*2*PI/height))*amplitude);
 				}
 				
 				framebuf->line[j+playing_field_offset][k]=wavebuf->line[j+playing_field_offset][k+ofs+16];
@@ -4794,8 +4796,8 @@ void openscreen(int32_t shape)
 		
 		if(x>0)
 		{
-			rectfill(framebuf,0,playing_field_offset,x,167+playing_field_offset,0);
-			rectfill(framebuf,256-x,playing_field_offset,255,167+playing_field_offset,0);
+			rectfill(framebuf,0,playing_field_offset,x,167+8+playing_field_offset,0);
+			rectfill(framebuf,256-x,playing_field_offset,255,167+8+playing_field_offset,0);
 		}
 		
 		advanceframe(true);
@@ -4842,8 +4844,8 @@ void closescreen(int32_t shape)
 		
 		if(x>0)
 		{
-			rectfill(framebuf,0,playing_field_offset,x,167+playing_field_offset,0);
-			rectfill(framebuf,256-x,playing_field_offset,255,167+playing_field_offset,0);
+			rectfill(framebuf,0,playing_field_offset,x,167+8+playing_field_offset,0);
+			rectfill(framebuf,256-x,playing_field_offset,255,167+8+playing_field_offset,0);
 		}
 		
 		advanceframe(true);

@@ -499,7 +499,7 @@ void subscrpg_clear_animation()
 }
 
 #define SUBSCR_ACTIVE_WIDTH 256
-#define SUBSCR_ACTIVE_HEIGHT 168
+#define SUBSCR_ACTIVE_HEIGHT 176
 bool subscrpg_animate(byte from, byte to, SubscrTransition const& transition, ZCSubscreen& parent)
 {
 	if(subscr_pg_animating)
@@ -3068,7 +3068,7 @@ word SW_Clear::getH() const
 	switch(sub ? sub->sub_type : sstPASSIVE)
 	{
 		case sstACTIVE:
-			hei = 168;
+			hei = 176;
 			break;
 		case sstPASSIVE:
 			hei = 56;

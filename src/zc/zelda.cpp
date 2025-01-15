@@ -159,9 +159,11 @@ using std::pair;
 
 int32_t zq_screen_w = 0, zq_screen_h = 0;
 int32_t passive_subscreen_height=56;
+int32_t active_subscreen_height=176;
 int32_t original_playing_field_offset=56;
 int32_t playing_field_offset=original_playing_field_offset;
 int32_t passive_subscreen_offset=0;
+bool show_bottom_8px;
 extern int32_t directItemA;
 extern int32_t directItemB;
 extern int32_t directItemY;
@@ -186,7 +188,7 @@ void playLevelMusic();
 int32_t draw_screen_clip_rect_x1=0;
 int32_t draw_screen_clip_rect_x2=255;
 int32_t draw_screen_clip_rect_y1=0;
-int32_t draw_screen_clip_rect_y2=223;
+int32_t draw_screen_clip_rect_y2=231;
 
 extern int32_t script_hero_sprite;
 extern int32_t script_hero_cset;
@@ -1610,7 +1612,7 @@ void init_game_vars(bool is_cont_game = false)
 	draw_screen_clip_rect_x1=0; //Prevent the ending sequence from carrying over through 'Reset System' -Z
 	draw_screen_clip_rect_x2=255;
 	draw_screen_clip_rect_y1=0;
-	draw_screen_clip_rect_y2=223;	
+	draw_screen_clip_rect_y2=231;	
 	didpit=false;
 	Hero.unfreeze();
 	Hero.reset_hookshot();
@@ -1789,6 +1791,11 @@ int32_t init_game()
 
 	if (zasm_optimize_enabled() && (get_flag_bool("-test-bisect").has_value() || is_ci()))
 		zasm_optimize();
+
+	show_bottom_8px = true;
+	if (!(QHeader.version_major >= 3 || (QHeader.version_major == 2 && QHeader.version_minor >= 9)))
+		if (strcmp(QHeader.title, "Yuurand") == 0)
+			show_bottom_8px = false;
 
 	FFCore.init();
 	FFCore.user_bitmaps_init();
@@ -4340,7 +4347,7 @@ int main(int argc, char **argv)
 	
 	// allocate bitmap buffers
 	set_color_depth(8);
-	framebuf  = create_bitmap_ex(8,256,224);
+	framebuf  = create_bitmap_ex(8,256,232);
 	menu_bmp  = create_bitmap_ex(8,640,480);
 	scrollbuf = create_bitmap_ex(8,512,406);
 	screen2   = create_bitmap_ex(8,320,240);
@@ -4355,8 +4362,8 @@ int main(int argc, char **argv)
 	msg_portrait_bmp_buf = create_bitmap_ex(8, 256, 256);
 	msg_portrait_display_buf = create_bitmap_ex(8, 256, 256);
 	pricesdisplaybuf = create_bitmap_ex(8,256, 176);
-	script_menu_buf = create_bitmap_ex(8,256,224);
-	f6_menu_buf = create_bitmap_ex(8,256,224);
+	script_menu_buf = create_bitmap_ex(8,256,232);
+	f6_menu_buf = create_bitmap_ex(8,256,232);
 	darkscr_bmp_curscr = create_bitmap_ex(8, 256, 176);
 	darkscr_bmp_curscr_trans = create_bitmap_ex(8, 256, 176);
 	darkscr_bmp_scrollscr = create_bitmap_ex(8, 256, 176);

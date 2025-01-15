@@ -31,13 +31,13 @@ void draw_subscrs(BITMAP* dest, int x, int y, bool showtime, int pos)
 {
 	if(get_qr(qr_OLD_SUBSCR))
 	{
-		put_passive_subscr(dest,x,y+168,showtime,pos);
+		put_passive_subscr(dest,x,y+active_subscreen_height,showtime,pos);
 		put_active_subscr(y,pos);
 	}
 	else
 	{
 		put_active_subscr(y,pos);
-		put_passive_subscr(dest,x,y+168,showtime,pos);
+		put_passive_subscr(dest,x,y+active_subscreen_height,showtime,pos);
 	}
 }
 void dosubscr()
@@ -98,11 +98,14 @@ void dosubscr()
 			pg.cursor_pos = game->ywpn>>8;
 		else pg.cursor_pos = 0;
 	}
-	
+
+	// active_subscreen_height = 176;
+	active_subscreen_height = 168;
+
 	FFCore.initZScriptSubscreenScript();
 	subscrpg_clear_animation();
 	subscreen_open = true;
-	for(int32_t y = -168; y <= 0; y += 3*Hero.subscr_speed)
+	for(int32_t y = -active_subscreen_height; y <= 0; y += 3*Hero.subscr_speed)
 	{
 		if(replay_version_check(19))
 		{
@@ -120,7 +123,7 @@ void dosubscr()
 			FFCore.waitdraw(ScriptType::EngineSubscreen,0) = false;
 		}
 		//fill in the screen with black to prevent the hall of mirrors effect
-		rectfill(framebuf, 0, 0, 255, 223, 0);
+		clear_to_color(framebuf, 0);
 
 		// With COOLSCROLL on, the subscreen crawls down over the playing field.
 		// Otherwise the playing field scrolls down past the bottom of the screen.
@@ -130,7 +133,7 @@ void dosubscr()
 		}
 		else
 		{
-			blit(scrollbuf,framebuf,0,0,0,y+168+passive_subscreen_height,256,-y);
+			blit(scrollbuf,framebuf,0,0,0,y+active_subscreen_height+passive_subscreen_height,256,-y+8);
 		}
 		
 		draw_subscrs(framebuf,0,y,showtime,sspSCROLLING);
@@ -437,10 +440,10 @@ void dosubscr()
 			FFCore.waitdraw(ScriptType::EngineSubscreen,0) = false;
 		}
 		
-		rectfill(framebuf, 0, 0, 255, 223, 0);
+		rectfill(framebuf, 0, 0, 255, 223+8, 0);
 		
-		if(compat && COOLSCROLL) //copy the playing field back onto the screen
-			blit(scrollbuf,framebuf,0,0,0,passive_subscreen_height,256,176);
+		// if(compat && COOLSCROLL) //copy the playing field back onto the screen
+		// 	blit(scrollbuf,framebuf,0,0,0,passive_subscreen_height,256,176);
 		//else nothing to do; the playing field has scrolled off the screen
 		
 		//draw the passive and active subscreen
@@ -466,7 +469,7 @@ void dosubscr()
 	}
 	while(!done);
 	subscrpg_clear_animation();
-	for(int32_t y = 0; y >= -168; y -= 3*Hero.subscr_speed)
+	for(int32_t y = 0; y >= -active_subscreen_height; y -= 3*Hero.subscr_speed)
 	{
 		if(replay_version_check(19))
 		{
@@ -484,7 +487,7 @@ void dosubscr()
 			FFCore.waitdraw(ScriptType::EngineSubscreen,0) = false;
 		}
 		//fill in the screen with black to prevent the hall of mirrors effect
-		rectfill(framebuf, 0, 0, 255, 223, 0);
+		clear_to_color(framebuf, 0);
 		
 		if(COOLSCROLL)
 		{
@@ -492,7 +495,7 @@ void dosubscr()
 		}
 		else
 		{
-			blit(scrollbuf,framebuf,0,0,0,y+168+passive_subscreen_height,256,-y);
+			blit(scrollbuf,framebuf,0,0,0,y+active_subscreen_height+passive_subscreen_height,256,-y+8);
 		}
 		
 		draw_subscrs(framebuf,0,y,showtime,sspSCROLLING);

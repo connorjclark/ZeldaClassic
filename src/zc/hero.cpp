@@ -28906,7 +28906,7 @@ void HeroClass::scrollscr(int32_t scrolldir, int32_t destscr, int32_t destdmap)
 		combotile_add_x = 0;
 		combotile_add_y = 0;
 		
-		blit(scrollbuf, framebuf, sx, sy, 0, playing_field_offset, 256, 168);
+		blit(scrollbuf, framebuf, sx, sy, 0, playing_field_offset, 256, 168+8);
 		if(lenscheck(newscr,0))
 			do_primitives(framebuf, 0, newscr, 0, playing_field_offset);
 		
@@ -29003,15 +29003,15 @@ void HeroClass::scrollscr(int32_t scrolldir, int32_t destscr, int32_t destdmap)
 		
 		if(msg_bg_display_buf->clip == 0)
 		{
-			blit_msgstr_bg(framebuf, tx2, ty2, 0, playing_field_offset, 256, 168);
+			blit_msgstr_bg(framebuf, tx2, ty2, 0, playing_field_offset, 256, 168+8);
 		}
 		if(msg_portrait_display_buf->clip == 0)
 		{
-			blit_msgstr_prt(framebuf, tx2, ty2, 0, playing_field_offset, 256, 168);
+			blit_msgstr_prt(framebuf, tx2, ty2, 0, playing_field_offset, 256, 168+8);
 		}
 		if(msg_txt_display_buf->clip == 0)
 		{
-			blit_msgstr_fg(framebuf, tx2, ty2, 0, playing_field_offset, 256, 168);
+			blit_msgstr_fg(framebuf, tx2, ty2, 0, playing_field_offset, 256, 168+8);
 		}
 			
 		if(get_qr(qr_NEW_DARKROOM) && (room_is_dark||room_was_dark))
@@ -29023,7 +29023,7 @@ void HeroClass::scrollscr(int32_t scrolldir, int32_t destscr, int32_t destdmap)
 		
 		if(get_qr(qr_NEW_DARKROOM) && get_qr(qr_NEWDARK_L6))
 		{
-			set_clip_rect(framebuf, 0, playing_field_offset, 256, 168+playing_field_offset);
+			set_clip_rect(framebuf, 0, playing_field_offset, 256, 168+8+playing_field_offset);
 			int32_t dx1 = FFCore.ScrollingData[SCROLLDATA_NX], dy1 = FFCore.ScrollingData[SCROLLDATA_NY]+playing_field_offset;
 			int32_t dx2 = FFCore.ScrollingData[SCROLLDATA_OX], dy2 = FFCore.ScrollingData[SCROLLDATA_OY]+playing_field_offset;
 			if(room_is_dark)
@@ -29066,7 +29066,7 @@ void HeroClass::scrollscr(int32_t scrolldir, int32_t destscr, int32_t destdmap)
 		
 		if(get_qr(qr_NEW_DARKROOM) && !get_qr(qr_NEWDARK_L6))
 		{
-			set_clip_rect(framebuf, 0, playing_field_offset, 256, 168+playing_field_offset);
+			set_clip_rect(framebuf, 0, playing_field_offset, 256, 168+8+playing_field_offset);
 			int32_t dx1 = FFCore.ScrollingData[SCROLLDATA_NX], dy1 = FFCore.ScrollingData[SCROLLDATA_NY]+playing_field_offset;
 			int32_t dx2 = FFCore.ScrollingData[SCROLLDATA_OX], dy2 = FFCore.ScrollingData[SCROLLDATA_OY]+playing_field_offset;
 			if(room_is_dark)
@@ -31248,7 +31248,7 @@ void HeroClass::getTriforce(int32_t id2)
 				draw_screen_clip_rect_x1=curtain_x;
 				draw_screen_clip_rect_x2=255-curtain_x;
 				draw_screen_clip_rect_y1=0;
-				draw_screen_clip_rect_y2=223;
+				draw_screen_clip_rect_y2=231;
 				//draw_screen(tmpscr);
 			}
 		}
@@ -31279,7 +31279,7 @@ void HeroClass::getTriforce(int32_t id2)
 	draw_screen_clip_rect_x1=0;
 	draw_screen_clip_rect_x2=255;
 	draw_screen_clip_rect_y1=0;
-	draw_screen_clip_rect_y2=223;
+	draw_screen_clip_rect_y2=231;
 	show_subscreen_items=true;
     
 	//Warp Hero out of item cellars, in 2.10 and earlier quests. -Z ( 16th January, 2019 )
@@ -31309,9 +31309,9 @@ void red_shift()
     }
     
     // color scale the game screen
-    for(int32_t y=0; y<168; y++)
+    for(int32_t y=0; y<168+8; y++)
     {
-        for(int32_t x=0; x<256; x++)
+        for(int32_t x=0; x<framebuf->w; x++)
         {
             int c = framebuf->line[y+playing_field_offset][x];
 			int r = RAMpal[c].r / 4;
@@ -31338,7 +31338,7 @@ void setup_red_screen_old()
     
     if(lenscheck(tmpscr,0)) putscr(scrollbuf, 0, 0, tmpscr);
 	putscrdoors(scrollbuf,0,0,tmpscr);
-    blit(scrollbuf, framebuf, 0, 0, 0, playing_field_offset, 256, 168);
+    blit(scrollbuf, framebuf, 0, 0, 0, playing_field_offset, 256, 168+8);
     do_layer(framebuf, 0, 1, tmpscr, 0, 0, 2);
     
     if(!(XOR(tmpscr->flags7&fLAYER2BG, DMaps[currdmap].flags&dmfLAYER2BG))) do_layer(framebuf, 0, 2, tmpscr, 0, 0, 2);
@@ -31355,17 +31355,17 @@ void setup_red_screen_old()
 	
     if(!(msg_bg_display_buf->clip))
     {
-		blit_msgstr_bg(framebuf, 0, 0, 0, playing_field_offset, 256, 168);
+		blit_msgstr_bg(framebuf, 0, 0, 0, playing_field_offset, 256, 168+8);
     }
     
     if(!(msg_portrait_display_buf->clip))
     {
-		blit_msgstr_prt(framebuf, 0, 0, 0, playing_field_offset, 256, 168);
+		blit_msgstr_prt(framebuf, 0, 0, 0, playing_field_offset, 256, 168+8);
     }
     
     if(!(msg_txt_display_buf->clip))
     {
-		blit_msgstr_fg(framebuf, 0, 0, 0, playing_field_offset, 256, 168);
+		blit_msgstr_fg(framebuf, 0, 0, 0, playing_field_offset, 256, 168+8);
     }
     
     if(!(pricesdisplaybuf->clip))
@@ -31386,7 +31386,7 @@ void setup_red_screen_old()
     }
     
     //  Hero->draw(framebuf);
-    blit(framebuf,scrollbuf, 0, playing_field_offset, 256, playing_field_offset, 256, 168);
+    blit(framebuf,scrollbuf, 0, playing_field_offset, 256, playing_field_offset, 256, 168+8);
     
     clear_bitmap(framebuf);
     
@@ -31415,10 +31415,10 @@ void setup_red_screen_old()
 			clear_bitmap(subbmp);
 			if(!(msg_txt_display_buf->clip) || !(msg_bg_display_buf->clip) || !(msg_portrait_display_buf->clip))
 			{
-				masked_blit(framebuf, subbmp, 0, playing_field_offset, 0, 0, 256, 168);
-				if(!(msg_bg_display_buf->clip)) blit_msgstr_bg(subbmp, 0, 0, 0, 0, 256, 168);
-				if(!(msg_portrait_display_buf->clip)) blit_msgstr_prt(subbmp, 0, 0, 0, 0, 256, 168);
-				if(!(msg_txt_display_buf->clip)) blit_msgstr_fg(subbmp, 0, 0, 0, 0, 256, 168);
+				masked_blit(framebuf, subbmp, 0, playing_field_offset, 0, 0, 256, 168+8);
+				if(!(msg_bg_display_buf->clip)) blit_msgstr_bg(subbmp, 0, 0, 0, 0, 256, 168+8);
+				if(!(msg_portrait_display_buf->clip)) blit_msgstr_prt(subbmp, 0, 0, 0, 0, 256, 168+8);
+				if(!(msg_txt_display_buf->clip)) blit_msgstr_fg(subbmp, 0, 0, 0, 0, 256, 168+8);
 			}
             for(int32_t y=0; y<168; y++)
             {
@@ -31454,7 +31454,7 @@ void setup_red_screen_old()
         }
     }
     
-    blit(framebuf,scrollbuf, 0, playing_field_offset, 0, playing_field_offset, 256, 168);
+    blit(framebuf,scrollbuf, 0, playing_field_offset, 0, playing_field_offset, 256, 168+8);
     
     // set up the new palette
     for(int32_t i=CSET(2); i < CSET(4); i++)
@@ -31723,7 +31723,7 @@ void HeroClass::heroDeathAnimation()
 					}
                     
 					//draw only hero. otherwise black layers might cover him.
-					rectfill(framebuf,0,playing_field_offset,255,167+playing_field_offset,0);
+					rectfill(framebuf,0,playing_field_offset,255,167+8+playing_field_offset,0);
 					draw(framebuf);
 					blit(subscrbmp,framebuf,0,0,0,0,256,passive_subscreen_height);
 				}
@@ -31809,7 +31809,7 @@ void HeroClass::heroDeathAnimation()
 				else
 				{
 					//draw only hero. otherwise black layers might cover him.
-					rectfill(framebuf,0,playing_field_offset,255,167+playing_field_offset,0);
+					rectfill(framebuf,0,playing_field_offset,255,167+8+playing_field_offset,0);
 					draw(framebuf);
 					blit(subscrbmp,framebuf,0,0,0,0,256,passive_subscreen_height);
 				}

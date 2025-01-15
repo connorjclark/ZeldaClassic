@@ -475,7 +475,7 @@ int32_t d_subscreen_proc(int32_t msg,DIALOG *d,int32_t)
 			hei = 56;
 			break;
 		case sstACTIVE:
-			hei = 168;
+			hei = 168+8;
 			break;
 		case sstOVERLAY:
 			hei = 224;
@@ -2320,7 +2320,7 @@ void update_subscr_dlg(bool start)
 				default:
 				case sstACTIVE:
 					strcpy(subscr_titlebuf,"Active Subscreen Editor");
-					hei = 168;
+					hei = 168+8;
 					break;
 				case sstPASSIVE:
 					strcpy(subscr_titlebuf,"Passive Subscreen Editor");
@@ -2379,7 +2379,7 @@ void update_subscr_dlg(bool start)
 			}
 			subscreen_dlg[50].y = subscreen_dlg[49].y = subscreen_dlg[48].y =
 				subscreen_dlg[47].y = subscreen_dlg[46].y = subscreen_dlg[57].y =
-				subscreen_dlg[58].y = subscreen_dlg[4].y+168*2+4;
+				subscreen_dlg[58].y = subscreen_dlg[4].y+176*2+4;
 			subscreen_dlg[46].y += (subscreen_dlg[47].h-dlg_fh(subscreen_dlg[46]))/2;
 			
 			subscreen_dlg[51].y = subscreen_dlg[52].y = subscreen_dlg[53].y =
