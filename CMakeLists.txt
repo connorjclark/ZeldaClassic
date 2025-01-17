@@ -333,6 +333,14 @@ endif()
 get_target_property(ALLEGRO_LINK_LIBRARIES allegro_with_legacy INTERFACE_LINK_LIBRARIES)
 zc_install_targets(${ALLEGRO_LINK_LIBRARIES})
 
+if(DEFINED ENV{CI} OR ZC_OFFICIAL)
+	get_target_property(ALLEGRO_CODEC_SOURCES allegro_acodec SOURCES)
+	if(NOT ("ogg.c" IN_LIST ALLEGRO_CODEC_SOURCES AND "mp3.c" IN_LIST ALLEGRO_CODEC_SOURCES AND "dumb.c" IN_LIST ALLEGRO_CODEC_SOURCES))
+		message("${ALLEGRO_CODEC_SOURCES}")
+		message(FATAL_ERROR "Missing support for at least one of: OGG, MP3, DUMB")
+	endif()
+endif()
+
 #############################################################
 # Header and source file lists
 #############################################################
