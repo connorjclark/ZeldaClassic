@@ -31,7 +31,7 @@ async function main() {
 
 		const extensionTestsEnv = {
 			ZC_PATH_255: getZcPath('2.55.7'),
-			ZC_PATH_3: process.env.BUILD_FOLDER ?? getZcPath('3.0.0-prerelease.86+2025-01-17'),
+			ZC_PATH_3: process.env.BUILD_FOLDER ?? `${ROOT}/build/Release`,
 		};
 		console.log(extensionTestsEnv);
 
