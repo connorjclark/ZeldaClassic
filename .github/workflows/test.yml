@@ -179,7 +179,14 @@ jobs:
         env:
           CXX: ${{ inputs.compiler }}
 
-      - if: ${{ matrix.shard_index == 1 && inputs.from-ci-workflow && !contains(inputs.runs-on, 'ubuntu') }}
+      - if: ${{ matrix.shard_index == 1 && inputs.from-ci-workflow && contains(inputs.runs-on, 'mac') }}
+        name: Run VS Code extension tests
+        working-directory: vscode-extension
+        run: |
+          sudo npm install
+          sudo npm run compile
+          sudo npm run test
+      - if: ${{ matrix.shard_index == 1 && inputs.from-ci-workflow && contains(inputs.runs-on, 'windows') }}
         name: Run VS Code extension tests
         working-directory: vscode-extension
         run: |
