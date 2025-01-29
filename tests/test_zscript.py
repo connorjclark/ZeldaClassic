@@ -46,25 +46,23 @@ class TestZScript(ZCTestCase):
         if 'emscripten' in str(run_target.get_build_folder()):
             return
 
+        exe_name = 'npm.cmd' if platform.system() == 'Windows' else 'npm'
         subprocess.check_call(
-            ['npm', 'install'],
+            [exe_name, 'install'],
             cwd=root_dir / 'vscode-extension',
         )
-
         subprocess.check_call(
-            ['npm', 'run', 'compile'],
+            [exe_name, 'run', 'compile'],
             cwd=root_dir / 'vscode-extension',
         )
-
         subprocess.check_call(
-            ['npm', 'run', 'test'],
+            [exe_name, 'run', 'test'],
             cwd=root_dir / 'vscode-extension',
             env={
                 **os.environ,
                 'ZC_DISABLE_DEBUG': '1',
                 'BUILD_FOLDER': run_target.get_build_folder(),
             },
-            shell=platform.system() == 'Windows'
         )
 
     def compile_script(self, script_path):
