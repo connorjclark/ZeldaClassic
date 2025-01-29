@@ -37,7 +37,7 @@ async function main() {
 			ZC_PATH_255: getZcPath('2.55.7'),
 			ZC_PATH_LATEST: findZcPath([process.env.BUILD_FOLDER, `${ROOT}/build/Release`, `${ROOT}/build/RelWithDebInfo`]),
 		};
-		console.log(extensionTestsEnv);
+		console.log('Using these binaries for extension test:', extensionTestsEnv);
 
 		// Download VS Code, unzip it and run the integration test
 		await runTests({ extensionDevelopmentPath, extensionTestsPath, extensionTestsEnv });
