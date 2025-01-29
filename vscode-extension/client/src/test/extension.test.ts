@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import * as assert from 'assert';
 import { getDocUri, activate, setVersion, setTestContent, executeDocumentSymbolProvider } from './helper.js';
 import { before } from 'mocha';
+import { jestExpect as expect } from 'mocha-expect-snapshot';
 
 function range(sLine: number, sChar: number, eLine: number, eChar: number) {
 	const start = new vscode.Position(sLine, sChar);
@@ -22,10 +23,14 @@ async function testDiagnostics(uri: vscode.Uri, expectedDiagnostics: vscode.Diag
 	assert.deepStrictEqual(actualDiagnostics, expectedDiagnostics);
 }
 
-before(async () => {
+before(async function () {
 	const config = vscode.workspace.getConfiguration('zscript');
 	await config.update('installationFolder', null, vscode.ConfigurationTarget.Global);
 	await config.update('defaultIncludeFiles', [], vscode.ConfigurationTarget.Global);
+
+	if (!process.env.CI) {
+		this.snapshotStateOptions = { updateSnapshot: 'all' };
+	}
 });
 
 suite('Diagnoses errors and warnings', () => {
@@ -112,10 +117,10 @@ suite.only('Document symbol outline', () => {
 
 	test('latest', async () => {
 		await setVersion('latest');
-
 		await new Promise(resolve => setTimeout(resolve, 2000));
 		const symbols = await executeDocumentSymbolProvider(uri);
-		
+		console.log('!!', symbols); // TODO !
+		expect(symbols).toMatchSnapshot();
 	});
 
 	// test('latest', async () => {

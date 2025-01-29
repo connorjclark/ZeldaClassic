@@ -33,7 +33,7 @@ async function main() {
 		// Passed to --extensionTestsPath
 		const extensionTestsPath = path.resolve(__dirname, './index');
 
-		const extensionTestsEnv = {
+		const extensionTestsEnv: Record<string, string> = {
 			ZC_PATH_255: getZcPath('2.55.7'),
 			ZC_PATH_LATEST: findZcPath([process.env.BUILD_FOLDER, `${ROOT}/build/Release`, `${ROOT}/build/RelWithDebInfo`]),
 		};

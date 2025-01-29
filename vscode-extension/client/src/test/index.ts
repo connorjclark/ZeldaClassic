@@ -1,14 +1,23 @@
 import * as path from 'path';
 import * as Mocha from 'mocha';
 import { glob } from 'glob';
+import * as mochaExpect from 'mocha-expect-snapshot';
 
 export async function run(): Promise<void> {
 	// Create the mocha test
 	const mocha = new Mocha({
 		ui: 'tdd',
-		color: true
+		color: true,
+		require: ['mocha-expect-snapshot'],
+		// @ts-expect-error
+		rootHooks: mochaExpect.mochaHooks,
 	});
 	mocha.timeout(100000);
+
+	// @ts-expect-error
+	mochaExpect.setSnapshotResolver({resolveSnapshotPath(name: string) {
+		return `${__dirname}/../../src/test/__snapshots__/${path.basename(name)}.snap`;
+	}});
 
 	const testsRoot = __dirname;
 
