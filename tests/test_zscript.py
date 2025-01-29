@@ -61,7 +61,7 @@ class TestZScript(ZCTestCase):
             env={
                 **os.environ,
                 'ZC_DISABLE_DEBUG': '1',
-                'BUILD_FOLDER': run_target.get_build_folder(),
+                'BUILD_FOLDER': str(run_target.get_build_folder()),
             },
         )
 
