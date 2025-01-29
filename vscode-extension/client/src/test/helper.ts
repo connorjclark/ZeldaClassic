@@ -1,14 +1,11 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 
-export let doc: vscode.TextDocument;
-export let editor: vscode.TextEditor;
-
 export async function activate(docUri: vscode.Uri) {
 	const ext = vscode.extensions.getExtension('cjamcl.zquest-lsp')!;
 	await ext.activate();
-	doc = await vscode.workspace.openTextDocument(docUri);
-	editor = await vscode.window.showTextDocument(doc);
+	const doc = await vscode.workspace.openTextDocument(docUri);
+	await vscode.window.showTextDocument(doc);
 	await sleep(2000); // Wait for server activation
 }
 
@@ -35,14 +32,21 @@ async function sleep(ms: number) {
 export const getDocPath = (p: string) => {
 	return path.resolve(__dirname, '../../testFixture', p);
 };
+
 export const getDocUri = (p: string) => {
 	return vscode.Uri.file(getDocPath(p));
 };
 
-export async function setTestContent(content: string): Promise<boolean> {
+export async function setTestContent(uri: vscode.Uri, content: string): Promise<boolean> {
+	const doc = await vscode.workspace.openTextDocument(uri);
+	const editor = await vscode.window.showTextDocument(doc);
 	const all = new vscode.Range(
 		doc.positionAt(0),
 		doc.positionAt(doc.getText().length)
 	);
 	return editor.edit(eb => eb.replace(all, content));
+}
+
+export async function executeDocumentSymbolProvider(uri: vscode.Uri): Promise<vscode.DocumentSymbol[]> {
+	return await vscode.commands.executeCommand('vscode.executeDocumentSymbolProvider', uri);
 }

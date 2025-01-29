@@ -159,7 +159,9 @@ let globalSettings: Settings = defaultSettings;
 // Cache the settings of all open documents
 const documentSettings: Map<string, Thenable<Settings>> = new Map();
 
-connection.onDidChangeConfiguration(change => {
+connection.onDidChangeConfiguration(async (change) => {
+	docMetadataMap.clear();
+
 	if (hasConfigurationCapability) {
 		// Reset all cached document settings
 		documentSettings.clear();
@@ -170,7 +172,9 @@ connection.onDidChangeConfiguration(change => {
 	}
 
 	// Revalidate all open text documents
-	documents.all().forEach(document => processScript(document.uri, document.getText()));
+	for (const doc of documents.all()) {
+		await processScript(doc.uri, doc.getText());
+	}
 });
 
 connection.onDidChangeWatchedFiles(e => {

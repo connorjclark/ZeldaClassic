@@ -46,9 +46,6 @@ class TestZScript(ZCTestCase):
         if 'emscripten' in str(run_target.get_build_folder()):
             return
 
-        # if 'CI' in os.environ and platform.system() == 'Linux':
-        #     raise unittest.SkipTest('skipping tests because archives.py does not work for ubuntu')
-
         subprocess.check_call(
             ['npm', 'install'],
             cwd=root_dir / 'vscode-extension',
