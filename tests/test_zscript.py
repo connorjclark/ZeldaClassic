@@ -67,6 +67,7 @@ class TestZScript(ZCTestCase):
                 'ZC_DISABLE_DEBUG': '1',
                 'BUILD_FOLDER': run_target.get_build_folder(),
             },
+            shell=platform.system() != 'Windows',
         )
 
     def compile_script(self, script_path):
