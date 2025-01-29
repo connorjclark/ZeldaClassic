@@ -38,10 +38,10 @@ suite('Diagnoses errors and warnings', () => {
 		]);
 	});
 
-	test('3.0', async () => {
-		await setVersion('3');
+	test('latest', async () => {
+		await setVersion('latest');
 		await testDiagnostics(docUri, [
-			{ message: `S094: Variable 'screendata->HasItem' is deprecated, and should not be used.\nCheck '->Item > -1' instead!`, range: range(5, 1, 5, 16), severity: vscode.DiagnosticSeverity.Warning },
+			{ message: `S094: Variable 'screendata->HasItem' is deprecated, and should not be used.\nCheck \`->Item > -1\` instead!`, range: range(5, 1, 5, 16), severity: vscode.DiagnosticSeverity.Warning },
 			{ message: `S102: Function 'fn' is not void, and must return a value!`, range: range(4, 4, 4, 6), severity: vscode.DiagnosticSeverity.Error },
 		]);
 	});
@@ -58,8 +58,8 @@ suite('Diagnoses parser errors', () => {
 		]);
 	});
 
-	test('3.0', async () => {
-		await setVersion('3');
+	test('latest', async () => {
+		await setVersion('latest');
 		await testDiagnostics(docUri, [
 			{ message: `syntax error, unexpected LBRACE`, range: range(2, 22, 2, 23), severity: vscode.DiagnosticSeverity.Error },
 		]);
@@ -79,8 +79,10 @@ suite('Default includes', () => {
 		await testDiagnostics(docUri, []);
 	});
 
-	test('3.0', async () => {
-		await setVersion('3');
+	test('latest', async () => {
+		await setVersion('latest');
 		await testDiagnostics(docUri, []);
 	});
 });
+
+// TODO ! document symbols

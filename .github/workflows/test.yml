@@ -183,9 +183,9 @@ jobs:
         name: Run VS Code extension tests
         working-directory: vscode-extension
         run: |
-          sudo npm install
-          sudo npm run compile
-          sudo npm run test
+          sudo -E npm install
+          sudo -E npm run compile
+          sudo -E npm run test
       - if: ${{ matrix.shard_index == 1 && inputs.from-ci-workflow && contains(inputs.runs-on, 'windows') }}
         name: Run VS Code extension tests
         working-directory: vscode-extension

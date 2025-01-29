@@ -19,6 +19,10 @@ function getZcPath(version: string): string {
 	return zcPath;
 }
 
+function findZcPath(paths: string[]): string {
+	return paths.find(p => fs.existsSync(p));
+}
+
 async function main() {
 	try {
 		// The folder containing the Extension Manifest package.json
@@ -31,7 +35,7 @@ async function main() {
 
 		const extensionTestsEnv = {
 			ZC_PATH_255: getZcPath('2.55.7'),
-			ZC_PATH_3: process.env.BUILD_FOLDER ?? `${ROOT}/build/Release`,
+			ZC_PATH_LATEST: findZcPath([process.env.BUILD_FOLDER, `${ROOT}/build/Release`, `${ROOT}/build/RelWithDebInfo`]),
 		};
 		console.log(extensionTestsEnv);
 

@@ -13,6 +13,8 @@
 import argparse
 import json
 import os
+import platform
+import subprocess
 import sys
 import unittest
 
@@ -39,6 +41,33 @@ import run_target
 class TestZScript(ZCTestCase):
     def setUp(self):
         self.maxDiff = None
+
+    def test_zscript_vscode_extension(self):
+        if 'emscripten' in str(run_target.get_build_folder()):
+            return
+
+        # if 'CI' in os.environ and platform.system() == 'Linux':
+        #     raise unittest.SkipTest('skipping tests because archives.py does not work for ubuntu')
+
+        subprocess.check_call(
+            ['npm', 'install'],
+            cwd=root_dir / 'vscode-extension',
+        )
+
+        subprocess.check_call(
+            ['npm', 'run', 'compile'],
+            cwd=root_dir / 'vscode-extension',
+        )
+
+        subprocess.check_call(
+            ['npm', 'run', 'test'],
+            cwd=root_dir / 'vscode-extension',
+            env={
+                **os.environ,
+                'ZC_DISABLE_DEBUG': '1',
+                'BUILD_FOLDER': run_target.get_build_folder(),
+            },
+        )
 
     def compile_script(self, script_path):
         # Change include paths to use resources/ directly, instead of possibly-stale stuff inside a build folder.

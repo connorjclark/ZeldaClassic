@@ -16,8 +16,8 @@ export async function setVersion(version: string) {
 	let zcPath: string;
 	if (version === '2.55') {
 		zcPath = process.env.ZC_PATH_255;
-	} else if (version === '3') {
-		zcPath = process.env.ZC_PATH_3;
+	} else if (version === 'latest') {
+		zcPath = process.env.ZC_PATH_LATEST;
 	}
 
 	if (!zcPath) {
