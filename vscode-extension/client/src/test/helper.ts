@@ -48,5 +48,6 @@ export async function setTestContent(uri: vscode.Uri, content: string): Promise<
 }
 
 export async function executeDocumentSymbolProvider(uri: vscode.Uri): Promise<vscode.DocumentSymbol[]> {
+	await activate(uri);
 	return await vscode.commands.executeCommand('vscode.executeDocumentSymbolProvider', uri);
 }
