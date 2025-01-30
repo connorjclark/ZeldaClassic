@@ -85,11 +85,11 @@ jobs:
       - if: ${{ contains(inputs.runs-on, 'ubuntu') }}
         run: sudo pip install -r requirements.txt
 
-      - if: ${{ matrix.shard_index == 1 && inputs.from-ci-workflow && !contains(inputs.runs-on, 'ubuntu') }}
-        name: Install Node.js 18.x
+      - if: ${{ matrix.shard_index == 1 && inputs.from-ci-workflow }}
+        name: Install Node.js 20.x
         uses: actions/setup-node@v3
         with:
-          node-version: 18.x
+          node-version: 20.x
 
       - uses: actions/download-artifact@v4
         with:
