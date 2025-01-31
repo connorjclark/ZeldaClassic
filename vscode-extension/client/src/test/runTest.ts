@@ -39,6 +39,8 @@ async function main() {
 		};
 		console.log('Using these binaries for extension test:', extensionTestsEnv);
 
+		extensionTestsEnv.TEST_ZSCRIPT = '1';
+
 		// Download VS Code, unzip it and run the integration test
 		await runTests({ extensionDevelopmentPath, extensionTestsPath, extensionTestsEnv });
 	} catch (err) {
