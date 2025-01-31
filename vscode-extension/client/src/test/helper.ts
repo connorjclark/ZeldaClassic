@@ -27,7 +27,6 @@ async function setVersion(version: string) {
 
 	const config = vscode.workspace.getConfiguration('zscript');
 	await config.update('installationFolder', zcPath, vscode.ConfigurationTarget.Global);
-	await sleep(1000);
 }
 
 async function sleep(ms: number) {
