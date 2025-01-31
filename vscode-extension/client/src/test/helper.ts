@@ -1,19 +1,22 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 
-export async function activate(docUri: vscode.Uri) {
+export async function activate(version: string, uri: vscode.Uri) {
 	const ext = vscode.extensions.getExtension('cjamcl.zquest-lsp')!;
 	await ext.activate();
-	const doc = await vscode.workspace.openTextDocument(docUri);
+	await setVersion(version);
+	const doc = await vscode.workspace.openTextDocument(uri);
 	const editor = await vscode.window.showTextDocument(doc);
 	await sleep(3000); // Wait for server activation
-	return {doc, editor};
+	return { doc, editor };
 }
 
-export async function setVersion(version: string) {
+async function setVersion(version: string) {
 	let zcPath: string;
 	if (version === '2.55') {
 		zcPath = process.env.ZC_PATH_255;
+	} else if (version === '3-no-json') {
+		zcPath = process.env.ZC_PATH_3_NO_JSON;
 	} else if (version === 'latest') {
 		zcPath = process.env.ZC_PATH_LATEST;
 	}
@@ -31,12 +34,9 @@ async function sleep(ms: number) {
 	return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-export const getDocPath = (p: string) => {
-	return path.resolve(__dirname, '../../testFixture', p);
-};
-
-export const getDocUri = (p: string) => {
-	return vscode.Uri.file(getDocPath(p));
+export const getDocUri = (testFixtureName: string) => {
+	const docPath = path.resolve(__dirname, '../../testFixture', testFixtureName);
+	return vscode.Uri.file(docPath);
 };
 
 export async function setTestContent(uri: vscode.Uri, content: string): Promise<void> {
@@ -51,8 +51,8 @@ export async function setTestContent(uri: vscode.Uri, content: string): Promise<
 }
 
 export async function executeDocumentSymbolProvider(uri: vscode.Uri): Promise<vscode.DocumentSymbol[]> {
-	const {doc} = await activate(uri);
 	// TODO: fix so that `onDocumentSymbol` runs processScript if needed (or waits for ongoing processing).
+	const doc = await vscode.workspace.openTextDocument(uri);
 	await setTestContent(uri, doc.getText());
 
 	while (true) {

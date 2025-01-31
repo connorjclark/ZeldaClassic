@@ -243,7 +243,8 @@ function parseOutput(settings: Settings, stdout: string, stderr: string): { diag
 		return result;
 	}
 
-	// For older releases, diagnostics and metadata must be parsed from stdout.
+	// For older releases, diagnostics and metadata must be manually parsed from stdout.
+	// JSON output was not added until 3.0.0-prerelease.61+2024-08-05.
 
 	const [compilerOutput, metadataStr] = stdout.split('=== METADATA', 2);
 	if (settings.printCompilerOutput) {

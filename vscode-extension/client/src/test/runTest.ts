@@ -35,6 +35,7 @@ async function main() {
 
 		const extensionTestsEnv: Record<string, string> = {
 			ZC_PATH_255: getZcPath('2.55.7'),
+			ZC_PATH_3_NO_JSON: getZcPath('3.0.0-prerelease.60+2024-08-04'),
 			ZC_PATH_LATEST: findZcPath([process.env.BUILD_FOLDER, `${ROOT}/build/Release`, `${ROOT}/build/RelWithDebInfo`]),
 		};
 		console.log('Using these binaries for extension test:', extensionTestsEnv);

@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import * as assert from 'assert';
-import { getDocUri, activate, setVersion, setTestContent, executeDocumentSymbolProvider, executeHoverProvider } from './helper.js';
+import { getDocUri, activate, setTestContent, executeDocumentSymbolProvider, executeHoverProvider } from './helper.js';
 import { before } from 'mocha';
 import { jestExpect as expect } from 'mocha-expect-snapshot';
 
@@ -11,8 +11,6 @@ function range(sLine: number, sChar: number, eLine: number, eChar: number) {
 }
 
 async function testDiagnostics(uri: vscode.Uri, expectedDiagnostics: vscode.Diagnostic[]) {
-	await activate(uri);
-
 	const actualDiagnostics = vscode.languages.getDiagnostics(uri)
 		.map(({ message, range, severity }) => ({ message, range, severity }));
 	for (const diag of actualDiagnostics) {
@@ -29,89 +27,117 @@ suite('ZScript extension', () => {
 			this.snapshotStateOptions = { updateSnapshot: 'all' };
 		}
 	});
-	
+
 	suite('Diagnoses errors and warnings', () => {
 		const uri = getDocUri('diagnostics.zs');
-	
+
 		test('2.55', async () => {
-			await setVersion('2.55');
+			await activate('2.55', uri);
 			await testDiagnostics(uri, [
 				{ message: `Warning S094: Variable 'Screen->HasItem' is deprecated, and should not be used.`, range: range(5, 1, 5, 16), severity: vscode.DiagnosticSeverity.Warning },
 			]);
 		});
-	
+
+		test('3-no-json', async () => {
+			await activate('3-no-json', uri);
+			await testDiagnostics(uri, [
+				{ message: `Warning S094: Variable 'screendata->HasItem' is deprecated, and should not be used.`, range: range(5, 1, 5, 16), severity: vscode.DiagnosticSeverity.Warning },
+				{ message: `Error S102: Function 'fn' is not void, and must return a value!`, range: range(4, 4, 4, 6), severity: vscode.DiagnosticSeverity.Error },
+			]);
+		});
+
 		test('latest', async () => {
-			await setVersion('latest');
+			await activate('latest', uri);
 			await testDiagnostics(uri, [
 				{ message: `S094: Variable 'screendata->HasItem' is deprecated, and should not be used.\nCheck \`->Item > -1\` instead!`, range: range(5, 1, 5, 16), severity: vscode.DiagnosticSeverity.Warning },
 				{ message: `S102: Function 'fn' is not void, and must return a value!`, range: range(4, 4, 4, 6), severity: vscode.DiagnosticSeverity.Error },
 			]);
 		});
 	});
-	
+
 	suite('Diagnoses errors and warnings - unsaved changes', () => {
 		const uri = getDocUri('empty.zs');
-	
+
 		before(async () => {
 			await setTestContent(uri, '#option WARN_DEPRECATED warn\n\nimport "std.zh"\n\nvoid fn() {\n\tScreen->HasItem;\n}\n');
 		});
-	
+
 		test('2.55', async () => {
-			await setVersion('2.55');
+			await activate('2.55', uri);
 			await testDiagnostics(uri, [
 				{ message: `Warning S094: Variable 'Screen->HasItem' is deprecated, and should not be used.`, range: range(5, 1, 5, 16), severity: vscode.DiagnosticSeverity.Warning },
 			]);
 		});
-	
+
+		test('3-no-json', async () => {
+			await activate('3-no-json', uri);
+			await testDiagnostics(uri, [
+				{ message: `Warning S094: Variable 'screendata->HasItem' is deprecated, and should not be used.`, range: range(5, 1, 5, 16), severity: vscode.DiagnosticSeverity.Warning },
+			]);
+		});
+
 		test('latest', async () => {
-			await setVersion('latest');
+			await activate('latest', uri);
 			await testDiagnostics(uri, [
 				{ message: `S094: Variable 'screendata->HasItem' is deprecated, and should not be used.\nCheck \`->Item > -1\` instead!`, range: range(5, 1, 5, 16), severity: vscode.DiagnosticSeverity.Warning },
 			]);
 		});
 	});
-	
+
 	suite('Diagnoses parser errors', () => {
 		const uri = getDocUri('parser_errors.zs');
-	
+
 		test('2.55', async () => {
-			await setVersion('2.55');
+			await activate('2.55', uri);
 			await testDiagnostics(uri, [
 				{ message: `unexpected LBRACE`, range: range(2, 22, 2, 23), severity: vscode.DiagnosticSeverity.Error },
 				{ message: `Error in temp file`, range: range(0, 0, 0, 0), severity: vscode.DiagnosticSeverity.Error },
 			]);
 		});
-	
+
+		test('3-no-json', async () => {
+			await activate('3-no-json', uri);
+			await testDiagnostics(uri, [
+				{ message: `unexpected LBRACE`, range: range(2, 22, 2, 23), severity: vscode.DiagnosticSeverity.Error },
+				{ message: `Error in temp file`, range: range(0, 0, 0, 0), severity: vscode.DiagnosticSeverity.Error },
+			]);
+		});
+
 		test('latest', async () => {
-			await setVersion('latest');
+			await activate('latest', uri);
 			await testDiagnostics(uri, [
 				{ message: `syntax error, unexpected LBRACE`, range: range(2, 22, 2, 23), severity: vscode.DiagnosticSeverity.Error },
 			]);
 		});
 	});
-	
+
 	suite('Default includes', () => {
 		const uri = getDocUri('default_includes.zs');
-	
+
 		before(async () => {
 			const config = vscode.workspace.getConfiguration('zscript');
 			await config.update('defaultIncludeFiles', ['std.zh'], vscode.ConfigurationTarget.Global);
 		});
-	
+
 		test('2.55', async () => {
-			await setVersion('2.55');
+			await activate('2.55', uri);
 			await testDiagnostics(uri, []);
 		});
-	
+
+		test('3-no-json', async () => {
+			await activate('3-no-json', uri);
+			await testDiagnostics(uri, []);
+		});
+
 		test('latest', async () => {
-			await setVersion('latest');
+			await activate('latest', uri);
 			await testDiagnostics(uri, []);
 		});
 	});
-	
+
 	suite('Hover tooltips', () => {
 		const uri = getDocUri('symbols.zs');
-	
+
 		const getHovers = async () => {
 			const positions = [
 				new vscode.Position(27, 16),
@@ -130,37 +156,47 @@ suite('ZScript extension', () => {
 					range: hover.range,
 				}));
 		};
-	
+
 		// Not supported in 2.55.
-	
+
+		test('3-no-json', async () => {
+			await activate('3-no-json', uri);
+			const hovers = await getHovers();
+			expect(hovers).toMatchSnapshot();
+		});
+
 		test('latest', async () => {
-			await setVersion('latest');
-			await activate(uri);
+			await activate('latest', uri);
 			const hovers = await getHovers();
 			expect(hovers).toMatchSnapshot();
 		});
 	});
-	
+
 	suite('Document symbol outline', () => {
 		const uri = getDocUri('symbols.zs');
-	
+
 		const getSymbols = async () => {
 			const symbols = await executeDocumentSymbolProvider(uri);
 			const flattened = [];
 			const collect = (s: vscode.DocumentSymbol) => {
-				const {name, kind, range, selectionRange} = s;
-				flattened.push({name, kind, range, selectionRange, children: s.children.length});
+				const { name, kind, range, selectionRange } = s;
+				flattened.push({ name, kind, range, selectionRange, children: s.children.length });
 				s.children.forEach(collect);
 			};
 			symbols.forEach(collect);
 			console.log(flattened.length);
 			return flattened;
 		};
-	
+
 		// Not supported in 2.55.
-	
+
+		test('3-no-json', async () => {
+			await activate('3-no-json', uri);
+			expect(await getSymbols()).toMatchSnapshot();
+		});
+
 		test('latest', async () => {
-			await setVersion('latest');
+			await activate('latest', uri);
 			expect(await getSymbols()).toMatchSnapshot();
 		});
 	});
