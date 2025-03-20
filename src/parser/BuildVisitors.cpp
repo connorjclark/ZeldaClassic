@@ -148,6 +148,11 @@ void BuildOpcodes::visit(AST& node, void* param)
 	}
 }
 
+// ...
+static std::vector<std::string> source_map_files;
+static std::string last_source_map_file = "<empty>";
+static std::vector<std::string> source_map;
+
 void BuildOpcodes::literal_visit(AST& node, void* param)
 {
 	if(node.isDisabled()) return; //Don't visit disabled nodes.
@@ -157,9 +162,16 @@ void BuildOpcodes::literal_visit(AST& node, void* param)
 	OpcodeContext prm(parentContext->typeStore);
 	OpcodeContext *c = &prm;
 	visit(node, (void*)c);
+	int32_t len = result.size() - initIndex;
 	//Handle literals
 	result.insert(result.begin() + initIndex, c->initCode.begin(), c->initCode.end());
 	result.insert(result.end(), c->deallocCode.begin(), c->deallocCode.end());
+
+	const auto& loc = node.location;
+	if (std::find(source_map_files.begin(), source_map_files.end(), loc.fname) != source_map_files.end())
+		source_map_files.push_back(loc.fname);
+	source_map.push_back(fmt::format("{}-{}-{}", initIndex, len, loc.asString()));
+	// printf("%s\n", source_map.back().c_str());
 }
 
 void BuildOpcodes::literal_visit(AST* node, void* param)

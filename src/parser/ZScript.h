@@ -69,6 +69,8 @@ namespace ZScript
 		// Does this script have a declaration error?
 		bool hasError() const {return (getErrors().size()>0);}
 
+		DebugData debugData;
+
 	private:
 		std::map<std::string, Script*> scriptsByName_;
 		std::map<ASTScript*, Script*> scriptsByNode_;
@@ -110,6 +112,7 @@ namespace ZScript
 		bool isPrototypeRun() const;
 		
 		std::vector<std::shared_ptr<Opcode>> code;
+		DebugData debugData;
 
 	protected:
 		Script(Program& program);

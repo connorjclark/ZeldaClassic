@@ -1496,6 +1496,32 @@ const char* ScriptTypeToString(ScriptType type);
 #define V_COMPILER_THIRD	BUILDTM_DAY
 #define V_COMPILER_FOURTH	BUILDTM_HOUR
 #define ZMETA_NULL_TYPE		1
+
+// TODO ! location
+
+enum DebugType{};
+
+struct ParamDebugData
+{
+	std::string name;
+	// DebugType type;
+};
+
+struct FunctionDebugData
+{
+	std::string name;
+	uint64_t start;
+	uint32_t len;
+	// DebugType returnType;
+	std::vector<ParamDebugData> params;
+};
+
+struct DebugData
+{
+	// std::vector<GlobalDebugData> globals;
+	std::vector<FunctionDebugData> functions;
+};
+
 struct zasm_meta
 {
 	word zasm_v;
@@ -1519,6 +1545,7 @@ struct zasm_meta
 	std::string initd[8];
 	std::string initd_help[8];
 	int8_t initd_type[8];
+	DebugData debug_data;
 	
 	void setFlag(byte flag)
 	{

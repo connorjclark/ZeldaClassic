@@ -518,6 +518,16 @@ string zasm_meta::get_meta() const
 			oss << "\n#INITD_TYPE_" << q << " = "
 				<< to_string(int32_t(initd_type[q]));
 	}
+
+	oss << "\n";
+	for (auto fn : debug_data.functions)
+	{
+		oss << fmt::format("#DEBUG_DATA {} {} {} {}", fn.name, fn.start, fn.len, fn.params.size());
+		for (auto p : fn.params)
+			oss << fmt::format(" {}", p.name);
+		oss << "\n";
+	}
+
 	oss << "\n";
 	return oss.str();
 }

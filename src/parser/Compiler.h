@@ -250,8 +250,8 @@ namespace ZScript
 		static std::string prepareFilename(std::string const& filename);
 		static std::string* checkIncludes(std::string& includePath, std::string const& importname, std::vector<std::string> includes);
 		static std::vector<std::shared_ptr<Opcode>> assembleOne(
-				Program& program, std::vector<std::shared_ptr<Opcode>> script,
-				int32_t numparams, FunctionSignature const& runsig);
+				Program& program, std::vector<std::shared_ptr<Opcode>> code,
+				int32_t numparams, FunctionSignature const& runsig, Script* script);
 		static int32_t vid;
 		static int32_t fid;
 		static int32_t gid;
