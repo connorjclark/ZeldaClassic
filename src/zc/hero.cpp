@@ -29316,15 +29316,6 @@ void HeroClass::scrollscr(int32_t scrolldir, int32_t dest_screen, int32_t destdm
 	// needed.
 	new_ffc_offset_x = new_region_offset_x;
 	new_ffc_offset_y = new_region_offset_y;
-	if (is_warping)
-	{
-		new_ffc_offset_x = 0;
-		new_ffc_offset_y = 0;
-		if (scrolling_dir == left) new_ffc_offset_x = -256;
-		if (scrolling_dir == right) new_ffc_offset_x = 256;
-		if (scrolling_dir == up) new_ffc_offset_y = -176;
-		if (scrolling_dir == down) new_ffc_offset_y = 176;
-	}
 
 	// These mark the top-left coordinate of the new screen and the old screen, in the old region
 	// coordinates.
@@ -29333,6 +29324,12 @@ void HeroClass::scrollscr(int32_t scrolldir, int32_t dest_screen, int32_t destdm
 	int ox = 0;
 	int oy = 0;
 	for_every_nearby_screen_during_scroll(nearby_screens, [&](screen_handles_t screen_handles, int screen, int offx, int offy, bool is_new_screen) {
+		if (screen == new_region.origin_screen && is_new_screen)
+		{
+			new_ffc_offset_x = offx;
+			new_ffc_offset_y = offy;
+		}
+
 		if (screen == dest_screen && is_new_screen)
 		{
 			nx = offx;
