@@ -181,14 +181,12 @@ static std::string getComment(const AST* node)
 	if (node->doc_comment.empty())
 		return "";
 
-	auto parsed_comment = node->getParsedDocComment();
+	auto parsed_comment = node->getParsedComment();
 	std::ostringstream s;
-	if (auto it = parsed_comment.find(""); it != parsed_comment.end())
-		s << it->second;
-	for (const auto& [k, v] : parsed_comment)
+	if (!parsed_comment.description.empty())
+		s << parsed_comment.description;
+	for (const auto& [k, v] : parsed_comment.annotations)
 	{
-		if (k == "")
-			continue;
 		if (k == "zasm")
 			continue;
 		if (k == "vargs")

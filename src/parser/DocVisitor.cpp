@@ -99,16 +99,12 @@ static json getCommentJson(const AST* node)
 	if (node->doc_comment.empty())
 		return nullptr;
 
-	auto parsed_comment = node->getParsedDocComment();
+	auto parsed_comment = node->getParsedComment();
 	json result = json::object();
 
 	result["tags"] = json::object();
-	util::trimstr(parsed_comment[""]);
-	for (auto [k, v] : parsed_comment)
+	for (auto [k, v] : parsed_comment.annotations)
 	{
-		if (k == "")
-			continue;
-
 		if (v.empty())
 			result["tags"][k] = true;
 		else
@@ -118,7 +114,8 @@ static json getCommentJson(const AST* node)
 		}
 	}
 
-	std::string comment = parsed_comment[""];
+	std::string comment = parsed_comment.description;
+	util::trimstr(comment);
 	linkifyString(comment, node);
 	result["text"] = comment;
 
