@@ -120,9 +120,9 @@ class dmapdata {
 	// @zasm_var DMAPDATACONTINUE
 	internal int Continue;
 
-	// @value [DMapType]
+	// @weak
 	// @zasm_var DMAPDATATYPE
-	internal int Type;
+	internal DMapType Type;
 
 	// The dmapdata script to run on this dmap.
 	//
@@ -247,9 +247,9 @@ class dmapdata {
 	// The flags used by the DMap. These are OR'd together. See [DMapBitflags].
 	//
 	// @future_deprecated Use [Flagset] instead!
-	// @value [DMapBitflags]
+	// @weak
 	// @zasm_var DMAPDATAFLAGS
-	internal int Flags;
+	internal DMapBitflags Flags;
 
 	// The starting loop point for enhanced music in seconds.
 	//

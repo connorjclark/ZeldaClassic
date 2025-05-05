@@ -354,6 +354,7 @@ namespace ZScript
 
 		std::optional<std::string> getName() const {return node.getName();}
 		std::optional<std::string> getDocComment() const {return node.doc_comment;}
+		// std::optional<std::string> getDocComment() const {return node.list->doc_comment;}
 		ASTDataDecl* getNode() const {return &node;}
 		UserClass* getClass() const {return &(scope.getClass()->user_class);}
 		int32_t getIndex() const {return _index;}

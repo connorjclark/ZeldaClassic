@@ -112,9 +112,9 @@ class eweapon {
 	// @zasm_var EWPNFLASHCSET
 	internal int FlashCSet;
 
-	// @value [WeaponDeadState]
+	// @weak
 	// @zasm_var EWPNDEAD
-	internal int DeadState;
+	internal WeaponDeadState DeadState;
 
 	// If the weapon is flashing or not. When flashing, it changes between its
 	// CSet and FlashCSet.

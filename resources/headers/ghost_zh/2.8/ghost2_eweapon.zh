@@ -449,7 +449,7 @@ void UpdateEWeapon(eweapon wpn)
         else if(wpn->Misc[__EWI_ON_DEATH]<8)
         {
             if(wpn->Misc[__EWI_ON_DEATH]==EWD_VANISH)
-                wpn->DeadState=0;
+                wpn->DeadState=WDS_DEAD;
             else if(wpn->Misc[__EWI_ON_DEATH]==EWD_AIM_AT_LINK)
                 __DoEWeaponDeathAimAtLink(wpn);
             else if(wpn->Misc[__EWI_ON_DEATH]==EWD_EXPLODE)

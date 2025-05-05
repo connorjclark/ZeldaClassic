@@ -34,7 +34,7 @@ void __DoEWeaponDeathPrototype(eweapon wpn)
         int error[]="ghost.zh: Failed to find prototype eweapon";
         TraceS(error);
         TraceNL();
-        wpn->DeadState=0;
+        wpn->DeadState=WDS_DEAD;
         return;
     }
 
@@ -86,7 +86,7 @@ void __DoEWeaponDeathPrototype(eweapon wpn)
         Audio->PlaySound(prototype->Misc[__EWI_DUMMY_SOUND]);
     }
 
-    wpn->DeadState=0;
+    wpn->DeadState=WDS_DEAD;
 
 }
 
@@ -127,27 +127,27 @@ void __DoEWeaponDeathAimAtLink(eweapon wpn)
 void __DoEWeaponDeathExplode(eweapon wpn)
 {
     FireNonAngularEWeapon(EW_BOMBBLAST, CenterX(wpn)-8, CenterY(wpn)-8, wpn->Dir, 0, wpn->Misc[__EWI_ON_DEATH_ARG], -1, 0, 0);
-    wpn->DeadState=0;
+    wpn->DeadState=WDS_DEAD;
 }
 
 void __DoEWeaponDeathSBombExplode(eweapon wpn)
 {
     FireNonAngularEWeapon(EW_SBOMBBLAST, CenterX(wpn)-8, CenterY(wpn)-8, wpn->Dir, 0, wpn->Misc[__EWI_ON_DEATH_ARG], -1, 0, 0);
-    wpn->DeadState=0;
+    wpn->DeadState=WDS_DEAD;
 }
 
 void __DoEWeaponDeath4FireballsHV(eweapon wpn)
 {
     for(int i=0; i<4; i++)
         FireNonAngularEWeapon(EW_FIREBALL, CenterX(wpn)-8, CenterY(wpn)-8, i, 200, wpn->Damage/2, wpn->Misc[__EWI_ON_DEATH_ARG], 0, 0);
-    wpn->DeadState=0;
+    wpn->DeadState=WDS_DEAD;
 }
 
 void __DoEWeaponDeath4FireballsDiag(eweapon wpn)
 {
     for(int i=4; i<8; i++)
         FireNonAngularEWeapon(EW_FIREBALL, CenterX(wpn)-8, CenterY(wpn)-8, i, 200, wpn->Damage/2, wpn->Misc[__EWI_ON_DEATH_ARG], 0, 0);
-    wpn->DeadState=0;
+    wpn->DeadState=WDS_DEAD;
 }
 
 void __DoEWeaponDeath4FireballsRand(eweapon wpn)
@@ -162,14 +162,14 @@ void __DoEWeaponDeath4FireballsRand(eweapon wpn)
         for(int i=4; i<8; i++)
             FireNonAngularEWeapon(EW_FIREBALL, CenterX(wpn)-8, CenterY(wpn)-8, i, 200, wpn->Damage/2, wpn->Misc[__EWI_ON_DEATH_ARG], 0, 0);
     }
-    wpn->DeadState=0;
+    wpn->DeadState=WDS_DEAD;
 }
 
 void __DoEWeaponDeath8Fireballs(eweapon wpn)
 {
     for(int i=0; i<8; i++)
         FireNonAngularEWeapon(EW_FIREBALL, CenterX(wpn)-8, CenterY(wpn)-8, i, 200, wpn->Damage/2, wpn->Misc[__EWI_ON_DEATH_ARG], 0, 0);
-    wpn->DeadState=0;
+    wpn->DeadState=WDS_DEAD;
 }
 
 void __DoEWeaponDeath4FiresHV(eweapon wpn)
@@ -177,7 +177,7 @@ void __DoEWeaponDeath4FiresHV(eweapon wpn)
     for(int i=0; i<4; i++)
         FireNonAngularEWeapon(EW_FIRE, CenterX(wpn)-8, CenterY(wpn)-8, i, 100, wpn->Damage/2, wpn->Misc[__EWI_ON_DEATH_ARG], 0, 0);
     Audio->PlaySound(SFX_FIRE); // Only play sound once
-    wpn->DeadState=0;
+    wpn->DeadState=WDS_DEAD;
 }
 
 void __DoEWeaponDeath4FiresDiag(eweapon wpn)
@@ -185,7 +185,7 @@ void __DoEWeaponDeath4FiresDiag(eweapon wpn)
     for(int i=4; i<8; i++)
         FireNonAngularEWeapon(EW_FIRE, CenterX(wpn)-8, CenterY(wpn)-8, i, 71, wpn->Damage/2, wpn->Misc[__EWI_ON_DEATH_ARG], 0, 0);
     Audio->PlaySound(SFX_FIRE);
-    wpn->DeadState=0;
+    wpn->DeadState=WDS_DEAD;
 }
 
 void __DoEWeaponDeath4FiresRand(eweapon wpn)
@@ -202,7 +202,7 @@ void __DoEWeaponDeath4FiresRand(eweapon wpn)
     }
 
     Audio->PlaySound(SFX_FIRE);
-    wpn->DeadState=0;
+    wpn->DeadState=WDS_DEAD;
 }
 
 void __DoEWeaponDeath8Fires(eweapon wpn)
@@ -212,14 +212,14 @@ void __DoEWeaponDeath8Fires(eweapon wpn)
     for(int i=4; i<8; i++)
         FireNonAngularEWeapon(EW_FIRE, CenterX(wpn)-8, CenterY(wpn)-8, i, 71, wpn->Damage/2, wpn->Misc[__EWI_ON_DEATH_ARG], 0, 0);
     Audio->PlaySound(SFX_FIRE);
-    wpn->DeadState=0;
+    wpn->DeadState=WDS_DEAD;
 }
 
 void __DoEWeaponDeathSingleFire(eweapon wpn)
 {
     FireNonAngularEWeapon(EW_FIRE, CenterX(wpn)-8, CenterY(wpn)-8, wpn->Dir, 0, wpn->Damage/2, wpn->Misc[__EWI_ON_DEATH_ARG], 0, 0);
     Audio->PlaySound(SFX_FIRE);
-    wpn->DeadState=0;
+    wpn->DeadState=WDS_DEAD;
 }
 
 void __DoEWeaponDeathSpawnNPC(eweapon wpn)
@@ -227,7 +227,7 @@ void __DoEWeaponDeathSpawnNPC(eweapon wpn)
     npc enemy=Screen->CreateNPC(wpn->Misc[__EWI_ON_DEATH_ARG]);
     enemy->X=wpn->X;
     enemy->Y=wpn->Y;
-    wpn->DeadState=0;
+    wpn->DeadState=WDS_DEAD;
 }
 
 void __DoEWeaponDeathRunScript(eweapon wpn)
@@ -242,7 +242,7 @@ void __DoEWeaponDeathRunScript(eweapon wpn)
     if(ffcID==0)
     {
         // None available; just remove the weapon
-        wpn->DeadState=0;
+        wpn->DeadState=WDS_DEAD;
         return;
     }
     f=Screen->LoadFFC(ffcID);

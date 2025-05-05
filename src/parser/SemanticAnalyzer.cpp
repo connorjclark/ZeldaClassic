@@ -543,7 +543,7 @@ void SemanticAnalyzer::caseDataDeclList(ASTDataDeclList& host, void*)
 	if(!host.registered())  //Handle initial setup
 	{
 		// Resolve the base type.
-		DataType const* baseType = &host.baseType->resolve(*scope, this);
+		DataType const* baseType = host.baseType->resolve_ornull_allow_weak(*scope, &host, this);
 		if (breakRecursion(*host.baseType.get())) return;
 		if (!host.baseType->wasResolved())
 		{
@@ -2121,6 +2121,29 @@ void SemanticAnalyzer::analyzeIncrement(ASTUnaryExpr& host)
 		handleError(CompileError::LValConst(&host, operand.asString()));
 }
 
+// This exists to not break all the scripts that existed before bitflags were a thing.
+// Older internal variables that are bitflags were of type int, but have a `@value` doc comment
+// for the actual type. Read that type as a backup.
+static const DataType* getReadTypeWithBitflagsValueCompat(SemanticAnalyzer* a, ASTExpr* expr)
+{
+	auto type = expr->getReadType(a->scope, a);
+
+	// auto x = expr->getParsedComment();
+
+	// Check the `@value` doc comment for the actual type.
+	// if (!type->isBitflagsEnum())
+	// {
+	// 	if (auto arrow = dynamic_cast<ASTExprArrow*>(expr))
+	// 	{
+	// 		auto x = arrow->u_datum->getNode()->list->getParsedComment();
+	// 		printf(".");
+	// 		// if (node->u_datum->getDocComment())
+	// 	}
+	// }
+
+	return type;
+}
+
 void SemanticAnalyzer::analyzeBinaryExpr(
 		ASTBinaryExpr& host, DataType const& leftType,
 		DataType const& rightType)
@@ -2143,6 +2166,7 @@ void SemanticAnalyzer::analyzeBinaryExpr(
 	if (breakRecursion(host)) return;
 
 	auto leftTypeActual = host.left->getReadType(scope, this);
+	// auto leftTypeActual = getReadTypeWithBitflagsValueCompat(this, host.left.get());
 	bool leftIsBitflags = leftTypeActual->isBitflagsEnum();
 	if (!leftIsBitflags)
 	{
@@ -2154,7 +2178,9 @@ void SemanticAnalyzer::analyzeBinaryExpr(
 	if (breakRecursion(host)) return;
 
 	auto rightTypeActual = host.right->getReadType(scope, this);
-	bool rightIsBitflags = leftTypeActual->isBitflagsEnum();
+	bool rightIsBitflags = leftTypeActual->isBitflagsEnum(); // TODO !
+	// auto rightTypeActual = getReadTypeWithBitflagsValueCompat(this, host.right.get());
+	// bool rightIsBitflags = rightTypeActual->isBitflagsEnum();
 	if (!rightIsBitflags)
 	{
 		checkCast(*rightTypeActual, rightType, &host);

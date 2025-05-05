@@ -249,24 +249,25 @@ class combodata {
 
 	// How to flip (or rotate) the combo.
 	//
+	// @weak
 	// @value [TransformationType|TransformationType (FLIP_ or ROT_)]
 	// @zasm_var COMBODFLIP
-	internal int Flip;
+	internal TransformationType Flip;
 
 	// The solidity bitmask of the combo (same as [Screen->ComboS]).
 	//
-	// @value [ComboSolidityBitflags]
+	// @weak
 	// @zasm_var COMBODWALK
-	internal int Walk;
+	internal ComboSolidityBitflags Walk;
 
 	// The effect bitmask of the combo (same as [Screen->ComboE]).
 	//
 	// @zasm_var COMBODEFFECT
 	internal int Effect;
 
-	// @value [ComboType]
+	// @weak
 	// @zasm_var COMBODTYPE
-	internal int Type;
+	internal ComboType Type;
 
 	// @deprecated Use [CSet2] instead!
 	// @zasm_var COMBODCSET
@@ -303,9 +304,9 @@ class combodata {
 
 	// The inherent flag of the combo.
 	//
-	// @value [ComboFlag]
+	// @weak
 	// @zasm_var COMBODFLAG
-	internal int Flag;
+	internal ComboFlag Flag;
 
 	// The number of extra tiles to move horizontally between each frame.
 	//

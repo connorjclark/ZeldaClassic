@@ -37,9 +37,9 @@ class messagedata {
 
 	// The font to display the message in.
 	//
-	// @value [Font]
+	// @weak
 	// @zasm_var MESSAGEDATAFONT
-	internal int Font;
+	internal FontType Font;
 
 	// The X position of the message box.
 	//

@@ -251,9 +251,9 @@ class mapdata {
 
 	// The special room type.
 	//
-	// @value [RoomType]
+	// @weak
 	// @zasm_var MAPDATAROOM
-	internal int RoomType;
+	internal RoomType RoomType;
 
 	// The item placed on the screen. -1 if no item placed.
 	//
@@ -263,9 +263,9 @@ class mapdata {
 	// The Tile Warp type for Tile Warps A, B, C, and D; [0], [1], [2], and [3]
 	// respectively.
 	//
-	// @value [WarpType]
+	// @weak
 	// @zasm_var MAPDATATILEWARPTYPE
-	internal int TileWarpType[];
+	internal WarpType TileWarpType[];
 
 	// The screen script that runs on this screen.
 	//
@@ -326,10 +326,10 @@ class mapdata {
 
 	// The 4 door states of the screen.
 	//
+	// @weak
 	// @index [DoorIndex]
-	// @value [DoorType]
 	// @zasm_var MAPDATADOOR
-	internal int Door[];
+	internal DoorType Door[];
 
 	// The destination DMap for each of the four warp types.
 	//
@@ -353,16 +353,16 @@ class mapdata {
 
 	// The spawn pattern for the screen enemies.
 	//
-	// @value [EnemyPattern]
+	// @weak
 	// @zasm_var MAPDATAPATTERN
-	internal int Pattern;
+	internal EnemyPattern Pattern;
 
 	// The Sidewarp type for Sidewarps A, B, C, and D; [0], [1], [2], and [3]
 	// respectively.
 	//
-	// @value [WarpType]
+	// @weak
 	// @zasm_var MAPDATASIDEWARPTYPE
-	internal int SideWarpType[];
+	internal WarpType SideWarpType[];
 
 	// Set or get the overlay state for the warp ID corresponding to the index
 	// of this array.
@@ -396,10 +396,10 @@ class mapdata {
 	//
 	// [SIDEWARP_NONE] if there is no sidewarp in that direction.
 	//
+	// @weak
 	// @index [DIR_UP], [DIR_DOWN], [DIR_LEFT], [DIR_RIGHT]
-	// @value [SideWarpIndex]
 	// @zasm_var MAPDATASIDEWARPID
-	internal int SideWarpID[];
+	internal SideWarpIndex SideWarpID[];
 
 	// The return square used by the Tile Warp (A, B, C, D).
 	//
@@ -440,15 +440,15 @@ class mapdata {
 
 	// The `No Reset` carryover flags.
 	//
-	// @value [NoResetBitflags]
+	// @weak
 	// @zasm_var MAPDATANORESET
-	internal int NoReset;
+	internal NoResetBitflags NoReset;
 
 	// The `No Carry Over` carryover flags.
 	//
-	// @value [NoCarryBitflags]
+	// @weak
 	// @zasm_var MAPDATANOCARRY
-	internal int NoCarry;
+	internal NoCarryBitflags NoCarry;
 
 	// The map and screen for each layer. Index [0] of these arrays does
 	// nothing, and is invalid to access.

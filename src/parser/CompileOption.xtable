@@ -15,3 +15,4 @@ X(	STRING_SWITCH_CASE_INSENSITIVE,    qr_PARSER_STRINGSWITCH_INSENSITIVE,       
 X(	WARN_DEPRECATED,                                                    0,        OPTTYPE_CONFIG,                OPTION_OFF)
 X(	ON_MISSING_RETURN,                                                  0,        OPTTYPE_CONFIG,              OPTION_ERROR)
 X(	LEGACY_ARRAYS,                                                      0,        OPTTYPE_CONFIG,               OPTION_WARN)
+X(	WEAK_TYPES,                                                         0,        OPTTYPE_CONFIG,                OPTION_OFF)

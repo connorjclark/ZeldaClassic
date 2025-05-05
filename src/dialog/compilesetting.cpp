@@ -53,6 +53,7 @@ void CompileSettingsDlg::load()
 	dd_cfg[1] = zc_get_config("Compiler","WARN_DEPRECATED",0,App::zscript);
 	dd_cfg[2] = zc_get_config("Compiler","ON_MISSING_RETURN",2,App::zscript);
 	dd_cfg[3] = zc_get_config("Compiler","LEGACY_ARRAYS",3,App::zscript);
+	dd_cfg[4] = zc_get_config("Compiler","WEAK_TYPES",4,App::zscript);
 	old_timeout_secs = timeout_secs = zc_get_config("Compiler","compiler_timeout",30,App::zscript);
 	memcpy(old_dd_cfg,dd_cfg,sizeof(dd_cfg));
 	
@@ -79,6 +80,8 @@ void CompileSettingsDlg::save()
 		zc_set_config("Compiler","ON_MISSING_RETURN",dd_cfg[2],App::zscript);
 	if(dd_cfg[3] != old_dd_cfg[3])
 		zc_set_config("Compiler","LEGACY_ARRAYS",dd_cfg[3],App::zscript);
+	if(dd_cfg[4] != old_dd_cfg[4])
+		zc_set_config("Compiler","WEAK_TYPES",dd_cfg[4],App::zscript);
 	if(timeout_secs != old_timeout_secs)
 		zc_set_config("Compiler","compiler_timeout",timeout_secs,App::zscript);
 	
@@ -186,7 +189,20 @@ std::shared_ptr<GUI::Widget> CompileSettingsDlg::view()
 								" is not."
 								" \nOnly applies to types that cannot be `Own`'d - custom objects, bitmaps, etc. cannot"
 								" be stored using legacy array syntax."
-							"\nNOTE: It is recommended to keep this `OFF`, except possibly for older code.")
+							"\nNOTE: It is recommended to keep this `OFF`, except possibly for older code."),
+						//
+						Label(text = "Weak Types", hAlign = 1.0),
+						DropDownList(data = list_deprecated_features,
+							fitParent = true,
+							selectedValue = dd_cfg[4],
+							onSelectFunc = [&](int32_t val)
+							{
+								dd_cfg[4] = val;
+							}
+						),
+						INFOBTN("Uses 'int' for many built-in types rather than their actual type."
+								"\nFor example, the type of `Hero->Sliding` is the `HeroSliding` enum, but"
+							    " when this option is enabled it is treated as `int`.")
 					),
 					Label(text = "Include Paths", hAlign = 0.0),
 					TextField(

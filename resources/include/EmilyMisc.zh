@@ -1382,7 +1382,7 @@ namespace Emily
 		dm->Map = map;
 		dm->Level = Game->CurLevel;
 		dm->Offset = 0;
-		dm->Type = (dm->Type & ~11b) | DMAP_OVERWORLD;
+		dm->Type = <DMapType>((dm->Type & ~11b) | DMAP_OVERWORLD);
 		//
 		int olddmap = Game->CurDMap;
 		int oldscr = Game->CurDMapScreen;
@@ -1429,7 +1429,7 @@ namespace Emily
 						continue;
 					unless(m->Valid & 1b)
 						continue;
-					int pat = m->Pattern;
+					auto pat = m->Pattern;
 					int twarp = m->TimedWarpTimer;
 					m->TimedWarpTimer = 0;
 					m->Pattern = PATTERN_NO_SPAWNING;
@@ -1484,7 +1484,7 @@ namespace Emily
 		dm->Map = olddm[0];
 		dm->Level = olddm[1];
 		dm->Offset = olddm[2];
-		dm->Type = olddm[3];
+		dm->Type = <DMapType>(olddm[3]);
 		dm->Palette = olddm[4];
 		Hero->WarpEx({WT_IWARP, olddmap, oldscr, oldx, oldy, 0, 0, WARP_FLAG_SCRIPTDRAW});
 		Hero->Invisible = false;
@@ -1512,7 +1512,7 @@ namespace Emily
 		int olddm[] = {dm->Map, dm->Level, dm->Offset, dm->Type, dm->Palette};
 		dm->Level = Game->CurLevel;
 		dm->Offset = 0;
-		dm->Type = (dm->Type & ~11b) | DMAP_OVERWORLD;
+		dm->Type = <DMapType>((dm->Type & ~11b) | DMAP_OVERWORLD);
 		int olddmap = Game->CurDMap;
 		int oldscr = Game->CurDMapScreen;
 		int oldx = Hero->X;
@@ -1563,7 +1563,7 @@ namespace Emily
 							continue;
 						unless(m->Valid & 1b)
 							continue;
-						int pat = m->Pattern;
+						auto pat = m->Pattern;
 						int twarp = m->TimedWarpTimer;
 						m->TimedWarpTimer = 0;
 						m->Pattern = PATTERN_NO_SPAWNING;
@@ -1619,7 +1619,7 @@ namespace Emily
 		dm->Map = olddm[0];
 		dm->Level = olddm[1];
 		dm->Offset = olddm[2];
-		dm->Type = olddm[3];
+		dm->Type = <DMapType>(olddm[3]);
 		dm->Palette = olddm[4];
 		Hero->WarpEx({WT_IWARP, olddmap, oldscr, oldx, oldy, 0, 0, WARP_FLAG_SCRIPTDRAW});
 		Hero->Invisible = false;

@@ -338,9 +338,9 @@ class screendata {
 
 	// The solidity bitflags of each of the [NUM_COMBO_POS] combo positions on the screen.
 	//
-	// @value [ComboSolidityBitflags]
+	// @weak
 	// @zasm_var COMBOSD
-	internal int ComboS[];
+	internal ComboSolidityBitflags ComboS[];
 
 	// The effect area bitflags of each of the [NUM_COMBO_POS] combo positions on the screen.
 	//
@@ -348,9 +348,9 @@ class screendata {
 	internal int ComboE[];
 
 	// @index [DoorIndex]
-	// @value [DoorType]
+	// @weak
 	// @zasm_var SCRDOORD
-	internal int Door[];
+	internal DoorType Door[];
 
 	// The 32 screen states used by this screen.
 	//
@@ -563,9 +563,9 @@ class screendata {
 
 	// The enemy 'Spawn Pattern'.
 	//
-	// @value [EnemyPattern]
+	// @weak
 	// @zasm_var SCREENDATAPATTERN
-	internal int Pattern;
+	internal EnemyPattern Pattern;
 
 	// The Sidewarp type for Sidewarps A, B, C, and D; [0], [1], [2], and [3]
 	// respectively.

@@ -372,19 +372,19 @@ class itemdata {
 	// @delete
 	internal itemdata();
 
-	// @value [ItemID]
+	// @weak
 	// @zasm_var IDATAID
-	internal const int ID;
+	internal const ItemID ID;
 
-	// @value [ItemType]
+	// @weak
 	// @zasm_var IDATAFAMILY
-	internal int Type;
+	internal ItemType Type;
 
 	// Exactly the same as [Type] - use that instead.
 	//
-	// @value [ItemType]
+	// @weak
 	// @zasm_var IDATAFAMILY
-	internal int Family;
+	internal ItemType Family;
 
 	// @zasm_var IDATALEVEL
 	internal int Level;
@@ -414,9 +414,9 @@ class itemdata {
 
 	// The counter to increase when this item is picked up.
 	//
-	// @value [CounterIndex]
+	// @weak
 	// @zasm_var IDATACOUNTER
-	internal int Counter;
+	internal CounterIndex Counter;
 
 	// The sound to play when the item is picked up.
 	//
@@ -481,9 +481,9 @@ class itemdata {
 
 	// The bitflags associated with the pickup string.
 	//
-	// @value [PickupStringBitflags]
+	// @weak
 	// @zasm_var IDATAPFLAGS
-	internal int PickupStringFlags;
+	internal PickupStringBitflags PickupStringFlags;
 
 	// The `Use Cost`/`Use Cost 2` of the item.
 	//
@@ -517,9 +517,9 @@ class itemdata {
 
 	// Misc bitflags for the item graphics.
 	//
-	// @value [ItemMiscBitflags]
+	// @weak
 	// @zasm_var IDATAMISC
-	internal int MiscFlags;
+	internal ItemMiscBitflags MiscFlags;
 
 	// The CSet the item sprite uses.
 	//
@@ -719,16 +719,16 @@ class itemdata {
 
 	// The item pickup bitflags.
 	//
-	// @value [ItemPickupBitflags]
+	// @weak
 	// @zasm_var IDATAPICKUP
-	internal int Pickup;
+	internal ItemPickupBitflags Pickup;
 
 	// Bitflags representing all the checkboxes for which sizes to
 	// apply from the itemdata.
 	//
-	// @value [SizeOverrideBitflags]
+	// @weak
 	// @zasm_var IDATAOVERRIDEFL
-	internal int SizeFlags;
+	internal SizeOverrideBitflags SizeFlags;
 
 	// Bitflags representing all the checkboxes for which sizes to
 	// apply from the itemdata, for any [lweapon] created by this item.

@@ -437,9 +437,9 @@ class Game {
 
 	// Contains a bitflags of the "Level Items".
 	//
-	// @value [LevelItemBitflags]
+	// @weak
 	// @zasm_var GAMELITEMSD
-	internal int LItems[];
+	internal LevelItemBitflags LItems[];
 
 	// How many level-specific keys are owned for each level.
 	//
@@ -621,9 +621,9 @@ class Game {
 	// Which mouse cursor should be displayed during gameplay.
 	// [ZCM_BLANK] is the default, and it resets on visiting the title screen.
 	//
-	// @value [MouseCursor]
+	// @weak
 	// @zasm_var GAMEMOUSECURSOR
-	internal int MouseCursor;
+	internal MouseCursor MouseCursor;
 
 	// Returns the number of saved portals that currently exist.
 	//

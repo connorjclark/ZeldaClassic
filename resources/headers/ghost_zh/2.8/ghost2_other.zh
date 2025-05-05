@@ -323,7 +323,7 @@ void Ghost_SpawnAnimationPuff(ffc this, npc ghost)
             if(graphic->ASpeed==0)
                 graphic->ASpeed=4;
             
-            graphic->DeadState=graphic->NumFrames*graphic->ASpeed;
+            graphic->DeadState = <WeaponDeadState>(graphic->NumFrames*graphic->ASpeed);
         }
     }
 

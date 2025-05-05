@@ -699,7 +699,7 @@ void RegistrationVisitor::caseScriptTypeDef(ASTScriptTypeDef& host, void* param)
 void RegistrationVisitor::caseDataDeclList(ASTDataDeclList& host, void* param)
 {
 	// Resolve the base type.
-	DataType const* baseType = host.baseType->resolve_ornull(*scope, this);
+	DataType const* baseType = host.baseType->resolve_ornull_allow_weak(*scope, &host, this);
     if (breakRecursion(*host.baseType.get())) return;
 	if (!host.baseType->wasResolved() || !baseType) return;
 

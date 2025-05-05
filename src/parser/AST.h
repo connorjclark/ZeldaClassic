@@ -254,6 +254,7 @@ namespace ZScript
 
 		// Documentation string associated with this node.
 		string doc_comment;
+		mutable std::optional<ParsedComment> parsed_comment;
 
 		// List of expected compile error ids for this node. They are
 		// removed as they are encountered.
@@ -270,7 +271,7 @@ namespace ZScript
 		bool reachable() const {return isReachable;}
 		void mark_reachable(bool b = true) {isReachable = b;}
 
-		ParsedComment getParsedComment() const;
+		const ParsedComment& getParsedComment() const;
 	
 		// Subclass Predicates (replacing typeof and such).
 		virtual bool isTypeArrow() const {return false;}
@@ -2370,8 +2371,9 @@ namespace ZScript
 		ASTDataType* clone() const {return new ASTDataType(*this);}
 	
 		void execute(ASTVisitor& visitor, void* param = NULL);
-		DataType const& resolve(Scope& scope, CompileErrorHandler* errorHandler);
+		DataType const& resolve(Scope& scope, CompileErrorHandler* errorHandler, bool weak = false);
 		DataType const* resolve_ornull(Scope& scope, CompileErrorHandler* errorHandler);
+		DataType const* resolve_ornull_allow_weak(Scope& scope, AST* node, CompileErrorHandler* errorHandler);
 		void replace(DataType const& newty);
 		inline bool wasResolved() const { return wasResolved_; }
 

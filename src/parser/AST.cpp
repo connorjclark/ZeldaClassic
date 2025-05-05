@@ -9,6 +9,7 @@
 
 #include "base/util.h"
 #include "parser/ParserHelper.h"
+#include "parser/Types.h"
 #include "zc/ffscript.h"
 
 using std::pair;
@@ -59,9 +60,11 @@ AST::AST(LocationData const& location)
 	: location(location), errorDisabled(false), disabled_(false), isRegistered(false), isReachable(true)
 {}
 
-ParsedComment AST::getParsedComment() const
+const ParsedComment& AST::getParsedComment() const
 {
-	return ParsedComment(doc_comment);
+	if (!parsed_comment)
+		parsed_comment = ParsedComment(doc_comment);
+	return *parsed_comment;
 }
 
 // ASTFile
@@ -1473,7 +1476,7 @@ DataType const& ASTDataDecl::resolveType(ZScript::Scope* scope, CompileErrorHand
 	}
 	if (!type->isResolved())
 		return *type;
-	
+
 	if(!extraArrays.empty())
 	{
 		uint q = 1;
@@ -2990,11 +2993,11 @@ void ASTDataType::execute(ASTVisitor& visitor, void* param)
 	visitor.caseDataType(*this, param);
 }
 
-DataType const& ASTDataType::resolve(ZScript::Scope& scope, CompileErrorHandler* errorHandler)
+DataType const& ASTDataType::resolve(ZScript::Scope& scope, CompileErrorHandler* errorHandler, bool weak)
 {
 	if(!wasResolved_)
 	{
-		DataType const* ty = type->resolve(scope, errorHandler);
+		DataType const* ty = weak ? &DataType::FLOAT : type->resolve(scope, errorHandler);
 		if (ty && ty->isResolved())
 		{
 			if (constant_ > 0)
@@ -3042,6 +3045,18 @@ DataType const* ASTDataType::resolve_ornull(ZScript::Scope& scope, CompileErrorH
 {
 	DataType const& ty = resolve(scope, errorHandler);
 	return ty.isResolved() ? &ty : nullptr;
+}
+DataType const* ASTDataType::resolve_ornull_allow_weak(ZScript::Scope& scope, AST* node, CompileErrorHandler* errorHandler)
+{
+	if (wasResolved_)
+		return type.get();
+
+	bool weak_types_opt = *lookupOption(scope, CompileOption::OPT_WEAK_TYPES) == ZScript::OPTION_ON;
+	bool weak = weak_types_opt && node->getParsedComment().contains_tag("weak");
+	DataType const& ty = resolve(scope, errorHandler, weak);
+	if (!ty.isResolved()) return nullptr;
+
+	return &ty;
 }
 void ASTDataType::replace(DataType const& newty)
 {

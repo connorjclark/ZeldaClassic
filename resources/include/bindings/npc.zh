@@ -267,9 +267,9 @@ class npc {
 
 	// The death effect for the npc.
 	//
-	// @value [NPCFade]
+	// @weak
 	// @zasm_var NPCFADING
-	internal int Fading;
+	internal NPCFade Fading;
 
 	// @zasm_var NPCRATE
 	internal int Rate;

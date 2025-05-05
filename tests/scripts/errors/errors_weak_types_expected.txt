@@ -1,0 +1,90 @@
+stderr:
+
+Compiling 'errors_weak_types.zs'
+Pass 1: Parsing
+Pass 2: Preprocessing
+Pass 3: Registration
+Pass 4: Analyzing Code
+errors_weak_types.zs Line 4 @ Columns 2-21 - Error T017: Cannot cast from int to EnemyPattern.
+
+2    {
+3        // OK.
+4        Screen->Pattern = 1;
+         ^~~~~~~~~~~~~~~~~~~
+
+
+errors_weak_types.zs Line 11 @ Columns 3-8 - Error T017: Cannot cast from int to EnemyPattern.
+
+ 9    // @weak
+10    EnemyPattern x;
+11    x = 1; // Error.
+      ^~~~~
+
+
+errors_weak_types.zs Line 27 @ Columns 2-18 - Error T017: Cannot cast from bitmap to HeroSliding.
+
+25    auto x = Hero->Sliding;
+26    // Error "Cannot cast from bitmap to int".
+27    x = new bitmap();
+      ^~~~~~~~~~~~~~~~
+
+
+Failure!
+Compile finished with exit code '17' (compiled with errors)
+
+stdout:
+
+{
+  "success": false,
+  "code": 17,
+  "diagnostics": [
+    {
+      "range": {
+        "start": {
+          "line": 3,
+          "character": 1
+        },
+        "end": {
+          "line": 3,
+          "character": 20
+        }
+      },
+      "severity": 1,
+      "message": "T017: Cannot cast from int to EnemyPattern."
+    },
+    {
+      "range": {
+        "start": {
+          "line": 10,
+          "character": 2
+        },
+        "end": {
+          "line": 10,
+          "character": 7
+        }
+      },
+      "severity": 1,
+      "message": "T017: Cannot cast from int to EnemyPattern."
+    },
+    {
+      "range": {
+        "start": {
+          "line": 26,
+          "character": 1
+        },
+        "end": {
+          "line": 26,
+          "character": 17
+        }
+      },
+      "severity": 1,
+      "message": "T017: Cannot cast from bitmap to HeroSliding."
+    }
+  ],
+  "metadata": {
+    "currentFileSymbols": 4,
+    "symbols": 11,
+    "identifiers": 25,
+    "elided": true
+  }
+}

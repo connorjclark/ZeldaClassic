@@ -136,9 +136,9 @@ class hero {
 	// @zasm_var LINKMAXMP
 	internal int MaxMP;
 
-	// @value [HeroAction]
+	// @weak
 	// @zasm_var LINKACTION
-	internal int Action;
+	internal HeroAction Action;
 
 	// The current *total* Hero Tile Modifier.
 	//
@@ -552,9 +552,9 @@ class hero {
 	// @zasm_var HEROFLASHINGCSET
 	internal const int FlashingCSet;
 
-	// @value [HeroSliding]
+	// @weak
 	// @zasm_var HEROSLIDING
-	internal const int Sliding;
+	internal const HeroSliding Sliding;
 
 	// The icy combo the Hero is sliding on.
 	//

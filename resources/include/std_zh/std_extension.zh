@@ -775,7 +775,7 @@ int GetPartialValue(int n, int place, int num)
 //itm_id is the item ID number
 //if holdtype is set to a Hero->Action for holding up an item
 //then Link will hold the item up as desired.
-void GiveLinkItem(int itm_id, int holdtype)
+void GiveLinkItem(int itm_id, HeroAction holdtype)
 {
 	item i = Screen->CreateItem(itm_id);
 	i->X = Hero->X;
@@ -811,7 +811,7 @@ void GiveLinkItem(int itm_id, int holdtype)
 //Link does not hold up this item.
 void GiveLinkItem(int itm_id)
 {
-	GiveLinkItem(itm_id,0);
+	GiveLinkItem(itm_id, LA_NONE);
 }
 
 //Returns the index holding the highest value in an array
@@ -863,11 +863,11 @@ void HoldUpItem(int id, int twohands)
 		case LA_DIVING:
 		case LA_GOTHURTWATER:
 		{
-			Hero->Action = Clamp(LA_HOLD1LAND+twohands,LA_HOLD1WATER,LA_HOLD2WATER);
+			Hero->Action = Clamp(<HeroAction>(LA_HOLD1LAND+twohands),LA_HOLD1WATER,LA_HOLD2WATER);
 			break;
 		}
 		default:
-			Hero->Action = Clamp(LA_HOLD1LAND+twohands,LA_HOLD1LAND,LA_HOLD2LAND);
+			Hero->Action = Clamp(<HeroAction>(LA_HOLD1LAND+twohands),LA_HOLD1LAND,LA_HOLD2LAND);
 			break;
 	}
 }
@@ -882,11 +882,11 @@ void HoldUpItem(itemsprite i, int twohands)
 		case LA_DIVING:
 		case LA_GOTHURTWATER:
 		{
-			Hero->Action = Clamp(LA_HOLD1LAND+twohands,LA_HOLD1WATER,LA_HOLD2WATER);
+			Hero->Action = Clamp(<HeroAction>(LA_HOLD1LAND+twohands),LA_HOLD1WATER,LA_HOLD2WATER);
 			break;
 		}
 		default:
-			Hero->Action = Clamp(LA_HOLD1LAND+twohands,LA_HOLD1LAND,LA_HOLD2LAND);
+			Hero->Action = Clamp(<HeroAction>(LA_HOLD1LAND+twohands),LA_HOLD1LAND,LA_HOLD2LAND);
 			break;
 	}
 }
@@ -901,11 +901,11 @@ void HoldUpItem(itemdata i, int twohands)
 		case LA_DIVING:
 		case LA_GOTHURTWATER:
 		{
-			Hero->Action = Clamp(LA_HOLD1LAND+twohands,LA_HOLD1WATER,LA_HOLD2WATER);
+			Hero->Action = Clamp(<HeroAction>(LA_HOLD1LAND+twohands),LA_HOLD1WATER,LA_HOLD2WATER);
 			break;
 		}
 		default:
-			Hero->Action = Clamp(LA_HOLD1LAND+twohands,LA_HOLD1LAND,LA_HOLD2LAND);
+			Hero->Action = Clamp(<HeroAction>(LA_HOLD1LAND+twohands),LA_HOLD1LAND,LA_HOLD2LAND);
 			break;
 	}
 }

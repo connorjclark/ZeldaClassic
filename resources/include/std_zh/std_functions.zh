@@ -219,7 +219,7 @@ bool CircleCollision(int c1x, int c1y, int radius1, int c2x, int c2y, int radius
 }
 
 //Clamps x to the range of low, high.
-int Clamp(int x, int low, int high)
+T Clamp<T>(T x, T low, T high)
 {
 	if(x<low) x=low;
 	else if(x>high) x=high;
@@ -1151,7 +1151,7 @@ int GetEquipmentY()
 //
 // @param [DMapBitflags] flag
 // @deprecated Use [dmapdata::Flagset] instead, with [DMapFlag].
-bool GetDMapFlag(int dmap, int flag)
+bool GetDMapFlag(int dmap, DMapBitflags flag)
 {
 	dmapdata dm = Game->LoadDMapData(dmap);
 	return (dm->Flags&flag);
@@ -1305,7 +1305,7 @@ itemdata GetItemData(item i)
 // Returns true if an item's Pickup state is set.
 //
 // @param [ItemPickupBitflags] bitflags
-bool GetItemPickup(item i, int bitflags)
+bool GetItemPickup(item i, ItemPickupBitflags bitflags)
 {
 	return (i->Pickup&bitflags);
 }
@@ -1395,11 +1395,11 @@ int GetLayerComboT(int layer, int pos)
 // Overloaded to use the current level if no 'level' arg is entered
 //
 // @param [LevelItemBitflags] bitflags
-bool GetLevelItem(int level, int bitflags)
+bool GetLevelItem(int level, LevelItemBitflags bitflags)
 {
 	return (Game->LItems[level]&bitflags);
 }
-bool GetLevelItem(int itm)
+bool GetLevelItem(LevelItemBitflags itm)
 {
 	return (Game->LItems[Game->CurLevel]&itm);
 }
@@ -2766,7 +2766,7 @@ int ScreenItem()
 // Only works with the [DMapBitflags] flags - [DMapFlag] is not supported.
 //
 // @param [DMapBitflags] flag
-void SetDMapFlag(int dmap, int flag, bool state)
+void SetDMapFlag(int dmap, DMapBitflags flag, bool state)
 {
 	dmapdata dm = Game->LoadDMapData(dmap);
 	dm->Flags = AdjustBitflags(dm->Flags, flag, state);
@@ -2779,7 +2779,7 @@ void SetEquipment(int a, int b)
 }
 
 //Sets an item's Pickup state to 'state'
-void SetItemPickup(item i, int pickup, bool state)
+void SetItemPickup(item i, ItemPickupBitflags pickup, bool state)
 {
 	if(state) i->Pickup |= pickup;
 	else i->Pickup &= ~pickup;
@@ -2864,11 +2864,11 @@ void SetLayerComboT(int layer, int pos, int val)
 }
 
 //Gives or removes a level item from Link's inventory
-void SetLevelItem(int level, int itm, bool state)
+void SetLevelItem(int level, LevelItemBitflags itm, bool state)
 {
 	Game->LItems[level] = AdjustBitflags(Game->LItems[level], itm, state);
 }
-void SetLevelItem(int itm, bool state)
+void SetLevelItem(LevelItemBitflags itm, bool state)
 {
 	Game->LItems[Game->CurLevel] = AdjustBitflags(Game->LItems[Game->CurLevel], itm, state);
 }

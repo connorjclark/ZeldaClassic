@@ -48,12 +48,12 @@ DEALLOCATEMEMR D3
 LOAD D2 0.0003; InlineFunc[int Game::GetGenericScript(char32[])] Params
 GETGENERICSCRIPT D2; InlineFunc[int Game::GetGenericScript(char32[])] Body
 STORE D2 0.0001
-LOAD D2 0.0001; if() #423 Test
+LOAD D2 0.0001; if() #422 Test
 COMPAREV D2 -1
 SETCMP D2 I==
 COMPAREV D2 0
 GOTOCMP 38 ==; Test 'if'
-ALLOCATEMEMV D2 53 0; if() #423 Body Start
+ALLOCATEMEMV D2 53 0; if() #422 Body Start
 STORE D2 0
 WRITEPODSTRING D2 "[Test] failed to start - could not find test script\n"
 LOAD D2 0; InlineFunc[void printf(char32[])] Params Start
@@ -62,7 +62,7 @@ PRINTFVARG; InlineFunc[void printf(char32[])] Body Start
 POP D5; InlineFunc[void printf(char32[])] Body End
 LOAD D3 0
 DEALLOCATEMEMR D3
-GAMEEXIT; InlineFunc[void Game::Exit()] Body AND if() #423 Body End
+GAMEEXIT; InlineFunc[void Game::Exit()] Body AND if() #422 Body End
 LOAD D2 0.0001; InlineFunc[genericdata Game::LoadGenericData(int)] Params
 LOADGENERICDATA D2; InlineFunc[genericdata Game::LoadGenericData(int)] Body Start
 SETR D2 REFGENERICDATA; InlineFunc[genericdata Game::LoadGenericData(int)] Body End
@@ -552,10 +552,10 @@ POP D5; return End
 RETURNFUNC; Func[int DirNormal(int)] Body End
 PUSHARGSV 0 0.0004; Func[int ComboX(int)] Body Start
 SETR D4 SP2
-SETR D2 REGION_ID; if() #23 Test
+SETR D2 REGION_ID; if() #22 Test
 COMPAREV D2 0
 GOTOCMP 563 ==; Test 'if'
-LOAD D2 0.0004; InlineFunc[int Floor(int)] Params Start AND if() #23 Body Start
+LOAD D2 0.0004; InlineFunc[int Floor(int)] Params Start AND if() #22 Body Start
 DIVV D2 176; InlineFunc[int Floor(int)] Params End
 FLOOR D2; InlineFunc[int Floor(int)] Body
 STORE D2 0.0003
@@ -587,18 +587,18 @@ MODV D2 16
 MULTV D2 16
 POP D3
 ADDR D2 D3
-GOTO 566; return End AND if() #23 Body End
-LOAD D2 0.0004; return Start AND if() #23 Else Start
+GOTO 566; return End AND if() #22 Body End
+LOAD D2 0.0004; return Start AND if() #22 Else Start
 MODV D2 16
 MULTV D2 16
-POPARGS D5 0.0005; return End AND if() #23 Else End
+POPARGS D5 0.0005; return End AND if() #22 Else End
 RETURNFUNC; Func[int ComboX(int)] Body End
 PUSHARGSV 0 0.0004; Func[int ComboY(int)] Body Start
 SETR D4 SP2
-SETR D2 REGION_ID; if() #24 Test
+SETR D2 REGION_ID; if() #23 Test
 COMPAREV D2 0
 GOTOCMP 599 ==; Test 'if'
-LOAD D2 0.0004; InlineFunc[int Floor(int)] Params Start AND if() #24 Body Start
+LOAD D2 0.0004; InlineFunc[int Floor(int)] Params Start AND if() #23 Body Start
 DIVV D2 176; InlineFunc[int Floor(int)] Params End
 FLOOR D2; InlineFunc[int Floor(int)] Body
 STORE D2 0.0003
@@ -623,10 +623,10 @@ LOAD D2 0
 ANDV D2 240
 POP D3
 ADDR D2 D3
-GOTO 601; return End AND if() #24 Body End
-LOAD D2 0.0004; return Start AND if() #24 Else Start
+GOTO 601; return End AND if() #23 Body End
+LOAD D2 0.0004; return Start AND if() #23 Else Start
 ANDV D2 240
-POPARGS D5 0.0005; return End AND if() #24 Else End
+POPARGS D5 0.0005; return End AND if() #23 Else End
 RETURNFUNC; Func[int ComboY(int)] Body End
 SETR D4 SP2; Func[void ClearRegion(int)] Body Start
 PUSHR D4
@@ -721,16 +721,16 @@ PRINTFVARG; InlineFunc[void printf(char32[])] Body Start
 POP D5; InlineFunc[void printf(char32[])] Body End
 LOAD D3 0
 DEALLOCATEMEMR D3
-LOAD D2 0.0001; if() #422 Test
+LOAD D2 0.0001; if() #421 Test
 COMPAREV D2 0
 SETCMP D2 I!=
 COMPAREV D2 0
 GOTOCMP 706 ==; Test 'if'
-PUSHV 5; InlineFunc[void hero::Warp(int, int)] Params Start AND if() #422 Body Start
+PUSHV 5; InlineFunc[void hero::Warp(int, int)] Params Start AND if() #421 Body Start
 LOAD D2 0.0001; InlineFunc[void hero::Warp(int, int)] Params End
 POP D3; InlineFunc[void hero::Warp(int, int)] Body Start
 WARPR D3 D2; InlineFunc[void hero::Warp(int, int)] Body End
-WAITFRAME; InlineFunc[void Waitframe()] Body AND if() #422 Body End
+WAITFRAME; InlineFunc[void Waitframe()] Body AND if() #421 Body End
 POPARGS D5 0.0002
 RETURNFUNC; Func[void Init(int)] Body End
 PUSHARGSV 0 0.0004; Func[void loadRegion(int, int)] Body Start
@@ -832,7 +832,7 @@ POPARGS D5 0.0002
 RETURNFUNC; Func[void reset(int)] Body End
 PUSHV 0; Func[void AssertEqual(int, int)] Body Start
 SETR D4 SP2
-LOAD D2 0.0001; if() #424 Test
+LOAD D2 0.0001; if() #425 Test
 PUSHR D2
 LOAD D2 0.0002
 POP D3
@@ -840,7 +840,7 @@ COMPARER D3 D2
 SETCMP D2 I!=
 COMPAREV D2 0
 GOTOCMP 829 ==; Test 'if'
-ALLOCATEMEMV D2 49 0; if() #424 Body Start
+ALLOCATEMEMV D2 49 0; if() #425 Body Start
 STORE D2 0
 WRITEPODSTRING D2 "[Test] failed assertion: expected %d but got %d\n"
 LOAD D2 0; InlineFunc[void printf(char32[])] Params Start
@@ -853,6 +853,6 @@ PRINTFVARG; InlineFunc[void printf(char32[])] Body Start
 POP D5; InlineFunc[void printf(char32[])] Body End
 LOAD D3 0
 DEALLOCATEMEMR D3
-GAMEEXIT; InlineFunc[void Game::Exit()] Body AND if() #424 Body End
+GAMEEXIT; InlineFunc[void Game::Exit()] Body AND if() #425 Body End
 POPARGS D5 0.0003
 RETURNFUNC; Func[void AssertEqual(int, int)] Body End

@@ -10,18 +10,19 @@ class itemsprite {
 	// @delete
 	internal itemsprite();
 
-	// @value [ItemID]
+	// @weak
 	// @zasm_var ITEMID
-	internal int ID;
+	internal ItemID ID;
 
-	// @value [ItemType]
+	// @weak
 	// @zasm_var ITEMFAMILY
-	internal int Type;
+	internal ItemType Type;
 
 	// Exactly the same as [Type] - use that instead.
 	//
+	// @weak
 	// @zasm_var ITEMFAMILY
-	internal int Family;
+	internal ItemType Family;
 
 	// Max number of itemsprites currently allowed.
 	//
@@ -71,9 +72,9 @@ class itemsprite {
 
 	// The item pickup bitflags.
 	//
-	// @value [ItemPickupBitflags]
+	// @weak
 	// @zasm_var ITEMPICKUP
-	internal int Pickup;
+	internal ItemPickupBitflags Pickup;
 
 	// If true, picking up the item does not play it's usual pickup sound
 	// assigned in the item editor. Does not affect holdup sound.

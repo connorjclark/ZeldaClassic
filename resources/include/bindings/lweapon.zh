@@ -129,9 +129,9 @@ class lweapon {
 	// @zasm_var LWPNFLASHCSET
 	internal int FlashCSet;
 
-	// @value [WeaponDeadState]
+	// @weak
 	// @zasm_var LWPNDEAD
-	internal int DeadState;
+	internal WeaponDeadState DeadState;
 
 	// If the weapon is flashing or not. When flashing, it changes between its
 	// CSet and FlashCSet.
