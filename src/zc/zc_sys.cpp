@@ -2112,6 +2112,9 @@ int _c_item_id_internal(int itemtype, bool checkmagic, bool jinx_check, bool che
 	return result;
 }
 
+// This may return -1, so check before using an index to itemsbuf. Consider using `current_itemdata`
+// instead.
+//
 // 'jinx_check' indicates that the highest level item *immune to jinxes* should be returned.
 int current_item_id(int itype, bool checkmagic, bool jinx_check, bool check_bunny)
 {
@@ -2152,6 +2155,24 @@ int current_item_id(int itype, bool checkmagic, bool jinx_check, bool check_bunn
 		}
 	}
 	return ret;
+}
+
+const itemdata& current_itemdata(int32_t itemtype)
+{
+	static itemdata null_item;
+
+	int id = current_item_id(itemtype);
+	return get_itemdata(id);
+}
+
+const itemdata& get_itemdata(int32_t id)
+{
+	static itemdata null_item;
+
+	if (id == -1)
+		return null_item;
+
+	return itemsbuf[id];
 }
 
 int current_item_power(int itemtype, bool checkmagic, bool jinx_check, bool check_bunny)
@@ -3519,7 +3540,7 @@ void draw_lens_over()
 
 	static BITMAP *lens_scr = create_bitmap_ex(8,2*w,2*h);
 	static int32_t last_width = -1;
-	int32_t width = itemsbuf[current_item_id(itype_lens,true)].misc1;
+	int32_t width = current_itemdata(itype_lens).misc1;
 	
 	// Only redraw the circle if the size has changed
 	if (width != last_width)

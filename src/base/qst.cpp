@@ -78,7 +78,6 @@ using std::pair;
 extern int32_t                 hero_animation_speed; //lower is faster animation
 extern byte                *colordata;
 extern tiledata            *newtilebuf;
-extern byte                *trashbuf;
 extern itemdata            *itemsbuf;
 extern wpndata             *wpnsbuf;
 extern comboclass          *combo_class_buf;
@@ -515,141 +514,6 @@ bool valid_zqt(PACKFILE *f)
         
     //for now, everything else is valid
     return true;
-    
-    /*int16_t version;
-    byte build;
-    
-    //read the version and make sure it worked
-    if(!p_igetw(&version,f))
-    {
-      goto error;
-    }
-    
-    //read the build and make sure it worked
-    if(!p_getc(&build,f))
-      goto error;
-    
-    //read the tile info and make sure it worked
-    if(!p_igetw(&tiles_used,f))
-    {
-      goto error;
-    }
-    
-    for (int32_t i=0; i<tiles_used; i++)
-    {
-      if(!pfread(trashbuf,tilesize(tf4Bit),f))
-      {
-        goto error;
-      }
-    }
-    
-    //read the combo info and make sure it worked
-    if(!p_igetw(&combos_used,f))
-    {
-      goto error;
-    }
-    for (int32_t i=0; i<combos_used; i++)
-    {
-      if(!pfread(trashbuf,sizeof(newcombo),f))
-      {
-        goto error;
-      }
-    }
-    
-    //read the palette info and make sure it worked
-    for (int32_t i=0; i<48; i++)
-    {
-      if(!pfread(trashbuf,newpdTOTAL,f))
-      {
-        goto error;
-      }
-    }
-    if(!pfread(trashbuf,sizeof(palcycle)*256*3,f))
-    {
-      goto error;
-    }
-    for (int32_t i=0; i<MAXLEVELS; i++)
-    {
-      if(!pfread(trashbuf,PALNAMESIZE,f))
-      {
-        goto error;
-      }
-    }
-    
-    //read the sprite info and make sure it worked
-    for (int32_t i=0; i<MAXITEMS; i++)
-    {
-      if(!pfread(trashbuf,sizeof(itemdata),f))
-      {
-        goto error;
-      }
-    }
-    
-    for (int32_t i=0; i<MAXWPNS; i++)
-    {
-      if(!pfread(trashbuf,sizeof(wpndata),f))
-      {
-        goto error;
-      }
-    }
-    
-    //read the triforce pieces info and make sure it worked
-    for (int32_t i=0; i<8; ++i)
-    {
-      if(!p_getc(&trashbuf,f))
-      {
-        goto error;
-      }
-    }
-    
-    
-    
-    //read the game icons info and make sure it worked
-    for (int32_t i=0; i<4; ++i)
-    {
-      if(!p_igetw(&trashbuf,f))
-      {
-        goto error;
-      }
-    }
-    
-    //read the misc colors info and map styles info and make sure it worked
-    if(!pfread(trashbuf,sizeof(zcolors),f))
-    {
-      goto error;
-    }
-    
-    //read the template screens and make sure it worked
-    byte num_maps;
-    if(!p_getc(&num_maps,f))
-    {
-      goto error;
-    }
-    for (int32_t i=0; i<TEMPLATES; i++)
-    {
-      if(!pfread(trashbuf,sizeof(mapscr),f))
-      {
-        goto error;
-      }
-    }
-    if (num_maps>1)                                           //dungeon templates
-    {
-      for (int32_t i=0; i<TEMPLATES; i++)
-      {
-        if(!pfread(trashbuf,sizeof(mapscr),f))
-        {
-          goto error;
-        }
-      }
-    }
-    
-    //yay!  it worked!  close the file and say everything was ok.
-    pack_fclose(f);
-    return true;
-    
-    error:
-    pack_fclose(f);
-    return false;*/
 }
 
 bool valid_zqt(const char *filename)
@@ -1238,9 +1102,7 @@ int32_t get_qst_buffers()
         return 0;
         
     memset(newtilebuf, 0, NEWMAXTILES*sizeof(tiledata));
-    //Z_message("Performed memset on tiles\n"); 
     clear_tiles(newtilebuf);
-    //Z_message("Performed clear_tiles()\n"); 
     
     if (get_app_id() == App::zquest)
     {
@@ -1250,20 +1112,11 @@ int32_t get_qst_buffers()
         memset(grabtilebuf, 0, NEWMAXTILES*sizeof(tiledata));
         clear_tiles(grabtilebuf);
     }
-    
-    if((trashbuf=(byte*)malloc(100000))==NULL)
+
+    if((itemsbuf=(itemdata*)malloc(sizeof(itemdata)*(MAXITEMS)))==NULL)
         return 0;
         
-    // Big, ugly band-aid here. Perhaps the most common cause of random crashes
-    // has been inadvertently accessing itemsbuf[-1]. All such crashes should be
-    // fixed by ensuring there's actually itemdata there.
-    // If you change this, be sure to update del_qst_buffers, too.
-    
-    if((itemsbuf=(itemdata*)malloc(sizeof(itemdata)*(MAXITEMS+1)))==NULL)
-        return 0;
-        
-    memset(itemsbuf,0,sizeof(itemdata)*(MAXITEMS+1));
-    itemsbuf++;
+    memset(itemsbuf,0,sizeof(itemdata)*(MAXITEMS));
     
     if((wpnsbuf=(wpndata*)malloc(sizeof(wpndata)*MAXWPNS))==NULL)
         return 0;
@@ -1312,31 +1165,16 @@ void free_grabtilebuf()
 
 void del_qst_buffers()
 {
-    if(MsgStrings) delete[] MsgStrings;
-    
-	if (DMaps) delete[] DMaps;
-    
+    delete[] MsgStrings;
+	delete[] DMaps;
 	combobuf.clear();
-    
-    if(colordata) free(colordata);
-	
+    free(colordata);
     free_newtilebuf();
     free_grabtilebuf();
-    
-    if(trashbuf) free(trashbuf);
-    
-    // See get_qst_buffers
-    if(itemsbuf)
-    {
-        itemsbuf--;
-        free(itemsbuf);
-    }
-    
-    if(wpnsbuf) free(wpnsbuf);
-    
-    if(guysbuf) free(guysbuf);
-    
-    if(combo_class_buf) free(combo_class_buf);
+	free(itemsbuf);
+    free(wpnsbuf);
+    free(guysbuf);
+    free(combo_class_buf);
 }
 
 bool init_palnames()

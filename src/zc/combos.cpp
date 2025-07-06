@@ -1691,8 +1691,8 @@ bool trigger_damage_combo(mapscr* scr, int32_t cid, int type, int ptrval, int32_
 		dmg = cmb.attributes[0] / -10000L;
 	else dmg = combo_class_buf[cmb.type].modify_hp_amount;
 	
-	bool global_defring = ((itemsbuf[current_item_id(itype_ring)].flags & item_flag1));
-	bool global_perilring = ((itemsbuf[current_item_id(itype_perilring)].flags & item_flag1));
+	bool global_defring = ((current_itemdata(itype_ring).flags & item_flag1));
+	bool global_perilring = ((current_itemdata(itype_perilring).flags & item_flag1));
 
 	bool current_ring = (scr->flags6&fTOGGLERINGDAMAGE) != 0;
 	if(current_ring)

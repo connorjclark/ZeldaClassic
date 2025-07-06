@@ -1980,7 +1980,7 @@ int32_t iswaterex(int32_t combo, int32_t map, int32_t screen, int32_t layer, int
 					}
 					if (iswater_type(cmb.type) && (cmb.walk&(1<<b)) && ((cmb.usrflags&cflag3) || (cmb.usrflags&cflag4)
 						|| (hero && current_item(itype_flippers) < cmb.attribytes[0])
-						|| (hero && ((cmb.usrflags&cflag1) && !(itemsbuf[current_item_id(itype_flippers)].flags & item_flag3)))))
+						|| (hero && ((cmb.usrflags&cflag1) && !(current_itemdata(itype_flippers).flags & item_flag3)))))
 					{
 						if (!(ShallowCheck && (cmb.walk&(1<<b)) && (cmb.usrflags&cflag4))) return 0;
 					}

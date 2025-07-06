@@ -111,23 +111,23 @@ int32_t select_dropitem(int32_t item_set)
     
     for(int32_t k=10; k>=0; --k)
     {
-    
         int32_t current_chance=item_drop_sets[item_set].chance[k];
         int32_t current_item=(k==0 ? -1 : item_drop_sets[item_set].item[k-1]);
+		auto& item = get_itemdata(current_item);
         
-        if((!get_qr(qr_ENABLEMAGIC)||(game->get_maxmagic()<=0))&&(current_item>=0&&itemsbuf[current_item].family == itype_magic))
+        if((!get_qr(qr_ENABLEMAGIC)||(game->get_maxmagic()<=0))&&(current_item>=0&&item.family == itype_magic))
         {
             current_chance=0;
         }
         
-        if((!get_qr(qr_TRUEARROWS))&&(current_item>=0&&itemsbuf[current_item].family == itype_arrowammo))
+        if((!get_qr(qr_TRUEARROWS))&&(current_item>=0&&item.family == itype_arrowammo))
         {
             current_chance=0;
         }
         
 		if(get_qr(qr_SMARTDROPS))
 		{
-			if(itemsbuf[current_item].amount > 0 && game->get_maxcounter(itemsbuf[current_item].count) == 0)
+			if(item.amount > 0 && game->get_maxcounter(item.count) == 0)
 			{
 				current_chance = 0;
 			}
@@ -135,7 +135,7 @@ int32_t select_dropitem(int32_t item_set)
 		
 		if(get_qr(qr_SMARTER_DROPS)) //OH SHIT EMILY
 		{											//DEEDEE 'BOUT TO DAB ON YOU
-			if(itemsbuf[current_item].amount > 0 && game->get_counter(itemsbuf[current_item].count) >= game->get_maxcounter(itemsbuf[current_item].count))
+			if(item.amount > 0 && game->get_counter(item.count) >= game->get_maxcounter(itemsbuf[current_item].count))
 			{
 				current_chance = 0;	//Item droprate being set to 0 faster than I can chug an entire coffee (read: fast)
 			}

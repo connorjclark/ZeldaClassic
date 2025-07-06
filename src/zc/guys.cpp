@@ -3881,7 +3881,7 @@ int32_t enemy::takehit(weapon *w, weapon* realweap)
 	
 	case wHSHandle:
 	{
-		if(itemsbuf[enemyHitWeapon>-1 ? enemyHitWeapon : current_item_id(itype_hookshot)].flags & item_flag1)
+		if (get_itemdata(enemyHitWeapon>-1 ? enemyHitWeapon : current_item_id(itype_hookshot)).flags & item_flag1)
 			return 0;
 			
 		bool ignorehookshot = ((defense[edefHOOKSHOT] == edIGNORE) || ((defense[edefHOOKSHOT] == edIGNOREL1 || defense[edefHOOKSHOT] == edSTUNORIGNORE)
@@ -20977,7 +20977,8 @@ void check_enemy_lweapon_collision(weapon *w)
 					break;
 			}
 			if(pitem < 0) pitem = current_item_id(itype);
-			if(w->id == wHookshot && w->family_class == itype_switchhook && (itemsbuf[pitem].flags & item_flag9))
+			auto& pitemdata = get_itemdata(pitem);
+			if(w->id == wHookshot && w->family_class == itype_switchhook && (pitemdata.flags & item_flag9))
 			{ //Swap with item
 				for(int32_t j=0; j<items.Count(); j++)
 				{
@@ -21006,7 +21007,7 @@ void check_enemy_lweapon_collision(weapon *w)
 					}
 				}
 			}
-			else if((w->id==wArrow&&itemsbuf[pitem].flags & item_flag2)||(w->id!=wArrow&&!(itemsbuf[pitem].flags & item_flag5)))//An arrow with "Picks up items" or a BRang/HShot without "Drags items"
+			else if((w->id==wArrow&&pitemdata.flags & item_flag2)||(w->id!=wArrow&&!(pitemdata.flags & item_flag5)))//An arrow with "Picks up items" or a BRang/HShot without "Drags items"
 			{
 				for(int32_t j=0; j<items.Count(); j++)
 				{
@@ -21016,7 +21017,7 @@ void check_enemy_lweapon_collision(weapon *w)
 						bool priced = theItem->PriceIndex >-1;
 						bool isKey = itemsbuf[theItem->id].family==itype_key||itemsbuf[theItem->id].family==itype_lkey;
 						if(!theItem->fallclk && !theItem->drownclk && ((theItem->pickup & ipTIMER && theItem->clk2 >= 32)
-							|| (((itemsbuf[pitem].flags & item_flag4)||(theItem->pickup & ipCANGRAB)||((itemsbuf[pitem].flags & item_flag7)&&isKey))&& !priced)))
+							|| (((pitemdata.flags & item_flag4)||(theItem->pickup & ipCANGRAB)||((pitemdata.flags & item_flag7)&&isKey))&& !priced)))
 						{
 							if(itemsbuf[theItem->id].collect_script)
 							{
@@ -21038,7 +21039,7 @@ void check_enemy_lweapon_collision(weapon *w)
 						bool priced = theItem->PriceIndex >-1;
 						bool isKey = itemsbuf[theItem->id].family==itype_key||itemsbuf[theItem->id].family==itype_lkey;
 						if(!theItem->fallclk && !theItem->drownclk && ((theItem->pickup & ipTIMER && theItem->clk2 >= 32)
-							|| (((itemsbuf[pitem].flags & item_flag4)||(theItem->pickup & ipCANGRAB)||((itemsbuf[pitem].flags & item_flag7)&&isKey)) && !priced && !(theItem->pickup & ipDUMMY))))
+							|| (((pitemdata.flags & item_flag4)||(theItem->pickup & ipCANGRAB)||((pitemdata.flags & item_flag7)&&isKey)) && !priced && !(theItem->pickup & ipDUMMY))))
 						{
 							int32_t pickup = theItem->pickup;
 							int32_t id2 = theItem->id;

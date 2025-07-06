@@ -529,7 +529,7 @@ COLOR_MAP trans_table, trans_table2;
 MIDI *song=NULL;
 BITMAP *menu1, *menu3, *mapscreenbmp, *tmp_scr, *screen2, *mouse_bmp[MOUSE_BMP_MAX][4], *mouse_bmp_1x[MOUSE_BMP_MAX][4], *icon_bmp[ICON_BMP_MAX][4], *flag_bmp[16][4], *select_bmp[2], *dmapbmp_small, *dmapbmp_large;
 BITMAP *arrow_bmp[MAXARROWS],*brushbmp, *brushscreen; //*brushshadowbmp;
-byte *colordata=NULL, *trashbuf=NULL;
+byte *colordata=NULL;
 itemdata *itemsbuf;
 wpndata  *wpnsbuf;
 comboclass *combo_class_buf;
@@ -23049,6 +23049,23 @@ int32_t current_item_id(int32_t itemtype, bool, bool, bool)
     return -1;
 }
 
+const itemdata& current_itemdata(int32_t itemtype)
+{
+	static itemdata null_item;
+
+	int id = current_item_id(itemtype);
+	return get_itemdata(id);
+}
+
+const itemdata& get_itemdata(int32_t id)
+{
+	static itemdata null_item;
+
+	if (id == -1)
+		return null_item;
+
+	return itemsbuf[id];
+}
 
 bool can_use_item(int32_t item_type, int32_t item)
 {
@@ -26310,7 +26327,7 @@ bool checkCost(int32_t ctr, int32_t amnt)
 		case crSBOMBS:
 		{
 			if(current_item_power(itype_bombbag)
-				&& itemsbuf[current_item_id(itype_bombbag)].flags & item_flag1)
+				&& current_itemdata(itype_bombbag).flags & item_flag1)
 				return true;
 			break;
 		}

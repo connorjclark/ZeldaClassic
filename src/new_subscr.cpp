@@ -144,6 +144,9 @@ void kill_subscr_items()
 
 bool is_counter_item(int32_t itmid, int32_t ctr)
 {
+	if (itmid == -1)
+		return false;
+
 	itemdata const& itm = itemsbuf[itmid];
 	if(ctr == crNONE) return false;
 	if(ctr == itm.cost_counter[0] ||
@@ -185,49 +188,49 @@ static int simplify_counter(int ctr)
 	{
 		case sscBTNCTRA_0:
 		{
-			itemdata const& itm = itemsbuf[Awpn&0xFF];
+			itemdata const& itm = get_itemdata(Awpn&0xFF);
 			if(!itm.cost_amount[0]) return crNONE;
 			return itm.cost_counter[0];
 		}
 		case sscBTNCTRA_1:
 		{
-			itemdata const& itm = itemsbuf[Awpn&0xFF];
+			itemdata const& itm = get_itemdata(Awpn&0xFF);
 			if(!itm.cost_amount[1]) return crNONE;
 			return itm.cost_counter[1];
 		}
 		case sscBTNCTRB_0:
 		{
-			itemdata const& itm = itemsbuf[Bwpn&0xFF];
+			itemdata const& itm = get_itemdata(Bwpn&0xFF);
 			if(!itm.cost_amount[0]) return crNONE;
 			return itm.cost_counter[0];
 		}
 		case sscBTNCTRB_1:
 		{
-			itemdata const& itm = itemsbuf[Bwpn&0xFF];
+			itemdata const& itm = get_itemdata(Bwpn&0xFF);
 			if(!itm.cost_amount[1]) return crNONE;
 			return itm.cost_counter[1];
 		}
 		case sscBTNCTRX_0:
 		{
-			itemdata const& itm = itemsbuf[Xwpn&0xFF];
+			itemdata const& itm = get_itemdata(Xwpn&0xFF);
 			if(!itm.cost_amount[0]) return crNONE;
 			return itm.cost_counter[0];
 		}
 		case sscBTNCTRX_1:
 		{
-			itemdata const& itm = itemsbuf[Xwpn&0xFF];
+			itemdata const& itm = get_itemdata(Xwpn&0xFF);
 			if(!itm.cost_amount[1]) return crNONE;
 			return itm.cost_counter[1];
 		}
 		case sscBTNCTRY_0:
 		{
-			itemdata const& itm = itemsbuf[Ywpn&0xFF];
+			itemdata const& itm = get_itemdata(Ywpn&0xFF);
 			if(!itm.cost_amount[0]) return crNONE;
 			return itm.cost_counter[0];
 		}
 		case sscBTNCTRY_1:
 		{
-			itemdata const& itm = itemsbuf[Ywpn&0xFF];
+			itemdata const& itm = get_itemdata(Ywpn&0xFF);
 			if(!itm.cost_amount[1]) return crNONE;
 			return itm.cost_counter[1];
 		}

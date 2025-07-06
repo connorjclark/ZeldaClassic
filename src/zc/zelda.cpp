@@ -246,7 +246,7 @@ BITMAP     *framebuf, *menu_bmp, *gui_bmp, *scrollbuf, *scrollbuf_old, *tmp_bmp,
 BITMAP     *zcmouse[NUM_ZCMOUSE];
 PALETTE    RAMpal;
 PALETTE    pal_gui;
-byte       *colordata, *trashbuf;
+byte       *colordata;
 //byte       *tilebuf;
 itemdata   *itemsbuf;
 wpndata    *wpnsbuf;
@@ -3558,66 +3558,66 @@ void game_loop()
 			
 			if(!freezemsg && current_item(itype_heartring))
 			{
-				int32_t itemid = current_item_id(itype_heartring);
-				int32_t fskip = itemsbuf[itemid].misc2;
+				auto& item = current_itemdata(itype_heartring);
+				int32_t fskip = item.misc2;
 				
 				if(fskip == 0 || frame % fskip == 0)
-					game->set_life(zc_min(game->get_life() + itemsbuf[itemid].misc1, game->get_maxlife()));
+					game->set_life(zc_min(game->get_life() + item.misc1, game->get_maxlife()));
 			}
 			if(!freezemsg && current_item(itype_magicring))
 			{
-				int32_t itemid = current_item_id(itype_magicring);
-				int32_t fskip = itemsbuf[itemid].misc2;
+				auto& item = current_itemdata(itype_magicring);
+				int32_t fskip = item.misc2;
 				
 				if(fskip == 0 || frame % fskip == 0)
 				{
-					game->set_magic(zc_min(game->get_magic() + itemsbuf[itemid].misc1, game->get_maxmagic()));
+					game->set_magic(zc_min(game->get_magic() + item.misc1, game->get_maxmagic()));
 				}
 			}
 			if(!freezemsg && current_item(itype_wallet))
 			{
-				int32_t itemid = current_item_id(itype_wallet);
-				int32_t fskip = itemsbuf[itemid].misc2;
+				auto& item = current_itemdata(itype_wallet);
+				int32_t fskip = item.misc2;
 				
 				if(fskip == 0 || frame % fskip == 0)
 				{
-					game->set_rupies(zc_min(game->get_rupies() + itemsbuf[itemid].misc1, game->get_maxcounter(1)));
+					game->set_rupies(zc_min(game->get_rupies() + item.misc1, game->get_maxcounter(1)));
 				}
 			}
 			if(!freezemsg && current_item(itype_bombbag))
 			{
-				int32_t itemid = current_item_id(itype_bombbag);
+				auto& item = current_itemdata(itype_bombbag);
 				
-				if(itemsbuf[itemid].misc1)
+				if(item.misc1)
 				{
-					int32_t fskip = itemsbuf[itemid].misc2;
+					int32_t fskip = item.misc2;
 					
 					if(fskip == 0 || frame % fskip == 0)
 					{
-						game->set_bombs(zc_min(game->get_bombs() + itemsbuf[itemid].misc1, game->get_maxbombs()));
+						game->set_bombs(zc_min(game->get_bombs() + item.misc1, game->get_maxbombs()));
 					}
 					
-					if((itemsbuf[itemid].flags & item_flag1) && zinit.bomb_ratio)
+					if((item.flags & item_flag1) && zinit.bomb_ratio)
 					{
 						int32_t ratio = zinit.bomb_ratio;
 						
-						fskip = itemsbuf[itemid].misc2 * ratio;
+						fskip = item.misc2 * ratio;
 						
 						if(fskip == 0 || frame % fskip == 0)
 						{
-							game->set_sbombs(zc_min(game->get_sbombs() + zc_max(itemsbuf[itemid].misc1 / ratio, 1), game->get_maxbombs() / ratio));
+							game->set_sbombs(zc_min(game->get_sbombs() + zc_max(item.misc1 / ratio, 1), game->get_maxbombs() / ratio));
 						}
 					}
 				}
 			}
 			if(!freezemsg && current_item(itype_quiver) && game->get_arrows() != game->get_maxarrows())
 			{
-				int32_t itemid = current_item_id(itype_quiver);
-				int32_t fskip = itemsbuf[itemid].misc2;
+				auto& item = current_itemdata(itype_quiver);
+				int32_t fskip = item.misc2;
 				
 				if(fskip == 0 || frame % fskip == 0)
 				{
-					game->set_arrows(zc_min(game->get_arrows() + itemsbuf[itemid].misc1, game->get_maxarrows()));
+					game->set_arrows(zc_min(game->get_arrows() + item.misc1, game->get_maxarrows()));
 				}
 			}
 
@@ -5269,7 +5269,7 @@ bool checkCost(int32_t ctr, int32_t amnt)
 		case crSBOMBS:
 		{
 			if(current_item_power(itype_bombbag)
-				&& itemsbuf[current_item_id(itype_bombbag)].flags & item_flag1)
+				&& current_itemdata(itype_bombbag).flags & item_flag1)
 				return true;
 			break;
 		}
@@ -5337,7 +5337,7 @@ void payCost(int32_t ctr, int32_t amnt, int32_t tmr, bool ignoreTimer)
 		case crSBOMBS:
 		{
 			if(cost && current_item_power(itype_bombbag)
-				&& itemsbuf[current_item_id(itype_bombbag)].flags & item_flag1)
+				&& current_itemdata(itype_bombbag).flags & item_flag1)
 				return;
 			break;
 		}

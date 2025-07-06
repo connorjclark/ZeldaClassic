@@ -18,7 +18,7 @@ item::~item()
 		return;
 	// TODO: we should have an item manager class in zc and manage lifetime explicitly, not via dtors.
 #ifndef IS_EDITOR
-	if(itemsbuf[id].family==itype_fairy && itemsbuf[id].misc3>0 && misc>0 && (!get_qr(qr_OLD_FAIRY_LIMIT) || replay_version_check(28)))
+	if(id >= 0 && itemsbuf[id].family==itype_fairy && itemsbuf[id].misc3>0 && misc>0 && (!get_qr(qr_OLD_FAIRY_LIMIT) || replay_version_check(28)))
 		killfairynew(*this);
 	FFCore.deallocateAllScriptOwned(ScriptType::ItemSprite, getUID());
 #endif
@@ -417,7 +417,7 @@ void putitem(BITMAP *dest,int32_t x,int32_t y,int32_t item_id)
 	temp.yofs=0;
 	temp.hide_hitbox = true;
 	
-	if ( itemsbuf[item_id].overrideFLAGS > 0 ) {
+	if ( item_id >= 0 && itemsbuf[item_id].overrideFLAGS > 0 ) {
 		temp.extend = 3; 
 		if ( itemsbuf[item_id].overrideFLAGS&OVERRIDE_TILE_WIDTH ) { temp.txsz = itemsbuf[item_id].tilew;}
 		if ( itemsbuf[item_id].overrideFLAGS&OVERRIDE_TILE_HEIGHT ){temp.tysz = itemsbuf[item_id].tileh;}
@@ -691,7 +691,7 @@ void putitem2(BITMAP *dest,int32_t x,int32_t y,int32_t item_id, int32_t &aclk, i
 	{
 		temp.flash=(flash != 0);
 	}
-	if ( itemsbuf[item_id].overrideFLAGS > 0 ) {
+	if ( item_id >= 0 && itemsbuf[item_id].overrideFLAGS > 0 ) {
 		temp.extend = 3;
 		if ( itemsbuf[item_id].overrideFLAGS&OVERRIDE_TILE_WIDTH ) { temp.txsz = itemsbuf[item_id].tilew;}
 		if ( itemsbuf[item_id].overrideFLAGS&OVERRIDE_TILE_HEIGHT ){temp.tysz = itemsbuf[item_id].tileh;}
@@ -725,7 +725,7 @@ void dummyitem_animate(item* dummy, int32_t clk)
 	dummy->aclk=dummy->aframe ? (clk-del*spd)%spd : clk;
 	
 	auto item_id = dummy->id;
-	if ( itemsbuf[item_id].overrideFLAGS > 0 )
+	if ( item_id >= 0 && itemsbuf[item_id].overrideFLAGS > 0 )
 	{
 		dummy->extend = 3;
 		if ( itemsbuf[item_id].overrideFLAGS&OVERRIDE_TILE_WIDTH ) {dummy->txsz = itemsbuf[item_id].tilew;}
