@@ -497,7 +497,9 @@ static void add_context_liveness(OptContext& ctx)
 	auto& vars = ctx.liveness_vars;
 	vars.resize(ctx.block_starts.size());
 
-	std::set<pc_t> worklist;
+	std::vector<pc_t> worklist;
+	std::vector<bool> in_worklist(ctx.block_starts.size(), false);
+
 	for (pc_t block_index = 0; block_index < ctx.block_starts.size(); block_index++)
 	{
 		uint8_t gen = 0;
@@ -531,13 +533,17 @@ static void add_context_liveness(OptContext& ctx)
 
 		// Minor optimization: only seed the worklist with exit blocks or blocks that use a register.
 		if (returns || gen || E(block_index).empty())
-			worklist.insert(block_index);
+		{
+			worklist.push_back(block_index);
+			in_worklist[block_index] = true;
+		}
 	}
 
 	while (!worklist.empty())
 	{
-		pc_t block_index = *worklist.begin();
-		worklist.erase(worklist.begin());
+		pc_t block_index = worklist.back();
+		worklist.pop_back();
+		in_worklist[block_index] = false;
 
 		auto& [in, out, gen, kill, returns] = vars.at(block_index);
 
@@ -552,8 +558,14 @@ static void add_context_liveness(OptContext& ctx)
 
 		if (in != old_in)
 		{
-			for (pc_t e : precede.at(block_index))
-				worklist.insert(e);
+			for (pc_t predecessor : precede.at(block_index))
+			{
+				if (!in_worklist[predecessor])
+				{
+					worklist.push_back(predecessor);
+					in_worklist[predecessor] = true;
+				}
+			}
 		}
 	}
 }
