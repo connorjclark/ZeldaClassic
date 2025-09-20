@@ -3,6 +3,7 @@
 #include "base/general.h"
 #include "base/qrs.h"
 #include "base/zdefs.h"
+#include "zasm/table.h"
 #include "zc/jit.h"
 #include "zc/ffscript.h"
 #include "zc/script_debug.h"
@@ -49,6 +50,33 @@ struct CompilationState
 };
 
 extern ScriptDebugHandle* runtime_script_debug_handle;
+
+// Very useful tool for identifying a single bad function compilation.
+// Use with a tool like `find-first-fail`: https://gitlab.com/ole.tange/tangetools/-/blob/master/find-first-fail/find-first-fail
+// 1. Enable ENABLE_BISECT_TOOL below.
+// 2. Make a new script `tmp.sh` calling a failing replay (change to use the failing replay, but don't change --extra_args):
+//        python tests/run_replay_tests.py --filter stellar --frame 40000 --not_interactive --extra_args="-replay-fail-assert-instant -jit-precompile -jit-threads 0 -test-jit-bisect $1"
+// 3. Run the bisect script (may need to increase the end range if script is large, as it is based on number of functions):
+//        bash ~/tools/find-first-fail.sh -s 0 -e 10000 -v -q bash tmp.sh
+// 4. For the number given, set `-test-jit-bisect` to that, and set a breakpoint
+//    where specified in bisect_tool_should_skip. Whatever function being processed is the one to focus on.
+// #define ENABLE_BISECT_TOOL
+static bool bisect_tool_should_skip()
+{
+#ifdef ENABLE_BISECT_TOOL
+	static int64_t c = 0;
+	static int64_t x = get_flag_int("-test-jit-bisect").value();
+	// Skip the first x calls.
+	bool skip = 0 <= c && c < x;
+	c++;
+	if (!skip)
+		// Set a breakpoint here.
+		x = x;
+	return skip;
+#else
+	return false;
+#endif
+}
 
 static void debug_pre_command(int32_t pc, uint32_t sp)
 {
@@ -1490,7 +1518,7 @@ static void compile_single_command(CompilationState& state, x86::Compiler& cc, c
 enum class AstOp {
 	// Leaf nodes (inputs)
 	Constant,     // A literal value (from SETV)
-	D_Register,   // A value from a D register's memory location
+	Register,   // A value from a D register's memory location
 	LoadStack,    // A value loaded from the script stack (from LOAD)
 
 	// Binary operations
@@ -1542,7 +1570,7 @@ static x86::Gp generate_code_for_node(CompilationState& state, x86::Compiler& cc
 			cc.mov(node->result_reg, node->value);
 			break;
 		}
-		case AstOp::D_Register:
+		case AstOp::Register:
 		{
 			if (DEBUG_JIT_PRINT_ASM)
 			{
@@ -1550,8 +1578,7 @@ static x86::Gp generate_code_for_node(CompilationState& state, x86::Compiler& cc
 				cc.nop();
 			}
 
-			node->result_reg = cc.newInt32();
-			cc.mov(node->result_reg, x86::ptr_32(state.ptrRegisters, node->register_id * 4));
+			node->result_reg = get_z_register(state, cc, node->register_id);
 			break;
 		}
 		case AstOp::LoadStack:
@@ -1568,12 +1595,23 @@ static x86::Gp generate_code_for_node(CompilationState& state, x86::Compiler& cc
 				cc.mov(state.vExpressionStackFrame, x86::ptr_32(state.ptrRegisters, rSFRAME * 4));
 			}
 
-			x86::Gp offset = cc.newInt32();
-			cc.mov(offset, state.vExpressionStackFrame);
+			x86::Gp offset;
 			if (node->stack_offset == 1)
+			{
+				offset = cc.newInt32();
+				cc.mov(offset, state.vExpressionStackFrame);
 				cc.inc(offset);
+			}
 			else if (node->stack_offset)
+			{
+				offset = cc.newInt32();
+				cc.mov(offset, state.vExpressionStackFrame);
 				cc.add(offset, node->stack_offset);
+			}
+			else
+			{
+				offset = state.vExpressionStackFrame;
+			}
 
 			node->result_reg = cc.newInt32();
 			cc.mov(node->result_reg, x86::ptr_32(state.ptrStackBase, offset, 2));
@@ -1598,8 +1636,13 @@ static x86::Gp generate_code_for_node(CompilationState& state, x86::Compiler& cc
 				else if (node->op == AstOp::Sub) cc.sub(left_reg, immediate_value);
 				else if (node->op == AstOp::Mul)
 				{
-					cc.imul(left_reg, left_reg, immediate_value);
-					div_10000(cc, left_reg);
+					x86::Gp val1 = cc.newInt64();
+					cc.movsxd(val1, left_reg);
+
+					cc.imul(val1, immediate_value);
+					div_10000(cc, val1);
+
+					cc.mov(left_reg, val1.r32());
 				}
 				else if (node->op == AstOp::Div)
 				{
@@ -1651,8 +1694,15 @@ static x86::Gp generate_code_for_node(CompilationState& state, x86::Compiler& cc
 				}
 				else if (node->op == AstOp::Mul)
 				{
-					cc.imul(left_reg, right_reg);
-					div_10000(cc, left_reg);
+					x86::Gp val1 = cc.newInt64();
+					cc.movsxd(val1, left_reg);
+					x86::Gp val2 = cc.newInt64();
+					cc.movsxd(val2, right_reg);
+
+					cc.imul(val1, val2);
+					div_10000(cc, val1);
+
+					cc.mov(left_reg, val1.r32());
 				}
 			}
 			
@@ -1683,7 +1733,7 @@ static bool is_expression_terminator(const ffscript& op)
 		// REFFFC), so for now end the expression when non-D registers are seen.
 		case POP:
 		case SETR:
-			return op.arg1 > D(INITIAL_D);
+			return op.arg1 > D(INITIAL_D) || op.arg1 == rSFRAME;
 		default:
 			return !command_is_compiled(op.command);
 	}
@@ -1695,6 +1745,14 @@ static bool is_expression_terminator(const ffscript& op)
 // Returns the number of ZASM instructions consumed if successful, otherwise 0.
 static int try_compile_expression_tree(CompilationState& state, x86::Compiler& cc, zasm_script* script, pc_t i)
 {
+	if (bisect_tool_should_skip())
+		return 0;
+
+	// TODO !
+	// bool ok = false;
+	// if (i == 29160) ok = true;
+	// if (!ok) return 0;
+
 	std::map<int, std::unique_ptr<AstNode>> live_expressions;
 	std::vector<std::unique_ptr<AstNode>> simulated_stack;
 	pc_t pc = i;
@@ -1727,7 +1785,7 @@ static int try_compile_expression_tree(CompilationState& state, x86::Compiler& c
 				}
 				else
 				{
-					live_expressions[dest] = std::make_unique<AstNode>(AstOp::D_Register, src, true);
+					live_expressions[dest] = std::make_unique<AstNode>(AstOp::Register, src, true);
 					if (DEBUG_JIT_PRINT_ASM)
 						live_expressions[dest]->source_zasm = fmt::format("↳ {} {}", pc, zasm_op_to_string(op));
 				}
@@ -1743,7 +1801,8 @@ static int try_compile_expression_tree(CompilationState& state, x86::Compiler& c
 
 			case ADDV:
 			case DIVV:
-			case MULTV:
+			// TODO !
+			// case MULTV:
 			case SUBV:
 			{
 				int dest = op.arg1;
@@ -1755,7 +1814,7 @@ static int try_compile_expression_tree(CompilationState& state, x86::Compiler& c
 
 				has_optimized = true;
 				if (!live_expressions.contains(dest)) {
-					live_expressions[dest] = std::make_unique<AstNode>(AstOp::D_Register, dest, true);
+					live_expressions[dest] = std::make_unique<AstNode>(AstOp::Register, dest, true);
 				}
 
 				AstOp ast_op;
@@ -1782,7 +1841,12 @@ static int try_compile_expression_tree(CompilationState& state, x86::Compiler& c
 				}
 				break;
 			}
-			case ADDR: case SUBR: case MULTR: case MODR: {
+
+			case ADDR:
+			case MODR:
+			case MULTR:
+			case SUBR:
+			{
 				int dest = op.arg1;
 				if (last_push_reg == dest)
 				{
@@ -1793,10 +1857,10 @@ static int try_compile_expression_tree(CompilationState& state, x86::Compiler& c
 				has_optimized = true;
 				int src = op.arg2;
 				if (!live_expressions.contains(dest)) {
-					live_expressions[dest] = std::make_unique<AstNode>(AstOp::D_Register, dest, true);
+					live_expressions[dest] = std::make_unique<AstNode>(AstOp::Register, dest, true);
 				}
 				if (!live_expressions.contains(src)) {
-					live_expressions[src] = std::make_unique<AstNode>(AstOp::D_Register, src, true);
+					live_expressions[src] = std::make_unique<AstNode>(AstOp::Register, src, true);
 				}
 
 				AstOp ast_op;
@@ -1827,7 +1891,7 @@ static int try_compile_expression_tree(CompilationState& state, x86::Compiler& c
 				}
 				else
 				{
-					simulated_stack.push_back(std::make_unique<AstNode>(AstOp::D_Register, op.arg1, true));
+					simulated_stack.push_back(std::make_unique<AstNode>(AstOp::Register, op.arg1, true));
 					// TODO !
 					// if (DEBUG_JIT_PRINT_ASM)
 					// 	simulated_stack.back()->source_zasm = zasm_op_to_string(op);
@@ -1883,6 +1947,14 @@ end_parse:
 			cc.nop();
 		}
 		cc.nop();
+	}
+
+	for (const auto& node : simulated_stack)
+	{
+		x86::Gp result_reg = generate_code_for_node(state, cc, node.get());
+		// TODO ! Note: Your handle_check_sp_push may need to be called here.
+		modify_sp(state, cc, state.vSp, -1);
+		cc.mov(x86::ptr_32(state.ptrStackBase, state.vSp, 2), result_reg);
 	}
 
 	if (ends_in_compare)
@@ -1946,9 +2018,9 @@ end_parse:
 static std::optional<JittedFunction> compile_function(zasm_script* script, JittedScript* j_script, const ZasmFunction& fn)
 {
 	// TODO !
-	// if (!(fn.start_pc == 26791 || fn.start_pc == 987))
+	// if (!(fn.start_pc == 26539 || fn.start_pc == 26791 || fn.start_pc == 936))
 	// 	return std::nullopt;
-	// if (!(fn.start_pc == 26254))
+	// if (!(fn.start_pc == 1025))
 	// 	return std::nullopt;
 
 	pc_t start_pc = fn.start_pc;
@@ -2289,33 +2361,6 @@ static std::optional<JittedFunction> compile_function(zasm_script* script, Jitte
 		.pc_to_stack_size = std::move(pc_to_stack_size),
 	};
 	return j_fn;
-}
-
-// Very useful tool for identifying a single bad function compilation.
-// Use with a tool like `find-first-fail`: https://gitlab.com/ole.tange/tangetools/-/blob/master/find-first-fail/find-first-fail
-// 1. Enable ENABLE_BISECT_TOOL below.
-// 2. Make a new script `tmp.sh` calling a failing replay (change to use the failing replay, but don't change --extra_args):
-//        python tests/run_replay_tests.py --filter stellar --frame 40000 --not_interactive --extra_args="-replay-fail-assert-instant -jit-precompile -jit-threads 0 -test-jit-bisect $1"
-// 3. Run the bisect script (may need to increase the end range if script is large, as it is based on number of functions):
-//        bash ~/tools/find-first-fail.sh -s 0 -e 10000 -v -q bash tmp.sh
-// 4. For the number given, set `-test-jit-bisect` to that, and set a breakpoint
-//    where specified in bisect_tool_should_skip. Whatever function being processed is the one to focus on.
-// #define ENABLE_BISECT_TOOL
-static bool bisect_tool_should_skip()
-{
-#ifdef ENABLE_BISECT_TOOL
-	static int64_t c = 0;
-	static int64_t x = get_flag_int("-test-jit-bisect").value();
-	// Skip the first x calls.
-	bool skip = 0 <= c && c < x;
-	c++;
-	if (!skip)
-		// Set a breakpoint here.
-		x = x;
-	return skip;
-#else
-	return false;
-#endif
 }
 
 static bool compile_and_queue_function(zasm_script* script, JittedScript* j_script, const ZasmFunction& fn)
