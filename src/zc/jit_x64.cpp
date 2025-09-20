@@ -1,4 +1,5 @@
 #include "zc/jit_x64.h"
+#include "asmjit/x86/x86operand.h"
 #include "base/general.h"
 #include "base/qrs.h"
 #include "base/zdefs.h"
@@ -35,6 +36,7 @@ struct CompilationState
 	x86::Gp vResult;
 	x86::Gp vSp;
 	x86::Gp vSwitchKey;
+	x86::Gp vExpressionStackFrame;
 	x86::Gp ptrCtx;
 	x86::Gp ptrRegisters;
 	x86::Gp ptrStackBase;
@@ -1492,7 +1494,7 @@ enum class AstOp {
 	LoadStack,    // A value loaded from the script stack (from LOAD)
 
 	// Binary operations
-	Add, Sub, Mul, Div,
+	Add, Sub, Mul, Div, Mod,
 };
 
 struct AstNode
@@ -1520,18 +1522,21 @@ struct AstNode
 };
 
 // Recursively generates assembly for a given AST node and returns the CPU register holding the result.
-static x86::Gp generate_code_for_node(CompilationState& state, x86::Compiler& cc, AstNode* node) {
-	if (!node) return x86::Gp();
-	if (node->result_reg.isValid()) return node->result_reg;
-
-	
+static x86::Gp generate_code_for_node(CompilationState& state, x86::Compiler& cc, AstNode* node)
+{
+	DCHECK(node);
+	if (node->result_reg.isValid())
+		return node->result_reg;
 
 	switch (node->op)
 	{
 		case AstOp::Constant:
 		{
 			if (DEBUG_JIT_PRINT_ASM)
+			{
 				cc.setInlineComment(node->source_zasm.c_str());
+				cc.nop();
+			}
 
 			node->result_reg = cc.newInt32();
 			cc.mov(node->result_reg, node->value);
@@ -1540,7 +1545,10 @@ static x86::Gp generate_code_for_node(CompilationState& state, x86::Compiler& cc
 		case AstOp::D_Register:
 		{
 			if (DEBUG_JIT_PRINT_ASM)
+			{
 				cc.setInlineComment(node->source_zasm.c_str());
+				cc.nop();
+			}
 
 			node->result_reg = cc.newInt32();
 			cc.mov(node->result_reg, x86::ptr_32(state.ptrRegisters, node->register_id * 4));
@@ -1549,18 +1557,31 @@ static x86::Gp generate_code_for_node(CompilationState& state, x86::Compiler& cc
 		case AstOp::LoadStack:
 		{
 			if (DEBUG_JIT_PRINT_ASM)
+			{
 				cc.setInlineComment(node->source_zasm.c_str());
+				cc.nop();
+			}
+
+			if (!state.vExpressionStackFrame.isValid())
+			{
+				state.vExpressionStackFrame = cc.newInt32();
+				cc.mov(state.vExpressionStackFrame, x86::ptr_32(state.ptrRegisters, rSFRAME * 4));
+			}
 
 			x86::Gp offset = cc.newInt32();
-			cc.mov(offset, get_z_register(state, cc, rSFRAME)); // TODO !
-			cc.add(offset, node->stack_offset);
+			cc.mov(offset, state.vExpressionStackFrame);
+			if (node->stack_offset == 1)
+				cc.inc(offset);
+			else if (node->stack_offset)
+				cc.add(offset, node->stack_offset);
 
 			node->result_reg = cc.newInt32();
-			cc.mov(node->result_reg, x86::ptr_32(state.ptrStackBase, offset, 2)); // scale by 4
+			cc.mov(node->result_reg, x86::ptr_32(state.ptrStackBase, offset, 2));
 			break;
 		}
 		case AstOp::Add:
 		case AstOp::Div:
+		case AstOp::Mod:
 		case AstOp::Mul:
 		case AstOp::Sub:
 		{
@@ -1570,9 +1591,7 @@ static x86::Gp generate_code_for_node(CompilationState& state, x86::Compiler& cc
 			if (node->right->op == AstOp::Constant)
 			{
 				if (DEBUG_JIT_PRINT_ASM)
-				{
 					cc.setInlineComment(node->source_zasm.c_str());
-				}
 
 				int32_t immediate_value = node->right->value;
 				if (node->op == AstOp::Add) cc.add(left_reg, immediate_value);
@@ -1601,12 +1620,35 @@ static x86::Gp generate_code_for_node(CompilationState& state, x86::Compiler& cc
 				x86::Gp right_reg = generate_code_for_node(state, cc, node->right.get());
 
 				if (DEBUG_JIT_PRINT_ASM)
-				{
 					cc.setInlineComment(node->source_zasm.c_str());
-				}
 
 				if (node->op == AstOp::Add) cc.add(left_reg, right_reg);
 				else if (node->op == AstOp::Sub) cc.sub(left_reg, right_reg);
+				else if (node->op == AstOp::Mod)
+				{
+					x86::Gp dividend = left_reg;
+					x86::Gp divisor = right_reg;
+
+					Label do_modulo = cc.newLabel();
+					Label do_set_register = cc.newLabel();
+
+					x86::Gp rem = cc.newInt32();
+					zero(cc, rem);
+
+					cc.test(divisor, divisor);
+					cc.jnz(do_modulo);
+
+					InvokeNode *invokeNode;
+					cc.invoke(&invokeNode, log_error_mod_0, FuncSignatureT<void>(state.calling_convention));
+					cc.jmp(do_set_register);
+
+					cc.bind(do_modulo);
+					cc.cdq(rem, dividend);
+					cc.idiv(rem, dividend, divisor);
+
+					cc.bind(do_set_register);
+					cc.mov(left_reg, rem);
+				}
 				else if (node->op == AstOp::Mul)
 				{
 					cc.imul(left_reg, right_reg);
@@ -1623,12 +1665,12 @@ static x86::Gp generate_code_for_node(CompilationState& state, x86::Compiler& cc
 }
 
 // Helper to identify instructions that end an expression-building sequence
-static bool is_expression_terminator(int command)
+static bool is_expression_terminator(const ffscript& op)
 {
-	if (command_is_goto(command) || command_is_wait(command))
+	if (command_is_goto(op.command) || command_is_wait(op.command))
 		return true;
 
-	switch (command)
+	switch (op.command)
 	{
 		case STORE:
 		case COMPARER:
@@ -1637,8 +1679,13 @@ static bool is_expression_terminator(int command)
 		case RETURNFUNC:
 		case QUIT:
 			return true;
+		// TODO: currently cannot handle implicit register dependencies (like how DATA depends on
+		// REFFFC), so for now end the expression when non-D registers are seen.
+		case POP:
+		case SETR:
+			return op.arg1 > D(INITIAL_D);
 		default:
-			return !command_is_compiled(command);
+			return !command_is_compiled(op.command);
 	}
 }
 
@@ -1652,15 +1699,15 @@ static int try_compile_expression_tree(CompilationState& state, x86::Compiler& c
 	std::vector<std::unique_ptr<AstNode>> simulated_stack;
 	pc_t pc = i;
 	bool has_optimized = false;
+	int last_push_reg = -1;
 
-	// Scan ahead and build the expression tree(s)
+	// Scan ahead and build the expression tree.
 	while (pc <= state.final_pc)
 	{
-		const ffscript& op = script->zasm[pc];
+		const auto& op = script->zasm[pc];
 
-		if (is_expression_terminator(op.command)) {
+		if (is_expression_terminator(op))
 			break;
-		}
 
 		switch (op.command)
 		{
@@ -1699,8 +1746,14 @@ static int try_compile_expression_tree(CompilationState& state, x86::Compiler& c
 			case MULTV:
 			case SUBV:
 			{
-				has_optimized = true;
 				int dest = op.arg1;
+				if (last_push_reg == dest)
+				{
+					has_optimized = false;
+					goto end_parse;
+				}
+
+				has_optimized = true;
 				if (!live_expressions.contains(dest)) {
 					live_expressions[dest] = std::make_unique<AstNode>(AstOp::D_Register, dest, true);
 				}
@@ -1729,9 +1782,15 @@ static int try_compile_expression_tree(CompilationState& state, x86::Compiler& c
 				}
 				break;
 			}
-			case ADDR: case SUBR: case MULTR: {
-				has_optimized = true;
+			case ADDR: case SUBR: case MULTR: case MODR: {
 				int dest = op.arg1;
+				if (last_push_reg == dest)
+				{
+					has_optimized = false;
+					goto end_parse;
+				}
+
+				has_optimized = true;
 				int src = op.arg2;
 				if (!live_expressions.contains(dest)) {
 					live_expressions[dest] = std::make_unique<AstNode>(AstOp::D_Register, dest, true);
@@ -1743,10 +1802,11 @@ static int try_compile_expression_tree(CompilationState& state, x86::Compiler& c
 				AstOp ast_op;
 				switch (op.command)
 				{
-					case ADDV: ast_op = AstOp::Add; break;
-					case DIVV: ast_op = AstOp::Div; break;
-					case MULTV: ast_op = AstOp::Mul; break;
-					case SUBV: ast_op = AstOp::Sub; break;
+					case ADDR: ast_op = AstOp::Add; break;
+					case DIVR: ast_op = AstOp::Div; break;
+					case MULTR: ast_op = AstOp::Mul; break;
+					case SUBR: ast_op = AstOp::Sub; break;
+					case MODR: ast_op = AstOp::Mod; break;
 				}
 
 				auto left = std::move(live_expressions[dest]);
@@ -1755,24 +1815,25 @@ static int try_compile_expression_tree(CompilationState& state, x86::Compiler& c
 
 				if (DEBUG_JIT_PRINT_ASM)
 				{
-					// live_expressions[dest]->source_zasm = fmt::format("↳ ({}) {} ({})", 
-					// 	live_expressions[dest]->left->source_zasm, 
-					// 	zasm_op_to_string(op.command), 
-					// 	live_expressions[dest]->right->source_zasm);
-					// TODO !
 					live_expressions[dest]->source_zasm = fmt::format("↳ {} {}", pc, zasm_op_to_string(op));
 				}
 				break;
 			}
-			case PUSHR: {
-				if (live_expressions.contains(op.arg1)) {
+			case PUSHR: // TODO ! PUSHV
+			{
+				if (live_expressions.contains(op.arg1))
+				{
 					simulated_stack.push_back(std::move(live_expressions[op.arg1]));
-				} else {
+				}
+				else
+				{
 					simulated_stack.push_back(std::make_unique<AstNode>(AstOp::D_Register, op.arg1, true));
 					// TODO !
 					// if (DEBUG_JIT_PRINT_ASM)
 					// 	simulated_stack.back()->source_zasm = zasm_op_to_string(op);
 				}
+
+				last_push_reg = op.arg1;
 				break;
 			}
 			case POP: {
@@ -1787,16 +1848,23 @@ static int try_compile_expression_tree(CompilationState& state, x86::Compiler& c
 			default:
 				goto end_parse;
 		}
+
 		pc++;
+		if (op.command != PUSHR) last_push_reg = -1;
+		// TODO ! get block end
+		if (state.j_script->cfg.contains_block_start(pc))
+			break;
 	}
 
 end_parse:
 	int instructions_parsed = pc - i;
-	if (!has_optimized || instructions_parsed == 0) {
+	if (!has_optimized || instructions_parsed <= 1)
 		return 0;
-	}
 
-	const ffscript& terminator_op = script->zasm[pc];
+	state.vExpressionStackFrame = x86::Gp();
+
+	const auto& terminator_op = script->zasm[pc];
+	// TODO ! handle STORE too?
 	bool ends_in_compare = terminator_op.command == COMPARER || terminator_op.command == COMPAREV;
 	if (ends_in_compare)
 		instructions_parsed += 1;
@@ -1878,8 +1946,10 @@ end_parse:
 static std::optional<JittedFunction> compile_function(zasm_script* script, JittedScript* j_script, const ZasmFunction& fn)
 {
 	// TODO !
-	if (!(fn.start_pc == 26791 || fn.start_pc == 987))
-		return std::nullopt;
+	// if (!(fn.start_pc == 26791 || fn.start_pc == 987))
+	// 	return std::nullopt;
+	// if (!(fn.start_pc == 26254))
+	// 	return std::nullopt;
 
 	pc_t start_pc = fn.start_pc;
 	pc_t final_pc = fn.final_pc;
