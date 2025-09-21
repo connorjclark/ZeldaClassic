@@ -785,6 +785,39 @@ static void log_error_mod_0()
 static size_t debug_last_pc;
 #endif
 
+static x86::Gp compile_modv(CompilationState& state, x86::Compiler& cc, x86::Gp arg1, int arg2)
+{
+	if (arg2 == 0)
+	{
+		x86::Gp val = cc.newInt32();
+		zero(cc, val);
+
+		InvokeNode *invokeNode;
+		cc.invoke(&invokeNode, log_error_div_0, FuncSignatureT<void>(state.calling_convention));
+		return val;
+	}
+
+	// https://stackoverflow.com/a/8022107/2788187
+	if (arg2 > 0 && (arg2 & (-arg2)) == arg2)
+	{
+		// Power of 2.
+		// Because numbers in zscript are fixed point, "2" is really "20000"... so this won't
+		// ever really be utilized.
+		cc.and_(arg1, arg2 - 1);
+		return arg1;
+	}
+	else
+	{
+		x86::Gp divisor = cc.newInt32();
+		cc.mov(divisor, arg2);
+		x86::Gp rem = cc.newInt32();
+		zero(cc, rem);
+		cc.cdq(rem, arg1);
+		cc.idiv(rem, arg1, divisor);
+		return rem;
+	}
+}
+
 // Every command here must be reflected in command_is_compiled!
 static void compile_single_command(CompilationState& state, x86::Compiler& cc, const ffscript& instr, pc_t pc, zasm_script *script)
 {
@@ -1262,37 +1295,41 @@ static void compile_single_command(CompilationState& state, x86::Compiler& cc, c
 		break;
 		case MODV:
 		{
-			if (arg2 == 0)
-			{
-				x86::Gp val = cc.newInt32();
-				zero(cc, val);
-				set_z_register(state, cc, arg1, val);
+			x86::Gp result = compile_modv(state, cc, get_z_register(state, cc, arg1), arg2);
+			set_z_register(state, cc, arg1, result);
+			// TODO !
 
-				InvokeNode *invokeNode;
-				cc.invoke(&invokeNode, log_error_div_0, FuncSignatureT<void>(state.calling_convention));
-				break;
-			}
+			// if (arg2 == 0)
+			// {
+			// 	x86::Gp val = cc.newInt32();
+			// 	zero(cc, val);
+			// 	set_z_register(state, cc, arg1, val);
 
-			// https://stackoverflow.com/a/8022107/2788187
-			x86::Gp val = get_z_register(state, cc, arg1);
-			if (arg2 > 0 && (arg2 & (-arg2)) == arg2)
-			{
-				// Power of 2.
-				// Because numbers in zscript are fixed point, "2" is really "20000"... so this won't
-				// ever really be utilized.
-				cc.and_(val, arg2 - 1);
-				set_z_register(state, cc, arg1, val);
-			}
-			else
-			{
-				x86::Gp divisor = cc.newInt32();
-				cc.mov(divisor, arg2);
-				x86::Gp rem = cc.newInt32();
-				zero(cc, rem);
-				cc.cdq(rem, val);
-				cc.idiv(rem, val, divisor);
-				set_z_register(state, cc, arg1, rem);
-			}
+			// 	InvokeNode *invokeNode;
+			// 	cc.invoke(&invokeNode, log_error_div_0, FuncSignatureT<void>(state.calling_convention));
+			// 	break;
+			// }
+
+			// // https://stackoverflow.com/a/8022107/2788187
+			// x86::Gp val = get_z_register(state, cc, arg1);
+			// if (arg2 > 0 && (arg2 & (-arg2)) == arg2)
+			// {
+			// 	// Power of 2.
+			// 	// Because numbers in zscript are fixed point, "2" is really "20000"... so this won't
+			// 	// ever really be utilized.
+			// 	cc.and_(val, arg2 - 1);
+			// 	set_z_register(state, cc, arg1, val);
+			// }
+			// else
+			// {
+			// 	x86::Gp divisor = cc.newInt32();
+			// 	cc.mov(divisor, arg2);
+			// 	x86::Gp rem = cc.newInt32();
+			// 	zero(cc, rem);
+			// 	cc.cdq(rem, val);
+			// 	cc.idiv(rem, val, divisor);
+			// 	set_z_register(state, cc, arg1, rem);
+			// }
 		}
 		break;
 		case MODR:
@@ -1657,6 +1694,11 @@ static x86::Gp generate_code_for_node(CompilationState& state, x86::Compiler& cc
 					cc.idiv(dummy, dividend, divisor);
 					cc.mov(left_reg, dividend.r32());
 				}
+				else if (node->op == AstOp::Mod)
+				{
+					x86::Gp result = compile_modv(state, cc, left_reg, immediate_value);
+					cc.mov(left_reg, result);
+				}
 			}
 			else
 			{
@@ -1747,7 +1789,7 @@ static int try_compile_expression_tree(CompilationState& state, x86::Compiler& c
 {
 	// TODO !
 	// bool ok = false;
-	// if (i == 44610) ok = true;
+	// if (i == 35212) ok = true;
 	// if (!ok) return 0;
 
 	std::map<int, std::unique_ptr<AstNode>> live_expressions;
@@ -2033,7 +2075,7 @@ static std::optional<JittedFunction> compile_function(zasm_script* script, Jitte
 	// TODO !
 	// if (!(fn.start_pc == 26539 || fn.start_pc == 26791 || fn.start_pc == 936))
 	// 	return std::nullopt;
-	// if (!(fn.start_pc == 44534))
+	// if (!(fn.start_pc == 35124))
 	// 	return std::nullopt;
 
 	pc_t start_pc = fn.start_pc;
