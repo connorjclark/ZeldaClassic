@@ -1745,12 +1745,9 @@ static bool is_expression_terminator(const ffscript& op)
 // Returns the number of ZASM instructions consumed if successful, otherwise 0.
 static int try_compile_expression_tree(CompilationState& state, x86::Compiler& cc, zasm_script* script, pc_t i)
 {
-	if (bisect_tool_should_skip())
-		return 0;
-
 	// TODO !
 	// bool ok = false;
-	// if (i == 29160) ok = true;
+	// if (i == 44610) ok = true;
 	// if (!ok) return 0;
 
 	std::map<int, std::unique_ptr<AstNode>> live_expressions;
@@ -1779,6 +1776,13 @@ static int try_compile_expression_tree(CompilationState& state, x86::Compiler& c
 			case SETR: {
 				int dest = op.arg1;
 				int src = op.arg2;
+
+				if (has_register_dependency(dest) || has_register_dependency(src))
+				{
+					has_optimized = false;
+					goto end_parse;
+				}
+
 				if (live_expressions.contains(src))
 				{
 					live_expressions[dest] = std::move(live_expressions[src]);
@@ -1895,6 +1899,9 @@ static int try_compile_expression_tree(CompilationState& state, x86::Compiler& c
 					// TODO !
 					// if (DEBUG_JIT_PRINT_ASM)
 					// 	simulated_stack.back()->source_zasm = zasm_op_to_string(op);
+					// TODO !
+					// if (i == pc)
+					// 	goto end_parse;
 				}
 
 				last_push_reg = op.arg1;
@@ -1923,6 +1930,9 @@ static int try_compile_expression_tree(CompilationState& state, x86::Compiler& c
 end_parse:
 	int instructions_parsed = pc - i;
 	if (!has_optimized || instructions_parsed <= 1)
+		return 0;
+
+	if (bisect_tool_should_skip())
 		return 0;
 
 	state.vExpressionStackFrame = x86::Gp();
@@ -2020,7 +2030,7 @@ static std::optional<JittedFunction> compile_function(zasm_script* script, Jitte
 	// TODO !
 	// if (!(fn.start_pc == 26539 || fn.start_pc == 26791 || fn.start_pc == 936))
 	// 	return std::nullopt;
-	// if (!(fn.start_pc == 1025))
+	// if (!(fn.start_pc == 44534))
 	// 	return std::nullopt;
 
 	pc_t start_pc = fn.start_pc;
@@ -2367,8 +2377,9 @@ static bool compile_and_queue_function(zasm_script* script, JittedScript* j_scri
 {
 	j_script->functions_requested_to_be_compiled[fn.id] = true;
 
-	if (bisect_tool_should_skip())
-		return false;
+	// TODO !
+	// if (bisect_tool_should_skip())
+	// 	return false;
 
 	auto j_fn = compile_function(script, j_script, fn);
 	if (!j_fn)
