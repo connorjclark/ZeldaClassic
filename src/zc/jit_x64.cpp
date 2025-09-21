@@ -1805,8 +1805,7 @@ static int try_compile_expression_tree(CompilationState& state, x86::Compiler& c
 
 			case ADDV:
 			case DIVV:
-			// TODO !
-			// case MULTV:
+			case MULTV:
 			case SUBV:
 			{
 				int dest = op.arg1;
@@ -1907,11 +1906,15 @@ static int try_compile_expression_tree(CompilationState& state, x86::Compiler& c
 				last_push_reg = op.arg1;
 				break;
 			}
-			case POP: {
-				if (!simulated_stack.empty()) {
+			case POP:
+			{
+				if (!simulated_stack.empty())
+				{
 					live_expressions[op.arg1] = std::move(simulated_stack.back());
 					simulated_stack.pop_back();
-				} else {
+				}
+				else
+				{
 					goto end_parse;
 				}
 				break;
