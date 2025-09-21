@@ -1789,7 +1789,7 @@ static int try_compile_expression_tree(CompilationState& state, x86::Compiler& c
 {
 	// TODO !
 	// bool ok = false;
-	// if (i == 35212) ok = true;
+	// if (i == 94) ok = true;
 	// if (!ok) return 0;
 
 	std::map<int, std::unique_ptr<AstNode>> live_expressions;
@@ -1859,7 +1859,11 @@ static int try_compile_expression_tree(CompilationState& state, x86::Compiler& c
 
 				has_optimized = true;
 				if (!live_expressions.contains(dest)) {
-					live_expressions[dest] = std::make_unique<AstNode>(AstOp::Register, dest, true);
+					// TODO !
+					// live_expressions[dest] = std::make_unique<AstNode>(AstOp::Register, dest, true);
+					// TODO !
+					has_optimized = false;
+					goto end_parse;
 				}
 
 				AstOp ast_op;
@@ -1902,10 +1906,16 @@ static int try_compile_expression_tree(CompilationState& state, x86::Compiler& c
 				has_optimized = true;
 				int src = op.arg2;
 				if (!live_expressions.contains(dest)) {
-					live_expressions[dest] = std::make_unique<AstNode>(AstOp::Register, dest, true);
+					// live_expressions[dest] = std::make_unique<AstNode>(AstOp::Register, dest, true);
+					// TODO !
+					has_optimized = false;
+					goto end_parse;
 				}
 				if (!live_expressions.contains(src)) {
-					live_expressions[src] = std::make_unique<AstNode>(AstOp::Register, src, true);
+					// TODO !
+					// live_expressions[src] = std::make_unique<AstNode>(AstOp::Register, src, true);
+					has_optimized = false;
+					goto end_parse;
 				}
 
 				AstOp ast_op;
@@ -2075,7 +2085,7 @@ static std::optional<JittedFunction> compile_function(zasm_script* script, Jitte
 	// TODO !
 	// if (!(fn.start_pc == 26539 || fn.start_pc == 26791 || fn.start_pc == 936))
 	// 	return std::nullopt;
-	// if (!(fn.start_pc == 35124))
+	// if (!(fn.start_pc == 0) || script->name != "ffc-11-Z4Moblin")
 	// 	return std::nullopt;
 
 	pc_t start_pc = fn.start_pc;
