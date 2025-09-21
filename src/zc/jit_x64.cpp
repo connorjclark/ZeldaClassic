@@ -1788,15 +1788,27 @@ static bool is_expression_terminator(const ffscript& op)
 static int try_compile_expression_tree(CompilationState& state, x86::Compiler& cc, zasm_script* script, pc_t i)
 {
 	// TODO !
-	// bool ok = false;
-	// if (i == 94) ok = true;
-	// if (!ok) return 0;
+	bool ok = false;
+	if (i == 8077) ok = true;
+	if (!ok) return 0;
+
+	if (bisect_tool_should_skip())
+		return 0;
 
 	std::map<int, std::unique_ptr<AstNode>> live_expressions;
-	std::vector<std::unique_ptr<AstNode>> simulated_stack;
+	// std::vector<std::unique_ptr<AstNode>> simulated_stack;
+	std::vector<x86::Gp> simulated_stack;
+	std::map<int, x86::Gp> live_regs;
 	pc_t pc = i;
 	bool has_optimized = false;
 	int last_push_reg = -1;
+
+	auto get_operand = [&](int reg_id) -> x86::Gp {
+		if (live_regs.contains(reg_id))
+			return live_regs.at(reg_id);
+
+		return get_z_register(state, cc, reg_id);
+	};
 
 	// Scan ahead and build the expression tree.
 	while (pc <= state.final_pc)
@@ -1810,38 +1822,69 @@ static int try_compile_expression_tree(CompilationState& state, x86::Compiler& c
 		{
 			case SETV:
 			{
-				live_expressions[op.arg1] = std::make_unique<AstNode>(AstOp::Constant, op.arg2);
-				if (DEBUG_JIT_PRINT_ASM)
-					live_expressions[op.arg1]->source_zasm = fmt::format("↳ {} {}", pc, zasm_op_to_string(op));
+				live_regs[op.arg1] = cc.newInt32();
+				cc.mov(live_regs[op.arg1], op.arg2);
+				// live_expressions[op.arg1] = std::make_unique<AstNode>(AstOp::Constant, op.arg2);
+				// if (DEBUG_JIT_PRINT_ASM)
+				// 	live_expressions[op.arg1]->source_zasm = fmt::format("↳ {} {}", pc, zasm_op_to_string(op));
 				break;
 			}
 			case SETR: {
-				int dest = op.arg1;
-				int src = op.arg2;
+				live_regs[op.arg1] = get_operand(op.arg2);
+				// int dest = op.arg1;
+				// int src = op.arg2;
 
-				if (has_register_dependency(dest) || has_register_dependency(src))
-				{
-					has_optimized = false;
-					goto end_parse;
-				}
+				// if (has_register_dependency(dest) || has_register_dependency(src))
+				// {
+				// 	has_optimized = false;
+				// 	goto end_parse;
+				// }
 
-				if (live_expressions.contains(src))
-				{
-					live_expressions[dest] = std::move(live_expressions[src]);
-				}
-				else
-				{
-					live_expressions[dest] = std::make_unique<AstNode>(AstOp::Register, src, true);
-					if (DEBUG_JIT_PRINT_ASM)
-						live_expressions[dest]->source_zasm = fmt::format("↳ {} {}", pc, zasm_op_to_string(op));
-				}
+				// if (live_expressions.contains(src))
+				// {
+				// 	live_expressions[dest] = std::move(live_expressions[src]);
+				// }
+				// else
+				// {
+				// 	live_expressions[dest] = std::make_unique<AstNode>(AstOp::Register, src, true);
+				// 	if (DEBUG_JIT_PRINT_ASM)
+				// 		live_expressions[dest]->source_zasm = fmt::format("↳ {} {}", pc, zasm_op_to_string(op));
+				// }
 				break;
 			}
 			case LOAD:
 			{
-				live_expressions[op.arg1] = std::make_unique<AstNode>(AstOp::LoadStack, op.arg2, false);
-				if (DEBUG_JIT_PRINT_ASM)
-					live_expressions[op.arg1]->source_zasm = fmt::format("↳ {} {}", pc, zasm_op_to_string(op));
+				if (!state.vExpressionStackFrame.isValid())
+				{
+					state.vExpressionStackFrame = cc.newInt32();
+					cc.mov(state.vExpressionStackFrame, x86::ptr_32(state.ptrRegisters, rSFRAME * 4));
+				}
+
+				x86::Gp offset;
+				if (op.arg2 == 1)
+				{
+					offset = cc.newInt32();
+					cc.mov(offset, state.vExpressionStackFrame);
+					cc.inc(offset);
+				}
+				else if (op.arg2)
+				{
+					offset = cc.newInt32();
+					cc.mov(offset, state.vExpressionStackFrame);
+					cc.add(offset, op.arg2);
+				}
+				else
+				{
+					offset = state.vExpressionStackFrame;
+				}
+
+				auto reg = cc.newInt32();
+				cc.mov(reg, x86::ptr_32(state.ptrStackBase, offset, 2));
+				live_regs[op.arg1] = reg;
+
+				// live_expressions[op.arg1] = std::make_unique<AstNode>(AstOp::LoadStack, op.arg2, false);
+				// if (DEBUG_JIT_PRINT_ASM)
+				// 	live_expressions[op.arg1]->source_zasm = fmt::format("↳ {} {}", pc, zasm_op_to_string(op));
 				break;
 			}
 
@@ -1850,44 +1893,70 @@ static int try_compile_expression_tree(CompilationState& state, x86::Compiler& c
 			case MULTV:
 			case SUBV:
 			{
-				int dest = op.arg1;
-				if (last_push_reg == dest)
-				{
-					has_optimized = false;
-					goto end_parse;
-				}
-
 				has_optimized = true;
-				if (!live_expressions.contains(dest)) {
-					// TODO !
-					// live_expressions[dest] = std::make_unique<AstNode>(AstOp::Register, dest, true);
-					// TODO !
-					has_optimized = false;
-					goto end_parse;
-				}
-
-				AstOp ast_op;
+				x86::Gp left_reg = get_operand(op.arg1);
+				int immediate_value = op.arg2;
 				switch (op.command)
 				{
-					case ADDV: ast_op = AstOp::Add; break;
-					case DIVV: ast_op = AstOp::Div; break;
-					case MULTV: ast_op = AstOp::Mul; break;
-					case SUBV: ast_op = AstOp::Sub; break;
+					case ADDV: cc.add(left_reg, immediate_value); break;
+					case DIVV:
+					{
+						x86::Gp dividend = cc.newInt64();
+						cc.movsxd(dividend, left_reg);
+						cc.imul(dividend, 10000);
+						x86::Gp divisor = cc.newInt64();
+						cc.mov(divisor, immediate_value);
+						x86::Gp dummy = cc.newInt64();
+						zero(cc, dummy);
+						cc.cqo(dummy, dividend);
+						cc.idiv(dummy, dividend, divisor);
+						cc.mov(left_reg, dividend.r32());
+						break;
+					}
+					// case MULTV: cc.add(left_reg, immediate_value); break;
+					case SUBV: cc.sub(left_reg, immediate_value); break;
 				}
 
-				auto left_node = std::move(live_expressions[dest]);
-				auto right_node = std::make_unique<AstNode>(AstOp::Constant, op.arg2);
-				live_expressions[dest] = std::make_unique<AstNode>(ast_op, std::move(left_node), std::move(right_node));
+				live_regs[op.arg1] = left_reg;
 
-				if (DEBUG_JIT_PRINT_ASM)
-				{
-					// live_expressions[dest]->source_zasm = fmt::format("↳ ({}) {} ({})", 
-					// 	live_expressions[dest]->left->source_zasm, 
-					// 	zasm_op_to_string(op.command), 
-					// 	live_expressions[dest]->right->source_zasm);
-					// TODO !
-					live_expressions[dest]->source_zasm = fmt::format("↳ {} {}", pc, zasm_op_to_string(op));
-				}
+				// int dest = op.arg1;
+				// if (last_push_reg == dest)
+				// {
+				// 	has_optimized = false;
+				// 	goto end_parse;
+				// }
+
+				// has_optimized = true;
+				// if (!live_expressions.contains(dest)) {
+				// 	// TODO !
+				// 	// live_expressions[dest] = std::make_unique<AstNode>(AstOp::Register, dest, true);
+				// 	// TODO !
+				// 	has_optimized = false;
+				// 	goto end_parse;
+				// }
+
+				// AstOp ast_op;
+				// switch (op.command)
+				// {
+				// 	case ADDV: ast_op = AstOp::Add; break;
+				// 	case DIVV: ast_op = AstOp::Div; break;
+				// 	case MULTV: ast_op = AstOp::Mul; break;
+				// 	case SUBV: ast_op = AstOp::Sub; break;
+				// }
+
+				// auto left_node = std::move(live_expressions[dest]);
+				// auto right_node = std::make_unique<AstNode>(AstOp::Constant, op.arg2);
+				// live_expressions[dest] = std::make_unique<AstNode>(ast_op, std::move(left_node), std::move(right_node));
+
+				// if (DEBUG_JIT_PRINT_ASM)
+				// {
+				// 	// live_expressions[dest]->source_zasm = fmt::format("↳ ({}) {} ({})", 
+				// 	// 	live_expressions[dest]->left->source_zasm, 
+				// 	// 	zasm_op_to_string(op.command), 
+				// 	// 	live_expressions[dest]->right->source_zasm);
+				// 	// TODO !
+				// 	live_expressions[dest]->source_zasm = fmt::format("↳ {} {}", pc, zasm_op_to_string(op));
+				// }
 				break;
 			}
 
@@ -1940,35 +2009,40 @@ static int try_compile_expression_tree(CompilationState& state, x86::Compiler& c
 			}
 			case PUSHR: // TODO ! PUSHV
 			{
-				if (live_expressions.contains(op.arg1))
-				{
-					simulated_stack.push_back(std::move(live_expressions[op.arg1]));
-				}
-				else
-				{
-					simulated_stack.push_back(std::make_unique<AstNode>(AstOp::Register, op.arg1, true));
-					// TODO !
-					// if (DEBUG_JIT_PRINT_ASM)
-					// 	simulated_stack.back()->source_zasm = zasm_op_to_string(op);
-					// TODO !
-					// if (i == pc)
-					// 	goto end_parse;
-				}
+				simulated_stack.push_back(get_operand(op.arg1));
+				// if (live_expressions.contains(op.arg1))
+				// {
+				// 	simulated_stack.push_back(std::move(live_expressions[op.arg1]));
+				// }
+				// else
+				// {
+				// 	simulated_stack.push_back(std::make_unique<AstNode>(AstOp::Register, op.arg1, true));
+				// 	// TODO !
+				// 	// if (DEBUG_JIT_PRINT_ASM)
+				// 	// 	simulated_stack.back()->source_zasm = zasm_op_to_string(op);
+				// 	// TODO !
+				// 	// if (i == pc)
+				// 	// 	goto end_parse;
+				// }
 
-				last_push_reg = op.arg1;
+				// last_push_reg = op.arg1;
 				break;
 			}
 			case POP:
 			{
-				if (!simulated_stack.empty())
-				{
-					live_expressions[op.arg1] = std::move(simulated_stack.back());
-					simulated_stack.pop_back();
-				}
-				else
-				{
-					goto end_parse;
-				}
+				if (!simulated_stack.empty()) {
+                    live_regs[op.arg1] = simulated_stack.back();
+                    simulated_stack.pop_back();
+                } else { goto end_parse; }
+				// if (!simulated_stack.empty())
+				// {
+				// 	live_expressions[op.arg1] = std::move(simulated_stack.back());
+				// 	simulated_stack.pop_back();
+				// }
+				// else
+				// {
+				// 	goto end_parse;
+				// }
 				break;
 			}
 			default:
@@ -1976,7 +2050,7 @@ static int try_compile_expression_tree(CompilationState& state, x86::Compiler& c
 		}
 
 		pc++;
-		if (op.command != PUSHR) last_push_reg = -1;
+		// if (op.command != PUSHR) last_push_reg = -1;
 		// TODO ! get block end
 		if (state.j_script->cfg.contains_block_start(pc))
 			break;
@@ -1984,10 +2058,9 @@ static int try_compile_expression_tree(CompilationState& state, x86::Compiler& c
 
 end_parse:
 	int instructions_parsed = pc - i;
-	if (!has_optimized || instructions_parsed <= 1)
-		return 0;
-
-	if (bisect_tool_should_skip())
+	// if (!has_optimized || instructions_parsed <= 1)
+	// 	return 0;
+	if (instructions_parsed == 0)
 		return 0;
 
 	state.vExpressionStackFrame = x86::Gp();
@@ -2014,68 +2087,80 @@ end_parse:
 		cc.nop();
 	}
 
-	for (const auto& node : simulated_stack)
-	{
-		x86::Gp result_reg = generate_code_for_node(state, cc, node.get());
-		// TODO ! Note: Your handle_check_sp_push may need to be called here.
-		modify_sp(state, cc, state.vSp, -1);
-		cc.mov(x86::ptr_32(state.ptrStackBase, state.vSp, 2), result_reg);
-	}
+	// --- Commit Phase ---
+    // Write the final values from the CPU registers back to the D-register memory slots.
+    for (auto const& [reg_id, cpu_reg] : live_regs) {
+        set_z_register(state, cc, reg_id, cpu_reg);
+    }
 
-	if (ends_in_compare)
-	{
-		x86::Gp left_reg, right_reg;
+    // Push any remaining values on the simulated stack to the real stack.
+    for (const auto& cpu_reg : simulated_stack) {
+        modify_sp(state, cc, state.vSp, -1);
+        cc.mov(x86::ptr_32(state.ptrStackBase, state.vSp, 2), cpu_reg);
+    }
 
-		int left_reg_idx = terminator_op.arg1;
-		if (live_expressions.contains(left_reg_idx))
-		{
-			left_reg = generate_code_for_node(state, cc, live_expressions[left_reg_idx].get());
-		}
-		else
-		{
-			left_reg = get_z_register(state, cc, left_reg_idx);
-		}
+	// for (const auto& node : simulated_stack)
+	// {
+	// 	x86::Gp result_reg = generate_code_for_node(state, cc, node.get());
+	// 	// TODO ! Note: Your handle_check_sp_push may need to be called here.
+	// 	modify_sp(state, cc, state.vSp, -1);
+	// 	cc.mov(x86::ptr_32(state.ptrStackBase, state.vSp, 2), result_reg);
+	// }
 
-		if (terminator_op.command == COMPAREV)
-		{
-			if (DEBUG_JIT_PRINT_ASM)
-			{
-				comment = fmt::format("↳ {} {}", pc, zasm_op_to_string(terminator_op));
-				cc.setInlineComment(comment.c_str());
-			}
+	// if (ends_in_compare)
+	// {
+	// 	x86::Gp left_reg, right_reg;
 
-			cc.cmp(left_reg, terminator_op.arg2);
-		}
-		else
-		{
-			int right_reg_idx = terminator_op.arg2;
-			if (live_expressions.contains(right_reg_idx)) {
-				right_reg = generate_code_for_node(state, cc, live_expressions[right_reg_idx].get());
-			} else {
-				right_reg = get_z_register(state, cc, right_reg_idx);
-			}
+	// 	int left_reg_idx = terminator_op.arg1;
+	// 	if (live_expressions.contains(left_reg_idx))
+	// 	{
+	// 		left_reg = generate_code_for_node(state, cc, live_expressions[left_reg_idx].get());
+	// 	}
+	// 	else
+	// 	{
+	// 		left_reg = get_z_register(state, cc, left_reg_idx);
+	// 	}
 
-			if (DEBUG_JIT_PRINT_ASM)
-			{
-				comment = fmt::format("↳ {} {}", pc, zasm_op_to_string(terminator_op));
-				cc.setInlineComment(comment.c_str());
-			}
+	// 	if (terminator_op.command == COMPAREV)
+	// 	{
+	// 		if (DEBUG_JIT_PRINT_ASM)
+	// 		{
+	// 			comment = fmt::format("↳ {} {}", pc, zasm_op_to_string(terminator_op));
+	// 			cc.setInlineComment(comment.c_str());
+	// 		}
 
-			cc.cmp(left_reg, right_reg);
-		}
+	// 		cc.cmp(left_reg, terminator_op.arg2);
+	// 	}
+	// 	else
+	// 	{
+	// 		int right_reg_idx = terminator_op.arg2;
+	// 		if (live_expressions.contains(right_reg_idx)) {
+	// 			right_reg = generate_code_for_node(state, cc, live_expressions[right_reg_idx].get());
+	// 		} else {
+	// 			right_reg = get_z_register(state, cc, right_reg_idx);
+	// 		}
 
-		return instructions_parsed;
-	}
+	// 		if (DEBUG_JIT_PRINT_ASM)
+	// 		{
+	// 			comment = fmt::format("↳ {} {}", pc, zasm_op_to_string(terminator_op));
+	// 			cc.setInlineComment(comment.c_str());
+	// 		}
 
-	// Fallback for other terminators: just write final values back to D registers.
-	for (auto const& [reg_id, node] : live_expressions)
-	{
-		if (node)
-		{
-			x86::Gp final_result_reg = generate_code_for_node(state, cc, node.get());
-			set_z_register(state, cc, reg_id, final_result_reg);
-		}
-	}
+	// 		cc.cmp(left_reg, right_reg);
+	// 	}
+
+	// 	return instructions_parsed;
+	// }
+
+	// // Fallback for other terminators: just write final values back to D registers.
+	// for (auto const& [reg_id, node] : live_expressions)
+	// {
+	// 	if (node)
+	// 	{
+	// 		x86::Gp final_result_reg = generate_code_for_node(state, cc, node.get());
+	// 		set_z_register(state, cc, reg_id, final_result_reg);
+	// 	}
+	// }
 	
 	return instructions_parsed;
 }
