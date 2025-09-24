@@ -57,6 +57,7 @@ struct CompilationState
 	// When to end the "lookahead" for stack pointer bounds checking (and start checking again).
 	pc_t num_push_commands_in_row_end_pc;
 	bool modified_stack;
+	bool runtime_debugging;
 };
 
 extern ScriptDebugHandle* runtime_script_debug_handle;
@@ -186,6 +187,9 @@ static x86::Gp get_z_register(CompilationState& state, x86::Compiler& cc, int r)
 	}
 	else
 	{
+		// TODO ! just flush registers needed for r?
+		flush_registers(state, cc);
+
 		// Call external get_register.
 		InvokeNode *invokeNode;
 		cc.invoke(&invokeNode, get_register, FuncSignatureT<int32_t, int32_t>(state.calling_convention));
@@ -239,6 +243,8 @@ static x86::Gp get_z_register_64(CompilationState& state, x86::Compiler& cc, int
 	}
 	else
 	{
+		flush_registers(state, cc);
+
 		// Call external get_register.
 		x86::Gp val32 = cc.newInt32();
 		InvokeNode *invokeNode;
@@ -1312,6 +1318,9 @@ static void compile_single_command(CompilationState& state, x86::Compiler& cc, c
 		break;
 		case POPARGS:
 		{
+			// TODO ! improve?
+			flush_registers(state, cc);
+
 			// int32_t num = sarg2;
 			// ri->sp += num;
 			modify_sp(state, cc, state.vSp, arg2);
@@ -1325,9 +1334,12 @@ static void compile_single_command(CompilationState& state, x86::Compiler& cc, c
 
 			// int32_t value = SH::read_stack(read);
 			// set_register(sarg1, value);
-			x86::Gp val = cc.newInt32();
-			cc.mov(val, x86::ptr_32(state.ptrStackBase, read, 2));
-			set_z_register(state, cc, arg1, val);
+			if (arg1 != D(5) || state.runtime_debugging) // Skip setting the "null" register (unless runtime debugging).
+			{
+				x86::Gp val = cc.newInt32();
+				cc.mov(val, x86::ptr_32(state.ptrStackBase, read, 2));
+				set_z_register(state, cc, arg1, val);
+			}
 		}
 		break;
 		case PEEK:
@@ -1759,7 +1771,7 @@ static void compile_single_command(CompilationState& state, x86::Compiler& cc, c
 static std::optional<JittedFunction> compile_function(zasm_script* script, JittedScript* j_script, const ZasmFunction& fn)
 {
 	// TODO !
-	// if (!(fn.start_pc == 936))
+	// if (!(fn.start_pc == 12363))
 	// 	return std::nullopt;
 	// if (!(fn.start_pc == 0) || script->name != "ffc-11-Z4Moblin")
 	// 	return std::nullopt;
@@ -1790,6 +1802,7 @@ static std::optional<JittedFunction> compile_function(zasm_script* script, Jitte
 		.j_script = j_script,
 		.start_pc = start_pc,
 		.final_pc = final_pc,
+		.runtime_debugging = runtime_debugging,
 	};
 
 	CodeHolder code;
@@ -1912,6 +1925,8 @@ static std::optional<JittedFunction> compile_function(zasm_script* script, Jitte
 	// 		should_use_cached_regs[i - start_pc] = use_cache;
 	// 	}
 	// }
+
+	// state.use_cached_regs = !bisect_tool_should_skip();
 
 	for (pc_t i = start_pc; i <= final_pc; i++)
 	{
@@ -2056,6 +2071,9 @@ static std::optional<JittedFunction> compile_function(zasm_script* script, Jitte
 		cc.setInlineComment("fall-thru");
 		cc.nop();
 	}
+
+	// TODO ! ?
+	flush_registers(state, cc);
 
 	if (fn.id == j_script->structured_zasm.functions.back().id)
 	{
