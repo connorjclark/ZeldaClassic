@@ -132,6 +132,7 @@ static void flush_registers(CompilationState& state, x86::Compiler& cc)
 	{
 		if (is_constant)
 		{
+			// TODO ! check overflow
 			modify_sp(state, cc, state.vSp, -1);
 			cc.mov(x86::ptr_32(state.ptrStackBase, state.vSp, 2), value);
 		}
@@ -1012,6 +1013,8 @@ static void compile_single_command(CompilationState& state, x86::Compiler& cc, c
 			if (state.use_cached_regs)
 			{
 				state.cached_d_reg_stack.push_back({.is_constant=true, .value=arg1});
+				if (DEBUG_JIT_PRINT_ASM)
+					cc.nop();
 				break;
 			}
 
@@ -1065,7 +1068,10 @@ static void compile_single_command(CompilationState& state, x86::Compiler& cc, c
 			if (state.use_cached_regs)
 			{
 				for (int i = 0; i < arg2; i++)
-					state.cached_d_reg_stack.push_back({.reg=x86::Gp()});
+					state.cached_d_reg_stack.push_back({.reg=get_z_register(state, cc, arg1), .value=arg1});
+				if (DEBUG_JIT_PRINT_ASM)
+					cc.nop();
+				break;
 			}
 
 			handle_check_sp_push(state, cc, script, pc, state.vSp);
@@ -1099,7 +1105,10 @@ static void compile_single_command(CompilationState& state, x86::Compiler& cc, c
 			if (state.use_cached_regs)
 			{
 				for (int i = 0; i < arg2; i++)
-					state.cached_d_reg_stack.push_back({.reg=x86::Gp()});
+					state.cached_d_reg_stack.push_back({.is_constant=true, .value=arg1});
+				if (DEBUG_JIT_PRINT_ASM)
+					cc.nop();
+				break;
 			}
 
 			handle_check_sp_push(state, cc, script, pc, state.vSp);
@@ -1774,7 +1783,7 @@ static void compile_single_command(CompilationState& state, x86::Compiler& cc, c
 static std::optional<JittedFunction> compile_function(zasm_script* script, JittedScript* j_script, const ZasmFunction& fn)
 {
 	// TODO !
-	// if (!(fn.start_pc == 12363))
+	// if (!(fn.start_pc == 712))
 	// 	return std::nullopt;
 	// if (!(fn.start_pc == 0) || script->name != "ffc-11-Z4Moblin")
 	// 	return std::nullopt;
@@ -1929,21 +1938,14 @@ static std::optional<JittedFunction> compile_function(zasm_script* script, Jitte
 	// 	}
 	// }
 
-	// state.use_cached_regs = !bisect_tool_should_skip();
+	state.use_cached_regs = !bisect_tool_should_skip();
 
 	for (pc_t i = start_pc; i <= final_pc; i++)
 	{
-		// state.use_cached_regs = false;
-		// if (i >= 987 && i <= 1024)
-			// state.use_cached_regs = true;
-		// if (i >= 26791 && i <= 26821)
-		// 	state.use_cached_regs = true;
+		// state.use_cached_regs = fn.start_pc == 897;
 
-		// state.use_cached_regs = fn.start_pc == 936;
-		state.use_cached_regs = true;
-
-		// state.use_cached_regs = i >= 965 && i <= 970;
-		// state.use_cached_regs = i >= 1017 && i <= 1018;
+		// state.use_cached_regs = i >= 745;
+		// state.use_cached_regs = i >= 712 && i <= 722;
 		// state.use_cached_regs = i >= 1008 && i <= 1016;
 		// state.use_cached_regs = i >= 26791 && i <= 26793;
 
