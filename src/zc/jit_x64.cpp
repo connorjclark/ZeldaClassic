@@ -2529,14 +2529,14 @@ static std::optional<JittedFunction> compile_function(zasm_script* script, Jitte
 
 	for (pc_t i = start_pc; i <= final_pc; i++)
 	{
-		state.use_cached_regs = false;
+		// state.use_cached_regs = false;
 		// if (i >= 987 && i <= 1024)
 			// state.use_cached_regs = true;
 		// if (i >= 26791 && i <= 26821)
 		// 	state.use_cached_regs = true;
 
 		// state.use_cached_regs = fn.start_pc == 936;
-		// state.use_cached_regs = true;
+		state.use_cached_regs = true;
 
 		// state.use_cached_regs = i >= 965 && i <= 970;
 		// state.use_cached_regs = i >= 1017 && i <= 1018;
