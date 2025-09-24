@@ -305,6 +305,9 @@ static void set_z_register(CompilationState& state, x86::Compiler& cc, int r, T 
 	}
 	else
 	{
+		// TODO ! just flush registers needed for r?
+		flush_registers(state, cc);
+
 		// Only some registers have an extra check when writing to them.
 		auto set_fn = set_register;
 		if (is_guarded_script_register(r))
