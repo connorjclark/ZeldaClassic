@@ -116,7 +116,7 @@ static void modify_sp(CompilationState& state, x86::Compiler& cc, x86::Gp vStack
 
 static void flush_registers(CompilationState& state, x86::Compiler& cc)
 {
-	if (DEBUG_JIT_PRINT_ASM && (!state.cached_d_regs.empty() || !state.cached_d_regs.empty()))
+	if (DEBUG_JIT_PRINT_ASM && (!state.cached_d_regs.empty() || !state.cached_d_reg_stack.empty()))
 	{
 		cc.setInlineComment("flush cached registers");
 		cc.nop();
@@ -1783,7 +1783,7 @@ static void compile_single_command(CompilationState& state, x86::Compiler& cc, c
 static std::optional<JittedFunction> compile_function(zasm_script* script, JittedScript* j_script, const ZasmFunction& fn)
 {
 	// TODO !
-	// if (!(fn.start_pc == 712))
+	// if (!(  fn.start_pc == 28773))
 	// 	return std::nullopt;
 	// if (!(fn.start_pc == 0) || script->name != "ffc-11-Z4Moblin")
 	// 	return std::nullopt;
@@ -1944,7 +1944,7 @@ static std::optional<JittedFunction> compile_function(zasm_script* script, Jitte
 	{
 		// state.use_cached_regs = fn.start_pc == 897;
 
-		// state.use_cached_regs = i >= 745;
+		// state.use_cached_regs = i >= 28719;
 		// state.use_cached_regs = i >= 712 && i <= 722;
 		// state.use_cached_regs = i >= 1008 && i <= 1016;
 		// state.use_cached_regs = i >= 26791 && i <= 26793;
@@ -1952,7 +1952,7 @@ static std::optional<JittedFunction> compile_function(zasm_script* script, Jitte
 		const auto& op = script->zasm[i];
 		int command = op.command;
 
-		if (command_is_goto(command) || command_is_wait(command) || !command_is_compiled(command) || command == CALLFUNC || state.j_script->cfg.contains_block_start(i))
+		if (command_is_goto(command) || command_is_wait(command) || !command_is_compiled(command) || command == CALLFUNC || command == RETURNFUNC || state.j_script->cfg.contains_block_start(i))
 			flush_registers(state, cc);
 
 		if (state.goto_labels.contains(i))
