@@ -1141,8 +1141,9 @@ static void compile_single_command(CompilationState& state, x86::Compiler& cc, c
 		case LOAD:
 		{
 			// Set register to a value on the stack (offset is arg2 + rSFRAME register).
+			x86::Gp sframe = get_z_register(state, cc, rSFRAME);
 			x86::Gp offset = cc.newInt32();
-			cc.mov(offset, x86::ptr_32(state.ptrRegisters, rSFRAME * 4));
+			cc.mov(offset, sframe);
 			if (arg2)
 				cc.add(offset, arg2);
 
@@ -1152,8 +1153,9 @@ static void compile_single_command(CompilationState& state, x86::Compiler& cc, c
 		case LOADD:
 		{
 			// Set register to a value on the stack (offset is arg2 + rSFRAME register).
+			x86::Gp sframe = get_z_register(state, cc, rSFRAME);
 			x86::Gp offset = cc.newInt32();
-			cc.mov(offset, x86::ptr_32(state.ptrRegisters, rSFRAME * 4));
+			cc.mov(offset, sframe);
 			if (arg2)
 				cc.add(offset, arg2);
 			div_10000(cc, offset);
@@ -1172,9 +1174,11 @@ static void compile_single_command(CompilationState& state, x86::Compiler& cc, c
 		break;
 		case REF_REMOVE:
 		{
+			x86::Gp sframe = get_z_register(state, cc, rSFRAME);
 			x86::Gp offset = cc.newInt32();
-			cc.mov(offset, arg1);
-			cc.add(offset, x86::ptr_32(state.ptrRegisters, rSFRAME * 4));
+			cc.add(offset, sframe);
+			if (arg1)
+				cc.mov(offset, arg1);
 
 			InvokeNode *invokeNode;
 			void script_remove_object_ref(int32_t offset);
@@ -1185,20 +1189,28 @@ static void compile_single_command(CompilationState& state, x86::Compiler& cc, c
 		case STORE:
 		{
 			// Write from register to a value on the stack (offset is arg2 + rSFRAME register).
+			x86::Gp val = get_z_register(state, cc, arg1);
+			x86::Gp sframe = get_z_register(state, cc, rSFRAME);
+			if (arg2 == 0)
+			{
+				cc.mov(x86::ptr_32(state.ptrStackBase, sframe, 2), val);
+				break;
+			}
+
 			x86::Gp offset = cc.newInt32();
 			cc.mov(offset, arg2);
-			cc.add(offset, x86::ptr_32(state.ptrRegisters, rSFRAME * 4));
+			cc.add(offset, sframe);
 
-			x86::Gp val = get_z_register(state, cc, arg1);
 			cc.mov(x86::ptr_32(state.ptrStackBase, offset, 2), val);
 		}
 		break;
 		case STORE_OBJECT:
 		{
 			// Same as STORE, but for a ref-counted object.
+			x86::Gp sframe = get_z_register(state, cc, rSFRAME);
 			x86::Gp offset = cc.newInt32();
 			cc.mov(offset, arg2);
-			cc.add(offset, x86::ptr_32(state.ptrRegisters, rSFRAME * 4));
+			cc.add(offset, sframe);
 
 			x86::Gp val = get_z_register(state, cc, arg1);
 
@@ -1240,7 +1252,7 @@ static void compile_single_command(CompilationState& state, x86::Compiler& cc, c
 
 			x86::Gp offset = cc.newInt32();
 			cc.mov(offset, arg2);
-			cc.add(offset, x86::ptr_32(state.ptrRegisters, rSFRAME * 4));
+			cc.add(offset, sframe);
 			div_10000(cc, offset);
 			
 			cc.mov(x86::ptr_32(state.ptrStackBase, offset, 2), val);
@@ -1249,12 +1261,18 @@ static void compile_single_command(CompilationState& state, x86::Compiler& cc, c
 		case STOREDV:
 		{
 			// Write directly value on the stack (offset is arg2 + rSFRAME register).
+			x86::Gp sframe = get_z_register(state, cc, rSFRAME);
+			if (arg2 == 0)
+			{
+				cc.mov(x86::ptr_32(state.ptrStackBase, sframe, 2), arg1);
+				break;
+			}
+
 			x86::Gp offset = cc.newInt32();
-			cc.mov(offset, x86::ptr_32(state.ptrRegisters, rSFRAME * 4));
-			if (arg2)
-				cc.add(offset, arg2);
+			cc.mov(offset, sframe);
+			cc.add(offset, arg2);
 			div_10000(cc, offset);
-			
+
 			cc.mov(x86::ptr_32(state.ptrStackBase, offset, 2), arg1);
 		}
 		break;
@@ -1309,6 +1327,28 @@ static void compile_single_command(CompilationState& state, x86::Compiler& cc, c
 			// set_register(sarg1, value);
 			x86::Gp val = cc.newInt32();
 			cc.mov(val, x86::ptr_32(state.ptrStackBase, read, 2));
+			set_z_register(state, cc, arg1, val);
+		}
+		break;
+		case PEEK:
+		{
+			if (state.use_cached_regs && !state.cached_d_reg_stack.empty())
+			{
+				auto& cached_value = state.cached_d_reg_stack.back();
+				if (cached_value.is_constant)
+				{
+					set_z_register(state, cc, arg1, cached_value.value);
+					break;
+				}
+				else if (cached_value.reg.isValid())
+				{
+					set_z_register(state, cc, arg1, cached_value.reg);
+					break;
+				}
+			}
+
+			x86::Gp val = cc.newInt32();
+			cc.mov(val, x86::ptr_32(state.ptrStackBase, state.vSp, 2));
 			set_z_register(state, cc, arg1, val);
 		}
 		break;
@@ -1706,13 +1746,6 @@ static void compile_single_command(CompilationState& state, x86::Compiler& cc, c
 			cc.roundsd(y, y, 10);
 			cc.cvttsd2si(val, y);
 			cc.imul(val, val, 10000);
-			set_z_register(state, cc, arg1, val);
-		}
-		break;
-		case PEEK:
-		{
-			x86::Gp val = cc.newInt32();
-			cc.mov(val, x86::ptr_32(state.ptrStackBase, state.vSp, 2));
 			set_z_register(state, cc, arg1, val);
 		}
 		break;
@@ -2340,7 +2373,7 @@ end_parse:
 static std::optional<JittedFunction> compile_function(zasm_script* script, JittedScript* j_script, const ZasmFunction& fn)
 {
 	// TODO !
-	// if (!(fn.start_pc == 987 || fn.start_pc == 26791))
+	// if (!(fn.start_pc == 936))
 	// 	return std::nullopt;
 	// if (!(fn.start_pc == 0) || script->name != "ffc-11-Z4Moblin")
 	// 	return std::nullopt;
@@ -2501,9 +2534,11 @@ static std::optional<JittedFunction> compile_function(zasm_script* script, Jitte
 			// state.use_cached_regs = true;
 		// if (i >= 26791 && i <= 26821)
 		// 	state.use_cached_regs = true;
-		state.use_cached_regs = true;
 
-		// state.use_cached_regs = i >= 1000 && i <= 1008;
+		// state.use_cached_regs = fn.start_pc == 936;
+		// state.use_cached_regs = true;
+
+		// state.use_cached_regs = i >= 965 && i <= 970;
 		// state.use_cached_regs = i >= 1017 && i <= 1018;
 		// state.use_cached_regs = i >= 1008 && i <= 1016;
 		// state.use_cached_regs = i >= 26791 && i <= 26793;
