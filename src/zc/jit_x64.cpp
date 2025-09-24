@@ -107,9 +107,45 @@ public:
 	}
 };
 
+static void modify_sp(CompilationState& state, x86::Compiler& cc, x86::Gp vStackIndex, int delta)
+{
+	cc.add(vStackIndex, delta);
+	state.modified_stack = true;
+}
+
+static void flush_registers(CompilationState& state, x86::Compiler& cc)
+{
+	if (DEBUG_JIT_PRINT_ASM && (!state.cached_d_regs.empty() || !state.cached_d_regs.empty()))
+	{
+		cc.setInlineComment("flush cached registers");
+		cc.nop();
+	}
+
+	// TODO ! check if needed (does register live beyond this block?)
+	// TODO ! check if dirty
+	for (auto& [r, reg] : state.cached_d_regs)
+		cc.mov(x86::ptr_32(state.ptrRegisters, r * 4), reg);
+	state.cached_d_regs.clear();
+
+	for (auto& [reg, is_constant, value] : state.cached_d_reg_stack)
+	{
+		if (is_constant)
+		{
+			modify_sp(state, cc, state.vSp, -1);
+			cc.mov(x86::ptr_32(state.ptrStackBase, state.vSp, 2), value);
+		}
+		else if (reg.isValid())
+		{
+			modify_sp(state, cc, state.vSp, -1);
+			cc.mov(x86::ptr_32(state.ptrStackBase, state.vSp, 2), reg);
+		}
+	}
+	state.cached_d_reg_stack.clear();
+}
+
 static x86::Gp get_z_register(CompilationState& state, x86::Compiler& cc, int r)
 {
-	x86::Gp val = cc.newInt32();
+	x86::Gp val = cc.newInt32(); // TODO !
 	if (r >= D(0) && r < D(INITIAL_D))
 	{
 		if (state.use_cached_regs)
@@ -133,11 +169,15 @@ static x86::Gp get_z_register(CompilationState& state, x86::Compiler& cc, int r)
 	}
 	else if (r == SP)
 	{
+		if (state.use_cached_regs && !state.cached_d_reg_stack.empty())
+			flush_registers(state, cc);
 		cc.mov(val, state.vSp);
 		cc.imul(val, 10000);
 	}
 	else if (r == SP2)
 	{
+		if (state.use_cached_regs && !state.cached_d_reg_stack.empty())
+			flush_registers(state, cc);
 		cc.mov(val, state.vSp);
 	}
 	else if (r == SWITCHKEY)
@@ -315,12 +355,6 @@ template <typename T>
 static void set_ctx_ret_code(CompilationState& state, x86::Compiler& cc, T ret_code)
 {
 	cc.mov(x86::ptr_32(state.ptrCtx, offsetof(JittedExecutionContext, ret_code)), ret_code);
-}
-
-static void modify_sp(CompilationState& state, x86::Compiler& cc, x86::Gp vStackIndex, int delta)
-{
-	cc.add(vStackIndex, delta);
-	state.modified_stack = true;
 }
 
 static void check_sp(CompilationState& state, x86::Compiler& cc, x86::Gp vStackIndex, int offset = 0)
@@ -645,36 +679,6 @@ static void ret_if_not_ok(CompilationState& state, x86::Compiler& cc, x86::Gp re
 	cc.jmp(state.L_End);
 
 	cc.bind(L_noret);
-}
-
-static void flush_registers(CompilationState& state, x86::Compiler& cc)
-{
-	if (DEBUG_JIT_PRINT_ASM && (!state.cached_d_regs.empty() || !state.cached_d_regs.empty()))
-	{
-		cc.setInlineComment("flush cached registers");
-		cc.nop();
-	}
-
-	// TODO ! check if needed (does register live beyond this block?)
-	// TODO ! check if dirty
-	for (auto& [r, reg] : state.cached_d_regs)
-		cc.mov(x86::ptr_32(state.ptrRegisters, r * 4), reg);
-	state.cached_d_regs.clear();
-
-	for (auto& [reg, is_constant, value] : state.cached_d_reg_stack)
-	{
-		if (is_constant)
-		{
-			modify_sp(state, cc, state.vSp, -1);
-			cc.mov(x86::ptr_32(state.ptrStackBase, state.vSp, 2), value);
-		}
-		else if (reg.isValid())
-		{
-			modify_sp(state, cc, state.vSp, -1);
-			cc.mov(x86::ptr_32(state.ptrStackBase, state.vSp, 2), reg);
-		}
-	}
-	state.cached_d_reg_stack.clear();
 }
 
 // Defer to the ZASM command interpreter for 1+ commands.
@@ -1208,23 +1212,37 @@ static void compile_single_command(CompilationState& state, x86::Compiler& cc, c
 		case STOREV:
 		{
 			// Write directly value on the stack (offset is arg2 + rSFRAME register).
+			x86::Gp sframe = get_z_register(state, cc, rSFRAME);
+			if (arg2 == 0)
+			{
+				cc.mov(x86::ptr_32(state.ptrStackBase, sframe, 2), arg1);
+				break;
+			}
+
 			x86::Gp offset = cc.newInt32();
-			cc.mov(offset, x86::ptr_32(state.ptrRegisters, rSFRAME * 4));
+			cc.mov(offset, sframe);
 			if (arg2)
 				cc.add(offset, arg2);
-			
+
 			cc.mov(x86::ptr_32(state.ptrStackBase, offset, 2), arg1);
 		}
 		break;
 		case STORED:
 		{
 			// Write from register to a value on the stack (offset is arg2 + rSFRAME register).
+			x86::Gp val = get_z_register(state, cc, arg1);
+			x86::Gp sframe = get_z_register(state, cc, rSFRAME);
+			if (arg2 == 0)
+			{
+				cc.mov(x86::ptr_32(state.ptrStackBase, sframe, 2), val);
+				break;
+			}
+
 			x86::Gp offset = cc.newInt32();
 			cc.mov(offset, arg2);
 			cc.add(offset, x86::ptr_32(state.ptrRegisters, rSFRAME * 4));
 			div_10000(cc, offset);
 			
-			x86::Gp val = get_z_register(state, cc, arg1);
 			cc.mov(x86::ptr_32(state.ptrStackBase, offset, 2), val);
 		}
 		break;
@@ -2322,9 +2340,7 @@ end_parse:
 static std::optional<JittedFunction> compile_function(zasm_script* script, JittedScript* j_script, const ZasmFunction& fn)
 {
 	// TODO !
-	if (!(fn.start_pc == 987))
-		return std::nullopt;
-	// if (!(fn.start_pc == 987 || fn.start_pc == 26791 || fn.start_pc == 936))
+	// if (!(fn.start_pc == 987 || fn.start_pc == 26791))
 	// 	return std::nullopt;
 	// if (!(fn.start_pc == 0) || script->name != "ffc-11-Z4Moblin")
 	// 	return std::nullopt;
@@ -2452,14 +2468,45 @@ static std::optional<JittedFunction> compile_function(zasm_script* script, Jitte
 
 	// state.use_cached_regs = fn.start_pc == 987;
 
+	std::vector<bool> should_use_cached_regs;
+	should_use_cached_regs.resize(fn.final_pc - fn.start_pc + 1);
+	
+	// for (pc_t block_id = j_script->cfg.block_id_from_start_pc(start_pc); block_id < j_script->cfg.block_starts.size(); block_id++)
+	// {
+	// 	pc_t block_start_pc = j_script->cfg.block_starts[block_id];
+	// 	if (block_start_pc > final_pc)
+	// 		break;
+
+	// 	pc_t block_final_pc = block_id == j_script->cfg.block_starts.size() - 1 ? final_pc : j_script->cfg.block_starts[block_id + 1];
+	// 	bool use_cache = true;
+	// 	for (pc_t i = block_start_pc; i <= block_final_pc; i++)
+	// 	{
+	// 		if (script->zasm[i].command == SETR && script->zasm[i].arg2 == SP2)
+	// 		{
+	// 			use_cache = false;
+	// 			break;
+	// 		}
+	// 	}
+
+	// 	for (pc_t i = block_start_pc; i <= block_final_pc; i++)
+	// 	{
+	// 		should_use_cached_regs[i - start_pc] = use_cache;
+	// 	}
+	// }
+
 	for (pc_t i = start_pc; i <= final_pc; i++)
 	{
-		state.use_cached_regs = i >= 987 && i <= 990;
+		state.use_cached_regs = false;
+		// if (i >= 987 && i <= 1024)
+			// state.use_cached_regs = true;
+		// if (i >= 26791 && i <= 26821)
+		// 	state.use_cached_regs = true;
+		state.use_cached_regs = true;
 
 		// state.use_cached_regs = i >= 1000 && i <= 1008;
 		// state.use_cached_regs = i >= 1017 && i <= 1018;
 		// state.use_cached_regs = i >= 1008 && i <= 1016;
-		// state.use_cached_regs = i >= 1008;
+		// state.use_cached_regs = i >= 26791 && i <= 26793;
 
 		const auto& op = script->zasm[i];
 		int command = op.command;
