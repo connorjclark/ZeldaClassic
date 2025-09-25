@@ -36,6 +36,7 @@ struct CachedStackValue
 
 struct CompilationState
 {
+	zasm_script* script;
 	JittedScript* j_script;
 	pc_t start_pc;
 	pc_t final_pc;
@@ -1040,20 +1041,22 @@ static void compile_single_command(CompilationState& state, x86::Compiler& cc, c
 			// }
 			if (state.use_cached_regs)
 			{
-				// if (arg1 <= D(INITIAL_D))
-				// {
+				if (pc != state.final_pc && (state.script->zasm[pc + 1].command == ADDV || state.script->zasm[pc + 1].command == SUBV) && state.script->zasm[pc + 1].arg1 == arg1)
+				{
+					x86::Gp copy = cc.newInt32();
+					cc.mov(copy, get_z_register(state, cc, arg1));
+					state.cached_d_reg_stack.push_back({.reg=copy});
+				}
+				else
+				{
 					state.cached_d_reg_stack.push_back({.reg=get_z_register(state, cc, arg1), .value=arg1});
 					if (DEBUG_JIT_PRINT_ASM)
 						cc.nop();
-				// }
-				// else
-				// {
-				// 	state.cached_d_reg_stack.push_back({.reg=get_z_register(state, cc, arg1), .value=arg1});
-				// }
+				}
 				break;
 			}
 
-			state.cached_d_reg_stack.push_back({.reg=x86::Gp()});
+			state.cached_d_reg_stack.push_back({});
 
 			handle_check_sp_push(state, cc, script, pc, state.vSp);
 
@@ -1193,10 +1196,17 @@ static void compile_single_command(CompilationState& state, x86::Compiler& cc, c
 		case REF_REMOVE:
 		{
 			x86::Gp sframe = get_z_register(state, cc, rSFRAME);
-			x86::Gp offset = cc.newInt32();
-			cc.add(offset, sframe);
+			x86::Gp offset;
 			if (arg1)
-				cc.mov(offset, arg1);
+			{
+				offset = cc.newInt32();
+				cc.mov(offset, sframe);
+				cc.add(offset, arg1);
+			}
+			else
+			{
+				offset = sframe;
+			}
 
 			InvokeNode *invokeNode;
 			void script_remove_object_ref(int32_t offset);
@@ -1406,7 +1416,7 @@ static void compile_single_command(CompilationState& state, x86::Compiler& cc, c
 		break;
 		case ADDV:
 		{
-			x86::Gp val = get_z_register(state, cc, arg1);
+			x86::Gp val = get_z_register(state, cc, arg1); // TODO ! ...
 			if (arg2 == 1)
 				cc.inc(val);
 			else if (arg2 == -1)
@@ -1783,7 +1793,7 @@ static void compile_single_command(CompilationState& state, x86::Compiler& cc, c
 static std::optional<JittedFunction> compile_function(zasm_script* script, JittedScript* j_script, const ZasmFunction& fn)
 {
 	// TODO !
-	// if (!(  fn.start_pc == 28773))
+	// if (!(  fn.start_pc == 28570))
 	// 	return std::nullopt;
 	// if (!(fn.start_pc == 0) || script->name != "ffc-11-Z4Moblin")
 	// 	return std::nullopt;
@@ -1811,6 +1821,7 @@ static std::optional<JittedFunction> compile_function(zasm_script* script, Jitte
 	bool runtime_debugging = script_debug_is_runtime_debugging() == 2;
 
 	CompilationState state{
+		.script = script,
 		.j_script = j_script,
 		.start_pc = start_pc,
 		.final_pc = final_pc,
@@ -1938,14 +1949,14 @@ static std::optional<JittedFunction> compile_function(zasm_script* script, Jitte
 	// 	}
 	// }
 
-	state.use_cached_regs = !bisect_tool_should_skip();
+	// state.use_cached_regs = !bisect_tool_should_skip();
 
 	for (pc_t i = start_pc; i <= final_pc; i++)
 	{
 		// state.use_cached_regs = fn.start_pc == 897;
 
-		// state.use_cached_regs = i >= 28719;
-		// state.use_cached_regs = i >= 712 && i <= 722;
+		// state.use_cached_regs = i >= 8865;
+		// state.use_cached_regs = i >= 8831 && i <= 8864 && i >= 8845;
 		// state.use_cached_regs = i >= 1008 && i <= 1016;
 		// state.use_cached_regs = i >= 26791 && i <= 26793;
 
