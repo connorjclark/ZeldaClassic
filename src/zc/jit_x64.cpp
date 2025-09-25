@@ -109,10 +109,70 @@ public:
 	}
 };
 
+template <typename T>
+static void set_ctx_pc(CompilationState& state, x86::Compiler& cc, T pc)
+{
+	cc.mov(x86::ptr_32(state.ptrCtx, offsetof(JittedExecutionContext, pc)), pc);
+}
+
+static void set_ctx_call_pc(CompilationState& state, x86::Compiler& cc, pc_t call_pc)
+{
+	cc.mov(x86::ptr_32(state.ptrCtx, offsetof(JittedExecutionContext, call_pc)), call_pc);
+}
+
+template <typename T>
+static void set_ctx_sp(CompilationState& state, x86::Compiler& cc, T sp)
+{
+	cc.mov(x86::ptr_32(state.ptrCtx, offsetof(JittedExecutionContext, sp)), sp);
+}
+
+template <typename T>
+static void set_ctx_ret_code(CompilationState& state, x86::Compiler& cc, T ret_code)
+{
+	cc.mov(x86::ptr_32(state.ptrCtx, offsetof(JittedExecutionContext, ret_code)), ret_code);
+}
+
+static void restore_regs(CompilationState& state, x86::Compiler& cc)
+{
+	cc.mov(x86::rbx, x86::ptr(state.ptrCtx, offsetof(JittedExecutionContext, saved_regs) + 24));
+	cc.mov(x86::r15, x86::ptr(state.ptrCtx, offsetof(JittedExecutionContext, saved_regs) + 16));
+	cc.mov(x86::r14, x86::ptr(state.ptrCtx, offsetof(JittedExecutionContext, saved_regs) + 8));
+	cc.mov(x86::r13, x86::ptr(state.ptrCtx, offsetof(JittedExecutionContext, saved_regs) + 0));
+}
+
 static void modify_sp(CompilationState& state, x86::Compiler& cc, x86::Gp vStackIndex, int delta)
 {
 	cc.add(vStackIndex, delta);
 	state.modified_stack = true;
+}
+
+static void check_sp(CompilationState& state, x86::Compiler& cc, x86::Gp vStackIndex, int offset = 0)
+{
+	if (offset == 0)
+	{
+		cc.cmp(vStackIndex, MAX_STACK_SIZE);
+	}
+	else
+	{
+		x86::Gp val = cc.newUInt32();
+		cc.mov(val, state.vSp);
+		// Prefer inc/dec for smaller code size.
+		if (offset == 1)
+			cc.inc(val);
+		else if (offset == -1)
+			cc.dec(val);
+		else
+			cc.add(val, offset);
+		cc.cmp(val, MAX_STACK_SIZE);
+	}
+
+	Label label = cc.newLabel();
+	cc.jb(label);
+	set_ctx_ret_code(state, cc, RUNSCRIPT_JIT_STACK_OVERFLOW);
+	cc.mov(state.vResult, EXEC_RESULT_EXIT);
+	restore_regs(state, cc);
+	cc.ret(state.vResult);
+	cc.bind(label);
 }
 
 static void flush_registers(CompilationState& state, x86::Compiler& cc)
@@ -123,27 +183,40 @@ static void flush_registers(CompilationState& state, x86::Compiler& cc)
 		cc.nop();
 	}
 
-	// TODO ! check if needed (does register live beyond this block?)
-	// TODO ! check if dirty
-	for (auto& [r, reg] : state.cached_d_regs)
-		cc.mov(x86::ptr_32(state.ptrRegisters, r * 4), reg);
-	state.cached_d_regs.clear();
-
-	for (auto& [reg, is_constant, value] : state.cached_d_reg_stack)
+	if (!state.cached_d_regs.empty())
 	{
-		if (is_constant)
-		{
-			// TODO ! check overflow
-			modify_sp(state, cc, state.vSp, -1);
-			cc.mov(x86::ptr_32(state.ptrStackBase, state.vSp, 2), value);
-		}
-		else if (reg.isValid())
-		{
-			modify_sp(state, cc, state.vSp, -1);
-			cc.mov(x86::ptr_32(state.ptrStackBase, state.vSp, 2), reg);
-		}
+		// TODO ! check if needed (does register live beyond this block?)
+		// TODO ! check if dirty
+		for (auto& [r, reg] : state.cached_d_regs)
+			cc.mov(x86::ptr_32(state.ptrRegisters, r * 4), reg);
+		state.cached_d_regs.clear();
 	}
-	state.cached_d_reg_stack.clear();
+
+	if (!state.cached_d_reg_stack.empty())
+	{
+		int stack_change = 0;
+		for (auto& [reg, is_constant, value] : state.cached_d_reg_stack)
+		{
+			if (is_constant || reg.isValid())
+				stack_change++;
+		}
+		check_sp(state, cc, state.vSp, -stack_change);
+
+		for (auto& [reg, is_constant, value] : state.cached_d_reg_stack)
+		{
+			if (is_constant)
+			{
+				modify_sp(state, cc, state.vSp, -1);
+				cc.mov(x86::ptr_32(state.ptrStackBase, state.vSp, 2), value);
+			}
+			else if (reg.isValid())
+			{
+				modify_sp(state, cc, state.vSp, -1);
+				cc.mov(x86::ptr_32(state.ptrStackBase, state.vSp, 2), reg);
+			}
+		}
+		state.cached_d_reg_stack.clear();
+	}
 }
 
 static x86::Gp get_z_register(CompilationState& state, x86::Compiler& cc, int r)
@@ -330,71 +403,11 @@ static void set_z_register(CompilationState& state, x86::Compiler& cc, int r, x8
 	set_z_register(state, cc, r, val);
 }
 
-static void restore_regs(CompilationState& state, x86::Compiler& cc)
-{
-	cc.mov(x86::rbx, x86::ptr(state.ptrCtx, offsetof(JittedExecutionContext, saved_regs) + 24));
-	cc.mov(x86::r15, x86::ptr(state.ptrCtx, offsetof(JittedExecutionContext, saved_regs) + 16));
-	cc.mov(x86::r14, x86::ptr(state.ptrCtx, offsetof(JittedExecutionContext, saved_regs) + 8));
-	cc.mov(x86::r13, x86::ptr(state.ptrCtx, offsetof(JittedExecutionContext, saved_regs) + 0));
-}
-
 static x86::Gp get_ctx_script_instance(CompilationState& state, x86::Compiler& cc)
 {
 	x86::Gp ptr = cc.newIntPtr();
 	cc.mov(ptr, x86::ptr_32(state.ptrCtx, offsetof(JittedExecutionContext, j_instance)));
 	return ptr;
-}
-
-template <typename T>
-static void set_ctx_pc(CompilationState& state, x86::Compiler& cc, T pc)
-{
-	cc.mov(x86::ptr_32(state.ptrCtx, offsetof(JittedExecutionContext, pc)), pc);
-}
-
-static void set_ctx_call_pc(CompilationState& state, x86::Compiler& cc, pc_t call_pc)
-{
-	cc.mov(x86::ptr_32(state.ptrCtx, offsetof(JittedExecutionContext, call_pc)), call_pc);
-}
-
-template <typename T>
-static void set_ctx_sp(CompilationState& state, x86::Compiler& cc, T sp)
-{
-	cc.mov(x86::ptr_32(state.ptrCtx, offsetof(JittedExecutionContext, sp)), sp);
-}
-
-template <typename T>
-static void set_ctx_ret_code(CompilationState& state, x86::Compiler& cc, T ret_code)
-{
-	cc.mov(x86::ptr_32(state.ptrCtx, offsetof(JittedExecutionContext, ret_code)), ret_code);
-}
-
-static void check_sp(CompilationState& state, x86::Compiler& cc, x86::Gp vStackIndex, int offset = 0)
-{
-	if (offset == 0)
-	{
-		cc.cmp(vStackIndex, MAX_STACK_SIZE);
-	}
-	else
-	{
-		x86::Gp val = cc.newUInt32();
-		cc.mov(val, state.vSp);
-		// Prefer inc/dec for smaller code size.
-		if (offset == 1)
-			cc.inc(val);
-		else if (offset == -1)
-			cc.dec(val);
-		else
-			cc.add(val, offset);
-		cc.cmp(val, MAX_STACK_SIZE);
-	}
-
-	Label label = cc.newLabel();
-	cc.jb(label);
-	set_ctx_ret_code(state, cc, RUNSCRIPT_JIT_STACK_OVERFLOW);
-	cc.mov(state.vResult, EXEC_RESULT_EXIT);
-	restore_regs(state, cc);
-	cc.ret(state.vResult);
-	cc.bind(label);
 }
 
 static void div_10000(x86::Compiler& cc, x86::Gp dividend)
@@ -447,6 +460,7 @@ static x86::Gp immutable_add_constant(x86::Compiler& cc, x86::Gp reg, int value)
 
 	x86::Gp r = cc.newInt32();
 	cc.mov(r, reg);
+	// Prefer inc/dec for smaller code size.
 	if (value == 1)
 		cc.inc(r);
 	else if (value == -1)
@@ -1066,7 +1080,7 @@ static void compile_single_command(CompilationState& state, x86::Compiler& cc, c
 				break;
 			}
 
-			state.cached_d_reg_stack.push_back({});
+			// state.cached_d_reg_stack.push_back({}); // TODO ! rm
 
 			handle_check_sp_push(state, cc, script, pc, state.vSp);
 
