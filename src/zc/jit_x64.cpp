@@ -302,7 +302,6 @@ static x86::Gp get_z_register(CompilationState& state, x86::Compiler& cc, int r)
 	}
 	else
 	{
-		// TODO ! just flush registers needed for r?
 		flush_cache_for_dependent_registers(state, cc, r);
 
 		// Call external get_register.
@@ -358,7 +357,7 @@ static x86::Gp get_z_register_64(CompilationState& state, x86::Compiler& cc, int
 	}
 	else
 	{
-		flush_cache(state, cc);
+		flush_cache_for_dependent_registers(state, cc, r);
 
 		// Call external get_register.
 		x86::Gp val32 = cc.newInt32();
@@ -420,8 +419,7 @@ static void set_z_register(CompilationState& state, x86::Compiler& cc, int r, T 
 	}
 	else
 	{
-		// TODO ! just flush registers needed for r?
-		flush_cache(state, cc);
+		flush_cache_for_dependent_registers(state, cc, r);
 
 		// Only some registers have an extra check when writing to them.
 		auto set_fn = set_register;
