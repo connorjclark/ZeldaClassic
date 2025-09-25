@@ -195,26 +195,22 @@ static void flush_cache(CompilationState& state, x86::Compiler& cc)
 		if (DEBUG_JIT_PRINT_ASM)
 			cc.setInlineComment("flush cached stack");
 
-		int stack_change = 0;
-		for (auto& [reg, is_constant, value] : state.cached_d_reg_stack)
-		{
-			if (is_constant || reg.isValid())
-				stack_change++;
-		}
+		int stack_change = state.cached_d_reg_stack.size();
 		check_sp(state, cc, state.vSp, -stack_change);
+		modify_sp(state, cc, state.vSp, -stack_change);
 
+		int i = stack_change - 1;
 		for (auto& [reg, is_constant, value] : state.cached_d_reg_stack)
 		{
 			if (is_constant)
 			{
-				modify_sp(state, cc, state.vSp, -1);
-				cc.mov(x86::ptr_32(state.ptrStackBase, state.vSp, 2), value);
+				cc.mov(x86::ptr_32(state.ptrStackBase, state.vSp, 2, i * 4), value);
 			}
-			else if (reg.isValid())
+			else
 			{
-				modify_sp(state, cc, state.vSp, -1);
-				cc.mov(x86::ptr_32(state.ptrStackBase, state.vSp, 2), reg);
+				cc.mov(x86::ptr_32(state.ptrStackBase, state.vSp, 2, i * 4), reg);
 			}
+			i--;
 		}
 		state.cached_d_reg_stack.clear();
 	}
@@ -1077,8 +1073,6 @@ static void compile_single_command(CompilationState& state, x86::Compiler& cc, c
 				break;
 			}
 
-			state.cached_d_reg_stack.push_back({});
-
 			handle_check_sp_push(state, cc, script, pc, state.vSp);
 
 			modify_sp(state, cc, state.vSp, -1);
@@ -1145,6 +1139,7 @@ static void compile_single_command(CompilationState& state, x86::Compiler& cc, c
 			}
 			else
 			{
+				// TODO !
 				// Otherwise, rep stos is probably faster.
 				// See: https://reviews.llvm.org/D32002
 				x86::Gp num = cc.newInt32();
@@ -2046,13 +2041,6 @@ static std::optional<JittedFunction> compile_function(zasm_script* script, Jitte
 		{
 			if (DEBUG_JIT_PRINT_ASM && command != 0xFFFF)
 				uncompiled_command_counts[command]++;
-
-			if (DEBUG_JIT_PRINT_ASM)
-			{
-				std::string op_str = zasm_op_to_string(op);
-				cc.setInlineComment((comment = fmt::format("{} {}", i, op_str)).c_str());
-				cc.nop();
-			}
 
 			// Every command that is not compiled to assembly must go through the regular interpreter function.
 			// In order to reduce function call overhead, we call into the interpreter function in batches.
