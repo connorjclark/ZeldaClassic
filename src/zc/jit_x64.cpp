@@ -1795,7 +1795,7 @@ static void compile_single_command(CompilationState& state, x86::Compiler& cc, c
 static std::optional<JittedFunction> compile_function(zasm_script* script, JittedScript* j_script, const ZasmFunction& fn)
 {
 	// TODO !
-	// if (!(  fn.start_pc == 987))
+	// if (!(  fn.start_pc == 27268))
 	// 	return std::nullopt;
 	// if (!(fn.start_pc == 0) || script->name != "ffc-11-Z4Moblin")
 	// 	return std::nullopt;
@@ -1966,7 +1966,7 @@ static std::optional<JittedFunction> compile_function(zasm_script* script, Jitte
 		const auto& op = script->zasm[i];
 		int command = op.command;
 
-		if (command_is_goto(command) || command_is_wait(command) || !command_is_compiled(command) || command == CALLFUNC || command == RETURNFUNC || state.j_script->cfg.contains_block_start(i))
+		if (command_is_goto(command) || command_is_wait(command) || !command_is_compiled(command) || command == CALLFUNC || command == RETURNFUNC || command == COMPAREV || command == COMPARER || state.j_script->cfg.contains_block_start(i))
 			flush_cache(state, cc);
 
 		if (state.goto_labels.contains(i))
