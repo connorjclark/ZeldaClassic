@@ -241,8 +241,6 @@ static void flush_cache_for_dependent_registers(CompilationState& state, x86::Co
 		for (auto& [r, reg] : state.cached_d_regs)
 			cc.mov(x86::ptr_32(state.ptrRegisters, r * 4), reg);
 		state.cached_d_regs.clear();
-
-		// flush_cache(state, cc);
 	}
 
 	// if (bisect_tool_should_skip())
