@@ -440,6 +440,22 @@ static void zero(x86::Compiler& cc, x86::Gp reg)
 	cc.xor_(reg, reg);
 }
 
+static x86::Gp immutable_add_constant(x86::Compiler& cc, x86::Gp reg, int value)
+{
+	if (value == 0)
+		return reg;
+
+	x86::Gp r = cc.newInt32();
+	cc.mov(r, reg);
+	if (value == 1)
+		cc.inc(r);
+	else if (value == -1)
+		cc.dec(r);
+	else
+		cc.add(r, value);
+	return r;
+}
+
 static void cast_bool(x86::Compiler& cc, x86::Gp reg)
 {
 	cc.test(reg, reg);
@@ -629,10 +645,7 @@ static void compile_compare(CompilationState& state, x86::Compiler& cc, int pc, 
 	{
 		// TODO: needs to check for stack overflow.
 		// Write directly value on the stack (arg1 to offset arg2)
-		x86::Gp offset = cc.newInt32();
-		cc.mov(offset, state.vSp);
-		if (arg2)
-			cc.add(offset, arg2);
+		x86::Gp offset = immutable_add_constant(cc, state.vSp, arg2);
 		auto cmp = arg3 & CMP_FLAGS;
 		switch(cmp) //but only conditionally
 		{
@@ -1002,10 +1015,7 @@ static void compile_single_command(CompilationState& state, x86::Compiler& cc, c
 		{
 			// TODO: needs to check for stack overflow.
 			// Write directly value on the stack (arg1 to offset arg2)
-			x86::Gp offset = cc.newInt32();
-			cc.mov(offset, state.vSp);
-			if (arg2)
-				cc.add(offset, arg2);
+			x86::Gp offset = immutable_add_constant(cc, state.vSp, arg2);
 			cc.mov(x86::ptr_32(state.ptrStackBase, offset, 2), arg1);
 		}
 		break;
@@ -1163,10 +1173,7 @@ static void compile_single_command(CompilationState& state, x86::Compiler& cc, c
 		{
 			// Set register to a value on the stack (offset is arg2 + rSFRAME register).
 			x86::Gp sframe = get_z_register(state, cc, rSFRAME);
-			x86::Gp offset = cc.newInt32();
-			cc.mov(offset, sframe);
-			if (arg2)
-				cc.add(offset, arg2);
+			x86::Gp offset = immutable_add_constant(cc, sframe, arg2);
 
 			set_z_register(state, cc, arg1, x86::ptr_32(state.ptrStackBase, offset, 2));
 		}
@@ -1175,10 +1182,7 @@ static void compile_single_command(CompilationState& state, x86::Compiler& cc, c
 		{
 			// Set register to a value on the stack (offset is arg2 + rSFRAME register).
 			x86::Gp sframe = get_z_register(state, cc, rSFRAME);
-			x86::Gp offset = cc.newInt32();
-			cc.mov(offset, sframe);
-			if (arg2)
-				cc.add(offset, arg2);
+			x86::Gp offset = immutable_add_constant(cc, sframe, arg2);
 			div_10000(cc, offset);
 
 			set_z_register(state, cc, arg1, x86::ptr_32(state.ptrStackBase, offset, 2));
@@ -1196,17 +1200,7 @@ static void compile_single_command(CompilationState& state, x86::Compiler& cc, c
 		case REF_REMOVE:
 		{
 			x86::Gp sframe = get_z_register(state, cc, rSFRAME);
-			x86::Gp offset;
-			if (arg1)
-			{
-				offset = cc.newInt32();
-				cc.mov(offset, sframe);
-				cc.add(offset, arg1);
-			}
-			else
-			{
-				offset = sframe;
-			}
+			x86::Gp offset = immutable_add_constant(cc, sframe, arg1);
 
 			InvokeNode *invokeNode;
 			void script_remove_object_ref(int32_t offset);
@@ -1217,18 +1211,10 @@ static void compile_single_command(CompilationState& state, x86::Compiler& cc, c
 		case STORE:
 		{
 			// Write from register to a value on the stack (offset is arg2 + rSFRAME register).
-			x86::Gp val = get_z_register(state, cc, arg1);
 			x86::Gp sframe = get_z_register(state, cc, rSFRAME);
-			if (arg2 == 0)
-			{
-				cc.mov(x86::ptr_32(state.ptrStackBase, sframe, 2), val);
-				break;
-			}
+			x86::Gp offset = immutable_add_constant(cc, sframe, arg2);
 
-			x86::Gp offset = cc.newInt32();
-			cc.mov(offset, arg2);
-			cc.add(offset, sframe);
-
+			x86::Gp val = get_z_register(state, cc, arg1);
 			cc.mov(x86::ptr_32(state.ptrStackBase, offset, 2), val);
 		}
 		break;
@@ -1236,9 +1222,7 @@ static void compile_single_command(CompilationState& state, x86::Compiler& cc, c
 		{
 			// Same as STORE, but for a ref-counted object.
 			x86::Gp sframe = get_z_register(state, cc, rSFRAME);
-			x86::Gp offset = cc.newInt32();
-			cc.mov(offset, arg2);
-			cc.add(offset, sframe);
+			x86::Gp offset = immutable_add_constant(cc, sframe, arg2);
 
 			x86::Gp val = get_z_register(state, cc, arg1);
 
@@ -1253,16 +1237,7 @@ static void compile_single_command(CompilationState& state, x86::Compiler& cc, c
 		{
 			// Write directly value on the stack (offset is arg2 + rSFRAME register).
 			x86::Gp sframe = get_z_register(state, cc, rSFRAME);
-			if (arg2 == 0)
-			{
-				cc.mov(x86::ptr_32(state.ptrStackBase, sframe, 2), arg1);
-				break;
-			}
-
-			x86::Gp offset = cc.newInt32();
-			cc.mov(offset, sframe);
-			if (arg2)
-				cc.add(offset, arg2);
+			x86::Gp offset = immutable_add_constant(cc, sframe, arg2);
 
 			cc.mov(x86::ptr_32(state.ptrStackBase, offset, 2), arg1);
 		}
@@ -1270,19 +1245,11 @@ static void compile_single_command(CompilationState& state, x86::Compiler& cc, c
 		case STORED:
 		{
 			// Write from register to a value on the stack (offset is arg2 + rSFRAME register).
-			x86::Gp val = get_z_register(state, cc, arg1);
 			x86::Gp sframe = get_z_register(state, cc, rSFRAME);
-			if (arg2 == 0)
-			{
-				cc.mov(x86::ptr_32(state.ptrStackBase, sframe, 2), val);
-				break;
-			}
-
-			x86::Gp offset = cc.newInt32();
-			cc.mov(offset, arg2);
-			cc.add(offset, sframe);
+			x86::Gp offset = immutable_add_constant(cc, sframe, arg2);
 			div_10000(cc, offset);
-			
+
+			x86::Gp val = get_z_register(state, cc, arg1);
 			cc.mov(x86::ptr_32(state.ptrStackBase, offset, 2), val);
 		}
 		break;
@@ -1290,15 +1257,7 @@ static void compile_single_command(CompilationState& state, x86::Compiler& cc, c
 		{
 			// Write directly value on the stack (offset is arg2 + rSFRAME register).
 			x86::Gp sframe = get_z_register(state, cc, rSFRAME);
-			if (arg2 == 0)
-			{
-				cc.mov(x86::ptr_32(state.ptrStackBase, sframe, 2), arg1);
-				break;
-			}
-
-			x86::Gp offset = cc.newInt32();
-			cc.mov(offset, sframe);
-			cc.add(offset, arg2);
+			x86::Gp offset = immutable_add_constant(cc, sframe, arg2);
 			div_10000(cc, offset);
 
 			cc.mov(x86::ptr_32(state.ptrStackBase, offset, 2), arg1);
@@ -1949,7 +1908,7 @@ static std::optional<JittedFunction> compile_function(zasm_script* script, Jitte
 	// 	}
 	// }
 
-	// state.use_cached_regs = !bisect_tool_should_skip();
+	state.use_cached_regs = !bisect_tool_should_skip();
 
 	for (pc_t i = start_pc; i <= final_pc; i++)
 	{
