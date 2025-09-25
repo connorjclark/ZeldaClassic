@@ -226,36 +226,37 @@ static void flush_cache_for_dependent_registers(CompilationState& state, x86::Co
 		return;
 
 	auto dep_regs = get_register_dependencies(r);
-	bool any_dependent = false;
-	for (auto r : state.cached_d_regs)
-	{
-		if (util::contains(dep_regs, r.first))
+	if (dep_regs.empty())
+		return;
+
+	std::erase_if(state.cached_d_regs, [&](const auto& pair){
+		if (util::contains(dep_regs, pair.first))
 		{
-			any_dependent = true;
-			break;
+			cc.mov(x86::ptr_32(state.ptrRegisters, pair.first * 4), pair.second);
+			return true;
 		}
-	}
 
-	if (any_dependent)
-	{
-		for (auto& [r, reg] : state.cached_d_regs)
-			cc.mov(x86::ptr_32(state.ptrRegisters, r * 4), reg);
-		state.cached_d_regs.clear();
-	}
+		return false;
+	});
 
-	// if (bisect_tool_should_skip())
-	// 	flush_cache(state, cc);
+	// TODO ! confirm the above is better.
 
-	// auto dep_regs = get_register_dependencies(r);
-	// std::erase_if(state.cached_d_regs, [&](const auto& pair){
-	// 	if (util::contains(dep_regs, pair.first))
+	// bool any_dependent = false;
+	// for (auto r : state.cached_d_regs)
+	// {
+	// 	if (util::contains(dep_regs, r.first))
 	// 	{
-	// 		cc.mov(x86::ptr_32(state.ptrRegisters, pair.first * 4), pair.second);
-	// 		return true;
+	// 		any_dependent = true;
+	// 		break;
 	// 	}
+	// }
 
-	// 	return false;
-	// });
+	// if (any_dependent)
+	// {
+	// 	for (auto& [r, reg] : state.cached_d_regs)
+	// 		cc.mov(x86::ptr_32(state.ptrRegisters, r * 4), reg);
+	// 	state.cached_d_regs.clear();
+	// }
 }
 
 static x86::Gp get_z_register(CompilationState& state, x86::Compiler& cc, int r)
