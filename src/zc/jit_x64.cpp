@@ -2,6 +2,7 @@
 #include "asmjit/x86/x86operand.h"
 #include "base/general.h"
 #include "base/qrs.h"
+#include "base/util.h"
 #include "base/zdefs.h"
 #include "zasm/table.h"
 #include "zc/jit.h"
@@ -175,13 +176,13 @@ static void check_sp(CompilationState& state, x86::Compiler& cc, x86::Gp vStackI
 	cc.bind(label);
 }
 
-static void flush_registers(CompilationState& state, x86::Compiler& cc)
+static void flush_cache(CompilationState& state, x86::Compiler& cc)
 {
-	if (DEBUG_JIT_PRINT_ASM && (!state.cached_d_regs.empty() || !state.cached_d_reg_stack.empty()))
-		cc.setInlineComment("flush cached registers");
-
 	if (!state.cached_d_regs.empty())
 	{
+		if (DEBUG_JIT_PRINT_ASM)
+			cc.setInlineComment("flush cached registers");
+
 		// TODO ! check if needed (does register live beyond this block?)
 		// TODO ! check if dirty
 		for (auto& [r, reg] : state.cached_d_regs)
@@ -191,6 +192,9 @@ static void flush_registers(CompilationState& state, x86::Compiler& cc)
 
 	if (!state.cached_d_reg_stack.empty())
 	{
+		if (DEBUG_JIT_PRINT_ASM)
+			cc.setInlineComment("flush cached stack");
+
 		int stack_change = 0;
 		for (auto& [reg, is_constant, value] : state.cached_d_reg_stack)
 		{
@@ -214,6 +218,46 @@ static void flush_registers(CompilationState& state, x86::Compiler& cc)
 		}
 		state.cached_d_reg_stack.clear();
 	}
+}
+
+static void flush_cache_for_dependent_registers(CompilationState& state, x86::Compiler& cc, int r)
+{
+	if (state.cached_d_regs.empty())
+		return;
+
+	auto dep_regs = get_register_dependencies(r);
+	bool any_dependent = false;
+	for (auto r : state.cached_d_regs)
+	{
+		if (util::contains(dep_regs, r.first))
+		{
+			any_dependent = true;
+			break;
+		}
+	}
+
+	if (any_dependent)
+	{
+		for (auto& [r, reg] : state.cached_d_regs)
+			cc.mov(x86::ptr_32(state.ptrRegisters, r * 4), reg);
+		state.cached_d_regs.clear();
+
+		// flush_cache(state, cc);
+	}
+
+	// if (bisect_tool_should_skip())
+	// 	flush_cache(state, cc);
+
+	// auto dep_regs = get_register_dependencies(r);
+	// std::erase_if(state.cached_d_regs, [&](const auto& pair){
+	// 	if (util::contains(dep_regs, pair.first))
+	// 	{
+	// 		cc.mov(x86::ptr_32(state.ptrRegisters, pair.first * 4), pair.second);
+	// 		return true;
+	// 	}
+
+	// 	return false;
+	// });
 }
 
 static x86::Gp get_z_register(CompilationState& state, x86::Compiler& cc, int r)
@@ -243,14 +287,14 @@ static x86::Gp get_z_register(CompilationState& state, x86::Compiler& cc, int r)
 	else if (r == SP)
 	{
 		if (state.use_cached_regs && !state.cached_d_reg_stack.empty())
-			flush_registers(state, cc);
+			flush_cache(state, cc);
 		cc.mov(val, state.vSp);
 		cc.imul(val, 10000);
 	}
 	else if (r == SP2)
 	{
 		if (state.use_cached_regs && !state.cached_d_reg_stack.empty())
-			flush_registers(state, cc);
+			flush_cache(state, cc);
 		cc.mov(val, state.vSp);
 	}
 	else if (r == SWITCHKEY)
@@ -260,7 +304,7 @@ static x86::Gp get_z_register(CompilationState& state, x86::Compiler& cc, int r)
 	else
 	{
 		// TODO ! just flush registers needed for r?
-		flush_registers(state, cc);
+		flush_cache_for_dependent_registers(state, cc, r);
 
 		// Call external get_register.
 		InvokeNode *invokeNode;
@@ -315,7 +359,7 @@ static x86::Gp get_z_register_64(CompilationState& state, x86::Compiler& cc, int
 	}
 	else
 	{
-		flush_registers(state, cc);
+		flush_cache(state, cc);
 
 		// Call external get_register.
 		x86::Gp val32 = cc.newInt32();
@@ -378,7 +422,7 @@ static void set_z_register(CompilationState& state, x86::Compiler& cc, int r, T 
 	else
 	{
 		// TODO ! just flush registers needed for r?
-		flush_registers(state, cc);
+		flush_cache(state, cc);
 
 		// Only some registers have an extra check when writing to them.
 		auto set_fn = set_register;
@@ -1276,7 +1320,7 @@ static void compile_single_command(CompilationState& state, x86::Compiler& cc, c
 		{
 			if (state.use_cached_regs && !state.cached_d_reg_stack.empty())
 			{
-				auto& cached_value = state.cached_d_reg_stack.back();
+				auto cached_value = state.cached_d_reg_stack.back();
 				state.cached_d_reg_stack.pop_back();
 				if (cached_value.is_constant)
 				{
@@ -1299,7 +1343,7 @@ static void compile_single_command(CompilationState& state, x86::Compiler& cc, c
 		case POPARGS:
 		{
 			// TODO ! improve?
-			flush_registers(state, cc);
+			flush_cache(state, cc);
 
 			// int32_t num = sarg2;
 			// ri->sp += num;
@@ -1751,8 +1795,8 @@ static void compile_single_command(CompilationState& state, x86::Compiler& cc, c
 static std::optional<JittedFunction> compile_function(zasm_script* script, JittedScript* j_script, const ZasmFunction& fn)
 {
 	// TODO !
-	if (!(  fn.start_pc == 987))
-		return std::nullopt;
+	// if (!(  fn.start_pc == 987))
+	// 	return std::nullopt;
 	// if (!(fn.start_pc == 0) || script->name != "ffc-11-Z4Moblin")
 	// 	return std::nullopt;
 
@@ -1907,7 +1951,8 @@ static std::optional<JittedFunction> compile_function(zasm_script* script, Jitte
 	// 	}
 	// }
 
-	state.use_cached_regs = !bisect_tool_should_skip();
+	// state.use_cached_regs = !bisect_tool_should_skip();
+	state.use_cached_regs =1;
 
 	for (pc_t i = start_pc; i <= final_pc; i++)
 	{
@@ -1916,13 +1961,13 @@ static std::optional<JittedFunction> compile_function(zasm_script* script, Jitte
 		// state.use_cached_regs = i >= 8865;
 		// state.use_cached_regs = i >= 8831 && i <= 8864 && i >= 8845;
 		// state.use_cached_regs = i >= 1008 && i <= 1016;
-		state.use_cached_regs = i >= 987 && i <= 997;
+		// state.use_cached_regs = i >= 987 && i <= 997;
 
 		const auto& op = script->zasm[i];
 		int command = op.command;
 
 		if (command_is_goto(command) || command_is_wait(command) || !command_is_compiled(command) || command == CALLFUNC || command == RETURNFUNC || state.j_script->cfg.contains_block_start(i))
-			flush_registers(state, cc);
+			flush_cache(state, cc);
 
 		if (state.goto_labels.contains(i))
 		{
@@ -2050,7 +2095,7 @@ static std::optional<JittedFunction> compile_function(zasm_script* script, Jitte
 	}
 
 	// TODO ! ?
-	flush_registers(state, cc);
+	flush_cache(state, cc);
 
 	if (fn.id == j_script->structured_zasm.functions.back().id)
 	{
