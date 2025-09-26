@@ -28,6 +28,12 @@ static int EXEC_RESULT_CALL = 2;
 static int EXEC_RESULT_RETURN = 3;
 static int EXEC_RESULT_EXIT = 4;
 
+struct CachedRegister
+{
+	x86::Gp reg;
+	bool dirty;
+};
+
 struct CachedStackValue
 {
 	x86::Gp reg;
@@ -48,7 +54,7 @@ struct CompilationState
 	x86::Gp vSwitchKey;
 	x86::Gp vExpressionStackFrame;
 	bool use_cached_regs;
-	std::map<int, x86::Gp> cached_d_regs;
+	std::map<int, CachedRegister> cached_d_regs;
 	std::vector<CachedStackValue> cached_d_reg_stack;
 	x86::Gp ptrCtx;
 	x86::Gp ptrRegisters;
@@ -185,8 +191,11 @@ static void flush_cache(CompilationState& state, x86::Compiler& cc)
 
 		// TODO ! check if needed (does register live beyond this block?)
 		// TODO ! check if dirty
-		for (auto& [r, reg] : state.cached_d_regs)
-			cc.mov(x86::ptr_32(state.ptrRegisters, r * 4), reg);
+		for (auto& [r, cached_reg] : state.cached_d_regs)
+		{
+			if (cached_reg.dirty)
+				cc.mov(x86::ptr_32(state.ptrRegisters, r * 4), cached_reg.reg);
+		}
 		state.cached_d_regs.clear();
 	}
 
@@ -228,8 +237,9 @@ static void flush_cache_for_dependent_registers(CompilationState& state, x86::Co
 	std::erase_if(state.cached_d_regs, [&](const auto& pair){
 		if (util::contains(dep_regs, pair.first))
 		{
-			cc.mov(x86::ptr_32(state.ptrRegisters, pair.first * 4), pair.second);
-			return true;
+			if (pair.second.dirty)
+				cc.mov(x86::ptr_32(state.ptrRegisters, pair.first * 4), pair.second.reg);
+			return true; // TODO ! keep?
 		}
 
 		return false;
@@ -300,10 +310,11 @@ static x86::Gp get_z_register(CompilationState& state, x86::Compiler& cc, int r)
 			if (!state.cached_d_regs.contains(r))
 			{
 				cc.mov(val, x86::ptr_32(state.ptrRegisters, r * 4));
-				return state.cached_d_regs[r] = val;
+				state.cached_d_regs[r] = {.reg=val};
+				return val;
 			}
 	
-			return state.cached_d_regs[r];
+			return state.cached_d_regs[r].reg;
 		}
 
 		cc.mov(val, x86::ptr_32(state.ptrRegisters, r * 4));
@@ -356,10 +367,10 @@ static x86::Gp get_z_register_64(CompilationState& state, x86::Compiler& cc, int
 			{
 				x86::Gp val32 = cc.newInt32();
 				cc.mov(val32, x86::ptr_32(state.ptrRegisters, r * 4));
-				state.cached_d_regs[r] = val32;
+				state.cached_d_regs[r] = {.reg=val32};
 			}
 
-			val32 = state.cached_d_regs[r];
+			val32 = state.cached_d_regs[r].reg;
 			cc.movsxd(val, val32);
 		}
 		else
@@ -419,12 +430,15 @@ static void set_z_register(CompilationState& state, x86::Compiler& cc, int r, T 
 
 			if (state.cached_d_regs.contains(r))
 			{
-				cc.mov(state.cached_d_regs.at(r), val);
+				auto& cached_reg = state.cached_d_regs[r];
+				cc.mov(cached_reg.reg, val);
+				cached_reg.dirty = true;
 			}
 			else
 			{
-				state.cached_d_regs[r] = cc.newInt32();
-				cc.mov(state.cached_d_regs.at(r), val);
+				x86::Gp reg = cc.newInt32();
+				state.cached_d_regs[r] = {.reg = reg, .dirty = true};
+				cc.mov(reg, val);
 			}
 		}
 		else
