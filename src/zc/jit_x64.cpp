@@ -183,14 +183,14 @@ static void check_sp(CompilationState& state, x86::Compiler& cc, x86::Gp vStackI
 	cc.bind(label);
 }
 
-static void do_stack_push_many(CompilationState& state, x86::Compiler& cc, int amount, x86::Gp val)
+static void do_stack_push_many(CompilationState& state, x86::Compiler& cc, int offset, int amount, x86::Gp val)
 {
 	// Push onto stack [amount] times.
 	if (amount < 8)
 	{
 		// For small [amount], it's likely faster to emit a bunch of movs.
 		for (int i = 0; i < amount; i++)
-			cc.mov(x86::ptr_32(state.ptrStackBase, state.vSp, 2, i * 4), val);
+			cc.mov(x86::ptr_32(state.ptrStackBase, state.vSp, 2, (offset - i) * 4), val);
 	}
 	else
 	{
@@ -198,8 +198,9 @@ static void do_stack_push_many(CompilationState& state, x86::Compiler& cc, int a
 		// See: https://reviews.llvm.org/D32002
 		x86::Gp num = cc.newInt32();
 		cc.mov(num, amount);
+		int start_offset_bytes = (offset - amount + 1) * 4;
 		x86::Gp address = cc.newIntPtr();
-		cc.lea(address, x86::ptr_32(state.ptrStackBase, state.vSp, 2));
+		cc.lea(address, x86::ptr_32(state.ptrStackBase, state.vSp, 2, start_offset_bytes));
 		cc.rep(num).stos(x86::ptr_32(address), val);
 	}
 }
@@ -238,36 +239,27 @@ static void flush_cache(CompilationState& state, x86::Compiler& cc)
 		int i = stack_change - 1;
 		for (auto& [reg, is_constant, value, amount] : state.cached_d_reg_stack)
 		{
-			for (int j = 0; j < amount; j++)
+			if (is_constant)
 			{
-				if (is_constant)
+				if (amount == 1)
 				{
 					cc.mov(x86::ptr_32(state.ptrStackBase, state.vSp, 2, i * 4), value);
 				}
 				else
 				{
-					cc.mov(x86::ptr_32(state.ptrStackBase, state.vSp, 2, i * 4), reg);
+					x86::Gp reg = cc.newInt32();
+					cc.mov(reg, value);
+					do_stack_push_many(state, cc, i, amount, reg);
 				}
-				i--;
 			}
+			else
+			{
+				do_stack_push_many(state, cc, i, amount, reg);
+			}
+
+			i -= amount;
 		}
 		state.cached_d_reg_stack.clear();
-
-		// TODO !
-		// for (auto& [reg, is_constant, value, amount] : state.cached_d_reg_stack)
-		// {
-		// 	if (is_constant)
-		// 	{
-		// 		x86::Gp reg = cc.newInt32();
-		// 		cc.mov(reg, value);
-		// 		do_stack_push_many(state, cc, amount, reg);
-		// 	}
-		// 	else
-		// 	{
-		// 		do_stack_push_many(state, cc, amount, reg);
-		// 	}
-		// }
-		// state.cached_d_reg_stack.clear();
 	}
 }
 
