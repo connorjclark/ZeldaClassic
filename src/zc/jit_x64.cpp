@@ -255,6 +255,41 @@ static void flush_cache_for_dependent_registers(CompilationState& state, x86::Co
 	// }
 }
 
+
+// TODO !
+// 26794: LOAD            D2               0           [Block 1 -> 2, 5]
+// 26795: PUSHR           D2                           
+// 26796: LOAD            D2               1           
+// 26797: DIVV            D2               20000       
+// 26798: POP             D3                           
+// 26799: COMPARER        D3               D2           ------- flushing too early here to avoid the cmp/flag destory...
+// 26800: GOTOCMP         26819            >           
+
+
+// nop                                         ; 26797 DIVV            D2               20000  
+// movsxd rcx, ecx
+// imul rcx, rcx, 10000
+// mov rdx, 20000
+// xor rbp, rbp
+// mov dword ptr [rsp], eax
+// mov rax, rcx
+// mov qword ptr [rsp+8], rdx
+// cqo rdx, rax
+// idiv rdx, rax, qword ptr [rsp+8]
+// nop                                         ; 26798 POP             D3              
+// mov ecx, dword ptr [rsp]
+// mov dword ptr [r14+8], eax                  ; flush cached registers
+// mov dword ptr [r14+12], ecx
+// mov dword ptr [r14+16], r11d
+// nop                                         ; 26799 COMPARER        D3               D2     
+// mov r11d, dword ptr [r14+8]
+// mov eax, dword ptr [r14+12]
+// cmp eax, r11d
+// mov dword ptr [r14+8], r11d                 ; flush cached registers
+// mov dword ptr [r14+12], eax
+// nop                                         ; 26800 GOTOCMP         26819            >      
+// jg L0
+
 static x86::Gp get_z_register(CompilationState& state, x86::Compiler& cc, int r)
 {
 	x86::Gp val = cc.newInt32(); // TODO !
@@ -495,11 +530,11 @@ static x86::Gp immutable_add_constant(x86::Compiler& cc, x86::Gp reg, int value)
 	x86::Gp r = cc.newInt32();
 	cc.mov(r, reg);
 	// Prefer inc/dec for smaller code size.
-	if (value == 1)
-		cc.inc(r);
-	else if (value == -1)
-		cc.dec(r);
-	else
+	// if (value == 1)
+	// 	cc.inc(r);
+	// else if (value == -1)
+	// 	cc.dec(r);
+	// else
 		cc.add(r, value);
 	return r;
 }
