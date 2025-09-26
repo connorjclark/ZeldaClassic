@@ -39,6 +39,7 @@ struct CachedStackValue
 	x86::Gp reg;
 	bool is_constant = false;
 	int value = -1;
+	int amount = 1;
 };
 
 struct CompilationState
@@ -182,6 +183,27 @@ static void check_sp(CompilationState& state, x86::Compiler& cc, x86::Gp vStackI
 	cc.bind(label);
 }
 
+static void do_stack_push_many(CompilationState& state, x86::Compiler& cc, int amount, x86::Gp val)
+{
+	// Push onto stack [amount] times.
+	if (amount < 8)
+	{
+		// For small [amount], it's likely faster to emit a bunch of movs.
+		for (int i = 0; i < amount; i++)
+			cc.mov(x86::ptr_32(state.ptrStackBase, state.vSp, 2, i * 4), val);
+	}
+	else
+	{
+		// Otherwise, rep stos is probably faster.
+		// See: https://reviews.llvm.org/D32002
+		x86::Gp num = cc.newInt32();
+		cc.mov(num, amount);
+		x86::Gp address = cc.newIntPtr();
+		cc.lea(address, x86::ptr_32(state.ptrStackBase, state.vSp, 2));
+		cc.rep(num).stos(x86::ptr_32(address), val);
+	}
+}
+
 static void flush_cache(CompilationState& state, x86::Compiler& cc)
 {
 	if (!state.cached_d_regs.empty())
@@ -204,24 +226,48 @@ static void flush_cache(CompilationState& state, x86::Compiler& cc)
 		if (DEBUG_JIT_PRINT_ASM)
 			cc.setInlineComment("flush cached stack");
 
-		int stack_change = state.cached_d_reg_stack.size();
+		int stack_change = 0;
+		for (auto& [reg, is_constant, value, amount] : state.cached_d_reg_stack)
+		{
+			stack_change += amount;
+		}
+
 		check_sp(state, cc, state.vSp, -stack_change);
 		modify_sp(state, cc, state.vSp, -stack_change);
 
 		int i = stack_change - 1;
-		for (auto& [reg, is_constant, value] : state.cached_d_reg_stack)
+		for (auto& [reg, is_constant, value, amount] : state.cached_d_reg_stack)
 		{
-			if (is_constant)
+			for (int j = 0; j < amount; j++)
 			{
-				cc.mov(x86::ptr_32(state.ptrStackBase, state.vSp, 2, i * 4), value);
+				if (is_constant)
+				{
+					cc.mov(x86::ptr_32(state.ptrStackBase, state.vSp, 2, i * 4), value);
+				}
+				else
+				{
+					cc.mov(x86::ptr_32(state.ptrStackBase, state.vSp, 2, i * 4), reg);
+				}
+				i--;
 			}
-			else
-			{
-				cc.mov(x86::ptr_32(state.ptrStackBase, state.vSp, 2, i * 4), reg);
-			}
-			i--;
 		}
 		state.cached_d_reg_stack.clear();
+
+		// TODO !
+		// for (auto& [reg, is_constant, value, amount] : state.cached_d_reg_stack)
+		// {
+		// 	if (is_constant)
+		// 	{
+		// 		x86::Gp reg = cc.newInt32();
+		// 		cc.mov(reg, value);
+		// 		do_stack_push_many(state, cc, amount, reg);
+		// 	}
+		// 	else
+		// 	{
+		// 		do_stack_push_many(state, cc, amount, reg);
+		// 	}
+		// }
+		// state.cached_d_reg_stack.clear();
 	}
 }
 
@@ -419,7 +465,7 @@ static void set_z_register(CompilationState& state, x86::Compiler& cc, int r, T 
 	{
 		if (state.use_cached_regs)
 		{
-			for (auto& [reg, is_constant, value] : state.cached_d_reg_stack)
+			for (auto& [reg, is_constant, value, amount] : state.cached_d_reg_stack)
 			{
 				if (!is_constant && value == r)
 				{
@@ -1167,8 +1213,7 @@ static void compile_single_command(CompilationState& state, x86::Compiler& cc, c
 		{
 			if (state.use_cached_regs)
 			{
-				for (int i = 0; i < arg2; i++)
-					state.cached_d_reg_stack.push_back({.reg=get_z_register(state, cc, arg1), .value=arg1});
+				state.cached_d_reg_stack.push_back({.reg=get_z_register(state, cc, arg1), .value=arg1, .amount=arg2});
 				break;
 			}
 
@@ -1203,8 +1248,7 @@ static void compile_single_command(CompilationState& state, x86::Compiler& cc, c
 		{
 			if (state.use_cached_regs)
 			{
-				for (int i = 0; i < arg2; i++)
-					state.cached_d_reg_stack.push_back({.is_constant=true, .value=arg1});
+				state.cached_d_reg_stack.push_back({.is_constant=true, .value=arg1, .amount=arg2});
 				break;
 			}
 
@@ -1361,18 +1405,15 @@ static void compile_single_command(CompilationState& state, x86::Compiler& cc, c
 		{
 			if (state.use_cached_regs && !state.cached_d_reg_stack.empty())
 			{
-				auto cached_value = state.cached_d_reg_stack.back();
-				state.cached_d_reg_stack.pop_back();
+				auto& cached_value = state.cached_d_reg_stack.back();
 				if (cached_value.is_constant)
-				{
 					set_z_register(state, cc, arg1, cached_value.value);
-					break;
-				}
-				else if (cached_value.reg.isValid())
-				{
+				else
 					set_z_register(state, cc, arg1, cached_value.reg);
-					break;
-				}
+
+				if (--cached_value.amount == 0)
+					state.cached_d_reg_stack.pop_back();
+				break;
 			}
 
 			x86::Gp val = cc.newInt32();
