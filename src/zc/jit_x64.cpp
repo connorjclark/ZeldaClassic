@@ -1134,6 +1134,7 @@ static void compile_single_command(CompilationState& state, x86::Compiler& cc, c
 		{
 			if (state.use_cached_regs)
 			{
+				// TODO !
 				if (pc != state.final_pc && (state.script->zasm[pc + 1].command == ADDV || state.script->zasm[pc + 1].command == SUBV) && state.script->zasm[pc + 1].arg1 == arg1)
 				{
 					x86::Gp copy = cc.newInt32();
@@ -1310,9 +1311,7 @@ static void compile_single_command(CompilationState& state, x86::Compiler& cc, c
 		{
 			// Write directly value on the stack (offset is arg2 + rSFRAME register).
 			x86::Gp sframe = get_z_register(state, cc, rSFRAME);
-			x86::Gp offset = immutable_add_constant(cc, sframe, arg2);
-
-			cc.mov(x86::ptr_32(state.ptrStackBase, offset, 2), arg1);
+			cc.mov(x86::ptr_32(state.ptrStackBase, sframe, 2, arg2*4), arg1);
 		}
 		break;
 		case STORED:
@@ -1789,7 +1788,7 @@ static void compile_single_command(CompilationState& state, x86::Compiler& cc, c
 static std::optional<JittedFunction> compile_function(zasm_script* script, JittedScript* j_script, const ZasmFunction& fn)
 {
 	// TODO !
-	// if (!(  fn.start_pc == 987))
+	// if (!(  fn.start_pc == 27268))
 	// 	return std::nullopt;
 	// if (!(fn.start_pc == 0) || script->name != "ffc-11-Z4Moblin")
 	// 	return std::nullopt;
