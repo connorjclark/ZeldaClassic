@@ -1946,7 +1946,7 @@ static std::optional<JittedFunction> compile_function(zasm_script* script, Jitte
 	// }
 
 	// state.use_cached_regs = !bisect_tool_should_skip();
-	state.use_cached_regs =1;
+	state.use_cached_regs = true;
 
 	for (pc_t i = start_pc; i <= final_pc; i++)
 	{
@@ -2033,12 +2033,6 @@ static std::optional<JittedFunction> compile_function(zasm_script* script, Jitte
 			continue;
 		}
 
-		// if (int commands_used = try_compile_expression_tree(state, cc, script, i))
-		// {
-		// 	i += commands_used - 1;
-		// 	continue;
-		// }
-
 		if (!command_is_compiled(command))
 		{
 			if (DEBUG_JIT_PRINT_ASM && command != 0xFFFF)
@@ -2082,7 +2076,7 @@ static std::optional<JittedFunction> compile_function(zasm_script* script, Jitte
 	}
 
 	// TODO ! ?
-	flush_cache(state, cc);
+	// flush_cache(state, cc);
 
 	if (fn.id == j_script->structured_zasm.functions.back().id)
 	{
