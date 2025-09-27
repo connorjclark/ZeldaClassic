@@ -1112,8 +1112,7 @@ static void compile_single_command(CompilationState& state, x86::Compiler& cc, c
 		{
 			// TODO: needs to check for stack overflow.
 			// Write directly value on the stack (arg1 to offset arg2)
-			x86::Gp offset = immutable_add_constant(cc, state.vSp, arg2);
-			cc.mov(x86::ptr_32(state.ptrStackBase, offset, 2), arg1);
+			cc.mov(x86::ptr_32(state.ptrStackBase, state.vSp, 2, arg2 * 4), arg1);
 		}
 		break;
 		case PUSHV:
