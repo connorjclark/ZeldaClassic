@@ -213,7 +213,6 @@ static void flush_cache(CompilationState& state, x86::Compiler& cc)
 			cc.setInlineComment("flush cached registers");
 
 		// TODO ! check if needed (does register live beyond this block?)
-		// TODO ! check if dirty
 		for (auto& [r, cached_reg] : state.cached_d_regs)
 		{
 			if (cached_reg.dirty)
@@ -302,41 +301,6 @@ static void flush_cache_for_dependent_registers(CompilationState& state, x86::Co
 	// 	state.cached_d_regs.clear();
 	// }
 }
-
-
-// TODO !
-// 26794: LOAD            D2               0           [Block 1 -> 2, 5]
-// 26795: PUSHR           D2                           
-// 26796: LOAD            D2               1           
-// 26797: DIVV            D2               20000       
-// 26798: POP             D3                           
-// 26799: COMPARER        D3               D2           ------- flushing too early here to avoid the cmp/flag destory...
-// 26800: GOTOCMP         26819            >           
-
-
-// nop                                         ; 26797 DIVV            D2               20000  
-// movsxd rcx, ecx
-// imul rcx, rcx, 10000
-// mov rdx, 20000
-// xor rbp, rbp
-// mov dword ptr [rsp], eax
-// mov rax, rcx
-// mov qword ptr [rsp+8], rdx
-// cqo rdx, rax
-// idiv rdx, rax, qword ptr [rsp+8]
-// nop                                         ; 26798 POP             D3              
-// mov ecx, dword ptr [rsp]
-// mov dword ptr [r14+8], eax                  ; flush cached registers
-// mov dword ptr [r14+12], ecx
-// mov dword ptr [r14+16], r11d
-// nop                                         ; 26799 COMPARER        D3               D2     
-// mov r11d, dword ptr [r14+8]
-// mov eax, dword ptr [r14+12]
-// cmp eax, r11d
-// mov dword ptr [r14+8], r11d                 ; flush cached registers
-// mov dword ptr [r14+12], eax
-// nop                                         ; 26800 GOTOCMP         26819            >      
-// jg L0
 
 static x86::Gp get_z_register(CompilationState& state, x86::Compiler& cc, int r)
 {
@@ -1168,14 +1132,6 @@ static void compile_single_command(CompilationState& state, x86::Compiler& cc, c
 		break;
 		case PUSHR:
 		{
-			// if (state.use_cached_regs)
-			// {
-			// 	if (state.cached_d_regs.contains(arg1))
-			// 	{
-			// 		state.cached_d_reg_stack.push_back({.reg=state.cached_d_regs[arg1], .value=arg1});
-			// 		break;
-			// 	}
-			// }
 			if (state.use_cached_regs)
 			{
 				if (pc != state.final_pc && (state.script->zasm[pc + 1].command == ADDV || state.script->zasm[pc + 1].command == SUBV) && state.script->zasm[pc + 1].arg1 == arg1)
@@ -1190,8 +1146,6 @@ static void compile_single_command(CompilationState& state, x86::Compiler& cc, c
 				}
 				break;
 			}
-
-			// state.cached_d_reg_stack.push_back({}); // TODO ! rm
 
 			handle_check_sp_push(state, cc, script, pc, state.vSp);
 
@@ -1225,7 +1179,6 @@ static void compile_single_command(CompilationState& state, x86::Compiler& cc, c
 			}
 			else
 			{
-				// TODO !
 				// Otherwise, rep stos is probably faster.
 				// See: https://reviews.llvm.org/D32002
 				x86::Gp num = cc.newInt32();
@@ -1619,39 +1572,6 @@ static void compile_single_command(CompilationState& state, x86::Compiler& cc, c
 		{
 			x86::Gp result = compile_modv(state, cc, get_z_register(state, cc, arg1), arg2);
 			set_z_register(state, cc, arg1, result);
-			// TODO !
-
-			// if (arg2 == 0)
-			// {
-			// 	x86::Gp val = cc.newInt32();
-			// 	zero(cc, val);
-			// 	set_z_register(state, cc, arg1, val);
-
-			// 	InvokeNode *invokeNode;
-			// 	cc.invoke(&invokeNode, log_error_div_0, FuncSignatureT<void>(state.calling_convention));
-			// 	break;
-			// }
-
-			// // https://stackoverflow.com/a/8022107/2788187
-			// x86::Gp val = get_z_register(state, cc, arg1);
-			// if (arg2 > 0 && (arg2 & (-arg2)) == arg2)
-			// {
-			// 	// Power of 2.
-			// 	// Because numbers in zscript are fixed point, "2" is really "20000"... so this won't
-			// 	// ever really be utilized.
-			// 	cc.and_(val, arg2 - 1);
-			// 	set_z_register(state, cc, arg1, val);
-			// }
-			// else
-			// {
-			// 	x86::Gp divisor = cc.newInt32();
-			// 	cc.mov(divisor, arg2);
-			// 	x86::Gp rem = cc.newInt32();
-			// 	zero(cc, rem);
-			// 	cc.cdq(rem, val);
-			// 	cc.idiv(rem, val, divisor);
-			// 	set_z_register(state, cc, arg1, rem);
-			// }
 		}
 		break;
 		case MODR:
@@ -1869,7 +1789,7 @@ static void compile_single_command(CompilationState& state, x86::Compiler& cc, c
 static std::optional<JittedFunction> compile_function(zasm_script* script, JittedScript* j_script, const ZasmFunction& fn)
 {
 	// TODO !
-	// if (!(  fn.start_pc == 27268))
+	// if (!(  fn.start_pc == 987))
 	// 	return std::nullopt;
 	// if (!(fn.start_pc == 0) || script->name != "ffc-11-Z4Moblin")
 	// 	return std::nullopt;
