@@ -1780,11 +1780,46 @@ static void compile_single_command(CompilationState& state, x86::Compiler& cc, c
 	}
 }
 
+// TODO ! shouldnt flush for 996 COMPARER.
+//
+// mov dword ptr [r14+16], r11d                ; flush cached registers
+// L6:
+// nop                                         ; 991 STOREV          20000            0      
+// mov r11d, dword ptr [r14+16]
+// mov dword ptr [r15+r11d*4], 20000
+// L4:
+// nop                                         ; 992 LOAD            D2               0      
+// mov r11d, dword ptr [r14+16]
+// mov eax, dword ptr [r15+r11d*4]
+// nop                                         ; 993 PUSHR           D2              
+// nop                                         ; 994 LOAD            D2               2      
+// mov r11d, dword ptr [r15+r11d*4+8]
+// nop                                         ; 995 POP             D3              
+// mov dword ptr [r14+8], r11d                 ; flush cached registers
+// mov dword ptr [r14+12], eax
+// nop                                         ; 996 COMPARER        D3               D2     
+// mov r11d, dword ptr [r14+8]
+// mov eax, dword ptr [r14+12]
+// cmp eax, r11d
+// nop                                         ; 997 GOTOCMP         1023             >      
+// jg L0
+// nop                                         ; 998 NOP            
+// nop                                         ; 999 NOP            
+// nop                                         ; 1000 LOAD            D2               2      
+// mov r11d, dword ptr [r14+16]
+// mov eax, dword ptr [r15+r11d*4+8]
+// nop                                         ; 1001 PUSHR           D2              
+// nop                                         ; 1002 LOAD            D2               0      
+// mov r11d, dword ptr [r15+r11d*4]
+// nop                                         ; 1003 POP             D3              
+// nop                                         ; 1004 MODR            D3               D2     
+// xor ecx, ecx
+
 static std::optional<JittedFunction> compile_function(zasm_script* script, JittedScript* j_script, const ZasmFunction& fn)
 {
 	// TODO !
-	// if (!(  fn.start_pc == 27268))
-	// 	return std::nullopt;
+	if (!(  fn.start_pc == 991))
+		return std::nullopt;
 	// if (!(fn.start_pc == 0) || script->name != "ffc-11-Z4Moblin")
 	// 	return std::nullopt;
 
@@ -1954,6 +1989,7 @@ static std::optional<JittedFunction> compile_function(zasm_script* script, Jitte
 		const auto& op = script->zasm[i];
 		int command = op.command;
 
+		// ...
 		if (command_is_goto(command) || command_is_wait(command) || !command_is_compiled(command) || command == CALLFUNC || command == RETURNFUNC || command == COMPAREV || command == COMPARER || state.j_script->cfg.contains_block_start(i))
 			flush_cache(state, cc);
 
