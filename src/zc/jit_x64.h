@@ -21,6 +21,8 @@ struct JittedExecutionContext
 	pc_t pc;
 	pc_t call_pc;
 	uint64_t saved_regs[4];
+	// If non-zero, this is the address to jump to upon entry.
+	uintptr_t resume_address; 
 };
 
 using JittedFunctionImpl = int (*)(JittedExecutionContext* ctx);
@@ -30,21 +32,19 @@ struct JittedFunction
 {
 	JittedFunctionImpl exec;
 	pc_t id;
-	std::map<pc_t, intptr_t> pc_to_address;
-	std::map<pc_t, uint32_t> pc_to_stack_size;
+	std::map<pc_t, uintptr_t> pc_to_resume_address;
 };
 
 struct JittedScript
 {
 	StructuredZasm structured_zasm;
 	ZasmCFG cfg;
-	std::map<pc_t, pc_t> start_pc_to_fn_id;
+	std::vector<pc_t> function_start_pcs;
 	std::vector<JittedFunction> compiled_functions;
 	std::deque<JittedFunction> pending_compiled_jit_functions;
 	std::unique_ptr<ScriptDebugHandle> debug_handle;
 	ALLEGRO_MUTEX* mutex;
-	std::map<pc_t, uintptr_t> pc_to_address;
-	std::map<pc_t, uint32_t> pc_to_stack_size;
+	std::map<pc_t, uintptr_t> pc_to_resume_address;
 	DispatcherStub dispatcher_stub;
 	std::map<pc_t, pc_t> pc_to_containing_function_id_cache;
 	// Tracks how many times functions are called in the interpeter.
