@@ -216,22 +216,8 @@ static void do_stack_push_many(CompilationState& state, x86::Compiler& cc, int o
 	}
 }
 
-static void flush_cache(CompilationState& state, x86::Compiler& cc)
+static void flush_stack_cache(CompilationState& state, x86::Compiler& cc)
 {
-	if (!state.cached_d_regs.empty())
-	{
-		if (DEBUG_JIT_PRINT_ASM)
-			cc.setInlineComment("flush cached registers");
-
-		// TODO ! check if needed (does register live beyond this block?)
-		for (auto& [r, cached_reg] : state.cached_d_regs)
-		{
-			if (cached_reg.dirty)
-				cc.mov(x86::ptr_32(state.ptrRegisters, r * 4), cached_reg.reg);
-		}
-		state.cached_d_regs.clear();
-	}
-
 	if (!state.cached_d_reg_stack.empty())
 	{
 		if (DEBUG_JIT_PRINT_ASM)
@@ -272,6 +258,25 @@ static void flush_cache(CompilationState& state, x86::Compiler& cc)
 		}
 		state.cached_d_reg_stack.clear();
 	}
+}
+
+static void flush_cache(CompilationState& state, x86::Compiler& cc)
+{
+	if (!state.cached_d_regs.empty())
+	{
+		if (DEBUG_JIT_PRINT_ASM)
+			cc.setInlineComment("flush cached registers");
+
+		// TODO ! check if needed (does register live beyond this block?)
+		for (auto& [r, cached_reg] : state.cached_d_regs)
+		{
+			if (cached_reg.dirty)
+				cc.mov(x86::ptr_32(state.ptrRegisters, r * 4), cached_reg.reg);
+		}
+		state.cached_d_regs.clear();
+	}
+
+	flush_stack_cache(state, cc);
 }
 
 static void flush_cache_for_dependent_registers(CompilationState& state, x86::Compiler& cc, int r)
@@ -342,15 +347,13 @@ static x86::Gp get_z_register(CompilationState& state, x86::Compiler& cc, int r)
 	}
 	else if (r == SP)
 	{
-		if (state.use_cached_regs && !state.cached_d_reg_stack.empty())
-			flush_cache(state, cc);
+		flush_stack_cache(state, cc);
 		cc.mov(val, state.vSp);
 		cc.imul(val, 10000);
 	}
 	else if (r == SP2)
 	{
-		if (state.use_cached_regs && !state.cached_d_reg_stack.empty())
-			flush_cache(state, cc);
+		flush_stack_cache(state, cc);
 		cc.mov(val, state.vSp);
 	}
 	else if (r == SWITCHKEY)
