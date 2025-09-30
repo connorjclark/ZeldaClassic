@@ -183,6 +183,17 @@ static void check_sp(CompilationState& state, x86::Compiler& cc, x86::Gp vStackI
 	cc.bind(label);
 }
 
+// TODO !
+// this is dumb:
+//
+// mov r11d, 0
+// mov dword ptr [r15+ebx*4+24], r11d
+// mov dword ptr [r15+ebx*4+20], r11d
+// mov dword ptr [r15+ebx*4+16], r11d
+// mov dword ptr [r15+ebx*4+12], r11d
+// mov dword ptr [r15+ebx*4+8], r11d
+// mov dword ptr [r15+ebx*4+4], 10000
+// mov dword ptr [r15+ebx*4], 1280000
 static void do_stack_push_many(CompilationState& state, x86::Compiler& cc, int offset, int amount, x86::Gp val)
 {
 	// Push onto stack [amount] times.
@@ -240,9 +251,10 @@ static void flush_cache(CompilationState& state, x86::Compiler& cc)
 		{
 			if (is_constant)
 			{
-				if (amount == 1)
+				if (amount < 8)
 				{
-					cc.mov(x86::ptr_32(state.ptrStackBase, state.vSp, 2, i * 4), value);
+					for (int j = 0; j < amount; j++)
+						cc.mov(x86::ptr_32(state.ptrStackBase, state.vSp, 2, (i - j) * 4), value);
 				}
 				else
 				{
@@ -1815,7 +1827,7 @@ static void compile_single_command(CompilationState& state, x86::Compiler& cc, c
 static std::optional<JittedFunction> compile_function(zasm_script* script, JittedScript* j_script, const ZasmFunction& fn)
 {
 	// TODO !
-	// if (!(  fn.start_pc == 7256))
+	// if (!(  fn.start_pc == 900))
 	// 	return std::nullopt;
 	// if (!(fn.start_pc == 0) || script->name != "ffc-11-Z4Moblin")
 	// 	return std::nullopt;
@@ -1991,6 +2003,8 @@ static std::optional<JittedFunction> compile_function(zasm_script* script, Jitte
 		// ...
 		if (command_is_goto(command) || command_is_wait(command) || !command_is_compiled(command) || command == CALLFUNC || command == RETURNFUNC || command == COMPAREV || command == COMPARER || state.j_script->cfg.contains_block_start(i))
 			flush_cache(state, cc);
+		// if (!command_is_compiled(command) || command == CALLFUNC || command == RETURNFUNC)
+		// 	flush_cache(state, cc);
 
 		if (state.goto_labels.contains(i))
 		{
