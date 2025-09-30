@@ -304,21 +304,22 @@ static void flush_cache_for_dependent_registers(CompilationState& state, x86::Co
 
 static x86::Gp get_z_register(CompilationState& state, x86::Compiler& cc, int r)
 {
-	x86::Gp val = cc.newInt32(); // TODO !
-	if (r >= D(0) && r < D(INITIAL_D))
+	if (state.use_cached_regs && r >= D(0) && r < D(INITIAL_D))
 	{
-		if (state.use_cached_regs)
+		if (!state.cached_d_regs.contains(r))
 		{
-			if (!state.cached_d_regs.contains(r))
-			{
-				cc.mov(val, x86::ptr_32(state.ptrRegisters, r * 4));
-				state.cached_d_regs[r] = {.reg=val};
-				return val;
-			}
-	
-			return state.cached_d_regs[r].reg;
+			x86::Gp val = cc.newInt32();
+			cc.mov(val, x86::ptr_32(state.ptrRegisters, r * 4));
+			state.cached_d_regs[r] = {.reg=val};
+			return val;
 		}
 
+		return state.cached_d_regs[r].reg;
+	}
+
+	x86::Gp val = cc.newInt32();
+	if (r >= D(0) && r < D(INITIAL_D))
+	{
 		cc.mov(val, x86::ptr_32(state.ptrRegisters, r * 4));
 	}
 	else if (r >= GD(0) && r <= GD(MAX_SCRIPT_REGISTERS))
@@ -1971,36 +1972,9 @@ static std::optional<JittedFunction> compile_function(zasm_script* script, Jitte
 	std::string comment;
 	std::map<int, int> uncompiled_command_counts;
 
-	// state.use_cached_regs = fn.start_pc == 987;
-
-	std::vector<bool> should_use_cached_regs;
-	should_use_cached_regs.resize(fn.final_pc - fn.start_pc + 1);
-	
-	// for (pc_t block_id = j_script->cfg.block_id_from_start_pc(start_pc); block_id < j_script->cfg.block_starts.size(); block_id++)
-	// {
-	// 	pc_t block_start_pc = j_script->cfg.block_starts[block_id];
-	// 	if (block_start_pc > final_pc)
-	// 		break;
-
-	// 	pc_t block_final_pc = block_id == j_script->cfg.block_starts.size() - 1 ? final_pc : j_script->cfg.block_starts[block_id + 1];
-	// 	bool use_cache = true;
-	// 	for (pc_t i = block_start_pc; i <= block_final_pc; i++)
-	// 	{
-	// 		if (script->zasm[i].command == SETR && script->zasm[i].arg2 == SP2)
-	// 		{
-	// 			use_cache = false;
-	// 			break;
-	// 		}
-	// 	}
-
-	// 	for (pc_t i = block_start_pc; i <= block_final_pc; i++)
-	// 	{
-	// 		should_use_cached_regs[i - start_pc] = use_cache;
-	// 	}
-	// }
-
+	static bool use_cached_regs_enabled = is_feature_enabled("-jit-cache-registers", "ZSCRIPT", "jit_cache_registers", true);
+	state.use_cached_regs = use_cached_regs_enabled;
 	// state.use_cached_regs = !bisect_tool_should_skip();
-	state.use_cached_regs = true;
 
 	for (pc_t i = start_pc; i <= final_pc; i++)
 	{
