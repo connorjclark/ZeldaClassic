@@ -2003,10 +2003,22 @@ static std::optional<JittedFunction> compile_function(zasm_script* script, Jitte
 		const auto& op = script->zasm[i];
 		int command = op.command;
 
-		// ...
-		if (command_is_goto(command) || command_is_wait(command) || !command_is_compiled(command) || command == CALLFUNC || command == RETURNFUNC || command == COMPAREV || command == COMPARER || state.j_script->cfg.contains_block_start(i))
+		if (command_is_goto(command) || command_is_wait(command) || !command_is_compiled(command) || command == CALLFUNC || command == RETURNFUNC || command == COMPAREV || command == COMPARER)
+		{
 			flush_cache(state, cc);
-		// if (!command_is_compiled(command) || command == CALLFUNC || command == RETURNFUNC)
+		}
+		else if (state.j_script->cfg.contains_block_start(i))
+		{
+			pc_t block_id = j_script->cfg.block_id_from_start_pc(i);
+			bool is_linear_flow =
+				block_id > 0 &&
+				j_script->cfg.block_edges[block_id - 1].size() == 1 &&
+				j_script->cfg.block_edges[block_id - 1][0] == block_id &&
+				j_script->block_predecessors[block_id].size() == 1;
+			if (!is_linear_flow)
+				flush_cache(state, cc);
+		}
+		// if (i == 904 || !command_is_compiled(command) || command == CALLFUNC || command == RETURNFUNC || command_is_wait(command) || command_is_goto(command))
 		// 	flush_cache(state, cc);
 
 		if (state.goto_labels.contains(i))
@@ -2353,6 +2365,15 @@ static JittedScript* init_jitted_script(zasm_script* script)
 		.structured_zasm = std::move(structured_zasm),
 		.cfg = zasm_construct_cfg(script, pc_ranges),
 	};
+
+	j_script->block_predecessors.resize(j_script->cfg.block_starts.size());
+	for (pc_t i = 0; i < j_script->block_predecessors.size(); i++)
+	{
+		for (pc_t edge : j_script->cfg.block_edges[i])
+		{
+			j_script->block_predecessors[edge].push_back(i);
+		}
+	}
 
 	j_script->function_start_pcs.reserve(j_script->structured_zasm.functions.size());
 	for (const auto& fn : j_script->structured_zasm.functions)
