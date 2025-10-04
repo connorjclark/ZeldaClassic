@@ -576,6 +576,20 @@ static x86::Gp immutable_add_constant(x86::Compiler& cc, x86::Gp reg, int value)
 	return r;
 }
 
+static void add_constant(x86::Compiler& cc, x86::Gp reg, int value)
+{
+	if (value == 0)
+		return;
+
+	// Prefer inc/dec for smaller code size.
+	if (value == 1)
+		cc.inc(reg);
+	else if (value == -1)
+		cc.dec(reg);
+	else
+		cc.add(reg, value);
+}
+
 static void cast_bool(x86::Compiler& cc, x86::Gp reg)
 {
 	cc.test(reg, reg);
@@ -1150,7 +1164,6 @@ static void compile_single_command(CompilationState& state, x86::Compiler& cc, c
 		{
 			if (state.use_cached_regs)
 			{
-				// TODO !
 				if (pc != state.final_pc && (state.script->zasm[pc + 1].command == ADDV || state.script->zasm[pc + 1].command == SUBV) && state.script->zasm[pc + 1].arg1 == arg1)
 				{
 					x86::Gp copy = cc.newInt32();
@@ -1456,13 +1469,8 @@ static void compile_single_command(CompilationState& state, x86::Compiler& cc, c
 		break;
 		case ADDV:
 		{
-			x86::Gp val = get_z_register(state, cc, arg1); // TODO ! ...
-			if (arg2 == 1)
-				cc.inc(val);
-			else if (arg2 == -1)
-				cc.dec(val);
-			else
-				cc.add(val, arg2);
+			x86::Gp val = get_z_register(state, cc, arg1);
+			add_constant(cc, val, arg2);
 			set_z_register(state, cc, arg1, val);
 		}
 		break;
