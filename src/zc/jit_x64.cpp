@@ -2002,11 +2002,14 @@ static std::optional<JittedFunction> compile_function(zasm_script* script, Jitte
 				j_script->block_predecessors[block_id].size() == 1;
 			if (!is_linear_flow)
 			{
-				uint8_t out = j_script->liveness[current_block_id-1].out;
-				for (auto& [r, cached_reg] : state.cached_d_regs)
+				if (current_block_id > 0)
 				{
-					if (!(out & (1 << r)))
-						cached_reg.dirty = false;
+					uint8_t out = j_script->liveness[current_block_id - 1].out;
+					for (auto& [r, cached_reg] : state.cached_d_regs)
+					{
+						if (!(out & (1 << r)))
+							cached_reg.dirty = false;
+					}
 				}
 
 				flush_cache(state, cc);
