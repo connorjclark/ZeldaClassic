@@ -297,30 +297,11 @@ static void flush_cache_for_dependent_registers(CompilationState& state, x86::Co
 		{
 			if (pair.second.dirty)
 				cc.mov(x86::ptr_32(state.ptrRegisters, pair.first * 4), pair.second.reg);
-			return true; // TODO ! keep?
+			return true;
 		}
 
 		return false;
 	});
-
-	// TODO ! confirm the above is better.
-
-	// bool any_dependent = false;
-	// for (auto r : state.cached_d_regs)
-	// {
-	// 	if (util::contains(dep_regs, r.first))
-	// 	{
-	// 		any_dependent = true;
-	// 		break;
-	// 	}
-	// }
-
-	// if (any_dependent)
-	// {
-	// 	for (auto& [r, reg] : state.cached_d_regs)
-	// 		cc.mov(x86::ptr_32(state.ptrRegisters, r * 4), reg);
-	// 	state.cached_d_regs.clear();
-	// }
 }
 
 static x86::Gp get_z_register(CompilationState& state, x86::Compiler& cc, int r)
@@ -2212,9 +2193,6 @@ static std::optional<JittedFunction> compile_function(zasm_script* script, Jitte
 		cc.setInlineComment("fall-thru");
 		cc.nop();
 	}
-
-	// TODO ! ?
-	// flush_cache(state, cc);
 
 	if (fn.id == j_script->structured_zasm.functions.back().id)
 	{
