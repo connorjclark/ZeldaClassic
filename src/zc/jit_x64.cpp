@@ -1993,20 +1993,12 @@ static std::optional<JittedFunction> compile_function(zasm_script* script, Jitte
 	std::map<int, int> uncompiled_command_counts;
 
 	static bool use_cached_regs_enabled = is_feature_enabled("-jit-cache-registers", "ZSCRIPT", "jit_cache_registers", true);
-	state.use_cached_regs = use_cached_regs_enabled;
-	// state.use_cached_regs = !bisect_tool_should_skip();
+	state.use_cached_regs = use_cached_regs_enabled && !runtime_debugging;
 
 	pc_t current_block_id = j_script->cfg.block_id_from_start_pc(start_pc);
 
 	for (pc_t i = start_pc; i <= final_pc; i++)
 	{
-		// state.use_cached_regs = fn.start_pc == 897;
-
-		// state.use_cached_regs = i >= 8865;
-		// state.use_cached_regs = i >= 8831 && i <= 8864 && i >= 8845;
-		// state.use_cached_regs = i >= 1008 && i <= 1016;
-		// state.use_cached_regs = i >= 987 && i <= 997;
-
 		const auto& op = script->zasm[i];
 		int command = op.command;
 
@@ -2015,9 +2007,6 @@ static std::optional<JittedFunction> compile_function(zasm_script* script, Jitte
 		{
 			current_block_id++;
 		}
-
-		// if (command_is_goto(command) || command_is_wait(command) || !command_is_compiled(command) || command == CALLFUNC || command == RETURNFUNC || command == COMPAREV || command == COMPARER || state.j_script->cfg.contains_block_start(i))
-		// 	flush_cache(state, cc);
 
 		if (command_is_wait(command))
 		{
