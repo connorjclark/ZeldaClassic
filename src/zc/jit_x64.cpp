@@ -585,6 +585,7 @@ static x86::Gp immutable_add_constant(x86::Compiler& cc, x86::Gp reg, int value)
 
 	x86::Gp r = cc.newInt32();
 	cc.mov(r, reg);
+	// TODO ! cant use if in a comparison (cmp; inc/dec sets eflag)
 	// Prefer inc/dec for smaller code size.
 	// if (value == 1)
 	// 	cc.inc(r);
@@ -1856,7 +1857,8 @@ static std::optional<JittedFunction> compile_function(zasm_script* script, Jitte
 	// TODO !
 	// if (!(  fn.start_pc == 987 || fn.start_pc == 26791))
 	// 	return std::nullopt;
-	// if (!(  fn.start_pc == 26887))
+	// 27268
+	// if (!(  fn.start_pc == 1129))
 	// 	return std::nullopt;
 	
 	// if (!(fn.start_pc == 0) || script->name != "ffc-11-Z4Moblin")
@@ -2062,42 +2064,6 @@ static std::optional<JittedFunction> compile_function(zasm_script* script, Jitte
 
 			flush_cache(state, cc);
 		}
-		else if (command == COMPAREV || command == COMPARER)
-		{
-			flush_cache(state, cc);
-
-			// bool is_compare_at_block_end = false;
-			// for (pc_t j = i + 1; j < final_pc; j++)
-			// {
-			// 	if (state.j_script->cfg.contains_block_start(j))
-			// 	{
-			// 		is_compare_at_block_end = true;
-			// 		break;
-			// 	}
-
-			// 	int next_command = script->zasm[j].command;
-			// 	if (next_command == COMPARER || next_command == COMPAREV || next_command == GOTOCMP || next_command == NOP)
-			// 		continue;
-
-			// 	break;
-			// }
-
-			// if (is_compare_at_block_end && i == 996)
-			// {
-			// 	uint8_t out = liveness[current_block_id].out;
-			// 	for (auto& [r, cached_reg] : state.cached_d_regs)
-			// 	{
-			// 		if (!(out & (1 << r)))
-			// 			cached_reg.dirty = false;
-			// 	}
-			// 	// flush_cache_some_registers(state, cc, liveness[current_block_id].out);
-			// 	// flush_stack_cache(state, cc);
-			// }
-			// else
-			// {
-			// 	flush_cache(state, cc);
-			// }
-		}
 		else if (is_block_start)
 		{
 			pc_t block_id = current_block_id;
@@ -2118,6 +2084,14 @@ static std::optional<JittedFunction> compile_function(zasm_script* script, Jitte
 				// flush_stack_cache(state, cc);
 				flush_cache(state, cc);
 			}
+		}
+
+		if (command == COMPAREV || command == COMPARER)
+		{
+			// Compare commands emit a cmp, but so does the stack check. So flush the stack here so
+			// that it doesn't need to be done in the "flush_cache" above, which would interrupt the
+			// compare's command cmp result.
+			flush_stack_cache(state, cc);
 		}
 
 		if (state.goto_labels.contains(i))
