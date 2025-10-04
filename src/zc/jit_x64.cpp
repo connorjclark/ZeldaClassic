@@ -1834,7 +1834,7 @@ static std::optional<JittedFunction> compile_function(zasm_script* script, Jitte
 	// TODO !
 	// if (!(  fn.start_pc == 987 || fn.start_pc == 26791))
 	// 	return std::nullopt;
-	// if (!(  fn.start_pc == 712))
+	// if (!(  fn.start_pc == 1129))
 	// 	return std::nullopt;
 	
 	// if (!(fn.start_pc == 0) || script->name != "ffc-11-Z4Moblin")
@@ -2057,14 +2057,13 @@ static std::optional<JittedFunction> compile_function(zasm_script* script, Jitte
 				j_script->block_predecessors[block_id].size() == 1;
 			if (!is_linear_flow)
 			{
-				// uint8_t out = liveness[current_block_id].out;
-				// for (auto& [r, cached_reg] : state.cached_d_regs)
-				// {
-				// 	if (!(out & (1 << r)))
-				// 		cached_reg.dirty = false;
-				// }
-				// flush_cache_some_registers(state, cc, liveness[block_id].out);
-				// flush_stack_cache(state, cc);
+				uint8_t out = j_script->liveness[current_block_id-1].out;
+				for (auto& [r, cached_reg] : state.cached_d_regs)
+				{
+					if (!(out & (1 << r)))
+						cached_reg.dirty = false;
+				}
+
 				flush_cache(state, cc);
 			}
 		}
