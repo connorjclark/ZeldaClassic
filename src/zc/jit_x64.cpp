@@ -1779,6 +1779,12 @@ static void compile_single_command(CompilationState& state, x86::Compiler& cc, c
 	}
 }
 
+
+// TODO ! (commit message)
+// Compiling seems faster now. Compiling yuurand w/ single thread.
+// base: 19941 19405
+// new:  13818 13444
+
 // TODO ! zasm_utils.h
 template <typename T>
 static void for_every_register_side_effect_args_only(const ffscript& instr, T fn)

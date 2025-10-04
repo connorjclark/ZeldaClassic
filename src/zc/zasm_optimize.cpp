@@ -20,6 +20,25 @@
 // 5. Finally, all the replay tests run with these optimizations applied, and since as of this writing no replays
 //    were recorded w/ these optimizations, they grant a high confidence that these optimizations are sound.
 
+// More optimization ideas:
+//
+// Loop invariants. For example, below `x/2` only needs to be calculated once,
+// but currently it is calculated on every iteration.
+//
+//
+//    bool is_prime(int x)
+//    {
+//        for (int i = 2; i <= x/2; i++)
+//        {
+//            if (x % i == 0)
+//            {
+//                return false;
+//            }
+//        }
+//
+//        return true;
+//    }
+
 #include "zc/zasm_optimize.h"
 #include "base/general.h"
 #include "base/util.h"
