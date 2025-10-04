@@ -183,17 +183,6 @@ static void check_sp(CompilationState& state, x86::Compiler& cc, x86::Gp vStackI
 	cc.bind(label);
 }
 
-// TODO !
-// this is dumb:
-//
-// mov r11d, 0
-// mov dword ptr [r15+ebx*4+24], r11d
-// mov dword ptr [r15+ebx*4+20], r11d
-// mov dword ptr [r15+ebx*4+16], r11d
-// mov dword ptr [r15+ebx*4+12], r11d
-// mov dword ptr [r15+ebx*4+8], r11d
-// mov dword ptr [r15+ebx*4+4], 10000
-// mov dword ptr [r15+ebx*4], 1280000
 static void do_stack_push_many(CompilationState& state, x86::Compiler& cc, int offset, int amount, x86::Gp val)
 {
 	// Push onto stack [amount] times.
@@ -278,29 +267,20 @@ static void flush_cache(CompilationState& state, x86::Compiler& cc, uint8_t regi
 	flush_stack_cache(state, cc);
 }
 
-// TODO ! not right...
-static void flush_cache_some_registers(CompilationState& state, x86::Compiler& cc, uint8_t register_mask)
+// TODO ! rm
+static void write_some_cached_registers(CompilationState& state, x86::Compiler& cc, uint8_t register_mask)
 {
 	if (state.cached_d_regs.empty())
 		return;
 
 	if (DEBUG_JIT_PRINT_ASM)
-		cc.setInlineComment("flush cached registers");
+		cc.setInlineComment("write cached registers");
 
-	std::erase_if(state.cached_d_regs, [&](const auto& pair){
-		auto& [r, cached_reg] = pair;
-
-		if (!(register_mask & (1 << r)))
-			return true;
-
-		if (cached_reg.dirty)
-		{
+	for (auto& [r, cached_reg] : state.cached_d_regs)
+	{
+		if (cached_reg.dirty && (register_mask & (1 << r)))
 			cc.mov(x86::ptr_32(state.ptrRegisters, r * 4), cached_reg.reg);
-			return true;
-		}
-
-		return false;
-	});
+	}
 }
 
 static void flush_cache_for_dependent_registers(CompilationState& state, x86::Compiler& cc, int r)
@@ -1817,48 +1797,56 @@ static void compile_single_command(CompilationState& state, x86::Compiler& cc, c
 	}
 }
 
-// TODO ! shouldnt flush for 996 COMPARER.
-//
-// mov dword ptr [r14+16], r11d                ; flush cached registers
-// L6:
-// nop                                         ; 991 STOREV          20000            0      
-// mov r11d, dword ptr [r14+16]
-// mov dword ptr [r15+r11d*4], 20000
-// L4:
-// nop                                         ; 992 LOAD            D2               0      
-// mov r11d, dword ptr [r14+16]
-// mov eax, dword ptr [r15+r11d*4]
-// nop                                         ; 993 PUSHR           D2              
-// nop                                         ; 994 LOAD            D2               2      
-// mov r11d, dword ptr [r15+r11d*4+8]
-// nop                                         ; 995 POP             D3              
-// mov dword ptr [r14+8], r11d                 ; flush cached registers
-// mov dword ptr [r14+12], eax
-// nop                                         ; 996 COMPARER        D3               D2     
-// mov r11d, dword ptr [r14+8]
-// mov eax, dword ptr [r14+12]
-// cmp eax, r11d
-// nop                                         ; 997 GOTOCMP         1023             >      
-// jg L0
-// nop                                         ; 998 NOP            
-// nop                                         ; 999 NOP            
-// nop                                         ; 1000 LOAD            D2               2      
-// mov r11d, dword ptr [r14+16]
-// mov eax, dword ptr [r15+r11d*4+8]
-// nop                                         ; 1001 PUSHR           D2              
-// nop                                         ; 1002 LOAD            D2               0      
-// mov r11d, dword ptr [r15+r11d*4]
-// nop                                         ; 1003 POP             D3              
-// nop                                         ; 1004 MODR            D3               D2     
-// xor ecx, ecx
+// TODO ! zasm_utils.h
+template <typename T>
+static void for_every_register_side_effect_args_only(const ffscript& instr, T fn)
+{
+	auto sc = get_script_command(instr.command);
+
+	if (sc->is_register(0))
+	{
+		auto [read, write] = get_command_rw(instr.command, 0);
+		fn(read, write, instr.arg1, 0);
+	}
+
+	if (sc->is_register(1))
+	{
+		auto [read, write] = get_command_rw(instr.command, 1);
+		fn(read, write, instr.arg2, 1);
+	}
+
+	if (sc->is_register(2))
+	{
+		auto [read, write] = get_command_rw(instr.command, 2);
+		fn(read, write, instr.arg3, 2);
+	}
+}
+
+template <typename T>
+static void for_every_register_side_effect(const ffscript& instr, T fn)
+{
+	for (auto [reg, rw] : get_command_implicit_dependencies(instr.command))
+	{
+		bool read = rw == ARGTY::READWRITE_REG || rw == ARGTY::READ_REG;
+		bool write = rw == ARGTY::READWRITE_REG || rw == ARGTY::WRITE_REG;
+		fn(read, write, reg, -1);
+	}
+
+	for_every_register_side_effect_args_only(instr, [&](bool read, bool write, int reg, int argn){
+		if (auto r = get_register_ref_dependency(reg))
+			fn(true, false, *r, -1);
+		for (auto r : get_register_dependencies(reg))
+			fn(true, false, r, -1);
+		fn(read, write, reg, argn);
+	});
+}
 
 static std::optional<JittedFunction> compile_function(zasm_script* script, JittedScript* j_script, const ZasmFunction& fn)
 {
 	// TODO !
 	// if (!(  fn.start_pc == 987 || fn.start_pc == 26791))
 	// 	return std::nullopt;
-	// 27268
-	// if (!(  fn.start_pc == 1129))
+	// if (!(  fn.start_pc == 712))
 	// 	return std::nullopt;
 	
 	// if (!(fn.start_pc == 0) || script->name != "ffc-11-Z4Moblin")
@@ -2045,9 +2033,29 @@ static std::optional<JittedFunction> compile_function(zasm_script* script, Jitte
 		// if (command_is_goto(command) || command_is_wait(command) || !command_is_compiled(command) || command == CALLFUNC || command == RETURNFUNC || command == COMPAREV || command == COMPARER || state.j_script->cfg.contains_block_start(i))
 		// 	flush_cache(state, cc);
 
-		if (command_is_wait(command) || !command_is_compiled(command))
+		if (command_is_wait(command))
 		{
-			// TODO !
+			flush_cache(state, cc);
+		}
+		else if (!command_is_compiled(command))
+		{
+			// TODO ! seems not worth it.
+			// uint8_t reads = 0;
+			// for (pc_t j = i; j <= final_pc; j++)
+			// {
+			// 	const auto& instr = script->zasm[j];
+			// 	if (!command_is_compiled(instr.command))
+			// 	{
+			// 		for_every_register_side_effect(instr, [&](bool read, bool write, int reg, int argn){
+			// 			if (reg < 8 && read)
+			// 				reads |= 1 << reg;
+			// 		});
+			// 	}
+			// 	else break;
+			// }
+
+			// write_some_cached_registers(state, cc, reads);
+			// flush_stack_cache(state, cc);
 			flush_cache(state, cc);
 		}
 		else if (command_is_goto(command) || command == CALLFUNC || command == RETURNFUNC)
