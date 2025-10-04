@@ -267,7 +267,6 @@ static void flush_cache(CompilationState& state, x86::Compiler& cc, uint8_t regi
 	flush_stack_cache(state, cc);
 }
 
-// TODO ! rm
 static void write_some_cached_registers(CompilationState& state, x86::Compiler& cc, uint8_t register_mask)
 {
 	if (state.cached_d_regs.empty())
@@ -1365,10 +1364,11 @@ static void compile_single_command(CompilationState& state, x86::Compiler& cc, c
 			set_z_register(state, cc, arg1, val);
 		}
 		break;
+		// Note: I'm pretty sure this always POPs to D5, which is the null register and can be
+		// ignored.
 		case POPARGS:
 		{
-			// TODO ! improve?
-			flush_cache(state, cc);
+			flush_stack_cache(state, cc);
 
 			// int32_t num = sarg2;
 			// ri->sp += num;
@@ -1779,67 +1779,8 @@ static void compile_single_command(CompilationState& state, x86::Compiler& cc, c
 	}
 }
 
-
-// TODO ! (commit message)
-// Compiling seems faster now. Compiling yuurand w/ single thread.
-// base: 19941 19405
-// new:  13818 13444
-
-// TODO ! zasm_utils.h
-template <typename T>
-static void for_every_register_side_effect_args_only(const ffscript& instr, T fn)
-{
-	auto sc = get_script_command(instr.command);
-
-	if (sc->is_register(0))
-	{
-		auto [read, write] = get_command_rw(instr.command, 0);
-		fn(read, write, instr.arg1, 0);
-	}
-
-	if (sc->is_register(1))
-	{
-		auto [read, write] = get_command_rw(instr.command, 1);
-		fn(read, write, instr.arg2, 1);
-	}
-
-	if (sc->is_register(2))
-	{
-		auto [read, write] = get_command_rw(instr.command, 2);
-		fn(read, write, instr.arg3, 2);
-	}
-}
-
-template <typename T>
-static void for_every_register_side_effect(const ffscript& instr, T fn)
-{
-	for (auto [reg, rw] : get_command_implicit_dependencies(instr.command))
-	{
-		bool read = rw == ARGTY::READWRITE_REG || rw == ARGTY::READ_REG;
-		bool write = rw == ARGTY::READWRITE_REG || rw == ARGTY::WRITE_REG;
-		fn(read, write, reg, -1);
-	}
-
-	for_every_register_side_effect_args_only(instr, [&](bool read, bool write, int reg, int argn){
-		if (auto r = get_register_ref_dependency(reg))
-			fn(true, false, *r, -1);
-		for (auto r : get_register_dependencies(reg))
-			fn(true, false, r, -1);
-		fn(read, write, reg, argn);
-	});
-}
-
 static std::optional<JittedFunction> compile_function(zasm_script* script, JittedScript* j_script, const ZasmFunction& fn)
 {
-	// TODO !
-	// if (!(  fn.start_pc == 987 || fn.start_pc == 26791))
-	// 	return std::nullopt;
-	// if (!(  fn.start_pc == 1129))
-	// 	return std::nullopt;
-	
-	// if (!(fn.start_pc == 0) || script->name != "ffc-11-Z4Moblin")
-	// 	return std::nullopt;
-
 	pc_t start_pc = fn.start_pc;
 	pc_t final_pc = fn.final_pc;
 
@@ -2004,9 +1945,7 @@ static std::optional<JittedFunction> compile_function(zasm_script* script, Jitte
 
 		bool is_block_start = state.j_script->cfg.contains_block_start(i);
 		if (is_block_start && i != start_pc)
-		{
 			current_block_id++;
-		}
 
 		if (command_is_wait(command))
 		{
@@ -2014,16 +1953,24 @@ static std::optional<JittedFunction> compile_function(zasm_script* script, Jitte
 		}
 		else if (!command_is_compiled(command))
 		{
-			// TODO ! seems not worth it.
+			flush_cache(state, cc);
+
+			// Note: I tried to be more clever here, only flushing registers
+			// that may be used by the compiled commands, but it wasn't working.
+			// Below was my attempt.
+
 			// uint8_t reads = 0;
+			// uint8_t writes = 0;
 			// for (pc_t j = i; j <= final_pc; j++)
 			// {
 			// 	const auto& instr = script->zasm[j];
 			// 	if (!command_is_compiled(instr.command))
 			// 	{
 			// 		for_every_register_side_effect(instr, [&](bool read, bool write, int reg, int argn){
-			// 			if (reg < 8 && read)
+			// 			if (reg < 8 && read && !((1 << reg) | write))
 			// 				reads |= 1 << reg;
+			// 			if (reg < 8 && write)
+			// 				writes |= 1 << reg;
 			// 		});
 			// 	}
 			// 	else break;
@@ -2031,7 +1978,9 @@ static std::optional<JittedFunction> compile_function(zasm_script* script, Jitte
 
 			// write_some_cached_registers(state, cc, reads);
 			// flush_stack_cache(state, cc);
-			flush_cache(state, cc);
+			// std::erase_if(state.cached_d_regs, [&](const auto& pair){
+			// 	return writes | (1 << pair.first);
+			// });
 		}
 		else if (command_is_goto(command) || command == CALLFUNC || command == RETURNFUNC)
 		{
@@ -2281,7 +2230,6 @@ static bool compile_and_queue_function(zasm_script* script, JittedScript* j_scri
 {
 	j_script->functions_requested_to_be_compiled[fn.id] = true;
 
-	// TODO !
 	if (bisect_tool_should_skip())
 		return false;
 
