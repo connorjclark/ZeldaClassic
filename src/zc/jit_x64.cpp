@@ -2009,8 +2009,6 @@ static std::optional<JittedFunction> compile_function(zasm_script* script, Jitte
 	state.use_cached_regs = use_cached_regs_enabled;
 	// state.use_cached_regs = !bisect_tool_should_skip();
 
-	// TODO !
-	ZasmLiveness liveness = zasm_run_liveness_analysis(script, j_script->cfg);
 	pc_t current_block_id = j_script->cfg.block_id_from_start_pc(start_pc);
 
 	for (pc_t i = start_pc; i <= final_pc; i++)
@@ -2061,9 +2059,9 @@ static std::optional<JittedFunction> compile_function(zasm_script* script, Jitte
 		}
 		else if (command_is_goto(command) || command == CALLFUNC || command == RETURNFUNC)
 		{
-			if (state.j_script->cfg.contains_block_start(i + 1))
+			if (j_script->cfg.contains_block_start(i + 1))
 			{
-				uint8_t out = liveness[current_block_id].out;
+				uint8_t out = j_script->liveness[current_block_id].out;
 				for (auto& [r, cached_reg] : state.cached_d_regs)
 				{
 					if (!(out & (1 << r)))
@@ -2447,6 +2445,8 @@ static JittedScript* init_jitted_script(zasm_script* script)
 		.structured_zasm = std::move(structured_zasm),
 		.cfg = zasm_construct_cfg(script, pc_ranges),
 	};
+
+	j_script->liveness = zasm_run_liveness_analysis(script, j_script->cfg);
 
 	j_script->block_predecessors.resize(j_script->cfg.block_starts.size());
 	for (pc_t i = 0; i < j_script->block_predecessors.size(); i++)
