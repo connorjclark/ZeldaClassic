@@ -558,24 +558,6 @@ static void zero(x86::Compiler& cc, x86::Gp reg)
 	cc.xor_(reg, reg);
 }
 
-static x86::Gp immutable_add_constant(x86::Compiler& cc, x86::Gp reg, int value)
-{
-	if (value == 0)
-		return reg;
-
-	x86::Gp r = cc.newInt32();
-	cc.mov(r, reg);
-	// TODO ! cant use if in a comparison (cmp; inc/dec sets eflag)
-	// Prefer inc/dec for smaller code size.
-	// if (value == 1)
-	// 	cc.inc(r);
-	// else if (value == -1)
-	// 	cc.dec(r);
-	// else
-		cc.add(r, value);
-	return r;
-}
-
 static void add_constant(x86::Compiler& cc, x86::Gp reg, int value)
 {
 	if (value == 0)
@@ -588,6 +570,17 @@ static void add_constant(x86::Compiler& cc, x86::Gp reg, int value)
 		cc.dec(reg);
 	else
 		cc.add(reg, value);
+}
+
+static x86::Gp immutable_add_constant(x86::Compiler& cc, x86::Gp reg, int value)
+{
+	if (value == 0)
+		return reg;
+
+	x86::Gp r = cc.newInt32();
+	cc.mov(r, reg);
+	add_constant(cc, r, value);
+	return r;
 }
 
 static void cast_bool(x86::Compiler& cc, x86::Gp reg)
