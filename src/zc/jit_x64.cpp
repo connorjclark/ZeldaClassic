@@ -260,23 +260,47 @@ static void flush_stack_cache(CompilationState& state, x86::Compiler& cc)
 	}
 }
 
-static void flush_cache(CompilationState& state, x86::Compiler& cc)
+static void flush_cache(CompilationState& state, x86::Compiler& cc, uint8_t register_mask = -1)
 {
 	if (!state.cached_d_regs.empty())
 	{
 		if (DEBUG_JIT_PRINT_ASM)
 			cc.setInlineComment("flush cached registers");
 
-		// TODO ! check if needed (does register live beyond this block?)
 		for (auto& [r, cached_reg] : state.cached_d_regs)
 		{
-			if (cached_reg.dirty)
+			if (cached_reg.dirty && (register_mask & (1 << r)))
 				cc.mov(x86::ptr_32(state.ptrRegisters, r * 4), cached_reg.reg);
 		}
 		state.cached_d_regs.clear();
 	}
 
 	flush_stack_cache(state, cc);
+}
+
+// TODO ! not right...
+static void flush_cache_some_registers(CompilationState& state, x86::Compiler& cc, uint8_t register_mask)
+{
+	if (state.cached_d_regs.empty())
+		return;
+
+	if (DEBUG_JIT_PRINT_ASM)
+		cc.setInlineComment("flush cached registers");
+
+	std::erase_if(state.cached_d_regs, [&](const auto& pair){
+		auto& [r, cached_reg] = pair;
+
+		if (!(register_mask & (1 << r)))
+			return true;
+
+		if (cached_reg.dirty)
+		{
+			cc.mov(x86::ptr_32(state.ptrRegisters, r * 4), cached_reg.reg);
+			return true;
+		}
+
+		return false;
+	});
 }
 
 static void flush_cache_for_dependent_registers(CompilationState& state, x86::Compiler& cc, int r)
@@ -1830,8 +1854,11 @@ static void compile_single_command(CompilationState& state, x86::Compiler& cc, c
 static std::optional<JittedFunction> compile_function(zasm_script* script, JittedScript* j_script, const ZasmFunction& fn)
 {
 	// TODO !
-	// if (!(  fn.start_pc == 900))
+	// if (!(  fn.start_pc == 987 || fn.start_pc == 26791))
 	// 	return std::nullopt;
+	// if (!(  fn.start_pc == 26887))
+	// 	return std::nullopt;
+	
 	// if (!(fn.start_pc == 0) || script->name != "ffc-11-Z4Moblin")
 	// 	return std::nullopt;
 
@@ -1991,6 +2018,10 @@ static std::optional<JittedFunction> compile_function(zasm_script* script, Jitte
 	state.use_cached_regs = use_cached_regs_enabled;
 	// state.use_cached_regs = !bisect_tool_should_skip();
 
+	// TODO !
+	ZasmLiveness liveness = zasm_run_liveness_analysis(script, j_script->cfg);
+	pc_t current_block_id = j_script->cfg.block_id_from_start_pc(start_pc);
+
 	for (pc_t i = start_pc; i <= final_pc; i++)
 	{
 		// state.use_cached_regs = fn.start_pc == 897;
@@ -2003,23 +2034,91 @@ static std::optional<JittedFunction> compile_function(zasm_script* script, Jitte
 		const auto& op = script->zasm[i];
 		int command = op.command;
 
-		if (command_is_goto(command) || command_is_wait(command) || !command_is_compiled(command) || command == CALLFUNC || command == RETURNFUNC || command == COMPAREV || command == COMPARER)
+		bool is_block_start = state.j_script->cfg.contains_block_start(i);
+		if (is_block_start && i != start_pc)
 		{
+			current_block_id++;
+		}
+
+		// if (command_is_goto(command) || command_is_wait(command) || !command_is_compiled(command) || command == CALLFUNC || command == RETURNFUNC || command == COMPAREV || command == COMPARER || state.j_script->cfg.contains_block_start(i))
+		// 	flush_cache(state, cc);
+
+		if (command_is_wait(command) || !command_is_compiled(command))
+		{
+			// TODO !
 			flush_cache(state, cc);
 		}
-		else if (state.j_script->cfg.contains_block_start(i))
+		else if (command_is_goto(command) || command == CALLFUNC || command == RETURNFUNC)
 		{
-			pc_t block_id = j_script->cfg.block_id_from_start_pc(i);
+			if (state.j_script->cfg.contains_block_start(i + 1))
+			{
+				uint8_t out = liveness[current_block_id].out;
+				for (auto& [r, cached_reg] : state.cached_d_regs)
+				{
+					if (!(out & (1 << r)))
+						cached_reg.dirty = false;
+				}
+			}
+
+			flush_cache(state, cc);
+		}
+		else if (command == COMPAREV || command == COMPARER)
+		{
+			flush_cache(state, cc);
+
+			// bool is_compare_at_block_end = false;
+			// for (pc_t j = i + 1; j < final_pc; j++)
+			// {
+			// 	if (state.j_script->cfg.contains_block_start(j))
+			// 	{
+			// 		is_compare_at_block_end = true;
+			// 		break;
+			// 	}
+
+			// 	int next_command = script->zasm[j].command;
+			// 	if (next_command == COMPARER || next_command == COMPAREV || next_command == GOTOCMP || next_command == NOP)
+			// 		continue;
+
+			// 	break;
+			// }
+
+			// if (is_compare_at_block_end && i == 996)
+			// {
+			// 	uint8_t out = liveness[current_block_id].out;
+			// 	for (auto& [r, cached_reg] : state.cached_d_regs)
+			// 	{
+			// 		if (!(out & (1 << r)))
+			// 			cached_reg.dirty = false;
+			// 	}
+			// 	// flush_cache_some_registers(state, cc, liveness[current_block_id].out);
+			// 	// flush_stack_cache(state, cc);
+			// }
+			// else
+			// {
+			// 	flush_cache(state, cc);
+			// }
+		}
+		else if (is_block_start)
+		{
+			pc_t block_id = current_block_id;
 			bool is_linear_flow =
 				block_id > 0 &&
 				j_script->cfg.block_edges[block_id - 1].size() == 1 &&
 				j_script->cfg.block_edges[block_id - 1][0] == block_id &&
 				j_script->block_predecessors[block_id].size() == 1;
 			if (!is_linear_flow)
+			{
+				// uint8_t out = liveness[current_block_id].out;
+				// for (auto& [r, cached_reg] : state.cached_d_regs)
+				// {
+				// 	if (!(out & (1 << r)))
+				// 		cached_reg.dirty = false;
+				// }
+				// flush_cache_some_registers(state, cc, liveness[block_id].out);
+				// flush_stack_cache(state, cc);
 				flush_cache(state, cc);
+			}
 		}
-		// if (i == 904 || !command_is_compiled(command) || command == CALLFUNC || command == RETURNFUNC || command_is_wait(command) || command_is_goto(command))
-		// 	flush_cache(state, cc);
 
 		if (state.goto_labels.contains(i))
 		{
@@ -2230,8 +2329,8 @@ static bool compile_and_queue_function(zasm_script* script, JittedScript* j_scri
 	j_script->functions_requested_to_be_compiled[fn.id] = true;
 
 	// TODO !
-	// if (bisect_tool_should_skip())
-	// 	return false;
+	if (bisect_tool_should_skip())
+		return false;
 
 	auto j_fn = compile_function(script, j_script, fn);
 	if (!j_fn)
