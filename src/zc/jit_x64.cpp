@@ -53,7 +53,6 @@ struct CompilationState
 	x86::Gp vResult;
 	x86::Gp vSp;
 	x86::Gp vSwitchKey;
-	x86::Gp vExpressionStackFrame;
 	bool use_cached_regs;
 	std::map<int, CachedRegister> cached_d_regs;
 	std::vector<CachedStackValue> cached_d_reg_stack;
@@ -1137,16 +1136,13 @@ static void compile_single_command(CompilationState& state, x86::Compiler& cc, c
 		{
 			if (state.use_cached_regs)
 			{
-				if (pc != state.final_pc && (state.script->zasm[pc + 1].command == ADDV || state.script->zasm[pc + 1].command == SUBV) && state.script->zasm[pc + 1].arg1 == arg1)
-				{
-					x86::Gp copy = cc.newInt32();
-					cc.mov(copy, get_z_register(state, cc, arg1));
-					state.cached_d_reg_stack.push_back({.reg=copy});
-				}
-				else
-				{
-					state.cached_d_reg_stack.push_back({.reg=get_z_register(state, cc, arg1), .value=arg1});
-				}
+				// Usually don't need to copy the register, but code like `while (i++ < frames)`
+				// will push the value of `i` via D2 first, then modify D2 and store it back. asmjit
+				// should remove the extra register copy when not necessary during register
+				// allocation.
+				x86::Gp copy = cc.newInt32();
+				cc.mov(copy, get_z_register(state, cc, arg1));
+				state.cached_d_reg_stack.push_back({.reg=copy});
 				break;
 			}
 
