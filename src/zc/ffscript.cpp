@@ -3109,9 +3109,6 @@ static void bad_subwidg_type(bool func, byte type)
 		type, tyname, func ? "function" : "value");
 }
 
-// TODO: Remove this.
-static sprite *s;
-
 int32_t item_flag(item_flags flag)
 {
 	if(unsigned(ri->idata) >= MAXITEMS)
@@ -5896,10 +5893,10 @@ int32_t get_register(int32_t arg)
 		
 		case DISTANCE: 
 		{
-			double x1 = double(ri->d[rSFTEMP] / 10000.0);
-			double y1 = double(ri->d[rINDEX] / 10000.0);
-			double x2 = double(ri->d[rINDEX2] / 10000.0);
-			double y2 = double(ri->d[rEXP1] / 10000.0);
+			double x1 = double(GET_D(rSFTEMP) / 10000.0);
+			double y1 = double(GET_D(rINDEX) / 10000.0);
+			double x2 = double(GET_D(rINDEX2) / 10000.0);
+			double y2 = double(GET_D(rEXP1) / 10000.0);
 			
 			
 			
@@ -5910,10 +5907,10 @@ int32_t get_register(int32_t arg)
 		}
 		case LONGDISTANCE: 
 		{
-			double x1 = double(ri->d[rSFTEMP]);
-			double y1 = double(ri->d[rINDEX]);
-			double x2 = double(ri->d[rINDEX2]);
-			double y2 = double(ri->d[rEXP1]);
+			double x1 = double(GET_D(rSFTEMP));
+			double y1 = double(GET_D(rINDEX));
+			double x2 = double(GET_D(rINDEX2));
+			double y2 = double(GET_D(rEXP1));
 			
 			
 			
@@ -5925,12 +5922,12 @@ int32_t get_register(int32_t arg)
 		
 		case DISTANCESCALE: 
 		{
-			double x1 = (double)(ri->d[rSFTEMP] / 10000.0);
-			double y1 = (double)(ri->d[rINDEX] / 10000.0);
-			double x2 = (double)(ri->d[rINDEX2] / 10000.0);
-			double y2 = (double)(ri->d[rEXP1] / 10000.0);
+			double x1 = (double)(GET_D(rSFTEMP) / 10000.0);
+			double y1 = (double)(GET_D(rINDEX) / 10000.0);
+			double x2 = (double)(GET_D(rINDEX2) / 10000.0);
+			double y2 = (double)(GET_D(rEXP1) / 10000.0);
 			
-			int32_t scale = (ri->d[rWHAT_NO_7]/10000);
+			int32_t scale = (GET_D(rWHAT_NO_7)/10000);
 			
 			if ( !scale ) scale = 10000;
 			int32_t result = FFCore.Distance(x1, y1, x2, y2, scale);
@@ -5940,12 +5937,12 @@ int32_t get_register(int32_t arg)
 		}
 		case LONGDISTANCESCALE: 
 		{
-			double x1 = (double)(ri->d[rSFTEMP]);
-			double y1 = (double)(ri->d[rINDEX]);
-			double x2 = (double)(ri->d[rINDEX2]);
-			double y2 = (double)(ri->d[rEXP1]);
+			double x1 = (double)(GET_D(rSFTEMP));
+			double y1 = (double)(GET_D(rINDEX));
+			double x2 = (double)(GET_D(rINDEX2));
+			double y2 = (double)(GET_D(rEXP1));
 			
-			int32_t scale = (ri->d[rWHAT_NO_7]);
+			int32_t scale = (GET_D(rWHAT_NO_7));
 			
 			if ( !scale ) scale = 1;
 			int32_t result = FFCore.LongDistance(x1, y1, x2, y2, scale);
@@ -5957,7 +5954,7 @@ int32_t get_register(int32_t arg)
 		// Note: never used?
 		case GAMEGUYCOUNTD:
 		{
-			int mi = mapind(cur_map, ri->d[rINDEX] / 10000);
+			int mi = mapind(cur_map, GET_D(rINDEX) / 10000);
 			ret = game->guys[mi] * 10000;
 			break;
 		}
@@ -6116,14 +6113,14 @@ int32_t get_register(int32_t arg)
 		
 		#define GET_SCREENDATA_BYTE_INDEX(member, indexbound) \
 		{ \
-			int32_t indx = ri->d[rINDEX] / 10000; \
+			int32_t indx = GET_D(rINDEX) / 10000; \
 			ret = (get_scr(ri->screenref)->member[indx] *10000); \
 		} \
 		
 		//byte
 		#define GET_SCREENDATA_LAYER_INDEX(member, indexbound) \
 		{ \
-			int32_t indx = ri->d[rINDEX] / 10000; \
+			int32_t indx = GET_D(rINDEX) / 10000; \
 			if (BC::checkIndex(indx, 1, indexbound) != SH::_NoError) \
 			{ \
 				ret = -10000; \
@@ -6136,7 +6133,7 @@ int32_t get_register(int32_t arg)
 		
 		#define GET_SCREENDATA_BOOL_INDEX(member, indexbound) \
 		{ \
-			int32_t indx = ri->d[rINDEX] / 10000; \
+			int32_t indx = GET_D(rINDEX) / 10000; \
 			if (BC::checkIndex(indx, 0, indexbound) != SH::_NoError) \
 			{ \
 				ret = -10000; \
@@ -6202,7 +6199,7 @@ int32_t get_register(int32_t arg)
 		// Note: that is totally not what its doing.
 		case SCREENDATANUMFF: 	
 		{
-			int id = ri->d[rINDEX] / 10000;
+			int id = GET_D(rINDEX) / 10000;
 			if (auto ffc = ResolveFFCWithID(id))
 				ret = ffc->data != 0 ? 10000 : 0;
 			break;
@@ -6210,7 +6207,7 @@ int32_t get_register(int32_t arg)
 
 		// Note: never used?
 		case SCREENDATAFFINITIALISED: 	{
-			int32_t indx = ri->d[rINDEX] / 10000;
+			int32_t indx = GET_D(rINDEX) / 10000;
 			if (indx < 0 || indx > MAX_FFCID)
 			{
 				scripting_log_error_with_context("Invalid index: %d", (indx));
@@ -6303,15 +6300,15 @@ int32_t get_register(int32_t arg)
 		}
 		
 		case SDDD:
-			ret=FFScript::get_screen_d((ri->d[rINDEX])/10000 + ((get_currdmap())<<7), ri->d[rINDEX2] / 10000);
+			ret=FFScript::get_screen_d((GET_D(rINDEX))/10000 + ((get_currdmap())<<7), GET_D(rINDEX2) / 10000);
 			break;
 		
 		case LINKOTILE:
-			ret=FFCore.getHeroOTile(ri->d[rINDEX]/10000, ri->d[rINDEX2] / 10000);
+			ret=FFCore.getHeroOTile(GET_D(rINDEX)/10000, GET_D(rINDEX2) / 10000);
 			break;
 			
 		case SDDDD:
-			ret=FFScript::get_screen_d(ri->d[rINDEX2] / 10000 + ((ri->d[rINDEX]/10000)<<7), ri->d[rEXP1] / 10000);
+			ret=FFScript::get_screen_d(GET_D(rINDEX2) / 10000 + ((GET_D(rINDEX)/10000)<<7), GET_D(rEXP1) / 10000);
 			break;
 
 		case SCREENSCRIPT:
@@ -6320,19 +6317,19 @@ int32_t get_register(int32_t arg)
 
 		//These use the same method as GetScreenD -Z
 		case SCREENWIDTH:
-			// ret=FFScript::get_screenWidth(&TheMaps[(ri->d[rINDEX2] / 10000) * MAPSCRS + (ri->d[rINDEX]/10000)]);
+			// ret=FFScript::get_screenWidth(&TheMaps[(GET_D(rINDEX2) / 10000) * MAPSCRS + (GET_D(rINDEX)/10000)]);
 			break;
 
 		case SCREENHEIGHT:
-			// ret=FFScript::get_screenHeight(&TheMaps[(ri->d[rINDEX2] / 10000) * MAPSCRS + (ri->d[rINDEX]/10000)]);
+			// ret=FFScript::get_screenHeight(&TheMaps[(GET_D(rINDEX2) / 10000) * MAPSCRS + (GET_D(rINDEX)/10000)]);
 			break;
 
 		case SCREENVIEWX:
-			// ret=get_screenViewX(&TheMaps[(ri->d[rINDEX2] / 10000) * MAPSCRS + (ri->d[rINDEX]/10000)]);
+			// ret=get_screenViewX(&TheMaps[(GET_D(rINDEX2) / 10000) * MAPSCRS + (GET_D(rINDEX)/10000)]);
 			break;
 
 		case SCREENVIEWY:
-			// ret=get_screenViewY(&TheMaps[(ri->d[rINDEX2] / 10000) * MAPSCRS + (ri->d[rINDEX]/10000)]);
+			// ret=get_screenViewY(&TheMaps[(GET_D(rINDEX2) / 10000) * MAPSCRS + (GET_D(rINDEX)/10000)]);
 			break;
 			
 		case LIT:
@@ -6404,8 +6401,8 @@ int32_t get_register(int32_t arg)
 		case CREATELWPNDX:
 		{
 			//Z_message("Trying to get Hero->SetExtend().\n");
-			int32_t ID = (ri->d[rINDEX] / 10000);
-			int32_t itemid = (ri->d[rINDEX2]/10000);
+			int32_t ID = (GET_D(rINDEX) / 10000);
+			int32_t itemid = (GET_D(rINDEX2)/10000);
 			itemid = vbound(itemid,0,(MAXITEMS-1));
 			
 			// TODO: use has_space()
@@ -6543,7 +6540,7 @@ int32_t get_register(int32_t arg)
 		
 		#define GET_MAPDATA_FFCPOS_INDEX32(member, indexbound) \
 		{ \
-			int32_t index = (ri->d[rINDEX] / 10000); \
+			int32_t index = (GET_D(rINDEX) / 10000); \
 			if (auto handle = ResolveMapdataFFC(ri->mapsref, index)) \
 			{ \
 				ret = (handle.ffc->member).getZLong(); \
@@ -6556,7 +6553,7 @@ int32_t get_register(int32_t arg)
 		
 		#define GET_MAPDATA_FFC_INDEX32(member, indexbound) \
 		{ \
-			int32_t index = (ri->d[rINDEX] / 10000); \
+			int32_t index = (GET_D(rINDEX) / 10000); \
 			if (auto handle = ResolveMapdataFFC(ri->mapsref, index)) \
 			{ \
 				ret = (handle.ffc->member)*10000; \
@@ -6569,7 +6566,7 @@ int32_t get_register(int32_t arg)
 
 		#define GET_MAPDATA_FFC_INDEX32(member, indexbound) \
 		{ \
-			int32_t index = (ri->d[rINDEX] / 10000); \
+			int32_t index = (GET_D(rINDEX) / 10000); \
 			if (auto handle = ResolveMapdataFFC(ri->mapsref, index)) \
 			{ \
 				ret = (handle.ffc->member)*10000; \
@@ -6651,7 +6648,7 @@ int32_t get_register(int32_t arg)
 		// NOTE: defunct. Never implemented correctly.
 		case MAPDATANUMFF: 	
 		{
-			int index = ri->d[rINDEX] / 10000;
+			int index = GET_D(rINDEX) / 10000;
 
 			if (auto handle = ResolveMapdataFFC(ri->mapsref, index))
 			{
@@ -6667,8 +6664,8 @@ int32_t get_register(int32_t arg)
 		case MAPDATAINTID: 	 //Same form as SetScreenD()
 			//SetFFCInitD(ffindex, d, value)
 		{
-			int32_t index = (ri->d[rINDEX]/10000);
-			int32_t d_index = ri->d[rINDEX2]/10000;
+			int32_t index = (GET_D(rINDEX)/10000);
+			int32_t d_index = GET_D(rINDEX2)/10000;
 
 			if (BC::checkBounds(d_index, 0, 7) != SH::_NoError)
 				break;
@@ -7208,7 +7205,7 @@ int32_t get_register(int32_t arg)
 		
 		#define GET_COMBO_VAR_INDEX(member, indexbound) \
 		{ \
-				int32_t indx = ri->d[rINDEX] / 10000; \
+				int32_t indx = GET_D(rINDEX) / 10000; \
 				if(ri->combosref < 0 || ri->combosref > (MAXCOMBOS-1) ) \
 				{ \
 					scripting_log_error_with_context("Invalid combodata ID: {}", (ri->combosref*10000)); \
@@ -7227,7 +7224,7 @@ int32_t get_register(int32_t arg)
 
 		#define GET_COMBO_BYTE_INDEX(member, indexbound) \
 		{ \
-				int32_t indx = ri->d[rINDEX] / 10000; \
+				int32_t indx = GET_D(rINDEX) / 10000; \
 				if(ri->combosref < 0 || ri->combosref > (MAXCOMBOS-1) ) \
 				{ \
 					scripting_log_error_with_context("Invalid combodata ID: {}", (ri->combosref*10000)); \
@@ -7300,7 +7297,7 @@ int32_t get_register(int32_t arg)
 		
 		#define GET_COMBOCLASS_VAR_INDEX(member, indexbound) \
 		{ \
-				int32_t indx = ri->d[rINDEX] / 10000; \
+				int32_t indx = GET_D(rINDEX) / 10000; \
 				if(ri->combosref < 0 || ri->combosref > (MAXCOMBOS-1) ) \
 				{ \
 					scripting_log_error_with_context("Invalid combodata ID: {}", (ri->combosref*10000)); \
@@ -7319,7 +7316,7 @@ int32_t get_register(int32_t arg)
 
 		#define GET_COMBOCLASS_BYTE_INDEX(member, indexbound) \
 		{ \
-				int32_t indx = ri->d[rINDEX] / 10000; \
+				int32_t indx = GET_D(rINDEX) / 10000; \
 				if(ri->combosref < 0 || ri->combosref > (MAXCOMBOS-1) ) \
 				{ \
 					scripting_log_error_with_context("Invalid combodata ID: {}", (ri->combosref*10000)); \
@@ -9119,16 +9116,16 @@ int32_t get_register(int32_t arg)
 			
 		case SCRIPTRAM:
 		case GLOBALRAM:
-			ret = ArrayH::getElement(ri->d[rINDEX], ri->d[rINDEX2] / 10000);
+			ret = ArrayH::getElement(GET_D(rINDEX), GET_D(rINDEX2) / 10000);
 			break;
 			
 		case SCRIPTRAMD:
 		case GLOBALRAMD:
-			ret = ArrayH::getElement(ri->d[rINDEX], 0);
+			ret = ArrayH::getElement(GET_D(rINDEX), 0);
 			break;
 			
 		case GDD: // Unused, remove?
-			ret = read_array(game->global_d, ri->d[rINDEX] / 10000);
+			ret = read_array(game->global_d, GET_D(rINDEX) / 10000);
 			break;
 
 		///----------------------------------------------------------------------------------------------------//
@@ -10781,7 +10778,7 @@ int32_t get_register(int32_t arg)
 			{
 				int ref_arg = get_register_ref_dependency(arg).value_or(0);
 				int ref = ref_arg ? get_ref(ref_arg) : 0;
-				ret = zasm_array_get(arg, ref, ri->d[rINDEX] / 10000);
+				ret = zasm_array_get(arg, ref, GET_D(rINDEX) / 10000);
 			}
 			else if (auto r = scripting_engine_get_register(arg))
 				ret = *r;
@@ -11132,15 +11129,13 @@ void set_register(int32_t arg, int32_t value)
 		  
 		case SETITEMSLOT:
 		{
-			//ri->d[rINDEX2] = 1st arg
-			//ri->d[rINDEX] = 2nd arg
 			//value = third arg
 			//int32_t item, int32_t slot, int32_t force
-			int32_t itm = ri->d[rINDEX]/10000;
+			int32_t itm = GET_D(rINDEX)/10000;
 			itm = vbound(itm, -1, 255);
 			
-			int32_t slot = ri->d[rINDEX2]/10000;
-			int32_t force = ri->d[rEXP1]/10000;
+			int32_t slot = GET_D(rINDEX2)/10000;
+			int32_t force = GET_D(rEXP1)/10000;
 			
 			//If we add more item buttons, slot should be an int32_t
 			//and force shuld be an int32_t
@@ -11955,7 +11950,7 @@ void set_register(int32_t arg, int32_t value)
 		{
 			//if ( !keypressed() ) break; //Don;t return values set by setting Hero->Input/Press
 			//hmm...no, this won;t return properly for modifier keys. 
-			int32_t keyid = ri->d[rINDEX]/10000;
+			int32_t keyid = GET_D(rINDEX)/10000;
 			//key = vbound(key,0,n);
 			if (value/10000) simulate_keypress(keyid << 8);
 		}
@@ -12053,7 +12048,7 @@ void set_register(int32_t arg, int32_t value)
 				scripting_log_error_with_context("Invalid itemdata access: {}", ri->idata);
 				break;
 			}
-			//int32_t a = ri->d[rINDEX] / 10000;
+			//int32_t a = GET_D(rINDEX) / 10000;
 			(itemsbuf[ri->idata].collectflags)=vbound(value/10000, 0, 214747);
 			break;
 		case IDATAWEAPONSCRIPT:
@@ -13784,7 +13779,7 @@ void set_register(int32_t arg, int32_t value)
 
 		case GAMEGUYCOUNTD:
 		{
-			int mi = mapind(cur_map, ri->d[rINDEX] / 10000);
+			int mi = mapind(cur_map, GET_D(rINDEX) / 10000);
 			game->guys[mi] = value / 10000;
 			break;
 		}
@@ -13875,14 +13870,14 @@ void set_register(int32_t arg, int32_t value)
 		
 		#define SET_SCREENDATA_BYTE_INDEX(member, str, indexbound) \
 		{ \
-			int32_t indx = ri->d[rINDEX] / 10000; \
+			int32_t indx = GET_D(rINDEX) / 10000; \
 			get_scr(ri->screenref)->member[indx] = vbound((value / 10000),0,255); \
 		}
 
 		///max screen id is higher! vbound properly... -Z
 		#define SET_SCREENDATA_LAYERSCREEN_INDEX(member, str, indexbound) \
 		{ \
-			int32_t indx = ri->d[rINDEX] / 10000; \
+			int32_t indx = GET_D(rINDEX) / 10000; \
 			int32_t scrn_id = value/10000; \
 			if ( FFCore.quest_format[vFFScript] < 11 ) ++indx; \
 			if (BC::checkIndex(indx, 1, indexbound) != SH::_NoError) \
@@ -13908,7 +13903,7 @@ void set_register(int32_t arg, int32_t value)
 		
 		#define SET_SCREENDATA_BOOL_INDEX(member, str, indexbound) \
 		{ \
-			int32_t indx = ri->d[rINDEX] / 10000; \
+			int32_t indx = GET_D(rINDEX) / 10000; \
 			if(indx < 0 || indx > indexbound ) \
 			{ \
 				Z_scripterrlog("Invalid Index passed to Screen->%s[]: %d\n", (indx), str); \
@@ -13994,7 +13989,7 @@ void set_register(int32_t arg, int32_t value)
 
 		case SCREENDATAFFINITIALISED:
 		{
-			int32_t indx = ri->d[rINDEX] / 10000;
+			int32_t indx = GET_D(rINDEX) / 10000;
 			if (indx < 0 || indx > MAX_FFCID)
 			{
 				Z_scripterrlog("Invalid Index passed to Screen->%s[]: %d\n", "FFCRunning", (indx));
@@ -14076,33 +14071,33 @@ void set_register(int32_t arg, int32_t value)
 
 		//These use the same method as SetScreenD
 		case SCREENWIDTH:
-			// FFScript::set_screenWidth(&TheMaps[(ri->d[rINDEX2] / 10000) * MAPSCRS + (ri->d[rINDEX]/10000)], value/10000);
+			// FFScript::set_screenWidth(&TheMaps[(GET_D(rINDEX2) / 10000) * MAPSCRS + (GET_D(rINDEX)/10000)], value/10000);
 			break;
 
 		case SCREENHEIGHT:
-			// FFScript::set_screenHeight(&TheMaps[(ri->d[rINDEX2] / 10000) * MAPSCRS + (ri->d[rINDEX]/10000)], value/10000);
+			// FFScript::set_screenHeight(&TheMaps[(GET_D(rINDEX2) / 10000) * MAPSCRS + (GET_D(rINDEX)/10000)], value/10000);
 			break;
 
 		case SCREENVIEWX:
-			// FFScript::set_screenViewX(&TheMaps[(ri->d[rINDEX2] / 10000) * MAPSCRS + (ri->d[rINDEX]/10000)], value/10000);
+			// FFScript::set_screenViewX(&TheMaps[(GET_D(rINDEX2) / 10000) * MAPSCRS + (GET_D(rINDEX)/10000)], value/10000);
 			break;
 
 		case SCREENVIEWY:
-			// FFScript::set_screenViewY(&TheMaps[(ri->d[rINDEX2] / 10000) * MAPSCRS + (ri->d[rINDEX]/10000)], value/10000);
+			// FFScript::set_screenViewY(&TheMaps[(GET_D(rINDEX2) / 10000) * MAPSCRS + (GET_D(rINDEX)/10000)], value/10000);
 			break;
 
 		//These use the method of SetScreenEnemy
 		
 		case GDD:
-			write_array(game->global_d, ri->d[rINDEX] / 10000, value);
+			write_array(game->global_d, GET_D(rINDEX) / 10000, value);
 			break;
 			
 		case SDDD:
-			FFScript::set_screen_d((ri->d[rINDEX])/10000 + ((get_currdmap())<<7), ri->d[rINDEX2]/10000, value);
+			FFScript::set_screen_d((GET_D(rINDEX))/10000 + ((get_currdmap())<<7), GET_D(rINDEX2)/10000, value);
 			break;
 			
 		case SDDDD:
-			FFScript::set_screen_d(ri->d[rINDEX2]/10000 + ((ri->d[rINDEX]/10000)<<7), ri->d[rEXP1]/10000, value);
+			FFScript::set_screen_d(GET_D(rINDEX2)/10000 + ((GET_D(rINDEX)/10000)<<7), GET_D(rEXP1)/10000, value);
 			break;
 			
 		case SCREENSCRIPT:
@@ -14245,7 +14240,7 @@ void set_register(int32_t arg, int32_t value)
 		
 		#define SET_MAPDATA_VAR_INDEX32(member, indexbound) \
 		{ \
-			int32_t indx = ri->d[rINDEX] / 10000; \
+			int32_t indx = GET_D(rINDEX) / 10000; \
 			if (BC::checkIndex(indx, 0, indexbound) != SH::_NoError) \
 			{ \
 			} \
@@ -14258,7 +14253,7 @@ void set_register(int32_t arg, int32_t value)
 		
 		#define SET_MAPDATA_VAR_INDEX16(member, indexbound) \
 		{ \
-			int32_t indx = ri->d[rINDEX] / 10000; \
+			int32_t indx = GET_D(rINDEX) / 10000; \
 			if (BC::checkIndex(indx, 0, indexbound) != SH::_NoError) \
 			{ \
 			} \
@@ -14271,7 +14266,7 @@ void set_register(int32_t arg, int32_t value)
 
 		#define SET_MAPDATA_BYTE_INDEX(member, indexbound) \
 		{ \
-			int32_t indx = ri->d[rINDEX] / 10000; \
+			int32_t indx = GET_D(rINDEX) / 10000; \
 			if (BC::checkIndex(indx, 0, indexbound) != SH::_NoError) \
 			{ \
 			} \
@@ -14284,7 +14279,7 @@ void set_register(int32_t arg, int32_t value)
 		
 		#define SET_MAPDATA_LAYER_INDEX(member, indexbound) \
 		{ \
-			int32_t indx = ri->d[rINDEX] / 10000; \
+			int32_t indx = GET_D(rINDEX) / 10000; \
 			if ( FFCore.quest_format[vFFScript] < 11 ) ++indx; \
 			if (BC::checkIndex(indx, 1, indexbound) != SH::_NoError) \
 			{ \
@@ -14298,7 +14293,7 @@ void set_register(int32_t arg, int32_t value)
 		
 		#define SET_MAPDATA_LAYERSCREEN_INDEX(member, indexbound) \
 		{ \
-			int32_t indx = ri->d[rINDEX] / 10000; \
+			int32_t indx = GET_D(rINDEX) / 10000; \
 			if ( FFCore.quest_format[vFFScript] < 11 ) ++indx; \
 			int32_t scrn_id = value/10000; \
 			if (BC::checkIndex(indx, 1, indexbound) != SH::_NoError) \
@@ -14318,7 +14313,7 @@ void set_register(int32_t arg, int32_t value)
 		
 		#define SET_MAPDATA_BOOL_INDEX(member, indexbound) \
 		{ \
-			int32_t indx = ri->d[rINDEX] / 10000; \
+			int32_t indx = GET_D(rINDEX) / 10000; \
 			if (BC::checkIndex(indx, 0, indexbound) != SH::_NoError) \
 			{ \
 			} \
@@ -14332,7 +14327,7 @@ void set_register(int32_t arg, int32_t value)
 
 		#define SET_FFC_MAPDATA_BOOL_INDEX(member, indexbound) \
 		{ \
-			int32_t index = ri->d[rINDEX] / 10000; \
+			int32_t index = GET_D(rINDEX) / 10000; \
 			if (auto handle = ResolveMapdataFFC(ri->mapsref, index)) \
 			{ \
 				handle.ffc->member =( (value/10000) ? 1 : 0 ); \
@@ -14457,8 +14452,8 @@ void set_register(int32_t arg, int32_t value)
 
 		case MAPDATAINTID:
 		{
-			int32_t index = (ri->d[rINDEX]/10000);
-			int32_t dindex = ri->d[rINDEX2]/10000;
+			int32_t index = (GET_D(rINDEX)/10000);
+			int32_t dindex = GET_D(rINDEX2)/10000;
 
 			if (BC::checkBounds(dindex, 0, 7) != SH::_NoError)
 				break;
@@ -15049,7 +15044,7 @@ void set_register(int32_t arg, int32_t value)
 
 		#define SET_COMBOCLASS_BYTE_INDEX(member, indexbound) \
 		{ \
-				int32_t indx = ri->d[rINDEX] / 10000; \
+				int32_t indx = GET_D(rINDEX) / 10000; \
 				if(ri->combosref < 0 || ri->combosref > (MAXCOMBOS-1) ) \
 				{ \
 					scripting_log_error_with_context("Invalid combodata ID: {}", (ri->combosref*10000)); \
@@ -16499,12 +16494,12 @@ void set_register(int32_t arg, int32_t value)
 			
 		case SCRIPTRAM:
 		case GLOBALRAM:
-			ArrayH::setElement(ri->d[rINDEX], ri->d[rINDEX2] / 10000, value);
+			ArrayH::setElement(GET_D(rINDEX), GET_D(rINDEX2) / 10000, value);
 			break;
 			
 		case SCRIPTRAMD:
 		case GLOBALRAMD:
-			ArrayH::setElement(ri->d[rINDEX], 0, value);
+			ArrayH::setElement(GET_D(rINDEX), 0, value);
 			break;
 			
 		case REFFFC:
@@ -18177,7 +18172,7 @@ void set_register(int32_t arg, int32_t value)
 			{
 				int ref_arg = get_register_ref_dependency(arg).value_or(0);
 				int ref = ref_arg ? get_ref(ref_arg) : 0;
-				zasm_array_set(arg, ref, ri->d[rINDEX] / 10000, value);
+				zasm_array_set(arg, ref, GET_D(rINDEX) / 10000, value);
 			}
 			else
 			{
@@ -18639,14 +18634,14 @@ void do_storei()
 
 void do_loadd()
 {
-	const int32_t stackoffset = (sarg2+ri->d[rSFRAME]) / 10000;
+	const int32_t stackoffset = (sarg2+GET_D(rSFRAME)) / 10000;
 	const int32_t value = SH::read_stack(stackoffset);
 	set_register(sarg1, value);
 }
 
 void do_load()
 {
-	const int32_t stackoffset = ri->d[rSFRAME] + sarg2;
+	const int32_t stackoffset = GET_D(rSFRAME) + sarg2;
 	const int32_t value = SH::read_stack(stackoffset);
 	set_register(sarg1, value);
 }
@@ -18670,14 +18665,14 @@ static void do_load_internal_array_ref()
 
 void do_stored(const bool v)
 {
-	const int32_t stackoffset = (sarg2+ri->d[rSFRAME]) / 10000;
+	const int32_t stackoffset = (sarg2+GET_D(rSFRAME)) / 10000;
 	const int32_t value = SH::get_arg(sarg1, v);
 	SH::write_stack(stackoffset, value);
 }
 
 void do_store(const bool v)
 {
-	const int32_t stackoffset = ri->d[rSFRAME] + sarg2;
+	const int32_t stackoffset = GET_D(rSFRAME) + sarg2;
 	const int32_t value = SH::get_arg(sarg1, v);
 	SH::write_stack(stackoffset, value);
 }
@@ -18703,7 +18698,7 @@ void script_store_object(uint32_t offset, uint32_t new_id)
 
 void do_store_object(const bool v)
 {
-	const int32_t stackoffset = ri->d[rSFRAME] + sarg2;
+	const int32_t stackoffset = GET_D(rSFRAME) + sarg2;
 	const int32_t new_id = SH::get_arg(sarg1, v);
 	script_store_object(stackoffset, new_id);
 }
@@ -19089,8 +19084,8 @@ void do_acos(const bool v)
 
 void do_arctan()
 {
-	double xpos = ri->d[rINDEX] / 10000.0;
-	double ypos = ri->d[rINDEX2] / 10000.0;
+	double xpos = GET_D(rINDEX) / 10000.0;
+	double ypos = GET_D(rINDEX2) / 10000.0;
 	
 	set_register(sarg1, int32_t(atan2(ypos, xpos) * 10000.0));
 }
@@ -19143,11 +19138,11 @@ void do_max(const bool v)
 }
 void do_wrap_rad(const bool v)
 {
-	ri->d[rEXP1] = wrap_zslong_rad(SH::get_arg(sarg1, v));
+	SET_D(rEXP1, wrap_zslong_rad(SH::get_arg(sarg1, v)));
 }
 void do_wrap_deg(const bool v)
 {
-	ri->d[rEXP1] = wrap_zslong_deg(SH::get_arg(sarg1, v));
+	SET_D(rEXP1, wrap_zslong_deg(SH::get_arg(sarg1, v)));
 }
 
 
@@ -19177,8 +19172,8 @@ void do_srndrnd()
 	zc_game_srand(seed);
 }
 
-//Returns the system Real-Time-Clock value for a specific type. 
-void FFScript::getRTC(const bool v)
+//Returns the system Real-Time-Clock value.
+void FFScript::getRTC()
 {
 	//int32_t type = get_register(sarg1) / 10000;
 	//int32_t time = getTime(type);
@@ -19406,7 +19401,7 @@ void do_boolcast(const bool isFloat)
 void do_fontheight()
 {
 	int32_t font = get_register(sarg1)/10000;
-	ri->d[rEXP1] = text_height(get_zc_font(font))*10000;
+	SET_D(rEXP1, text_height(get_zc_font(font))*10000);
 }
 
 void do_strwidth()
@@ -19415,7 +19410,7 @@ void do_strwidth()
 	int32_t font = get_register(sarg2)/10000;
 	string the_string;
 	ArrayH::getString(strptr, the_string, 512);
-	ri->d[rEXP1] = text_length(get_zc_font(font), the_string.c_str())*10000;
+	SET_D(rEXP1, text_length(get_zc_font(font), the_string.c_str())*10000);
 }
 
 void do_charwidth()
@@ -19425,7 +19420,7 @@ void do_charwidth()
 	char *cstr = new char[2];
 	cstr[0] = chr;
 	cstr[1] = '\0';
-	ri->d[rEXP1] = text_length(get_zc_font(font), cstr)*10000;
+	SET_D(rEXP1, text_length(get_zc_font(font), cstr)*10000);
 	delete[] cstr;
 }
 
@@ -19588,14 +19583,17 @@ void do_selectweapon(bool v, int32_t btn)
 
 void do_issolid()
 {
-	int32_t x = int32_t(ri->d[rINDEX] / 10000);
-	int32_t y = int32_t(ri->d[rINDEX2] / 10000);
+	int32_t x = int32_t(GET_D(rINDEX) / 10000);
+	int32_t y = int32_t(GET_D(rINDEX2) / 10000);
 	
 	set_register(sarg1, (_walkflag(x, y, 1) ? 10000 : 0));
 }
 
 void do_mapdataissolid()
 {
+	int32_t x = int32_t(GET_D(rINDEX) / 10000);
+	int32_t y = int32_t(GET_D(rINDEX2) / 10000);
+
 	auto result = decode_mapdata_ref(ri->mapsref);
 	if (!result.scr)
 	{
@@ -19604,9 +19602,6 @@ void do_mapdataissolid()
 	}
 	else
 	{
-		int32_t x = int32_t(ri->d[rINDEX] / 10000);
-		int32_t y = int32_t(ri->d[rINDEX2] / 10000);
-
 		if (result.type == mapdata_type::CanonicalScreen)
 		{
 			set_register(sarg1, (_walkflag(x, y, 1, result.scr) ? 10000 : 0));
@@ -19636,6 +19631,10 @@ void do_mapdataissolid()
 
 void do_mapdataissolid_layer()
 {
+	int32_t x = int32_t(GET_D(rINDEX) / 10000);
+	int32_t y = int32_t(GET_D(rINDEX2) / 10000);
+	int32_t layer = int32_t(GET_D(rEXP1) / 10000);
+
 	auto result = decode_mapdata_ref(ri->mapsref);
 	if (!result.scr)
 	{
@@ -19644,9 +19643,6 @@ void do_mapdataissolid_layer()
 	}
 	else
 	{
-		int32_t x = int32_t(ri->d[rINDEX] / 10000);
-		int32_t y = int32_t(ri->d[rINDEX2] / 10000);
-		int32_t layer = int32_t(ri->d[rEXP1] / 10000);
 		if(BC::checkBounds(layer, 0, 6) != SH::_NoError)
 		{
 			set_register(sarg1,10000);
@@ -19684,9 +19680,10 @@ void do_mapdataissolid_layer()
 
 void do_issolid_layer()
 {
-	int32_t x = int32_t(ri->d[rINDEX] / 10000);
-	int32_t y = int32_t(ri->d[rINDEX2] / 10000);
-	int32_t layer = int32_t(ri->d[rEXP1] / 10000);
+	int32_t x = int32_t(GET_D(rINDEX) / 10000);
+	int32_t y = int32_t(GET_D(rINDEX2) / 10000);
+	int32_t layer = int32_t(GET_D(rEXP1) / 10000);
+
 	if(BC::checkBounds(layer, 0, 6) != SH::_NoError)
 	{
 		set_register(sarg1,10000);
@@ -19884,23 +19881,22 @@ void do_triggersecrets(int screen)
 
 void FFScript::do_graphics_getpixel()
 {
-	int32_t yoffset = 0;
-	const bool brokenOffset= ( (get_er(er_BITMAPOFFSET)!=0) || (get_qr(qr_BITMAPOFFSETFIX)!=0) );
-	int32_t ref = (ri->d[rEXP1]);
-	
+	int32_t ref = (GET_D(rEXP1));
+	int32_t xpos  = GET_D(rINDEX2) / 10000;
+	int32_t ypos = (GET_D(rINDEX) / 10000);
+
 	BITMAP *bitty = FFCore.GetScriptBitmap(ref, screen);
-	int32_t xpos  = ri->d[rINDEX2] / 10000;
-	
+
+	const bool brokenOffset= ( (get_er(er_BITMAPOFFSET)!=0) || (get_qr(qr_BITMAPOFFSETFIX)!=0) );
 	if(!brokenOffset && (ref-10) == -1 )
 	{
-		yoffset = 56; //should this be -56?
+		ypos += 56; //should this be -56?
 	}
 	else
 	{
-		yoffset = 0;
+		ypos += 0;
 	}
-	
-	int32_t ypos = (ri->d[rINDEX] / 10000)+yoffset;
+
 	if(!bitty)
 	{
 		bitty = scrollbuf;
@@ -20325,7 +20321,7 @@ void FFScript::do_load_active_subscreendata(const bool v)
 		Z_scripterrlog("Invalid Subscreen ID passed to Game->LoadASubData(): %d\n", ID);
 		ri->subdataref = 0;
 	}
-	ri->d[rEXP1] = ri->subdataref;
+	SET_D(rEXP1, ri->subdataref);
 }
 void FFScript::do_load_passive_subscreendata(const bool v)
 {
@@ -20340,7 +20336,7 @@ void FFScript::do_load_passive_subscreendata(const bool v)
 		Z_scripterrlog("Invalid Subscreen ID passed to Game->LoadPSubData(): %d\n", ID);
 		ri->subdataref = 0;
 	}
-	ri->d[rEXP1] = ri->subdataref;
+	SET_D(rEXP1, ri->subdataref);
 }
 void FFScript::do_load_overlay_subscreendata(const bool v)
 {
@@ -20355,7 +20351,7 @@ void FFScript::do_load_overlay_subscreendata(const bool v)
 		Z_scripterrlog("Invalid Subscreen ID passed to Game->LoadOSubData(): %d\n", ID);
 		ri->subdataref = 0;
 	}
-	ri->d[rEXP1] = ri->subdataref;
+	SET_D(rEXP1, ri->subdataref);
 }
 void FFScript::do_load_subscreendata(const bool v, const bool v2)
 {
@@ -20378,7 +20374,7 @@ void FFScript::do_load_subscreendata(const bool v, const bool v2)
 			break;
 		}
 	}
-	ri->d[rEXP1] = ri->subdataref;
+	SET_D(rEXP1, ri->subdataref);
 }
 
 void FFScript::do_loadrng()
@@ -20386,14 +20382,14 @@ void FFScript::do_loadrng()
 	auto rng = user_rngs.create();
 	if (!rng)
 	{
-		ri->d[rEXP1] = 0;
+		SET_D(rEXP1, 0);
 		return;
 	}
 
 	int q = script_object_ids_by_type[script_object_type::rng].size() - 1;
 	rng->gen = &script_rnggens[q];
 	ri->rngref = rng->id;
-	ri->d[rEXP1] = rng->id;
+	SET_D(rEXP1, rng->id);
 }
 
 void FFScript::do_loaddirectory()
@@ -20427,7 +20423,7 @@ void FFScript::do_loaddirectory()
 void FFScript::do_loadstack()
 {
 	ri->stackref = user_stacks.get_free();
-	ri->d[rEXP1] = ri->stackref;
+	SET_D(rEXP1, ri->stackref);
 }
 
 void FFScript::do_loaddropset(const bool v)
@@ -20481,7 +20477,7 @@ void FFScript::do_loadgenericdata(const bool v)
 void FFScript::do_create_paldata()
 {
 	ri->paldataref = user_paldatas.get_free();
-	ri->d[rEXP1] = ri->paldataref;
+	SET_D(rEXP1, ri->paldataref);
 }
 
 void FFScript::do_create_paldata_clr()
@@ -20501,7 +20497,7 @@ void FFScript::do_create_paldata_clr()
 		for (int32_t q = 0; q < 240; ++q)
 			pd.set_color(q, c);
 	}
-	ri->d[rEXP1] = ri->paldataref;
+	SET_D(rEXP1, ri->paldataref);
 }
 
 void FFScript::do_mix_clr()
@@ -20519,7 +20515,7 @@ void FFScript::do_mix_clr()
 	int32_t g = vbound(outputc.g, 0, scripting_max_color_val);
 	int32_t b = vbound(outputc.b, 0, scripting_max_color_val);
 
-	ri->d[rEXP1] = (r << 16) | (g << 8) | b;
+	SET_D(rEXP1, (r << 16) | (g << 8) | b);
 }
 
 void FFScript::do_create_rgb_hex()
@@ -20543,7 +20539,7 @@ void FFScript::do_create_rgb_hex()
 		b = vbound(b / 4, 0, 63);
 	}
 
-	ri->d[rEXP1] = (r << 16) | (g << 8) | b;
+	SET_D(rEXP1, (r << 16) | (g << 8) | b);
 }
 
 void FFScript::do_create_rgb()
@@ -20562,7 +20558,7 @@ void FFScript::do_create_rgb()
 	g = vbound(g, 0, max_value);
 	b = vbound(b, 0, max_value);
 
-	ri->d[rEXP1] = (r << 16) | (g << 8) | b;
+	SET_D(rEXP1, (r << 16) | (g << 8) | b);
 }
 
 void FFScript::do_convert_from_rgb()
@@ -20635,7 +20631,7 @@ void FFScript::do_convert_to_rgb()
 	}
 	RGB c = user_paldata::RGBFrom(convert, color_space);
 
-	ri->d[rEXP1] = (c.r << 16) | (c.g << 8) | c.b;
+	SET_D(rEXP1, (c.r << 16) | (c.g << 8) | c.b);
 }
 
 void FFScript::do_paldata_load_level()
@@ -24179,7 +24175,7 @@ void do_enh_music_crossfade()
 	if (arrayptr == 0)
 	{
 		bool ret = play_enh_music_crossfade(NULL, qstpath, track, get_emusic_volume(), fadeoutframes, fadeinframes, fademiddleframes, startpos);
-		ri->d[rEXP1] = ret ? 10000 : 0;
+		SET_D(rEXP1, ret ? 10000 : 0);
 	}
 	else
 	{
@@ -24189,7 +24185,7 @@ void do_enh_music_crossfade()
 		strncpy(filename_char, filename_str.c_str(), 255);
 		filename_char[255] = '\0';
 		bool ret = play_enh_music_crossfade(filename_char, qstpath, track, get_emusic_volume(), fadeoutframes, fadeinframes, fademiddleframes, startpos, true);
-		ri->d[rEXP1] = ret ? 10000 : 0;
+		SET_D(rEXP1, ret ? 10000 : 0);
 	}
 }
 
@@ -24317,7 +24313,7 @@ void do_set_dmap_enh_music(const bool v)
 void do_arraysize()
 {
 	int32_t arrayptr = get_register(sarg1);
-	ri->d[rEXP1] = ArrayH::getSize(arrayptr) * 10000;
+	SET_D(rEXP1, ArrayH::getSize(arrayptr) * 10000);
 }
 
 void do_tobyte()
@@ -24515,7 +24511,7 @@ void do_gettilepixel()
 	y = vbound(y, 0, 15);
 	unpack_tile(newtilebuf, tile, 0, false);
 	int32_t csoffs = newtilebuf[tile].format == tf8Bit ? 0 : cs * 16;
-	ri->d[rEXP1] = 10000 * (unpackbuf[y * 16 + x] + csoffs);
+	SET_D(rEXP1, 10000 * (unpackbuf[y * 16 + x] + csoffs));
 }
 
 void do_shifttile(const bool v, const bool v2)
@@ -24553,14 +24549,14 @@ void do_combotile(const bool v)
 void do_readpod(const bool v)
 {
 	int32_t indx = SH::get_arg(sarg2, v) / 10000;
-	int32_t val = ArrayH::getElement(ri->d[rINDEX], indx, can_neg_array);
+	int32_t val = ArrayH::getElement(GET_D(rINDEX), indx, can_neg_array);
 	set_register(sarg1, val);
 }
 void do_writepod(const bool v1, const bool v2)
 {
 	int32_t indx = SH::get_arg(sarg1, v1) / 10000;
 	int32_t val = SH::get_arg(sarg2, v2);
-	ArrayH::setElement(ri->d[rINDEX], indx, val, can_neg_array);
+	ArrayH::setElement(GET_D(rINDEX), indx, val, can_neg_array);
 }
 void do_writepodstr()
 {
@@ -25826,10 +25822,10 @@ int32_t run_script_int(JittedScriptInstance* j_instance)
 				do_charwidth();
 				break;
 			case MESSAGEWIDTHR:
-				ri->d[rEXP1] = 10000* do_msgwidth(get_register(sarg1)/10000);
+				SET_D(rEXP1, 10000* do_msgwidth(get_register(sarg1)/10000));
 				break;
 			case MESSAGEHEIGHTR:
-				ri->d[rEXP1] = 10000* do_msgheight(get_register(sarg1)/10000);
+				SET_D(rEXP1, 10000* do_msgheight(get_register(sarg1)/10000));
 				break;
 			//
 
@@ -25983,10 +25979,7 @@ int32_t run_script_int(JittedScriptInstance* j_instance)
 				break;
 			
 			case GETRTCTIMER:
-				FFCore.getRTC(false);
-				break;
-			case GETRTCTIMEV:
-				FFCore.getRTC(true);
+				FFCore.getRTC();
 				break;
 				
 			case FACTORIAL:
@@ -26237,7 +26230,7 @@ int32_t run_script_int(JittedScriptInstance* j_instance)
 				auto val = SH::read_stack(ri->sp + 1);
 				auto indx = SH::read_stack(ri->sp + 0) / 10000;
 				ArrayManager am(ptr);
-				ri->d[rEXP1] = am.push(val,indx) ? 10000 : 0;
+				SET_D(rEXP1, am.push(val,indx) ? 10000 : 0);
 				break;
 			}
 			case ARRAYPOP:
@@ -26245,7 +26238,7 @@ int32_t run_script_int(JittedScriptInstance* j_instance)
 				auto ptr = SH::read_stack(ri->sp + 1);
 				auto indx = SH::read_stack(ri->sp + 0) / 10000;
 				ArrayManager am(ptr);
-				ri->d[rEXP1] = am.pop(indx);
+				SET_D(rEXP1, am.pop(indx));
 				break;
 			}
 			
@@ -26360,7 +26353,7 @@ int32_t run_script_int(JittedScriptInstance* j_instance)
 			
 			case PAUSESFX:
 			{
-				int32_t sound = ri->d[rINDEX]/10000;
+				int32_t sound = GET_D(rINDEX)/10000;
 				pause_sfx(sound);
 				
 			}
@@ -26368,7 +26361,7 @@ int32_t run_script_int(JittedScriptInstance* j_instance)
 
 			case RESUMESFX:
 			{
-				int32_t sound = ri->d[rINDEX]/10000;
+				int32_t sound = GET_D(rINDEX)/10000;
 				resume_sfx(sound);
 			}
 			break;
@@ -26393,7 +26386,7 @@ int32_t run_script_int(JittedScriptInstance* j_instance)
 
 			case CONTINUESFX:
 			{
-				int32_t sound = ri->d[rINDEX]/10000;
+				int32_t sound = GET_D(rINDEX)/10000;
 				//Backend::sfx->cont_sfx(sound);
 				
 				//! cont_sfx was not ported to the new back end!!!
@@ -27054,12 +27047,13 @@ int32_t run_script_int(JittedScriptInstance* j_instance)
 			case READBITMAP:
 			{
 				uint32_t bitref = SH::read_stack(ri->sp+2);
+				SET_D(rEXP2, bitref);
 				if(user_bitmap* b = checkBitmap(bitref,false,true))
 					do_drawing_command(scommand, false);
 				else //If the pointer isn't allocated, attempt to allocate it first
 				{
 					bitref = FFCore.get_free_bitmap();
-					ri->d[rEXP2] = bitref; //Return to ptr
+					SET_D(rEXP2, bitref); //Return to ptr
 					if(bitref) SH::write_stack(ri->sp+2,bitref); //Write the ref, for the drawing command to read
 					else break; //No ref allocated; don't enqueue the drawing command.
 					do_drawing_command(scommand, false);
@@ -27068,8 +27062,9 @@ int32_t run_script_int(JittedScriptInstance* j_instance)
 			}
 			case REGENERATEBITMAP:
 			{
-				ri->d[rEXP2] = SH::read_stack(ri->sp+3);
-				if(user_bitmap* b = checkBitmap(ri->d[rEXP2],false,true))
+				int ref = SH::read_stack(ri->sp+3);
+				SET_D(rEXP2, ref);
+				if(user_bitmap* b = checkBitmap(ref,false,true))
 					do_drawing_command(scommand, false);
 				else //If the pointer isn't allocated
 				{
@@ -27083,7 +27078,7 @@ int32_t run_script_int(JittedScriptInstance* j_instance)
 						h = h ^ w;
 					}
 					
-					ri->d[rEXP2] = FFCore.create_user_bitmap_ex(h,w); //Return to ptr
+					SET_D(rEXP2, FFCore.create_user_bitmap_ex(h,w)); //Return to ptr
 				}
 				break;
 			}
@@ -27320,7 +27315,7 @@ int32_t run_script_int(JittedScriptInstance* j_instance)
 				bool checkcost = flags&0x01;
 				bool checkjinx = flags&0x02;
 				bool check_bunny = flags&0x04;
-				ri->d[rEXP1] = current_item_id(ity,checkcost,checkjinx,check_bunny) * 10000;
+				SET_D(rEXP1, current_item_id(ity,checkcost,checkjinx,check_bunny) * 10000);
 				break;
 			}
 			
@@ -27439,7 +27434,7 @@ int32_t run_script_int(JittedScriptInstance* j_instance)
 			
 			case SCREENDOSPAWN:
 			{
-				ri->d[rEXP1] = scriptloadenemies(ri->screenref) ? 10000 : 0;
+				SET_D(rEXP1, scriptloadenemies(ri->screenref) ? 10000 : 0);
 				break;
 			}
 			
@@ -27573,7 +27568,7 @@ int32_t run_script_int(JittedScriptInstance* j_instance)
 				bool kb = SH::read_stack(ri->sp + 2)!=0;
 				bool ign_sv = SH::read_stack(ri->sp + 1)!=0;
 				bool shove = SH::read_stack(ri->sp + 0)!=0;
-				ri->d[rEXP1] = Hero.movexy(dx, dy, kb, ign_sv, shove) ? 10000 : 0;
+				SET_D(rEXP1, Hero.movexy(dx, dy, kb, ign_sv, shove) ? 10000 : 0);
 				break;
 			}
 			case HEROCANMOVEXY:
@@ -27583,7 +27578,7 @@ int32_t run_script_int(JittedScriptInstance* j_instance)
 				bool kb = SH::read_stack(ri->sp + 2)!=0;
 				bool ign_sv = SH::read_stack(ri->sp + 1)!=0;
 				bool shove = SH::read_stack(ri->sp + 0)!=0;
-				ri->d[rEXP1] = Hero.can_movexy(dx, dy, kb, ign_sv, shove) ? 10000 : 0;
+				SET_D(rEXP1, Hero.can_movexy(dx, dy, kb, ign_sv, shove) ? 10000 : 0);
 				break;
 			}
 			case HEROMOVEATANGLE:
@@ -27593,7 +27588,7 @@ int32_t run_script_int(JittedScriptInstance* j_instance)
 				bool kb = SH::read_stack(ri->sp + 2)!=0;
 				bool ign_sv = SH::read_stack(ri->sp + 1)!=0;
 				bool shove = SH::read_stack(ri->sp + 0)!=0;
-				ri->d[rEXP1] = Hero.moveAtAngle(degrees, pxamnt, kb, ign_sv, shove) ? 10000 : 0;
+				SET_D(rEXP1, Hero.moveAtAngle(degrees, pxamnt, kb, ign_sv, shove) ? 10000 : 0);
 				break;
 			}
 			case HEROCANMOVEATANGLE:
@@ -27603,7 +27598,7 @@ int32_t run_script_int(JittedScriptInstance* j_instance)
 				bool kb = SH::read_stack(ri->sp + 2)!=0;
 				bool ign_sv = SH::read_stack(ri->sp + 1)!=0;
 				bool shove = SH::read_stack(ri->sp + 0)!=0;
-				ri->d[rEXP1] = Hero.can_moveAtAngle(degrees, pxamnt, kb, ign_sv, shove) ? 10000 : 0;
+				SET_D(rEXP1, Hero.can_moveAtAngle(degrees, pxamnt, kb, ign_sv, shove) ? 10000 : 0);
 				break;
 			}
 			case HEROMOVE:
@@ -27613,7 +27608,7 @@ int32_t run_script_int(JittedScriptInstance* j_instance)
 				bool kb = SH::read_stack(ri->sp + 2)!=0;
 				bool ign_sv = SH::read_stack(ri->sp + 1)!=0;
 				bool shove = SH::read_stack(ri->sp + 0)!=0;
-				ri->d[rEXP1] = Hero.moveDir(dir, pxamnt, kb, ign_sv, shove) ? 10000 : 0;
+				SET_D(rEXP1, Hero.moveDir(dir, pxamnt, kb, ign_sv, shove) ? 10000 : 0);
 				break;
 			}
 			case HEROCANMOVE:
@@ -27623,18 +27618,18 @@ int32_t run_script_int(JittedScriptInstance* j_instance)
 				bool kb = SH::read_stack(ri->sp + 2)!=0;
 				bool ign_sv = SH::read_stack(ri->sp + 1)!=0;
 				bool shove = SH::read_stack(ri->sp + 0)!=0;
-				ri->d[rEXP1] = Hero.can_moveDir(dir, pxamnt, kb, ign_sv, shove) ? 10000 : 0;
+				SET_D(rEXP1, Hero.can_moveDir(dir, pxamnt, kb, ign_sv, shove) ? 10000 : 0);
 				break;
 			}
 			case HEROLIFTRELEASE:
 			{
 				if(Hero.lift_wpn)
 				{
-					ri->d[rEXP1] = Hero.lift_wpn->getUID();
+					SET_D(rEXP1, Hero.lift_wpn->getUID());
 					Lwpns.add(Hero.lift_wpn);
 					Hero.lift_wpn = nullptr;
 				}
-				else ri->d[rEXP1] = 0;
+				else SET_D(rEXP1, 0);
 				break;
 			}
 			case HEROLIFTGRAB:
@@ -27653,7 +27648,7 @@ int32_t run_script_int(JittedScriptInstance* j_instance)
 				break;
 			}
 			case HEROISFLICKERFRAME:
-				ri->d[rEXP1] = Hero.is_hitflickerframe() ? 10000 : 0;
+				SET_D(rEXP1, Hero.is_hitflickerframe() ? 10000 : 0);
 				break;
 			case LOADPORTAL:
 			{
@@ -27669,17 +27664,17 @@ int32_t run_script_int(JittedScriptInstance* j_instance)
 						val = 0;
 					}
 				}
-				ri->portalref = ri->d[rEXP1] = val;
+				ri->portalref = SET_D(rEXP1, val);
 				break;
 			}
 			case CREATEPORTAL:
 			{
 				portal* p = new portal();
 				if(portals.add(p))
-					ri->portalref = ri->d[rEXP1] = p->getUID();
+					ri->portalref = SET_D(rEXP1, p->getUID());
 				else
 				{
-					ri->portalref = ri->d[rEXP1] = 0;
+					ri->portalref = SET_D(rEXP1, 0);
 					Z_scripterrlog("Unable to create new portal! Limit reached!\n");
 				}
 				break;
@@ -27688,19 +27683,19 @@ int32_t run_script_int(JittedScriptInstance* j_instance)
 			{
 				auto val = get_register(sarg1)/10000;
 				savedportal* prt = checkSavedPortal(val);
-				ri->saveportalref = ri->d[rEXP1] = prt ? val : 0;
+				ri->saveportalref = SET_D(rEXP1, prt ? val : 0);
 				break;
 			}
 			case CREATESAVPORTAL:
 			{
 				if(game->user_portals.size() >= MAX_SAVED_PORTALS)
 				{
-					ri->saveportalref = ri->d[rEXP1] = 0;
+					ri->saveportalref = SET_D(rEXP1, 0);
 					Z_scripterrlog("Cannot create any more Saved Portals! Remove some first!\n");
 					break;
 				}
 				savedportal& ref = game->user_portals.emplace_back();
-				ri->saveportalref = ri->d[rEXP1] = ref.getUID();
+				ri->saveportalref = SET_D(rEXP1, ref.getUID());
 				break;
 			}
 			case PORTALREMOVE:
@@ -27768,7 +27763,7 @@ int32_t run_script_int(JittedScriptInstance* j_instance)
 								retval = p->getUID();
 					}
 				}
-				ri->d[rEXP1] = retval;
+				SET_D(rEXP1, retval);
 				break;
 			}
 			
@@ -28340,9 +28335,9 @@ int32_t run_script_int(JittedScriptInstance* j_instance)
 			case RNGRAND1:
 				if(user_rng* r = checkRNG(ri->rngref))
 				{
-					ri->d[rEXP1] = r->rand(214748, -214748)*10000L;
+					SET_D(rEXP1, r->rand(214748, -214748)*10000L);
 				}
-				else ri->d[rEXP1] = -10000L;
+				else SET_D(rEXP1, -10000L);
 				break;
 			case RNGRAND2:
 				if(user_rng* r = checkRNG(ri->rngref))
@@ -28361,23 +28356,23 @@ int32_t run_script_int(JittedScriptInstance* j_instance)
 			case RNGLRAND1:
 				if(user_rng* r = checkRNG(ri->rngref))
 				{
-					ri->d[rEXP1] = r->rand();
+					SET_D(rEXP1, r->rand());
 				}
-				else ri->d[rEXP1] = -10000L;
+				else SET_D(rEXP1, -10000L);
 				break;
 			case RNGLRAND2:
 				if(user_rng* r = checkRNG(ri->rngref))
 				{
-					ri->d[rEXP1] = r->rand(get_register(sarg1));
+					SET_D(rEXP1, r->rand(get_register(sarg1)));
 				}
-				else ri->d[rEXP1] = -10000L;
+				else SET_D(rEXP1, -10000L);
 				break;
 			case RNGLRAND3:
 				if(user_rng* r = checkRNG(ri->rngref))
 				{
-					ri->d[rEXP1] = r->rand(get_register(sarg1), get_register(sarg2));
+					SET_D(rEXP1, r->rand(get_register(sarg1), get_register(sarg2)));
 				}
-				else ri->d[rEXP1] = -10000L;
+				else SET_D(rEXP1, -10000L);
 				break;
 			case RNGSEED:
 				if(user_rng* r = checkRNG(ri->rngref))
@@ -28388,9 +28383,9 @@ int32_t run_script_int(JittedScriptInstance* j_instance)
 			case RNGRSEED:
 				if(user_rng* r = checkRNG(ri->rngref))
 				{
-					ri->d[rEXP1] = r->srand();
+					SET_D(rEXP1, r->srand());
 				}
-				else ri->d[rEXP1] = -10000;
+				else SET_D(rEXP1, -10000);
 				break;
 			case RNGFREE:
 				if(user_rng* r = checkRNG(ri->rngref, true))
@@ -28468,7 +28463,8 @@ int32_t run_script_int(JittedScriptInstance* j_instance)
 			}
 			case SUBPAGE_FIND_WIDGET:
 			{
-				ri->d[rEXP1] = 0;
+				SET_D(rEXP1, 0);
+
 				ri->subpageref = SH::read_stack(ri->sp+1);
 				if(SubscrPage* pg = checkSubPage(ri->subpageref, sstACTIVE))
 				{
@@ -28479,7 +28475,7 @@ int32_t run_script_int(JittedScriptInstance* j_instance)
 						if(q > -1)
 						{
 							auto [sub,ty,pgid,_ind] = from_subref(ri->subpageref);
-							ri->d[rEXP1] = get_subref(sub,ty,pgid,q);
+							SET_D(rEXP1, get_subref(sub,ty,pgid,q));
 						}
 					}
 				}
@@ -28487,7 +28483,8 @@ int32_t run_script_int(JittedScriptInstance* j_instance)
 			}
 			case SUBPAGE_FIND_WIDGET_BY_LABEL:
 			{
-				ri->d[rEXP1] = 0;
+				SET_D(rEXP1, 0);
+
 				ri->subpageref = SH::read_stack(ri->sp+1);
 				if(SubscrPage* pg = checkSubPage(ri->subpageref))
 				{
@@ -28500,7 +28497,7 @@ int32_t run_script_int(JittedScriptInstance* j_instance)
 						if(q > -1)
 						{
 							auto [sub,ty,pgid,_ind] = from_subref(ri->subpageref);
-							ri->d[rEXP1] = get_subref(sub,ty,pgid,q);
+							SET_D(rEXP1, get_subref(sub,ty,pgid,q));
 						}
 					}
 				}
@@ -28510,6 +28507,9 @@ int32_t run_script_int(JittedScriptInstance* j_instance)
 			{
 				#define SUBSEL_FLAG_NO_NONEQUIP 0x01
 				#define SUBSEL_FLAG_NEED_ITEM 0x02
+
+				SET_D(rEXP1, 0);
+
 				ri->subpageref = SH::read_stack(ri->sp+3);
 				if(SubscrPage* pg = checkSubPage(ri->subpageref))
 				{
@@ -28535,12 +28535,14 @@ int32_t run_script_int(JittedScriptInstance* j_instance)
 					auto newpos = pg->movepos_legacy(dir, (pos<<8)|pg->getIndex(),
 						255, 255, 255, flags&SUBSEL_FLAG_NO_NONEQUIP,
 						flags&SUBSEL_FLAG_NEED_ITEM, true) >> 8;
-					ri->d[rEXP1] = 10000*newpos;
+					SET_D(rEXP1, 10000*newpos);
 				}
 				break;
 			}
 			case SUBPAGE_NEW_WIDG:
 			{
+				SET_D(rEXP1, 0);
+
 				ri->subpageref = SH::read_stack(ri->sp+1);
 				if(SubscrPage* pg = checkSubPage(ri->subpageref))
 				{
@@ -28554,7 +28556,7 @@ int32_t run_script_int(JittedScriptInstance* j_instance)
 						widg->h = 1;
 						pg->push_back(widg);
 						auto [sub,ty,pgid,_ind] = from_subref(ri->subpageref);
-						ri->d[rEXP1] = get_subref(sub,ty,pgid,pg->size()-1);
+						SET_D(rEXP1, get_subref(sub,ty,pgid,pg->size()-1));
 					}
 					else Z_scripterrlog("Invalid type %d passed to subscreenpage->CreateWidget()\n",ty);
 				}
@@ -28733,7 +28735,7 @@ int32_t run_script_int(JittedScriptInstance* j_instance)
 			
 			case REF_INC:
 			{
-				int offset = ri->d[rSFRAME] + sarg1;
+				int offset = GET_D(rSFRAME) + sarg1;
 				if (!ri->stack_pos_is_object.contains(offset))
 				{
 					assert(false);
@@ -28746,7 +28748,7 @@ int32_t run_script_int(JittedScriptInstance* j_instance)
 			}
 			case REF_DEC:
 			{
-				int offset = ri->d[rSFRAME] + sarg1;
+				int offset = GET_D(rSFRAME) + sarg1;
 				if (!ri->stack_pos_is_object.contains(offset))
 				{
 					assert(false);
@@ -28784,7 +28786,7 @@ int32_t run_script_int(JittedScriptInstance* j_instance)
 			}
 			case MARK_TYPE_STACK:
 			{
-				int offset = ri->d[rSFRAME] + sarg2;
+				int offset = GET_D(rSFRAME) + sarg2;
 				if (offset < 0 || offset >= MAX_STACK_SIZE)
 				{
 					assert(false);
@@ -28809,7 +28811,7 @@ int32_t run_script_int(JittedScriptInstance* j_instance)
 			}
 			case REF_REMOVE:
 			{
-				int offset = ri->d[rSFRAME] + sarg1;
+				int offset = GET_D(rSFRAME) + sarg1;
 				script_remove_object_ref(offset);
 				break;
 			}
@@ -28863,6 +28865,9 @@ int32_t run_script_int(JittedScriptInstance* j_instance)
 				scripting_log_error_with_context("Invalid ZASM command {} reached; terminating", scommand);
 				hit_invalid_zasm = true;
 				scommand = 0xFFFF;
+#ifdef _DEBUG
+				Z_error_fatal("Invalid ZASM command: %d\n", scommand);
+#endif
 				break;
 			}
 		}
@@ -29241,8 +29246,8 @@ void FFScript::do_fopen(const bool v, const char* f_mode)
 	string user_path;
 	ArrayH::getString(arrayptr, user_path, 512);
 
-	ri->d[rEXP1] = 0L; //Presume failure; update to 10000L on success
-	ri->d[rEXP2] = 0;
+	SET_D(rEXP1, 0); //Presume failure; update to 10000L on success
+	SET_D(rEXP2, 0);
 
 	std::string resolved_path;
 	if (auto r = parse_user_path(user_path, true); !r)
@@ -29257,7 +29262,7 @@ void FFScript::do_fopen(const bool v, const char* f_mode)
 		ri->fileref = user_files.get_free();
 		f = checkFile(ri->fileref, false, true);
 	}
-	ri->d[rEXP2] = ri->fileref; //Returns to the variable!
+	SET_D(rEXP2, ri->fileref); //Returns to the variable!
 	if(f)
 	{
 		f->close(); //Close the old FILE* before overwriting it!
@@ -29280,14 +29285,14 @@ void FFScript::do_fopen(const bool v, const char* f_mode)
 			//w+; read-write, will create if does not exist, will delete all content if does exist.
 			if(f->file)
 			{
-				ri->d[rEXP1] = 10000L; //Success
+				SET_D(rEXP1, 10000L); //Success
 				return;
 			}
 		}
 		else
 		{
 			Z_scripterrlog("Script failed to create directories for file path '%s'.\n", resolved_path.c_str());
-			ri->d[rEXP2] = 0;
+			SET_D(rEXP2, 0);
 			return;
 		}
 	}
@@ -29298,9 +29303,9 @@ void FFScript::do_fremove()
 	if(user_file* f = checkFile(ri->fileref, true))
 	{
 		zprint2("Removing file %d\n", ri->fileref);
-		ri->d[rEXP1] = f->do_remove() ? 0L : 10000L;
+		SET_D(rEXP1, f->do_remove() ? 0L : 10000L);
 	}
-	else ri->d[rEXP1] = 0L;
+	else SET_D(rEXP1, 0L);
 }
 
 void FFScript::do_fclose()
@@ -29316,8 +29321,8 @@ void FFScript::do_allocate_file()
 {
 	//Get a file and return it
 	ri->fileref = user_files.get_free();
-	ri->d[rEXP2] = ri->fileref; //Return to ptr
-	ri->d[rEXP1] = (ri->d[rEXP2] == 0 ? 0L : 10000L);
+	SET_D(rEXP2, ri->fileref); //Return to ptr
+	SET_D(rEXP1, (ri->d[rEXP2] == 0 ? 0L : 10000L));
 }
 
 void FFScript::do_deallocate_file()
@@ -29329,34 +29334,38 @@ void FFScript::do_deallocate_file()
 void FFScript::do_file_isallocated() //Returns true if file is allocated
 {
 	user_file* f = checkFile(ri->fileref, false, true);
-	ri->d[rEXP1] = (f) ? 10000L : 0L;
+	SET_D(rEXP1, (f) ? 10000L : 0L);
 }
 
 void FFScript::do_file_isvalid() //Returns true if file is allocated and has an open FILE*
 {
 	user_file* f = checkFile(ri->fileref, true, true);
-	ri->d[rEXP1] = (f) ? 10000L : 0L;
+	SET_D(rEXP1, (f) ? 10000L : 0L);
 }
 
 void FFScript::do_fflush()
 {
-	ri->d[rEXP1] = 0L;
+	SET_D(rEXP1, 0L);
+
 	if(user_file* f = checkFile(ri->fileref, true))
 	{
 		if(!fflush(f->file))
-			ri->d[rEXP1] = 10000L;
+			SET_D(rEXP1, 10000L);
 		check_file_error(ri->fileref);
 	}
 }
 
 void FFScript::do_file_readchars()
 {
+	int32_t arrayptr = get_register(sarg1);
+	int32_t count = get_register(sarg2) / 10000;
+	uint32_t pos = zc_max(GET_D(rINDEX) / 10000,0);
+	SET_D(rEXP1, 0L);
+
 	if(user_file* f = checkFile(ri->fileref, true))
 	{
-		uint32_t pos = zc_max(ri->d[rINDEX] / 10000,0);
-		int32_t count = get_register(sarg2) / 10000;
 		if(count == 0) return;
-		int32_t arrayptr = get_register(sarg1);
+
 		ArrayManager am(arrayptr);
 		int32_t sz = am.size();
 		if(sz <= 0)
@@ -29370,7 +29379,6 @@ void FFScript::do_file_readchars()
 		int32_t limit = pos+count;
 		char c;
 		word q;
-		ri->d[rEXP1] = 0;
 		for(q = pos; q < limit; ++q)
 		{
 			c = fgetc(f->file);
@@ -29390,18 +29398,19 @@ void FFScript::do_file_readchars()
 		am.set(q,0); //Force null-termination
 		ri->d[rEXP1] *= 10000L;
 		check_file_error(ri->fileref);
-		return;
 	}
-	ri->d[rEXP1] = 0L;
 }
 void FFScript::do_file_readbytes()
 {
+	int32_t arrayptr = get_register(sarg1);
+	int32_t count = get_register(sarg2) / 10000;
+	uint32_t pos = zc_max(GET_D(rINDEX) / 10000,0);
+	SET_D(rEXP1, 0L);
+
 	if(user_file* f = checkFile(ri->fileref, true))
 	{
-		uint32_t pos = zc_max(ri->d[rINDEX] / 10000,0);
-		int32_t count = get_register(sarg2) / 10000;
 		if(count == 0) return;
-		int32_t arrayptr = get_register(sarg1);
+
 		ArrayManager am(arrayptr);
 		int32_t sz = am.size();
 		if(sz <= 0)
@@ -29413,21 +29422,21 @@ void FFScript::do_file_readbytes()
 		}
 		if(count < 0 || unsigned(count) > sz-pos) count = sz-pos;
 		std::vector<uint8_t> data(count);
-		ri->d[rEXP1] = 10000L * fread((void*)&(data[0]), 1, count, f->file);
+		SET_D(rEXP1, 10000L * fread((void*)&(data[0]), 1, count, f->file));
 		for(int32_t q = 0; q < count; ++q)
 		{
 			am.set(q+pos, 10000L * data[q]);
 		}
 		check_file_error(ri->fileref);
-		return;
 	}
-	ri->d[rEXP1] = 0L;
 }
 void FFScript::do_file_readstring()
 {
+	int32_t arrayptr = get_register(sarg1);
+	SET_D(rEXP1, 0L);
+
 	if(user_file* f = checkFile(ri->fileref, true))
 	{
-		int32_t arrayptr = get_register(sarg1);
 		ArrayManager am(arrayptr);
 		int32_t sz = am.size();
 		if(sz <= 0)
@@ -29435,7 +29444,6 @@ void FFScript::do_file_readstring()
 		int32_t limit = sz;
 		int32_t c;
 		word q;
-		ri->d[rEXP1] = 0;
 		for(q = 0; q < limit; ++q)
 		{
 			c = fgetc(f->file);
@@ -29460,18 +29468,19 @@ void FFScript::do_file_readstring()
 		am.set(q,0); //Force null-termination
 		ri->d[rEXP1] *= 10000L;
 		check_file_error(ri->fileref);
-		return;
 	}
-	ri->d[rEXP1] = 0L;
 }
 void FFScript::do_file_readints()
 {
+	int32_t arrayptr = get_register(sarg1);
+	int32_t count = get_register(sarg2) / 10000;
+	uint32_t pos = zc_max(GET_D(rINDEX) / 10000,0);
+	SET_D(rEXP1, 0L);
+
 	if(user_file* f = checkFile(ri->fileref, true))
 	{
-		uint32_t pos = zc_max(ri->d[rINDEX] / 10000,0);
-		int32_t count = get_register(sarg2) / 10000;
 		if(count == 0) return;
-		int32_t arrayptr = get_register(sarg1);
+
 		ArrayManager am(arrayptr);
 		int32_t sz = am.size();
 		if(sz <= 0)
@@ -29484,25 +29493,25 @@ void FFScript::do_file_readints()
 		if(count < 0 || unsigned(count) > sz-pos) count = sz-pos;
 		
 		std::vector<int32_t> data(count);
-		ri->d[rEXP1] = 10000L * fread((void*)&(data[0]), 4, count, f->file);
+		SET_D(rEXP1, 10000L * fread((void*)&(data[0]), 4, count, f->file));
 		for(int32_t q = 0; q < count; ++q)
 		{
 			am.set(q+pos,data[q]);
 		}
 		check_file_error(ri->fileref);
-		return;
 	}
-	ri->d[rEXP1] = 0L;
 }
 void FFScript::do_file_writechars()
 {
+	int32_t arrayptr = get_register(sarg1);
+	int32_t count = get_register(sarg2) / 10000;
+	int32_t pos = zc_max(GET_D(rINDEX) / 10000,0);
+	SET_D(rEXP1, 0L);
+
 	if(user_file* f = checkFile(ri->fileref, true))
 	{
-		int32_t pos = zc_max(ri->d[rINDEX] / 10000,0);
-		int32_t count = get_register(sarg2) / 10000;
 		if(count == 0) return;
 		if(count == -1 || count > (MAX_ZC_ARRAY_SIZE-pos)) count = MAX_ZC_ARRAY_SIZE-pos;
-		int32_t arrayptr = get_register(sarg1);
 		string output;
 		ArrayH::getString(arrayptr, output, count, pos);
 		uint32_t q = 0;
@@ -29511,22 +29520,23 @@ void FFScript::do_file_writechars()
 			if(fputc(output[q], f->file)<0)
 				break;
 		}
-		ri->d[rEXP1] = q * 10000L;
+		SET_D(rEXP1, q * 10000L);
 		check_file_error(ri->fileref);
-		return;
 	}
-	ri->d[rEXP1] = 0L;
 }
 
 void FFScript::do_file_writebytes()
 {
+	int32_t arrayptr = get_register(sarg1);
+	int32_t arg = get_register(sarg2) / 10000;
+	uint32_t pos = zc_max(GET_D(rINDEX) / 10000,0);
+	SET_D(rEXP1, 0L);
+
 	if(user_file* f = checkFile(ri->fileref, true))
 	{
-		uint32_t pos = zc_max(ri->d[rINDEX] / 10000,0);
-		int32_t arg = get_register(sarg2) / 10000;
 		if(arg == 0) return;
+
 		uint32_t count = ((arg<0 || unsigned(arg) >(MAX_ZC_ARRAY_SIZE - pos)) ? MAX_ZC_ARRAY_SIZE - pos : unsigned(arg));
-		int32_t arrayptr = get_register(sarg1);
 		string output;
 		ArrayManager am(arrayptr);
 		if(am.invalid()) return;
@@ -29544,17 +29554,17 @@ void FFScript::do_file_writebytes()
 		{
 			data[q] = am.get(q+pos) / 10000;
 		}
-		ri->d[rEXP1] = 10000L * fwrite((const void*)&(data[0]), 1, count, f->file);
+		SET_D(rEXP1, 10000L * fwrite((const void*)&(data[0]), 1, count, f->file));
 		check_file_error(ri->fileref);
-		return;
 	}
-	ri->d[rEXP1] = 0L;
 }
 void FFScript::do_file_writestring()
 {
+	int32_t arrayptr = get_register(sarg1);
+	SET_D(rEXP1, 0L);
+
 	if(user_file* f = checkFile(ri->fileref, true))
 	{
-		int32_t arrayptr = get_register(sarg1);
 		string output;
 		ArrayH::getString(arrayptr, output, ZSCRIPT_MAX_STRING_CHARS);
 		uint32_t q = 0;
@@ -29563,20 +29573,20 @@ void FFScript::do_file_writestring()
 			if(fputc(output[q], f->file)<0)
 				break;
 		}
-		ri->d[rEXP1] = q * 10000L;
+		SET_D(rEXP1, q * 10000L);
 		check_file_error(ri->fileref);
-		return;
 	}
-	ri->d[rEXP1] = 0L;
 }
 void FFScript::do_file_writeints()
 {
+	int32_t arrayptr = get_register(sarg1);
+	int32_t count = get_register(sarg2) / 10000;
+	uint32_t pos = zc_max(GET_D(rINDEX) / 10000,0);
+	SET_D(rEXP1, 0L);
+
 	if(user_file* f = checkFile(ri->fileref, true))
 	{
-		uint32_t pos = zc_max(ri->d[rINDEX] / 10000,0);
-		int32_t count = get_register(sarg2) / 10000;
 		if(count == 0) return;
-		int32_t arrayptr = get_register(sarg1);
 		ArrayManager am(arrayptr);
 		if(am.invalid()) return;
 		int32_t sz = am.size();
@@ -29594,67 +29604,66 @@ void FFScript::do_file_writeints()
 		{
 			data[q] = am.get(q+pos);
 		}
-		ri->d[rEXP1] = 10000L * fwrite((const void*)&(data[0]), 4, count, f->file);
+		SET_D(rEXP1, 10000L * fwrite((const void*)&(data[0]), 4, count, f->file));
 		check_file_error(ri->fileref);
-		return;
 	}
-	ri->d[rEXP1] = 0L;
 }
 
 void FFScript::do_file_getchar()
 {
+	SET_D(rEXP1, -10000L); //-1 == EOF; error value
+
 	if(user_file* f = checkFile(ri->fileref, true))
 	{
-		ri->d[rEXP1] = fgetc(f->file) * 10000L;
-		check_file_error(ri->fileref);
-		return;
+		SET_D(rEXP1, fgetc(f->file) * 10000L);
+		check_file_error(ri->fileref); // TODO: should be checking file error before setting rEXP1.
 	}
-	ri->d[rEXP1] = -10000L; //-1 == EOF; error value
 }
 void FFScript::do_file_putchar()
 {
+	int32_t c = get_register(sarg1) / 10000;
+	SET_D(rEXP1, -10000L); //-1 == EOF; error value
+
 	if(user_file* f = checkFile(ri->fileref, true))
 	{
-		int32_t c = get_register(sarg1) / 10000;
 		if(char(c) != c)
 		{
 			Z_scripterrlog("Invalid character val %d passed to PutChar(); value will overflow.", c);
 			c = char(c);
 		}
-		ri->d[rEXP1] = fputc(c, f->file) * 10000L;
-		check_file_error(ri->fileref);
-		return;
+		SET_D(rEXP1, fputc(c, f->file) * 10000L);
+		check_file_error(ri->fileref); // TODO: should be checking file error before setting rEXP1.
 	}
-	ri->d[rEXP1] = -10000L; //-1 == EOF; error value
 }
 void FFScript::do_file_ungetchar()
 {
+	int32_t c = get_register(sarg1) / 10000;
+
 	if(user_file* f = checkFile(ri->fileref, true))
 	{
-		int32_t c = get_register(sarg1) / 10000;
 		if(char(c) != c)
 		{
 			Z_scripterrlog("Invalid character val %d passed to UngetChar(); value will overflow.", c);
 			c = char(c);
 		}
-		ri->d[rEXP1] = ungetc(c,f->file) * 10000L;
-		check_file_error(ri->fileref);
+		SET_D(rEXP1, ungetc(c,f->file) * 10000L);
+		check_file_error(ri->fileref); // TODO: should be checking file error before setting rEXP1.
 		return;
 	}
-	ri->d[rEXP1] = -10000L; //-1 == EOF; error value
+	SET_D(rEXP1, -10000L); //-1 == EOF; error value
 }
 
 void FFScript::do_file_seek()
 {
+	int32_t pos = get_register(sarg1); //NOT /10000 -V
+	int32_t origin = get_register(sarg2) ? SEEK_CUR : SEEK_SET;
+	SET_D(rEXP1, 0);
+
 	if(user_file* f = checkFile(ri->fileref, true))
 	{
-		int32_t pos = get_register(sarg1); //NOT /10000 -V
-		int32_t origin = get_register(sarg2) ? SEEK_CUR : SEEK_SET;
-		ri->d[rEXP1] = fseek(f->file, pos, origin) ? 0L : 10000L;
-		check_file_error(ri->fileref);
-		return;
+		SET_D(rEXP1, fseek(f->file, pos, origin) ? 0L : 10000L);
+		check_file_error(ri->fileref); // TODO: should be checking file error before setting rEXP1.
 	}
-	ri->d[rEXP1] = 0;
 }
 void FFScript::do_file_rewind()
 {
@@ -29695,10 +29704,11 @@ void FFScript::do_file_geterr()
 
 void FFScript::do_directory_get()
 {
+	int32_t indx = get_register(sarg1) / 10000L;
+	int32_t arrayptr = get_register(sarg2);
+
 	if(user_dir* dr = checkDir(ri->directoryref, true))
 	{
-		int32_t indx = get_register(sarg1) / 10000L;
-		int32_t arrayptr = get_register(sarg2);
 		char buf[2048] = {0};
 		set_register(sarg1, dr->get(indx, buf) ? 10000L : 0L);
 		if(ArrayH::setArray(arrayptr, string(buf)) == SH::_Overflow)
@@ -29765,8 +29775,8 @@ void FFScript::user_bitmaps_init()
 
 int32_t FFScript::do_create_bitmap()
 {
-	int32_t w = (ri->d[rINDEX2] / 10000);
-	int32_t h = (ri->d[rINDEX]/10000);
+	int32_t w = (GET_D(rINDEX2) / 10000);
+	int32_t h = (GET_D(rINDEX)/10000);
 	if ( get_qr(qr_OLDCREATEBITMAP_ARGS) )
 	{
 		std::swap(w, h);
@@ -30044,8 +30054,8 @@ void FFScript::do_bmpcollision()
 
 int32_t FFScript::loadMapData()
 {
-	int32_t map = (ri->d[rINDEX] / 10000);
-	int32_t screen = (ri->d[rINDEX2]/10000);
+	int32_t map = (GET_D(rINDEX) / 10000);
+	int32_t screen = (GET_D(rINDEX2)/10000);
 	int32_t indx = (zc_max((map)-1,0) * MAPSCRS + screen);
 	 if ( map < 1 || map > map_count )
 	{
@@ -31482,8 +31492,8 @@ void FFScript::do_savegamestructs(const bool v, const bool v2)
 
 void FFScript::do_strcmp()
 {
-	int32_t arrayptr_a = ri->d[rINDEX];
-	int32_t arrayptr_b = ri->d[rINDEX2];
+	int32_t arrayptr_a = GET_D(rINDEX);
+	int32_t arrayptr_b = GET_D(rINDEX2);
 	string strA;
 	string strB;
 	ArrayH::getString(arrayptr_a, strA);
@@ -31493,8 +31503,8 @@ void FFScript::do_strcmp()
 
 void FFScript::do_stricmp()
 {
-	int32_t arrayptr_a = ri->d[rINDEX];
-	int32_t arrayptr_b = ri->d[rINDEX2];
+	int32_t arrayptr_a = GET_D(rINDEX);
+	int32_t arrayptr_b = GET_D(rINDEX2);
 	string strA;
 	string strB;
 	ArrayH::getString(arrayptr_a, strA);
@@ -31685,7 +31695,7 @@ void FFScript::do_xtoi(const bool v)
 }
 void FFScript::do_xtoi2() 
 {
-	int32_t arrayptr_a = ri->d[rINDEX];
+	int32_t arrayptr_a = GET_D(rINDEX);
 	string strA;
 	ArrayH::getString(arrayptr_a, strA);
 	set_register(sarg1, (zc_xtoi(strA.c_str()) * 10000));
@@ -31703,7 +31713,7 @@ void FFScript::do_xtoa()
 {
 	
 	int32_t arrayptr_a = get_register(sarg1);
-	int32_t number = get_register(sarg2) / 10000;//ri->d[rEXP2]/10000; //why are you not in sarg2?!!
+	int32_t number = get_register(sarg2) / 10000;//GET_D(rEXP2)/10000; //why are you not in sarg2?!!
 	
 	
 	
@@ -31789,8 +31799,8 @@ void FFScript::do_atol(const bool v)
 void FFScript::do_strstr()
 {
 	
-	int32_t arrayptr_a = ri->d[rINDEX];
-	int32_t arrayptr_b = ri->d[rINDEX2];
+	int32_t arrayptr_a = GET_D(rINDEX);
+	int32_t arrayptr_b = GET_D(rINDEX2);
 	string strA;
 	string strB;
 	ArrayH::getString(arrayptr_a, strA);
@@ -31807,8 +31817,8 @@ void FFScript::do_strstr()
 void FFScript::do_strcat()
 {
 	
-	int32_t arrayptr_a = ri->d[rINDEX];
-	int32_t arrayptr_b = ri->d[rINDEX2];
+	int32_t arrayptr_a = GET_D(rINDEX);
+	int32_t arrayptr_b = GET_D(rINDEX2);
 	string strA;
 	string strB;
 	ArrayH::getString(arrayptr_a, strA);
@@ -31826,8 +31836,8 @@ void FFScript::do_strcat()
 void FFScript::do_strspn()
 {
 	
-	int32_t arrayptr_a = ri->d[rINDEX];
-	int32_t arrayptr_b = ri->d[rINDEX2];
+	int32_t arrayptr_a = GET_D(rINDEX);
+	int32_t arrayptr_b = GET_D(rINDEX2);
 	string strA;
 	string strB;
 	ArrayH::getString(arrayptr_a, strA);
@@ -31838,8 +31848,8 @@ void FFScript::do_strspn()
 void FFScript::do_strcspn()
 {
 	
-	int32_t arrayptr_a = ri->d[rINDEX];
-	int32_t arrayptr_b = ri->d[rINDEX2];
+	int32_t arrayptr_a = GET_D(rINDEX);
+	int32_t arrayptr_b = GET_D(rINDEX2);
 	string strA;
 	string strB;
 	ArrayH::getString(arrayptr_a, strA);
@@ -31850,8 +31860,8 @@ void FFScript::do_strcspn()
 void FFScript::do_strchr()
 {
 	
-	int32_t arrayptr_a = ri->d[rINDEX];
-	char chr_to_find = (ri->d[rINDEX2]/10000);
+	int32_t arrayptr_a = GET_D(rINDEX);
+	char chr_to_find = (GET_D(rINDEX2)/10000);
 	string strA; 
 	ArrayH::getString(arrayptr_a, strA);
 	if ( strA.size() < 1 ) 
@@ -31865,8 +31875,8 @@ void FFScript::do_strchr()
 }
 void FFScript::do_strrchr()
 {
-	int32_t arrayptr_a = ri->d[rINDEX];
-	char chr_to_find = (ri->d[rINDEX2]/10000);
+	int32_t arrayptr_a = GET_D(rINDEX);
+	char chr_to_find = (GET_D(rINDEX2)/10000);
 	string strA; 
 	ArrayH::getString(arrayptr_a, strA);
 	if ( strA.size() < 1 ) 
@@ -31882,7 +31892,7 @@ void FFScript::do_remchr2()
 {
 	//Not implemented, remchr not found
 	//not part of any standard library
-	int32_t arrayptr_a = ri->d[rINDEX];
+	int32_t arrayptr_a = GET_D(rINDEX);
 	string strA;
 	ArrayH::getString(arrayptr_a, strA);
 }
@@ -31890,21 +31900,21 @@ void FFScript::do_remchr2()
 void FFScript::do_atoi2()
 {
 	//not implemented; atoi does not take 2 params
-	int32_t arrayptr_a = ri->d[rINDEX];
+	int32_t arrayptr_a = GET_D(rINDEX);
 	string strA;
 	ArrayH::getString(arrayptr_a, strA);
 }
 void FFScript::do_ilen2()
 {
 	//not implemented, ilen not found
-	int32_t arrayptr_a = ri->d[rINDEX];
+	int32_t arrayptr_a = GET_D(rINDEX);
 	string strA;
 	ArrayH::getString(arrayptr_a, strA);
 }
 void FFScript::do_xlen2()
 {
 	//not implemented, xlen not found
-	int32_t arrayptr_a = ri->d[rINDEX];
+	int32_t arrayptr_a = GET_D(rINDEX);
 	string strA;
 	ArrayH::getString(arrayptr_a, strA);
 }
@@ -32001,9 +32011,9 @@ void FFScript::do_strlen(const bool v)
 
 void FFScript::do_strncmp()
 {
-	int32_t arrayptr_a = ri->d[rINDEX];
-	int32_t arrayptr_b = ri->d[rEXP2];
-	int32_t len = ri->d[rEXP1]/10000;
+	int32_t arrayptr_a = GET_D(rINDEX);
+	int32_t arrayptr_b = GET_D(rEXP2);
+	int32_t len = GET_D(rEXP1)/10000;
 	string strA;
 	string strB;
 	ArrayH::getString(arrayptr_a, strA);
@@ -32013,9 +32023,9 @@ void FFScript::do_strncmp()
 
 void FFScript::do_strnicmp()
 {
-	int32_t arrayptr_a = ri->d[rINDEX];
-	int32_t arrayptr_b = ri->d[rEXP2];
-	int32_t len = ri->d[rEXP1]/10000;
+	int32_t arrayptr_a = GET_D(rINDEX);
+	int32_t arrayptr_b = GET_D(rEXP2);
+	int32_t len = GET_D(rEXP1)/10000;
 	string strA;
 	string strB;
 	ArrayH::getString(arrayptr_a, strA);
@@ -32607,7 +32617,7 @@ void FFScript::do_sprintf(const bool v, const bool varg)
 	ArrayManager fmt_am(format_arrayptr);
 	ArrayManager dst_am(dest_arrayptr);
 	if(fmt_am.invalid() || dst_am.invalid())
-		ri->d[rEXP1] = 0;
+		SET_D(rEXP1, 0);
 	else
 	{
 		string formatstr;
@@ -32617,9 +32627,9 @@ void FFScript::do_sprintf(const bool v, const bool varg)
 		if(ArrayH::setArray(dest_arrayptr, output, true) == SH::_Overflow)
 		{
 			Z_scripterrlog("Dest string supplied to 'sprintf()' not large enough and cannot be resized\n");
-			ri->d[rEXP1] = ArrayH::strlen(dest_arrayptr);
+			SET_D(rEXP1, ArrayH::strlen(dest_arrayptr));
 		}
-		else ri->d[rEXP1] = output.size();
+		else SET_D(rEXP1, output.size());
 	}
 	if(varg)
 		zs_vargs.clear();
@@ -32652,7 +32662,7 @@ void FFScript::do_sprintfarr()
 	ArrayManager arg_am(args_arrayptr);
 	ArrayManager dst_am(dest_arrayptr);
 	if(fmt_am.invalid() || arg_am.invalid() || dst_am.invalid())
-		ri->d[rEXP1] = 0;
+		SET_D(rEXP1, 0);
 	else
 	{
 		auto num_args = arg_am.size();
@@ -32668,9 +32678,9 @@ void FFScript::do_sprintfarr()
 		if(ArrayH::setArray(dest_arrayptr, output, true) == SH::_Overflow)
 		{
 			Z_scripterrlog("Dest string supplied to 'sprintfa()' not large enough and cannot be resized\n");
-			ri->d[rEXP1] = ArrayH::strlen(dest_arrayptr);
+			SET_D(rEXP1, ArrayH::strlen(dest_arrayptr));
 		}
-		else ri->d[rEXP1] = output.size();
+		else SET_D(rEXP1, output.size());
 	}
 }
 void FFScript::do_varg_max()
@@ -32685,7 +32695,7 @@ void FFScript::do_varg_max()
 		if(tval > val) val = tval;
 	}
 	zs_vargs.clear();
-	ri->d[rEXP1] = val;
+	SET_D(rEXP1, val);
 }
 void FFScript::do_varg_min()
 {
@@ -32699,7 +32709,7 @@ void FFScript::do_varg_min()
 		if(tval < val) val = tval;
 	}
 	zs_vargs.clear();
-	ri->d[rEXP1] = val;
+	SET_D(rEXP1, val);
 }
 void FFScript::do_varg_choose()
 {
@@ -32711,7 +32721,7 @@ void FFScript::do_varg_choose()
 		val = zs_vargs.at(choice);
 	}
 	zs_vargs.clear();
-	ri->d[rEXP1] = val;
+	SET_D(rEXP1, val);
 }
 void FFScript::do_varg_makearray(ScriptType type, const uint32_t UID, script_object_type object_type)
 {
@@ -32719,7 +32729,7 @@ void FFScript::do_varg_makearray(ScriptType type, const uint32_t UID, script_obj
 	zs_vargs.clear();
 
 	size_t size = vargs.size();
-	ri->d[rEXP1] = 0;
+	SET_D(rEXP1, 0);
 
 	if (ZScriptVersion::gc_arrays())
 	{
@@ -32735,7 +32745,7 @@ void FFScript::do_varg_makearray(ScriptType type, const uint32_t UID, script_obj
 		for(size_t j = 0; j < size; ++j)
 			a[j] = vargs[j]; //initialize array
 
-		ri->d[rEXP1] = array->id;
+		SET_D(rEXP1, array->id);
 
 		return;
 	}
@@ -32762,7 +32772,7 @@ void FFScript::do_varg_makearray(ScriptType type, const uint32_t UID, script_obj
 		arrayOwner[ptrval].reown(type, UID);
 	}
 
-	ri->d[rEXP1] = ptrval*10000;
+	SET_D(rEXP1, ptrval*10000);
 }
 
 void FFScript::do_breakpoint()
@@ -36928,6 +36938,8 @@ bool command_is_pure(int command)
 		case COMPAREV2:
 		case COSR:
 		case COSV:
+		case DIVR:
+		case DIVV:
 		case DIVV2:
 		case FACTORIAL:
 		case FLOOR:
@@ -36939,19 +36951,22 @@ bool command_is_pure(int command)
 		case LOADI:
 		case LOG10:
 		case LOGE:
+		case LPOWERR:
+		case LPOWERV:
+		case LPOWERV2:
 		case LSHIFTR:
 		case LSHIFTR32:
 		case LSHIFTV:
 		case LSHIFTV32:
 		case MAXR:
 		case MAXV:
-		case MAXVARG:
 		case MINR:
 		case MINV:
-		case MINVARG:
 		case MODR:
 		case MODV:
 		case MODV2:
+		case MULTR:
+		case MULTV:
 		case NANDR:
 		case NANDV:
 		case NORR:
@@ -36965,6 +36980,7 @@ bool command_is_pure(int command)
 		case PEEKATV:
 		case POWERR:
 		case POWERV:
+		case POWERV2:
 		case ROUND:
 		case ROUNDAWAY:
 		case RSHIFTR:
@@ -36984,6 +37000,8 @@ bool command_is_pure(int command)
 		case SETV:
 		case SINR:
 		case SINV:
+		case SQROOTR:
+		case SQROOTV:
 		case SUBR:
 		case SUBV:
 		case SUBV2:
@@ -37036,3 +37054,284 @@ ScriptEngineData& get_item_script_engine_data(int index)
 {
 	return get_script_engine_data(ScriptType::Item, index);
 }
+
+#ifdef DEBUG_REGISTER_DEPS
+
+static std::array<int, 8> debug_deps_cur_regs;
+
+#define REG_R ((int)ARGTY::READ_REG)
+#define REG_W ((int)ARGTY::WRITE_REG)
+
+int debug_get_d(int r)
+{
+	assert(!(debug_deps_cur_regs[r] & REG_W));
+	debug_deps_cur_regs[r] |= REG_R;
+	return ri->d[r];
+}
+
+int debug_set_d(int r, int v)
+{
+	debug_deps_cur_regs[r] |= REG_W;
+	return ri->d[r];
+}
+
+static const char* get_d_reg_name(int r)
+{
+	if (r == 0) return "rINDEX";
+	if (r == 1) return "rINDEX2";
+	if (r == 2) return "rEXP1";
+	if (r == 3) return "rEXP2";
+	if (r == 4) return "rSFRAME";
+	if (r == 5) return "rNUL";
+	if (r == 6) return "rSFTEMP";
+	if (r == 7) return "rWHAT_NO_7";
+	NOTREACHED();
+}
+
+static void reset_test_ri(refInfo* ri)
+{
+	*ri = {};
+	ri->sp = MAX_STACK_SIZE - 100;
+	ri->screenref = cur_screen;
+	ri->idata = -1; // TODO !
+	ri->npcdataref = -1;
+	ri->zmsgref = -1;
+}
+
+void print_d_register_deps()
+{
+	refInfo testRi;
+	ri = &testRi;
+	std::array<int32_t, MAX_STACK_SIZE> testStack{};
+	stack = (int32_t (*)[MAX_STACK_SIZE])testStack.data();
+
+	// value -> case labels
+	std::map<std::string, std::vector<std::string>> value_to_labels;
+
+	for (int i = 0; i < NUMVARIABLES; i++)
+	{
+		auto [sv, _] = get_script_variable(i);
+		if (!sv) continue;
+
+		reset_test_ri(&testRi);
+		for (int j = 0; j < 8; j++) ri->d[j] = i == 4891 ? 10000 : 0;
+
+		debug_deps_cur_regs = {};
+		get_register(i);
+
+		bool any = false;
+		for (int j = 0; j < 8; j++)
+		{
+			if (debug_deps_cur_regs[j])
+				any = true;
+		}
+		if (!any)
+			continue;
+
+		std::vector<std::string> reg_names;
+		for (int j = 0; j < 8; j++)
+		{
+			CHECK(!(debug_deps_cur_regs[j] & REG_W));
+			if (!debug_deps_cur_regs[j])
+				continue;
+
+			reg_names.push_back(get_d_reg_name(j));
+		}
+
+		std::string value = fmt::format("{{{}}}", fmt::join(reg_names, ", "));
+		if (auto* labels = util::find(value_to_labels, value))
+			labels->push_back(sv->name);
+		else
+			value_to_labels[value] = {sv->name};
+	}
+
+	// TODO !
+	value_to_labels["{CLASS_THISKEY}"] = {"ZCLASS_MARK_TYPE"};
+
+	fmt::println("static std::vector<int> _get_register_dependencies(int reg)");
+	fmt::println("{{");
+	fmt::println("\tswitch (reg)");
+	fmt::println("\t{{");
+
+	for (auto& [value, labels] : value_to_labels | std::views::reverse)
+	{
+		std::sort(labels.begin(), labels.end());
+		for (auto& label : labels)
+			fmt::println("\t\tcase {}:", label);
+		fmt::println("\t\t{{");
+		fmt::println("\t\t\treturn {};", value);
+		fmt::println("\t\t}}");
+		fmt::println("");
+	}
+	value_to_labels.clear();
+
+	fmt::println("\t}}");
+	fmt::println("");
+	fmt::println("\treturn {{}};");
+	fmt::println("}}");
+
+	curscript = new script_data(ScriptType::None, 0);
+	curscript->zasm_script = std::make_shared<zasm_script>();
+
+	JittedScriptInstance j_instance{};
+	j_instance.script = curscript;
+
+	for (int i = 0; i < NUMCOMMANDS; i++)
+	{
+		if (command_is_goto(i) || command_is_wait(i) || command_uses_comparison_result(i) || command_writes_comparison_result(i))
+			continue;
+
+		switch (i)
+		{
+			case CALLFUNC:
+			case CLOSEWIPE:
+			case CLOSEWIPESHAPE:
+			case DEALLOCATEMEMR:
+			case FXWAVYR:
+			case FXWAVYV:
+			case FXZAPR:
+			case FXZAPV:
+			case GAMECONTINUE:
+			case GAMEEND:
+			case GAMEEXIT:
+			case GAMERELOAD:
+			case GAMESAVECONTINUE:
+			case GAMESAVEQUIT:
+			case GOTOR:
+			case LOAD_INTERNAL_ARRAY_REF:
+			case LOAD_INTERNAL_ARRAY:
+			case MARK_TYPE_REG:
+			case OBJ_OWN_ARRAY:
+			case OBJ_OWN_BITMAP:
+			case OBJ_OWN_DIR:
+			case OBJ_OWN_FILE:
+			case OBJ_OWN_PALDATA:
+			case OBJ_OWN_RNG:
+			case OBJ_OWN_STACK:
+			case OPENWIPE:
+			case OPENWIPESHAPE:
+			case POP:
+			case POPARGS:
+			case PUSHARGSR:
+			case PUSHARGSV:
+			case PUSHR:
+			case PUSHV:
+			case QUIT:
+			case RETURN:
+			case RETURNFUNC:
+			case SAVE:
+			case SAVEQUITSCREEN:
+			case SAVESCREEN:
+			case SET_OBJECT:
+			case SHOWF6SCREEN:
+			case STARTDESTRUCTOR:
+			case WAVYIN:
+			case WAVYOUT:
+			case ZAPIN:
+			case ZAPOUT:
+			case ZCLASS_MARK_TYPE:
+				continue;
+		}
+
+		if (!get_script_command(i))
+			continue;
+
+		curscript->zasm_script->zasm.push_back({(word)i});
+	}
+
+	curscript->zasm_script->zasm.push_back({NOP});
+	curscript->zasm_script->size = curscript->end_pc = curscript->zasm_script->zasm.size();
+
+	for (int i = 0; i < curscript->zasm_script->size; i++)
+	{
+		reset_test_ri(&testRi);
+
+		debug_deps_cur_regs = {};
+
+		int command = curscript->zasm_script->zasm[i].command;
+		auto sc = get_script_command(command);
+
+		switch (command)
+		{
+			case REF_DEC:
+			case REF_INC:
+			{
+				debug_deps_cur_regs[rSFRAME] = REG_R;
+				break;
+			}
+
+			default:
+			{
+				run_script_jit_one(&j_instance, i, MAX_STACK_SIZE - 100);
+			}
+		}
+
+		bool any = false;
+		for (int j = 0; j < 8; j++)
+		{
+			if (debug_deps_cur_regs[j])
+				any = true;
+			if (debug_deps_cur_regs[j] & REG_W)
+				CHECK(!command_is_pure(command));
+		}
+		if (!any)
+			continue;
+
+		std::vector<std::string> parts;
+		for (int j = 0; j < 8; j++)
+		{
+			if (!debug_deps_cur_regs[j])
+				continue;
+
+			bool r = debug_deps_cur_regs[j] & REG_R;
+			bool w = debug_deps_cur_regs[j] & REG_W;
+			std::string value;
+			if (r && w) value = "REG_RW";
+			else if (r) value = "REG_R";
+			else if (w) value = "REG_W";
+
+			parts.push_back(fmt::format("{{{}, {}}}", get_d_reg_name(j), value));
+		}
+
+		if (command == ZCLASS_CONSTRUCT)
+			parts.push_back("{CLASS_THISKEY, REG_W}");
+
+		std::string value = fmt::format("{{{}}}", fmt::join(parts, ", "));
+		if (auto* labels = util::find(value_to_labels, value))
+			labels->push_back(sc->name);
+		else
+			value_to_labels[value] = {sc->name};
+	}
+
+	// TODO !
+	value_to_labels["{{SP, REG_RW}, {SP2, REG_RW}}"] = {"POP", "POPARGS", "PUSHARGSR", "PUSHARGSV", "PUSHR", "PUSHV"};
+
+	fmt::println("std::initializer_list<CommandDependency> get_command_implicit_dependencies(int command)");
+	fmt::println("{{");
+	fmt::println("\ttypedef std::initializer_list<CommandDependency> T;");
+	fmt::println("");
+	fmt::println("\tswitch (command)");
+	fmt::println("\t{{");
+
+	for (auto& [value, labels] : value_to_labels | std::views::reverse)
+	{
+		std::sort(labels.begin(), labels.end());
+		for (auto& label : labels)
+			fmt::println("\t\tcase {}:", label);
+		fmt::println("\t\t{{");
+		fmt::println("\t\t\tstatic T r = {};", value);
+		fmt::println("\t\t\treturn r;");
+		fmt::println("\t\t}}");
+		fmt::println("");
+	}
+	value_to_labels.clear();
+
+	fmt::println("\t}}");
+	fmt::println("");
+	fmt::println("\treturn {{}};");
+	fmt::println("}}");
+
+	exit(0);
+}
+
+#endif

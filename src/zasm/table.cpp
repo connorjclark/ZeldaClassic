@@ -34,7 +34,6 @@ static constexpr script_command command_list[]=
 	{ "DIVV", DIVV, 2, { REG_RW, NUM }, 0, 0 },
 	{ "WAITFRAME", WAITFRAME, 0, {}, 0, 0 },
 	{ "GOTO", GOTO, 1, { NUM }, 0, 0 },
-	{ "CHECKTRIG", CHECKTRIG, 0, {}, 0, 0 },
 	{ "WARP", WARP, 2, { NUM, NUM }, 0, 0 },
 	{ "COMPARER", COMPARER, 2, { REG_R, REG_R }, 0, CMPSET },
 	{ "COMPAREV", COMPAREV, 2, { REG_R, NUM }, 0, CMPSET },
@@ -166,7 +165,6 @@ static constexpr script_command command_list[]=
 	{ "ALLOCATEMEMV", ALLOCATEMEMV, 3, { REG_W, NUM, NUM }, 0, 0 },
 	{ "ALLOCATEGMEMV", ALLOCATEGMEMV, 3, { REG_W, NUM, NUM }, 0, 0 },
 	{ "DEALLOCATEMEMR", DEALLOCATEMEMR, 1, { REG_R }, 0, 0 },
-	{ "DEALLOCATEMEMV", DEALLOCATEMEMV, 1, { NUM }, 0, 0 },
 	{ "WAITDRAW", WAITDRAW, 0, {}, 0, 0 },
 	{ "ARCTANR", ARCTANR, 1, { REG_W }, 0, 0 },
 	{ "LWPNUSESPRITER", LWPNUSESPRITER, 1, { REG_R }, 0, 0 },
@@ -251,8 +249,6 @@ static constexpr script_command command_list[]=
 	{ "SETDMAPNAME", SETDMAPNAME, 2, { REG_R, REG_R }, 0, 0 },
 	{ "SETDMAPTITLE", SETDMAPTITLE, 2, { REG_R, REG_R }, 0, 0 },
 	{ "SETDMAPINTRO", SETDMAPINTRO, 2, { REG_R, REG_R }, 0, 0 },
-	{ "GREYSCALEON", GREYSCALEON, 0, {}, 0, 0 },
-	{ "GREYSCALEOFF", GREYSCALEOFF, 0, {}, 0, 0 },
 	{ "ENDSOUNDR", ENDSOUNDR, 1, { REG_R }, 0, 0 },
 	{ "ENDSOUNDV", ENDSOUNDV, 1, { NUM }, 0, 0 },
 	{ "PAUSESOUNDR", PAUSESOUNDR, 1, { REG_R }, 0, 0 },
@@ -282,9 +278,6 @@ static constexpr script_command command_list[]=
 	
 	{ "LOADSPRITEDATAR", LOADSPRITEDATAR, 1, { REG_R }, 0, 0 },
 	{ "LOADSPRITEDATAV", LOADSPRITEDATAV, 1, { NUM }, 0, 0 },
- 
-	{ "LOADSCREENDATAR", LOADSCREENDATAR, 1, { REG_R }, 0, 0 },
-	{ "LOADSCREENDATAV", LOADSCREENDATAV, 1, { NUM }, 0, 0 },
 
 	{ "LOADBITMAPDATAR", LOADBITMAPDATAR, 1, { REG_R }, 0, 0 },
 	{ "LOADBITMAPDATAV", LOADBITMAPDATAV, 1, { NUM }, 0, 0 },
@@ -367,21 +360,14 @@ static constexpr script_command command_list[]=
 	{ "BMPBLIT", BMPBLIT, 0, {}, 0, 0 },
 	
 	{ "LINKWARPEXR", LINKWARPEXR, 1, { REG_R }, 0, 0 },
-	{ "LINKWARPEXV", LINKWARPEXV, 1, { NUM }, 0, 0 },
 	{ "LINKEXPLODER", LINKEXPLODER, 1, { REG_R }, 0, 0 },
-	{ "LINKEXPLODEV", LINKEXPLODEV, 1, { NUM }, 0, 0 },
 	{ "NPCEXPLODER", NPCEXPLODER, 1, { REG_R }, 0, 0 },
-	{ "NPCEXPLODEV", NPCEXPLODEV, 1, { NUM }, 0, 0 },
 	
 	{ "ITEMEXPLODER", ITEMEXPLODER, 1, { REG_R }, 0, 0 },
-	{ "ITEMEXPLODEV", ITEMEXPLODEV, 1, { NUM }, 0, 0 },
 	{ "LWEAPONEXPLODER", LWEAPONEXPLODER, 1, { REG_R }, 0, 0 },
-	{ "LWEAPONEXPLODEV", LWEAPONEXPLODEV, 1, { NUM }, 0, 0 },
 	{ "EWEAPONEXPLODER", EWEAPONEXPLODER, 1, { REG_R }, 0, 0 },
-	{ "EWEAPONEXPLODEV", EWEAPONEXPLODEV, 1, { NUM }, 0, 0 },
 	{ "RUNITEMSCRIPT", RUNITEMSCRIPT, 1, { REG_R }, 0, 0 },
 	{ "GETRTCTIMER", GETRTCTIMER, 1, { REG_RW }, 0, 0 },
-	{ "GETRTCTIMEV", GETRTCTIMEV, 1, { NUM }, 0, UNIMPL }, //!TODO ERROR Reads from and writes to sarg1 as a register
 	
 	//new npc functions for npc scripts
 	{ "NPCDEAD", NPCDEAD, 1, { REG_W }, 0, 0 },
@@ -400,13 +386,11 @@ static constexpr script_command command_list[]=
 	// moved to a var: { "NPCLINEDUP", NPCLINEDUP, 0, {}, 0, 0 },
 	{ "NPCLINKINRANGE", NPCLINKINRANGE, 1, { REG_RW }, 0, 0 }, //!TODO ERROR Writes the unused sarg2 as a register
 	{ "NPCATTACK", NPCATTACK, 0, {}, 0, 0 },
-	{ "NPCPLACEONAXIS", NPCPLACEONAXIS, 0, {}, 0, 0 },
 	{ "NPCADD", NPCADD, 1, { REG_R }, 0, 0 },
 	{ "NPCFIREBREATH", NPCFIREBREATH, 1, { REG_R }, 0, 0 },
 	{ "NPCCANSLIDE", NPCCANSLIDE, 1, { REG_W }, 0, 0 },
 	{ "NPCSLIDE", NPCSLIDE, 1, { REG_W }, 0, 0 },
 	{ "NPCHITWITH", NPCHITWITH, 1, { REG_RW }, 0, 0 },
-	{ "NPCGETINITDLABEL", NPCGETINITDLABEL, 0, {}, 0, 0 },
 	// moved to a var: { "NPCCOLLISION", NPCCOLLISION, 0, {}, 0, 0 }, //how to implement this?
 	{ "GAMECONTINUE", GAMECONTINUE, 0, {}, 0, 0 },
 	{ "MAPDATAISSOLID", MAPDATAISSOLID, 1, { REG_W }, 0, 0 },
@@ -419,7 +403,6 @@ static constexpr script_command command_list[]=
 	{ "ISVALIDBITMAP", ISVALIDBITMAP, 1, { REG_RW }, 0, 0 },
 	{ "READBITMAP", READBITMAP, 0, {}, 0, 0 },
 	{ "WRITEBITMAP", WRITEBITMAP, 0, {}, 0, 0 },
-	{ "ALLOCATEBITMAP", ALLOCATEBITMAP, 1, { REG_UNIMPLEMENTED }, 0, UNIMPL }, // Unimplemented - no case
 	{ "CLEARBITMAP", CLEARBITMAP, 0, {}, 0, 0 },
 	{ "REGENERATEBITMAP", REGENERATEBITMAP, 0, {}, 0, 0 },
 	{ "BMPBLITTO", BMPBLITTO, 0, {}, 0, 0 },
@@ -1410,7 +1393,6 @@ static constexpr script_variable variable_list[]=
 	{"COMBODATAID", COMBODATAID, 0},
 	{"REFFILE", REFFILE, 0},
 	{"REFSUBSCREEN", REFSUBSCREEN, 0},
-
 	{"SETGAMEOVERELEMENT", SETGAMEOVERELEMENT, 0},
 	{"SETGAMEOVERSTRING", SETGAMEOVERSTRING, 0},
 	{"MOUSEARR", MOUSEARR, 0},
@@ -2823,21 +2805,25 @@ std::initializer_list<CommandDependency> get_command_implicit_dependencies(int c
 		case REF_DEC:
 		case REF_INC:
 		case REF_REMOVE:
-		case STORE_OBJECT:
 		case STORE:
-		case STOREV:
 		case STORED:
 		case STOREDV:
+		case STOREV:
+		case STORE_OBJECT:
 		{
 			static T r = {{rSFRAME, REG_R}};
 			return r;
 		}
 
 		case ATOI2:
+		case CONTINUESFX:
 		case ILEN2:
+		case NPCKNOCKBACK:
+		case PAUSESFX:
 		case READPODARRAYR:
 		case READPODARRAYV:
 		case REMCHR2:
+		case RESUMESFX:
 		case WRITEPODARRAYRR:
 		case WRITEPODARRAYRV:
 		case WRITEPODARRAYVR:
@@ -2846,121 +2832,6 @@ std::initializer_list<CommandDependency> get_command_implicit_dependencies(int c
 		case XTOI2:
 		{
 			static T r = {{rINDEX, REG_R}};
-			return r;
-		}
-
-		case ZCLASS_WRITE:
-		{
-			static T r = {{rEXP1, REG_R}};
-			return r;
-		}
-
-		case ZCLASS_CONSTRUCT:
-		{
-			static T r = {{rEXP1, REG_R}, {CLASS_THISKEY, REG_W}};
-			return r;
-		}
-		
-		case READBITMAP:
-		{
-			static T r = {{rEXP2, REG_R}};
-			return r;
-		}
-
-		case ARRAYPOP:
-		case ARRAYPUSH:
-		case CHARWIDTHR:
-		case CHOOSEVARG:
-		case CREATEPORTAL:
-		case CREATESAVPORTAL:
-		case CURRENTITEMID:
-		case FILECREATE:
-		case FILEFLUSH:
-		case FILEGETCHAR:
-		case FILEISALLOCATED:
-		case FILEISVALID:
-		case FILEOPEN:
-		case FILEPUTCHAR:
-		case FILEREADSTR:
-		case FILEREMOVE:
-		case FILESEEK:
-		case FILEUNGETCHAR:
-		case FILEWRITESTR:
-		case FONTHEIGHTR:
-		case HEROCANMOVE:
-		case HEROCANMOVEATANGLE:
-		case HEROCANMOVEXY:
-		case HEROISFLICKERFRAME:
-		case HEROLIFTRELEASE:
-		case HEROMOVE:
-		case HEROMOVEATANGLE:
-		case HEROMOVEXY:
-		case LOADPORTAL:
-		case LOADSAVPORTAL:
-		case MAKEVARGARRAY:
-		case MAXVARG:
-		case MESSAGEHEIGHTR:
-		case MESSAGEWIDTHR:
-		case MINVARG:
-		case NPCCANPLACE:
-		case NPCISFLICKERFRAME:
-		case NPCMOVEPAUSED:
-		case RNGLRAND1:
-		case RNGLRAND2:
-		case RNGLRAND3:
-		case RNGRAND1:
-		case RNGRSEED:
-		case SAVEDPORTALGENERATE:
-		case SCREENDOSPAWN:
-		case SPRINTFA:
-		case SPRINTFVARG:
-		case STRINGWIDTHR:
-		case SUBPAGE_FIND_WIDGET_BY_LABEL:
-		case SUBPAGE_FIND_WIDGET:
-		case SUBPAGE_MOVE_SEL:
-		case SUBPAGE_NEW_WIDG:
-		case WEBSOCKET_LOAD:
-		case WRAPDEGREES:
-		case WRAPRADIANS:
-		case ZCLASS_FREE:
-		case ZCLASS_READ:
-		{
-			static T r = {{rEXP1, REG_W}};
-			return r;
-		}
-
-		case REGENERATEBITMAP:
-		{
-			static T r = {{rEXP2, REG_RW}};
-			return r;
-		}
-
-		case FILEREADBYTES:
-		case FILEREADCHARS:
-		case FILEREADINTS:
-		case FILEWRITEBYTES:
-		case FILEWRITECHARS:
-		case FILEWRITEINTS:
-		{
-			static T r = {{rINDEX, REG_R}, {rEXP1, REG_W}};
-			return r;
-		}
-
-		case FILEALLOCATE:
-		case NPCADD:
-		{
-			static T r = {{rEXP1, REG_W}, {rEXP2, REG_W}};
-			return r;
-		}
-
-		case NPCCANMOVEANGLE:
-		case NPCCANMOVEDIR:
-		case NPCCANMOVEXY:
-		case NPCMOVE:
-		case NPCMOVEANGLE:
-		case NPCMOVEXY:
-		{
-			static T r = {{rINDEX, REG_R}, {rEXP1, REG_RW}, {rEXP2, REG_R}};
 			return r;
 		}
 
@@ -2979,7 +2850,27 @@ std::initializer_list<CommandDependency> get_command_implicit_dependencies(int c
 			static T r = {{rINDEX, REG_R}, {rINDEX2, REG_R}};
 			return r;
 		}
-		
+
+		case GETSCREENFLAGS:
+		case GRAPHICSGETPIXEL:
+		case ISSOLIDLAYER:
+		case MAPDATAISSOLIDLYR:
+		{
+			static T r = {{rINDEX, REG_R}, {rINDEX2, REG_R}, {rEXP1, REG_R}};
+			return r;
+		}
+
+		case FILEREADBYTES:
+		case FILEREADCHARS:
+		case FILEREADINTS:
+		case FILEWRITEBYTES:
+		case FILEWRITECHARS:
+		case FILEWRITEINTS:
+		{
+			static T r = {{rINDEX, REG_R}, {rEXP1, REG_W}};
+			return r;
+		}
+
 		case STRINGNCOMPARE:
 		case STRINGNICOMPARE:
 		{
@@ -2987,13 +2878,112 @@ std::initializer_list<CommandDependency> get_command_implicit_dependencies(int c
 			return r;
 		}
 
-		case MAPDATAISSOLIDLYR:
-		case ISSOLIDLAYER:
+		case NPCCANMOVEANGLE:
+		case NPCCANMOVEDIR:
+		case NPCCANMOVEXY:
+		case NPCMOVE:
+		case NPCMOVEANGLE:
+		case NPCMOVEXY:
 		{
-			static T r = {{rINDEX, REG_R}, {rINDEX2, REG_R}, {rEXP1, REG_R}};
+			static T r = {{rINDEX, REG_R}, {rEXP1, REG_RW}, {rEXP2, REG_R}};
 			return r;
 		}
-		
+
+		case READBITMAP:
+		case REGENERATEBITMAP:
+		{
+			static T r = {{rEXP2, REG_W}};
+			return r;
+		}
+
+		case ARRAYPOP:
+		case ARRAYPUSH:
+		case ARRAYSIZE:
+		case CHARWIDTHR:
+		case CHOOSEVARG:
+		case CREATEPALDATA:
+		case CREATEPALDATACLR:
+		case CREATEPORTAL:
+		case CREATERGB:
+		case CREATERGBHEX:
+		case CREATESAVPORTAL:
+		case CURRENTITEMID:
+		case ENHCROSSFADE:
+		case FILEFLUSH:
+		case FILEGETCHAR:
+		case FILEISALLOCATED:
+		case FILEISVALID:
+		case FILEPUTCHAR:
+		case FILEREADSTR:
+		case FILEREMOVE:
+		case FILESEEK:
+		case FILEUNGETCHAR:
+		case FILEWRITESTR:
+		case FONTHEIGHTR:
+		case GETTILEPIXEL:
+		case HEROCANMOVE:
+		case HEROCANMOVEATANGLE:
+		case HEROCANMOVEXY:
+		case HEROISFLICKERFRAME:
+		case HEROLIFTRELEASE:
+		case HEROMOVE:
+		case HEROMOVEATANGLE:
+		case HEROMOVEXY:
+		case LOADPORTAL:
+		case LOADRNG:
+		case LOADSAVPORTAL:
+		case LOADSTACK:
+		case LOADSUBDATARV:
+		case MAKEVARGARRAY:
+		case MAXVARG:
+		case MESSAGEHEIGHTR:
+		case MESSAGEWIDTHR:
+		case MINVARG:
+		case MIXCLR:
+		case NPCCANPLACE:
+		case NPCISFLICKERFRAME:
+		case NPCMOVEPAUSED:
+		case RNGLRAND1:
+		case RNGLRAND2:
+		case RNGLRAND3:
+		case RNGRAND1:
+		case RNGRSEED:
+		case SAVEDPORTALGENERATE:
+		case SCREENDOSPAWN:
+		case SPRINTFA:
+		case SPRINTFV:
+		case SPRINTFVARG:
+		case STRINGWIDTHR:
+		case SUBPAGE_FIND_WIDGET:
+		case SUBPAGE_FIND_WIDGET_BY_LABEL:
+		case SUBPAGE_MOVE_SEL:
+		case SUBPAGE_NEW_WIDG:
+		case WEBSOCKET_LOAD:
+		case WRAPDEGREES:
+		case WRAPRADIANS:
+		case ZCLASS_FREE:
+		case ZCLASS_READ:
+		{
+			static T r = {{rEXP1, REG_W}};
+			return r;
+		}
+
+		case FILEALLOCATE:
+		case FILECREATE:
+		case FILEOPEN:
+		case FILEOPENMODE:
+		case NPCADD:
+		{
+			static T r = {{rEXP1, REG_W}, {rEXP2, REG_W}};
+			return r;
+		}
+
+		case ZCLASS_WRITE:
+		{
+			static T r = {{rEXP1, REG_R}};
+			return r;
+		}
+
 		case POP:
 		case POPARGS:
 		case PUSHARGSR:
@@ -3013,7 +3003,6 @@ static std::vector<int> _get_register_dependencies(int reg)
 {
 	switch (reg)
 	{
-		// These are mostly arrays.
 		case AUDIOVOLUME:
 		case BOTTLEAMOUNT:
 		case BOTTLECOUNTER:
@@ -3089,7 +3078,6 @@ static std::vector<int> _get_register_dependencies(int reg)
 		case FFINITDD:
 		case FFMISCD:
 		case FFRULE:
-		case GAME_SAVED_PORTALS:
 		case GAMEBOTTLEST:
 		case GAMECOUNTERD:
 		case GAMEDCOUNTERD:
@@ -3099,7 +3087,6 @@ static std::vector<int> _get_register_dependencies(int reg)
 		case GAMEGSWITCH:
 		case GAMEGUYCOUNT:
 		case GAMEGUYCOUNTD:
-		case GAMEITEMSD:
 		case GAMELAYERZTHRESHOLDS:
 		case GAMELITEMSD:
 		case GAMELKEYSD:
@@ -3112,20 +3099,20 @@ static std::vector<int> _get_register_dependencies(int reg)
 		case GAMESCROLLING:
 		case GAMESUSPEND:
 		case GAMETRIGGROUPS:
+		case GAME_SAVED_PORTALS:
 		case GDD:
 		case GENDATADATA:
 		case GENDATAEVENTSTATE:
 		case GENDATAEXITSTATE:
 		case GENDATAINITD:
 		case GENDATARELOADSTATE:
-		case GHOSTARR:
 		case GLOBALRAMD:
 		case HEROITEMCOOLDOWN:
 		case HEROLIFTFLAGS:
 		case HEROMOVEFLAGS:
 		case HEROSTEPS:
-		case IDATAATTRIB_L:
 		case IDATAATTRIB:
+		case IDATAATTRIB_L:
 		case IDATABURNINGLIGHTRAD:
 		case IDATABURNINGSPR:
 		case IDATAFLAGS:
@@ -3154,7 +3141,6 @@ static std::vector<int> _get_register_dependencies(int reg)
 		case LWPNMISCD:
 		case LWPNMOVEFLAGS:
 		case LWPNSPRITES:
-		case MAPDATA_FLAG:
 		case MAPDATACOMBOCD:
 		case MAPDATACOMBODATAD:
 		case MAPDATACOMBODD:
@@ -3219,6 +3205,7 @@ static std::vector<int> _get_register_dependencies(int reg)
 		case MAPDATATWARPRETSQR:
 		case MAPDATAWARPRETX:
 		case MAPDATAWARPRETY:
+		case MAPDATA_FLAG:
 		case MESSAGEDATAFLAGSARR:
 		case MESSAGEDATAMARGINS:
 		case MOUSEARR:
@@ -3234,8 +3221,8 @@ static std::vector<int> _get_register_dependencies(int reg)
 		case NPCDATAWEAPONINITD:
 		case NPCDATAWMOVEFLAGS:
 		case NPCDD:
-		case NPCFLAGS:
 		case NPCDEFENSED:
+		case NPCFLAGS:
 		case NPCHITBY:
 		case NPCINITD:
 		case NPCMISCD:
@@ -3249,13 +3236,6 @@ static std::vector<int> _get_register_dependencies(int reg)
 		case RAWKEY:
 		case READKEY:
 		case SCRDOORD:
-		case SCREEN_EWEAPONS:
-		case SCREEN_FFCS:
-		case SCREEN_FLAG:
-		case SCREEN_ITEMS:
-		case SCREEN_LWEAPONS:
-		case SCREEN_NPCS:
-		case SCREEN_PORTALS:
 		case SCREENDATADOOR:
 		case SCREENDATAENEMY:
 		case SCREENDATAEXCARRY:
@@ -3295,6 +3275,13 @@ static std::vector<int> _get_register_dependencies(int reg)
 		case SCREENSCRDATA:
 		case SCREENSIDEWARPID:
 		case SCREENSTATED:
+		case SCREEN_EWEAPONS:
+		case SCREEN_FFCS:
+		case SCREEN_FLAG:
+		case SCREEN_ITEMS:
+		case SCREEN_LWEAPONS:
+		case SCREEN_NPCS:
+		case SCREEN_PORTALS:
 		case SCRIPTRAMD:
 		case SDD:
 		case SETGAMEOVERELEMENT:
@@ -3303,10 +3290,9 @@ static std::vector<int> _get_register_dependencies(int reg)
 		case SHOPDATAITEM:
 		case SHOPDATAPRICE:
 		case SHOPDATASTRING:
+		case SPRITEDATAFLAGS:
 		case SPRITE_MISCD:
 		case SPRITE_MOVE_FLAGS:
-		case SPRITEDATAFLAGS:
-		case STDARR:
 		case SUBDATABTNLEFT:
 		case SUBDATABTNRIGHT:
 		case SUBDATAFLAGS:
@@ -3350,7 +3336,6 @@ static std::vector<int> _get_register_dependencies(int reg)
 		case SUBWIDGTY_COUNTERS:
 		case SUBWIDGTY_CSET:
 		case SUBWIDGTY_TILE:
-		case TANGOARR:
 		{
 			return {rINDEX};
 		}

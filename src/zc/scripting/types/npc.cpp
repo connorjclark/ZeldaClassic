@@ -349,12 +349,12 @@ void do_npc_newdir8()
 
 int32_t npc_collision()
 {
+	int32_t _obj_type = (GET_D(rINDEX) / 10000);
+	int32_t _obj_ptr = (GET_D(rINDEX2));
+
 	int32_t isColl = 0;
 	if(GuyH::loadNPC(ri->guyref) == SH::_NoError)
 	{
-		int32_t _obj_type = (ri->d[rINDEX] / 10000);
-		int32_t _obj_ptr = (ri->d[rINDEX2]);
-		
 		switch(_obj_type)
 		{
 			case obj_type_lweapon:
@@ -408,13 +408,14 @@ int32_t npc_collision()
 
 int32_t npc_linedup()
 {
+	int32_t range = (GET_D(rINDEX) / 10000);
+	bool dir8 = (GET_D(rINDEX2));
+
 	if(GuyH::loadNPC(ri->guyref) == SH::_NoError)
 	{
-		int32_t range = (ri->d[rINDEX] / 10000);
-		bool dir8 = (ri->d[rINDEX2]);
 		return (int32_t)(GuyH::getNPC()->lined_up(range,dir8)*10000);
 	}
-	
+
 	return 0;
 }
 
@@ -464,7 +465,7 @@ void do_npc_knockback(const bool v)
 {
 	int32_t time = SH::get_arg(sarg1, v) / 10000;
 	int32_t dir = SH::get_arg(sarg2, v) / 10000;
-	int32_t spd = vbound(ri->d[rINDEX] / 10000, 0, 255);
+	int32_t spd = vbound(GET_D(rINDEX) / 10000, 0, 255);
 	bool ret = false;
 	
 	if(GuyH::loadNPC(ri->guyref) == SH::_NoError)
@@ -476,8 +477,10 @@ void do_npc_knockback(const bool v)
 
 void do_npc_add(const bool v)
 {
-	
 	int32_t arrayptr = SH::get_arg(sarg1, v);
+	SET_D(rEXP1, 0);
+	SET_D(rEXP2, 0);
+
 	ArrayManager am(arrayptr);
 	if(am.invalid()) return;
 	int32_t sz = am.size();
@@ -520,8 +523,8 @@ void do_npc_add(const bool v)
 		for(; index<guys.Count(); index++)
 			((enemy*)guys.spr(index))->script_spawned=true;
 		
-		ri->d[rEXP1] = ri->guyref;
-		ri->d[rEXP2] = ri->guyref;
+		SET_D(rEXP1, ri->guyref);
+		SET_D(rEXP2, ri->guyref);
 		Z_eventlog("Script created NPC \"%s\" with UID = %u\n", guy_string[id], ri->guyref);
 	}
 }
@@ -2015,89 +2018,89 @@ std::optional<int32_t> npc_run_command(word command)
 		
 		case NPCMOVEPAUSED:
 		{
-			ri->d[rEXP1] = 0;
+			SET_D(rEXP1, 0);
 			if(GuyH::loadNPC(ri->guyref) == SH::_NoError)
 			{
-				ri->d[rEXP1] = GuyH::getNPC()->is_move_paused() ? 10000 : 0;
+				SET_D(rEXP1, GuyH::getNPC()->is_move_paused() ? 10000 : 0);
 			}
 			break;
 		}
 		case NPCMOVE:
 		{
-			int32_t dir = ri->d[rINDEX] / 10000;
-			zfix px = zslongToFix(ri->d[rEXP2]);
-			int32_t special = ri->d[rEXP1] / 10000;
-			ri->d[rEXP1] = 0;
+			int32_t dir = GET_D(rINDEX) / 10000;
+			zfix px = zslongToFix(GET_D(rEXP2));
+			int32_t special = GET_D(rEXP1) / 10000;
+			SET_D(rEXP1, 0);
 			if(GuyH::loadNPC(ri->guyref) == SH::_NoError)
 			{
-				ri->d[rEXP1] = GuyH::getNPC()->moveDir(dir, px, special) ? 10000 : 0;
+				SET_D(rEXP1, GuyH::getNPC()->moveDir(dir, px, special) ? 10000 : 0);
 			}
 			break;
 		}
 		case NPCMOVEANGLE:
 		{
-			zfix degrees = zslongToFix(ri->d[rINDEX]);
-			zfix px = zslongToFix(ri->d[rEXP2]);
-			int32_t special = ri->d[rEXP1] / 10000;
-			ri->d[rEXP1] = 0;
+			zfix degrees = zslongToFix(GET_D(rINDEX));
+			zfix px = zslongToFix(GET_D(rEXP2));
+			int32_t special = GET_D(rEXP1) / 10000;
+			SET_D(rEXP1, 0);
 			if(GuyH::loadNPC(ri->guyref) == SH::_NoError)
 			{
-				ri->d[rEXP1] = GuyH::getNPC()->moveAtAngle(degrees, px, special) ? 10000 : 0;
+				SET_D(rEXP1, GuyH::getNPC()->moveAtAngle(degrees, px, special) ? 10000 : 0);
 			}
 			break;
 		}
 		case NPCMOVEXY:
 		{
-			zfix dx = zslongToFix(ri->d[rINDEX]);
-			zfix dy = zslongToFix(ri->d[rEXP2]);
-			int32_t special = ri->d[rEXP1] / 10000;
-			ri->d[rEXP1] = 0;
+			zfix dx = zslongToFix(GET_D(rINDEX));
+			zfix dy = zslongToFix(GET_D(rEXP2));
+			int32_t special = GET_D(rEXP1) / 10000;
+			SET_D(rEXP1, 0);
 			if(GuyH::loadNPC(ri->guyref) == SH::_NoError)
 			{
-				ri->d[rEXP1] = GuyH::getNPC()->movexy(dx, dy, special) ? 10000 : 00;
+				SET_D(rEXP1, GuyH::getNPC()->movexy(dx, dy, special) ? 10000 : 00);
 			}
 			break;
 		}
 		case NPCCANMOVEDIR:
 		{
-			int32_t dir = ri->d[rINDEX] / 10000;
-			zfix px = zslongToFix(ri->d[rEXP2]);
-			int32_t special = ri->d[rEXP1] / 10000;
-			ri->d[rEXP1] = 0;
+			int32_t dir = GET_D(rINDEX) / 10000;
+			zfix px = zslongToFix(GET_D(rEXP2));
+			int32_t special = GET_D(rEXP1) / 10000;
+			SET_D(rEXP1, 0);
 			if(GuyH::loadNPC(ri->guyref) == SH::_NoError)
 			{
-				ri->d[rEXP1] = GuyH::getNPC()->can_moveDir(dir, px, special) ? 10000 : 0;
+				SET_D(rEXP1, GuyH::getNPC()->can_moveDir(dir, px, special) ? 10000 : 0);
 			}
 			break;
 		}
 		case NPCCANMOVEANGLE:
 		{
-			zfix degrees = zslongToFix(ri->d[rINDEX]);
-			zfix px = zslongToFix(ri->d[rEXP2]);
-			int32_t special = ri->d[rEXP1] / 10000;
-			ri->d[rEXP1] = 0;
+			zfix degrees = zslongToFix(GET_D(rINDEX));
+			zfix px = zslongToFix(GET_D(rEXP2));
+			int32_t special = GET_D(rEXP1) / 10000;
+			SET_D(rEXP1, 0);
 			if(GuyH::loadNPC(ri->guyref) == SH::_NoError)
 			{
-				ri->d[rEXP1] = GuyH::getNPC()->can_moveAtAngle(degrees, px, special) ? 10000 : 0;
+				SET_D(rEXP1, GuyH::getNPC()->can_moveAtAngle(degrees, px, special) ? 10000 : 0);
 			}
 			break;
 		}
 		case NPCCANMOVEXY:
 		{
-			zfix dx = zslongToFix(ri->d[rINDEX]);
-			zfix dy = zslongToFix(ri->d[rEXP2]);
-			int32_t special = ri->d[rEXP1] / 10000;
-			ri->d[rEXP1] = 0;
+			zfix dx = zslongToFix(GET_D(rINDEX));
+			zfix dy = zslongToFix(GET_D(rEXP2));
+			int32_t special = GET_D(rEXP1) / 10000;
+			SET_D(rEXP1, 0);
 			if(GuyH::loadNPC(ri->guyref) == SH::_NoError)
 			{
-				ri->d[rEXP1] = GuyH::getNPC()->can_movexy(dx, dy, special) ? 10000 : 0;
+				SET_D(rEXP1, GuyH::getNPC()->can_movexy(dx, dy, special) ? 10000 : 0);
 			}
 			break;
 		}
 		case NPCCANPLACE:
 		{
 			ri->guyref = SH::read_stack(ri->sp + 6);
-			ri->d[rEXP1] = 0;
+			SET_D(rEXP1, 0);
 			if(GuyH::loadNPC(ri->guyref) == SH::_NoError)
 			{
 				zfix nx = zslongToFix(SH::read_stack(ri->sp + 5));
@@ -2106,16 +2109,16 @@ std::optional<int32_t> npc_run_command(word command)
 				bool kb = SH::read_stack(ri->sp + 2)!=0;
 				int nw = SH::read_stack(ri->sp + 1) / 10000;
 				int nh = SH::read_stack(ri->sp + 0) / 10000;
-				ri->d[rEXP1] = GuyH::getNPC()->scr_canplace(nx, ny, special, kb, nw, nh) ? 10000 : 0;
+				SET_D(rEXP1, GuyH::getNPC()->scr_canplace(nx, ny, special, kb, nw, nh) ? 10000 : 0);
 			}
 			break;
 		}
 		case NPCISFLICKERFRAME:
 		{
-			ri->d[rEXP1] = 0;
+			SET_D(rEXP1, 0);
 			if (GuyH::loadNPC(ri->guyref) == SH::_NoError)
 			{
-				ri->d[rEXP1] = GuyH::getNPC()->is_hitflickerframe(get_qr(qr_OLDSPRITEDRAWS)) ? 10000 : 0;
+				SET_D(rEXP1, GuyH::getNPC()->is_hitflickerframe(get_qr(qr_OLDSPRITEDRAWS)) ? 10000 : 0);
 			}
 			break;
 		}
@@ -2155,7 +2158,7 @@ std::optional<int32_t> npc_run_command(word command)
 			do_getnpcdata_getname();
 			break;
 		
-		case NPCGETINITDLABEL:
+		case DELETED_NPCGETINITDLABEL:
 			get_npcdata_initd_label(false);
 			break;
 

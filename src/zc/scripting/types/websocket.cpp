@@ -154,7 +154,7 @@ std::optional<int32_t> websocket_run_command(word command)
 			ArrayH::getString(arrayptr, url, 512);
 
 			ri->websocketref = 0;
-			ri->d[rEXP1] = 0;
+			SET_D(rEXP1, 0);
 
 			if (url.size() == 0 || !url.starts_with("ws"))
 			{
@@ -170,7 +170,7 @@ std::optional<int32_t> websocket_run_command(word command)
 			ws->connect(url);
 
 			ri->websocketref = ws->id;
-			ri->d[rEXP1] = ws->id;
+			SET_D(rEXP1, ws->id);
 			break;
 		}
 		case WEBSOCKET_FREE:
