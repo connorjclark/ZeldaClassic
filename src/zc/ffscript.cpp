@@ -37093,8 +37093,6 @@ static void reset_test_ri(refInfo* ri)
 	*ri = {};
 	ri->sp = MAX_STACK_SIZE - 100;
 	ri->screenref = cur_screen;
-	// ri->idata = -1; // TODO !
-	// ri->npcdataref = -1;
 	ri->zmsgref = -1;
 }
 
@@ -37145,9 +37143,6 @@ void print_d_register_deps()
 		else
 			value_to_labels[value] = {sv->name};
 	}
-
-	// TODO !
-	value_to_labels["{CLASS_THISKEY}"] = {"ZCLASS_MARK_TYPE"};
 
 	fmt::println("static std::vector<int> _get_register_dependencies(int reg)");
 	fmt::println("{{");
@@ -37230,6 +37225,7 @@ void print_d_register_deps()
 			case WAVYOUT:
 			case ZAPIN:
 			case ZAPOUT:
+			case ZCLASS_CONSTRUCT:
 			case ZCLASS_MARK_TYPE:
 				continue;
 		}
@@ -37294,9 +37290,6 @@ void print_d_register_deps()
 			parts.push_back(fmt::format("{{{}, {}}}", get_d_reg_name(j), value));
 		}
 
-		if (command == ZCLASS_CONSTRUCT)
-			parts.push_back("{CLASS_THISKEY, REG_W}");
-
 		std::string value = fmt::format("{{{}}}", fmt::join(parts, ", "));
 		if (auto* labels = util::find(value_to_labels, value))
 			labels->push_back(sc->name);
@@ -37304,7 +37297,8 @@ void print_d_register_deps()
 			value_to_labels[value] = {sc->name};
 	}
 
-	// TODO !
+	value_to_labels["{{CLASS_THISKEY, REG_W}}"] = {"ZCLASS_MARK_TYPE"};
+	value_to_labels["{{rEXP1, REG_R}, {CLASS_THISKEY, REG_W}}"] = {"ZCLASS_CONSTRUCT"};
 	value_to_labels["{{SP, REG_RW}, {SP2, REG_RW}}"] = {"POP", "POPARGS", "PUSHARGSR", "PUSHARGSV", "PUSHR", "PUSHV"};
 
 	fmt::println("std::initializer_list<CommandDependency> get_command_implicit_dependencies(int command)");

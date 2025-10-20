@@ -2793,6 +2793,7 @@ std::optional<int> get_script_variable(const std::string& var_name)
 	return std::nullopt;
 }
 
+// Note: generated automatically (ctrl+f DEBUG_REGISTER_DEPS)
 std::initializer_list<CommandDependency> get_command_implicit_dependencies(int command)
 {
 	typedef std::initializer_list<CommandDependency> T;
@@ -2994,11 +2995,24 @@ std::initializer_list<CommandDependency> get_command_implicit_dependencies(int c
 			static T r = {{SP, REG_RW}, {SP2, REG_RW}};
 			return r;
 		}
+
+		case ZCLASS_MARK_TYPE:
+		{
+			static T r = {{CLASS_THISKEY, REG_W}};
+			return r;
+		}
+
+		case ZCLASS_CONSTRUCT:
+		{
+			static T r = {{rEXP1, REG_R}, {CLASS_THISKEY, REG_W}};
+			return r;
+		}
 	}
 
 	return {};
 }
 
+// Note: generated automatically (ctrl+f DEBUG_REGISTER_DEPS)
 static std::vector<int> _get_register_dependencies(int reg)
 {
 	switch (reg)
@@ -3376,11 +3390,6 @@ static std::vector<int> _get_register_dependencies(int reg)
 		case LONGDISTANCESCALE:
 		{
 			return {rINDEX, rINDEX2, rEXP1, rSFTEMP, rWHAT_NO_7};
-		}
-
-		case ZCLASS_MARK_TYPE:
-		{
-			return {CLASS_THISKEY};
 		}
 	}
 
