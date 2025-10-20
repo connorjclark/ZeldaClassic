@@ -22608,7 +22608,7 @@ static void do_drawing_command(int32_t script_command, bool is_screen_draw)
 				break;
 			}
 			int32_t sz = ArrayH::getSize(arrayptr);
-			if(!sz)
+			if(sz <= 0)
 			{
 				script_drawing_commands.PopLast();
 				return;
@@ -22633,7 +22633,7 @@ static void do_drawing_command(int32_t script_command, bool is_screen_draw)
 				break;
 			}
 			int32_t sz = ArrayH::getSize(arrayptr);
-			if(!sz)
+			if(sz <= 0)
 			{
 				script_drawing_commands.PopLast();
 				return;
@@ -22658,7 +22658,7 @@ static void do_drawing_command(int32_t script_command, bool is_screen_draw)
 				break;
 			}
 			int32_t sz = ArrayH::getSize(arrayptr);
-			if(!sz)
+			if(sz <= 0)
 			{
 				script_drawing_commands.PopLast();
 				return;
@@ -22682,7 +22682,7 @@ static void do_drawing_command(int32_t script_command, bool is_screen_draw)
 				break;
 			}
 			int32_t sz = ArrayH::getSize(arrayptr);
-			if(!sz)
+			if(sz <= 0)
 			{
 				script_drawing_commands.PopLast();
 				return;
@@ -22705,7 +22705,7 @@ static void do_drawing_command(int32_t script_command, bool is_screen_draw)
 				break;
 			}
 			int32_t sz = ArrayH::getSize(arrayptr);
-			if(!sz)
+			if(sz <= 0)
 			{
 				script_drawing_commands.PopLast();
 				return;
@@ -22915,7 +22915,7 @@ static void do_drawing_command(int32_t script_command, bool is_screen_draw)
 				break;
 			}
 			int32_t sz = ArrayH::getSize(arrayptr);
-			if(!sz)
+			if(sz <= 0)
 			{
 				script_drawing_commands.PopLast();
 				return;
@@ -37093,8 +37093,8 @@ static void reset_test_ri(refInfo* ri)
 	*ri = {};
 	ri->sp = MAX_STACK_SIZE - 100;
 	ri->screenref = cur_screen;
-	ri->idata = -1; // TODO !
-	ri->npcdataref = -1;
+	// ri->idata = -1; // TODO !
+	// ri->npcdataref = -1;
 	ri->zmsgref = -1;
 }
 
@@ -37103,6 +37103,7 @@ void print_d_register_deps()
 	refInfo testRi;
 	ri = &testRi;
 	std::array<int32_t, MAX_STACK_SIZE> testStack{};
+	testStack.fill(10000);
 	stack = (int32_t (*)[MAX_STACK_SIZE])testStack.data();
 
 	// value -> case labels
