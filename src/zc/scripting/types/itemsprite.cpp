@@ -625,7 +625,7 @@ bool itemsprite_set_register(int32_t reg, int32_t value)
 			break;
 		
 		case ITEMSPRITESCRIPT:
-			FFScript::deallocateAllScriptOwned(ScriptType::ItemSprite, ri->itemref);
+			FFScript::deallocateAllScriptOwned(ScriptType::ItemSprite, GET_ITEMREF);
 			if (auto s = checkItem(GET_ITEMREF))
 			{
 				(s->script)=(value/10000);

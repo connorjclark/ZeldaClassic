@@ -545,7 +545,7 @@ void do_getnpcname()
 void do_getnpcdata_getname()
 {
 	int32_t arrayptr = get_register(sarg1);
-	int32_t npc_id = ri->npcdataref;
+	int32_t npc_id = GET_NPCDATAREF;
 	if((unsigned)npc_id > 511)
 	{
 		Z_scripterrlog("Invalid npc ID (%d) passed to npcdata->GetName().\n", npc_id);
@@ -1773,7 +1773,7 @@ bool npc_set_register(int32_t reg, int32_t value)
 						GuyH::getNPC()->initD[q] = 0;
 				}
 				GuyH::getNPC()->script = vbound((value/10000), 0, NUMSCRIPTGUYS-1);
-				on_reassign_script_engine_data(ScriptType::NPC, ri->guyref);
+				on_reassign_script_engine_data(ScriptType::NPC, GET_GUYREF);
 			}
 		}
 		break;
@@ -2136,7 +2136,7 @@ std::optional<int32_t> npc_run_command(word command)
 		
 		case NPCKICKBUCKET:
 		{
-			if (type == ScriptType::NPC && ri->guyref == i)
+			if (type == ScriptType::NPC && GET_GUYREF == i)
 			{
 				do_npc_delete();
 				return RUNSCRIPT_SELFDELETE;

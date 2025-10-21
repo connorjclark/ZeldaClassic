@@ -175,7 +175,7 @@ std::optional<int32_t> websocket_run_command(word command)
 		}
 		case WEBSOCKET_FREE:
 		{
-			if (auto ws = user_websockets.check(ri->websocketref, true))
+			if (auto ws = user_websockets.check(GET_WEBSOCKETREF, true))
 			{
 				free_script_object(ws->id);
 			}

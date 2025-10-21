@@ -4504,11 +4504,10 @@ int32_t get_register(int32_t arg)
 		case IDATAID:
 			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
-				//Don't error here //scripting_log_error_with_context("Invalid itemdata access: {}", ri->idata);
 				ret = -10000;
 				break;
 			}
-			ret=ri->itemclassref*10000;
+			ret=GET_ITEMCLASSREF*10000;
 			break;
 		
 		//Get the script assigned to an item (active)
@@ -6287,7 +6286,7 @@ int32_t get_register(int32_t arg)
 		
 		case SCREENDATAGUYCOUNT:
 		{
-			int mi = mapind(cur_map, ri->screenref);
+			int mi = mapind(cur_map, GET_SCREENREF);
 			if(mi < 0)
 				ret = -10000;
 			else ret = game->guys[mi] * 10000;
@@ -6296,7 +6295,7 @@ int32_t get_register(int32_t arg)
 		case SCREENDATAEXDOOR:
 		{
 			ret = 0;
-			int mi = mapind(cur_map, ri->screenref);
+			int mi = mapind(cur_map, GET_SCREENREF);
 			if(mi < 0) break;
 			int dir = SH::read_stack(ri->sp+1) / 10000;
 			int ind = SH::read_stack(ri->sp+0) / 10000;
@@ -8636,7 +8635,7 @@ int32_t get_register(int32_t arg)
 
 		case NPCDSHADOWSPR:
 		{
-			if(ri->npcdataref > (MAXNPCS-1) ) 
+			if(!checkNPCDataRef()) 
 			{ 
 				Z_scripterrlog("Invalid NPC ID passed to npcdata->ShadowSprite: %d\n", ri->npcdataref);
 				ret = -10000; 
@@ -8649,7 +8648,7 @@ int32_t get_register(int32_t arg)
 		}
 		case NPCDSPAWNSPR:
 		{
-			if(ri->npcdataref > (MAXNPCS-1) ) 
+			if(!checkNPCDataRef()) 
 			{ 
 				Z_scripterrlog("Invalid NPC ID passed to npcdata->SpawnSprite: %d\n", ri->npcdataref);
 				ret = -10000; 
@@ -8662,7 +8661,7 @@ int32_t get_register(int32_t arg)
 		}
 		case NPCDDEATHSPR:
 		{
-			if(ri->npcdataref > (MAXNPCS-1) ) 
+			if(!checkNPCDataRef()) 
 			{ 
 				Z_scripterrlog("Invalid NPC ID passed to npcdata->DeathSprite: %d\n", ri->npcdataref);
 				ret = -10000; 
@@ -8773,7 +8772,7 @@ int32_t get_register(int32_t arg)
 		//File->
 		case FILEPOS:
 		{
-			if(user_file* f = checkFile(ri->fileref, true))
+			if(user_file* f = checkFile(GET_FILEREF, true))
 			{
 				ret = ftell(f->file); //NOT *10000 -V
 			}
@@ -8782,7 +8781,7 @@ int32_t get_register(int32_t arg)
 		}
 		case FILEEOF:
 		{
-			if(user_file* f = checkFile(ri->fileref, true))
+			if(user_file* f = checkFile(GET_FILEREF, true))
 			{
 				ret = feof(f->file) ? 10000L : 0L; //Boolean
 			}
@@ -8791,7 +8790,7 @@ int32_t get_register(int32_t arg)
 		}
 		case FILEERR:
 		{
-			if(user_file* f = checkFile(ri->fileref, true))
+			if(user_file* f = checkFile(GET_FILEREF, true))
 			{
 				ret = ferror(f->file) * 10000L;
 			}
@@ -8803,7 +8802,7 @@ int32_t get_register(int32_t arg)
 		//Directory->
 		case DIRECTORYSIZE:
 		{
-			if(user_dir* dr = checkDir(ri->directoryref, true))
+			if(user_dir* dr = checkDir(GET_DIRECTORYREF, true))
 			{
 				ret = dr->size() * 10000L;
 			}
@@ -8815,7 +8814,7 @@ int32_t get_register(int32_t arg)
 		//Stack->
 		case STACKSIZE:
 		{
-			if(user_stack* st = checkStack(ri->stackref, true))
+			if(user_stack* st = checkStack(GET_STACKREF, true))
 			{
 				ret = st->size(); //NOT *10000
 			}
@@ -8824,7 +8823,7 @@ int32_t get_register(int32_t arg)
 		}
 		case STACKFULL:
 		{
-			if(user_stack* st = checkStack(ri->stackref, true))
+			if(user_stack* st = checkStack(GET_STACKREF, true))
 			{
 				ret = st->full() ? 10000L : 0L;
 			}
@@ -9181,7 +9180,7 @@ int32_t get_register(int32_t arg)
 		///---- ACTIVE SUBSCREENS ONLY
 		case SUBDATACURSORPOS:
 		{
-			if(ZCSubscreen* sub = checkSubData(ri->subdataref, sstACTIVE))
+			if(ZCSubscreen* sub = checkSubData(GET_SUBDATAREF, sstACTIVE))
 			{
 				SubscrPage& pg = sub->cur_page();
 				ret = pg.cursor_pos * 10000;
@@ -9190,13 +9189,13 @@ int32_t get_register(int32_t arg)
 		}
 		case SUBDATASCRIPT:
 		{
-			if(ZCSubscreen* sub = checkSubData(ri->subdataref, sstACTIVE))
+			if(ZCSubscreen* sub = checkSubData(GET_SUBDATAREF, sstACTIVE))
 				ret = sub->script * 10000;
 			break;
 		}
 		case SUBDATATRANSLEFTTY:
 		{
-			if(ZCSubscreen* sub = checkSubData(ri->subdataref, sstACTIVE))
+			if(ZCSubscreen* sub = checkSubData(GET_SUBDATAREF, sstACTIVE))
 			{
 				auto& trans = sub->trans_left;
 				ret = trans.type * 10000;
@@ -9205,7 +9204,7 @@ int32_t get_register(int32_t arg)
 		}
 		case SUBDATATRANSLEFTSFX:
 		{
-			if(ZCSubscreen* sub = checkSubData(ri->subdataref, sstACTIVE))
+			if(ZCSubscreen* sub = checkSubData(GET_SUBDATAREF, sstACTIVE))
 			{
 				auto& trans = sub->trans_left;
 				ret = trans.tr_sfx * 10000;
@@ -9214,7 +9213,7 @@ int32_t get_register(int32_t arg)
 		}
 		case SUBDATATRANSRIGHTTY:
 		{
-			if(ZCSubscreen* sub = checkSubData(ri->subdataref, sstACTIVE))
+			if(ZCSubscreen* sub = checkSubData(GET_SUBDATAREF, sstACTIVE))
 			{
 				auto& trans = sub->trans_right;
 				ret = trans.type * 10000;
@@ -9223,7 +9222,7 @@ int32_t get_register(int32_t arg)
 		}
 		case SUBDATATRANSRIGHTSFX:
 		{
-			if(ZCSubscreen* sub = checkSubData(ri->subdataref, sstACTIVE))
+			if(ZCSubscreen* sub = checkSubData(GET_SUBDATAREF, sstACTIVE))
 			{
 				auto& trans = sub->trans_right;
 				ret = trans.tr_sfx * 10000;
@@ -9232,25 +9231,25 @@ int32_t get_register(int32_t arg)
 		}
 		case SUBDATASELECTORDSTX:
 		{
-			if(ZCSubscreen* sub = checkSubData(ri->subdataref, sstACTIVE))
+			if(ZCSubscreen* sub = checkSubData(GET_SUBDATAREF, sstACTIVE))
 				ret = sub->selector_setting.x * 10000;
 			break;
 		}
 		case SUBDATASELECTORDSTY:
 		{
-			if(ZCSubscreen* sub = checkSubData(ri->subdataref, sstACTIVE))
+			if(ZCSubscreen* sub = checkSubData(GET_SUBDATAREF, sstACTIVE))
 				ret = sub->selector_setting.y * 10000;
 			break;
 		}
 		case SUBDATASELECTORDSTW:
 		{
-			if(ZCSubscreen* sub = checkSubData(ri->subdataref, sstACTIVE))
+			if(ZCSubscreen* sub = checkSubData(GET_SUBDATAREF, sstACTIVE))
 				ret = sub->selector_setting.w * 10000;
 			break;
 		}
 		case SUBDATASELECTORDSTH:
 		{
-			if(ZCSubscreen* sub = checkSubData(ri->subdataref, sstACTIVE))
+			if(ZCSubscreen* sub = checkSubData(GET_SUBDATAREF, sstACTIVE))
 				ret = sub->selector_setting.h * 10000;
 			break;
 		}
@@ -9258,7 +9257,7 @@ int32_t get_register(int32_t arg)
 		case SUBDATATRANSCLK:
 		{
 			ret = -10000;
-			if(ZCSubscreen* sub = checkSubData(ri->subdataref, sstACTIVE))
+			if(ZCSubscreen* sub = checkSubData(GET_SUBDATAREF, sstACTIVE))
 			{
 				if(sub != new_subscreen_active)
 					Z_scripterrlog("'subscreendata->TransClock' is only"
@@ -9270,7 +9269,7 @@ int32_t get_register(int32_t arg)
 		}
 		case SUBDATATRANSTY:
 		{
-			if(ZCSubscreen* sub = checkSubData(ri->subdataref, sstACTIVE))
+			if(ZCSubscreen* sub = checkSubData(GET_SUBDATAREF, sstACTIVE))
 			{
 				auto& trans = subscr_pg_transition;
 				if(sub != new_subscreen_active)
@@ -9283,7 +9282,7 @@ int32_t get_register(int32_t arg)
 		}
 		case SUBDATATRANSFROMPG:
 		{
-			if(ZCSubscreen* sub = checkSubData(ri->subdataref, sstACTIVE))
+			if(ZCSubscreen* sub = checkSubData(GET_SUBDATAREF, sstACTIVE))
 			{
 				if(sub != new_subscreen_active)
 					Z_scripterrlog("'subscreendata->TransFromPage' is only"
@@ -9295,7 +9294,7 @@ int32_t get_register(int32_t arg)
 		}
 		case SUBDATATRANSTOPG:
 		{
-			if(ZCSubscreen* sub = checkSubData(ri->subdataref, sstACTIVE))
+			if(ZCSubscreen* sub = checkSubData(GET_SUBDATAREF, sstACTIVE))
 			{
 				if(sub != new_subscreen_active)
 					Z_scripterrlog("'subscreendata->TransToPage' is only"
@@ -9469,51 +9468,51 @@ int32_t get_register(int32_t arg)
 		///---- ACTIVE SUBSCREENS ONLY
 		case SUBWIDGSELECTORDSTX:
 		{
-			if(SubscrWidget* widg = checkSubWidg(ri->subwidgref, sstACTIVE))
+			if(SubscrWidget* widg = checkSubWidg(GET_SUBWIDGREF, sstACTIVE))
 				ret = 10000*widg->selector_override.x;
 			break;
 		}
 		case SUBWIDGSELECTORDSTY:
 		{
-			if(SubscrWidget* widg = checkSubWidg(ri->subwidgref, sstACTIVE))
+			if(SubscrWidget* widg = checkSubWidg(GET_SUBWIDGREF, sstACTIVE))
 				ret = 10000*widg->selector_override.y;
 			break;
 		}
 		case SUBWIDGSELECTORDSTW:
 		{
-			if(SubscrWidget* widg = checkSubWidg(ri->subwidgref, sstACTIVE))
+			if(SubscrWidget* widg = checkSubWidg(GET_SUBWIDGREF, sstACTIVE))
 				ret = 10000*widg->selector_override.w;
 			break;
 		}
 		case SUBWIDGSELECTORDSTH:
 		{
-			if(SubscrWidget* widg = checkSubWidg(ri->subwidgref, sstACTIVE))
+			if(SubscrWidget* widg = checkSubWidg(GET_SUBWIDGREF, sstACTIVE))
 				ret = 10000*widg->selector_override.h;
 			break;
 		}
 				
 		case SUBWIDGPRESSSCRIPT:
 		{
-			if(SubscrWidget* widg = checkSubWidg(ri->subwidgref, sstACTIVE))
+			if(SubscrWidget* widg = checkSubWidg(GET_SUBWIDGREF, sstACTIVE))
 				ret = 10000*widg->generic_script;
 			break;
 		}
 		case SUBWIDGPGMODE:
 		{
-			if(SubscrWidget* widg = checkSubWidg(ri->subwidgref, sstACTIVE))
+			if(SubscrWidget* widg = checkSubWidg(GET_SUBWIDGREF, sstACTIVE))
 				ret = 10000*widg->pg_mode;
 			break;
 		}
 		case SUBWIDGPGTARG:
 		{
-			if(SubscrWidget* widg = checkSubWidg(ri->subwidgref, sstACTIVE))
+			if(SubscrWidget* widg = checkSubWidg(GET_SUBWIDGREF, sstACTIVE))
 				ret = 10000*widg->pg_targ;
 			break;
 		}
 		
 		case SUBWIDGTRANSPGTY:
 		{
-			if(SubscrWidget* widg = checkSubWidg(ri->subwidgref, sstACTIVE))
+			if(SubscrWidget* widg = checkSubWidg(GET_SUBWIDGREF, sstACTIVE))
 			{
 				auto& trans = widg->pg_trans;
 				ret = 10000*trans.type;
@@ -9522,7 +9521,7 @@ int32_t get_register(int32_t arg)
 		}
 		case SUBWIDGTRANSPGSFX:
 		{
-			if(SubscrWidget* widg = checkSubWidg(ri->subwidgref, sstACTIVE))
+			if(SubscrWidget* widg = checkSubWidg(GET_SUBWIDGREF, sstACTIVE))
 			{
 				auto& trans = widg->pg_trans;
 				ret = 10000*trans.tr_sfx;
@@ -13836,14 +13835,14 @@ void set_register(int32_t arg, int32_t value)
 		
 		case SCREENDATAGUYCOUNT:
 		{
-			int mi = mapind(cur_map, ri->screenref);
+			int mi = mapind(cur_map, GET_SCREENREF);
 			if(mi > -1)
 				game->guys[mi] = vbound(value/10000,10,0);
 			break;
 		}
 		case SCREENDATAEXDOOR:
 		{
-			int mi = mapind(cur_map, ri->screenref);
+			int mi = mapind(cur_map, GET_SCREENREF);
 			if(mi < 0) break;
 			int dir = SH::read_stack(ri->sp+1) / 10000;
 			int ind = SH::read_stack(ri->sp+0) / 10000;
@@ -15951,7 +15950,7 @@ void set_register(int32_t arg, int32_t value)
 		case NPCDATAWPNSPRITE: SET_NPCDATA_VAR_INT(wpnsprite, "WeaponSprite"); break;
 		case NPCDATAWEAPONSCRIPT: 
 		{
-			if( checkNPCDataRef() )
+			if(checkNPCDataRef())
 				guysbuf[GET_NPCDATAREF].weap_data.script = vbound((value / 10000),0,214747);
 			break;
 		}
@@ -15963,38 +15962,20 @@ void set_register(int32_t arg, int32_t value)
 
 		case NPCDSHADOWSPR:
 		{
-			if(ri->npcdataref > (MAXNPCS-1) ) 
-			{ 
-				Z_scripterrlog("Invalid NPC ID passed to npcdata->ShadowSprite: %d\n", ri->npcdataref);
-			} 
-			else 
-			{
+			if (checkNPCDataRef())
 				guysbuf[GET_NPCDATAREF].spr_shadow = vbound(value/10000, 0, 255);
-			} 
 			break;
 		}
 		case NPCDSPAWNSPR:
 		{
-			if(ri->npcdataref > (MAXNPCS-1) ) 
-			{ 
-				Z_scripterrlog("Invalid NPC ID passed to npcdata->SpawnSprite: %d\n", ri->npcdataref);
-			} 
-			else 
-			{
+			if (checkNPCDataRef())
 				guysbuf[GET_NPCDATAREF].spr_spawn = vbound(value/10000, 0, 255);
-			} 
 			break;
 		}
 		case NPCDDEATHSPR:
 		{
-			if(ri->npcdataref > (MAXNPCS-1) ) 
-			{ 
-				Z_scripterrlog("Invalid NPC ID passed to npcdata->DeathSprite: %d\n", ri->npcdataref);
-			} 
-			else 
-			{
+			if (checkNPCDataRef())
 				guysbuf[GET_NPCDATAREF].spr_death = vbound(value/10000, 0, 255);
-			} 
 			break;
 		}
 
@@ -16384,7 +16365,7 @@ void set_register(int32_t arg, int32_t value)
 		///---- ACTIVE SUBSCREENS ONLY
 		case SUBDATACURSORPOS:
 		{
-			if(ZCSubscreen* sub = checkSubData(ri->subdataref, sstACTIVE))
+			if(ZCSubscreen* sub = checkSubData(GET_SUBDATAREF, sstACTIVE))
 			{
 				SubscrPage& pg = sub->cur_page();
 				//Should this be sanity checked? Or should nulling out
@@ -16395,14 +16376,14 @@ void set_register(int32_t arg, int32_t value)
 		}
 		case SUBDATASCRIPT:
 		{
-			if(ZCSubscreen* sub = checkSubData(ri->subdataref, sstACTIVE))
+			if(ZCSubscreen* sub = checkSubData(GET_SUBDATAREF, sstACTIVE))
 				sub->script = vbound(value/10000,0,NUMSCRIPTSSUBSCREEN-1);
 			break;
 		}
 
 		case SUBDATATRANSLEFTTY:
 		{
-			if(ZCSubscreen* sub = checkSubData(ri->subdataref, sstACTIVE))
+			if(ZCSubscreen* sub = checkSubData(GET_SUBDATAREF, sstACTIVE))
 			{
 				auto& trans = sub->trans_left;
 				trans.type = vbound(value/10000,0,sstrMAX-1);
@@ -16411,7 +16392,7 @@ void set_register(int32_t arg, int32_t value)
 		}
 		case SUBDATATRANSLEFTSFX:
 		{
-			if(ZCSubscreen* sub = checkSubData(ri->subdataref, sstACTIVE))
+			if(ZCSubscreen* sub = checkSubData(GET_SUBDATAREF, sstACTIVE))
 			{
 				auto& trans = sub->trans_left;
 				trans.tr_sfx = vbound(value/10000,0,255);
@@ -16420,7 +16401,7 @@ void set_register(int32_t arg, int32_t value)
 		}
 		case SUBDATATRANSRIGHTTY:
 		{
-			if(ZCSubscreen* sub = checkSubData(ri->subdataref, sstACTIVE))
+			if(ZCSubscreen* sub = checkSubData(GET_SUBDATAREF, sstACTIVE))
 			{
 				auto& trans = sub->trans_right;
 				trans.type = vbound(value/10000,0,sstrMAX-1);
@@ -16429,7 +16410,7 @@ void set_register(int32_t arg, int32_t value)
 		}
 		case SUBDATATRANSRIGHTSFX:
 		{
-			if(ZCSubscreen* sub = checkSubData(ri->subdataref, sstACTIVE))
+			if(ZCSubscreen* sub = checkSubData(GET_SUBDATAREF, sstACTIVE))
 			{
 				auto& trans = sub->trans_right;
 				trans.tr_sfx = vbound(value/10000,0,255);
@@ -16438,32 +16419,32 @@ void set_register(int32_t arg, int32_t value)
 		}
 		case SUBDATASELECTORDSTX:
 		{
-			if(ZCSubscreen* sub = checkSubData(ri->subdataref, sstACTIVE))
+			if(ZCSubscreen* sub = checkSubData(GET_SUBDATAREF, sstACTIVE))
 				sub->selector_setting.x = vbound(value/10000,-32768,32767);
 			break;
 		}
 		case SUBDATASELECTORDSTY:
 		{
-			if(ZCSubscreen* sub = checkSubData(ri->subdataref, sstACTIVE))
+			if(ZCSubscreen* sub = checkSubData(GET_SUBDATAREF, sstACTIVE))
 				sub->selector_setting.y = vbound(value/10000,-32768,32767);
 			break;
 		}
 		case SUBDATASELECTORDSTW:
 		{
-			if(ZCSubscreen* sub = checkSubData(ri->subdataref, sstACTIVE))
+			if(ZCSubscreen* sub = checkSubData(GET_SUBDATAREF, sstACTIVE))
 				sub->selector_setting.w = vbound(value/10000,-32768,32767);
 			break;
 		}
 		case SUBDATASELECTORDSTH:
 		{
-			if(ZCSubscreen* sub = checkSubData(ri->subdataref, sstACTIVE))
+			if(ZCSubscreen* sub = checkSubData(GET_SUBDATAREF, sstACTIVE))
 				sub->selector_setting.h = vbound(value/10000,-32768,32767);
 			break;
 		}
 		///---- CURRENTLY OPEN ACTIVE SUBSCREEN ONLY
 		case SUBDATATRANSCLK:
 		{
-			if(ZCSubscreen* sub = checkSubData(ri->subdataref, sstACTIVE))
+			if(ZCSubscreen* sub = checkSubData(GET_SUBDATAREF, sstACTIVE))
 			{
 				if(sub != new_subscreen_active)
 					Z_scripterrlog("'subscreendata->TransClock' is only"
@@ -16487,7 +16468,7 @@ void set_register(int32_t arg, int32_t value)
 		}
 		case SUBDATATRANSTY:
 		{
-			if(ZCSubscreen* sub = checkSubData(ri->subdataref, sstACTIVE))
+			if(ZCSubscreen* sub = checkSubData(GET_SUBDATAREF, sstACTIVE))
 			{
 				auto& trans = subscr_pg_transition;
 				if(sub != new_subscreen_active)
@@ -16500,7 +16481,7 @@ void set_register(int32_t arg, int32_t value)
 		}
 		case SUBDATATRANSFROMPG:
 		{
-			if(ZCSubscreen* sub = checkSubData(ri->subdataref, sstACTIVE))
+			if(ZCSubscreen* sub = checkSubData(GET_SUBDATAREF, sstACTIVE))
 			{
 				if(sub != new_subscreen_active)
 					Z_scripterrlog("'subscreendata->TransFromPage' is only"
@@ -16512,7 +16493,7 @@ void set_register(int32_t arg, int32_t value)
 		}
 		case SUBDATATRANSTOPG:
 		{
-			if(ZCSubscreen* sub = checkSubData(ri->subdataref, sstACTIVE))
+			if(ZCSubscreen* sub = checkSubData(GET_SUBDATAREF, sstACTIVE))
 			{
 				if(sub != new_subscreen_active)
 					Z_scripterrlog("'subscreendata->TransToPage' is only"
@@ -16609,51 +16590,51 @@ void set_register(int32_t arg, int32_t value)
 		///---- ACTIVE SUBSCREENS ONLY
 		case SUBWIDGSELECTORDSTX:
 		{
-			if(SubscrWidget* widg = checkSubWidg(ri->subwidgref, sstACTIVE))
+			if(SubscrWidget* widg = checkSubWidg(GET_SUBWIDGREF, sstACTIVE))
 				widg->selector_override.x = vbound(value/10000,-32768,32767);
 			break;
 		}
 		case SUBWIDGSELECTORDSTY:
 		{
-			if(SubscrWidget* widg = checkSubWidg(ri->subwidgref, sstACTIVE))
+			if(SubscrWidget* widg = checkSubWidg(GET_SUBWIDGREF, sstACTIVE))
 				widg->selector_override.y = vbound(value/10000,-32768,32767);
 			break;
 		}
 		case SUBWIDGSELECTORDSTW:
 		{
-			if(SubscrWidget* widg = checkSubWidg(ri->subwidgref, sstACTIVE))
+			if(SubscrWidget* widg = checkSubWidg(GET_SUBWIDGREF, sstACTIVE))
 				widg->selector_override.w = vbound(value/10000,-32768,32767);
 			break;
 		}
 		case SUBWIDGSELECTORDSTH:
 		{
-			if(SubscrWidget* widg = checkSubWidg(ri->subwidgref, sstACTIVE))
+			if(SubscrWidget* widg = checkSubWidg(GET_SUBWIDGREF, sstACTIVE))
 				widg->selector_override.h = vbound(value/10000,-32768,32767);
 			break;
 		}
 				
 		case SUBWIDGPRESSSCRIPT:
 		{
-			if(SubscrWidget* widg = checkSubWidg(ri->subwidgref, sstACTIVE))
+			if(SubscrWidget* widg = checkSubWidg(GET_SUBWIDGREF, sstACTIVE))
 				widg->generic_script = vbound(value/10000,0,NUMSCRIPTSGENERIC-1);
 			break;
 		}
 		case SUBWIDGPGMODE:
 		{
-			if(SubscrWidget* widg = checkSubWidg(ri->subwidgref, sstACTIVE))
+			if(SubscrWidget* widg = checkSubWidg(GET_SUBWIDGREF, sstACTIVE))
 				widg->pg_mode = vbound(value/10000,0,PGGOTO_MAX-1);
 			break;
 		}
 		case SUBWIDGPGTARG:
 		{
-			if(SubscrWidget* widg = checkSubWidg(ri->subwidgref, sstACTIVE))
+			if(SubscrWidget* widg = checkSubWidg(GET_SUBWIDGREF, sstACTIVE))
 				widg->pg_targ = vbound(value/10000,0,MAX_SUBSCR_PAGES-1);
 			break;
 		}
 		
 		case SUBWIDGTRANSPGTY:
 		{
-			if(SubscrWidget* widg = checkSubWidg(ri->subwidgref, sstACTIVE))
+			if(SubscrWidget* widg = checkSubWidg(GET_SUBWIDGREF, sstACTIVE))
 			{
 				auto& trans = widg->pg_trans;
 				trans.type = vbound(value/10000,0,sstrMAX-1);
@@ -16662,7 +16643,7 @@ void set_register(int32_t arg, int32_t value)
 		}
 		case SUBWIDGTRANSPGSFX:
 		{
-			if(SubscrWidget* widg = checkSubWidg(ri->subwidgref, sstACTIVE))
+			if(SubscrWidget* widg = checkSubWidg(GET_SUBWIDGREF, sstACTIVE))
 			{
 				auto& trans = widg->pg_trans;
 				trans.tr_sfx = vbound(value/10000,0,255);
@@ -19970,6 +19951,7 @@ void FFScript::do_loaddirectory()
 	{
 		ri->directoryref = user_dirs.get_free();
 		if(!ri->directoryref) return;
+
 		user_dir* d = checkDir(ri->directoryref, true);
 		set_register(sarg1, ri->directoryref);
 		d->setPath(resolved_path.c_str());
@@ -21529,7 +21511,7 @@ void user_paldata::mix(user_paldata *pal_start, user_paldata *pal_end, double pe
 
 void item_display_name(const bool setter)
 {
-	int32_t ID = ri->itemclassref;
+	int32_t ID = GET_ITEMCLASSREF;
 	if(unsigned(ID) >= MAXITEMS)
 		return;
 	int32_t arrayptr = get_register(sarg1);
@@ -21547,7 +21529,7 @@ void item_display_name(const bool setter)
 }
 void item_shown_name()
 {
-	int32_t ID = ri->itemclassref;
+	int32_t ID = GET_ITEMCLASSREF;
 	if(unsigned(ID) >= MAXITEMS)
 		return;
 	int32_t arrayptr = get_register(sarg1);
@@ -22008,7 +21990,6 @@ void do_createnpc(const bool v)
 	
 	if(numcreated == 0)
 	{
-		//ri->guyref = MAX_DWORD;
 		ri->guyref = 0;
 		Z_scripterrlog("Couldn't create NPC \"%s\", screen NPC limit reached\n", guy_string[ID]);
 	}
@@ -26141,13 +26122,13 @@ int32_t run_script_int(JittedScriptInstance* j_instance)
 			case PALDATACOPYCSET:
 				FFCore.do_paldata_copycset(); break;
 			case PALDATAFREE:
-				if (user_paldata* pd = checkPalData(ri->paldataref, true))
+				if (user_paldata* pd = checkPalData(GET_PALDATAREF, true))
 				{
 					free_script_object(pd->id);
 				}
 				break;
 			case PALDATAOWN:
-				if (user_paldata* pd = checkPalData(ri->paldataref, false))
+				if (user_paldata* pd = checkPalData(GET_PALDATAREF, false))
 				{
 					own_script_object(pd, type, i);
 				}
@@ -26655,7 +26636,7 @@ int32_t run_script_int(JittedScriptInstance* j_instance)
 				if(FFCore.isSystemBitref(GET_BITMAPREF))
 					break; //Don't attempt to own system bitmaps!
 
-				if (auto bitmap = checkBitmap(ri->bitmapref, false))
+				if (auto bitmap = checkBitmap(GET_BITMAPREF, false))
 					own_script_object(bitmap, type, i);
 				break;
 			}
@@ -27261,7 +27242,7 @@ int32_t run_script_int(JittedScriptInstance* j_instance)
 			}
 			case PORTALREMOVE:
 			{
-				if(portal* p = checkPortal(ri->portalref, true))
+				if(portal* p = checkPortal(GET_PORTALREF, true))
 				{
 					if(p == &mirror_portal)
 						p->clear();
@@ -27279,7 +27260,7 @@ int32_t run_script_int(JittedScriptInstance* j_instance)
 				break;
 			case SAVEDPORTALREMOVE:
 			{
-				if(savedportal* sp = checkSavedPortal(ri->saveportalref, true))
+				if(savedportal* sp = checkSavedPortal(GET_SAVEPORTALREF, true))
 				{
 					if(sp == &(game->saved_mirror_portal))
 						sp->clear();
@@ -27408,7 +27389,7 @@ int32_t run_script_int(JittedScriptInstance* j_instance)
 			case BOTTLENAMEGET:
 			{
 				int32_t arrayptr = get_register(sarg1);
-				int32_t id = ri->bottletyperef-1;
+				int32_t id = GET_BOTTLETYPEREF-1;
 				if(unsigned(id) > 63)
 				{
 					Z_scripterrlog("Invalid bottledata ID (%d) passed to bottledata->GetName().\n", id);
@@ -27422,7 +27403,7 @@ int32_t run_script_int(JittedScriptInstance* j_instance)
 			case BOTTLENAMESET:
 			{
 				int32_t arrayptr = get_register(sarg1);
-				int32_t id = ri->bottletyperef-1;
+				int32_t id = GET_BOTTLETYPEREF-1;
 				if(unsigned(id) > 63)
 				{
 					Z_scripterrlog("Invalid bottledata ID (%d) passed to bottledata->SetName().\n", id+1);
@@ -27436,7 +27417,7 @@ int32_t run_script_int(JittedScriptInstance* j_instance)
 			case BSHOPNAMEGET:
 			{
 				int32_t arrayptr = get_register(sarg1);
-				int32_t id = ri->bottleshopref-1;
+				int32_t id = GET_BOTTLESHOPREF-1;
 				if(unsigned(id) > 255)
 				{
 					Z_scripterrlog("Invalid bottleshopdata ID (%d) passed to bottleshopdata->GetName().\n", id+1);
@@ -27450,7 +27431,7 @@ int32_t run_script_int(JittedScriptInstance* j_instance)
 			case BSHOPNAMESET:
 			{
 				int32_t arrayptr = get_register(sarg1);
-				int32_t id = ri->bottleshopref;
+				int32_t id = GET_BOTTLESHOPREF;
 				if(unsigned(id) > 255)
 				{
 					Z_scripterrlog("Invalid bottleshopdata ID (%d) passed to bottleshopdata->SetName().\n", id);
@@ -27464,7 +27445,7 @@ int32_t run_script_int(JittedScriptInstance* j_instance)
 			
 			case RUNITEMSCRIPT:
 			{
-				int32_t itemid = ri->itemclassref;
+				int32_t itemid = GET_ITEMCLASSREF;
 				if(unsigned(itemid) > MAXITEMS) break;
 				int32_t mode = get_register(sarg1) / 10000;
 				auto& data = get_script_engine_data(ScriptType::Item, itemid);
@@ -27619,7 +27600,7 @@ int32_t run_script_int(JittedScriptInstance* j_instance)
 			}
 			case FILEOWN:
 			{
-				user_file* f = checkFile(ri->fileref, false);
+				user_file* f = checkFile(GET_FILEREF, false);
 				if(f) own_script_object(f, type, i);
 				break;
 			}
@@ -27770,7 +27751,7 @@ int32_t run_script_int(JittedScriptInstance* j_instance)
 			//Stack
 			case STACKFREE:
 			{
-				if(user_stack* st = checkStack(ri->stackref, true))
+				if(user_stack* st = checkStack(GET_STACKREF, true))
 				{
 					free_script_object(st->id);
 				}
@@ -27794,7 +27775,7 @@ int32_t run_script_int(JittedScriptInstance* j_instance)
 			}
 			case STACKGET:
 			{
-				if(user_stack* st = checkStack(ri->stackref, true))
+				if(user_stack* st = checkStack(GET_STACKREF, true))
 				{
 					int32_t indx = get_register(sarg1); //NOT /10000
 					set_register(sarg1, st->get(indx)); //NOT *10000
@@ -27804,7 +27785,7 @@ int32_t run_script_int(JittedScriptInstance* j_instance)
 			}
 			case STACKSET:
 			{
-				if(user_stack* st = checkStack(ri->stackref, true))
+				if(user_stack* st = checkStack(GET_STACKREF, true))
 				{
 					int32_t indx = get_register(sarg1); //NOT /10000
 					int32_t val = get_register(sarg2); //NOT /10000
@@ -27814,7 +27795,7 @@ int32_t run_script_int(JittedScriptInstance* j_instance)
 			}
 			case STACKPOPBACK:
 			{
-				if(user_stack* st = checkStack(ri->stackref, true))
+				if(user_stack* st = checkStack(GET_STACKREF, true))
 				{
 					set_register(sarg1, st->pop_back()); //NOT *10000
 				}
@@ -27823,7 +27804,7 @@ int32_t run_script_int(JittedScriptInstance* j_instance)
 			}
 			case STACKPOPFRONT:
 			{
-				if(user_stack* st = checkStack(ri->stackref, true))
+				if(user_stack* st = checkStack(GET_STACKREF, true))
 				{
 					set_register(sarg1, st->pop_front()); //NOT *10000
 				}
@@ -27832,7 +27813,7 @@ int32_t run_script_int(JittedScriptInstance* j_instance)
 			}
 			case STACKPEEKBACK:
 			{
-				if(user_stack* st = checkStack(ri->stackref, true))
+				if(user_stack* st = checkStack(GET_STACKREF, true))
 				{
 					set_register(sarg1, st->peek_back()); //NOT *10000
 				}
@@ -27841,7 +27822,7 @@ int32_t run_script_int(JittedScriptInstance* j_instance)
 			}
 			case STACKPEEKFRONT:
 			{
-				if(user_stack* st = checkStack(ri->stackref, true))
+				if(user_stack* st = checkStack(GET_STACKREF, true))
 				{
 					set_register(sarg1, st->peek_front()); //NOT *10000
 				}
@@ -27850,7 +27831,7 @@ int32_t run_script_int(JittedScriptInstance* j_instance)
 			}
 			case STACKPUSHBACK:
 			{
-				if(user_stack* st = checkStack(ri->stackref, true))
+				if(user_stack* st = checkStack(GET_STACKREF, true))
 				{
 					int32_t val = get_register(sarg1); //NOT /10000
 					st->push_back(val);
@@ -27859,7 +27840,7 @@ int32_t run_script_int(JittedScriptInstance* j_instance)
 			}
 			case STACKPUSHFRONT:
 			{
-				if(user_stack* st = checkStack(ri->stackref, true))
+				if(user_stack* st = checkStack(GET_STACKREF, true))
 				{
 					int32_t val = get_register(sarg1); //NOT /10000
 					st->push_front(val);
@@ -27949,13 +27930,13 @@ int32_t run_script_int(JittedScriptInstance* j_instance)
 				else SET_D(rEXP1, -10000);
 				break;
 			case RNGFREE:
-				if(user_rng* r = checkRNG(ri->rngref, true))
+				if(user_rng* r = checkRNG(GET_RNGREF, true))
 				{
 					free_script_object(r->id);
 				}
 				break;
 			case RNGOWN:
-				if(user_rng* r = checkRNG(ri->rngref, false))
+				if(user_rng* r = checkRNG(GET_RNGREF, false))
 				{
 					own_script_object(r, type, i);
 				}
@@ -28027,7 +28008,7 @@ int32_t run_script_int(JittedScriptInstance* j_instance)
 				SET_D(rEXP1, 0);
 
 				ri->subpageref = SH::read_stack(ri->sp+1);
-				if(SubscrPage* pg = checkSubPage(ri->subpageref, sstACTIVE))
+				if(SubscrPage* pg = checkSubPage(GET_SUBPAGEREF, sstACTIVE))
 				{
 					int cursorpos = SH::read_stack(ri->sp+0) / 10000;
 					if(auto* widg = pg->get_widg_pos(cursorpos,false))
@@ -28813,11 +28794,11 @@ void FFScript::do_fopen(const bool v, const char* f_mode)
 		return;
 	} else resolved_path = r.value();
 
-	user_file* f = checkFile(ri->fileref, false, true);
+	user_file* f = checkFile(GET_FILEREF, false, true);
 	if(!f) //auto-allocate
 	{
 		ri->fileref = user_files.get_free();
-		f = checkFile(ri->fileref, false, true);
+		f = checkFile(GET_FILEREF, false, true);
 	}
 	SET_D(rEXP2, ri->fileref); //Returns to the variable!
 	if(f)
@@ -28857,9 +28838,9 @@ void FFScript::do_fopen(const bool v, const char* f_mode)
 
 void FFScript::do_fremove()
 {
-	if(user_file* f = checkFile(ri->fileref, true))
+	if(user_file* f = checkFile(GET_FILEREF, true))
 	{
-		zprint2("Removing file %d\n", ri->fileref);
+		zprint2("Removing file %d\n", GET_FILEREF);
 		SET_D(rEXP1, f->do_remove() ? 0L : 10000L);
 	}
 	else SET_D(rEXP1, 0L);
@@ -28867,7 +28848,7 @@ void FFScript::do_fremove()
 
 void FFScript::do_fclose()
 {
-	if(user_file* f = checkFile(ri->fileref, false, true))
+	if(user_file* f = checkFile(GET_FILEREF, false, true))
 	{
 		f->close();
 	}
@@ -28884,19 +28865,19 @@ void FFScript::do_allocate_file()
 
 void FFScript::do_deallocate_file()
 {
-	user_file* f = checkFile(ri->fileref, false, true);
+	user_file* f = checkFile(GET_FILEREF, false, true);
 	if(f) free_script_object(f->id);
 }
 
 void FFScript::do_file_isallocated() //Returns true if file is allocated
 {
-	user_file* f = checkFile(ri->fileref, false, true);
+	user_file* f = checkFile(GET_FILEREF, false, true);
 	SET_D(rEXP1, (f) ? 10000L : 0L);
 }
 
 void FFScript::do_file_isvalid() //Returns true if file is allocated and has an open FILE*
 {
-	user_file* f = checkFile(ri->fileref, true, true);
+	user_file* f = checkFile(GET_FILEREF, true, true);
 	SET_D(rEXP1, (f) ? 10000L : 0L);
 }
 
@@ -28904,7 +28885,7 @@ void FFScript::do_fflush()
 {
 	SET_D(rEXP1, 0L);
 
-	if(user_file* f = checkFile(ri->fileref, true))
+	if(user_file* f = checkFile(GET_FILEREF, true))
 	{
 		if(!fflush(f->file))
 			SET_D(rEXP1, 10000L);
@@ -28919,7 +28900,7 @@ void FFScript::do_file_readchars()
 	uint32_t pos = zc_max(GET_D(rINDEX) / 10000,0);
 	SET_D(rEXP1, 0L);
 
-	if(user_file* f = checkFile(ri->fileref, true))
+	if(user_file* f = checkFile(GET_FILEREF, true))
 	{
 		if(count == 0) return;
 
@@ -28964,7 +28945,7 @@ void FFScript::do_file_readbytes()
 	uint32_t pos = zc_max(GET_D(rINDEX) / 10000,0);
 	SET_D(rEXP1, 0L);
 
-	if(user_file* f = checkFile(ri->fileref, true))
+	if(user_file* f = checkFile(GET_FILEREF, true))
 	{
 		if(count == 0) return;
 
@@ -28992,7 +28973,7 @@ void FFScript::do_file_readstring()
 	int32_t arrayptr = get_register(sarg1);
 	SET_D(rEXP1, 0L);
 
-	if(user_file* f = checkFile(ri->fileref, true))
+	if(user_file* f = checkFile(GET_FILEREF, true))
 	{
 		ArrayManager am(arrayptr);
 		int32_t sz = am.size();
@@ -29034,7 +29015,7 @@ void FFScript::do_file_readints()
 	uint32_t pos = zc_max(GET_D(rINDEX) / 10000,0);
 	SET_D(rEXP1, 0L);
 
-	if(user_file* f = checkFile(ri->fileref, true))
+	if(user_file* f = checkFile(GET_FILEREF, true))
 	{
 		if(count == 0) return;
 
@@ -29065,7 +29046,7 @@ void FFScript::do_file_writechars()
 	int32_t pos = zc_max(GET_D(rINDEX) / 10000,0);
 	SET_D(rEXP1, 0L);
 
-	if(user_file* f = checkFile(ri->fileref, true))
+	if(user_file* f = checkFile(GET_FILEREF, true))
 	{
 		if(count == 0) return;
 		if(count == -1 || count > (MAX_ZC_ARRAY_SIZE-pos)) count = MAX_ZC_ARRAY_SIZE-pos;
@@ -29089,7 +29070,7 @@ void FFScript::do_file_writebytes()
 	uint32_t pos = zc_max(GET_D(rINDEX) / 10000,0);
 	SET_D(rEXP1, 0L);
 
-	if(user_file* f = checkFile(ri->fileref, true))
+	if(user_file* f = checkFile(GET_FILEREF, true))
 	{
 		if(arg == 0) return;
 
@@ -29120,7 +29101,7 @@ void FFScript::do_file_writestring()
 	int32_t arrayptr = get_register(sarg1);
 	SET_D(rEXP1, 0L);
 
-	if(user_file* f = checkFile(ri->fileref, true))
+	if(user_file* f = checkFile(GET_FILEREF, true))
 	{
 		string output;
 		ArrayH::getString(arrayptr, output, ZSCRIPT_MAX_STRING_CHARS);
@@ -29141,7 +29122,7 @@ void FFScript::do_file_writeints()
 	uint32_t pos = zc_max(GET_D(rINDEX) / 10000,0);
 	SET_D(rEXP1, 0L);
 
-	if(user_file* f = checkFile(ri->fileref, true))
+	if(user_file* f = checkFile(GET_FILEREF, true))
 	{
 		if(count == 0) return;
 		ArrayManager am(arrayptr);
@@ -29170,7 +29151,7 @@ void FFScript::do_file_getchar()
 {
 	SET_D(rEXP1, -10000L); //-1 == EOF; error value
 
-	if(user_file* f = checkFile(ri->fileref, true))
+	if(user_file* f = checkFile(GET_FILEREF, true))
 	{
 		SET_D(rEXP1, fgetc(f->file) * 10000L);
 		check_file_error(GET_FILEREF); // TODO: should be checking file error before setting rEXP1.
@@ -29181,7 +29162,7 @@ void FFScript::do_file_putchar()
 	int32_t c = get_register(sarg1) / 10000;
 	SET_D(rEXP1, -10000L); //-1 == EOF; error value
 
-	if(user_file* f = checkFile(ri->fileref, true))
+	if(user_file* f = checkFile(GET_FILEREF, true))
 	{
 		if(char(c) != c)
 		{
@@ -29196,7 +29177,7 @@ void FFScript::do_file_ungetchar()
 {
 	int32_t c = get_register(sarg1) / 10000;
 
-	if(user_file* f = checkFile(ri->fileref, true))
+	if(user_file* f = checkFile(GET_FILEREF, true))
 	{
 		if(char(c) != c)
 		{
@@ -29216,7 +29197,7 @@ void FFScript::do_file_seek()
 	int32_t origin = get_register(sarg2) ? SEEK_CUR : SEEK_SET;
 	SET_D(rEXP1, 0);
 
-	if(user_file* f = checkFile(ri->fileref, true))
+	if(user_file* f = checkFile(GET_FILEREF, true))
 	{
 		SET_D(rEXP1, fseek(f->file, pos, origin) ? 0L : 10000L);
 		check_file_error(GET_FILEREF); // TODO: should be checking file error before setting rEXP1.
@@ -29224,7 +29205,7 @@ void FFScript::do_file_seek()
 }
 void FFScript::do_file_rewind()
 {
-	if(user_file* f = checkFile(ri->fileref, true))
+	if(user_file* f = checkFile(GET_FILEREF, true))
 	{
 		//fseek(f->file, 0L, SEEK_END);
 		rewind(f->file);
@@ -29233,7 +29214,7 @@ void FFScript::do_file_rewind()
 }
 void FFScript::do_file_clearerr()
 {
-	if(user_file* f = checkFile(ri->fileref, true))
+	if(user_file* f = checkFile(GET_FILEREF, true))
 	{
 		clearerr(f->file);
 	}
@@ -29241,7 +29222,7 @@ void FFScript::do_file_clearerr()
 
 void FFScript::do_file_geterr()
 {
-	if(user_file* f = checkFile(ri->fileref, true))
+	if(user_file* f = checkFile(GET_FILEREF, true))
 	{
 		int32_t err = ferror(f->file);
 		int32_t arrayptr = get_register(sarg1);
@@ -29264,7 +29245,7 @@ void FFScript::do_directory_get()
 	int32_t indx = get_register(sarg1) / 10000L;
 	int32_t arrayptr = get_register(sarg2);
 
-	if(user_dir* dr = checkDir(ri->directoryref, true))
+	if(user_dir* dr = checkDir(GET_DIRECTORYREF, true))
 	{
 		char buf[2048] = {0};
 		set_register(sarg1, dr->get(indx, buf) ? 10000L : 0L);
@@ -29276,7 +29257,7 @@ void FFScript::do_directory_get()
 
 void FFScript::do_directory_reload()
 {
-	if(user_dir* dr = checkDir(ri->directoryref, true))
+	if(user_dir* dr = checkDir(GET_DIRECTORYREF, true))
 	{
 		dr->refresh();
 	}
@@ -29284,7 +29265,7 @@ void FFScript::do_directory_reload()
 
 void FFScript::do_directory_free()
 {
-	if(user_dir* dr = checkDir(ri->directoryref, true))
+	if(user_dir* dr = checkDir(GET_DIRECTORYREF, true))
 	{
 		free_script_object(dr->id);
 	}
@@ -29442,7 +29423,7 @@ void FFScript::do_deallocate_bitmap()
 	}
 
 	// Bitmaps are not deallocated right away, but deferred until the next call to scb.update()
-	if (auto b = checkBitmap(ri->bitmapref, false, true))
+	if (auto b = checkBitmap(GET_BITMAPREF, false, true))
 		b->free_obj();
 }
 
