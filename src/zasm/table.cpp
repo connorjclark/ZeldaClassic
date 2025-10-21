@@ -2701,6 +2701,7 @@ static constexpr script_variable variable_list[]=
 	{ "COMBOD_DIVE_UNDER_LEVEL", COMBOD_DIVE_UNDER_LEVEL, 0 },
 	{ "GAMELAYERZTHRESHOLDS", GAMELAYERZTHRESHOLDS, 0 },
 	{ "NPCFLAGS", NPCFLAGS, 0 },
+	{"", -1},
 };
 
 // Don't rely on `command_list` to be indexed by command.
