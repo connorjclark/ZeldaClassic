@@ -1304,7 +1304,7 @@ public:
 	dword dropsetref;
 	dword fileref, directoryref, rngref, stackref, paldataref;
 	dword bottletyperef, bottleshopref, genericdataref;
-	int32_t combosref, comboposref;
+	int32_t comboref, comboposref;
 	dword combotrigref;
 	int32_t portalref, saveportalref;
 	int32_t websocketref;
