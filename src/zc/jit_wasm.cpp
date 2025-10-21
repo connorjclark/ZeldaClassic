@@ -28,6 +28,7 @@
 #include "base/general.h"
 #include "base/zapp.h"
 #include "base/zdefs.h"
+#include "zasm/table.h"
 #include "zc/ffscript.h"
 #include "zc/jit.h"
 #include "zc/script_debug.h"
@@ -231,6 +232,14 @@ static void get_z_register(CompilationState& state, int r)
 	}
 	else
 	{
+		if (does_register_use_stack(r))
+		{
+			// ri->sp = g_idx_sp
+			state.wasm->emitGlobalGet(state.g_idx_ri);
+			state.wasm->emitGlobalGet(state.g_idx_sp);
+			state.wasm->emitI32Store(4*9); // ri->sp
+		}
+
 		state.wasm->emitI32Const(r);
 		state.wasm->emitCall(state.f_idx_get_register);
 	}
@@ -252,6 +261,14 @@ static void set_z_register(CompilationState& state, int r, std::function<void()>
 	}
 	else
 	{
+		if (does_register_use_stack(r))
+		{
+			// ri->sp = g_idx_sp
+			state.wasm->emitGlobalGet(state.g_idx_ri);
+			state.wasm->emitGlobalGet(state.g_idx_sp);
+			state.wasm->emitI32Store(4*9); // ri->sp
+		}
+
 		state.wasm->emitI32Const(r);
 		fn();
 		state.wasm->emitCall(state.f_idx_set_register);
