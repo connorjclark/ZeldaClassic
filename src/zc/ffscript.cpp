@@ -2918,6 +2918,18 @@ guydata* checkNPCData(int32_t ref)
 	return nullptr;
 }
 
+// TODO: replace with checkNPCData.
+static bool checkNPCDataRef()
+{
+	if( (unsigned) GET_NPCDATAREF > (MAXNPCS-1) )
+	{
+		scripting_log_error_with_context("Invalid npcdata ID: {}", GET_NPCDATAREF);
+		return false;
+	}
+
+	return true;
+}
+
 item* checkItem(int32_t ref)
 {
 	return ResolveItemSprite(ref);
@@ -8492,9 +8504,8 @@ int32_t get_register(int32_t arg)
 		//npcdata nd->member variable
 		#define	GET_NPCDATA_VAR_INT32(member, str) \
 		{ \
-			if( (unsigned) ri->npcdataref > (MAXNPCS-1) ) \
+			if( !checkNPCDataRef() ) \
 			{ \
-				Z_scripterrlog("Invalid NPC ID passed to npcdata->%s: %d\n", str, GET_NPCDATAREF); \
 				ret = -10000; \
 			} \
 			else \
@@ -8505,9 +8516,8 @@ int32_t get_register(int32_t arg)
 
 		#define	GET_NPCDATA_VAR_BYTE(member, str) \
 		{ \
-			if( (unsigned) ri->npcdataref > (MAXNPCS-1) ) \
+			if( !checkNPCDataRef() ) \
 			{ \
-				Z_scripterrlog("Invalid NPC ID passed to npcdata->%s: %d\n", str, GET_NPCDATAREF); \
 				ret = -10000; \
 			} \
 			else \
@@ -8518,9 +8528,8 @@ int32_t get_register(int32_t arg)
 		
 		#define	GET_NPCDATA_VAR_INT16(member, str) \
 		{ \
-			if( (unsigned) ri->npcdataref > (MAXNPCS-1) ) \
+			if( !checkNPCDataRef() ) \
 			{ \
-				Z_scripterrlog("Invalid NPC ID passed to npcdata->%s: %d\n", str, GET_NPCDATAREF); \
 				ret = -10000; \
 			} \
 			else \
@@ -8532,9 +8541,8 @@ int32_t get_register(int32_t arg)
 		#define GET_NPCDATA_FLAG(member, str, indexbound) \
 		{ \
 			int32_t flag =  (value/10000);  \
-			if( (unsigned) ri->npcdataref > (MAXNPCS-1) ) \
+			if( !checkNPCDataRef() ) \
 			{ \
-				Z_scripterrlog("Invalid NPC ID passed to npcdata->%s: %d\n", str, GET_NPCDATAREF); \
 			} \
 			else \
 			{ \
@@ -8545,9 +8553,8 @@ int32_t get_register(int32_t arg)
 		// These are for compat only, though seemingly no quests even use these.
 		case NPCDATAFLAGS1:
 		{
-			if( (unsigned) ri->npcdataref > (MAXNPCS-1) )
+			if( !checkNPCDataRef() )
 			{
-				Z_scripterrlog("Invalid NPC ID passed to npcdata->%s: %d\n", "Flags (deprecated)", GET_NPCDATAREF);
 				ret = -10000;
 			}
 			else
@@ -8559,9 +8566,8 @@ int32_t get_register(int32_t arg)
 		break;
 		case NPCDATAFLAGS2:
 		{
-			if( (unsigned) ri->npcdataref > (MAXNPCS-1) )
+			if( !checkNPCDataRef() )
 			{
-				Z_scripterrlog("Invalid NPC ID passed to npcdata->%s: %d\n", "Flags2 (deprecated)", GET_NPCDATAREF);
 				ret = -10000;
 			}
 			else
@@ -8672,7 +8678,7 @@ int32_t get_register(int32_t arg)
 			//bool npcdata->MatchInitDLabel("label", d)
 		{
 			
-			if( (unsigned) ri->npcdataref > (MAXNPCS-1) ) \
+			if( !checkNPCDataRef() ) \
 			{ 
 				Z_scripterrlog("Invalid NPC ID passed to npcdata->%s: %d\n", "MatchInitDLabel()", GET_NPCDATAREF);
 				ret = 0; 
@@ -15945,9 +15951,7 @@ void set_register(int32_t arg, int32_t value)
 		case NPCDATAWPNSPRITE: SET_NPCDATA_VAR_INT(wpnsprite, "WeaponSprite"); break;
 		case NPCDATAWEAPONSCRIPT: 
 		{
-			if( (unsigned) ri->npcdataref > (MAXNPCS-1) )
-				Z_scripterrlog("Invalid NPC ID passed to npcdata->WeaponScript: %d\n", ri->npcdataref);
-			else
+			if( checkNPCDataRef() )
 				guysbuf[GET_NPCDATAREF].weap_data.script = vbound((value / 10000),0,214747);
 			break;
 		}
