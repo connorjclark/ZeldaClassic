@@ -3114,7 +3114,7 @@ int32_t item_flag(item_flags flag)
 {
 	if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 	{
-		scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
+		scripting_log_error_with_context("Invalid itemdata access: {}", GET_ITEMCLASSREF);
 		return 0;
 	}
 	return (itemsbuf[GET_ITEMCLASSREF].flags & flag) ? 10000 : 0;
@@ -3123,7 +3123,7 @@ void item_flag(item_flags flag, bool val)
 {
 	if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 	{
-		scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
+		scripting_log_error_with_context("Invalid itemdata access: {}", GET_ITEMCLASSREF);
 		return;
 	}
 	SETFLAG(itemsbuf[GET_ITEMCLASSREF].flags, flag, val);
@@ -3282,7 +3282,7 @@ int32_t get_register(int32_t arg)
 		if(unsigned(GET_SPRITEDATAREF) > (MAXWPNS-1) )    \
 		{ \
 			ret = -10000; \
-			scripting_log_error_with_context("Invalid Sprite ID: {}", ri->spritedataref*10000); \
+			scripting_log_error_with_context("Invalid Sprite ID: {}", GET_SPRITEDATAREF*10000); \
 		} \
 		else \
 			ret = (wpnsbuf[GET_SPRITEDATAREF].member * 10000); \
@@ -4056,7 +4056,7 @@ int32_t get_register(int32_t arg)
 		case IDATAUSEWPN:
 			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
+				scripting_log_error_with_context("Invalid itemdata access: {}", GET_ITEMCLASSREF);
 				ret = -10000;
 				break;
 			}
@@ -4065,7 +4065,7 @@ int32_t get_register(int32_t arg)
 		case IDATAUSEDEF:
 			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
+				scripting_log_error_with_context("Invalid itemdata access: {}", GET_ITEMCLASSREF);
 				ret = -10000;
 				break;
 			}
@@ -4074,7 +4074,7 @@ int32_t get_register(int32_t arg)
 		case IDATAWRANGE:
 			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
+				scripting_log_error_with_context("Invalid itemdata access: {}", GET_ITEMCLASSREF);
 				ret = -10000;
 				break;
 			}
@@ -4083,7 +4083,7 @@ int32_t get_register(int32_t arg)
 		case IDATAMAGICTIMER:
 			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
+				scripting_log_error_with_context("Invalid itemdata access: {}", GET_ITEMCLASSREF);
 				ret = -10000;
 				break;
 			}
@@ -4092,7 +4092,7 @@ int32_t get_register(int32_t arg)
 		case IDATAMAGICTIMER2:
 			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
+				scripting_log_error_with_context("Invalid itemdata access: {}", GET_ITEMCLASSREF);
 				ret = -10000;
 				break;
 			}
@@ -4102,7 +4102,7 @@ int32_t get_register(int32_t arg)
 		case IDATADURATION:
 			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
+				scripting_log_error_with_context("Invalid itemdata access: {}", GET_ITEMCLASSREF);
 				ret = -10000;
 				break;
 			}
@@ -4112,7 +4112,7 @@ int32_t get_register(int32_t arg)
 		case IDATADUPLICATES:
 			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
+				scripting_log_error_with_context("Invalid itemdata access: {}", GET_ITEMCLASSREF);
 				ret = -10000;
 				break;
 			}
@@ -4121,7 +4121,7 @@ int32_t get_register(int32_t arg)
 		case IDATADRAWLAYER:
 			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
+				scripting_log_error_with_context("Invalid itemdata access: {}", GET_ITEMCLASSREF);
 				ret = -10000;
 				break;
 			}
@@ -4130,7 +4130,7 @@ int32_t get_register(int32_t arg)
 		case IDATACOLLECTFLAGS:
 			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
+				scripting_log_error_with_context("Invalid itemdata access: {}", GET_ITEMCLASSREF);
 				ret = 0;
 				break;
 			}
@@ -4139,7 +4139,7 @@ int32_t get_register(int32_t arg)
 		case IDATAWEAPONSCRIPT:
 			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
+				scripting_log_error_with_context("Invalid itemdata access: {}", GET_ITEMCLASSREF);
 				ret = -10000;
 				break;
 			}
@@ -4148,7 +4148,7 @@ int32_t get_register(int32_t arg)
 		case IDATAWEAPHXOFS:
 			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
+				scripting_log_error_with_context("Invalid itemdata access: {}", GET_ITEMCLASSREF);
 				ret = -10000;
 				break;
 			}
@@ -4157,7 +4157,7 @@ int32_t get_register(int32_t arg)
 		case IDATAWEAPHYOFS:
 			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
+				scripting_log_error_with_context("Invalid itemdata access: {}", GET_ITEMCLASSREF);
 				ret = -10000;
 				break;
 			}
@@ -4166,7 +4166,7 @@ int32_t get_register(int32_t arg)
 		case IDATAWEAPHXSZ:
 			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
+				scripting_log_error_with_context("Invalid itemdata access: {}", GET_ITEMCLASSREF);
 				ret = -10000;
 				break;
 			}
@@ -4175,7 +4175,7 @@ int32_t get_register(int32_t arg)
 		case IDATAWEAPHYSZ:
 			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
+				scripting_log_error_with_context("Invalid itemdata access: {}", GET_ITEMCLASSREF);
 				ret = -10000;
 				break;
 			}
@@ -4184,7 +4184,7 @@ int32_t get_register(int32_t arg)
 		case IDATAWEAPHZSZ:
 			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
+				scripting_log_error_with_context("Invalid itemdata access: {}", GET_ITEMCLASSREF);
 				ret = -10000;
 				break;
 			}
@@ -4193,7 +4193,7 @@ int32_t get_register(int32_t arg)
 		case IDATAWEAPXOFS:
 			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
+				scripting_log_error_with_context("Invalid itemdata access: {}", GET_ITEMCLASSREF);
 				ret = -10000;
 				break;
 			}
@@ -4202,7 +4202,7 @@ int32_t get_register(int32_t arg)
 		case IDATAWEAPYOFS:
 			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
+				scripting_log_error_with_context("Invalid itemdata access: {}", GET_ITEMCLASSREF);
 				ret = -10000;
 				break;
 			}
@@ -4211,7 +4211,7 @@ int32_t get_register(int32_t arg)
 		case IDATAHXOFS:
 			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
+				scripting_log_error_with_context("Invalid itemdata access: {}", GET_ITEMCLASSREF);
 				ret = -10000;
 				break;
 			}
@@ -4220,7 +4220,7 @@ int32_t get_register(int32_t arg)
 		case IDATAHYOFS:
 			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
+				scripting_log_error_with_context("Invalid itemdata access: {}", GET_ITEMCLASSREF);
 				ret = -10000;
 				break;
 			}
@@ -4229,7 +4229,7 @@ int32_t get_register(int32_t arg)
 		case IDATAHXSZ:
 			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
+				scripting_log_error_with_context("Invalid itemdata access: {}", GET_ITEMCLASSREF);
 				ret = -10000;
 				break;
 			}
@@ -4238,7 +4238,7 @@ int32_t get_register(int32_t arg)
 		case IDATAHYSZ:
 			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
+				scripting_log_error_with_context("Invalid itemdata access: {}", GET_ITEMCLASSREF);
 				ret = -10000;
 				break;
 			}
@@ -4247,7 +4247,7 @@ int32_t get_register(int32_t arg)
 		case IDATAHZSZ:
 			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
+				scripting_log_error_with_context("Invalid itemdata access: {}", GET_ITEMCLASSREF);
 				ret = -10000;
 				break;
 			}
@@ -4256,7 +4256,7 @@ int32_t get_register(int32_t arg)
 		case IDATADXOFS:
 			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
+				scripting_log_error_with_context("Invalid itemdata access: {}", GET_ITEMCLASSREF);
 				ret = -10000;
 				break;
 			}
@@ -4265,7 +4265,7 @@ int32_t get_register(int32_t arg)
 		case IDATADYOFS:
 			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
+				scripting_log_error_with_context("Invalid itemdata access: {}", GET_ITEMCLASSREF);
 				ret = -10000;
 				break;
 			}
@@ -4274,7 +4274,7 @@ int32_t get_register(int32_t arg)
 		case IDATATILEW:
 			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
+				scripting_log_error_with_context("Invalid itemdata access: {}", GET_ITEMCLASSREF);
 				ret = -10000;
 				break;
 			}
@@ -4283,7 +4283,7 @@ int32_t get_register(int32_t arg)
 		case IDATATILEH:
 			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
+				scripting_log_error_with_context("Invalid itemdata access: {}", GET_ITEMCLASSREF);
 				ret = -10000;
 				break;
 			}
@@ -4292,7 +4292,7 @@ int32_t get_register(int32_t arg)
 		case IDATAPICKUP:
 			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
+				scripting_log_error_with_context("Invalid itemdata access: {}", GET_ITEMCLASSREF);
 				ret = -10000;
 				break;
 			}
@@ -4301,7 +4301,7 @@ int32_t get_register(int32_t arg)
 		case IDATAOVERRIDEFL:
 			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
+				scripting_log_error_with_context("Invalid itemdata access: {}", GET_ITEMCLASSREF);
 				ret = 0;
 				break;
 			}
@@ -4311,7 +4311,7 @@ int32_t get_register(int32_t arg)
 		case IDATATILEWWEAP:
 			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
+				scripting_log_error_with_context("Invalid itemdata access: {}", GET_ITEMCLASSREF);
 				ret = -10000;
 				break;
 			}
@@ -4320,7 +4320,7 @@ int32_t get_register(int32_t arg)
 		case IDATATILEHWEAP:
 			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
+				scripting_log_error_with_context("Invalid itemdata access: {}", GET_ITEMCLASSREF);
 				ret = -10000;
 				break;
 			}
@@ -4329,7 +4329,7 @@ int32_t get_register(int32_t arg)
 		case IDATAOVERRIDEFLWEAP:
 			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
+				scripting_log_error_with_context("Invalid itemdata access: {}", GET_ITEMCLASSREF);
 				ret = 0;
 				break;
 			}
@@ -4339,7 +4339,7 @@ int32_t get_register(int32_t arg)
 		case IDATATYPE:
 			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
+				scripting_log_error_with_context("Invalid itemdata access: {}", GET_ITEMCLASSREF);
 				ret = -10000;
 				break;
 			}
@@ -4349,7 +4349,7 @@ int32_t get_register(int32_t arg)
 		case IDATALEVEL:
 			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
+				scripting_log_error_with_context("Invalid itemdata access: {}", GET_ITEMCLASSREF);
 				ret = -10000;
 				break;
 			}
@@ -4364,7 +4364,7 @@ int32_t get_register(int32_t arg)
 		{
 			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
+				scripting_log_error_with_context("Invalid itemdata access: {}", GET_ITEMCLASSREF);
 				ret = -10000;
 				break;
 			}
@@ -4376,7 +4376,7 @@ int32_t get_register(int32_t arg)
 		{
 			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
+				scripting_log_error_with_context("Invalid itemdata access: {}", GET_ITEMCLASSREF);
 				ret = -10000;
 				break;
 			}
@@ -4401,7 +4401,7 @@ int32_t get_register(int32_t arg)
 		case IDATAUSEBURNSPR:
 			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
+				scripting_log_error_with_context("Invalid itemdata access: {}", GET_ITEMCLASSREF);
 				ret = 0;
 			}
 			else ret = (itemsbuf[GET_ITEMCLASSREF].weap_data.wflags & WFLAG_UPDATE_IGNITE_SPRITE) ? 10000 : 0;
@@ -4410,7 +4410,7 @@ int32_t get_register(int32_t arg)
 		case IDATASETMAX:
 			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
+				scripting_log_error_with_context("Invalid itemdata access: {}", GET_ITEMCLASSREF);
 				ret = -10000;
 				break;
 			}
@@ -4420,7 +4420,7 @@ int32_t get_register(int32_t arg)
 		case IDATAMAX:
 			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
+				scripting_log_error_with_context("Invalid itemdata access: {}", GET_ITEMCLASSREF);
 				ret = -10000;
 				break;
 			}
@@ -4430,7 +4430,7 @@ int32_t get_register(int32_t arg)
 		case IDATACOUNTER:
 			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
+				scripting_log_error_with_context("Invalid itemdata access: {}", GET_ITEMCLASSREF);
 				ret = -10000;
 				break;
 			}
@@ -4440,7 +4440,7 @@ int32_t get_register(int32_t arg)
 		case IDATAPSOUND:
 			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
+				scripting_log_error_with_context("Invalid itemdata access: {}", GET_ITEMCLASSREF);
 				ret = -10000;
 				break;
 			}
@@ -4449,7 +4449,7 @@ int32_t get_register(int32_t arg)
 		case IDATAUSESOUND:
 			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
+				scripting_log_error_with_context("Invalid itemdata access: {}", GET_ITEMCLASSREF);
 				ret = -10000;
 				break;
 			}
@@ -4459,7 +4459,7 @@ int32_t get_register(int32_t arg)
 		case IDATAUSESOUND2:
 			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
+				scripting_log_error_with_context("Invalid itemdata access: {}", GET_ITEMCLASSREF);
 				ret = -10000;
 				break;
 			}
@@ -4469,7 +4469,7 @@ int32_t get_register(int32_t arg)
 		case IDATAPOWER:
 			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
+				scripting_log_error_with_context("Invalid itemdata access: {}", GET_ITEMCLASSREF);
 				ret = -10000;
 				break;
 			}
@@ -4491,7 +4491,7 @@ int32_t get_register(int32_t arg)
 		case IDATASCRIPT:
 			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
+				scripting_log_error_with_context("Invalid itemdata access: {}", GET_ITEMCLASSREF);
 				ret = -10000;
 				break;
 			}
@@ -4500,7 +4500,7 @@ int32_t get_register(int32_t arg)
 		case IDATASPRSCRIPT:
 			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
+				scripting_log_error_with_context("Invalid itemdata access: {}", GET_ITEMCLASSREF);
 				ret = -10000;
 				break;
 			}
@@ -4510,7 +4510,7 @@ int32_t get_register(int32_t arg)
 		case IDATALTM:
 			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
+				scripting_log_error_with_context("Invalid itemdata access: {}", GET_ITEMCLASSREF);
 				ret = 0;
 				break;
 			}
@@ -4520,7 +4520,7 @@ int32_t get_register(int32_t arg)
 		case IDATAPSCRIPT:
 			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
+				scripting_log_error_with_context("Invalid itemdata access: {}", GET_ITEMCLASSREF);
 				ret = -10000;
 				break;
 			}
@@ -4530,7 +4530,7 @@ int32_t get_register(int32_t arg)
 		case IDATAPSTRING:
 			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
+				scripting_log_error_with_context("Invalid itemdata access: {}", GET_ITEMCLASSREF);
 				ret = -10000;
 				break;
 			}
@@ -4539,7 +4539,7 @@ int32_t get_register(int32_t arg)
 		case IDATAPFLAGS:
 			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
+				scripting_log_error_with_context("Invalid itemdata access: {}", GET_ITEMCLASSREF);
 				ret = 0;
 				break;
 			}
@@ -4548,7 +4548,7 @@ int32_t get_register(int32_t arg)
 		case IDATAPICKUPLITEMS:
 			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
+				scripting_log_error_with_context("Invalid itemdata access: {}", GET_ITEMCLASSREF);
 				ret = 0;
 				break;
 			}
@@ -4557,7 +4557,7 @@ int32_t get_register(int32_t arg)
 		case IDATAPICKUPLITEMLEVEL:
 			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
+				scripting_log_error_with_context("Invalid itemdata access: {}", GET_ITEMCLASSREF);
 				ret = 0;
 				break;
 			}
@@ -4567,7 +4567,7 @@ int32_t get_register(int32_t arg)
 		case IDATAMAGCOST:
 			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
+				scripting_log_error_with_context("Invalid itemdata access: {}", GET_ITEMCLASSREF);
 				ret = -10000;
 				break;
 			}
@@ -4576,7 +4576,7 @@ int32_t get_register(int32_t arg)
 		case IDATACOST2:
 			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
+				scripting_log_error_with_context("Invalid itemdata access: {}", GET_ITEMCLASSREF);
 				ret = -10000;
 				break;
 			}
@@ -4585,7 +4585,7 @@ int32_t get_register(int32_t arg)
 		case IDATACOOLDOWN:
 			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
+				scripting_log_error_with_context("Invalid itemdata access: {}", GET_ITEMCLASSREF);
 				ret = -10000;
 				break;
 			}
@@ -4595,7 +4595,7 @@ int32_t get_register(int32_t arg)
 		case IDATACOSTCOUNTER:
 			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
+				scripting_log_error_with_context("Invalid itemdata access: {}", GET_ITEMCLASSREF);
 				ret = -10000;
 				break;
 			}
@@ -4604,7 +4604,7 @@ int32_t get_register(int32_t arg)
 		case IDATACOSTCOUNTER2:
 			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
+				scripting_log_error_with_context("Invalid itemdata access: {}", GET_ITEMCLASSREF);
 				ret = -10000;
 				break;
 			}
@@ -4614,7 +4614,7 @@ int32_t get_register(int32_t arg)
 		case IDATAMINHEARTS:
 			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
+				scripting_log_error_with_context("Invalid itemdata access: {}", GET_ITEMCLASSREF);
 				ret = -10000;
 				break;
 			}
@@ -4624,7 +4624,7 @@ int32_t get_register(int32_t arg)
 		case IDATATILE:
 			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
+				scripting_log_error_with_context("Invalid itemdata access: {}", GET_ITEMCLASSREF);
 				ret = -10000;
 				break;
 			}
@@ -4634,7 +4634,7 @@ int32_t get_register(int32_t arg)
 		case IDATAMISC:
 			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
+				scripting_log_error_with_context("Invalid itemdata access: {}", GET_ITEMCLASSREF);
 				ret = -10000;
 				break;
 			}
@@ -4644,7 +4644,7 @@ int32_t get_register(int32_t arg)
 		case IDATACSET:
 			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
+				scripting_log_error_with_context("Invalid itemdata access: {}", GET_ITEMCLASSREF);
 				ret = -10000;
 				break;
 			}
@@ -4660,7 +4660,7 @@ int32_t get_register(int32_t arg)
 		case IDATAFLASHCSET:
 			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
+				scripting_log_error_with_context("Invalid itemdata access: {}", GET_ITEMCLASSREF);
 				ret = -10000;
 				break;
 			}
@@ -4670,7 +4670,7 @@ int32_t get_register(int32_t arg)
 		case IDATAFRAMES:
 			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
+				scripting_log_error_with_context("Invalid itemdata access: {}", GET_ITEMCLASSREF);
 				ret = -10000;
 				break;
 			}
@@ -4685,7 +4685,7 @@ int32_t get_register(int32_t arg)
 		case IDATAASPEED:
 			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
+				scripting_log_error_with_context("Invalid itemdata access: {}", GET_ITEMCLASSREF);
 				ret = -10000;
 				break;
 			}
@@ -4695,7 +4695,7 @@ int32_t get_register(int32_t arg)
 		case IDATADELAY:
 			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
+				scripting_log_error_with_context("Invalid itemdata access: {}", GET_ITEMCLASSREF);
 				ret = -10000;
 				break;
 			}
@@ -7411,7 +7411,7 @@ int32_t get_register(int32_t arg)
 		{
 			if(ri->comboref < 0 || ri->comboref > (MAXCOMBOS-1) )
 			{
-				scripting_log_error_with_context("Invalid combodata ID: {}", ri->comboref);
+				scripting_log_error_with_context("Invalid combodata ID: {}", GET_COMBOREF);
 				ret = -10000;
 			}
 			else
@@ -7424,7 +7424,7 @@ int32_t get_register(int32_t arg)
 		{
 			if(ri->comboref < 0 || ri->comboref > (MAXCOMBOS-1) )
 			{
-				scripting_log_error_with_context("Invalid combodata ID: {}", ri->comboref);
+				scripting_log_error_with_context("Invalid combodata ID: {}", GET_COMBOREF);
 				ret = -10000;
 			}
 			else
@@ -7438,7 +7438,7 @@ int32_t get_register(int32_t arg)
 		{
 			if(ri->comboref < 0 || ri->comboref > (MAXCOMBOS-1) )
 			{
-				scripting_log_error_with_context("Invalid combodata ID: {}", ri->comboref);
+				scripting_log_error_with_context("Invalid combodata ID: {}", GET_COMBOREF);
 				ret = -10000;
 			}
 			else
@@ -7452,7 +7452,7 @@ int32_t get_register(int32_t arg)
 		{
 			if(ri->comboref < 0 || ri->comboref > (MAXCOMBOS-1) )
 			{
-				scripting_log_error_with_context("Invalid combodata ID: {}", ri->comboref);
+				scripting_log_error_with_context("Invalid combodata ID: {}", GET_COMBOREF);
 			}
 			else
 			{
@@ -7476,7 +7476,7 @@ int32_t get_register(int32_t arg)
 			ret = -10000;
 			if(ri->comboref < 0 || ri->comboref > (MAXCOMBOS-1) )
 			{
-				scripting_log_error_with_context("Invalid combodata ID: {}", ri->comboref);
+				scripting_log_error_with_context("Invalid combodata ID: {}", GET_COMBOREF);
 			}
 			else if(auto* trig = get_first_combo_trigger())
 				ret = trig->triggeritem * 10000;
@@ -7487,7 +7487,7 @@ int32_t get_register(int32_t arg)
 			ret = -10000;
 			if(ri->comboref < 0 || ri->comboref > (MAXCOMBOS-1) )
 			{
-				scripting_log_error_with_context("Invalid combodata ID: {}", ri->comboref);
+				scripting_log_error_with_context("Invalid combodata ID: {}", GET_COMBOREF);
 			}
 			else if(auto* trig = get_first_combo_trigger())
 				ret = trig->trigtimer * 10000;
@@ -7498,7 +7498,7 @@ int32_t get_register(int32_t arg)
 			ret = -10000;
 			if(ri->comboref < 0 || ri->comboref > (MAXCOMBOS-1) )
 			{
-				scripting_log_error_with_context("Invalid combodata ID: {}", ri->comboref);
+				scripting_log_error_with_context("Invalid combodata ID: {}", GET_COMBOREF);
 			}
 			else if(auto* trig = get_first_combo_trigger())
 				ret = trig->trigsfx * 10000;
@@ -7509,7 +7509,7 @@ int32_t get_register(int32_t arg)
 			ret = -10000;
 			if(ri->comboref < 0 || ri->comboref > (MAXCOMBOS-1) )
 			{
-				scripting_log_error_with_context("Invalid combodata ID: {}", ri->comboref);
+				scripting_log_error_with_context("Invalid combodata ID: {}", GET_COMBOREF);
 			}
 			else if(auto* trig = get_first_combo_trigger())
 				ret = trig->trigchange * 10000;
@@ -7520,7 +7520,7 @@ int32_t get_register(int32_t arg)
 			ret = -10000;
 			if(ri->comboref < 0 || ri->comboref > (MAXCOMBOS-1) )
 			{
-				scripting_log_error_with_context("Invalid combodata ID: {}", ri->comboref);
+				scripting_log_error_with_context("Invalid combodata ID: {}", GET_COMBOREF);
 			}
 			else if(auto* trig = get_first_combo_trigger())
 				ret = trig->trigprox * 10000;
@@ -7531,7 +7531,7 @@ int32_t get_register(int32_t arg)
 			ret = -10000;
 			if(ri->comboref < 0 || ri->comboref > (MAXCOMBOS-1) )
 			{
-				scripting_log_error_with_context("Invalid combodata ID: {}", ri->comboref);
+				scripting_log_error_with_context("Invalid combodata ID: {}", GET_COMBOREF);
 			}
 			else if(auto* trig = get_first_combo_trigger())
 				ret = trig->triglbeam * 10000;
@@ -7542,7 +7542,7 @@ int32_t get_register(int32_t arg)
 			ret = -10000;
 			if(ri->comboref < 0 || ri->comboref > (MAXCOMBOS-1) )
 			{
-				scripting_log_error_with_context("Invalid combodata ID: {}", ri->comboref);
+				scripting_log_error_with_context("Invalid combodata ID: {}", GET_COMBOREF);
 			}
 			else if(auto* trig = get_first_combo_trigger())
 				ret = trig->trigctr * 10000;
@@ -7553,7 +7553,7 @@ int32_t get_register(int32_t arg)
 			ret = -10000;
 			if(ri->comboref < 0 || ri->comboref > (MAXCOMBOS-1) )
 			{
-				scripting_log_error_with_context("Invalid combodata ID: {}", ri->comboref);
+				scripting_log_error_with_context("Invalid combodata ID: {}", GET_COMBOREF);
 			}
 			else if(auto* trig = get_first_combo_trigger())
 				ret = trig->trigctramnt * 10000;
@@ -7564,7 +7564,7 @@ int32_t get_register(int32_t arg)
 			ret = -10000;
 			if(ri->comboref < 0 || ri->comboref > (MAXCOMBOS-1) )
 			{
-				scripting_log_error_with_context("Invalid combodata ID: {}", ri->comboref);
+				scripting_log_error_with_context("Invalid combodata ID: {}", GET_COMBOREF);
 			}
 			else if(auto* trig = get_first_combo_trigger())
 				ret = trig->trigcooldown * 10000;
@@ -7575,7 +7575,7 @@ int32_t get_register(int32_t arg)
 			ret = -10000;
 			if(ri->comboref < 0 || ri->comboref > (MAXCOMBOS-1) )
 			{
-				scripting_log_error_with_context("Invalid combodata ID: {}", ri->comboref);
+				scripting_log_error_with_context("Invalid combodata ID: {}", GET_COMBOREF);
 			}
 			else if(auto* trig = get_first_combo_trigger())
 				ret = trig->trigcopycat * 10000;
@@ -7586,7 +7586,7 @@ int32_t get_register(int32_t arg)
 			ret = -10000;
 			if(ri->comboref < 0 || ri->comboref > (MAXCOMBOS-1) )
 			{
-				scripting_log_error_with_context("Invalid combodata ID: {}", ri->comboref);
+				scripting_log_error_with_context("Invalid combodata ID: {}", GET_COMBOREF);
 			}
 			else if(auto* trig = get_first_combo_trigger())
 				ret = trig->spawnip * 10000;
@@ -7597,7 +7597,7 @@ int32_t get_register(int32_t arg)
 			ret = -10000;
 			if(ri->comboref < 0 || ri->comboref > (MAXCOMBOS-1) )
 			{
-				scripting_log_error_with_context("Invalid combodata ID: {}", ri->comboref);
+				scripting_log_error_with_context("Invalid combodata ID: {}", GET_COMBOREF);
 			}
 			else if(auto* trig = get_first_combo_trigger())
 				ret = trig->exstate * 10000;
@@ -7608,7 +7608,7 @@ int32_t get_register(int32_t arg)
 			ret = -10000;
 			if(ri->comboref < 0 || ri->comboref > (MAXCOMBOS-1) )
 			{
-				scripting_log_error_with_context("Invalid combodata ID: {}", ri->comboref);
+				scripting_log_error_with_context("Invalid combodata ID: {}", GET_COMBOREF);
 			}
 			else if(auto* trig = get_first_combo_trigger())
 				ret = trig->exdoor_dir * 10000;
@@ -7619,7 +7619,7 @@ int32_t get_register(int32_t arg)
 			ret = -10000;
 			if(ri->comboref < 0 || ri->comboref > (MAXCOMBOS-1) )
 			{
-				scripting_log_error_with_context("Invalid combodata ID: {}", ri->comboref);
+				scripting_log_error_with_context("Invalid combodata ID: {}", GET_COMBOREF);
 			}
 			else if(auto* trig = get_first_combo_trigger())
 				ret = trig->exdoor_ind * 10000;
@@ -7630,7 +7630,7 @@ int32_t get_register(int32_t arg)
 			ret = -10000;
 			if(ri->comboref < 0 || ri->comboref > (MAXCOMBOS-1) )
 			{
-				scripting_log_error_with_context("Invalid combodata ID: {}", ri->comboref);
+				scripting_log_error_with_context("Invalid combodata ID: {}", GET_COMBOREF);
 			}
 			else if(auto* trig = get_first_combo_trigger())
 				ret = trig->spawnenemy * 10000;
@@ -7641,7 +7641,7 @@ int32_t get_register(int32_t arg)
 			ret = -10000;
 			if(ri->comboref < 0 || ri->comboref > (MAXCOMBOS-1) )
 			{
-				scripting_log_error_with_context("Invalid combodata ID: {}", ri->comboref);
+				scripting_log_error_with_context("Invalid combodata ID: {}", GET_COMBOREF);
 			}
 			else if(auto* trig = get_first_combo_trigger())
 				ret = trig->spawnitem * 10000;
@@ -7652,7 +7652,7 @@ int32_t get_register(int32_t arg)
 			ret = -10000;
 			if(ri->comboref < 0 || ri->comboref > (MAXCOMBOS-1) )
 			{
-				scripting_log_error_with_context("Invalid combodata ID: {}", ri->comboref);
+				scripting_log_error_with_context("Invalid combodata ID: {}", GET_COMBOREF);
 			}
 			else if(auto* trig = get_first_combo_trigger())
 				ret = trig->trigcschange * 10000;
@@ -7663,7 +7663,7 @@ int32_t get_register(int32_t arg)
 			ret = -10000;
 			if(ri->comboref < 0 || ri->comboref > (MAXCOMBOS-1) )
 			{
-				scripting_log_error_with_context("Invalid combodata ID: {}", ri->comboref);
+				scripting_log_error_with_context("Invalid combodata ID: {}", GET_COMBOREF);
 			}
 			else if(auto* trig = get_first_combo_trigger())
 				ret = trig->trig_levelitems * 10000;
@@ -7674,7 +7674,7 @@ int32_t get_register(int32_t arg)
 			ret = -10000;
 			if(ri->comboref < 0 || ri->comboref > (MAXCOMBOS-1) )
 			{
-				scripting_log_error_with_context("Invalid combodata ID: {}", ri->comboref);
+				scripting_log_error_with_context("Invalid combodata ID: {}", GET_COMBOREF);
 			}
 			else if(auto* trig = get_first_combo_trigger())
 				ret = trig->trigdmlevel * 10000;
@@ -7684,7 +7684,7 @@ int32_t get_register(int32_t arg)
 		{
 			if(ri->comboref < 0 || ri->comboref > (MAXCOMBOS-1) )
 			{
-				scripting_log_error_with_context("Invalid combodata ID: {}", ri->comboref);
+				scripting_log_error_with_context("Invalid combodata ID: {}", GET_COMBOREF);
 				break;
 			}
 			else if(auto* trig = get_first_combo_trigger())
@@ -7695,7 +7695,7 @@ int32_t get_register(int32_t arg)
 		{
 			if(ri->comboref < 0 || ri->comboref > (MAXCOMBOS-1) )
 			{
-				scripting_log_error_with_context("Invalid combodata ID: {}", ri->comboref);
+				scripting_log_error_with_context("Invalid combodata ID: {}", GET_COMBOREF);
 			}
 			else if(auto* trig = get_first_combo_trigger())
 				ret = trig->trigtint[1] * 10000;
@@ -7705,7 +7705,7 @@ int32_t get_register(int32_t arg)
 		{
 			if(ri->comboref < 0 || ri->comboref > (MAXCOMBOS-1) )
 			{
-				scripting_log_error_with_context("Invalid combodata ID: {}", ri->comboref);
+				scripting_log_error_with_context("Invalid combodata ID: {}", GET_COMBOREF);
 			}
 			else if(auto* trig = get_first_combo_trigger())
 				ret = trig->trigtint[2] * 10000;
@@ -7716,7 +7716,7 @@ int32_t get_register(int32_t arg)
 			ret = -10000;
 			if(ri->comboref < 0 || ri->comboref > (MAXCOMBOS-1) )
 			{
-				scripting_log_error_with_context("Invalid combodata ID: {}", ri->comboref);
+				scripting_log_error_with_context("Invalid combodata ID: {}", GET_COMBOREF);
 			}
 			else if(auto* trig = get_first_combo_trigger())
 				ret = trig->triglvlpalette * 10000;
@@ -7727,7 +7727,7 @@ int32_t get_register(int32_t arg)
 			ret = -10000;
 			if(ri->comboref < 0 || ri->comboref > (MAXCOMBOS-1) )
 			{
-				scripting_log_error_with_context("Invalid combodata ID: {}", ri->comboref);
+				scripting_log_error_with_context("Invalid combodata ID: {}", GET_COMBOREF);
 			}
 			else if(auto* trig = get_first_combo_trigger())
 				ret = trig->trigbosspalette * 10000;
@@ -7738,7 +7738,7 @@ int32_t get_register(int32_t arg)
 			ret = -10000;
 			if(ri->comboref < 0 || ri->comboref > (MAXCOMBOS-1) )
 			{
-				scripting_log_error_with_context("Invalid combodata ID: {}", ri->comboref);
+				scripting_log_error_with_context("Invalid combodata ID: {}", GET_COMBOREF);
 			}
 			else if(auto* trig = get_first_combo_trigger())
 				ret = trig->trigquaketime * 10000;
@@ -7749,7 +7749,7 @@ int32_t get_register(int32_t arg)
 			ret = -10000;
 			if(ri->comboref < 0 || ri->comboref > (MAXCOMBOS-1) )
 			{
-				scripting_log_error_with_context("Invalid combodata ID: {}", ri->comboref);
+				scripting_log_error_with_context("Invalid combodata ID: {}", GET_COMBOREF);
 			}
 			else if(auto* trig = get_first_combo_trigger())
 				ret = trig->trigwavytime * 10000;
@@ -7760,7 +7760,7 @@ int32_t get_register(int32_t arg)
 			ret = -10000;
 			if(ri->comboref < 0 || ri->comboref > (MAXCOMBOS-1) )
 			{
-				scripting_log_error_with_context("Invalid combodata ID: {}", ri->comboref);
+				scripting_log_error_with_context("Invalid combodata ID: {}", GET_COMBOREF);
 			}
 			else if(auto* trig = get_first_combo_trigger())
 				ret = trig->trig_swjinxtime * 10000;
@@ -7771,7 +7771,7 @@ int32_t get_register(int32_t arg)
 			ret = -10000;
 			if(ri->comboref < 0 || ri->comboref > (MAXCOMBOS-1) )
 			{
-				scripting_log_error_with_context("Invalid combodata ID: {}", ri->comboref);
+				scripting_log_error_with_context("Invalid combodata ID: {}", GET_COMBOREF);
 			}
 			else if(auto* trig = get_first_combo_trigger())
 				ret = trig->trig_itmjinxtime * 10000;
@@ -7782,7 +7782,7 @@ int32_t get_register(int32_t arg)
 			ret = -10000;
 			if (ri->comboref < 0 || ri->comboref >(MAXCOMBOS - 1))
 			{
-				scripting_log_error_with_context("Invalid combodata ID: {}", ri->comboref);
+				scripting_log_error_with_context("Invalid combodata ID: {}", GET_COMBOREF);
 			}
 			else if(auto* trig = get_first_combo_trigger())
 				ret = trig->trig_shieldjinxtime * 10000;
@@ -7793,7 +7793,7 @@ int32_t get_register(int32_t arg)
 			ret = -10000;
 			if(ri->comboref < 0 || ri->comboref > (MAXCOMBOS-1) )
 			{
-				scripting_log_error_with_context("Invalid combodata ID: {}", ri->comboref);
+				scripting_log_error_with_context("Invalid combodata ID: {}", GET_COMBOREF);
 			}
 			else if(auto* trig = get_first_combo_trigger())
 				ret = trig->trig_stuntime * 10000;
@@ -7804,7 +7804,7 @@ int32_t get_register(int32_t arg)
 			ret = -10000;
 			if(ri->comboref < 0 || ri->comboref > (MAXCOMBOS-1) )
 			{
-				scripting_log_error_with_context("Invalid combodata ID: {}", ri->comboref);
+				scripting_log_error_with_context("Invalid combodata ID: {}", GET_COMBOREF);
 			}
 			else if(auto* trig = get_first_combo_trigger())
 				ret = trig->trig_bunnytime * 10000;
@@ -7815,7 +7815,7 @@ int32_t get_register(int32_t arg)
 			ret = -10000;
 			if(ri->comboref < 0 || ri->comboref > (MAXCOMBOS-1) )
 			{
-				scripting_log_error_with_context("Invalid combodata ID: {}", ri->comboref);
+				scripting_log_error_with_context("Invalid combodata ID: {}", GET_COMBOREF);
 			}
 			else if(auto* trig = get_first_combo_trigger())
 				ret = trig->trig_pushtime * 10000;
@@ -7826,7 +7826,7 @@ int32_t get_register(int32_t arg)
 			ret = -10000;
 			if(ri->comboref < 0 || ri->comboref > (MAXCOMBOS-1) )
 			{
-				scripting_log_error_with_context("Invalid combodata ID: {}", ri->comboref);
+				scripting_log_error_with_context("Invalid combodata ID: {}", GET_COMBOREF);
 			}
 			else ret = (combobuf[GET_COMBOREF].liftcmb) * 10000;
 			break;
@@ -7836,7 +7836,7 @@ int32_t get_register(int32_t arg)
 			ret = -10000;
 			if(ri->comboref < 0 || ri->comboref > (MAXCOMBOS-1) )
 			{
-				scripting_log_error_with_context("Invalid combodata ID: {}", ri->comboref);
+				scripting_log_error_with_context("Invalid combodata ID: {}", GET_COMBOREF);
 			}
 			else ret = (combobuf[GET_COMBOREF].liftcs) * 10000;
 			break;
@@ -7846,7 +7846,7 @@ int32_t get_register(int32_t arg)
 			ret = -10000;
 			if(ri->comboref < 0 || ri->comboref > (MAXCOMBOS-1) )
 			{
-				scripting_log_error_with_context("Invalid combodata ID: {}", ri->comboref);
+				scripting_log_error_with_context("Invalid combodata ID: {}", GET_COMBOREF);
 			}
 			else ret = (combobuf[GET_COMBOREF].liftundercmb) * 10000;
 			break;
@@ -7856,7 +7856,7 @@ int32_t get_register(int32_t arg)
 			ret = -10000;
 			if(ri->comboref < 0 || ri->comboref > (MAXCOMBOS-1) )
 			{
-				scripting_log_error_with_context("Invalid combodata ID: {}", ri->comboref);
+				scripting_log_error_with_context("Invalid combodata ID: {}", GET_COMBOREF);
 			}
 			else ret = (combobuf[GET_COMBOREF].liftundercs) * 10000;
 			break;
@@ -7866,7 +7866,7 @@ int32_t get_register(int32_t arg)
 			ret = -10000;
 			if(ri->comboref < 0 || ri->comboref > (MAXCOMBOS-1) )
 			{
-				scripting_log_error_with_context("Invalid combodata ID: {}", ri->comboref);
+				scripting_log_error_with_context("Invalid combodata ID: {}", GET_COMBOREF);
 			}
 			else ret = (combobuf[GET_COMBOREF].liftdmg) * 10000;
 			break;
@@ -7876,7 +7876,7 @@ int32_t get_register(int32_t arg)
 			ret = -10000;
 			if(ri->comboref < 0 || ri->comboref > (MAXCOMBOS-1) )
 			{
-				scripting_log_error_with_context("Invalid combodata ID: {}", ri->comboref);
+				scripting_log_error_with_context("Invalid combodata ID: {}", GET_COMBOREF);
 			}
 			else ret = (combobuf[GET_COMBOREF].liftlvl) * 10000;
 			break;
@@ -7886,7 +7886,7 @@ int32_t get_register(int32_t arg)
 			ret = -10000;
 			if(ri->comboref < 0 || ri->comboref > (MAXCOMBOS-1) )
 			{
-				scripting_log_error_with_context("Invalid combodata ID: {}", ri->comboref);
+				scripting_log_error_with_context("Invalid combodata ID: {}", GET_COMBOREF);
 			}
 			else ret = (combobuf[GET_COMBOREF].liftitm) * 10000;
 			break;
@@ -7896,7 +7896,7 @@ int32_t get_register(int32_t arg)
 			ret = -10000;
 			if(ri->comboref < 0 || ri->comboref > (MAXCOMBOS-1) )
 			{
-				scripting_log_error_with_context("Invalid combodata ID: {}", ri->comboref);
+				scripting_log_error_with_context("Invalid combodata ID: {}", GET_COMBOREF);
 			}
 			else ret = (combobuf[GET_COMBOREF].liftgfx) * 10000;
 			break;
@@ -7906,7 +7906,7 @@ int32_t get_register(int32_t arg)
 			ret = -10000;
 			if(ri->comboref < 0 || ri->comboref > (MAXCOMBOS-1) )
 			{
-				scripting_log_error_with_context("Invalid combodata ID: {}", ri->comboref);
+				scripting_log_error_with_context("Invalid combodata ID: {}", GET_COMBOREF);
 			}
 			else ret = (combobuf[GET_COMBOREF].liftsprite) * 10000;
 			break;
@@ -7916,7 +7916,7 @@ int32_t get_register(int32_t arg)
 			ret = -10000;
 			if(ri->comboref < 0 || ri->comboref > (MAXCOMBOS-1) )
 			{
-				scripting_log_error_with_context("Invalid combodata ID: {}", ri->comboref);
+				scripting_log_error_with_context("Invalid combodata ID: {}", GET_COMBOREF);
 			}
 			else ret = (combobuf[GET_COMBOREF].liftsfx) * 10000;
 			break;
@@ -7926,7 +7926,7 @@ int32_t get_register(int32_t arg)
 			ret = -10000;
 			if(ri->comboref < 0 || ri->comboref > (MAXCOMBOS-1) )
 			{
-				scripting_log_error_with_context("Invalid combodata ID: {}", ri->comboref);
+				scripting_log_error_with_context("Invalid combodata ID: {}", GET_COMBOREF);
 			}
 			else ret = (combobuf[GET_COMBOREF].liftbreaksprite) * 10000;
 			break;
@@ -7936,7 +7936,7 @@ int32_t get_register(int32_t arg)
 			ret = -10000;
 			if(ri->comboref < 0 || ri->comboref > (MAXCOMBOS-1) )
 			{
-				scripting_log_error_with_context("Invalid combodata ID: {}", ri->comboref);
+				scripting_log_error_with_context("Invalid combodata ID: {}", GET_COMBOREF);
 			}
 			else ret = (combobuf[GET_COMBOREF].liftbreaksfx) * 10000;
 			break;
@@ -7946,7 +7946,7 @@ int32_t get_register(int32_t arg)
 			ret = -10000;
 			if(ri->comboref < 0 || ri->comboref > (MAXCOMBOS-1) )
 			{
-				scripting_log_error_with_context("Invalid combodata ID: {}", ri->comboref);
+				scripting_log_error_with_context("Invalid combodata ID: {}", GET_COMBOREF);
 			}
 			else ret = (combobuf[GET_COMBOREF].lifthei) * 10000;
 			break;
@@ -7956,7 +7956,7 @@ int32_t get_register(int32_t arg)
 			ret = -10000;
 			if(ri->comboref < 0 || ri->comboref > (MAXCOMBOS-1) )
 			{
-				scripting_log_error_with_context("Invalid combodata ID: {}", ri->comboref);
+				scripting_log_error_with_context("Invalid combodata ID: {}", GET_COMBOREF);
 			}
 			else ret = (combobuf[GET_COMBOREF].lifttime) * 10000;
 			break;
@@ -7966,7 +7966,7 @@ int32_t get_register(int32_t arg)
 			ret = -10000;
 			if(ri->comboref < 0 || ri->comboref > (MAXCOMBOS-1) )
 			{
-				scripting_log_error_with_context("Invalid combodata ID: {}", ri->comboref);
+				scripting_log_error_with_context("Invalid combodata ID: {}", GET_COMBOREF);
 			}
 			else ret = (combobuf[GET_COMBOREF].lift_weap_data.light_rads[WPNSPR_BASE]) * 10000;
 			break;
@@ -7976,7 +7976,7 @@ int32_t get_register(int32_t arg)
 			ret = -10000;
 			if(ri->comboref < 0 || ri->comboref > (MAXCOMBOS-1) )
 			{
-				scripting_log_error_with_context("Invalid combodata ID: {}", ri->comboref);
+				scripting_log_error_with_context("Invalid combodata ID: {}", GET_COMBOREF);
 			}
 			else ret = (combobuf[GET_COMBOREF].lift_weap_data.glow_shape) * 10000;
 			break;
@@ -7986,7 +7986,7 @@ int32_t get_register(int32_t arg)
 			ret = -10000;
 			if(ri->comboref < 0 || ri->comboref > (MAXCOMBOS-1) )
 			{
-				scripting_log_error_with_context("Invalid combodata ID: {}", ri->comboref);
+				scripting_log_error_with_context("Invalid combodata ID: {}", GET_COMBOREF);
 			}
 			else ret = (combobuf[GET_COMBOREF].lift_parent_item) * 10000;
 			break;
@@ -7996,7 +7996,7 @@ int32_t get_register(int32_t arg)
 			ret = -10000;
 			if(ri->comboref < 0 || ri->comboref > (MAXCOMBOS-1) )
 			{
-				scripting_log_error_with_context("Invalid combodata ID: {}", ri->comboref);
+				scripting_log_error_with_context("Invalid combodata ID: {}", GET_COMBOREF);
 			}
 			else if(auto* trig = get_first_combo_trigger())
 				ret = trig->trig_lstate * 10000;
@@ -8007,7 +8007,7 @@ int32_t get_register(int32_t arg)
 			ret = -10000;
 			if(ri->comboref < 0 || ri->comboref > (MAXCOMBOS-1) )
 			{
-				scripting_log_error_with_context("Invalid combodata ID: {}", ri->comboref);
+				scripting_log_error_with_context("Invalid combodata ID: {}", GET_COMBOREF);
 			}
 			else if(auto* trig = get_first_combo_trigger())
 				ret = trig->trig_gstate * 10000;
@@ -8018,7 +8018,7 @@ int32_t get_register(int32_t arg)
 			ret = -10000;
 			if(ri->comboref < 0 || ri->comboref > (MAXCOMBOS-1) )
 			{
-				scripting_log_error_with_context("Invalid combodata ID: {}", ri->comboref);
+				scripting_log_error_with_context("Invalid combodata ID: {}", GET_COMBOREF);
 			}
 			else if(auto* trig = get_first_combo_trigger())
 				ret = trig->trig_group * 10000;
@@ -8029,7 +8029,7 @@ int32_t get_register(int32_t arg)
 			ret = -10000;
 			if(ri->comboref < 0 || ri->comboref > (MAXCOMBOS-1) )
 			{
-				scripting_log_error_with_context("Invalid combodata ID: {}", ri->comboref);
+				scripting_log_error_with_context("Invalid combodata ID: {}", GET_COMBOREF);
 			}
 			else if(auto* trig = get_first_combo_trigger())
 				ret = trig->trig_group_val * 10000;
@@ -8040,7 +8040,7 @@ int32_t get_register(int32_t arg)
 			ret = -10000;
 			if(ri->comboref < 0 || ri->comboref > (MAXCOMBOS-1) )
 			{
-				scripting_log_error_with_context("Invalid combodata ID: {}", ri->comboref);
+				scripting_log_error_with_context("Invalid combodata ID: {}", GET_COMBOREF);
 			}
 			else if(auto* trig = get_first_combo_trigger())
 				ret = trig->trig_statetime * 10000;
@@ -8051,7 +8051,7 @@ int32_t get_register(int32_t arg)
 			ret = -10000;
 			if(ri->comboref < 0 || ri->comboref > (MAXCOMBOS-1) )
 			{
-				scripting_log_error_with_context("Invalid combodata ID: {}", ri->comboref);
+				scripting_log_error_with_context("Invalid combodata ID: {}", GET_COMBOREF);
 			}
 			else if(auto* trig = get_first_combo_trigger())
 				ret = trig->trig_genscr * 10000;
@@ -8063,7 +8063,7 @@ int32_t get_register(int32_t arg)
 			ret = -10000;
 			if(ri->comboref < 0 || ri->comboref > (MAXCOMBOS-1) )
 			{
-				scripting_log_error_with_context("Invalid combodata ID: {}", ri->comboref);
+				scripting_log_error_with_context("Invalid combodata ID: {}", GET_COMBOREF);
 			}
 			else if(auto* trig = get_first_combo_trigger())
 				ret = trig->triggerlevel * 10000;
@@ -8075,7 +8075,7 @@ int32_t get_register(int32_t arg)
 			ret = -10000;
 			if(ri->comboref < 0 || ri->comboref > (MAXCOMBOS-1) )
 			{
-				scripting_log_error_with_context("Invalid combodata ID: {}", ri->comboref);
+				scripting_log_error_with_context("Invalid combodata ID: {}", GET_COMBOREF);
 			}
 			else ret = combobuf[GET_COMBOREF].triggers.size() * 10000;
 			break;
@@ -8085,7 +8085,7 @@ int32_t get_register(int32_t arg)
 			ret = 0;
 			if(ri->comboref < 0 || ri->comboref > (MAXCOMBOS-1) )
 			{
-				scripting_log_error_with_context("Invalid combodata ID: {}", ri->comboref);
+				scripting_log_error_with_context("Invalid combodata ID: {}", GET_COMBOREF);
 			}
 			else ret = combobuf[GET_COMBOREF].only_gentrig ? 10000 : 0;
 			break;
@@ -8095,7 +8095,7 @@ int32_t get_register(int32_t arg)
 			ret = 0;
 			if(ri->comboref < 0 || ri->comboref > (MAXCOMBOS-1) )
 			{
-				scripting_log_error_with_context("Invalid combodata ID: {}", ri->comboref);
+				scripting_log_error_with_context("Invalid combodata ID: {}", GET_COMBOREF);
 			}
 			else ret = combobuf[GET_COMBOREF].z_height.getZLong();
 			break;
@@ -8105,7 +8105,7 @@ int32_t get_register(int32_t arg)
 			ret = 0;
 			if(ri->comboref < 0 || ri->comboref > (MAXCOMBOS-1) )
 			{
-				scripting_log_error_with_context("Invalid combodata ID: {}", ri->comboref);
+				scripting_log_error_with_context("Invalid combodata ID: {}", GET_COMBOREF);
 			}
 			else ret = combobuf[GET_COMBOREF].z_step_height.getZLong();
 			break;
@@ -8115,7 +8115,7 @@ int32_t get_register(int32_t arg)
 			ret = 0;
 			if(ri->comboref < 0 || ri->comboref > (MAXCOMBOS-1) )
 			{
-				scripting_log_error_with_context("Invalid combodata ID: {}", ri->comboref);
+				scripting_log_error_with_context("Invalid combodata ID: {}", GET_COMBOREF);
 			}
 			else ret = combobuf[GET_COMBOREF].dive_under_level * 10000;
 			break;
@@ -11965,7 +11965,7 @@ void set_register(int32_t arg, int32_t value)
 		case IDATATYPE:
 			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
+				scripting_log_error_with_context("Invalid itemdata access: {}", GET_ITEMCLASSREF);
 				break;
 			}
 			(itemsbuf[GET_ITEMCLASSREF].type)=vbound(value/10000,0, 254);
@@ -11975,7 +11975,7 @@ void set_register(int32_t arg, int32_t value)
 		case IDATAUSEWPN:
 			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
+				scripting_log_error_with_context("Invalid itemdata access: {}", GET_ITEMCLASSREF);
 				break;
 			}
 			(itemsbuf[GET_ITEMCLASSREF].weap_data.imitate_weapon)=vbound(value/10000, 0, 255);
@@ -11983,7 +11983,7 @@ void set_register(int32_t arg, int32_t value)
 		case IDATAUSEDEF:
 			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
+				scripting_log_error_with_context("Invalid itemdata access: {}", GET_ITEMCLASSREF);
 				break;
 			}
 			(itemsbuf[GET_ITEMCLASSREF].weap_data.default_defense)=vbound(value/10000, 0, 255);
@@ -11991,7 +11991,7 @@ void set_register(int32_t arg, int32_t value)
 		case IDATAWRANGE:
 			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
+				scripting_log_error_with_context("Invalid itemdata access: {}", GET_ITEMCLASSREF);
 				break;
 			}
 			(itemsbuf[GET_ITEMCLASSREF].weaprange)=vbound(value/10000, 0, 255);
@@ -11999,7 +11999,7 @@ void set_register(int32_t arg, int32_t value)
 		case IDATAMAGICTIMER:
 			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
+				scripting_log_error_with_context("Invalid itemdata access: {}", GET_ITEMCLASSREF);
 				break;
 			}
 			(itemsbuf[GET_ITEMCLASSREF].magiccosttimer[0])=vbound(value/10000, 0, 214747);
@@ -12007,7 +12007,7 @@ void set_register(int32_t arg, int32_t value)
 		case IDATAMAGICTIMER2:
 			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
+				scripting_log_error_with_context("Invalid itemdata access: {}", GET_ITEMCLASSREF);
 				break;
 			}
 			(itemsbuf[GET_ITEMCLASSREF].magiccosttimer[1])=vbound(value/10000, 0, 214747);
@@ -12015,7 +12015,7 @@ void set_register(int32_t arg, int32_t value)
 		case IDATADURATION:
 			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
+				scripting_log_error_with_context("Invalid itemdata access: {}", GET_ITEMCLASSREF);
 				break;
 			}
 			(itemsbuf[GET_ITEMCLASSREF].weapduration)=vbound(value/10000, 0, 255);
@@ -12024,7 +12024,7 @@ void set_register(int32_t arg, int32_t value)
 		case IDATADUPLICATES:
 			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
+				scripting_log_error_with_context("Invalid itemdata access: {}", GET_ITEMCLASSREF);
 				break;
 			}
 			(itemsbuf[GET_ITEMCLASSREF].duplicates)=vbound(value/10000, 0, 255);
@@ -12032,7 +12032,7 @@ void set_register(int32_t arg, int32_t value)
 		case IDATADRAWLAYER:
 			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
+				scripting_log_error_with_context("Invalid itemdata access: {}", GET_ITEMCLASSREF);
 				break;
 			}
 			(itemsbuf[GET_ITEMCLASSREF].drawlayer)=vbound(value/10000, 0, 7);
@@ -12040,7 +12040,7 @@ void set_register(int32_t arg, int32_t value)
 		case IDATACOLLECTFLAGS:
 			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
+				scripting_log_error_with_context("Invalid itemdata access: {}", GET_ITEMCLASSREF);
 				break;
 			}
 			//int32_t a = GET_D(rINDEX) / 10000;
@@ -12049,7 +12049,7 @@ void set_register(int32_t arg, int32_t value)
 		case IDATAWEAPONSCRIPT:
 			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
+				scripting_log_error_with_context("Invalid itemdata access: {}", GET_ITEMCLASSREF);
 				break;
 			}
 			(itemsbuf[GET_ITEMCLASSREF].weap_data.script)=vbound(value/10000, 0, 255);
@@ -12057,7 +12057,7 @@ void set_register(int32_t arg, int32_t value)
 		case IDATAWEAPHXOFS:
 			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
+				scripting_log_error_with_context("Invalid itemdata access: {}", GET_ITEMCLASSREF);
 				break;
 			}
 			(itemsbuf[GET_ITEMCLASSREF].weap_data.hxofs)=(value/10000);
@@ -12065,7 +12065,7 @@ void set_register(int32_t arg, int32_t value)
 		case IDATAWEAPHYOFS:
 			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
+				scripting_log_error_with_context("Invalid itemdata access: {}", GET_ITEMCLASSREF);
 				break;
 			}
 			(itemsbuf[GET_ITEMCLASSREF].weap_data.hyofs)=(value/10000);
@@ -12073,7 +12073,7 @@ void set_register(int32_t arg, int32_t value)
 		case IDATAWEAPHXSZ:
 			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
+				scripting_log_error_with_context("Invalid itemdata access: {}", GET_ITEMCLASSREF);
 				break;
 			}
 			(itemsbuf[GET_ITEMCLASSREF].weap_data.hxsz)=(value/10000);
@@ -12081,7 +12081,7 @@ void set_register(int32_t arg, int32_t value)
 		case IDATAWEAPHYSZ:
 			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
+				scripting_log_error_with_context("Invalid itemdata access: {}", GET_ITEMCLASSREF);
 				break;
 			}
 			(itemsbuf[GET_ITEMCLASSREF].weap_data.hysz)=(value/10000);
@@ -12089,7 +12089,7 @@ void set_register(int32_t arg, int32_t value)
 		case IDATAWEAPHZSZ:
 			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
+				scripting_log_error_with_context("Invalid itemdata access: {}", GET_ITEMCLASSREF);
 				break;
 			}
 			(itemsbuf[GET_ITEMCLASSREF].weap_data.hzsz)=(value/10000);
@@ -12097,7 +12097,7 @@ void set_register(int32_t arg, int32_t value)
 		case IDATAWEAPXOFS:
 			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
+				scripting_log_error_with_context("Invalid itemdata access: {}", GET_ITEMCLASSREF);
 				break;
 			}
 			(itemsbuf[GET_ITEMCLASSREF].weap_data.xofs)=(value/10000);
@@ -12105,7 +12105,7 @@ void set_register(int32_t arg, int32_t value)
 		case IDATAWEAPYOFS:
 			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
+				scripting_log_error_with_context("Invalid itemdata access: {}", GET_ITEMCLASSREF);
 				break;
 			}
 			(itemsbuf[GET_ITEMCLASSREF].weap_data.yofs)=(value/10000);
@@ -12115,7 +12115,7 @@ void set_register(int32_t arg, int32_t value)
 		case IDATAHXOFS:
 			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
+				scripting_log_error_with_context("Invalid itemdata access: {}", GET_ITEMCLASSREF);
 				break;
 			}
 			(itemsbuf[GET_ITEMCLASSREF].hxofs)=(value/10000);
@@ -12123,7 +12123,7 @@ void set_register(int32_t arg, int32_t value)
 		case IDATAHYOFS:
 			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
+				scripting_log_error_with_context("Invalid itemdata access: {}", GET_ITEMCLASSREF);
 				break;
 			}
 			(itemsbuf[GET_ITEMCLASSREF].hyofs)=(value/10000);
@@ -12131,7 +12131,7 @@ void set_register(int32_t arg, int32_t value)
 		case IDATAHXSZ:
 			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
+				scripting_log_error_with_context("Invalid itemdata access: {}", GET_ITEMCLASSREF);
 				break;
 			}
 			(itemsbuf[GET_ITEMCLASSREF].hxsz)=(value/10000);
@@ -12139,7 +12139,7 @@ void set_register(int32_t arg, int32_t value)
 		case IDATAHYSZ:
 			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
+				scripting_log_error_with_context("Invalid itemdata access: {}", GET_ITEMCLASSREF);
 				break;
 			}
 			(itemsbuf[GET_ITEMCLASSREF].hysz)=(value/10000);
@@ -12147,7 +12147,7 @@ void set_register(int32_t arg, int32_t value)
 		case IDATAHZSZ:
 			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
+				scripting_log_error_with_context("Invalid itemdata access: {}", GET_ITEMCLASSREF);
 				break;
 			}
 			(itemsbuf[GET_ITEMCLASSREF].hzsz)=(value/10000);
@@ -12155,7 +12155,7 @@ void set_register(int32_t arg, int32_t value)
 		case IDATADXOFS:
 			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
+				scripting_log_error_with_context("Invalid itemdata access: {}", GET_ITEMCLASSREF);
 				break;
 			}
 			(itemsbuf[GET_ITEMCLASSREF].xofs)=(value/10000);
@@ -12163,7 +12163,7 @@ void set_register(int32_t arg, int32_t value)
 		case IDATADYOFS:
 			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
+				scripting_log_error_with_context("Invalid itemdata access: {}", GET_ITEMCLASSREF);
 				break;
 			}
 			(itemsbuf[GET_ITEMCLASSREF].yofs)=(value/10000);
@@ -12171,7 +12171,7 @@ void set_register(int32_t arg, int32_t value)
 		case IDATATILEW:
 			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
+				scripting_log_error_with_context("Invalid itemdata access: {}", GET_ITEMCLASSREF);
 				break;
 			}
 			(itemsbuf[GET_ITEMCLASSREF].tilew)=(value/10000);
@@ -12179,7 +12179,7 @@ void set_register(int32_t arg, int32_t value)
 		case IDATATILEH:
 			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
+				scripting_log_error_with_context("Invalid itemdata access: {}", GET_ITEMCLASSREF);
 				break;
 			}
 			(itemsbuf[GET_ITEMCLASSREF].tileh)=(value/10000);
@@ -12187,7 +12187,7 @@ void set_register(int32_t arg, int32_t value)
 		case IDATAPICKUP:
 			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
+				scripting_log_error_with_context("Invalid itemdata access: {}", GET_ITEMCLASSREF);
 				break;
 			}
 			(itemsbuf[GET_ITEMCLASSREF].pickup)=(value/10000);
@@ -12195,7 +12195,7 @@ void set_register(int32_t arg, int32_t value)
 		case IDATAOVERRIDEFL:
 			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
+				scripting_log_error_with_context("Invalid itemdata access: {}", GET_ITEMCLASSREF);
 				break;
 			}
 			(itemsbuf[GET_ITEMCLASSREF].overrideFLAGS)=(value/10000);
@@ -12204,7 +12204,7 @@ void set_register(int32_t arg, int32_t value)
 		case IDATATILEWWEAP:
 			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
+				scripting_log_error_with_context("Invalid itemdata access: {}", GET_ITEMCLASSREF);
 				break;
 			}
 			(itemsbuf[GET_ITEMCLASSREF].weap_data.tilew)=(value/10000);
@@ -12212,7 +12212,7 @@ void set_register(int32_t arg, int32_t value)
 		case IDATATILEHWEAP:
 			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
+				scripting_log_error_with_context("Invalid itemdata access: {}", GET_ITEMCLASSREF);
 				break;
 			}
 			(itemsbuf[GET_ITEMCLASSREF].weap_data.tileh)=(value/10000);
@@ -12220,7 +12220,7 @@ void set_register(int32_t arg, int32_t value)
 		case IDATAOVERRIDEFLWEAP:
 			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
+				scripting_log_error_with_context("Invalid itemdata access: {}", GET_ITEMCLASSREF);
 				break;
 			}
 			(itemsbuf[GET_ITEMCLASSREF].weap_data.override_flags)=(value/10000);
@@ -12229,7 +12229,7 @@ void set_register(int32_t arg, int32_t value)
 		case IDATALEVEL:
 			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
+				scripting_log_error_with_context("Invalid itemdata access: {}", GET_ITEMCLASSREF);
 				break;
 			}
 			(itemsbuf[GET_ITEMCLASSREF].level)=vbound(value/10000, 0, 512);
@@ -12242,7 +12242,7 @@ void set_register(int32_t arg, int32_t value)
 		{
 			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
+				scripting_log_error_with_context("Invalid itemdata access: {}", GET_ITEMCLASSREF);
 				break;
 			}
 			int32_t v = vbound(value/10000, -9999, 16383);
@@ -12254,7 +12254,7 @@ void set_register(int32_t arg, int32_t value)
 		{
 			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
+				scripting_log_error_with_context("Invalid itemdata access: {}", GET_ITEMCLASSREF);
 				break;
 			}
 			SETFLAG(itemsbuf[GET_ITEMCLASSREF].amount, 0x8000, value!=0);
@@ -12278,14 +12278,14 @@ void set_register(int32_t arg, int32_t value)
 		case IDATAUSEBURNSPR:
 			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
+				scripting_log_error_with_context("Invalid itemdata access: {}", GET_ITEMCLASSREF);
 			}
 			else SETFLAG(itemsbuf[GET_ITEMCLASSREF].weap_data.wflags, WFLAG_UPDATE_IGNITE_SPRITE, value);
 			break;
 		case IDATASETMAX:
 			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
+				scripting_log_error_with_context("Invalid itemdata access: {}", GET_ITEMCLASSREF);
 				break;
 			}
 			(itemsbuf[GET_ITEMCLASSREF].setmax)=value/10000;
@@ -12294,7 +12294,7 @@ void set_register(int32_t arg, int32_t value)
 		case IDATAMAX:
 			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
+				scripting_log_error_with_context("Invalid itemdata access: {}", GET_ITEMCLASSREF);
 				break;
 			}
 			(itemsbuf[GET_ITEMCLASSREF].max)=value/10000;
@@ -12303,7 +12303,7 @@ void set_register(int32_t arg, int32_t value)
 		case IDATAPOWER:
 			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
+				scripting_log_error_with_context("Invalid itemdata access: {}", GET_ITEMCLASSREF);
 				break;
 			}
 			(itemsbuf[GET_ITEMCLASSREF].power)=value/10000;
@@ -12312,7 +12312,7 @@ void set_register(int32_t arg, int32_t value)
 		case IDATACOUNTER:
 			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
+				scripting_log_error_with_context("Invalid itemdata access: {}", GET_ITEMCLASSREF);
 				break;
 			}
 			(itemsbuf[GET_ITEMCLASSREF].count)=vbound(value/10000,0,31);
@@ -12321,7 +12321,7 @@ void set_register(int32_t arg, int32_t value)
 		case IDATAPSOUND:
 			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
+				scripting_log_error_with_context("Invalid itemdata access: {}", GET_ITEMCLASSREF);
 				break;
 			}
 			(itemsbuf[GET_ITEMCLASSREF].playsound)=vbound(value/10000, 0, 255);
@@ -12330,7 +12330,7 @@ void set_register(int32_t arg, int32_t value)
 		case IDATAUSESOUND:
 			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
+				scripting_log_error_with_context("Invalid itemdata access: {}", GET_ITEMCLASSREF);
 				break;
 			}
 			(itemsbuf[GET_ITEMCLASSREF].usesound)=vbound(value/10000, 0, 255);
@@ -12339,7 +12339,7 @@ void set_register(int32_t arg, int32_t value)
 		case IDATAUSESOUND2:
 			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
+				scripting_log_error_with_context("Invalid itemdata access: {}", GET_ITEMCLASSREF);
 				break;
 			}
 			(itemsbuf[GET_ITEMCLASSREF].usesound2)=vbound(value/10000, 0, 255);
@@ -12388,7 +12388,7 @@ void set_register(int32_t arg, int32_t value)
 		case IDATASCRIPT:
 			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
+				scripting_log_error_with_context("Invalid itemdata access: {}", GET_ITEMCLASSREF);
 				break;
 			}
 			FFScript::deallocateAllScriptOwned(ScriptType::Item, ri->itemclassref);
@@ -12397,7 +12397,7 @@ void set_register(int32_t arg, int32_t value)
 		case IDATASPRSCRIPT:
 			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
+				scripting_log_error_with_context("Invalid itemdata access: {}", GET_ITEMCLASSREF);
 				break;
 			}
 			itemsbuf[GET_ITEMCLASSREF].sprite_script=vbound(value/10000,0,255);
@@ -12408,7 +12408,7 @@ void set_register(int32_t arg, int32_t value)
 		{
 			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
+				scripting_log_error_with_context("Invalid itemdata access: {}", GET_ITEMCLASSREF);
 				break;
 			}
 			auto new_value = value/10000;
@@ -12422,7 +12422,7 @@ void set_register(int32_t arg, int32_t value)
 		{
 			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
+				scripting_log_error_with_context("Invalid itemdata access: {}", GET_ITEMCLASSREF);
 				break;
 			}
 			//Need to get collect script ref, not standard idata ref!
@@ -12435,7 +12435,7 @@ void set_register(int32_t arg, int32_t value)
 		case IDATAPSTRING:
 			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
+				scripting_log_error_with_context("Invalid itemdata access: {}", GET_ITEMCLASSREF);
 				break;
 			}
 			itemsbuf[GET_ITEMCLASSREF].pstring=vbound(value/10000, 1, 255);
@@ -12443,7 +12443,7 @@ void set_register(int32_t arg, int32_t value)
 		case IDATAPFLAGS:
 			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
+				scripting_log_error_with_context("Invalid itemdata access: {}", GET_ITEMCLASSREF);
 				break;
 			}
 			itemsbuf[GET_ITEMCLASSREF].pickup_string_flags=vbound(value/10000, 0, 214748);
@@ -12451,7 +12451,7 @@ void set_register(int32_t arg, int32_t value)
 		case IDATAPICKUPLITEMS:
 			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
+				scripting_log_error_with_context("Invalid itemdata access: {}", GET_ITEMCLASSREF);
 				break;
 			}
 			itemsbuf[GET_ITEMCLASSREF].pickup_litems = vbound(value/10000, 0, 214748) & LI_ALL;
@@ -12459,7 +12459,7 @@ void set_register(int32_t arg, int32_t value)
 		case IDATAPICKUPLITEMLEVEL:
 			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
+				scripting_log_error_with_context("Invalid itemdata access: {}", GET_ITEMCLASSREF);
 				break;
 			}
 			itemsbuf[GET_ITEMCLASSREF].pickup_litem_level = vbound(value/10000, -1, MAXLEVELS-1);
@@ -12468,7 +12468,7 @@ void set_register(int32_t arg, int32_t value)
 		case IDATAMAGCOST:
 			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
+				scripting_log_error_with_context("Invalid itemdata access: {}", GET_ITEMCLASSREF);
 				break;
 			}
 			itemsbuf[GET_ITEMCLASSREF].cost_amount[0]=vbound(value/10000,32767,-32768);
@@ -12476,7 +12476,7 @@ void set_register(int32_t arg, int32_t value)
 		case IDATACOST2:
 			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
+				scripting_log_error_with_context("Invalid itemdata access: {}", GET_ITEMCLASSREF);
 				break;
 			}
 			itemsbuf[GET_ITEMCLASSREF].cost_amount[1]=vbound(value/10000,32767,-32768);
@@ -12484,7 +12484,7 @@ void set_register(int32_t arg, int32_t value)
 		case IDATACOOLDOWN:
 			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
+				scripting_log_error_with_context("Invalid itemdata access: {}", GET_ITEMCLASSREF);
 				break;
 			}
 			itemsbuf[GET_ITEMCLASSREF].cooldown = zc_max(value/10000,0);
@@ -12493,7 +12493,7 @@ void set_register(int32_t arg, int32_t value)
 		case IDATACOSTCOUNTER:
 			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
+				scripting_log_error_with_context("Invalid itemdata access: {}", GET_ITEMCLASSREF);
 				break;
 			}
 			itemsbuf[GET_ITEMCLASSREF].cost_counter[0]=(vbound(value/10000,-1,32));
@@ -12501,7 +12501,7 @@ void set_register(int32_t arg, int32_t value)
 		case IDATACOSTCOUNTER2:
 			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
+				scripting_log_error_with_context("Invalid itemdata access: {}", GET_ITEMCLASSREF);
 				break;
 			}
 			itemsbuf[GET_ITEMCLASSREF].cost_counter[1]=(vbound(value/10000,-1,32));
@@ -12510,7 +12510,7 @@ void set_register(int32_t arg, int32_t value)
 		case IDATAMINHEARTS:
 			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
+				scripting_log_error_with_context("Invalid itemdata access: {}", GET_ITEMCLASSREF);
 				break;
 			}
 			itemsbuf[GET_ITEMCLASSREF].pickup_hearts=vbound(value/10000, 0, 214748);
@@ -12519,7 +12519,7 @@ void set_register(int32_t arg, int32_t value)
 		case IDATATILE:
 			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
+				scripting_log_error_with_context("Invalid itemdata access: {}", GET_ITEMCLASSREF);
 				break;
 			}
 			itemsbuf[GET_ITEMCLASSREF].tile=vbound(value/10000, 0, NEWMAXTILES-1);
@@ -12528,7 +12528,7 @@ void set_register(int32_t arg, int32_t value)
 		case IDATAMISC:
 			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
+				scripting_log_error_with_context("Invalid itemdata access: {}", GET_ITEMCLASSREF);
 				break;
 			}
 			itemsbuf[GET_ITEMCLASSREF].misc_flags=value/10000;
@@ -12537,7 +12537,7 @@ void set_register(int32_t arg, int32_t value)
 		case IDATACSET:
 			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
+				scripting_log_error_with_context("Invalid itemdata access: {}", GET_ITEMCLASSREF);
 				break;
 			}
 
@@ -12553,7 +12553,7 @@ void set_register(int32_t arg, int32_t value)
 		case IDATAFLASHCSET:
 			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
+				scripting_log_error_with_context("Invalid itemdata access: {}", GET_ITEMCLASSREF);
 				break;
 			}
 
@@ -12568,7 +12568,7 @@ void set_register(int32_t arg, int32_t value)
 		case IDATAFRAMES:
 			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
+				scripting_log_error_with_context("Invalid itemdata access: {}", GET_ITEMCLASSREF);
 				break;
 			}
 			(itemsbuf[GET_ITEMCLASSREF].frames)=vbound(value/10000, 0, 214748);
@@ -12577,7 +12577,7 @@ void set_register(int32_t arg, int32_t value)
 		case IDATAASPEED:
 			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
+				scripting_log_error_with_context("Invalid itemdata access: {}", GET_ITEMCLASSREF);
 				break;
 			}
 			itemsbuf[GET_ITEMCLASSREF].speed=vbound(value/10000, 0, 214748);
@@ -12586,7 +12586,7 @@ void set_register(int32_t arg, int32_t value)
 		case IDATADELAY:
 			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
+				scripting_log_error_with_context("Invalid itemdata access: {}", GET_ITEMCLASSREF);
 				break;
 			}
 			itemsbuf[GET_ITEMCLASSREF].delay=vbound(value/10000, 0, 214748);
@@ -15071,7 +15071,7 @@ void set_register(int32_t arg, int32_t value)
 		{
 			if(ri->comboref < 0 || ri->comboref > (MAXCOMBOS-1) )
 			{
-				scripting_log_error_with_context("Invalid combodata ID: {}", ri->comboref);
+				scripting_log_error_with_context("Invalid combodata ID: {}", GET_COMBOREF);
 			}
 			else
 			{
@@ -15098,7 +15098,7 @@ void set_register(int32_t arg, int32_t value)
 		{
 			if(ri->comboref < 0 || ri->comboref > (MAXCOMBOS-1) )
 			{
-				scripting_log_error_with_context("Invalid combodata ID: {}", ri->comboref);
+				scripting_log_error_with_context("Invalid combodata ID: {}", GET_COMBOREF);
 			}
 			else
 			{
@@ -15111,7 +15111,7 @@ void set_register(int32_t arg, int32_t value)
 		{
 			if(ri->comboref < 0 || ri->comboref > (MAXCOMBOS-1) )
 			{
-				scripting_log_error_with_context("Invalid combodata ID: {}", ri->comboref);
+				scripting_log_error_with_context("Invalid combodata ID: {}", GET_COMBOREF);
 			}
 			else
 			{
@@ -15124,7 +15124,7 @@ void set_register(int32_t arg, int32_t value)
 		{
 			if(ri->comboref < 0 || ri->comboref > (MAXCOMBOS-1) )
 			{
-				scripting_log_error_with_context("Invalid combodata ID: {}", ri->comboref);
+				scripting_log_error_with_context("Invalid combodata ID: {}", GET_COMBOREF);
 			}
 			else
 			{
@@ -15138,7 +15138,7 @@ void set_register(int32_t arg, int32_t value)
 		{
 			if(ri->comboref < 0 || ri->comboref > (MAXCOMBOS-1) )
 			{
-				scripting_log_error_with_context("Invalid combodata ID: {}", ri->comboref);
+				scripting_log_error_with_context("Invalid combodata ID: {}", GET_COMBOREF);
 			}
 			else
 			{
@@ -15154,7 +15154,7 @@ void set_register(int32_t arg, int32_t value)
 		{
 			if(ri->comboref < 0 || ri->comboref > (MAXCOMBOS-1) )
 			{
-				scripting_log_error_with_context("Invalid combodata ID: {}", ri->comboref);
+				scripting_log_error_with_context("Invalid combodata ID: {}", GET_COMBOREF);
 			}
 			else
 			{
@@ -15179,7 +15179,7 @@ void set_register(int32_t arg, int32_t value)
 		{
 			if(ri->comboref < 0 || ri->comboref > (MAXCOMBOS-1) )
 			{
-				scripting_log_error_with_context("Invalid combodata ID: {}", ri->comboref);
+				scripting_log_error_with_context("Invalid combodata ID: {}", GET_COMBOREF);
 			}
 			else if(auto* trig = get_first_combo_trigger())
 				trig->triggeritem = vbound(value/10000,0,255);
@@ -15189,7 +15189,7 @@ void set_register(int32_t arg, int32_t value)
 		{
 			if(ri->comboref < 0 || ri->comboref > (MAXCOMBOS-1) )
 			{
-				scripting_log_error_with_context("Invalid combodata ID: {}", ri->comboref);
+				scripting_log_error_with_context("Invalid combodata ID: {}", GET_COMBOREF);
 			}
 			else
 			{
@@ -15204,7 +15204,7 @@ void set_register(int32_t arg, int32_t value)
 		{
 			if(ri->comboref < 0 || ri->comboref > (MAXCOMBOS-1) )
 			{
-				scripting_log_error_with_context("Invalid combodata ID: {}", ri->comboref);
+				scripting_log_error_with_context("Invalid combodata ID: {}", GET_COMBOREF);
 			}
 			else if(auto* trig = get_first_combo_trigger())
 				trig->trigsfx = vbound(value/10000,0,255);
@@ -15214,7 +15214,7 @@ void set_register(int32_t arg, int32_t value)
 		{
 			if(ri->comboref < 0 || ri->comboref > (MAXCOMBOS-1) )
 			{
-				scripting_log_error_with_context("Invalid combodata ID: {}", ri->comboref);
+				scripting_log_error_with_context("Invalid combodata ID: {}", GET_COMBOREF);
 			}
 			else if(auto* trig = get_first_combo_trigger())
 				trig->trigchange = vbound(value/10000,-65535,65535);
@@ -15224,7 +15224,7 @@ void set_register(int32_t arg, int32_t value)
 		{
 			if(ri->comboref < 0 || ri->comboref > (MAXCOMBOS-1) )
 			{
-				scripting_log_error_with_context("Invalid combodata ID: {}", ri->comboref);
+				scripting_log_error_with_context("Invalid combodata ID: {}", GET_COMBOREF);
 			}
 			else if(auto* trig = get_first_combo_trigger())
 				trig->trigprox = vbound(value/10000,0,65535);
@@ -15234,7 +15234,7 @@ void set_register(int32_t arg, int32_t value)
 		{
 			if(ri->comboref < 0 || ri->comboref > (MAXCOMBOS-1) )
 			{
-				scripting_log_error_with_context("Invalid combodata ID: {}", ri->comboref);
+				scripting_log_error_with_context("Invalid combodata ID: {}", GET_COMBOREF);
 			}
 			else if(auto* trig = get_first_combo_trigger())
 				trig->triglbeam = vbound(value/10000,0,32);
@@ -15244,7 +15244,7 @@ void set_register(int32_t arg, int32_t value)
 		{
 			if(ri->comboref < 0 || ri->comboref > (MAXCOMBOS-1) )
 			{
-				scripting_log_error_with_context("Invalid combodata ID: {}", ri->comboref);
+				scripting_log_error_with_context("Invalid combodata ID: {}", GET_COMBOREF);
 			}
 			else if(auto* trig = get_first_combo_trigger())
 				trig->trigctr = vbound(value/10000, sscMIN, MAX_COUNTERS-1);
@@ -15254,7 +15254,7 @@ void set_register(int32_t arg, int32_t value)
 		{
 			if(ri->comboref < 0 || ri->comboref > (MAXCOMBOS-1) )
 			{
-				scripting_log_error_with_context("Invalid combodata ID: {}", ri->comboref);
+				scripting_log_error_with_context("Invalid combodata ID: {}", GET_COMBOREF);
 			}
 			else if(auto* trig = get_first_combo_trigger())
 				trig->trigctramnt = vbound(value/10000, -65535, 65535);
@@ -15265,7 +15265,7 @@ void set_register(int32_t arg, int32_t value)
 		{
 			if(ri->comboref < 0 || ri->comboref > (MAXCOMBOS-1) )
 			{
-				scripting_log_error_with_context("Invalid combodata ID: {}", ri->comboref);
+				scripting_log_error_with_context("Invalid combodata ID: {}", GET_COMBOREF);
 			}
 			else if(auto* trig = get_first_combo_trigger())
 				trig->trigcooldown = vbound(value/10000, 0, 255);
@@ -15275,7 +15275,7 @@ void set_register(int32_t arg, int32_t value)
 		{
 			if(ri->comboref < 0 || ri->comboref > (MAXCOMBOS-1) )
 			{
-				scripting_log_error_with_context("Invalid combodata ID: {}", ri->comboref);
+				scripting_log_error_with_context("Invalid combodata ID: {}", GET_COMBOREF);
 			}
 			else if(auto* trig = get_first_combo_trigger())
 				trig->trigcopycat = vbound(value/10000, 0, 255);
@@ -15286,7 +15286,7 @@ void set_register(int32_t arg, int32_t value)
 			const int32_t allowed_pflags = ipHOLDUP | ipTIMER | ipSECRETS | ipCANGRAB;
 			if(ri->comboref < 0 || ri->comboref > (MAXCOMBOS-1) )
 			{
-				scripting_log_error_with_context("Invalid combodata ID: {}", ri->comboref);
+				scripting_log_error_with_context("Invalid combodata ID: {}", GET_COMBOREF);
 			}
 			else if(auto* trig = get_first_combo_trigger())
 				trig->spawnip = (value/10000)&allowed_pflags;
@@ -15296,7 +15296,7 @@ void set_register(int32_t arg, int32_t value)
 		{
 			if(ri->comboref < 0 || ri->comboref > (MAXCOMBOS-1) )
 			{
-				scripting_log_error_with_context("Invalid combodata ID: {}", ri->comboref);
+				scripting_log_error_with_context("Invalid combodata ID: {}", GET_COMBOREF);
 			}
 			else if(auto* trig = get_first_combo_trigger())
 				trig->exstate = vbound(value/10000, -1, 31);
@@ -15306,7 +15306,7 @@ void set_register(int32_t arg, int32_t value)
 		{
 			if(ri->comboref < 0 || ri->comboref > (MAXCOMBOS-1) )
 			{
-				scripting_log_error_with_context("Invalid combodata ID: {}", ri->comboref);
+				scripting_log_error_with_context("Invalid combodata ID: {}", GET_COMBOREF);
 			}
 			else if(auto* trig = get_first_combo_trigger())
 				trig->exdoor_dir = vbound(value/10000, -1, 3);
@@ -15316,7 +15316,7 @@ void set_register(int32_t arg, int32_t value)
 		{
 			if(ri->comboref < 0 || ri->comboref > (MAXCOMBOS-1) )
 			{
-				scripting_log_error_with_context("Invalid combodata ID: {}", ri->comboref);
+				scripting_log_error_with_context("Invalid combodata ID: {}", GET_COMBOREF);
 			}
 			else if(auto* trig = get_first_combo_trigger())
 				trig->exdoor_ind = vbound(value/10000, 0, 7);
@@ -15326,7 +15326,7 @@ void set_register(int32_t arg, int32_t value)
 		{
 			if(ri->comboref < 0 || ri->comboref > (MAXCOMBOS-1) )
 			{
-				scripting_log_error_with_context("Invalid combodata ID: {}", ri->comboref);
+				scripting_log_error_with_context("Invalid combodata ID: {}", GET_COMBOREF);
 			}
 			else if(auto* trig = get_first_combo_trigger())
 				trig->spawnenemy = vbound(value/10000, 0, 511);
@@ -15336,7 +15336,7 @@ void set_register(int32_t arg, int32_t value)
 		{
 			if(ri->comboref < 0 || ri->comboref > (MAXCOMBOS-1) )
 			{
-				scripting_log_error_with_context("Invalid combodata ID: {}", ri->comboref);
+				scripting_log_error_with_context("Invalid combodata ID: {}", GET_COMBOREF);
 			}
 			else if(auto* trig = get_first_combo_trigger())
 				trig->spawnitem = vbound(value/10000, -255, 255);
@@ -15346,7 +15346,7 @@ void set_register(int32_t arg, int32_t value)
 		{
 			if(ri->comboref < 0 || ri->comboref > (MAXCOMBOS-1) )
 			{
-				scripting_log_error_with_context("Invalid combodata ID: {}", ri->comboref);
+				scripting_log_error_with_context("Invalid combodata ID: {}", GET_COMBOREF);
 			}
 			else if(auto* trig = get_first_combo_trigger())
 				trig->trigcschange = vbound(value/10000, -15, 15);
@@ -15356,7 +15356,7 @@ void set_register(int32_t arg, int32_t value)
 		{
 			if(ri->comboref < 0 || ri->comboref > (MAXCOMBOS-1) )
 			{
-				scripting_log_error_with_context("Invalid combodata ID: {}", ri->comboref);
+				scripting_log_error_with_context("Invalid combodata ID: {}", GET_COMBOREF);
 			}
 			else if(auto* trig = get_first_combo_trigger())
 				trig->trig_levelitems = (value/10000)&LI_ALL;
@@ -15366,7 +15366,7 @@ void set_register(int32_t arg, int32_t value)
 		{
 			if(ri->comboref < 0 || ri->comboref > (MAXCOMBOS-1) )
 			{
-				scripting_log_error_with_context("Invalid combodata ID: {}", ri->comboref);
+				scripting_log_error_with_context("Invalid combodata ID: {}", GET_COMBOREF);
 			}
 			else if(auto* trig = get_first_combo_trigger())
 				trig->trigdmlevel = vbound(value/10000, -1, MAXLEVELS-1);
@@ -15376,7 +15376,7 @@ void set_register(int32_t arg, int32_t value)
 		{
 			if(ri->comboref < 0 || ri->comboref > (MAXCOMBOS-1) )
 			{
-				scripting_log_error_with_context("Invalid combodata ID: {}", ri->comboref);
+				scripting_log_error_with_context("Invalid combodata ID: {}", GET_COMBOREF);
 			}
 			else if(auto* trig = get_first_combo_trigger())
 				trig->trigtint[0] = scripting_write_pal_color(vbound(value/10000, -scripting_max_color_val, scripting_max_color_val));
@@ -15386,7 +15386,7 @@ void set_register(int32_t arg, int32_t value)
 		{
 			if(ri->comboref < 0 || ri->comboref > (MAXCOMBOS-1) )
 			{
-				scripting_log_error_with_context("Invalid combodata ID: {}", ri->comboref);
+				scripting_log_error_with_context("Invalid combodata ID: {}", GET_COMBOREF);
 			}
 			else if(auto* trig = get_first_combo_trigger())
 				trig->trigtint[1] = scripting_write_pal_color(vbound(value/10000, -scripting_max_color_val, scripting_max_color_val));
@@ -15396,7 +15396,7 @@ void set_register(int32_t arg, int32_t value)
 		{
 			if(ri->comboref < 0 || ri->comboref > (MAXCOMBOS-1) )
 			{
-				scripting_log_error_with_context("Invalid combodata ID: {}", ri->comboref);
+				scripting_log_error_with_context("Invalid combodata ID: {}", GET_COMBOREF);
 			}
 			else if(auto* trig = get_first_combo_trigger())
 				trig->trigtint[2] = scripting_write_pal_color(vbound(value/10000, -scripting_max_color_val, scripting_max_color_val));
@@ -15406,7 +15406,7 @@ void set_register(int32_t arg, int32_t value)
 		{
 			if(ri->comboref < 0 || ri->comboref > (MAXCOMBOS-1) )
 			{
-				scripting_log_error_with_context("Invalid combodata ID: {}", ri->comboref);
+				scripting_log_error_with_context("Invalid combodata ID: {}", GET_COMBOREF);
 			}
 			else if(auto* trig = get_first_combo_trigger())
 				trig->triglvlpalette = vbound(value/10000, -1, 512);
@@ -15416,7 +15416,7 @@ void set_register(int32_t arg, int32_t value)
 		{
 			if(ri->comboref < 0 || ri->comboref > (MAXCOMBOS-1) )
 			{
-				scripting_log_error_with_context("Invalid combodata ID: {}", ri->comboref);
+				scripting_log_error_with_context("Invalid combodata ID: {}", GET_COMBOREF);
 			}
 			else if(auto* trig = get_first_combo_trigger())
 				trig->trigbosspalette = vbound(value/10000, -1, 29);
@@ -15426,7 +15426,7 @@ void set_register(int32_t arg, int32_t value)
 		{
 			if(ri->comboref < 0 || ri->comboref > (MAXCOMBOS-1) )
 			{
-				scripting_log_error_with_context("Invalid combodata ID: {}", ri->comboref);
+				scripting_log_error_with_context("Invalid combodata ID: {}", GET_COMBOREF);
 			}
 			else if(auto* trig = get_first_combo_trigger())
 				trig->trigquaketime = zc_max(value/10000, -1);
@@ -15436,7 +15436,7 @@ void set_register(int32_t arg, int32_t value)
 		{
 			if(ri->comboref < 0 || ri->comboref > (MAXCOMBOS-1) )
 			{
-				scripting_log_error_with_context("Invalid combodata ID: {}", ri->comboref);
+				scripting_log_error_with_context("Invalid combodata ID: {}", GET_COMBOREF);
 			}
 			else if(auto* trig = get_first_combo_trigger())
 				trig->trigwavytime = zc_max(value/10000, -1);
@@ -15446,7 +15446,7 @@ void set_register(int32_t arg, int32_t value)
 		{
 			if(ri->comboref < 0 || ri->comboref > (MAXCOMBOS-1) )
 			{
-				scripting_log_error_with_context("Invalid combodata ID: {}", ri->comboref);
+				scripting_log_error_with_context("Invalid combodata ID: {}", GET_COMBOREF);
 			}
 			else if(auto* trig = get_first_combo_trigger())
 				trig->trig_swjinxtime = zc_max(value/10000, -2);
@@ -15456,7 +15456,7 @@ void set_register(int32_t arg, int32_t value)
 		{
 			if(ri->comboref < 0 || ri->comboref > (MAXCOMBOS-1) )
 			{
-				scripting_log_error_with_context("Invalid combodata ID: {}", ri->comboref);
+				scripting_log_error_with_context("Invalid combodata ID: {}", GET_COMBOREF);
 			}
 			else if(auto* trig = get_first_combo_trigger())
 				trig->trig_itmjinxtime = zc_max(value/10000, -2);
@@ -15466,7 +15466,7 @@ void set_register(int32_t arg, int32_t value)
 		{
 			if (ri->comboref < 0 || ri->comboref >(MAXCOMBOS - 1))
 			{
-				scripting_log_error_with_context("Invalid combodata ID: {}", ri->comboref);
+				scripting_log_error_with_context("Invalid combodata ID: {}", GET_COMBOREF);
 			}
 			else if(auto* trig = get_first_combo_trigger())
 				trig->trig_shieldjinxtime = zc_max(value / 10000, -2);
@@ -15476,7 +15476,7 @@ void set_register(int32_t arg, int32_t value)
 		{
 			if(ri->comboref < 0 || ri->comboref > (MAXCOMBOS-1) )
 			{
-				scripting_log_error_with_context("Invalid combodata ID: {}", ri->comboref);
+				scripting_log_error_with_context("Invalid combodata ID: {}", GET_COMBOREF);
 			}
 			else if(auto* trig = get_first_combo_trigger())
 				trig->trig_stuntime = zc_max(value/10000, -2);
@@ -15486,7 +15486,7 @@ void set_register(int32_t arg, int32_t value)
 		{
 			if(ri->comboref < 0 || ri->comboref > (MAXCOMBOS-1) )
 			{
-				scripting_log_error_with_context("Invalid combodata ID: {}", ri->comboref);
+				scripting_log_error_with_context("Invalid combodata ID: {}", GET_COMBOREF);
 			}
 			else if(auto* trig = get_first_combo_trigger())
 				trig->trig_bunnytime = zc_max(value/10000, -2);
@@ -15496,7 +15496,7 @@ void set_register(int32_t arg, int32_t value)
 		{
 			if(ri->comboref < 0 || ri->comboref > (MAXCOMBOS-1) )
 			{
-				scripting_log_error_with_context("Invalid combodata ID: {}", ri->comboref);
+				scripting_log_error_with_context("Invalid combodata ID: {}", GET_COMBOREF);
 			}
 			else if(auto* trig = get_first_combo_trigger())
 				trig->trig_pushtime = vbound(value/10000, 0, 255);
@@ -15506,7 +15506,7 @@ void set_register(int32_t arg, int32_t value)
 		{
 			if(ri->comboref < 0 || ri->comboref > (MAXCOMBOS-1) )
 			{
-				scripting_log_error_with_context("Invalid combodata ID: {}", ri->comboref);
+				scripting_log_error_with_context("Invalid combodata ID: {}", GET_COMBOREF);
 			}
 			else combobuf[GET_COMBOREF].liftcmb = vbound(value/10000, 0, MAXCOMBOS);
 			break;
@@ -15515,7 +15515,7 @@ void set_register(int32_t arg, int32_t value)
 		{
 			if(ri->comboref < 0 || ri->comboref > (MAXCOMBOS-1) )
 			{
-				scripting_log_error_with_context("Invalid combodata ID: {}", ri->comboref);
+				scripting_log_error_with_context("Invalid combodata ID: {}", GET_COMBOREF);
 			}
 			else combobuf[GET_COMBOREF].liftcs = vbound(value/10000, 0, 13);
 			break;
@@ -15524,7 +15524,7 @@ void set_register(int32_t arg, int32_t value)
 		{
 			if(ri->comboref < 0 || ri->comboref > (MAXCOMBOS-1) )
 			{
-				scripting_log_error_with_context("Invalid combodata ID: {}", ri->comboref);
+				scripting_log_error_with_context("Invalid combodata ID: {}", GET_COMBOREF);
 			}
 			else combobuf[GET_COMBOREF].liftundercmb = vbound(value/10000, 0, MAXCOMBOS);
 			break;
@@ -15533,7 +15533,7 @@ void set_register(int32_t arg, int32_t value)
 		{
 			if(ri->comboref < 0 || ri->comboref > (MAXCOMBOS-1) )
 			{
-				scripting_log_error_with_context("Invalid combodata ID: {}", ri->comboref);
+				scripting_log_error_with_context("Invalid combodata ID: {}", GET_COMBOREF);
 			}
 			else combobuf[GET_COMBOREF].liftundercs = vbound(value/10000, 0, 13);
 			break;
@@ -15542,7 +15542,7 @@ void set_register(int32_t arg, int32_t value)
 		{
 			if(ri->comboref < 0 || ri->comboref > (MAXCOMBOS-1) )
 			{
-				scripting_log_error_with_context("Invalid combodata ID: {}", ri->comboref);
+				scripting_log_error_with_context("Invalid combodata ID: {}", GET_COMBOREF);
 			}
 			else combobuf[GET_COMBOREF].liftdmg = vbound(value/10000, 0, 255);
 			break;
@@ -15551,7 +15551,7 @@ void set_register(int32_t arg, int32_t value)
 		{
 			if(ri->comboref < 0 || ri->comboref > (MAXCOMBOS-1) )
 			{
-				scripting_log_error_with_context("Invalid combodata ID: {}", ri->comboref);
+				scripting_log_error_with_context("Invalid combodata ID: {}", GET_COMBOREF);
 			}
 			else combobuf[GET_COMBOREF].liftlvl = vbound(value/10000, 0, 255);
 			break;
@@ -15560,7 +15560,7 @@ void set_register(int32_t arg, int32_t value)
 		{
 			if(ri->comboref < 0 || ri->comboref > (MAXCOMBOS-1) )
 			{
-				scripting_log_error_with_context("Invalid combodata ID: {}", ri->comboref);
+				scripting_log_error_with_context("Invalid combodata ID: {}", GET_COMBOREF);
 			}
 			else combobuf[GET_COMBOREF].liftitm = vbound(value/10000, 0, 255);
 			break;
@@ -15569,7 +15569,7 @@ void set_register(int32_t arg, int32_t value)
 		{
 			if(ri->comboref < 0 || ri->comboref > (MAXCOMBOS-1) )
 			{
-				scripting_log_error_with_context("Invalid combodata ID: {}", ri->comboref);
+				scripting_log_error_with_context("Invalid combodata ID: {}", GET_COMBOREF);
 			}
 			else combobuf[GET_COMBOREF].liftgfx = vbound(value/10000, 0, 2);
 			break;
@@ -15578,7 +15578,7 @@ void set_register(int32_t arg, int32_t value)
 		{
 			if(ri->comboref < 0 || ri->comboref > (MAXCOMBOS-1) )
 			{
-				scripting_log_error_with_context("Invalid combodata ID: {}", ri->comboref);
+				scripting_log_error_with_context("Invalid combodata ID: {}", GET_COMBOREF);
 			}
 			else combobuf[GET_COMBOREF].liftsprite = vbound(value/10000, 0, 255);
 			break;
@@ -15587,7 +15587,7 @@ void set_register(int32_t arg, int32_t value)
 		{
 			if(ri->comboref < 0 || ri->comboref > (MAXCOMBOS-1) )
 			{
-				scripting_log_error_with_context("Invalid combodata ID: {}", ri->comboref);
+				scripting_log_error_with_context("Invalid combodata ID: {}", GET_COMBOREF);
 			}
 			else combobuf[GET_COMBOREF].liftsfx = vbound(value/10000, 0, 255);
 			break;
@@ -15596,7 +15596,7 @@ void set_register(int32_t arg, int32_t value)
 		{
 			if(ri->comboref < 0 || ri->comboref > (MAXCOMBOS-1) )
 			{
-				scripting_log_error_with_context("Invalid combodata ID: {}", ri->comboref);
+				scripting_log_error_with_context("Invalid combodata ID: {}", GET_COMBOREF);
 			}
 			else combobuf[GET_COMBOREF].liftbreaksprite = vbound(value/10000, -4, 255);
 			break;
@@ -15605,7 +15605,7 @@ void set_register(int32_t arg, int32_t value)
 		{
 			if(ri->comboref < 0 || ri->comboref > (MAXCOMBOS-1) )
 			{
-				scripting_log_error_with_context("Invalid combodata ID: {}", ri->comboref);
+				scripting_log_error_with_context("Invalid combodata ID: {}", GET_COMBOREF);
 			}
 			else combobuf[GET_COMBOREF].liftbreaksfx = vbound(value/10000, 0, 255);
 			break;
@@ -15614,7 +15614,7 @@ void set_register(int32_t arg, int32_t value)
 		{
 			if(ri->comboref < 0 || ri->comboref > (MAXCOMBOS-1) )
 			{
-				scripting_log_error_with_context("Invalid combodata ID: {}", ri->comboref);
+				scripting_log_error_with_context("Invalid combodata ID: {}", GET_COMBOREF);
 			}
 			else combobuf[GET_COMBOREF].lifthei = vbound(value/10000, 0, 255);
 			break;
@@ -15623,7 +15623,7 @@ void set_register(int32_t arg, int32_t value)
 		{
 			if(ri->comboref < 0 || ri->comboref > (MAXCOMBOS-1) )
 			{
-				scripting_log_error_with_context("Invalid combodata ID: {}", ri->comboref);
+				scripting_log_error_with_context("Invalid combodata ID: {}", GET_COMBOREF);
 			}
 			else combobuf[GET_COMBOREF].lifttime = vbound(value/10000, 0, 255);
 			break;
@@ -15632,7 +15632,7 @@ void set_register(int32_t arg, int32_t value)
 		{
 			if(ri->comboref < 0 || ri->comboref > (MAXCOMBOS-1) )
 			{
-				scripting_log_error_with_context("Invalid combodata ID: {}", ri->comboref);
+				scripting_log_error_with_context("Invalid combodata ID: {}", GET_COMBOREF);
 			}
 			else combobuf[GET_COMBOREF].lift_weap_data.light_rads[WPNSPR_BASE] = vbound(value/10000, 0, 255);
 			break;
@@ -15641,7 +15641,7 @@ void set_register(int32_t arg, int32_t value)
 		{
 			if(ri->comboref < 0 || ri->comboref > (MAXCOMBOS-1) )
 			{
-				scripting_log_error_with_context("Invalid combodata ID: {}", ri->comboref);
+				scripting_log_error_with_context("Invalid combodata ID: {}", GET_COMBOREF);
 			}
 			else combobuf[GET_COMBOREF].lift_weap_data.glow_shape = vbound(value/10000, 0, 2);
 			break;
@@ -15650,7 +15650,7 @@ void set_register(int32_t arg, int32_t value)
 		{
 			if(ri->comboref < 0 || ri->comboref > (MAXCOMBOS-1) )
 			{
-				scripting_log_error_with_context("Invalid combodata ID: {}", ri->comboref);
+				scripting_log_error_with_context("Invalid combodata ID: {}", GET_COMBOREF);
 			}
 			else combobuf[GET_COMBOREF].lift_parent_item = vbound(value/10000, 0, 255);
 			break;
@@ -15659,7 +15659,7 @@ void set_register(int32_t arg, int32_t value)
 		{
 			if(ri->comboref < 0 || ri->comboref > (MAXCOMBOS-1) )
 			{
-				scripting_log_error_with_context("Invalid combodata ID: {}", ri->comboref);
+				scripting_log_error_with_context("Invalid combodata ID: {}", GET_COMBOREF);
 			}
 			else if(auto* trig = get_first_combo_trigger())
 				trig->trig_lstate = vbound(value/10000, 0, 31);
@@ -15669,7 +15669,7 @@ void set_register(int32_t arg, int32_t value)
 		{
 			if(ri->comboref < 0 || ri->comboref > (MAXCOMBOS-1) )
 			{
-				scripting_log_error_with_context("Invalid combodata ID: {}", ri->comboref);
+				scripting_log_error_with_context("Invalid combodata ID: {}", GET_COMBOREF);
 			}
 			else if(auto* trig = get_first_combo_trigger())
 				trig->trig_gstate = vbound(value/10000, 0, 255);
@@ -15679,7 +15679,7 @@ void set_register(int32_t arg, int32_t value)
 		{
 			if(ri->comboref < 0 || ri->comboref > (MAXCOMBOS-1) )
 			{
-				scripting_log_error_with_context("Invalid combodata ID: {}", ri->comboref);
+				scripting_log_error_with_context("Invalid combodata ID: {}", GET_COMBOREF);
 			}
 			else if(auto* trig = get_first_combo_trigger())
 				trig->trig_group = vbound(value/10000, 0, 255);
@@ -15689,7 +15689,7 @@ void set_register(int32_t arg, int32_t value)
 		{
 			if(ri->comboref < 0 || ri->comboref > (MAXCOMBOS-1) )
 			{
-				scripting_log_error_with_context("Invalid combodata ID: {}", ri->comboref);
+				scripting_log_error_with_context("Invalid combodata ID: {}", GET_COMBOREF);
 			}
 			else if(auto* trig = get_first_combo_trigger())
 				trig->trig_group_val = vbound(value/10000, 0, 65535);
@@ -15699,7 +15699,7 @@ void set_register(int32_t arg, int32_t value)
 		{
 			if(ri->comboref < 0 || ri->comboref > (MAXCOMBOS-1) )
 			{
-				scripting_log_error_with_context("Invalid combodata ID: {}", ri->comboref);
+				scripting_log_error_with_context("Invalid combodata ID: {}", GET_COMBOREF);
 			}
 			else if(auto* trig = get_first_combo_trigger())
 				trig->trig_statetime = vbound(value/10000, 0, 214748);
@@ -15709,7 +15709,7 @@ void set_register(int32_t arg, int32_t value)
 		{
 			if(ri->comboref < 0 || ri->comboref > (MAXCOMBOS-1) )
 			{
-				scripting_log_error_with_context("Invalid combodata ID: {}", ri->comboref);
+				scripting_log_error_with_context("Invalid combodata ID: {}", GET_COMBOREF);
 			}
 			else if(auto* trig = get_first_combo_trigger())
 				trig->trig_genscr = vbound(value/10000, 0, 65535);
@@ -15719,7 +15719,7 @@ void set_register(int32_t arg, int32_t value)
 		{
 			if(ri->comboref < 0 || ri->comboref > (MAXCOMBOS-1) )
 			{
-				scripting_log_error_with_context("Invalid combodata ID: {}", ri->comboref);
+				scripting_log_error_with_context("Invalid combodata ID: {}", GET_COMBOREF);
 			}
 			else if(auto* trig = get_first_combo_trigger())
 				trig->triggerlevel = vbound(value/10000, 0, 214747);
@@ -15729,7 +15729,7 @@ void set_register(int32_t arg, int32_t value)
 		{
 			if(ri->comboref < 0 || ri->comboref > (MAXCOMBOS-1) )
 			{
-				scripting_log_error_with_context("Invalid combodata ID: {}", ri->comboref);
+				scripting_log_error_with_context("Invalid combodata ID: {}", GET_COMBOREF);
 			}
 			else
 				combobuf[GET_COMBOREF].triggers.resize(vbound(value / 10000, 0, MAX_COMBO_TRIGGERS));
@@ -15739,7 +15739,7 @@ void set_register(int32_t arg, int32_t value)
 		{
 			if(ri->comboref < 0 || ri->comboref > (MAXCOMBOS-1) )
 			{
-				scripting_log_error_with_context("Invalid combodata ID: {}", ri->comboref);
+				scripting_log_error_with_context("Invalid combodata ID: {}", GET_COMBOREF);
 			}
 			else
 				combobuf[GET_COMBOREF].only_gentrig = value != 0 ? 1 : 0;
@@ -15749,7 +15749,7 @@ void set_register(int32_t arg, int32_t value)
 		{
 			if(ri->comboref < 0 || ri->comboref > (MAXCOMBOS-1) )
 			{
-				scripting_log_error_with_context("Invalid combodata ID: {}", ri->comboref);
+				scripting_log_error_with_context("Invalid combodata ID: {}", GET_COMBOREF);
 			}
 			else
 				combobuf[GET_COMBOREF].z_height = zslongToFix(value);
@@ -15759,7 +15759,7 @@ void set_register(int32_t arg, int32_t value)
 		{
 			if(ri->comboref < 0 || ri->comboref > (MAXCOMBOS-1) )
 			{
-				scripting_log_error_with_context("Invalid combodata ID: {}", ri->comboref);
+				scripting_log_error_with_context("Invalid combodata ID: {}", GET_COMBOREF);
 			}
 			else
 				combobuf[GET_COMBOREF].z_step_height = zslongToFix(zc_max(0,value));
@@ -15769,7 +15769,7 @@ void set_register(int32_t arg, int32_t value)
 		{
 			if(ri->comboref < 0 || ri->comboref > (MAXCOMBOS-1) )
 			{
-				scripting_log_error_with_context("Invalid combodata ID: {}", ri->comboref);
+				scripting_log_error_with_context("Invalid combodata ID: {}", GET_COMBOREF);
 			}
 			else
 				combobuf[GET_COMBOREF].dive_under_level = (byte)vbound(value / 10000, 0, 255);
@@ -22161,7 +22161,7 @@ void FFScript::do_loadcombodata(const bool v)
 	
 	if ( (unsigned)ID > (MAXCOMBOS-1) )
 	{
-		scripting_log_error_with_context("Invalid combodata ID: {}", ri->comboref);
+		scripting_log_error_with_context("Invalid combodata ID: {}", GET_COMBOREF);
 		ri->comboref = 0;
 	}
 
@@ -24371,7 +24371,7 @@ void do_getitemname()
 	int32_t arrayptr = get_register(sarg1);
 	if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 	{
-		scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
+		scripting_log_error_with_context("Invalid itemdata access: {}", GET_ITEMCLASSREF);
 		return;
 	}
 	
@@ -28679,7 +28679,7 @@ int32_t run_script_int(JittedScriptInstance* j_instance)
 			{
 				if(ri->comboref < 0 || ri->comboref > (MAXCOMBOS-1) )
 				{
-					scripting_log_error_with_context("Invalid combodata ID: {}", ri->comboref);
+					scripting_log_error_with_context("Invalid combodata ID: {}", GET_COMBOREF);
 				}
 				else
 				{
