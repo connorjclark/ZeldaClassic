@@ -6475,7 +6475,7 @@ int32_t get_register(int32_t arg)
 			if(unsigned(GET_SPRITEDATAREF) > (MAXWPNS-1) )
 			{
 				ret = -10000;
-				Z_scripterrlog("Invalid Sprite ID passed to spritedata->ID: %d\n", (ri->spritedataref*10000));
+				Z_scripterrlog("Invalid Sprite ID passed to spritedata->ID: %d\n", GET_SPRITEDATAREF);
 				break;
 			}
 			ret = ri->spritedataref*10000;
@@ -7163,7 +7163,7 @@ int32_t get_register(int32_t arg)
 		{ \
 			if(ri->comboref < 0 || ri->comboref > (MAXCOMBOS-1) ) \
 			{ \
-				scripting_log_error_with_context("Invalid combodata ID: {}", (ri->comboref*10000)); \
+				scripting_log_error_with_context("Invalid combodata ID: {}", GET_COMBOREF); \
 				ret = -10000; \
 			} \
 			else \
@@ -7176,7 +7176,7 @@ int32_t get_register(int32_t arg)
 		{ \
 			if(ri->comboref < 0 || ri->comboref > (MAXCOMBOS-1) ) \
 			{ \
-				scripting_log_error_with_context("Invalid combodata ID: {}", (ri->comboref*10000)); \
+				scripting_log_error_with_context("Invalid combodata ID: {}", GET_COMBOREF); \
 				ret = -10000; \
 			} \
 			else \
@@ -7189,7 +7189,7 @@ int32_t get_register(int32_t arg)
 		{ \
 			if(ri->comboref < 0 || ri->comboref > (MAXCOMBOS-1) ) \
 			{ \
-				scripting_log_error_with_context("Invalid combodata ID: {}", (ri->comboref*10000)); \
+				scripting_log_error_with_context("Invalid combodata ID: {}", GET_COMBOREF); \
 				ret = -10000; \
 			} \
 			else \
@@ -7203,7 +7203,7 @@ int32_t get_register(int32_t arg)
 				int32_t indx = GET_D(rINDEX) / 10000; \
 				if(ri->comboref < 0 || ri->comboref > (MAXCOMBOS-1) ) \
 				{ \
-					scripting_log_error_with_context("Invalid combodata ID: {}", (ri->comboref*10000)); \
+					scripting_log_error_with_context("Invalid combodata ID: {}", GET_COMBOREF); \
 					ret = -10000; \
 				} \
 				else if ( indx < 0 || indx >= indexbound ) \
@@ -7222,7 +7222,7 @@ int32_t get_register(int32_t arg)
 				int32_t indx = GET_D(rINDEX) / 10000; \
 				if(ri->comboref < 0 || ri->comboref > (MAXCOMBOS-1) ) \
 				{ \
-					scripting_log_error_with_context("Invalid combodata ID: {}", (ri->comboref*10000)); \
+					scripting_log_error_with_context("Invalid combodata ID: {}", GET_COMBOREF); \
 					ret = -10000; \
 				} \
 				else if ( indx < 0 || indx >= indexbound ) \
@@ -7241,7 +7241,7 @@ int32_t get_register(int32_t arg)
 			int32_t flag =  (value/10000);  \
 			if(ri->comboref < 0 || ri->comboref > (MAXCOMBOS-1) ) \
 			{ \
-				scripting_log_error_with_context("Invalid combodata ID: {}", (ri->comboref*10000)); \
+				scripting_log_error_with_context("Invalid combodata ID: {}", GET_COMBOREF); \
 			} \
 			else \
 			{ \
@@ -7255,7 +7255,7 @@ int32_t get_register(int32_t arg)
 		{ \
 			if(ri->comboref < 0 || ri->comboref > (MAXCOMBOS-1) ) \
 			{ \
-				scripting_log_error_with_context("Invalid combodata ID: {}", (ri->comboref*10000)); \
+				scripting_log_error_with_context("Invalid combodata ID: {}", GET_COMBOREF); \
 				ret = -10000; \
 			} \
 			else \
@@ -7268,7 +7268,7 @@ int32_t get_register(int32_t arg)
 		{ \
 			if(ri->comboref < 0 || ri->comboref > (MAXCOMBOS-1) ) \
 			{ \
-				scripting_log_error_with_context("Invalid combodata ID: {}", (ri->comboref*10000)); \
+				scripting_log_error_with_context("Invalid combodata ID: {}", GET_COMBOREF); \
 				ret = -10000; \
 			} \
 			else \
@@ -7281,7 +7281,7 @@ int32_t get_register(int32_t arg)
 		{ \
 			if(ri->comboref < 0 || ri->comboref > (MAXCOMBOS-1) ) \
 			{ \
-				scripting_log_error_with_context("Invalid combodata ID: {}", (ri->comboref*10000)); \
+				scripting_log_error_with_context("Invalid combodata ID: {}", GET_COMBOREF); \
 				ret = -10000; \
 			} \
 			else \
@@ -7295,7 +7295,7 @@ int32_t get_register(int32_t arg)
 				int32_t indx = GET_D(rINDEX) / 10000; \
 				if(ri->comboref < 0 || ri->comboref > (MAXCOMBOS-1) ) \
 				{ \
-					scripting_log_error_with_context("Invalid combodata ID: {}", (ri->comboref*10000)); \
+					scripting_log_error_with_context("Invalid combodata ID: {}", GET_COMBOREF); \
 					ret = -10000; \
 				} \
 				else if ( indx < 0 || indx > indexbound ) \
@@ -7314,7 +7314,7 @@ int32_t get_register(int32_t arg)
 				int32_t indx = GET_D(rINDEX) / 10000; \
 				if(ri->comboref < 0 || ri->comboref > (MAXCOMBOS-1) ) \
 				{ \
-					scripting_log_error_with_context("Invalid combodata ID: {}", (ri->comboref*10000)); \
+					scripting_log_error_with_context("Invalid combodata ID: {}", GET_COMBOREF); \
 					ret = -10000; \
 				} \
 				else if ( indx < 0 || indx > indexbound ) \
@@ -7333,7 +7333,7 @@ int32_t get_register(int32_t arg)
 			int32_t flag =  (value/10000);  \
 			if(ri->comboref < 0 || ri->comboref > (MAXCOMBOS-1) ) \
 			{ \
-				scripting_log_error_with_context("Invalid combodata ID: {}", (ri->comboref*10000)); \
+				scripting_log_error_with_context("Invalid combodata ID: {}", GET_COMBOREF); \
 			} \
 			else \
 			{ \
@@ -8069,7 +8069,7 @@ int32_t get_register(int32_t arg)
 				ret = trig->triggerlevel * 10000;
 			break;
 		}
-		case COMBODATAID: 		ret = (ri->comboref*10000); break;
+		case COMBODATAID: 		ret = (GET_COMBOREF*10000); break;
 		case COMBODNUMTRIGGERS:
 		{
 			ret = -10000;
@@ -8702,7 +8702,7 @@ int32_t get_register(int32_t arg)
 		{ \
 			if( (unsigned) ri->npcdataref > (MAXNPCS-1) ) \
 			{ \
-				Z_scripterrlog("Invalid NPC ID passed to npcdata->%s: %d\n", str, (ri->npcdataref*10000)); \
+				Z_scripterrlog("Invalid NPC ID passed to npcdata->%s: %d\n", str, GET_NPCDATAREF); \
 				ret = -10000; \
 			} \
 			else \
@@ -8715,7 +8715,7 @@ int32_t get_register(int32_t arg)
 		{ \
 			if( (unsigned) ri->npcdataref > (MAXNPCS-1) ) \
 			{ \
-				Z_scripterrlog("Invalid NPC ID passed to npcdata->%s: %d\n", str, (ri->npcdataref*10000)); \
+				Z_scripterrlog("Invalid NPC ID passed to npcdata->%s: %d\n", str, GET_NPCDATAREF); \
 				ret = -10000; \
 			} \
 			else \
@@ -8728,7 +8728,7 @@ int32_t get_register(int32_t arg)
 		{ \
 			if( (unsigned) ri->npcdataref > (MAXNPCS-1) ) \
 			{ \
-				Z_scripterrlog("Invalid NPC ID passed to npcdata->%s: %d\n", str, (ri->npcdataref*10000)); \
+				Z_scripterrlog("Invalid NPC ID passed to npcdata->%s: %d\n", str, GET_NPCDATAREF); \
 				ret = -10000; \
 			} \
 			else \
@@ -8742,7 +8742,7 @@ int32_t get_register(int32_t arg)
 			int32_t flag =  (value/10000);  \
 			if( (unsigned) ri->npcdataref > (MAXNPCS-1) ) \
 			{ \
-				Z_scripterrlog("Invalid NPC ID passed to npcdata->%s: %d\n", str, (ri->npcdataref*10000)); \
+				Z_scripterrlog("Invalid NPC ID passed to npcdata->%s: %d\n", str, GET_NPCDATAREF); \
 			} \
 			else \
 			{ \
@@ -8755,7 +8755,7 @@ int32_t get_register(int32_t arg)
 		{
 			if( (unsigned) ri->npcdataref > (MAXNPCS-1) )
 			{
-				Z_scripterrlog("Invalid NPC ID passed to npcdata->%s: %d\n", "Flags (deprecated)", (ri->npcdataref*10000));
+				Z_scripterrlog("Invalid NPC ID passed to npcdata->%s: %d\n", "Flags (deprecated)", GET_NPCDATAREF);
 				ret = -10000;
 			}
 			else
@@ -8769,7 +8769,7 @@ int32_t get_register(int32_t arg)
 		{
 			if( (unsigned) ri->npcdataref > (MAXNPCS-1) )
 			{
-				Z_scripterrlog("Invalid NPC ID passed to npcdata->%s: %d\n", "Flags2 (deprecated)", (ri->npcdataref*10000));
+				Z_scripterrlog("Invalid NPC ID passed to npcdata->%s: %d\n", "Flags2 (deprecated)", GET_NPCDATAREF);
 				ret = -10000;
 			}
 			else
@@ -8824,7 +8824,7 @@ int32_t get_register(int32_t arg)
 		{
 			if( (unsigned) ri->npcdataref > (MAXNPCS-1) )
 			{
-				Z_scripterrlog("Invalid NPC ID passed to npcdata->WeaponScript: %d\n", (ri->npcdataref*10000));
+				Z_scripterrlog("Invalid NPC ID passed to npcdata->WeaponScript: %d\n", ri->npcdataref);
 				ret = -10000;
 			}
 			else ret = (guysbuf[GET_NPCDATAREF].weap_data.script *10000);
@@ -8840,7 +8840,7 @@ int32_t get_register(int32_t arg)
 		{
 			if(ri->npcdataref > (MAXNPCS-1) ) 
 			{ 
-				Z_scripterrlog("Invalid NPC ID passed to npcdata->ShadowSprite: %d\n", (ri->npcdataref*10000));
+				Z_scripterrlog("Invalid NPC ID passed to npcdata->ShadowSprite: %d\n", ri->npcdataref);
 				ret = -10000; 
 			} 
 			else 
@@ -8853,7 +8853,7 @@ int32_t get_register(int32_t arg)
 		{
 			if(ri->npcdataref > (MAXNPCS-1) ) 
 			{ 
-				Z_scripterrlog("Invalid NPC ID passed to npcdata->SpawnSprite: %d\n", (ri->npcdataref*10000));
+				Z_scripterrlog("Invalid NPC ID passed to npcdata->SpawnSprite: %d\n", ri->npcdataref);
 				ret = -10000; 
 			} 
 			else 
@@ -8866,7 +8866,7 @@ int32_t get_register(int32_t arg)
 		{
 			if(ri->npcdataref > (MAXNPCS-1) ) 
 			{ 
-				Z_scripterrlog("Invalid NPC ID passed to npcdata->DeathSprite: %d\n", (ri->npcdataref*10000));
+				Z_scripterrlog("Invalid NPC ID passed to npcdata->DeathSprite: %d\n", ri->npcdataref);
 				ret = -10000; 
 			} 
 			else 
@@ -8882,7 +8882,7 @@ int32_t get_register(int32_t arg)
 			
 			if( (unsigned) ri->npcdataref > (MAXNPCS-1) ) \
 			{ 
-				Z_scripterrlog("Invalid NPC ID passed to npcdata->%s: %d\n", "MatchInitDLabel()", (ri->npcdataref*10000));
+				Z_scripterrlog("Invalid NPC ID passed to npcdata->%s: %d\n", "MatchInitDLabel()", GET_NPCDATAREF);
 				ret = 0; 
 				break;
 			} 
@@ -10808,7 +10808,7 @@ void set_register(int32_t arg, int32_t value)
 	{ \
 		if(unsigned(GET_SPRITEDATAREF) > (MAXWPNS-1) ) \
 		{ \
-			Z_scripterrlog("Invalid Sprite ID passed to spritedata->%s: %d\n", str, (ri->spritedataref*10000)); \
+			Z_scripterrlog("Invalid Sprite ID passed to spritedata->%s: %d\n", str, GET_SPRITEDATAREF); \
 		} \
 		else \
 		{ \
@@ -10820,7 +10820,7 @@ void set_register(int32_t arg, int32_t value)
 	{ \
 		if(unsigned(GET_SPRITEDATAREF) > (MAXWPNS-1) ) \
 		{ \
-			Z_scripterrlog("Invalid Sprite ID passed to spritedata->%s: %d\n", str, (ri->spritedataref*10000)); \
+			Z_scripterrlog("Invalid Sprite ID passed to spritedata->%s: %d\n", str, GET_SPRITEDATAREF); \
 		} \
 		else \
 		{ \
@@ -14170,7 +14170,7 @@ void set_register(int32_t arg, int32_t value)
 		{
 			if(unsigned(GET_SPRITEDATAREF) > (MAXWPNS-1) )
 			{
-				Z_scripterrlog("Invalid Sprite ID passed to spritedata->CSet: %d\n", (ri->spritedataref*10000));
+				Z_scripterrlog("Invalid Sprite ID passed to spritedata->CSet: %d\n", GET_SPRITEDATAREF);
 			}
 			else
 			{
@@ -14183,7 +14183,7 @@ void set_register(int32_t arg, int32_t value)
 		{
 			if(unsigned(GET_SPRITEDATAREF) > (MAXWPNS-1) )
 			{
-				Z_scripterrlog("Invalid Sprite ID passed to spritedata->FlashCSet: %d\n", (ri->spritedataref*10000));
+				Z_scripterrlog("Invalid Sprite ID passed to spritedata->FlashCSet: %d\n", GET_SPRITEDATAREF);
 			}
 			else
 			{
@@ -14938,7 +14938,7 @@ void set_register(int32_t arg, int32_t value)
 		{ \
 			if(ri->comboref < 0 || ri->comboref > (MAXCOMBOS-1) ) \
 			{ \
-				scripting_log_error_with_context("Invalid combodata ID: {}", (ri->comboref*10000)); \
+				scripting_log_error_with_context("Invalid combodata ID: {}", GET_COMBOREF); \
 			} \
 			else \
 			{ \
@@ -14953,7 +14953,7 @@ void set_register(int32_t arg, int32_t value)
 		{ \
 			if(ri->comboref < 0 || ri->comboref > (MAXCOMBOS-1) ) \
 			{ \
-				scripting_log_error_with_context("Invalid combodata ID: {}", (ri->comboref*10000)); \
+				scripting_log_error_with_context("Invalid combodata ID: {}", GET_COMBOREF); \
 			} \
 			else \
 			{ \
@@ -14967,7 +14967,7 @@ void set_register(int32_t arg, int32_t value)
 		{ \
 			if(ri->comboref < 0 || ri->comboref > (MAXCOMBOS-1) ) \
 			{ \
-				scripting_log_error_with_context("Invalid combodata ID: {}", (ri->comboref*10000)); \
+				scripting_log_error_with_context("Invalid combodata ID: {}", GET_COMBOREF); \
 			} \
 			else \
 			{ \
@@ -14982,7 +14982,7 @@ void set_register(int32_t arg, int32_t value)
 			int32_t flag =  (value/10000);  \
 			if(ri->comboref < 0 || ri->comboref > (MAXCOMBOS-1) ) \
 			{ \
-				scripting_log_error_with_context("Invalid combodata ID: {}", (ri->comboref*10000)); \
+				scripting_log_error_with_context("Invalid combodata ID: {}", GET_COMBOREF); \
 			} \
 			else \
 			{ \
@@ -14999,7 +14999,7 @@ void set_register(int32_t arg, int32_t value)
 		{ \
 			if(ri->comboref < 0 || ri->comboref > (MAXCOMBOS-1) ) \
 			{ \
-				scripting_log_error_with_context("Invalid combodata ID: {}", (ri->comboref*10000)); \
+				scripting_log_error_with_context("Invalid combodata ID: {}", GET_COMBOREF); \
 			} \
 			else \
 			{ \
@@ -15011,7 +15011,7 @@ void set_register(int32_t arg, int32_t value)
 		{ \
 			if(ri->comboref < 0 || ri->comboref > (MAXCOMBOS-1) ) \
 			{ \
-				scripting_log_error_with_context("Invalid combodata ID: {}", (ri->comboref*10000)); \
+				scripting_log_error_with_context("Invalid combodata ID: {}", GET_COMBOREF); \
 			} \
 			else \
 			{ \
@@ -15023,7 +15023,7 @@ void set_register(int32_t arg, int32_t value)
 		{ \
 			if(ri->comboref < 0 || ri->comboref > (MAXCOMBOS-1) ) \
 			{ \
-				scripting_log_error_with_context("Invalid combodata ID: {}", (ri->comboref*10000)); \
+				scripting_log_error_with_context("Invalid combodata ID: {}", GET_COMBOREF); \
 			} \
 			else \
 			{ \
@@ -15036,7 +15036,7 @@ void set_register(int32_t arg, int32_t value)
 				int32_t indx = GET_D(rINDEX) / 10000; \
 				if(ri->comboref < 0 || ri->comboref > (MAXCOMBOS-1) ) \
 				{ \
-					scripting_log_error_with_context("Invalid combodata ID: {}", (ri->comboref*10000)); \
+					scripting_log_error_with_context("Invalid combodata ID: {}", GET_COMBOREF); \
 				} \
 				else if ( indx < 0 || indx > indexbound ) \
 				{ \
@@ -15053,7 +15053,7 @@ void set_register(int32_t arg, int32_t value)
 			int32_t flag =  (value/10000);  \
 			if(ri->comboref < 0 || ri->comboref > (MAXCOMBOS-1) ) \
 			{ \
-				scripting_log_error_with_context("Invalid combodata ID: {}", (ri->comboref*10000)); \
+				scripting_log_error_with_context("Invalid combodata ID: {}", GET_COMBOREF); \
 			} \
 			else \
 			{ \
@@ -16378,7 +16378,7 @@ void set_register(int32_t arg, int32_t value)
 		case NPCDATAWEAPONSCRIPT: 
 		{
 			if( (unsigned) ri->npcdataref > (MAXNPCS-1) )
-				Z_scripterrlog("Invalid NPC ID passed to npcdata->WeaponScript: %d\n", (ri->npcdataref*10000));
+				Z_scripterrlog("Invalid NPC ID passed to npcdata->WeaponScript: %d\n", ri->npcdataref);
 			else
 				guysbuf[GET_NPCDATAREF].weap_data.script = vbound((value / 10000),0,214747);
 			break;
@@ -16393,7 +16393,7 @@ void set_register(int32_t arg, int32_t value)
 		{
 			if(ri->npcdataref > (MAXNPCS-1) ) 
 			{ 
-				Z_scripterrlog("Invalid NPC ID passed to npcdata->ShadowSprite: %d\n", (ri->npcdataref*10000));
+				Z_scripterrlog("Invalid NPC ID passed to npcdata->ShadowSprite: %d\n", ri->npcdataref);
 			} 
 			else 
 			{
@@ -16405,7 +16405,7 @@ void set_register(int32_t arg, int32_t value)
 		{
 			if(ri->npcdataref > (MAXNPCS-1) ) 
 			{ 
-				Z_scripterrlog("Invalid NPC ID passed to npcdata->SpawnSprite: %d\n", (ri->npcdataref*10000));
+				Z_scripterrlog("Invalid NPC ID passed to npcdata->SpawnSprite: %d\n", ri->npcdataref);
 			} 
 			else 
 			{
@@ -16417,7 +16417,7 @@ void set_register(int32_t arg, int32_t value)
 		{
 			if(ri->npcdataref > (MAXNPCS-1) ) 
 			{ 
-				Z_scripterrlog("Invalid NPC ID passed to npcdata->DeathSprite: %d\n", (ri->npcdataref*10000));
+				Z_scripterrlog("Invalid NPC ID passed to npcdata->DeathSprite: %d\n", ri->npcdataref);
 			} 
 			else 
 			{
