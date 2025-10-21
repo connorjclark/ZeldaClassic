@@ -1035,7 +1035,7 @@ static weapon* ResolveLWeapon_checkSpriteList(int32_t uid)
 // For compat, get the first `combo_trigger` of the current `ri->comboref`
 combo_trigger* get_first_combo_trigger()
 {
-	int ref = ri->comboref;
+	int ref = GET_COMBOREF;
 	if(ref < 0 || ref > (MAXCOMBOS-1) )
 		return nullptr;
 	if(combobuf[ref].triggers.empty())
@@ -2873,6 +2873,18 @@ newcombo* checkCombo(int32_t ref, bool skipError)
 	return &combobuf[ref];
 }
 
+// TODO: replace with checkCombo.
+static bool checkComboRef()
+{
+	if (GET_COMBOREF < 0 || GET_COMBOREF > (MAXCOMBOS-1))
+	{
+		scripting_log_error_with_context("Invalid combodata ID: {}", GET_COMBOREF);
+		return false;
+	}
+
+	return true;
+}
+
 newcombo* checkComboFromTriggerRef(dword ref)
 {
 	ref = get_combo_from_trigger_ref(ref);
@@ -3264,17 +3276,6 @@ static int get_ref(int arg)
 
 		default: NOTREACHED();
 	}
-}
-
-static bool checkComboRef()
-{
-	if (ri->comboref < 0 || ri->comboref > (MAXCOMBOS-1))
-	{
-		scripting_log_error_with_context("Invalid combodata ID: {}", GET_COMBOREF);
-		return false;
-	}
-
-	return true;
 }
 
 int32_t earlyretval = -1;
@@ -7330,9 +7331,8 @@ int32_t get_register(int32_t arg)
 		case COMBODFLIP:		GET_COMBO_VAR_BYTE(flip); break;					//char
 		case COMBODWALK:
 		{
-			if(ri->comboref < 0 || ri->comboref > (MAXCOMBOS-1) )
+			if(!checkComboRef())
 			{
-				scripting_log_error_with_context("Invalid combodata ID: {}", GET_COMBOREF);
 				ret = -10000;
 			}
 			else
@@ -7343,9 +7343,8 @@ int32_t get_register(int32_t arg)
 		}
 		case COMBODEFFECT:
 		{
-			if(ri->comboref < 0 || ri->comboref > (MAXCOMBOS-1) )
+			if(!checkComboRef())
 			{
-				scripting_log_error_with_context("Invalid combodata ID: {}", GET_COMBOREF);
 				ret = -10000;
 			}
 			else
@@ -7357,9 +7356,8 @@ int32_t get_register(int32_t arg)
 		case COMBODTYPE:		GET_COMBO_VAR_BYTE(type); break;					//char
 		case COMBODCSET:
 		{
-			if(ri->comboref < 0 || ri->comboref > (MAXCOMBOS-1) )
+			if(!checkComboRef())
 			{
-				scripting_log_error_with_context("Invalid combodata ID: {}", GET_COMBOREF);
 				ret = -10000;
 			}
 			else
@@ -7371,11 +7369,7 @@ int32_t get_register(int32_t arg)
 		}
 		case COMBODCSET2FLAGS:
 		{
-			if(ri->comboref < 0 || ri->comboref > (MAXCOMBOS-1) )
-			{
-				scripting_log_error_with_context("Invalid combodata ID: {}", GET_COMBOREF);
-			}
-			else
+			if(checkComboRef())
 			{
 				ret = ((combobuf[GET_COMBOREF].csets & 0xF0) >> 4) * 10000;
 			}
@@ -14745,11 +14739,7 @@ void set_register(int32_t arg, int32_t value)
 		
 		#define	SET_COMBO_VAR_DWORD(member) \
 		{ \
-			if(ri->comboref < 0 || ri->comboref > (MAXCOMBOS-1) ) \
-			{ \
-				scripting_log_error_with_context("Invalid combodata ID: {}", GET_COMBOREF); \
-			} \
-			else \
+			if(checkComboRef()) \
 			{ \
 				screen_combo_modify_pre(GET_COMBOREF); \
 				combobuf[GET_COMBOREF].member = vbound((value / 10000),0,32767); \
@@ -14759,11 +14749,7 @@ void set_register(int32_t arg, int32_t value)
 
 		#define	SET_COMBO_VAR_BYTE(member) \
 		{ \
-			if(ri->comboref < 0 || ri->comboref > (MAXCOMBOS-1) ) \
-			{ \
-				scripting_log_error_with_context("Invalid combodata ID: {}", GET_COMBOREF); \
-			} \
-			else \
+			if(checkComboRef()) \
 			{ \
 			    screen_combo_modify_pre(GET_COMBOREF); \
 				combobuf[GET_COMBOREF].member = vbound((value / 10000),0,255); \
@@ -14774,11 +14760,7 @@ void set_register(int32_t arg, int32_t value)
 		//comboclass
 		#define	SET_COMBOCLASS_VAR_INT(member) \
 		{ \
-			if(ri->comboref < 0 || ri->comboref > (MAXCOMBOS-1) ) \
-			{ \
-				scripting_log_error_with_context("Invalid combodata ID: {}", GET_COMBOREF); \
-			} \
-			else \
+			if(checkComboRef()) \
 			{ \
 				combo_class_buf[combobuf[GET_COMBOREF].type].member = vbound((value / 10000),0,214747); \
 			} \
@@ -14786,11 +14768,7 @@ void set_register(int32_t arg, int32_t value)
 		
 		#define	SET_COMBOCLASS_VAR_DWORD(member) \
 		{ \
-			if(ri->comboref < 0 || ri->comboref > (MAXCOMBOS-1) ) \
-			{ \
-				scripting_log_error_with_context("Invalid combodata ID: {}", GET_COMBOREF); \
-			} \
-			else \
+			if(checkComboRef()) \
 			{ \
 				combo_class_buf[combobuf[GET_COMBOREF].type].member = vbound((value / 10000),0,32767); \
 			} \
@@ -14798,11 +14776,7 @@ void set_register(int32_t arg, int32_t value)
 
 		#define	SET_COMBOCLASS_VAR_BYTE(member) \
 		{ \
-			if(ri->comboref < 0 || ri->comboref > (MAXCOMBOS-1) ) \
-			{ \
-				scripting_log_error_with_context("Invalid combodata ID: {}", GET_COMBOREF); \
-			} \
-			else \
+			if(checkComboRef()) \
 			{ \
 				combo_class_buf[combobuf[GET_COMBOREF].type].member = vbound((value / 10000),0,255); \
 			} \
@@ -14811,9 +14785,8 @@ void set_register(int32_t arg, int32_t value)
 		#define SET_COMBOCLASS_BYTE_INDEX(member, indexbound) \
 		{ \
 				int32_t indx = GET_D(rINDEX) / 10000; \
-				if(ri->comboref < 0 || ri->comboref > (MAXCOMBOS-1) ) \
+				if(!checkComboRef()) \
 				{ \
-					scripting_log_error_with_context("Invalid combodata ID: {}", GET_COMBOREF); \
 				} \
 				else if ( indx < 0 || indx > indexbound ) \
 				{ \
@@ -15135,10 +15108,8 @@ void set_register(int32_t arg, int32_t value)
 		}
 		case COMBODTRIGSHIELDJINX:
 		{
-			if (ri->comboref < 0 || ri->comboref >(MAXCOMBOS - 1))
-			{
-				scripting_log_error_with_context("Invalid combodata ID: {}", GET_COMBOREF);
-			}
+			if (!checkComboRef()) break;
+
 			else if(auto* trig = get_first_combo_trigger())
 				trig->trig_shieldjinxtime = zc_max(value / 10000, -2);
 			break;
@@ -15344,51 +15315,31 @@ void set_register(int32_t arg, int32_t value)
 		}
 		case COMBODNUMTRIGGERS:
 		{
-			if(ri->comboref < 0 || ri->comboref > (MAXCOMBOS-1) )
-			{
-				scripting_log_error_with_context("Invalid combodata ID: {}", GET_COMBOREF);
-			}
-			else
+			if(checkComboRef())
 				combobuf[GET_COMBOREF].triggers.resize(vbound(value / 10000, 0, MAX_COMBO_TRIGGERS));
 			break;
 		}
 		case COMBODONLYGEN:
 		{
-			if(ri->comboref < 0 || ri->comboref > (MAXCOMBOS-1) )
-			{
-				scripting_log_error_with_context("Invalid combodata ID: {}", GET_COMBOREF);
-			}
-			else
+			if(checkComboRef())
 				combobuf[GET_COMBOREF].only_gentrig = value != 0 ? 1 : 0;
 			break;
 		}
 		case COMBOD_Z_HEIGHT:
 		{
-			if(ri->comboref < 0 || ri->comboref > (MAXCOMBOS-1) )
-			{
-				scripting_log_error_with_context("Invalid combodata ID: {}", GET_COMBOREF);
-			}
-			else
+			if(checkComboRef())
 				combobuf[GET_COMBOREF].z_height = zslongToFix(value);
 			break;
 		}
 		case COMBOD_Z_STEP_HEIGHT:
 		{
-			if(ri->comboref < 0 || ri->comboref > (MAXCOMBOS-1) )
-			{
-				scripting_log_error_with_context("Invalid combodata ID: {}", GET_COMBOREF);
-			}
-			else
+			if(checkComboRef())
 				combobuf[GET_COMBOREF].z_step_height = zslongToFix(zc_max(0,value));
 			break;
 		}
 		case COMBOD_DIVE_UNDER_LEVEL:
 		{
-			if(ri->comboref < 0 || ri->comboref > (MAXCOMBOS-1) )
-			{
-				scripting_log_error_with_context("Invalid combodata ID: {}", GET_COMBOREF);
-			}
-			else
+			if(checkComboRef())
 				combobuf[GET_COMBOREF].dive_under_level = (byte)vbound(value / 10000, 0, 255);
 			break;
 		}
@@ -28294,11 +28245,7 @@ int32_t run_script_int(JittedScriptInstance* j_instance)
 			
 			case COMBOD_GET_TRIGGER:
 			{
-				if(ri->comboref < 0 || ri->comboref > (MAXCOMBOS-1) )
-				{
-					scripting_log_error_with_context("Invalid combodata ID: {}", GET_COMBOREF);
-				}
-				else
+				if(checkComboRef())
 				{
 					auto aptr = get_register(sarg1) / 10000;
 					string name;
