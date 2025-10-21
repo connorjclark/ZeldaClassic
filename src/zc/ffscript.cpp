@@ -3271,7 +3271,7 @@ static int get_ref(int arg)
 		case REFDMAPDATA: return ri->dmapref;
 		case REFDROPS: return ri->dropsetref;
 		case REFEWPN: return ri->ewpnref;
-		case REFFFC: return ZScriptVersion::ffcRefIsSpriteId() ? ri->ffcref : ri->ffcref * 10000;
+		case REFFFC: return ri->ffcref;
 		case REFFILE: return ri->fileref;
 		case REFGENERICDATA: return ri->genericdataref;
 		case REFITEM: return ri->itemref;
