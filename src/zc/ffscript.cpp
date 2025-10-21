@@ -3260,15 +3260,19 @@ static int get_ref(int arg)
 {
 	switch (arg)
 	{
+		case CLASS_THISKEY: return ri->thiskey;
+		case CLASS_THISKEY2: return ri->thiskey2;
 		case REFBITMAP: return ri->bitmapref;
 		case REFBOTTLESHOP: return ri->bottleshopref;
 		case REFBOTTLETYPE: return ri->bottletyperef;
 		case REFCOMBODATA: return ri->comboref;
 		case REFCOMBOTRIGGER: return ri->combotrigref;
+		case REFDIRECTORY: return ri->directoryref;
 		case REFDMAPDATA: return ri->dmapref;
 		case REFDROPS: return ri->dropsetref;
 		case REFEWPN: return ri->ewpnref;
-		case REFFFC: return ri->ffcref;
+		case REFFFC: return ZScriptVersion::ffcRefIsSpriteId() ? ri->ffcref : ri->ffcref * 10000;
+		case REFFILE: return ri->fileref;
 		case REFGENERICDATA: return ri->genericdataref;
 		case REFITEM: return ri->itemref;
 		case REFITEMCLASS: return ri->itemclassref;
@@ -3278,13 +3282,18 @@ static int get_ref(int arg)
 		case REFNPC: return ri->guyref;
 		case REFNPCCLASS: return ri->npcdataref;
 		case REFPALDATA: return ri->paldataref;
+		case REFPORTAL: return ri->portalref;
+		case REFRNG: return ri->rngref;
+		case REFSAVPORTAL: return ri->saveportalref;
 		case REFSCREENDATA: return ri->screenref;
 		case REFSHOPDATA: return ri->shopref;
 		case REFSPRITE: return ri->spriteref;
 		case REFSPRITEDATA: return ri->spritedataref;
+		case REFSTACK: return ri->stackref;
 		case REFSUBSCREEN: return ri->subdataref;
 		case REFSUBSCREENPAGE: return ri->subpageref;
 		case REFSUBSCREENWIDG: return ri->subwidgref;
+		case REFWEBSOCKET: return ri->websocketref;
 
 		default: NOTREACHED();
 	}
@@ -7276,8 +7285,6 @@ int32_t get_register(int32_t arg)
 		
 		case COMBOXR:
 		{
-			//ri->comboref = id; //'this' pointer
-			//ri->comboposref = i; //used for X(), Y(), Layer(), and so forth.
 			if ( curScriptType == ScriptType::Combo )
 			{
 				rpos_t rpos = combopos_ref_to_rpos(GET_COMBOPOSREF);
@@ -36616,10 +36623,11 @@ int debug_set_d(int r, int v)
 
 int debug_get_ref(int r)
 {
-	CHECK(get_ref(r) && r); // check valid ref.
+	if (r == debug_ref) return get_ref(r);
+
 	CHECK(!debug_ref);
 	debug_ref = r;
-	return r;
+	return get_ref(r);
 }
 
 static const char* get_d_reg_name(int r)
@@ -36653,6 +36661,7 @@ void print_d_register_deps()
 
 	// value -> case labels
 	std::map<std::string, std::vector<std::string>> value_to_labels;
+	std::map<std::string, std::vector<std::string>> value_to_labels2;
 
 	for (int i = 0; i < NUMVARIABLES; i++)
 	{
@@ -36663,6 +36672,7 @@ void print_d_register_deps()
 		for (int j = 0; j < 8; j++) ri->d[j] = i == 4891 ? 10000 : 0;
 
 		debug_deps_cur_regs = {};
+		debug_ref = 0;
 		get_register(i);
 
 		bool any = false;
@@ -36671,24 +36681,34 @@ void print_d_register_deps()
 			if (debug_deps_cur_regs[j])
 				any = true;
 		}
-		if (!any)
-			continue;
 
-		std::vector<std::string> reg_names;
-		for (int j = 0; j < 8; j++)
+		if (any)
 		{
-			CHECK(!(debug_deps_cur_regs[j] & REG_W));
-			if (!debug_deps_cur_regs[j])
-				continue;
+			std::vector<std::string> reg_names;
+			for (int j = 0; j < 8; j++)
+			{
+				CHECK(!(debug_deps_cur_regs[j] & REG_W));
+				if (!debug_deps_cur_regs[j])
+					continue;
 
-			reg_names.push_back(get_d_reg_name(j));
+				reg_names.push_back(get_d_reg_name(j));
+			}
+
+			std::string value = fmt::format("{{{}}}", fmt::join(reg_names, ", "));
+			if (auto* labels = util::find(value_to_labels, value))
+				labels->push_back(sv->name);
+			else
+				value_to_labels[value] = {sv->name};
 		}
 
-		std::string value = fmt::format("{{{}}}", fmt::join(reg_names, ", "));
-		if (auto* labels = util::find(value_to_labels, value))
-			labels->push_back(sv->name);
-		else
-			value_to_labels[value] = {sv->name};
+		if (debug_ref)
+		{
+			std::string value = get_script_variable(debug_ref).first->name;
+			if (auto* labels = util::find(value_to_labels2, value))
+				labels->push_back(sv->name);
+			else
+				value_to_labels2[value] = {sv->name};
+		}
 	}
 
 	fmt::println("static std::vector<int> _get_register_dependencies(int reg)");
@@ -36707,6 +36727,25 @@ void print_d_register_deps()
 		fmt::println("");
 	}
 	value_to_labels.clear();
+
+	fmt::println("\t}}");
+	fmt::println("");
+	fmt::println("\treturn {{}};");
+	fmt::println("}}");
+
+	fmt::println("std::optional<int> get_register_ref_dependency(int reg)");
+	fmt::println("{{");
+	fmt::println("\tswitch (reg)");
+	fmt::println("\t{{");
+
+	for (auto& [value, labels] : value_to_labels2)
+	{
+		std::sort(labels.begin(), labels.end());
+		for (auto& label : labels)
+			fmt::println("\t\tcase {}:", label);
+		fmt::println("\t\t\treturn {};", value);
+		fmt::println("");
+	}
 
 	fmt::println("\t}}");
 	fmt::println("");
@@ -36791,6 +36830,7 @@ void print_d_register_deps()
 		reset_test_ri(&testRi);
 
 		debug_deps_cur_regs = {};
+		debug_ref = 0;
 
 		int command = curscript->zasm_script->zasm[i].command;
 		auto sc = get_script_command(command);
