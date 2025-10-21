@@ -10571,11 +10571,18 @@ int32_t get_register(int32_t arg)
 			break;
 		}
 
+		case GETRENDERTARGET:
+			ret=(zscriptDrawingRenderTarget->GetCurrentRenderTarget())*10000;
+			break;
+
 		default:
 		{
 			if (zasm_array_supports(arg))
 			{
 				int ref_arg = get_register_ref_dependency(arg).value_or(0);
+#ifdef DEBUG_REGISTER_DEPS
+				if (ref_arg) debug_get_ref(ref_arg);
+#endif
 				int ref = ref_arg ? get_ref(ref_arg) : 0;
 				ret = zasm_array_get(arg, ref, GET_D(rINDEX) / 10000);
 			}
@@ -17720,6 +17727,9 @@ void set_register(int32_t arg, int32_t value)
 			if (zasm_array_supports(arg))
 			{
 				int ref_arg = get_register_ref_dependency(arg).value_or(0);
+#ifdef DEBUG_REGISTER_DEPS
+				if (ref_arg) debug_get_ref(ref_arg);
+#endif
 				int ref = ref_arg ? get_ref(ref_arg) : 0;
 				zasm_array_set(arg, ref, GET_D(rINDEX) / 10000, value);
 			}

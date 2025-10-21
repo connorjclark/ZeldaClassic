@@ -435,10 +435,6 @@ std::optional<int32_t> itemsprite_get_register(int32_t reg)
 		case ITEMCOUNT:
 			ret=(items.Count())*10000;
 			break;
-		
-		case GETRENDERTARGET:
-			ret=(zscriptDrawingRenderTarget->GetCurrentRenderTarget())*10000;
-			break;
 			
 		case ITEMEXTEND:
 			if (auto s = checkItem(GET_ITEMREF))
