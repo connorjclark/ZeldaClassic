@@ -1474,7 +1474,7 @@ static void set_current_script_engine_data(ScriptEngineData& data, ScriptType ty
 				data.initialized = 1;
 			}
 			
-			ri->lwpn = index;
+			ri->lwpnref = index;
 			ri->screenref = spr->screen_spawned;
 		}
 		break;
@@ -1491,7 +1491,7 @@ static void set_current_script_engine_data(ScriptEngineData& data, ScriptType ty
 				data.initialized = 1;
 			}
 			
-			ri->ewpn = index;
+			ri->ewpnref = index;
 			ri->screenref = spr->screen_spawned;
 		}
 		break;
@@ -1528,7 +1528,7 @@ static void set_current_script_engine_data(ScriptEngineData& data, ScriptType ty
 				memcpy(ri->d, ( collect ) ? itemsbuf[new_i].initiald : itemsbuf[i].initiald, 8 * sizeof(int32_t));
 				data.initialized = true;
 			}			
-			ri->idata = ( collect ) ? new_i : i; //'this' pointer
+			ri->itemclassref = ( collect ) ? new_i : i; //'this' pointer
 		}
 		break;
 		
@@ -1595,14 +1595,14 @@ static void set_current_script_engine_data(ScriptEngineData& data, ScriptType ty
 		case ScriptType::DMap:
 		{
 			curscript = dmapscripts[script];
-			ri->dmapsref = index;
+			ri->dmapref = index;
 			//how do we clear initialised on dmap change?
 			if ( !data.initialized )
 			{
 				got_initialized = true;
 				for ( int32_t q = 0; q < 8; q++ ) 
 				{
-					ri->d[q] = DMaps[ri->dmapsref].initD[q];// * 10000;
+					ri->d[q] = DMaps[ri->dmapref].initD[q];// * 10000;
 				}
 				data.initialized = true;
 			}
@@ -1612,13 +1612,13 @@ static void set_current_script_engine_data(ScriptEngineData& data, ScriptType ty
 		case ScriptType::OnMap:
 		{
 			curscript = dmapscripts[script];
-			ri->dmapsref = index;
+			ri->dmapref = index;
 			if (!data.initialized)
 			{
 				got_initialized = true;
 				for ( int32_t q = 0; q < 8; q++ ) 
 				{
-					ri->d[q] = DMaps[ri->dmapsref].onmap_initD[q];
+					ri->d[q] = DMaps[ri->dmapref].onmap_initD[q];
 				}
 				data.initialized = true;
 			}
@@ -1628,13 +1628,13 @@ static void set_current_script_engine_data(ScriptEngineData& data, ScriptType ty
 		case ScriptType::ScriptedActiveSubscreen:
 		{
 			curscript = dmapscripts[script];
-			ri->dmapsref = index;
+			ri->dmapref = index;
 			if (!data.initialized)
 			{
 				got_initialized = true;
 				for ( int32_t q = 0; q < 8; q++ ) 
 				{
-					ri->d[q] = DMaps[ri->dmapsref].sub_initD[q];
+					ri->d[q] = DMaps[ri->dmapref].sub_initD[q];
 				}
 				data.initialized = true;
 			}
@@ -1644,13 +1644,13 @@ static void set_current_script_engine_data(ScriptEngineData& data, ScriptType ty
 		case ScriptType::ScriptedPassiveSubscreen:
 		{
 			curscript = dmapscripts[script];
-			ri->dmapsref = index;
+			ri->dmapref = index;
 			if (!data.initialized)
 			{
 				got_initialized = true;
 				for ( int32_t q = 0; q < 8; q++ ) 
 				{
-					ri->d[q] = DMaps[ri->dmapsref].sub_initD[q];
+					ri->d[q] = DMaps[ri->dmapref].sub_initD[q];
 				}
 				data.initialized = true;
 			}
@@ -3111,21 +3111,21 @@ static void bad_subwidg_type(bool func, byte type)
 
 int32_t item_flag(item_flags flag)
 {
-	if(unsigned(ri->idata) >= MAXITEMS)
+	if(unsigned(ri->itemclassref) >= MAXITEMS)
 	{
-		scripting_log_error_with_context("Invalid itemdata access: {}", ri->idata);
+		scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 		return 0;
 	}
-	return (itemsbuf[ri->idata].flags & flag) ? 10000 : 0;
+	return (itemsbuf[ri->itemclassref].flags & flag) ? 10000 : 0;
 }
 void item_flag(item_flags flag, bool val)
 {
-	if(unsigned(ri->idata) >= MAXITEMS)
+	if(unsigned(ri->itemclassref) >= MAXITEMS)
 	{
-		scripting_log_error_with_context("Invalid itemdata access: {}", ri->idata);
+		scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 		return;
 	}
-	SETFLAG(itemsbuf[ri->idata].flags, flag, val);
+	SETFLAG(itemsbuf[ri->itemclassref].flags, flag, val);
 }
 
 bool scripting_use_8bit_colors;
@@ -3240,21 +3240,21 @@ static int get_ref(int arg)
 		case REFBOTTLETYPE: return ri->bottletyperef;
 		case REFCOMBODATA: return ri->combosref;
 		case REFCOMBOTRIGGER: return ri->combotrigref;
-		case REFDMAPDATA: return ri->dmapsref;
+		case REFDMAPDATA: return ri->dmapref;
 		case REFDROPS: return ri->dropsetref;
-		case REFEWPN: return ri->ewpn;
+		case REFEWPN: return ri->ewpnref;
 		case REFFFC: return ri->ffcref;
 		case REFGENERICDATA: return ri->genericdataref;
 		case REFITEM: return ri->itemref;
-		case REFITEMCLASS: return ri->idata;
-		case REFLWPN: return ri->lwpn;
-		case REFMAPDATA: return ri->mapsref;
+		case REFITEMCLASS: return ri->itemclassref;
+		case REFLWPN: return ri->lwpnref;
+		case REFMAPDATA: return ri->mapref;
 		case REFMSGDATA: return ri->zmsgref;
 		case REFNPC: return ri->guyref;
 		case REFNPCCLASS: return ri->npcdataref;
 		case REFPALDATA: return ri->paldataref;
 		case REFSCREENDATA: return ri->screenref;
-		case REFSHOPDATA: return ri->shopsref;
+		case REFSHOPDATA: return ri->shopref;
 		case REFSPRITE: return ri->spriteref;
 		case REFSPRITEDATA: return ri->spritedataref;
 		case REFSUBSCREEN: return ri->subdataref;
@@ -4053,306 +4053,306 @@ int32_t get_register(int32_t arg)
 		
 		
 		case IDATAUSEWPN:
-			if(unsigned(ri->idata) >= MAXITEMS)
+			if(unsigned(ri->itemclassref) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->idata);
+				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				ret = -10000;
 				break;
 			}
-			ret=(itemsbuf[ri->idata].weap_data.imitate_weapon)*10000;
+			ret=(itemsbuf[ri->itemclassref].weap_data.imitate_weapon)*10000;
 			break;
 		case IDATAUSEDEF:
-			if(unsigned(ri->idata) >= MAXITEMS)
+			if(unsigned(ri->itemclassref) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->idata);
+				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				ret = -10000;
 				break;
 			}
-			ret=(itemsbuf[ri->idata].weap_data.default_defense)*10000;
+			ret=(itemsbuf[ri->itemclassref].weap_data.default_defense)*10000;
 			break;
 		case IDATAWRANGE:
-			if(unsigned(ri->idata) >= MAXITEMS)
+			if(unsigned(ri->itemclassref) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->idata);
+				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				ret = -10000;
 				break;
 			}
-			ret=(itemsbuf[ri->idata].weaprange)*10000;
+			ret=(itemsbuf[ri->itemclassref].weaprange)*10000;
 			break;
 		case IDATAMAGICTIMER:
-			if(unsigned(ri->idata) >= MAXITEMS)
+			if(unsigned(ri->itemclassref) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->idata);
+				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				ret = -10000;
 				break;
 			}
-			ret=(itemsbuf[ri->idata].magiccosttimer[0])*10000;
+			ret=(itemsbuf[ri->itemclassref].magiccosttimer[0])*10000;
 			break;
 		case IDATAMAGICTIMER2:
-			if(unsigned(ri->idata) >= MAXITEMS)
+			if(unsigned(ri->itemclassref) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->idata);
+				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				ret = -10000;
 				break;
 			}
-			ret=(itemsbuf[ri->idata].magiccosttimer[1])*10000;
+			ret=(itemsbuf[ri->itemclassref].magiccosttimer[1])*10000;
 			break;
 		
 		case IDATADURATION:
-			if(unsigned(ri->idata) >= MAXITEMS)
+			if(unsigned(ri->itemclassref) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->idata);
+				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				ret = -10000;
 				break;
 			}
-			ret=(itemsbuf[ri->idata].weapduration)*10000;
+			ret=(itemsbuf[ri->itemclassref].weapduration)*10000;
 			break;
 		
 		case IDATADUPLICATES:
-			if(unsigned(ri->idata) >= MAXITEMS)
+			if(unsigned(ri->itemclassref) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->idata);
+				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				ret = -10000;
 				break;
 			}
-			ret=(itemsbuf[ri->idata].duplicates)*10000;
+			ret=(itemsbuf[ri->itemclassref].duplicates)*10000;
 			break;
 		case IDATADRAWLAYER:
-			if(unsigned(ri->idata) >= MAXITEMS)
+			if(unsigned(ri->itemclassref) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->idata);
+				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				ret = -10000;
 				break;
 			}
-			ret=(itemsbuf[ri->idata].drawlayer)*10000;
+			ret=(itemsbuf[ri->itemclassref].drawlayer)*10000;
 			break;
 		case IDATACOLLECTFLAGS:
-			if(unsigned(ri->idata) >= MAXITEMS)
+			if(unsigned(ri->itemclassref) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->idata);
+				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				ret = 0;
 				break;
 			}
-			ret=(itemsbuf[ri->idata].collectflags)*10000;
+			ret=(itemsbuf[ri->itemclassref].collectflags)*10000;
 			break;
 		case IDATAWEAPONSCRIPT:
-			if(unsigned(ri->idata) >= MAXITEMS)
+			if(unsigned(ri->itemclassref) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->idata);
+				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				ret = -10000;
 				break;
 			}
-			ret=(itemsbuf[ri->idata].weap_data.script)*10000;
+			ret=(itemsbuf[ri->itemclassref].weap_data.script)*10000;
 			break;
 		case IDATAWEAPHXOFS:
-			if(unsigned(ri->idata) >= MAXITEMS)
+			if(unsigned(ri->itemclassref) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->idata);
+				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				ret = -10000;
 				break;
 			}
-			ret=(itemsbuf[ri->idata].weap_data.hxofs)*10000;
+			ret=(itemsbuf[ri->itemclassref].weap_data.hxofs)*10000;
 			break;
 		case IDATAWEAPHYOFS:
-			if(unsigned(ri->idata) >= MAXITEMS)
+			if(unsigned(ri->itemclassref) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->idata);
+				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				ret = -10000;
 				break;
 			}
-			ret=(itemsbuf[ri->idata].weap_data.hyofs)*10000;
+			ret=(itemsbuf[ri->itemclassref].weap_data.hyofs)*10000;
 			break;
 		case IDATAWEAPHXSZ:
-			if(unsigned(ri->idata) >= MAXITEMS)
+			if(unsigned(ri->itemclassref) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->idata);
+				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				ret = -10000;
 				break;
 			}
-			ret=(itemsbuf[ri->idata].weap_data.hxsz)*10000;
+			ret=(itemsbuf[ri->itemclassref].weap_data.hxsz)*10000;
 			break;
 		case IDATAWEAPHYSZ:
-			if(unsigned(ri->idata) >= MAXITEMS)
+			if(unsigned(ri->itemclassref) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->idata);
+				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				ret = -10000;
 				break;
 			}
-			ret=(itemsbuf[ri->idata].weap_data.hysz)*10000;
+			ret=(itemsbuf[ri->itemclassref].weap_data.hysz)*10000;
 			break;
 		case IDATAWEAPHZSZ:
-			if(unsigned(ri->idata) >= MAXITEMS)
+			if(unsigned(ri->itemclassref) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->idata);
+				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				ret = -10000;
 				break;
 			}
-			ret=(itemsbuf[ri->idata].weap_data.hzsz)*10000;
+			ret=(itemsbuf[ri->itemclassref].weap_data.hzsz)*10000;
 			break;
 		case IDATAWEAPXOFS:
-			if(unsigned(ri->idata) >= MAXITEMS)
+			if(unsigned(ri->itemclassref) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->idata);
+				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				ret = -10000;
 				break;
 			}
-			ret=(itemsbuf[ri->idata].weap_data.xofs)*10000;
+			ret=(itemsbuf[ri->itemclassref].weap_data.xofs)*10000;
 			break;
 		case IDATAWEAPYOFS:
-			if(unsigned(ri->idata) >= MAXITEMS)
+			if(unsigned(ri->itemclassref) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->idata);
+				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				ret = -10000;
 				break;
 			}
-			ret=(itemsbuf[ri->idata].weap_data.yofs)*10000;
+			ret=(itemsbuf[ri->itemclassref].weap_data.yofs)*10000;
 			break;
 		case IDATAHXOFS:
-			if(unsigned(ri->idata) >= MAXITEMS)
+			if(unsigned(ri->itemclassref) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->idata);
+				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				ret = -10000;
 				break;
 			}
-			ret=(itemsbuf[ri->idata].hxofs)*10000;
+			ret=(itemsbuf[ri->itemclassref].hxofs)*10000;
 			break;
 		case IDATAHYOFS:
-			if(unsigned(ri->idata) >= MAXITEMS)
+			if(unsigned(ri->itemclassref) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->idata);
+				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				ret = -10000;
 				break;
 			}
-			ret=(itemsbuf[ri->idata].hyofs)*10000;
+			ret=(itemsbuf[ri->itemclassref].hyofs)*10000;
 			break;
 		case IDATAHXSZ:
-			if(unsigned(ri->idata) >= MAXITEMS)
+			if(unsigned(ri->itemclassref) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->idata);
+				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				ret = -10000;
 				break;
 			}
-			ret=(itemsbuf[ri->idata].hxsz)*10000;
+			ret=(itemsbuf[ri->itemclassref].hxsz)*10000;
 			break;
 		case IDATAHYSZ:
-			if(unsigned(ri->idata) >= MAXITEMS)
+			if(unsigned(ri->itemclassref) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->idata);
+				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				ret = -10000;
 				break;
 			}
-			ret=(itemsbuf[ri->idata].hysz)*10000;
+			ret=(itemsbuf[ri->itemclassref].hysz)*10000;
 			break;
 		case IDATAHZSZ:
-			if(unsigned(ri->idata) >= MAXITEMS)
+			if(unsigned(ri->itemclassref) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->idata);
+				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				ret = -10000;
 				break;
 			}
-			ret=(itemsbuf[ri->idata].hzsz)*10000;
+			ret=(itemsbuf[ri->itemclassref].hzsz)*10000;
 			break;
 		case IDATADXOFS:
-			if(unsigned(ri->idata) >= MAXITEMS)
+			if(unsigned(ri->itemclassref) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->idata);
+				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				ret = -10000;
 				break;
 			}
-			ret=(itemsbuf[ri->idata].xofs)*10000;
+			ret=(itemsbuf[ri->itemclassref].xofs)*10000;
 			break;
 		case IDATADYOFS:
-			if(unsigned(ri->idata) >= MAXITEMS)
+			if(unsigned(ri->itemclassref) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->idata);
+				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				ret = -10000;
 				break;
 			}
-			ret=(itemsbuf[ri->idata].yofs)*10000;
+			ret=(itemsbuf[ri->itemclassref].yofs)*10000;
 			break;
 		case IDATATILEW:
-			if(unsigned(ri->idata) >= MAXITEMS)
+			if(unsigned(ri->itemclassref) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->idata);
+				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				ret = -10000;
 				break;
 			}
-			ret=(itemsbuf[ri->idata].tilew)*10000;
+			ret=(itemsbuf[ri->itemclassref].tilew)*10000;
 			break;
 		case IDATATILEH:
-			if(unsigned(ri->idata) >= MAXITEMS)
+			if(unsigned(ri->itemclassref) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->idata);
+				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				ret = -10000;
 				break;
 			}
-			ret=(itemsbuf[ri->idata].tileh)*10000;
+			ret=(itemsbuf[ri->itemclassref].tileh)*10000;
 			break;
 		case IDATAPICKUP:
-			if(unsigned(ri->idata) >= MAXITEMS)
+			if(unsigned(ri->itemclassref) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->idata);
+				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				ret = -10000;
 				break;
 			}
-			ret=(itemsbuf[ri->idata].pickup)*10000;
+			ret=(itemsbuf[ri->itemclassref].pickup)*10000;
 			break;
 		case IDATAOVERRIDEFL:
-			if(unsigned(ri->idata) >= MAXITEMS)
+			if(unsigned(ri->itemclassref) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->idata);
+				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				ret = 0;
 				break;
 			}
-			ret=(itemsbuf[ri->idata].overrideFLAGS)*10000;
+			ret=(itemsbuf[ri->itemclassref].overrideFLAGS)*10000;
 			break;
 
 		case IDATATILEWWEAP:
-			if(unsigned(ri->idata) >= MAXITEMS)
+			if(unsigned(ri->itemclassref) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->idata);
+				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				ret = -10000;
 				break;
 			}
-			ret=(itemsbuf[ri->idata].weap_data.tilew)*10000;
+			ret=(itemsbuf[ri->itemclassref].weap_data.tilew)*10000;
 			break;
 		case IDATATILEHWEAP:
-			if(unsigned(ri->idata) >= MAXITEMS)
+			if(unsigned(ri->itemclassref) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->idata);
+				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				ret = -10000;
 				break;
 			}
-			ret=(itemsbuf[ri->idata].weap_data.tileh)*10000;
+			ret=(itemsbuf[ri->itemclassref].weap_data.tileh)*10000;
 			break;
 		case IDATAOVERRIDEFLWEAP:
-			if(unsigned(ri->idata) >= MAXITEMS)
+			if(unsigned(ri->itemclassref) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->idata);
+				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				ret = 0;
 				break;
 			}
-			ret=(itemsbuf[ri->idata].weap_data.override_flags)*10000;
+			ret=(itemsbuf[ri->itemclassref].weap_data.override_flags)*10000;
 			break;
 		
 		case IDATATYPE:
-			if(unsigned(ri->idata) >= MAXITEMS)
+			if(unsigned(ri->itemclassref) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->idata);
+				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				ret = -10000;
 				break;
 			}
-			ret=(itemsbuf[ri->idata].type)*10000;
+			ret=(itemsbuf[ri->itemclassref].type)*10000;
 			break;
 			
 		case IDATALEVEL:
-			if(unsigned(ri->idata) >= MAXITEMS)
+			if(unsigned(ri->itemclassref) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->idata);
+				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				ret = -10000;
 				break;
 			}
-			ret=(itemsbuf[ri->idata].level)*10000;
+			ret=(itemsbuf[ri->itemclassref].level)*10000;
 			break;
 			
 		case IDATAKEEP:
@@ -4361,25 +4361,25 @@ int32_t get_register(int32_t arg)
 			
 		case IDATAAMOUNT:
 		{
-			if(unsigned(ri->idata) >= MAXITEMS)
+			if(unsigned(ri->itemclassref) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->idata);
+				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				ret = -10000;
 				break;
 			}
-			int32_t v = itemsbuf[ri->idata].amount;
+			int32_t v = itemsbuf[ri->itemclassref].amount;
 			ret = ((v&0x4000)?-1:1)*(v & 0x3FFF)*10000;
 			break;
 		}
 		case IDATAGRADUAL:
 		{
-			if(unsigned(ri->idata) >= MAXITEMS)
+			if(unsigned(ri->itemclassref) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->idata);
+				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				ret = -10000;
 				break;
 			}
-			ret = (itemsbuf[ri->idata].amount&0x8000) ? 10000 : 0;
+			ret = (itemsbuf[ri->itemclassref].amount&0x8000) ? 10000 : 0;
 			break;
 		}
 		case IDATACONSTSCRIPT:
@@ -4398,257 +4398,257 @@ int32_t get_register(int32_t arg)
 			ret = item_flag(item_flip_jinx);
 			break;
 		case IDATAUSEBURNSPR:
-			if(unsigned(ri->idata) >= MAXITEMS)
+			if(unsigned(ri->itemclassref) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->idata);
+				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				ret = 0;
 			}
-			else ret = (itemsbuf[ri->idata].weap_data.wflags & WFLAG_UPDATE_IGNITE_SPRITE) ? 10000 : 0;
+			else ret = (itemsbuf[ri->itemclassref].weap_data.wflags & WFLAG_UPDATE_IGNITE_SPRITE) ? 10000 : 0;
 			break;
 			
 		case IDATASETMAX:
-			if(unsigned(ri->idata) >= MAXITEMS)
+			if(unsigned(ri->itemclassref) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->idata);
+				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				ret = -10000;
 				break;
 			}
-			ret=(itemsbuf[ri->idata].setmax)*10000;
+			ret=(itemsbuf[ri->itemclassref].setmax)*10000;
 			break;
 			
 		case IDATAMAX:
-			if(unsigned(ri->idata) >= MAXITEMS)
+			if(unsigned(ri->itemclassref) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->idata);
+				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				ret = -10000;
 				break;
 			}
-			ret=(itemsbuf[ri->idata].max)*10000;
+			ret=(itemsbuf[ri->itemclassref].max)*10000;
 			break;
 			
 		case IDATACOUNTER:
-			if(unsigned(ri->idata) >= MAXITEMS)
+			if(unsigned(ri->itemclassref) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->idata);
+				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				ret = -10000;
 				break;
 			}
-			ret=(itemsbuf[ri->idata].count)*10000;
+			ret=(itemsbuf[ri->itemclassref].count)*10000;
 			break;
 			
 		case IDATAPSOUND:
-			if(unsigned(ri->idata) >= MAXITEMS)
+			if(unsigned(ri->itemclassref) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->idata);
+				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				ret = -10000;
 				break;
 			}
-			ret=(itemsbuf[ri->idata].playsound)*10000;
+			ret=(itemsbuf[ri->itemclassref].playsound)*10000;
 			break;
 		case IDATAUSESOUND:
-			if(unsigned(ri->idata) >= MAXITEMS)
+			if(unsigned(ri->itemclassref) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->idata);
+				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				ret = -10000;
 				break;
 			}
-			ret=(itemsbuf[ri->idata].usesound)*10000;
+			ret=(itemsbuf[ri->itemclassref].usesound)*10000;
 			break;
 			
 		case IDATAUSESOUND2:
-			if(unsigned(ri->idata) >= MAXITEMS)
+			if(unsigned(ri->itemclassref) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->idata);
+				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				ret = -10000;
 				break;
 			}
-			ret=(itemsbuf[ri->idata].usesound2)*10000;
+			ret=(itemsbuf[ri->itemclassref].usesound2)*10000;
 			break;
 			
 		case IDATAPOWER:
-			if(unsigned(ri->idata) >= MAXITEMS)
+			if(unsigned(ri->itemclassref) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->idata);
+				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				ret = -10000;
 				break;
 			}
-			ret=(itemsbuf[ri->idata].power)*10000;
+			ret=(itemsbuf[ri->itemclassref].power)*10000;
 			break;
 		
 		//Get the ID of an item.
 		case IDATAID:
-			if(unsigned(ri->idata) >= MAXITEMS)
+			if(unsigned(ri->itemclassref) >= MAXITEMS)
 			{
 				//Don't error here //scripting_log_error_with_context("Invalid itemdata access: {}", ri->idata);
 				ret = -10000;
 				break;
 			}
-			ret=ri->idata*10000;
+			ret=ri->itemclassref*10000;
 			break;
 		
 		//Get the script assigned to an item (active)
 		case IDATASCRIPT:
-			if(unsigned(ri->idata) >= MAXITEMS)
+			if(unsigned(ri->itemclassref) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->idata);
+				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				ret = -10000;
 				break;
 			}
-			ret=(itemsbuf[ri->idata].script)*10000;
+			ret=(itemsbuf[ri->itemclassref].script)*10000;
 			break;
 		case IDATASPRSCRIPT:
-			if(unsigned(ri->idata) >= MAXITEMS)
+			if(unsigned(ri->itemclassref) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->idata);
+				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				ret = -10000;
 				break;
 			}
-			ret=(itemsbuf[ri->idata].sprite_script)*10000;
+			ret=(itemsbuf[ri->itemclassref].sprite_script)*10000;
 			break;
 		//Hero TIle modifier
 		case IDATALTM:
-			if(unsigned(ri->idata) >= MAXITEMS)
+			if(unsigned(ri->itemclassref) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->idata);
+				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				ret = 0;
 				break;
 			}
-			ret=(itemsbuf[ri->idata].ltm)*10000;
+			ret=(itemsbuf[ri->itemclassref].ltm)*10000;
 			break;
 		//Pickup script
 		case IDATAPSCRIPT:
-			if(unsigned(ri->idata) >= MAXITEMS)
+			if(unsigned(ri->itemclassref) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->idata);
+				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				ret = -10000;
 				break;
 			}
-			ret=(itemsbuf[ri->idata].collect_script)*10000;
+			ret=(itemsbuf[ri->itemclassref].collect_script)*10000;
 			break;
 		//Pickup string
 		case IDATAPSTRING:
-			if(unsigned(ri->idata) >= MAXITEMS)
+			if(unsigned(ri->itemclassref) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->idata);
+				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				ret = -10000;
 				break;
 			}
-			ret=(itemsbuf[ri->idata].pstring)*10000;
+			ret=(itemsbuf[ri->itemclassref].pstring)*10000;
 			break;
 		case IDATAPFLAGS:
-			if(unsigned(ri->idata) >= MAXITEMS)
+			if(unsigned(ri->itemclassref) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->idata);
+				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				ret = 0;
 				break;
 			}
-			ret = (itemsbuf[ri->idata].pickup_string_flags)*10000;
+			ret = (itemsbuf[ri->itemclassref].pickup_string_flags)*10000;
 			break;
 		case IDATAPICKUPLITEMS:
-			if(unsigned(ri->idata) >= MAXITEMS)
+			if(unsigned(ri->itemclassref) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->idata);
+				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				ret = 0;
 				break;
 			}
-			ret = (itemsbuf[ri->idata].pickup_litems)*10000;
+			ret = (itemsbuf[ri->itemclassref].pickup_litems)*10000;
 			break;
 		case IDATAPICKUPLITEMLEVEL:
-			if(unsigned(ri->idata) >= MAXITEMS)
+			if(unsigned(ri->itemclassref) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->idata);
+				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				ret = 0;
 				break;
 			}
-			ret = (itemsbuf[ri->idata].pickup_litem_level)*10000;
+			ret = (itemsbuf[ri->itemclassref].pickup_litem_level)*10000;
 			break;
 		//Magic cost
 		case IDATAMAGCOST:
-			if(unsigned(ri->idata) >= MAXITEMS)
+			if(unsigned(ri->itemclassref) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->idata);
+				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				ret = -10000;
 				break;
 			}
-			ret=(itemsbuf[ri->idata].cost_amount[0])*10000;
+			ret=(itemsbuf[ri->itemclassref].cost_amount[0])*10000;
 			break;
 		case IDATACOST2:
-			if(unsigned(ri->idata) >= MAXITEMS)
+			if(unsigned(ri->itemclassref) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->idata);
+				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				ret = -10000;
 				break;
 			}
-			ret=(itemsbuf[ri->idata].cost_amount[1])*10000;
+			ret=(itemsbuf[ri->itemclassref].cost_amount[1])*10000;
 			break;
 		case IDATACOOLDOWN:
-			if(unsigned(ri->idata) >= MAXITEMS)
+			if(unsigned(ri->itemclassref) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->idata);
+				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				ret = -10000;
 				break;
 			}
-			ret = (itemsbuf[ri->idata].cooldown) * 10000;
+			ret = (itemsbuf[ri->itemclassref].cooldown) * 10000;
 			break;
 		//cost counter ref
 		case IDATACOSTCOUNTER:
-			if(unsigned(ri->idata) >= MAXITEMS)
+			if(unsigned(ri->itemclassref) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->idata);
+				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				ret = -10000;
 				break;
 			}
-			ret=(itemsbuf[ri->idata].cost_counter[0])*10000;
+			ret=(itemsbuf[ri->itemclassref].cost_counter[0])*10000;
 			break;
 		case IDATACOSTCOUNTER2:
-			if(unsigned(ri->idata) >= MAXITEMS)
+			if(unsigned(ri->itemclassref) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->idata);
+				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				ret = -10000;
 				break;
 			}
-			ret=(itemsbuf[ri->idata].cost_counter[1])*10000;
+			ret=(itemsbuf[ri->itemclassref].cost_counter[1])*10000;
 			break;
 		//Min Hearts to Pick Up
 		case IDATAMINHEARTS:
-			if(unsigned(ri->idata) >= MAXITEMS)
+			if(unsigned(ri->itemclassref) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->idata);
+				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				ret = -10000;
 				break;
 			}
-			ret=(itemsbuf[ri->idata].pickup_hearts)*10000;
+			ret=(itemsbuf[ri->itemclassref].pickup_hearts)*10000;
 			break;
 		//Tile used by the item
 		case IDATATILE:
-			if(unsigned(ri->idata) >= MAXITEMS)
+			if(unsigned(ri->itemclassref) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->idata);
+				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				ret = -10000;
 				break;
 			}
-			ret=(itemsbuf[ri->idata].tile)*10000;
+			ret=(itemsbuf[ri->itemclassref].tile)*10000;
 			break;
 		//itemdata->Flash
 		case IDATAMISC:
-			if(unsigned(ri->idata) >= MAXITEMS)
+			if(unsigned(ri->itemclassref) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->idata);
+				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				ret = -10000;
 				break;
 			}
-			ret=(itemsbuf[ri->idata].misc_flags)*10000;
+			ret=(itemsbuf[ri->itemclassref].misc_flags)*10000;
 			break;
 		//->CSet
 		case IDATACSET:
-			if(unsigned(ri->idata) >= MAXITEMS)
+			if(unsigned(ri->itemclassref) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->idata);
+				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				ret = -10000;
 				break;
 			}
 
-			ret = (itemsbuf[ri->idata].csets&15)*10000;
+			ret = (itemsbuf[ri->itemclassref].csets&15)*10000;
 
 			// If we find quests that broke, use this code.
 			// if (QHeader.compareVer(2, 55, 9) >= 0)
@@ -4657,23 +4657,23 @@ int32_t get_register(int32_t arg)
 			// 	ret = itemsbuf[ri->idata].csets*10000;
 			break;
 		case IDATAFLASHCSET:
-			if(unsigned(ri->idata) >= MAXITEMS)
+			if(unsigned(ri->itemclassref) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->idata);
+				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				ret = -10000;
 				break;
 			}
-			ret=(itemsbuf[ri->idata].csets>>4)*10000;
+			ret=(itemsbuf[ri->itemclassref].csets>>4)*10000;
 			break;
 		//->A.Frames
 		case IDATAFRAMES:
-			if(unsigned(ri->idata) >= MAXITEMS)
+			if(unsigned(ri->itemclassref) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->idata);
+				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				ret = -10000;
 				break;
 			}
-			ret=(itemsbuf[ri->idata].frames)*10000;
+			ret=(itemsbuf[ri->itemclassref].frames)*10000;
 			break;
 		/*
 		case IDATAFRAME:
@@ -4682,23 +4682,23 @@ int32_t get_register(int32_t arg)
 		*/ 
 		//->A.Speed
 		case IDATAASPEED:
-			if(unsigned(ri->idata) >= MAXITEMS)
+			if(unsigned(ri->itemclassref) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->idata);
+				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				ret = -10000;
 				break;
 			}
-			ret=(itemsbuf[ri->idata].speed)*10000;
+			ret=(itemsbuf[ri->itemclassref].speed)*10000;
 			break;
 		//->Delay
 		case IDATADELAY:
-			if(unsigned(ri->idata) >= MAXITEMS)
+			if(unsigned(ri->itemclassref) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->idata);
+				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				ret = -10000;
 				break;
 			}
-			ret=(itemsbuf[ri->idata].delay)*10000;
+			ret=(itemsbuf[ri->itemclassref].delay)*10000;
 			break;
 		// teo of this item upgrades
 		case IDATACOMBINE:
@@ -4739,7 +4739,7 @@ int32_t get_register(int32_t arg)
 		///----------------------------------------------------------------------------------------------------//
 		//LWeapon Variables
 		case LWPNSPECIAL:
-			if(auto s=checkLWpn(ri->lwpn))
+			if(auto s=checkLWpn(ri->lwpnref))
 				ret=((int32_t)s->specialinfo)*10000;
 			
 				
@@ -4751,13 +4751,13 @@ int32_t get_register(int32_t arg)
 				scripting_log_error_with_context("To use this you must disable the quest rule 'Old (Faster) Sprite Drawing'.");
 				ret = -1; break;
 			}
-			if(auto s=checkLWpn(ri->lwpn))
+			if(auto s=checkLWpn(ri->lwpnref))
 				ret=((int32_t)s->scale)*100.0;
 				
 			break;
 		
 		case LWPNX:
-			if(auto s=checkLWpn(ri->lwpn))
+			if(auto s=checkLWpn(ri->lwpnref))
 			{
 				if ( get_qr(qr_SPRITEXY_IS_FLOAT) )
 				{
@@ -4777,7 +4777,7 @@ int32_t get_register(int32_t arg)
 		}
 	
 		case LWPNY:
-			if(auto s=checkLWpn(ri->lwpn))
+			if(auto s=checkLWpn(ri->lwpnref))
 			{
 				if ( get_qr(qr_SPRITEXY_IS_FLOAT) )
 				{
@@ -4789,7 +4789,7 @@ int32_t get_register(int32_t arg)
 			break;
 			
 		case LWPNZ:
-			if(auto s=checkLWpn(ri->lwpn))
+			if(auto s=checkLWpn(ri->lwpnref))
 			{
 				if ( get_qr(qr_SPRITEXY_IS_FLOAT) )
 				{
@@ -4802,7 +4802,7 @@ int32_t get_register(int32_t arg)
 			break;
 			
 		case LWPNJUMP:
-			if(auto s=checkLWpn(ri->lwpn))
+			if(auto s=checkLWpn(ri->lwpnref))
 			{
 				ret = s->fall.getZLong() / -100;
 				if (get_qr(qr_SPRITE_JUMP_IS_TRUNCATED)) ret = trunc(ret / 10000) * 10000;
@@ -4811,7 +4811,7 @@ int32_t get_register(int32_t arg)
 			break;
 		
 		case LWPNFAKEJUMP:
-			if(auto s=checkLWpn(ri->lwpn))
+			if(auto s=checkLWpn(ri->lwpnref))
 			{
 				ret = s->fakefall.getZLong() / -100;
 				if (get_qr(qr_SPRITE_JUMP_IS_TRUNCATED)) ret = trunc(ret / 10000) * 10000;
@@ -4820,19 +4820,19 @@ int32_t get_register(int32_t arg)
 			break;
 			
 		case LWPNDIR:
-			if(auto s=checkLWpn(ri->lwpn))
+			if(auto s=checkLWpn(ri->lwpnref))
 				ret=s->dir*10000;
 				
 			break;
 		 
 		case LWPNGRAVITY:
-			if(auto s=checkLWpn(ri->lwpn))
+			if(auto s=checkLWpn(ri->lwpnref))
 				ret= (s->moveflags & move_obeys_grav) ? 10000 : 0;
 				
 			break;
 			
 		case LWPNSTEP:
-			if(auto s=checkLWpn(ri->lwpn))
+			if(auto s=checkLWpn(ri->lwpnref))
 			{
 				if ( get_qr(qr_STEP_IS_FLOAT) || replay_is_active() )
 				{
@@ -4854,13 +4854,13 @@ int32_t get_register(int32_t arg)
 			break;
 			
 		case LWPNANGLE:
-			if(auto s=checkLWpn(ri->lwpn))
+			if(auto s=checkLWpn(ri->lwpnref))
 				ret=(int32_t)(s->angle*10000);
 				
 			break;
 		
 		case LWPNDEGANGLE:
-			if(auto s=checkLWpn(ri->lwpn))
+			if(auto s=checkLWpn(ri->lwpnref))
 			{
 				ret=(int32_t)(s->angle*(180.0 / PI)*10000);
 			}
@@ -4868,7 +4868,7 @@ int32_t get_register(int32_t arg)
 			break;
 			
 		case LWPNVX:
-			if(auto s=checkLWpn(ri->lwpn))
+			if(auto s=checkLWpn(ri->lwpnref))
 			{
 				if (s->angular)
 					ret = int32_t(zc::math::Cos(s->angle)*10000.0*s->step);
@@ -4898,7 +4898,7 @@ int32_t get_register(int32_t arg)
 			break;
 		
 		case LWPNVY:
-			if(auto s=checkLWpn(ri->lwpn))
+			if(auto s=checkLWpn(ri->lwpnref))
 			{
 				if (s->angular)
 					ret = int32_t(zc::math::Sin(s->angle)*10000.0*s->step);
@@ -4927,31 +4927,31 @@ int32_t get_register(int32_t arg)
 			break;
 				
 		case LWPNANGULAR:
-			if(auto s=checkLWpn(ri->lwpn))
+			if(auto s=checkLWpn(ri->lwpnref))
 				ret=s->angular*10000;
 				
 			break;
 			
 		case LWPNAUTOROTATE:
-			if(auto s=checkLWpn(ri->lwpn))
+			if(auto s=checkLWpn(ri->lwpnref))
 				ret=s->autorotate*10000;
 				
 			break;
 			
 		case LWPNBEHIND:
-			if(auto s=checkLWpn(ri->lwpn))
+			if(auto s=checkLWpn(ri->lwpnref))
 				ret=s->behind*10000;
 				
 			break;
 			
 		case LWPNDRAWTYPE:
-			if(auto s=checkLWpn(ri->lwpn))
+			if(auto s=checkLWpn(ri->lwpnref))
 				ret=s->drawstyle*10000;
 				
 			break;
 			
 		case LWPNPOWER:
-			if(auto s=checkLWpn(ri->lwpn))
+			if(auto s=checkLWpn(ri->lwpnref))
 				ret=s->power*10000;
 				
 			break;
@@ -4963,73 +4963,73 @@ int32_t get_register(int32_t arg)
 			break;
 		*/        
 		case LWPNDEAD:
-			if(auto s=checkLWpn(ri->lwpn))
+			if(auto s=checkLWpn(ri->lwpnref))
 				ret=s->dead*10000;
 				
 			break;
 			
 		case LWPNTYPE:
-			if(auto s=checkLWpn(ri->lwpn))
+			if(auto s=checkLWpn(ri->lwpnref))
 				ret=s->id*10000;
 				
 			break;
 			
 		case LWPNTILE:
-			if(auto s=checkLWpn(ri->lwpn))
+			if(auto s=checkLWpn(ri->lwpnref))
 				ret=s->tile*10000;
 				
 			break;
 		
 		case LWPNSCRIPTTILE:
-			if(auto s=checkLWpn(ri->lwpn))
+			if(auto s=checkLWpn(ri->lwpnref))
 				ret=s->scripttile*10000;
 				
 			break;
 		
 		case LWPNSCRIPTFLIP:
-			if(auto s=checkLWpn(ri->lwpn))
+			if(auto s=checkLWpn(ri->lwpnref))
 				ret=s->scriptflip*10000;
 				
 			break;
 			
 		case LWPNCSET:
-			if(auto s=checkLWpn(ri->lwpn))
+			if(auto s=checkLWpn(ri->lwpnref))
 				ret=s->cs*10000;
 				
 			break;
 			
 		case LWPNFLASHCSET:
-			if(auto s=checkLWpn(ri->lwpn))
+			if(auto s=checkLWpn(ri->lwpnref))
 				ret=(s->o_cset>>4)*10000;
 				
 			break;
 			
 		case LWPNFRAMES:
-			if(auto s=checkLWpn(ri->lwpn))
+			if(auto s=checkLWpn(ri->lwpnref))
 				ret=s->frames*10000;
 				
 			break;
 			
 		case LWPNFRAME:
-			if(auto s=checkLWpn(ri->lwpn))
+			if(auto s=checkLWpn(ri->lwpnref))
 				ret=s->aframe*10000;
 				
 			break;
 			
 		case LWPNASPEED:
-			if(auto s=checkLWpn(ri->lwpn))
+			if(auto s=checkLWpn(ri->lwpnref))
 				ret=s->o_speed*10000;
 				
 			break;
 			
 		case LWPNFLASH:
-			if(auto s=checkLWpn(ri->lwpn))
+			if(auto s=checkLWpn(ri->lwpnref))
 				ret=s->flash*10000;
 				
 			break;
 			
 		case LWPNFLIP:
-			if(auto s=checkLWpn(ri->lwpn))
+			if(auto s=checkLWpn(ri->lwpnref))
 				ret=s->flip*10000;
 				
 			break;
@@ -5039,146 +5039,146 @@ int32_t get_register(int32_t arg)
 			break;
 			
 		case LWPNEXTEND:
-			if(auto s=checkLWpn(ri->lwpn))
+			if(auto s=checkLWpn(ri->lwpnref))
 				ret=s->extend*10000;
 				
 			break;
 			
 		case LWPNOTILE:
-			if(auto s=checkLWpn(ri->lwpn))
+			if(auto s=checkLWpn(ri->lwpnref))
 				ret=s->o_tile*10000;
 				
 			break;
 			
 		case LWPNOCSET:
-			if(auto s=checkLWpn(ri->lwpn))
+			if(auto s=checkLWpn(ri->lwpnref))
 				ret=(s->o_cset&15)*10000;
 				
 			break;
 			
 		case LWPNHXOFS:
-			if(auto s=checkLWpn(ri->lwpn))
+			if(auto s=checkLWpn(ri->lwpnref))
 				ret=(s->hxofs)*10000;
 				
 			break;
 			
 		case LWPNHYOFS:
-			if(auto s=checkLWpn(ri->lwpn))
+			if(auto s=checkLWpn(ri->lwpnref))
 				ret=(s->hyofs)*10000;
 				
 			break;
 			
 		case LWPNXOFS:
-			if(auto s=checkLWpn(ri->lwpn))
+			if(auto s=checkLWpn(ri->lwpnref))
 				ret=((int32_t)(s->xofs))*10000;
 				
 			break;
 			
 		case LWPNYOFS:
-			if(auto s=checkLWpn(ri->lwpn))
+			if(auto s=checkLWpn(ri->lwpnref))
 				ret=((int32_t)(s->yofs-(get_qr(qr_OLD_DRAWOFFSET)?playing_field_offset:original_playing_field_offset)))*10000;
 				
 			break;
 			
 		case LWPNSHADOWXOFS:
-			if(auto s=checkLWpn(ri->lwpn))
+			if(auto s=checkLWpn(ri->lwpnref))
 				ret=((int32_t)(s->shadowxofs))*10000;
 				
 			break;
 			
 		case LWPNSHADOWYOFS:
-			if(auto s=checkLWpn(ri->lwpn))
+			if(auto s=checkLWpn(ri->lwpnref))
 				ret=((int32_t)(s->shadowyofs))*10000;
 				
 			break;
 			
 		case LWPNTOTALDYOFFS:
-			if(auto s=checkLWpn(ri->lwpn))
+			if(auto s=checkLWpn(ri->lwpnref))
 				ret = ((int32_t)(s->yofs-(get_qr(qr_OLD_DRAWOFFSET)?playing_field_offset:original_playing_field_offset))
 					+ ((s->switch_hooked && Hero.switchhookstyle == swRISE)
 						? -(8-(abs(Hero.switchhookclk-32)/4)) : 0)) * 10000;
 			break;
 			
 		case LWPNZOFS:
-			if(auto s=checkLWpn(ri->lwpn))
+			if(auto s=checkLWpn(ri->lwpnref))
 				ret=((int32_t)(s->zofs))*10000;
 				
 			break;
 			
 		case LWPNHXSZ:
-			if(auto s=checkLWpn(ri->lwpn))
+			if(auto s=checkLWpn(ri->lwpnref))
 				ret=(s->hit_width)*10000;
 				
 			break;
 			
 		case LWPNHYSZ:
-			if(auto s=checkLWpn(ri->lwpn))
+			if(auto s=checkLWpn(ri->lwpnref))
 				ret=(s->hit_height)*10000;
 				
 			break;
 			
 		case LWPNHZSZ:
-			if(auto s=checkLWpn(ri->lwpn))
+			if(auto s=checkLWpn(ri->lwpnref))
 				ret=(s->hzsz)*10000;
 				
 			break;
 			
 		case LWPNTXSZ:
-			if(auto s=checkLWpn(ri->lwpn))
+			if(auto s=checkLWpn(ri->lwpnref))
 				ret=(s->txsz)*10000;
 				
 			break;
 			
 		case LWPNTYSZ:
-			if(auto s=checkLWpn(ri->lwpn))
+			if(auto s=checkLWpn(ri->lwpnref))
 				ret=(s->tysz)*10000;
 				
 			break;
 			
 		case LWPNCOLLDET:
-			if(auto s=checkLWpn(ri->lwpn))
+			if(auto s=checkLWpn(ri->lwpnref))
 				ret=(s->scriptcoldet)*10000;
 				
 			break;
 		
 		case LWPNENGINEANIMATE:
-			if(auto s=checkLWpn(ri->lwpn))
+			if(auto s=checkLWpn(ri->lwpnref))
 				ret=(s->do_animation)*10000;
 				
 			break;
 		
 		case LWPNPARENT:
-			if(auto s=checkLWpn(ri->lwpn))
+			if(auto s=checkLWpn(ri->lwpnref))
 				ret=(s->parentitem)*10000;
 				
 			break;
 
 		case LWPNLEVEL:
-			if(auto s=checkLWpn(ri->lwpn))
+			if(auto s=checkLWpn(ri->lwpnref))
 				ret=(s->level)*10000;
 				
 			break;
 		
 		case LWPNSCRIPT:
-			if(auto s=checkLWpn(ri->lwpn))
+			if(auto s=checkLWpn(ri->lwpnref))
 				ret=(s->script)*10000;
 				
 			break;
 		
 		case LWPNUSEWEAPON:
-			if(auto s=checkLWpn(ri->lwpn))
+			if(auto s=checkLWpn(ri->lwpnref))
 				ret=(s->useweapon)*10000;
 				
 			break;
 		
 		case LWPNUSEDEFENCE:
-			if(auto s=checkLWpn(ri->lwpn))
+			if(auto s=checkLWpn(ri->lwpnref))
 				ret=(s->usedefense)*10000;
 				
 			break;
 		
 		case LWEAPONSCRIPTUID:
-			if(auto s=checkLWpn(ri->lwpn))
+			if(auto s=checkLWpn(ri->lwpnref))
 				ret=(s->getUID());
 				
 			break;
@@ -5189,41 +5189,41 @@ int32_t get_register(int32_t arg)
 				scripting_log_error_with_context("To use this you must disable the quest rule 'Old (Faster) Sprite Drawing'.");
 				ret = -1; break;
 			}
-			if(auto s=checkLWpn(ri->lwpn))
+			if(auto s=checkLWpn(ri->lwpnref))
 				ret=s->rotation*10000;
 				
 			break;
 		
 		case LWPNFALLCLK:
-			if(auto s=checkLWpn(ri->lwpn))
+			if(auto s=checkLWpn(ri->lwpnref))
 			{
 				ret = s->fallclk * 10000;
 			}
 			break;
 		
 		case LWPNFALLCMB:
-			if(auto s=checkLWpn(ri->lwpn))
+			if(auto s=checkLWpn(ri->lwpnref))
 			{
 				ret = s->fallCombo * 10000;
 			}
 			break;
 		
 		case LWPNDROWNCLK:
-			if(auto s=checkLWpn(ri->lwpn))
+			if(auto s=checkLWpn(ri->lwpnref))
 			{
 				ret = s->drownclk * 10000;
 			}
 			break;
 		
 		case LWPNDROWNCMB:
-			if(auto s=checkLWpn(ri->lwpn))
+			if(auto s=checkLWpn(ri->lwpnref))
 			{
 				ret = s->drownCombo * 10000;
 			}
 			break;
 			
 		case LWPNFAKEZ:
-			if(auto s=checkLWpn(ri->lwpn))
+			if(auto s=checkLWpn(ri->lwpnref))
 			{
 				if ( get_qr(qr_SPRITEXY_IS_FLOAT) )
 				{
@@ -5235,88 +5235,88 @@ int32_t get_register(int32_t arg)
 			break;
 
 		case LWPNGLOWRAD:
-			if(auto s=checkLWpn(ri->lwpn))
+			if(auto s=checkLWpn(ri->lwpnref))
 			{
 				ret = s->glowRad * 10000;
 			}
 			break;
 			
 		case LWPNGLOWSHP:
-			if(auto s=checkLWpn(ri->lwpn))
+			if(auto s=checkLWpn(ri->lwpnref))
 			{
 				ret = s->glowShape * 10000;
 			}
 			break;
 			
 		case LWPNUNBL:
-			if(auto s=checkLWpn(ri->lwpn))
+			if(auto s=checkLWpn(ri->lwpnref))
 			{
 				ret = s->unblockable * 10000;
 			}
 			break;
 			
 		case LWPNSHADOWSPR:
-			if(auto s=checkLWpn(ri->lwpn))
+			if(auto s=checkLWpn(ri->lwpnref))
 			{
 				ret = s->spr_shadow * 10000;
 			}
 			break;
 		case LWSWHOOKED:
-			if(auto s=checkLWpn(ri->lwpn))
+			if(auto s=checkLWpn(ri->lwpnref))
 			{
 				ret = s->switch_hooked ? 10000 : 0;
 			}
 			break;
 		case LWPNTIMEOUT:
-			if(auto s=checkLWpn(ri->lwpn))
+			if(auto s=checkLWpn(ri->lwpnref))
 			{
 				ret = s->weap_timeout * 10000;
 			}
 			break;
 		case LWPNDEATHITEM:
-			if(auto s=checkLWpn(ri->lwpn))
+			if(auto s=checkLWpn(ri->lwpnref))
 			{
 				ret = s->death_spawnitem * 10000;
 			}
 			break;
 		case LWPNDEATHDROPSET:
-			if(auto s=checkLWpn(ri->lwpn))
+			if(auto s=checkLWpn(ri->lwpnref))
 			{
 				ret = s->death_spawndropset * 10000;
 			}
 			break;
 		case LWPNDEATHIPICKUP:
-			if(auto s=checkLWpn(ri->lwpn))
+			if(auto s=checkLWpn(ri->lwpnref))
 			{
 				ret = s->death_item_pflags * 10000;
 			}
 			break;
 		case LWPNDEATHSPRITE:
-			if(auto s=checkLWpn(ri->lwpn))
+			if(auto s=checkLWpn(ri->lwpnref))
 			{
 				ret = s->death_sprite * 10000;
 			}
 			break;
 		case LWPNDEATHSFX:
-			if(auto s=checkLWpn(ri->lwpn))
+			if(auto s=checkLWpn(ri->lwpnref))
 			{
 				ret = s->death_sfx * 10000;
 			}
 			break;
 		case LWPNLIFTLEVEL:
-			if(auto s=checkLWpn(ri->lwpn))
+			if(auto s=checkLWpn(ri->lwpnref))
 			{
 				ret = s->lift_level * 10000;
 			}
 			break;
 		case LWPNLIFTTIME:
-			if(auto s=checkLWpn(ri->lwpn))
+			if(auto s=checkLWpn(ri->lwpnref))
 			{
 				ret = s->lift_time * 10000;
 			}
 			break;
 		case LWPNLIFTHEIGHT:
-			if(auto s=checkLWpn(ri->lwpn))
+			if(auto s=checkLWpn(ri->lwpnref))
 			{
 				ret = s->lift_height.getZLong();
 			}
@@ -5330,13 +5330,13 @@ int32_t get_register(int32_t arg)
 				scripting_log_error_with_context("To use this you must disable the quest rule 'Old (Faster) Sprite Drawing'.");
 				ret = -1; break;
 			}
-			if(auto s=checkEWpn(ri->ewpn))
+			if(auto s=checkEWpn(ri->ewpnref))
 				ret=((int32_t)s->scale)*100.0;
 				
 			break;
 
 		case EWPNX:
-			if(auto s=checkEWpn(ri->ewpn))
+			if(auto s=checkEWpn(ri->ewpnref))
 			{
 				if ( get_qr(qr_SPRITEXY_IS_FLOAT) )
 				{
@@ -5355,7 +5355,7 @@ int32_t get_register(int32_t arg)
 		}
 	
 		case EWPNY:
-			if(auto s=checkEWpn(ri->ewpn))
+			if(auto s=checkEWpn(ri->ewpnref))
 			{
 				if ( get_qr(qr_SPRITEXY_IS_FLOAT) )
 				{
@@ -5367,7 +5367,7 @@ int32_t get_register(int32_t arg)
 			break;
 			
 		case EWPNZ:
-			if(auto s=checkEWpn(ri->ewpn))
+			if(auto s=checkEWpn(ri->ewpnref))
 			{
 				if ( get_qr(qr_SPRITEXY_IS_FLOAT) )
 				{
@@ -5379,7 +5379,7 @@ int32_t get_register(int32_t arg)
 			break;
 			
 		case EWPNJUMP:
-			if(auto s=checkEWpn(ri->ewpn))
+			if(auto s=checkEWpn(ri->ewpnref))
 			{
 				ret = s->fall.getZLong() / -100;
 				if (get_qr(qr_SPRITE_JUMP_IS_TRUNCATED)) ret = trunc(ret / 10000) * 10000;
@@ -5388,7 +5388,7 @@ int32_t get_register(int32_t arg)
 			break;
 		
 		case EWPNFAKEJUMP:
-			if(auto s=checkEWpn(ri->ewpn))
+			if(auto s=checkEWpn(ri->ewpnref))
 			{
 				ret = s->fakefall.getZLong() / -100;
 				if (get_qr(qr_SPRITE_JUMP_IS_TRUNCATED)) ret = trunc(ret / 10000) * 10000;
@@ -5397,25 +5397,25 @@ int32_t get_register(int32_t arg)
 			break;
 			
 		case EWPNDIR:
-			if(auto s=checkEWpn(ri->ewpn))
+			if(auto s=checkEWpn(ri->ewpnref))
 				ret=s->dir*10000;
 				
 			break;
 			
 		case EWPNLEVEL:
-			if(auto s=checkEWpn(ri->ewpn))
+			if(auto s=checkEWpn(ri->ewpnref))
 				ret=s->level*10000;
 				
 			break;
 			
 		case EWPNGRAVITY:
-			if(auto s=checkEWpn(ri->ewpn))
+			if(auto s=checkEWpn(ri->ewpnref))
 				ret=((s->moveflags & move_obeys_grav) ? 10000 : 0);
 				
 			break;
 			
 		case EWPNSTEP:
-			if(auto s=checkEWpn(ri->ewpn))
+			if(auto s=checkEWpn(ri->ewpnref))
 			{
 				if ( get_qr(qr_STEP_IS_FLOAT) || replay_is_active() )
 				{
@@ -5435,13 +5435,13 @@ int32_t get_register(int32_t arg)
 			break;
 			
 		case EWPNANGLE:
-			if(auto s=checkEWpn(ri->ewpn))
+			if(auto s=checkEWpn(ri->ewpnref))
 				ret=(int32_t)(s->angle*10000);
 				
 			break;
 			
 		case EWPNDEGANGLE:
-			if(auto s=checkEWpn(ri->ewpn))
+			if(auto s=checkEWpn(ri->ewpnref))
 			{
 				ret=(int32_t)(s->angle*(180.0 / PI)*10000);
 			}
@@ -5449,7 +5449,7 @@ int32_t get_register(int32_t arg)
 			break;
 			
 		case EWPNVX:
-			if(auto s=checkEWpn(ri->ewpn))
+			if(auto s=checkEWpn(ri->ewpnref))
 			{
 				if (s->angular)
 					ret = int32_t(zc::math::Cos(s->angle)*10000.0*s->step);
@@ -5478,7 +5478,7 @@ int32_t get_register(int32_t arg)
 			break;
 		
 		case EWPNVY:
-			if(auto s=checkEWpn(ri->ewpn))
+			if(auto s=checkEWpn(ri->ewpnref))
 			{
 				if (s->angular)
 					ret = int32_t(zc::math::Sin(s->angle)*10000.0*s->step);
@@ -5508,103 +5508,103 @@ int32_t get_register(int32_t arg)
 			
 			
 		case EWPNANGULAR:
-			if(auto s=checkEWpn(ri->ewpn))
+			if(auto s=checkEWpn(ri->ewpnref))
 				ret=s->angular*10000;
 				
 			break;
 			
 		case EWPNAUTOROTATE:
-			if(auto s=checkEWpn(ri->ewpn))
+			if(auto s=checkEWpn(ri->ewpnref))
 				ret=s->autorotate*10000;
 				
 			break;
 			
 		case EWPNBEHIND:
-			if(auto s=checkEWpn(ri->ewpn))
+			if(auto s=checkEWpn(ri->ewpnref))
 				ret=s->behind*10000;
 				
 			break;
 			
 		case EWPNDRAWTYPE:
-			if(auto s=checkEWpn(ri->ewpn))
+			if(auto s=checkEWpn(ri->ewpnref))
 				ret=s->drawstyle*10000;
 				
 			break;
 			
 		case EWPNPOWER:
-			if(auto s=checkEWpn(ri->ewpn))
+			if(auto s=checkEWpn(ri->ewpnref))
 				ret=s->power*10000;
 				
 			break;
 			
 		case EWPNDEAD:
-			if(auto s=checkEWpn(ri->ewpn))
+			if(auto s=checkEWpn(ri->ewpnref))
 				ret=s->dead*10000;
 				
 			break;
 			
 		case EWPNTYPE:
-			if(auto s=checkEWpn(ri->ewpn))
+			if(auto s=checkEWpn(ri->ewpnref))
 				ret=s->id*10000;
 				
 			break;
 			
 		case EWPNTILE:
-			if(auto s=checkEWpn(ri->ewpn))
+			if(auto s=checkEWpn(ri->ewpnref))
 				ret=s->tile*10000;
 				
 			break;
 		
 		case EWPNSCRIPTTILE:
-			if(auto s=checkEWpn(ri->ewpn))
+			if(auto s=checkEWpn(ri->ewpnref))
 				ret=s->scripttile*10000;
 				
 			break;
 		
 		case EWPNSCRIPTFLIP:
-			if(auto s=checkEWpn(ri->ewpn))
+			if(auto s=checkEWpn(ri->ewpnref))
 				ret=s->scriptflip*10000;
 				
 			break;
 			
 		case EWPNCSET:
-			if(auto s=checkEWpn(ri->ewpn))
+			if(auto s=checkEWpn(ri->ewpnref))
 				ret=s->cs*10000;
 				
 			break;
 			
 		case EWPNFLASHCSET:
-			if(auto s=checkEWpn(ri->ewpn))
+			if(auto s=checkEWpn(ri->ewpnref))
 				ret=(s->o_cset>>4)*10000;
 				
 			break;
 			
 		case EWPNFRAMES:
-			if(auto s=checkEWpn(ri->ewpn))
+			if(auto s=checkEWpn(ri->ewpnref))
 				ret=s->frames*10000;
 				
 			break;
 			
 		case EWPNFRAME:
-			if(auto s=checkEWpn(ri->ewpn))
+			if(auto s=checkEWpn(ri->ewpnref))
 				ret=s->aframe*10000;
 				
 			break;
 			
 		case EWPNASPEED:
-			if(auto s=checkEWpn(ri->ewpn))
+			if(auto s=checkEWpn(ri->ewpnref))
 				ret=s->o_speed*10000;
 				
 			break;
 			
 		case EWPNFLASH:
-			if(auto s=checkEWpn(ri->ewpn))
+			if(auto s=checkEWpn(ri->ewpnref))
 				ret=s->flash*10000;
 				
 			break;
 			
 		case EWPNFLIP:
-			if(auto s=checkEWpn(ri->ewpn))
+			if(auto s=checkEWpn(ri->ewpnref))
 				ret=s->flip*10000;
 				
 			break;
@@ -5615,7 +5615,7 @@ int32_t get_register(int32_t arg)
 				scripting_log_error_with_context("To use this you must disable the quest rule 'Old (Faster) Sprite Drawing'");
 				break;
 			}
-			if(auto s=checkEWpn(ri->ewpn))
+			if(auto s=checkEWpn(ri->ewpnref))
 				ret=s->rotation*10000;
 				
 			break;
@@ -5625,166 +5625,166 @@ int32_t get_register(int32_t arg)
 			break;
 			
 		case EWPNEXTEND:
-			if(auto s=checkEWpn(ri->ewpn))
+			if(auto s=checkEWpn(ri->ewpnref))
 				ret=s->extend*10000;
 				
 			break;
 			
 		case EWPNOTILE:
-			if(auto s=checkEWpn(ri->ewpn))
+			if(auto s=checkEWpn(ri->ewpnref))
 				ret=s->o_tile*10000;
 				
 			break;
 			
 		case EWPNOCSET:
-			if(auto s=checkEWpn(ri->ewpn))
+			if(auto s=checkEWpn(ri->ewpnref))
 				ret=(s->o_cset&15)*10000;
 				
 			break;
 			
 		case EWPNHXOFS:
-			if(auto s=checkEWpn(ri->ewpn))
+			if(auto s=checkEWpn(ri->ewpnref))
 				ret=(s->hxofs)*10000;
 				
 			break;
 			
 		case EWPNHYOFS:
-			if(auto s=checkEWpn(ri->ewpn))
+			if(auto s=checkEWpn(ri->ewpnref))
 				ret=(s->hyofs)*10000;
 				
 			break;
 			
 		case EWPNXOFS:
-			if(auto s=checkEWpn(ri->ewpn))
+			if(auto s=checkEWpn(ri->ewpnref))
 				ret=((int32_t)(s->xofs))*10000;
 				
 			break;
 			
 		case EWPNYOFS:
-			if(auto s=checkEWpn(ri->ewpn))
+			if(auto s=checkEWpn(ri->ewpnref))
 				ret=((int32_t)(s->yofs-(get_qr(qr_OLD_DRAWOFFSET)?playing_field_offset:original_playing_field_offset)))*10000;
 				
 			break;
 			
 		case EWPNSHADOWXOFS:
-			if(auto s=checkEWpn(ri->ewpn))
+			if(auto s=checkEWpn(ri->ewpnref))
 				ret=((int32_t)(s->shadowxofs))*10000;
 				
 			break;
 			
 		case EWPNSHADOWYOFS:
-			if(auto s=checkEWpn(ri->ewpn))
+			if(auto s=checkEWpn(ri->ewpnref))
 				ret=((int32_t)(s->shadowyofs))*10000;
 				
 			break;
 		case EWPNTOTALDYOFFS:
-			if(auto s=checkEWpn(ri->ewpn))
+			if(auto s=checkEWpn(ri->ewpnref))
 				ret = ((int32_t)(s->yofs-(get_qr(qr_OLD_DRAWOFFSET)?playing_field_offset:original_playing_field_offset))
 					+ ((s->switch_hooked && Hero.switchhookstyle == swRISE)
 						? -(8-(abs(Hero.switchhookclk-32)/4)) : 0) * 10000);
 			break;
 			
 		case EWPNZOFS:
-			if(auto s=checkEWpn(ri->ewpn))
+			if(auto s=checkEWpn(ri->ewpnref))
 				ret=((int32_t)(s->zofs))*10000;
 				
 			break;
 			
 		case EWPNHXSZ:
-			if(auto s=checkEWpn(ri->ewpn))
+			if(auto s=checkEWpn(ri->ewpnref))
 				ret=(s->hit_width)*10000;
 				
 			break;
 			
 		case EWPNHYSZ:
-			if(auto s=checkEWpn(ri->ewpn))
+			if(auto s=checkEWpn(ri->ewpnref))
 				ret=(s->hit_height)*10000;
 				
 			break;
 			
 		case EWPNHZSZ:
-			if(auto s=checkEWpn(ri->ewpn))
+			if(auto s=checkEWpn(ri->ewpnref))
 				ret=(s->hzsz)*10000;
 				
 			break;
 			
 		case EWPNTXSZ:
-			if(auto s=checkEWpn(ri->ewpn))
+			if(auto s=checkEWpn(ri->ewpnref))
 				ret=(s->txsz)*10000;
 				
 			break;
 			
 		case EWPNTYSZ:
-			if(auto s=checkEWpn(ri->ewpn))
+			if(auto s=checkEWpn(ri->ewpnref))
 				ret=(s->tysz)*10000;
 				
 			break;
 			
 		case EWPNCOLLDET:
-			if(auto s=checkEWpn(ri->ewpn))
+			if(auto s=checkEWpn(ri->ewpnref))
 				ret=(s->scriptcoldet)*10000;
 				
 			break;
 		
 		case EWPNENGINEANIMATE:
-			if(auto s=checkEWpn(ri->ewpn))
+			if(auto s=checkEWpn(ri->ewpnref))
 				ret=(s->do_animation)*10000;
 				
 			break;
 		
 		case EWPNPARENT:
-			if(auto s=checkEWpn(ri->ewpn))
+			if(auto s=checkEWpn(ri->ewpnref))
 				ret= ((get_qr(qr_OLDEWPNPARENT)) ? (s->parentid)*10000 : (s->parentid));
 		
 			break;
 		
 		case EWEAPONSCRIPTUID:
-			if(auto s=checkEWpn(ri->ewpn))
+			if(auto s=checkEWpn(ri->ewpnref))
 				ret=(s->getUID());
 				
 			break;
 		
 		case EWPNPARENTUID:
-			if(auto s=checkEWpn(ri->ewpn))
+			if(auto s=checkEWpn(ri->ewpnref))
 				ret = s->parent ? s->parent->getUID() : 0;
 				
 			break;
 		
 		case EWPNSCRIPT:
-			if(auto s=checkEWpn(ri->ewpn))
+			if(auto s=checkEWpn(ri->ewpnref))
 				ret=(s->script)*10000;
 				
 			break;
 		
 		case EWPNFALLCLK:
-			if(auto s=checkEWpn(ri->ewpn))
+			if(auto s=checkEWpn(ri->ewpnref))
 			{
 				ret = s->fallclk * 10000;
 			}
 			break;
 		
 		case EWPNFALLCMB:
-			if(auto s=checkEWpn(ri->ewpn))
+			if(auto s=checkEWpn(ri->ewpnref))
 			{
 				ret = s->fallCombo * 10000;
 			}
 			break;
 		
 		case EWPNDROWNCLK:
-			if(auto s=checkEWpn(ri->ewpn))
+			if(auto s=checkEWpn(ri->ewpnref))
 			{
 				ret = s->drownclk * 10000;
 			}
 			break;
 		
 		case EWPNDROWNCMB:
-			if(auto s=checkEWpn(ri->ewpn))
+			if(auto s=checkEWpn(ri->ewpnref))
 			{
 				ret = s->drownCombo * 10000;
 			}
 			break;
 		case EWPNFAKEZ:
-			if(auto s=checkEWpn(ri->ewpn))
+			if(auto s=checkEWpn(ri->ewpnref))
 			{
 				if ( get_qr(qr_SPRITEXY_IS_FLOAT) )
 				{
@@ -5796,88 +5796,88 @@ int32_t get_register(int32_t arg)
 			break;
 		
 		case EWPNGLOWRAD:
-			if(auto s=checkEWpn(ri->ewpn))
+			if(auto s=checkEWpn(ri->ewpnref))
 			{
 				ret = s->glowRad * 10000;
 			}
 			break;
 			
 		case EWPNGLOWSHP:
-			if(auto s=checkEWpn(ri->ewpn))
+			if(auto s=checkEWpn(ri->ewpnref))
 			{
 				ret = s->glowShape * 10000;
 			}
 			break;
 			
 		case EWPNUNBL:
-			if(auto s=checkEWpn(ri->ewpn))
+			if(auto s=checkEWpn(ri->ewpnref))
 			{
 				ret = s->unblockable * 10000;
 			}
 			break;
 			
 		case EWPNSHADOWSPR:
-			if(auto s=checkEWpn(ri->ewpn))
+			if(auto s=checkEWpn(ri->ewpnref))
 			{
 				ret = s->spr_shadow * 10000;
 			}
 			break;
 		case EWSWHOOKED:
-			if(auto s=checkEWpn(ri->ewpn))
+			if(auto s=checkEWpn(ri->ewpnref))
 			{
 				ret = s->switch_hooked ? 10000 : 0;
 			}
 			break;
 		case EWPNTIMEOUT:
-			if(auto s=checkEWpn(ri->ewpn))
+			if(auto s=checkEWpn(ri->ewpnref))
 			{
 				ret = s->weap_timeout * 10000;
 			}
 			break;
 		case EWPNDEATHITEM:
-			if(auto s=checkEWpn(ri->ewpn))
+			if(auto s=checkEWpn(ri->ewpnref))
 			{
 				ret = s->death_spawnitem * 10000;
 			}
 			break;
 		case EWPNDEATHDROPSET:
-			if(auto s=checkEWpn(ri->ewpn))
+			if(auto s=checkEWpn(ri->ewpnref))
 			{
 				ret = s->death_spawndropset * 10000;
 			}
 			break;
 		case EWPNDEATHIPICKUP:
-			if(auto s=checkEWpn(ri->ewpn))
+			if(auto s=checkEWpn(ri->ewpnref))
 			{
 				ret = s->death_item_pflags * 10000;
 			}
 			break;
 		case EWPNDEATHSPRITE:
-			if(auto s=checkEWpn(ri->ewpn))
+			if(auto s=checkEWpn(ri->ewpnref))
 			{
 				ret = s->death_sprite * 10000;
 			}
 			break;
 		case EWPNDEATHSFX:
-			if(auto s=checkEWpn(ri->ewpn))
+			if(auto s=checkEWpn(ri->ewpnref))
 			{
 				ret = s->death_sfx * 10000;
 			}
 			break;
 		case EWPNLIFTLEVEL:
-			if(auto s=checkEWpn(ri->ewpn))
+			if(auto s=checkEWpn(ri->ewpnref))
 			{
 				ret = s->lift_level * 10000;
 			}
 			break;
 		case EWPNLIFTTIME:
-			if(auto s=checkEWpn(ri->ewpn))
+			if(auto s=checkEWpn(ri->ewpnref))
 			{
 				ret = s->lift_time * 10000;
 			}
 			break;
 		case EWPNLIFTHEIGHT:
-			if(auto s=checkEWpn(ri->ewpn))
+			if(auto s=checkEWpn(ri->ewpnref))
 			{
 				ret = s->lift_height.getZLong();
 			}
@@ -6428,7 +6428,7 @@ int32_t get_register(int32_t arg)
 						(ID==wWind?1:0)  /*special*/
 					)
 				);
-				ri->lwpn = Lwpns.spr(Lwpns.Count() - 1)->getUID();
+				ri->lwpnref = Lwpns.spr(Lwpns.Count() - 1)->getUID();
 				
 				weapon *w = (weapon*)Lwpns.spr(Lwpns.Count()-1); //last created
 				//w->LOADGFX(FFCore.getDefWeaponSprite(ID)); //What the fuck Zoria, this broke old quests...
@@ -6441,10 +6441,10 @@ int32_t get_register(int32_t arg)
 			else
 			{
 				Z_scripterrlog("Tried to create too many LWeapons on the screen. The current LWeapon count is: %d\n", Lwpns.Count());
-				ri->lwpn = 0;
+				ri->lwpnref = 0;
 			}
 			
-			ret = ri->lwpn; 
+			ret = ri->lwpnref; 
 		}
 		break;
 		
@@ -6491,7 +6491,7 @@ int32_t get_register(int32_t arg)
 		//mapdata m-> variables
 		#define	GET_MAPDATA_VAR_INT32(member) \
 		{ \
-			if ( mapscr *m = ResolveMapdataScr(ri->mapsref) ) \
+			if ( mapscr *m = ResolveMapdataScr(ri->mapref) ) \
 			{ \
 				ret = (m->member *10000); \
 			} \
@@ -6503,7 +6503,7 @@ int32_t get_register(int32_t arg)
 
 		#define	GET_MAPDATA_VAR_INT16(member) \
 		{ \
-			if ( mapscr *m = ResolveMapdataScr(ri->mapsref) ) \
+			if ( mapscr *m = ResolveMapdataScr(ri->mapref) ) \
 			{ \
 				ret = (m->member *10000); \
 			} \
@@ -6515,7 +6515,7 @@ int32_t get_register(int32_t arg)
 
 		#define	GET_MAPDATA_VAR_BYTE(member) \
 		{ \
-			if ( mapscr *m = ResolveMapdataScr(ri->mapsref) ) \
+			if ( mapscr *m = ResolveMapdataScr(ri->mapref) ) \
 			{ \
 				ret = (m->member *10000); \
 			} \
@@ -6528,7 +6528,7 @@ int32_t get_register(int32_t arg)
 		#define GET_MAPDATA_FLAG(member) \
 		{ \
 			int32_t flag =  (value/10000);  \
-			if (mapscr *m = ResolveMapdataScr(ri->mapsref)) \
+			if (mapscr *m = ResolveMapdataScr(ri->mapref)) \
 			{ \
 				ret = (m->member&flag) ? 10000 : 0); \
 			} \
@@ -6541,7 +6541,7 @@ int32_t get_register(int32_t arg)
 		#define GET_MAPDATA_FFCPOS_INDEX32(member, indexbound) \
 		{ \
 			int32_t index = (GET_D(rINDEX) / 10000); \
-			if (auto handle = ResolveMapdataFFC(ri->mapsref, index)) \
+			if (auto handle = ResolveMapdataFFC(ri->mapref, index)) \
 			{ \
 				ret = (handle.ffc->member).getZLong(); \
 			} \
@@ -6554,7 +6554,7 @@ int32_t get_register(int32_t arg)
 		#define GET_MAPDATA_FFC_INDEX32(member, indexbound) \
 		{ \
 			int32_t index = (GET_D(rINDEX) / 10000); \
-			if (auto handle = ResolveMapdataFFC(ri->mapsref, index)) \
+			if (auto handle = ResolveMapdataFFC(ri->mapref, index)) \
 			{ \
 				ret = (handle.ffc->member)*10000; \
 			} \
@@ -6567,7 +6567,7 @@ int32_t get_register(int32_t arg)
 		#define GET_MAPDATA_FFC_INDEX32(member, indexbound) \
 		{ \
 			int32_t index = (GET_D(rINDEX) / 10000); \
-			if (auto handle = ResolveMapdataFFC(ri->mapsref, index)) \
+			if (auto handle = ResolveMapdataFFC(ri->mapref, index)) \
 			{ \
 				ret = (handle.ffc->member)*10000; \
 			} \
@@ -6593,7 +6593,7 @@ int32_t get_register(int32_t arg)
 		case MAPDATAROOM: 		GET_MAPDATA_VAR_BYTE(room);	break;		//b
 		case MAPDATAITEM:
 		{
-			if ( mapscr *m = ResolveMapdataScr(ri->mapsref) )
+			if ( mapscr *m = ResolveMapdataScr(ri->mapref) )
 			{
 				if(m->hasitem)
 					ret = (m->item *10000);
@@ -6607,7 +6607,7 @@ int32_t get_register(int32_t arg)
 		}
 		case MAPDATAREGIONID:
 		{
-			if (auto scr = ResolveMapdataScr(ri->mapsref))
+			if (auto scr = ResolveMapdataScr(ri->mapref))
 				ret = get_region_id(scr->map, scr->screen) * 10000;
 			break;
 		}
@@ -6650,7 +6650,7 @@ int32_t get_register(int32_t arg)
 		{
 			int index = GET_D(rINDEX) / 10000;
 
-			if (auto handle = ResolveMapdataFFC(ri->mapsref, index))
+			if (auto handle = ResolveMapdataFFC(ri->mapref, index))
 			{
 				ret = (handle.data() != 0) ? 10000 : 0;
 			}
@@ -6670,7 +6670,7 @@ int32_t get_register(int32_t arg)
 			if (BC::checkBounds(d_index, 0, 7) != SH::_NoError)
 				break;
 
-			if (auto handle = ResolveMapdataFFC(ri->mapsref, index))
+			if (auto handle = ResolveMapdataFFC(ri->mapref, index))
 				ret = handle.ffc->initd[d_index];
 			else
 			{
@@ -6704,7 +6704,7 @@ int32_t get_register(int32_t arg)
 		case MAPDATAHOLDUPSFX:	 	GET_MAPDATA_VAR_BYTE(holdupsfx); break; //B
 		case MAPDATASCREENMIDI:
 		{
-			if (mapscr *m = ResolveMapdataScr(ri->mapsref))
+			if (mapscr *m = ResolveMapdataScr(ri->mapref))
 			{
 				ret = ((m->screen_midi+(MIDIOFFSET_MAPSCR-MIDIOFFSET_ZSCRIPT)) *10000);
 			}
@@ -6716,7 +6716,7 @@ int32_t get_register(int32_t arg)
 		}
 		case MAPDATA_GRAVITY_STRENGTH:
 		{
-			if (mapscr *m = ResolveMapdataScr(ri->mapsref))
+			if (mapscr *m = ResolveMapdataScr(ri->mapref))
 			{
 				ret = m->screen_gravity.getZLong();
 			}
@@ -6725,7 +6725,7 @@ int32_t get_register(int32_t arg)
 		}
 		case MAPDATA_TERMINAL_VELOCITY:
 		{
-			if (mapscr *m = ResolveMapdataScr(ri->mapsref))
+			if (mapscr *m = ResolveMapdataScr(ri->mapref))
 			{
 				ret = m->screen_terminal_v.getZLong();
 			}
@@ -6735,9 +6735,9 @@ int32_t get_register(int32_t arg)
 		case MAPDATALENSLAYER:	 	GET_MAPDATA_VAR_BYTE(lens_layer); break;	//B, OLD QUESTS ONLY?
 		case MAPDATAMAP:
 		{
-			if (mapscr *m = ResolveMapdataScr(ri->mapsref))
+			if (mapscr *m = ResolveMapdataScr(ri->mapref))
 			{
-				ret = getMap(ri->mapsref) * 10000;
+				ret = getMap(ri->mapref) * 10000;
 			}
 			else
 			{
@@ -6747,9 +6747,9 @@ int32_t get_register(int32_t arg)
 		}
 		case MAPDATASCREEN:
 		{
-			if (mapscr *m = ResolveMapdataScr(ri->mapsref))
+			if (mapscr *m = ResolveMapdataScr(ri->mapref))
 			{
-				ret = getScreen(ri->mapsref) * 10000;
+				ret = getScreen(ri->mapref) * 10000;
 			}
 			else
 			{
@@ -6760,9 +6760,9 @@ int32_t get_register(int32_t arg)
 		case MAPDATASCRDATASIZE:
 		{
 			ret = -10000;
-			if (mapscr *m = ResolveMapdataScr(ri->mapsref))
+			if (mapscr *m = ResolveMapdataScr(ri->mapref))
 			{
-				int index = get_ref_map_index(ri->mapsref);
+				int index = get_ref_map_index(ri->mapref);
 				if (index < 0) break;
 
 				ret = 10000*game->scriptDataSize(index);
@@ -6771,9 +6771,9 @@ int32_t get_register(int32_t arg)
 		}
 		case MAPDATAGUYCOUNT:
 		{
-			if (mapscr *m = ResolveMapdataScr(ri->mapsref))
+			if (mapscr *m = ResolveMapdataScr(ri->mapref))
 			{
-				int mi = get_mi(ri->mapsref);
+				int mi = get_mi(ri->mapref);
 				if(mi > -1)
 				{
 					ret = game->guys[mi] * 10000;
@@ -6786,9 +6786,9 @@ int32_t get_register(int32_t arg)
 		case MAPDATAEXDOOR:
 		{
 			ret = 0;
-			if (mapscr *m = ResolveMapdataScr(ri->mapsref))
+			if (mapscr *m = ResolveMapdataScr(ri->mapref))
 			{
-				int mi = get_mi(ri->mapsref);
+				int mi = get_mi(ri->mapref);
 				if(mi < 0) break;
 				int dir = SH::read_stack(ri->sp+1) / 10000;
 				int ind = SH::read_stack(ri->sp+0) / 10000;
@@ -6810,7 +6810,7 @@ int32_t get_register(int32_t arg)
 	
 		case SHOPDATATYPE:
 		{
-			int32_t ref = ri->shopsref; 
+			int32_t ref = ri->shopref; 
 			if ( ref > NUMINFOSHOPS || ref < 0 ) ret = 0;
 			else ret = ( ( ref <= NUMSHOPS ) ? 10000 : 20000 ); 
 			break;
@@ -6820,101 +6820,101 @@ int32_t get_register(int32_t arg)
 		//dmapdata dmd-> variables
 
 		//getter
-		case DMAPDATAID: ret = ri->dmapsref*10000; break; //read-only, equal to CurrentDMap
+		case DMAPDATAID: ret = ri->dmapref*10000; break; //read-only, equal to CurrentDMap
 			
 		case DMAPDATAMAP: 	//byte
 		{
-			ret = ((byte)DMaps[ri->dmapsref].map + 1) * 10000; break;
+			ret = ((byte)DMaps[ri->dmapref].map + 1) * 10000; break;
 		}
 		case DMAPDATALEVEL:	//word
 		{
-			ret = ((word)DMaps[ri->dmapsref].level) * 10000; break;
+			ret = ((word)DMaps[ri->dmapref].level) * 10000; break;
 		}
 		case DMAPDATAOFFSET:	//char
 		{
-			ret = ((char)DMaps[ri->dmapsref].xoff) * 10000; break;
+			ret = ((char)DMaps[ri->dmapref].xoff) * 10000; break;
 		}
 		case DMAPDATACOMPASS:	//byte
 		{
-			ret = ((byte)DMaps[ri->dmapsref].compass) * 10000; break;
+			ret = ((byte)DMaps[ri->dmapref].compass) * 10000; break;
 		}
 		case DMAPDATAPALETTE:	//word
 		{
-			ret = ((word)DMaps[ri->dmapsref].color) * 10000; break;
+			ret = ((word)DMaps[ri->dmapref].color) * 10000; break;
 		}
 		case DMAPSCRIPT:	//word
 		{
-			ret = (DMaps[ri->dmapsref].script) * 10000; break;
+			ret = (DMaps[ri->dmapref].script) * 10000; break;
 		}
 		case DMAPDATAMIDI:	//byte
 		{
-			ret = (DMaps[ri->dmapsref].midi-MIDIOFFSET_DMAP) * 10000; break;
+			ret = (DMaps[ri->dmapref].midi-MIDIOFFSET_DMAP) * 10000; break;
 		}
 		case DMAPDATA_GRAVITY_STRENGTH:
 		{
-			ret = DMaps[ri->dmapsref].dmap_gravity.getZLong();
+			ret = DMaps[ri->dmapref].dmap_gravity.getZLong();
 			break;
 		}
 		case DMAPDATA_TERMINAL_VELOCITY:
 		{
-			ret = DMaps[ri->dmapsref].dmap_terminal_v.getZLong();
+			ret = DMaps[ri->dmapref].dmap_terminal_v.getZLong();
 			break;
 		}
 		case DMAPDATACONTINUE:	//byte
 		{
-			ret = ((byte)DMaps[ri->dmapsref].cont) * 10000; break;
+			ret = ((byte)DMaps[ri->dmapref].cont) * 10000; break;
 		}
 		case DMAPDATATYPE:	//byte
 		{
-			ret = ((byte)DMaps[ri->dmapsref].type&dmfTYPE) * 10000; break;
+			ret = ((byte)DMaps[ri->dmapref].type&dmfTYPE) * 10000; break;
 		}
 		case DMAPDATASIDEVIEW:	//byte
 		{
-			ret = ((DMaps[ri->dmapsref].sideview) ? 10000 : 0); break;
+			ret = ((DMaps[ri->dmapref].sideview) ? 10000 : 0); break;
 		}
 		case DMAPDATAMUISCTRACK:	//byte
 		{
-			ret = ((byte)DMaps[ri->dmapsref].tmusictrack) * 10000; break;
+			ret = ((byte)DMaps[ri->dmapref].tmusictrack) * 10000; break;
 		}
 		case DMAPDATASUBSCRA:
 		{
-			ret = ((byte)DMaps[ri->dmapsref].active_subscreen) * 10000; break;
+			ret = ((byte)DMaps[ri->dmapref].active_subscreen) * 10000; break;
 		}
 		case DMAPDATASUBSCRP:
 		{
-			ret = ((byte)DMaps[ri->dmapsref].passive_subscreen) * 10000; break;
+			ret = ((byte)DMaps[ri->dmapref].passive_subscreen) * 10000; break;
 		}
 		case DMAPDATASUBSCRO:
 		{
-			ret = ((byte)DMaps[ri->dmapsref].overlay_subscreen) * 10000; break;
+			ret = ((byte)DMaps[ri->dmapref].overlay_subscreen) * 10000; break;
 		}
 		case DMAPDATAFLAGS:	 //int32_t
 		{
-			ret = (DMaps[ri->dmapsref].flags) * 10000; break;
+			ret = (DMaps[ri->dmapref].flags) * 10000; break;
 		}
 		case DMAPDATAMIRRDMAP:
 		{
-			ret = (DMaps[ri->dmapsref].mirrorDMap) * 10000; break;
+			ret = (DMaps[ri->dmapref].mirrorDMap) * 10000; break;
 		}
 		case DMAPDATALOOPSTART:
 		{
-			ret = (DMaps[ri->dmapsref].tmusic_loop_start); break;
+			ret = (DMaps[ri->dmapref].tmusic_loop_start); break;
 		}
 		case DMAPDATALOOPEND:
 		{
-			ret = (DMaps[ri->dmapsref].tmusic_loop_end); break;
+			ret = (DMaps[ri->dmapref].tmusic_loop_end); break;
 		}
 		case DMAPDATAXFADEIN:
 		{
-			ret = (DMaps[ri->dmapsref].tmusic_xfade_in * 10000); break;
+			ret = (DMaps[ri->dmapref].tmusic_xfade_in * 10000); break;
 		}
 		case DMAPDATAXFADEOUT:
 		{
-			ret = (DMaps[ri->dmapsref].tmusic_xfade_out * 10000); break;
+			ret = (DMaps[ri->dmapref].tmusic_xfade_out * 10000); break;
 		}
 		case DMAPDATAINTROSTRINGID:
 		{
-			ret = (DMaps[ri->dmapsref].intro_string_id * 10000); break;
+			ret = (DMaps[ri->dmapref].intro_string_id * 10000); break;
 		}
 		case MUSICUPDATECOND:
 		{
@@ -6922,22 +6922,22 @@ int32_t get_register(int32_t arg)
 		}
 		case DMAPDATAASUBSCRIPT:	//word
 		{
-			ret = (DMaps[ri->dmapsref].active_sub_script) * 10000; break;
+			ret = (DMaps[ri->dmapref].active_sub_script) * 10000; break;
 		}
 		case DMAPDATAMAPSCRIPT:	//byte
 		{
-			ret = (DMaps[ri->dmapsref].onmap_script) * 10000; break;
+			ret = (DMaps[ri->dmapref].onmap_script) * 10000; break;
 		}
 		case DMAPDATAPSUBSCRIPT:	//word
 		{
-			ret = (DMaps[ri->dmapsref].passive_sub_script) * 10000; break;
+			ret = (DMaps[ri->dmapref].passive_sub_script) * 10000; break;
 		}
 			
 		///----------------------------------------------------------------------------------------------------//
 		//messagedata msgd-> variables
 		case MESSAGEDATANEXT: //W
 		{
-			int32_t ID = ri->zmsgref;	
+			int32_t ID = GET_ZMSGREF;	
 
 			if(BC::checkMessage(ID) != SH::_NoError)
 			{
@@ -6952,7 +6952,7 @@ int32_t get_register(int32_t arg)
 
 		case MESSAGEDATATILE: //W
 		{
-			int32_t ID = ri->zmsgref;	
+			int32_t ID = GET_ZMSGREF;	
 
 			if(BC::checkMessage(ID) != SH::_NoError)
 				ret = -10000;
@@ -6963,7 +6963,7 @@ int32_t get_register(int32_t arg)
 
 		case MESSAGEDATACSET: //b
 		{
-			int32_t ID = ri->zmsgref;	
+			int32_t ID = GET_ZMSGREF;	
 
 			if(BC::checkMessage(ID) != SH::_NoError)
 				ret = -10000;
@@ -6973,7 +6973,7 @@ int32_t get_register(int32_t arg)
 		}	
 		case MESSAGEDATATRANS: //BOOL
 		{
-			int32_t ID = ri->zmsgref;	
+			int32_t ID = GET_ZMSGREF;	
 
 			if(BC::checkMessage(ID) != SH::_NoError)
 				ret = -10000;
@@ -6983,7 +6983,7 @@ int32_t get_register(int32_t arg)
 		}	
 		case MESSAGEDATAFONT: //B
 		{
-			int32_t ID = ri->zmsgref;	
+			int32_t ID = GET_ZMSGREF;	
 
 			if(BC::checkMessage(ID) != SH::_NoError)
 				ret = -10000;
@@ -6993,7 +6993,7 @@ int32_t get_register(int32_t arg)
 		}	
 		case MESSAGEDATAX: //SHORT
 		{
-			int32_t ID = ri->zmsgref;	
+			int32_t ID = GET_ZMSGREF;	
 
 			if(BC::checkMessage(ID) != SH::_NoError)
 				ret = -10000;
@@ -7003,7 +7003,7 @@ int32_t get_register(int32_t arg)
 		}	
 		case MESSAGEDATAY: //SHORT
 		{
-			int32_t ID = ri->zmsgref;	
+			int32_t ID = GET_ZMSGREF;	
 
 			if(BC::checkMessage(ID) != SH::_NoError)
 				ret = -10000;
@@ -7013,7 +7013,7 @@ int32_t get_register(int32_t arg)
 		}	
 		case MESSAGEDATAW: //UNSIGNED SHORT
 		{
-			int32_t ID = ri->zmsgref;	
+			int32_t ID = GET_ZMSGREF;	
 
 			if(BC::checkMessage(ID) != SH::_NoError)
 				ret = -10000;
@@ -7023,7 +7023,7 @@ int32_t get_register(int32_t arg)
 		}	
 		case MESSAGEDATAH: //UNSIGNED SHORT
 		{
-			int32_t ID = ri->zmsgref;	
+			int32_t ID = GET_ZMSGREF;	
 
 			if(BC::checkMessage(ID) != SH::_NoError)
 				ret = -10000;
@@ -7033,7 +7033,7 @@ int32_t get_register(int32_t arg)
 		}	
 		case MESSAGEDATASFX: //BYTE
 		{
-			int32_t ID = ri->zmsgref;	
+			int32_t ID = GET_ZMSGREF;	
 
 			if(BC::checkMessage(ID) != SH::_NoError)
 				ret = -10000;
@@ -7043,7 +7043,7 @@ int32_t get_register(int32_t arg)
 		}	
 		case MESSAGEDATALISTPOS: //WORD
 		{
-			int32_t ID = ri->zmsgref;	
+			int32_t ID = GET_ZMSGREF;	
 
 			if(BC::checkMessage(ID) != SH::_NoError)
 				ret = -10000;
@@ -7053,7 +7053,7 @@ int32_t get_register(int32_t arg)
 		}	
 		case MESSAGEDATAVSPACE: //BYTE
 		{
-			int32_t ID = ri->zmsgref;	
+			int32_t ID = GET_ZMSGREF;	
 
 			if(BC::checkMessage(ID) != SH::_NoError)
 				ret = -10000;
@@ -7063,7 +7063,7 @@ int32_t get_register(int32_t arg)
 		}	
 		case MESSAGEDATAHSPACE: //BYTE
 		{
-			int32_t ID = ri->zmsgref;	
+			int32_t ID = GET_ZMSGREF;	
 
 			if(BC::checkMessage(ID) != SH::_NoError)
 				ret = -10000;
@@ -7073,7 +7073,7 @@ int32_t get_register(int32_t arg)
 		}	
 		case MESSAGEDATAFLAGS: //BYTE
 		{
-			int32_t ID = ri->zmsgref;	
+			int32_t ID = GET_ZMSGREF;	
 
 			if(BC::checkMessage(ID) != SH::_NoError)
 				ret = -10000;
@@ -7083,7 +7083,7 @@ int32_t get_register(int32_t arg)
 		}
 		case MESSAGEDATAPORTTILE: //INT
 		{
-			int32_t ID = ri->zmsgref;
+			int32_t ID = GET_ZMSGREF;
 			
 			if(BC::checkMessage(ID) != SH::_NoError)
 				ret = -10000;
@@ -7093,7 +7093,7 @@ int32_t get_register(int32_t arg)
 		}
 		case MESSAGEDATAPORTCSET: //BYTE
 		{
-			int32_t ID = ri->zmsgref;
+			int32_t ID = GET_ZMSGREF;
 			
 			if(BC::checkMessage(ID) != SH::_NoError)
 				ret = -10000;
@@ -7103,7 +7103,7 @@ int32_t get_register(int32_t arg)
 		}
 		case MESSAGEDATAPORTX: //BYTE
 		{
-			int32_t ID = ri->zmsgref;
+			int32_t ID = GET_ZMSGREF;
 			
 			if(BC::checkMessage(ID) != SH::_NoError)
 				ret = -10000;
@@ -7113,7 +7113,7 @@ int32_t get_register(int32_t arg)
 		}
 		case MESSAGEDATAPORTY: //BYTE
 		{
-			int32_t ID = ri->zmsgref;
+			int32_t ID = GET_ZMSGREF;
 			
 			if(BC::checkMessage(ID) != SH::_NoError)
 				ret = -10000;
@@ -7123,7 +7123,7 @@ int32_t get_register(int32_t arg)
 		}
 		case MESSAGEDATAPORTWID: //BYTE
 		{
-			int32_t ID = ri->zmsgref;
+			int32_t ID = GET_ZMSGREF;
 			
 			if(BC::checkMessage(ID) != SH::_NoError)
 				ret = -10000;
@@ -7133,7 +7133,7 @@ int32_t get_register(int32_t arg)
 		}
 		case MESSAGEDATAPORTHEI: //BYTE
 		{
-			int32_t ID = ri->zmsgref;
+			int32_t ID = GET_ZMSGREF;
 			
 			if(BC::checkMessage(ID) != SH::_NoError)
 				ret = -10000;
@@ -7143,7 +7143,7 @@ int32_t get_register(int32_t arg)
 		}
 		case MESSAGEDATATEXTLEN: //BYTE
 		{
-			int32_t ID = ri->zmsgref;
+			int32_t ID = GET_ZMSGREF;
 			
 			if(BC::checkMessage(ID) != SH::_NoError)
 				ret = -10000;
@@ -9050,15 +9050,15 @@ int32_t get_register(int32_t arg)
 			break;
 			
 		case REFITEMCLASS:
-			ret = ri->idata;
+			ret = ri->itemclassref;
 			break;
 			
 		case REFLWPN:
-			ret = ri->lwpn;
+			ret = ri->lwpnref;
 			break;
 			
 		case REFEWPN:
-			ret = ri->ewpn;
+			ret = ri->ewpnref;
 			break;
 			
 		case REFNPC:
@@ -9069,7 +9069,7 @@ int32_t get_register(int32_t arg)
 			ret = ri->spriteref;
 			break;
 		
-		case REFMAPDATA: ret = ri->mapsref; break;
+		case REFMAPDATA: ret = ri->mapref; break;
 		case REFSCREENDATA: ret = ri->screenref; break;
 		case REFCOMBODATA: ret = ri->combosref; break;
 		case REFCOMBOTRIGGER: ret = ri->combotrigref; break;
@@ -9078,8 +9078,8 @@ int32_t get_register(int32_t arg)
 		case REFNPCCLASS: ret = ri->npcdataref; break;
 		
 		
-		case REFDMAPDATA: ret = ri->dmapsref; break;
-		case REFSHOPDATA: ret = ri->shopsref; break;
+		case REFDMAPDATA: ret = ri->dmapref; break;
+		case REFSHOPDATA: ret = ri->shopref; break;
 		case REFMSGDATA: ret = ri->zmsgref; break;
 		
 		case REFDROPS: ret = ri->dropsetref; break;
@@ -11968,276 +11968,276 @@ void set_register(int32_t arg, int32_t value)
 		//not mine, but let;s guard some of them all the same -Z
 		//item class
 		case IDATATYPE:
-			if(unsigned(ri->idata) >= MAXITEMS)
+			if(unsigned(ri->itemclassref) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->idata);
+				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				break;
 			}
-			(itemsbuf[ri->idata].type)=vbound(value/10000,0, 254);
+			(itemsbuf[ri->itemclassref].type)=vbound(value/10000,0, 254);
 			flushItemCache();
 			break;
 		
 		case IDATAUSEWPN:
-			if(unsigned(ri->idata) >= MAXITEMS)
+			if(unsigned(ri->itemclassref) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->idata);
+				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				break;
 			}
-			(itemsbuf[ri->idata].weap_data.imitate_weapon)=vbound(value/10000, 0, 255);
+			(itemsbuf[ri->itemclassref].weap_data.imitate_weapon)=vbound(value/10000, 0, 255);
 			break;
 		case IDATAUSEDEF:
-			if(unsigned(ri->idata) >= MAXITEMS)
+			if(unsigned(ri->itemclassref) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->idata);
+				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				break;
 			}
-			(itemsbuf[ri->idata].weap_data.default_defense)=vbound(value/10000, 0, 255);
+			(itemsbuf[ri->itemclassref].weap_data.default_defense)=vbound(value/10000, 0, 255);
 			break;
 		case IDATAWRANGE:
-			if(unsigned(ri->idata) >= MAXITEMS)
+			if(unsigned(ri->itemclassref) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->idata);
+				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				break;
 			}
-			(itemsbuf[ri->idata].weaprange)=vbound(value/10000, 0, 255);
+			(itemsbuf[ri->itemclassref].weaprange)=vbound(value/10000, 0, 255);
 			break;
 		case IDATAMAGICTIMER:
-			if(unsigned(ri->idata) >= MAXITEMS)
+			if(unsigned(ri->itemclassref) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->idata);
+				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				break;
 			}
-			(itemsbuf[ri->idata].magiccosttimer[0])=vbound(value/10000, 0, 214747);
+			(itemsbuf[ri->itemclassref].magiccosttimer[0])=vbound(value/10000, 0, 214747);
 			break;
 		case IDATAMAGICTIMER2:
-			if(unsigned(ri->idata) >= MAXITEMS)
+			if(unsigned(ri->itemclassref) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->idata);
+				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				break;
 			}
-			(itemsbuf[ri->idata].magiccosttimer[1])=vbound(value/10000, 0, 214747);
+			(itemsbuf[ri->itemclassref].magiccosttimer[1])=vbound(value/10000, 0, 214747);
 			break;
 		case IDATADURATION:
-			if(unsigned(ri->idata) >= MAXITEMS)
+			if(unsigned(ri->itemclassref) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->idata);
+				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				break;
 			}
-			(itemsbuf[ri->idata].weapduration)=vbound(value/10000, 0, 255);
+			(itemsbuf[ri->itemclassref].weapduration)=vbound(value/10000, 0, 255);
 			break;
 		 
 		case IDATADUPLICATES:
-			if(unsigned(ri->idata) >= MAXITEMS)
+			if(unsigned(ri->itemclassref) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->idata);
+				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				break;
 			}
-			(itemsbuf[ri->idata].duplicates)=vbound(value/10000, 0, 255);
+			(itemsbuf[ri->itemclassref].duplicates)=vbound(value/10000, 0, 255);
 			break;
 		case IDATADRAWLAYER:
-			if(unsigned(ri->idata) >= MAXITEMS)
+			if(unsigned(ri->itemclassref) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->idata);
+				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				break;
 			}
-			(itemsbuf[ri->idata].drawlayer)=vbound(value/10000, 0, 7);
+			(itemsbuf[ri->itemclassref].drawlayer)=vbound(value/10000, 0, 7);
 			break;
 		case IDATACOLLECTFLAGS:
-			if(unsigned(ri->idata) >= MAXITEMS)
+			if(unsigned(ri->itemclassref) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->idata);
+				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				break;
 			}
 			//int32_t a = GET_D(rINDEX) / 10000;
-			(itemsbuf[ri->idata].collectflags)=vbound(value/10000, 0, 214747);
+			(itemsbuf[ri->itemclassref].collectflags)=vbound(value/10000, 0, 214747);
 			break;
 		case IDATAWEAPONSCRIPT:
-			if(unsigned(ri->idata) >= MAXITEMS)
+			if(unsigned(ri->itemclassref) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->idata);
+				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				break;
 			}
-			(itemsbuf[ri->idata].weap_data.script)=vbound(value/10000, 0, 255);
+			(itemsbuf[ri->itemclassref].weap_data.script)=vbound(value/10000, 0, 255);
 			break;
 		case IDATAWEAPHXOFS:
-			if(unsigned(ri->idata) >= MAXITEMS)
+			if(unsigned(ri->itemclassref) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->idata);
+				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				break;
 			}
-			(itemsbuf[ri->idata].weap_data.hxofs)=(value/10000);
+			(itemsbuf[ri->itemclassref].weap_data.hxofs)=(value/10000);
 			break;
 		case IDATAWEAPHYOFS:
-			if(unsigned(ri->idata) >= MAXITEMS)
+			if(unsigned(ri->itemclassref) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->idata);
+				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				break;
 			}
-			(itemsbuf[ri->idata].weap_data.hyofs)=(value/10000);
+			(itemsbuf[ri->itemclassref].weap_data.hyofs)=(value/10000);
 			break;
 		case IDATAWEAPHXSZ:
-			if(unsigned(ri->idata) >= MAXITEMS)
+			if(unsigned(ri->itemclassref) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->idata);
+				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				break;
 			}
-			(itemsbuf[ri->idata].weap_data.hxsz)=(value/10000);
+			(itemsbuf[ri->itemclassref].weap_data.hxsz)=(value/10000);
 			break;
 		case IDATAWEAPHYSZ:
-			if(unsigned(ri->idata) >= MAXITEMS)
+			if(unsigned(ri->itemclassref) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->idata);
+				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				break;
 			}
-			(itemsbuf[ri->idata].weap_data.hysz)=(value/10000);
+			(itemsbuf[ri->itemclassref].weap_data.hysz)=(value/10000);
 			break;
 		case IDATAWEAPHZSZ:
-			if(unsigned(ri->idata) >= MAXITEMS)
+			if(unsigned(ri->itemclassref) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->idata);
+				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				break;
 			}
-			(itemsbuf[ri->idata].weap_data.hzsz)=(value/10000);
+			(itemsbuf[ri->itemclassref].weap_data.hzsz)=(value/10000);
 			break;
 		case IDATAWEAPXOFS:
-			if(unsigned(ri->idata) >= MAXITEMS)
+			if(unsigned(ri->itemclassref) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->idata);
+				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				break;
 			}
-			(itemsbuf[ri->idata].weap_data.xofs)=(value/10000);
+			(itemsbuf[ri->itemclassref].weap_data.xofs)=(value/10000);
 			break;
 		case IDATAWEAPYOFS:
-			if(unsigned(ri->idata) >= MAXITEMS)
+			if(unsigned(ri->itemclassref) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->idata);
+				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				break;
 			}
-			(itemsbuf[ri->idata].weap_data.yofs)=(value/10000);
+			(itemsbuf[ri->itemclassref].weap_data.yofs)=(value/10000);
 			break;
 
 		
 		case IDATAHXOFS:
-			if(unsigned(ri->idata) >= MAXITEMS)
+			if(unsigned(ri->itemclassref) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->idata);
+				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				break;
 			}
-			(itemsbuf[ri->idata].hxofs)=(value/10000);
+			(itemsbuf[ri->itemclassref].hxofs)=(value/10000);
 			break;
 		case IDATAHYOFS:
-			if(unsigned(ri->idata) >= MAXITEMS)
+			if(unsigned(ri->itemclassref) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->idata);
+				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				break;
 			}
-			(itemsbuf[ri->idata].hyofs)=(value/10000);
+			(itemsbuf[ri->itemclassref].hyofs)=(value/10000);
 			break;
 		case IDATAHXSZ:
-			if(unsigned(ri->idata) >= MAXITEMS)
+			if(unsigned(ri->itemclassref) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->idata);
+				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				break;
 			}
-			(itemsbuf[ri->idata].hxsz)=(value/10000);
+			(itemsbuf[ri->itemclassref].hxsz)=(value/10000);
 			break;
 		case IDATAHYSZ:
-			if(unsigned(ri->idata) >= MAXITEMS)
+			if(unsigned(ri->itemclassref) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->idata);
+				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				break;
 			}
-			(itemsbuf[ri->idata].hysz)=(value/10000);
+			(itemsbuf[ri->itemclassref].hysz)=(value/10000);
 			break;
 		case IDATAHZSZ:
-			if(unsigned(ri->idata) >= MAXITEMS)
+			if(unsigned(ri->itemclassref) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->idata);
+				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				break;
 			}
-			(itemsbuf[ri->idata].hzsz)=(value/10000);
+			(itemsbuf[ri->itemclassref].hzsz)=(value/10000);
 			break;
 		case IDATADXOFS:
-			if(unsigned(ri->idata) >= MAXITEMS)
+			if(unsigned(ri->itemclassref) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->idata);
+				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				break;
 			}
-			(itemsbuf[ri->idata].xofs)=(value/10000);
+			(itemsbuf[ri->itemclassref].xofs)=(value/10000);
 			break;
 		case IDATADYOFS:
-			if(unsigned(ri->idata) >= MAXITEMS)
+			if(unsigned(ri->itemclassref) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->idata);
+				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				break;
 			}
-			(itemsbuf[ri->idata].yofs)=(value/10000);
+			(itemsbuf[ri->itemclassref].yofs)=(value/10000);
 			break;
 		case IDATATILEW:
-			if(unsigned(ri->idata) >= MAXITEMS)
+			if(unsigned(ri->itemclassref) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->idata);
+				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				break;
 			}
-			(itemsbuf[ri->idata].tilew)=(value/10000);
+			(itemsbuf[ri->itemclassref].tilew)=(value/10000);
 			break;
 		case IDATATILEH:
-			if(unsigned(ri->idata) >= MAXITEMS)
+			if(unsigned(ri->itemclassref) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->idata);
+				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				break;
 			}
-			(itemsbuf[ri->idata].tileh)=(value/10000);
+			(itemsbuf[ri->itemclassref].tileh)=(value/10000);
 			break;
 		case IDATAPICKUP:
-			if(unsigned(ri->idata) >= MAXITEMS)
+			if(unsigned(ri->itemclassref) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->idata);
+				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				break;
 			}
-			(itemsbuf[ri->idata].pickup)=(value/10000);
+			(itemsbuf[ri->itemclassref].pickup)=(value/10000);
 			break;
 		case IDATAOVERRIDEFL:
-			if(unsigned(ri->idata) >= MAXITEMS)
+			if(unsigned(ri->itemclassref) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->idata);
+				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				break;
 			}
-			(itemsbuf[ri->idata].overrideFLAGS)=(value/10000);
+			(itemsbuf[ri->itemclassref].overrideFLAGS)=(value/10000);
 			break;
 
 		case IDATATILEWWEAP:
-			if(unsigned(ri->idata) >= MAXITEMS)
+			if(unsigned(ri->itemclassref) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->idata);
+				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				break;
 			}
-			(itemsbuf[ri->idata].weap_data.tilew)=(value/10000);
+			(itemsbuf[ri->itemclassref].weap_data.tilew)=(value/10000);
 			break;
 		case IDATATILEHWEAP:
-			if(unsigned(ri->idata) >= MAXITEMS)
+			if(unsigned(ri->itemclassref) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->idata);
+				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				break;
 			}
-			(itemsbuf[ri->idata].weap_data.tileh)=(value/10000);
+			(itemsbuf[ri->itemclassref].weap_data.tileh)=(value/10000);
 			break;
 		case IDATAOVERRIDEFLWEAP:
-			if(unsigned(ri->idata) >= MAXITEMS)
+			if(unsigned(ri->itemclassref) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->idata);
+				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				break;
 			}
-			(itemsbuf[ri->idata].weap_data.override_flags)=(value/10000);
+			(itemsbuf[ri->itemclassref].weap_data.override_flags)=(value/10000);
 			break;
 		
 		case IDATALEVEL:
-			if(unsigned(ri->idata) >= MAXITEMS)
+			if(unsigned(ri->itemclassref) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->idata);
+				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				break;
 			}
-			(itemsbuf[ri->idata].level)=vbound(value/10000, 0, 512);
+			(itemsbuf[ri->itemclassref].level)=vbound(value/10000, 0, 512);
 			flushItemCache();
 			break;
 		case IDATAKEEP:
@@ -12245,24 +12245,24 @@ void set_register(int32_t arg, int32_t value)
 			break;
 		case IDATAAMOUNT:
 		{
-			if(unsigned(ri->idata) >= MAXITEMS)
+			if(unsigned(ri->itemclassref) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->idata);
+				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				break;
 			}
 			int32_t v = vbound(value/10000, -9999, 16383);
-			itemsbuf[ri->idata].amount &= 0x8000;
-			itemsbuf[ri->idata].amount |= (abs(v)&0x3FFF)|(v<0?0x4000:0);
+			itemsbuf[ri->itemclassref].amount &= 0x8000;
+			itemsbuf[ri->itemclassref].amount |= (abs(v)&0x3FFF)|(v<0?0x4000:0);
 			break;
 		}
 		case IDATAGRADUAL:
 		{
-			if(unsigned(ri->idata) >= MAXITEMS)
+			if(unsigned(ri->itemclassref) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->idata);
+				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				break;
 			}
-			SETFLAG(itemsbuf[ri->idata].amount, 0x8000, value!=0);
+			SETFLAG(itemsbuf[ri->itemclassref].amount, 0x8000, value!=0);
 			break;
 		}
 		case IDATACONSTSCRIPT:
@@ -12281,73 +12281,73 @@ void set_register(int32_t arg, int32_t value)
 			item_flag(item_flip_jinx, value);
 			break;
 		case IDATAUSEBURNSPR:
-			if(unsigned(ri->idata) >= MAXITEMS)
+			if(unsigned(ri->itemclassref) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->idata);
+				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 			}
-			else SETFLAG(itemsbuf[ri->idata].weap_data.wflags, WFLAG_UPDATE_IGNITE_SPRITE, value);
+			else SETFLAG(itemsbuf[ri->itemclassref].weap_data.wflags, WFLAG_UPDATE_IGNITE_SPRITE, value);
 			break;
 		case IDATASETMAX:
-			if(unsigned(ri->idata) >= MAXITEMS)
+			if(unsigned(ri->itemclassref) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->idata);
+				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				break;
 			}
-			(itemsbuf[ri->idata].setmax)=value/10000;
+			(itemsbuf[ri->itemclassref].setmax)=value/10000;
 			break;
 			
 		case IDATAMAX:
-			if(unsigned(ri->idata) >= MAXITEMS)
+			if(unsigned(ri->itemclassref) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->idata);
+				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				break;
 			}
-			(itemsbuf[ri->idata].max)=value/10000;
+			(itemsbuf[ri->itemclassref].max)=value/10000;
 			break;
 			
 		case IDATAPOWER:
-			if(unsigned(ri->idata) >= MAXITEMS)
+			if(unsigned(ri->itemclassref) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->idata);
+				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				break;
 			}
-			(itemsbuf[ri->idata].power)=value/10000;
+			(itemsbuf[ri->itemclassref].power)=value/10000;
 			break;
 			
 		case IDATACOUNTER:
-			if(unsigned(ri->idata) >= MAXITEMS)
+			if(unsigned(ri->itemclassref) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->idata);
+				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				break;
 			}
-			(itemsbuf[ri->idata].count)=vbound(value/10000,0,31);
+			(itemsbuf[ri->itemclassref].count)=vbound(value/10000,0,31);
 			break;
 			
 		case IDATAPSOUND:
-			if(unsigned(ri->idata) >= MAXITEMS)
+			if(unsigned(ri->itemclassref) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->idata);
+				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				break;
 			}
-			(itemsbuf[ri->idata].playsound)=vbound(value/10000, 0, 255);
+			(itemsbuf[ri->itemclassref].playsound)=vbound(value/10000, 0, 255);
 			break;
 			
 		case IDATAUSESOUND:
-			if(unsigned(ri->idata) >= MAXITEMS)
+			if(unsigned(ri->itemclassref) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->idata);
+				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				break;
 			}
-			(itemsbuf[ri->idata].usesound)=vbound(value/10000, 0, 255);
+			(itemsbuf[ri->itemclassref].usesound)=vbound(value/10000, 0, 255);
 			break;
 			
 		case IDATAUSESOUND2:
-			if(unsigned(ri->idata) >= MAXITEMS)
+			if(unsigned(ri->itemclassref) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->idata);
+				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				break;
 			}
-			(itemsbuf[ri->idata].usesound2)=vbound(value/10000, 0, 255);
+			(itemsbuf[ri->itemclassref].usesound2)=vbound(value/10000, 0, 255);
 			break;
 		
 		//2.54
@@ -12391,162 +12391,162 @@ void set_register(int32_t arg, int32_t value)
 			break;
 		//Set the action script
 		case IDATASCRIPT:
-			if(unsigned(ri->idata) >= MAXITEMS)
+			if(unsigned(ri->itemclassref) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->idata);
+				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				break;
 			}
-			FFScript::deallocateAllScriptOwned(ScriptType::Item, ri->idata);
-			itemsbuf[ri->idata].script=vbound(value/10000,0,255);
+			FFScript::deallocateAllScriptOwned(ScriptType::Item, ri->itemclassref);
+			itemsbuf[ri->itemclassref].script=vbound(value/10000,0,255);
 			break;
 		case IDATASPRSCRIPT:
-			if(unsigned(ri->idata) >= MAXITEMS)
+			if(unsigned(ri->itemclassref) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->idata);
+				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				break;
 			}
-			itemsbuf[ri->idata].sprite_script=vbound(value/10000,0,255);
+			itemsbuf[ri->itemclassref].sprite_script=vbound(value/10000,0,255);
 			break;
 
 		//Hero tile modifier. 
 		case IDATALTM:
 		{
-			if(unsigned(ri->idata) >= MAXITEMS)
+			if(unsigned(ri->itemclassref) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->idata);
+				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				break;
 			}
 			auto new_value = value/10000;
-			if (new_value != itemsbuf[ri->idata].ltm)
+			if (new_value != itemsbuf[ri->itemclassref].ltm)
 				cache_tile_mod_clear();
-			itemsbuf[ri->idata].ltm = new_value;
+			itemsbuf[ri->itemclassref].ltm = new_value;
 			break;
 		}
 		//Pickup script
 		case IDATAPSCRIPT:
 		{
-			if(unsigned(ri->idata) >= MAXITEMS)
+			if(unsigned(ri->itemclassref) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->idata);
+				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				break;
 			}
 			//Need to get collect script ref, not standard idata ref!
-			const int32_t new_ref = ri->idata!=0 ? -(ri->idata) : COLLECT_SCRIPT_ITEM_ZERO;
+			const int32_t new_ref = ri->itemclassref!=0 ? -(ri->itemclassref) : COLLECT_SCRIPT_ITEM_ZERO;
 			FFScript::deallocateAllScriptOwned(ScriptType::Item,new_ref);
-			itemsbuf[ri->idata].collect_script=vbound(value/10000, 0, 255);
+			itemsbuf[ri->itemclassref].collect_script=vbound(value/10000, 0, 255);
 			break;
 		}
 		//pickup string
 		case IDATAPSTRING:
-			if(unsigned(ri->idata) >= MAXITEMS)
+			if(unsigned(ri->itemclassref) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->idata);
+				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				break;
 			}
-			itemsbuf[ri->idata].pstring=vbound(value/10000, 1, 255);
+			itemsbuf[ri->itemclassref].pstring=vbound(value/10000, 1, 255);
 			break;
 		case IDATAPFLAGS:
-			if(unsigned(ri->idata) >= MAXITEMS)
+			if(unsigned(ri->itemclassref) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->idata);
+				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				break;
 			}
-			itemsbuf[ri->idata].pickup_string_flags=vbound(value/10000, 0, 214748);
+			itemsbuf[ri->itemclassref].pickup_string_flags=vbound(value/10000, 0, 214748);
 			break;
 		case IDATAPICKUPLITEMS:
-			if(unsigned(ri->idata) >= MAXITEMS)
+			if(unsigned(ri->itemclassref) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->idata);
+				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				break;
 			}
-			itemsbuf[ri->idata].pickup_litems = vbound(value/10000, 0, 214748) & LI_ALL;
+			itemsbuf[ri->itemclassref].pickup_litems = vbound(value/10000, 0, 214748) & LI_ALL;
 			break;
 		case IDATAPICKUPLITEMLEVEL:
-			if(unsigned(ri->idata) >= MAXITEMS)
+			if(unsigned(ri->itemclassref) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->idata);
+				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				break;
 			}
-			itemsbuf[ri->idata].pickup_litem_level = vbound(value/10000, -1, MAXLEVELS-1);
+			itemsbuf[ri->itemclassref].pickup_litem_level = vbound(value/10000, -1, MAXLEVELS-1);
 			break;
 		//magic cost
 		case IDATAMAGCOST:
-			if(unsigned(ri->idata) >= MAXITEMS)
+			if(unsigned(ri->itemclassref) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->idata);
+				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				break;
 			}
-			itemsbuf[ri->idata].cost_amount[0]=vbound(value/10000,32767,-32768);
+			itemsbuf[ri->itemclassref].cost_amount[0]=vbound(value/10000,32767,-32768);
 			break;
 		case IDATACOST2:
-			if(unsigned(ri->idata) >= MAXITEMS)
+			if(unsigned(ri->itemclassref) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->idata);
+				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				break;
 			}
-			itemsbuf[ri->idata].cost_amount[1]=vbound(value/10000,32767,-32768);
+			itemsbuf[ri->itemclassref].cost_amount[1]=vbound(value/10000,32767,-32768);
 			break;
 		case IDATACOOLDOWN:
-			if(unsigned(ri->idata) >= MAXITEMS)
+			if(unsigned(ri->itemclassref) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->idata);
+				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				break;
 			}
-			itemsbuf[ri->idata].cooldown = zc_max(value/10000,0);
+			itemsbuf[ri->itemclassref].cooldown = zc_max(value/10000,0);
 			break;
 		//cost counter ref
 		case IDATACOSTCOUNTER:
-			if(unsigned(ri->idata) >= MAXITEMS)
+			if(unsigned(ri->itemclassref) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->idata);
+				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				break;
 			}
-			itemsbuf[ri->idata].cost_counter[0]=(vbound(value/10000,-1,32));
+			itemsbuf[ri->itemclassref].cost_counter[0]=(vbound(value/10000,-1,32));
 			break;
 		case IDATACOSTCOUNTER2:
-			if(unsigned(ri->idata) >= MAXITEMS)
+			if(unsigned(ri->itemclassref) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->idata);
+				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				break;
 			}
-			itemsbuf[ri->idata].cost_counter[1]=(vbound(value/10000,-1,32));
+			itemsbuf[ri->itemclassref].cost_counter[1]=(vbound(value/10000,-1,32));
 			break;
 		//min hearts to pick up
 		case IDATAMINHEARTS:
-			if(unsigned(ri->idata) >= MAXITEMS)
+			if(unsigned(ri->itemclassref) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->idata);
+				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				break;
 			}
-			itemsbuf[ri->idata].pickup_hearts=vbound(value/10000, 0, 214748);
+			itemsbuf[ri->itemclassref].pickup_hearts=vbound(value/10000, 0, 214748);
 			break;
 		//item tile
 		case IDATATILE:
-			if(unsigned(ri->idata) >= MAXITEMS)
+			if(unsigned(ri->itemclassref) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->idata);
+				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				break;
 			}
-			itemsbuf[ri->idata].tile=vbound(value/10000, 0, NEWMAXTILES-1);
+			itemsbuf[ri->itemclassref].tile=vbound(value/10000, 0, NEWMAXTILES-1);
 			break;
 		//flash
 		case IDATAMISC:
-			if(unsigned(ri->idata) >= MAXITEMS)
+			if(unsigned(ri->itemclassref) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->idata);
+				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				break;
 			}
-			itemsbuf[ri->idata].misc_flags=value/10000;
+			itemsbuf[ri->itemclassref].misc_flags=value/10000;
 			break;
 		//cset
 		case IDATACSET:
-			if(unsigned(ri->idata) >= MAXITEMS)
+			if(unsigned(ri->itemclassref) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->idata);
+				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				break;
 			}
 
-			itemsbuf[ri->idata].csets = (itemsbuf[ri->idata].csets & 0xF0) | vbound(value/10000,0,15);
+			itemsbuf[ri->itemclassref].csets = (itemsbuf[ri->itemclassref].csets & 0xF0) | vbound(value/10000,0,15);
 
 			// If we find quests that broke, use this code.
 			// if (QHeader.compareVer(2, 55, 9) >= 0)
@@ -12556,13 +12556,13 @@ void set_register(int32_t arg, int32_t value)
 			break;
 		
 		case IDATAFLASHCSET:
-			if(unsigned(ri->idata) >= MAXITEMS)
+			if(unsigned(ri->itemclassref) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->idata);
+				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				break;
 			}
 
-			itemsbuf[ri->idata].csets = (itemsbuf[ri->idata].csets & 0xF) | (vbound(value/10000,0,15)<<4);
+			itemsbuf[ri->itemclassref].csets = (itemsbuf[ri->itemclassref].csets & 0xF) | (vbound(value/10000,0,15)<<4);
 			break;
 		/*
 		case IDATAFRAME:
@@ -12571,30 +12571,30 @@ void set_register(int32_t arg, int32_t value)
 		*/
 		//A.Frames
 		case IDATAFRAMES:
-			if(unsigned(ri->idata) >= MAXITEMS)
+			if(unsigned(ri->itemclassref) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->idata);
+				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				break;
 			}
-			(itemsbuf[ri->idata].frames)=vbound(value/10000, 0, 214748);
+			(itemsbuf[ri->itemclassref].frames)=vbound(value/10000, 0, 214748);
 			break;
 		//A.speed
 		case IDATAASPEED:
-			if(unsigned(ri->idata) >= MAXITEMS)
+			if(unsigned(ri->itemclassref) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->idata);
+				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				break;
 			}
-			itemsbuf[ri->idata].speed=vbound(value/10000, 0, 214748);
+			itemsbuf[ri->itemclassref].speed=vbound(value/10000, 0, 214748);
 			break;
 		//Anim delay
 		case IDATADELAY:
-			if(unsigned(ri->idata) >= MAXITEMS)
+			if(unsigned(ri->itemclassref) >= MAXITEMS)
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", ri->idata);
+				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				break;
 			}
-			itemsbuf[ri->idata].delay=vbound(value/10000, 0, 214748);
+			itemsbuf[ri->itemclassref].delay=vbound(value/10000, 0, 214748);
 			break;
 		
 	///----------------------------------------------------------------------------------------------------//
@@ -12606,13 +12606,13 @@ void set_register(int32_t arg, int32_t value)
 				scripting_log_error_with_context("To use this you must disable the quest rule 'Old (Faster) Sprite Drawing'.");
 				break;
 			}
-			if(auto s=checkLWpn(ri->lwpn))
+			if(auto s=checkLWpn(ri->lwpnref))
 				s->scale=(zfix)(value/100.0);
 				
 			break;
 		
 		case LWPNX:
-			if(auto s=checkLWpn(ri->lwpn))
+			if(auto s=checkLWpn(ri->lwpnref))
 				s->x=get_qr(qr_SPRITEXY_IS_FLOAT) ? zslongToFix(value) : zfix(value/10000);
 			break;
 		
@@ -12624,13 +12624,13 @@ void set_register(int32_t arg, int32_t value)
 		}
 			
 		case LWPNY:
-			if(auto s=checkLWpn(ri->lwpn))
+			if(auto s=checkLWpn(ri->lwpnref))
 				s->y=get_qr(qr_SPRITEXY_IS_FLOAT) ? zslongToFix(value) : zfix(value/10000);
 				
 			break;
 			
 		case LWPNZ:
-			if(auto s=checkLWpn(ri->lwpn))
+			if(auto s=checkLWpn(ri->lwpnref))
 			{
 				s->z=get_qr(qr_SPRITEXY_IS_FLOAT) ? zslongToFix(value) : zfix(value/10000);
 				if(s->z < 0) s->z = 0_zf;
@@ -12639,19 +12639,19 @@ void set_register(int32_t arg, int32_t value)
 			break;
 			
 		case LWPNJUMP:
-			if(auto s=checkLWpn(ri->lwpn))
+			if(auto s=checkLWpn(ri->lwpnref))
 				s->fall=zslongToFix(value)*-100;
 				
 			break;
 			
 		case LWPNFAKEJUMP:
-			if(auto s=checkLWpn(ri->lwpn))
+			if(auto s=checkLWpn(ri->lwpnref))
 				s->fakefall=zslongToFix(value)*-100;
 				
 			break;
 			
 		case LWPNDIR:
-			if(auto s=checkLWpn(ri->lwpn))
+			if(auto s=checkLWpn(ri->lwpnref))
 			{
 				s->dir=(value/10000);
 				s->doAutoRotate(true);
@@ -12660,13 +12660,13 @@ void set_register(int32_t arg, int32_t value)
 			break;
 			
 		case LWPNSPECIAL:
-			if(auto s=checkLWpn(ri->lwpn))
+			if(auto s=checkLWpn(ri->lwpnref))
 				s->specialinfo=(value/10000);
 				
 			break;
 		 
 		case LWPNGRAVITY:
-			if(auto s=checkLWpn(ri->lwpn))
+			if(auto s=checkLWpn(ri->lwpnref))
 			{
 				if(value)
 					s->moveflags |= move_obeys_grav;
@@ -12676,7 +12676,7 @@ void set_register(int32_t arg, int32_t value)
 			break;
 			
 		case LWPNSTEP:
-			if(auto s=checkLWpn(ri->lwpn))
+			if(auto s=checkLWpn(ri->lwpnref))
 			{
 				// fp math is bad for replay, so always ignore this QR when replay is active.
 				// TODO: can we just delete this QR? Would it actually break anything? For now,
@@ -12702,7 +12702,7 @@ void set_register(int32_t arg, int32_t value)
 			break;
 			
 		case LWPNANGLE:
-			if(auto s=checkLWpn(ri->lwpn))
+			if(auto s=checkLWpn(ri->lwpnref))
 			{
 				s->angle=(double)(value/10000.0);
 				s->doAutoRotate();
@@ -12711,7 +12711,7 @@ void set_register(int32_t arg, int32_t value)
 			break;
 			
 		case LWPNDEGANGLE:
-			if(auto s=checkLWpn(ri->lwpn))
+			if(auto s=checkLWpn(ri->lwpnref))
 			{
 				double rangle = (value / 10000.0) * (PI / 180.0);
 				s->angle=(double)(rangle);
@@ -12721,7 +12721,7 @@ void set_register(int32_t arg, int32_t value)
 			break;
 			
 		case LWPNVX:
-			if(auto s=checkLWpn(ri->lwpn))
+			if(auto s=checkLWpn(ri->lwpnref))
 			{
 				double vy;
 				double vx = (value / 10000.0);
@@ -12756,7 +12756,7 @@ void set_register(int32_t arg, int32_t value)
 			break;
 		
 		case LWPNVY:
-			if(auto s=checkLWpn(ri->lwpn))
+			if(auto s=checkLWpn(ri->lwpnref))
 			{
 				double vx;
 				double vy = (value / 10000.0);
@@ -12791,7 +12791,7 @@ void set_register(int32_t arg, int32_t value)
 			break;
 			
 		case LWPNANGULAR:
-			if(auto s=checkLWpn(ri->lwpn))
+			if(auto s=checkLWpn(ri->lwpnref))
 			{
 				s->angular=(value!=0);
 				s->doAutoRotate(false, true);
@@ -12800,7 +12800,7 @@ void set_register(int32_t arg, int32_t value)
 			break;
 			
 		case LWPNAUTOROTATE:
-			if(auto s=checkLWpn(ri->lwpn))
+			if(auto s=checkLWpn(ri->lwpnref))
 			{
 				s->autorotate=(value!=0);
 				s->doAutoRotate(false, true);
@@ -12809,19 +12809,19 @@ void set_register(int32_t arg, int32_t value)
 			break;
 			
 		case LWPNBEHIND:
-			if(auto s=checkLWpn(ri->lwpn))
+			if(auto s=checkLWpn(ri->lwpnref))
 				s->behind=(value!=0);
 				
 			break;
 			
 		case LWPNDRAWTYPE:
-			if(auto s=checkLWpn(ri->lwpn))
+			if(auto s=checkLWpn(ri->lwpnref))
 				s->drawstyle=(value/10000);
 				
 			break;
 			
 		case LWPNPOWER:
-			if(auto s=checkLWpn(ri->lwpn))
+			if(auto s=checkLWpn(ri->lwpnref))
 				s->power=(value/10000);
 				
 			break;
@@ -12832,7 +12832,7 @@ void set_register(int32_t arg, int32_t value)
 			break;
 		*/        
 		case LWPNDEAD:
-			if(auto s=checkLWpn(ri->lwpn))
+			if(auto s=checkLWpn(ri->lwpnref))
 			{
 				auto dead = value/10000;
 				s->dead=dead;
@@ -12841,67 +12841,67 @@ void set_register(int32_t arg, int32_t value)
 			break;
 			
 		case LWPNTYPE:
-			if(auto s=checkLWpn(ri->lwpn))
+			if(auto s=checkLWpn(ri->lwpnref))
 				s->id=(value/10000);
 				
 			break;
 			
 		case LWPNTILE:
-			if(auto s=checkLWpn(ri->lwpn))
+			if(auto s=checkLWpn(ri->lwpnref))
 				s->tile=(value/10000);
 				
 			break;
 		
 		case LWPNSCRIPTTILE:
-			if(auto s=checkLWpn(ri->lwpn))
+			if(auto s=checkLWpn(ri->lwpnref))
 				s->scripttile=vbound((value/10000),-1,NEWMAXTILES-1);
 				
 			break;
 		
 		case LWPNSCRIPTFLIP:
-			if(auto s=checkLWpn(ri->lwpn))
+			if(auto s=checkLWpn(ri->lwpnref))
 				s->scriptflip=vbound((value/10000),-1,127);
 				
 			break;
 			
 		case LWPNCSET:
-			if(auto s=checkLWpn(ri->lwpn))
+			if(auto s=checkLWpn(ri->lwpnref))
 				s->cs=(value/10000)&15;
 				
 			break;
 			
 		case LWPNFLASHCSET:
-			if(auto s=checkLWpn(ri->lwpn))
+			if(auto s=checkLWpn(ri->lwpnref))
 				(s->o_cset)|=(value/10000)<<4;
 				
 			break;
 			
 		case LWPNFRAMES:
-			if(auto s=checkLWpn(ri->lwpn))
+			if(auto s=checkLWpn(ri->lwpnref))
 				s->frames=(value/10000);
 				
 			break;
 			
 		case LWPNFRAME:
-			if(auto s=checkLWpn(ri->lwpn))
+			if(auto s=checkLWpn(ri->lwpnref))
 				s->aframe=(value/10000);
 				
 			break;
 			
 		case LWPNASPEED:
-			if(auto s=checkLWpn(ri->lwpn))
+			if(auto s=checkLWpn(ri->lwpnref))
 				s->o_speed=(value/10000);
 				
 			break;
 			
 		case LWPNFLASH:
-			if(auto s=checkLWpn(ri->lwpn))
+			if(auto s=checkLWpn(ri->lwpnref))
 				s->flash=(value/10000);
 				
 			break;
 			
 		case LWPNFLIP:
-			if(auto s=checkLWpn(ri->lwpn))
+			if(auto s=checkLWpn(ri->lwpnref))
 				s->flip=(value/10000);
 				
 			break;
@@ -12912,19 +12912,19 @@ void set_register(int32_t arg, int32_t value)
 				scripting_log_error_with_context("To use this you must disable the quest rule 'Old (Faster) Sprite Drawing'.");
 				break;
 			}
-			if(auto s=checkLWpn(ri->lwpn))
+			if(auto s=checkLWpn(ri->lwpnref))
 				s->rotation=(value/10000);
 				
 			break;
 			
 		case LWPNEXTEND:
-			if(auto s=checkLWpn(ri->lwpn))
+			if(auto s=checkLWpn(ri->lwpnref))
 				s->extend=(value/10000);
 				
 			break;
 			
 		case LWPNOTILE:
-			if(auto s=checkLWpn(ri->lwpn))
+			if(auto s=checkLWpn(ri->lwpnref))
 			{
 					s->o_tile=(value/10000);
 					s->ref_o_tile=(value/10000);
@@ -12936,43 +12936,43 @@ void set_register(int32_t arg, int32_t value)
 			break;
 			
 		case LWPNOCSET:
-			if(auto s=checkLWpn(ri->lwpn))
+			if(auto s=checkLWpn(ri->lwpnref))
 				(s->o_cset)|=(value/10000)&15;
 				
 			break;
 			
 		case LWPNHXOFS:
-			if(auto s=checkLWpn(ri->lwpn))
+			if(auto s=checkLWpn(ri->lwpnref))
 				(s->hxofs)=(value/10000);
 				
 			break;
 			
 		case LWPNHYOFS:
-			if(auto s=checkLWpn(ri->lwpn))
+			if(auto s=checkLWpn(ri->lwpnref))
 				(s->hyofs)=(value/10000);
 				
 			break;
 			
 		case LWPNXOFS:
-			if(auto s=checkLWpn(ri->lwpn))
+			if(auto s=checkLWpn(ri->lwpnref))
 				(s->xofs)=(zfix)(value/10000);
 				
 			break;
 			
 		case LWPNYOFS:
-			if(auto s=checkLWpn(ri->lwpn))
+			if(auto s=checkLWpn(ri->lwpnref))
 				(s->yofs)=(zfix)(value/10000)+(get_qr(qr_OLD_DRAWOFFSET)?playing_field_offset:original_playing_field_offset);
 				
 			break;
 		
 		case LWPNSHADOWXOFS:
-			if(auto s=checkLWpn(ri->lwpn))
+			if(auto s=checkLWpn(ri->lwpnref))
 				(s->shadowxofs)=(zfix)(value/10000);
 				
 			break;
 		
 		case LWPNSHADOWYOFS:
-			if(auto s=checkLWpn(ri->lwpn))
+			if(auto s=checkLWpn(ri->lwpnref))
 				(s->shadowyofs)=(zfix)(value/10000);
 				
 			break;
@@ -12981,49 +12981,49 @@ void set_register(int32_t arg, int32_t value)
 			break; //READ-ONLY
 			
 		case LWPNZOFS:
-			if(auto s=checkLWpn(ri->lwpn))
+			if(auto s=checkLWpn(ri->lwpnref))
 				(s->zofs)=(zfix)(value/10000);
 				
 			break;
 			
 		case LWPNHXSZ:
-			if(auto s=checkLWpn(ri->lwpn))
+			if(auto s=checkLWpn(ri->lwpnref))
 				(s->hit_width)=(value/10000);
 				
 			break;
 			
 		case LWPNHYSZ:
-			if(auto s=checkLWpn(ri->lwpn))
+			if(auto s=checkLWpn(ri->lwpnref))
 				(s->hit_height)=(value/10000);
 				
 			break;
 			
 		case LWPNHZSZ:
-			if(auto s=checkLWpn(ri->lwpn))
+			if(auto s=checkLWpn(ri->lwpnref))
 				(s->hzsz)=(value/10000);
 				
 			break;
 			
 		case LWPNTXSZ:
-			if(auto s=checkLWpn(ri->lwpn))
+			if(auto s=checkLWpn(ri->lwpnref))
 				(s->txsz)=vbound((value/10000),1,20);
 				
 			break;
 			
 		case LWPNTYSZ:
-			if(auto s=checkLWpn(ri->lwpn))
+			if(auto s=checkLWpn(ri->lwpnref))
 				(s->tysz)=vbound((value/10000),1,20);
 				
 			break;
 
 		case LWPNCOLLDET:
-			if(auto s=checkLWpn(ri->lwpn))
+			if(auto s=checkLWpn(ri->lwpnref))
 				(s->scriptcoldet) = value;
 
 			break;
 		
 		case LWPNENGINEANIMATE:
-			if(auto s=checkLWpn(ri->lwpn))
+			if(auto s=checkLWpn(ri->lwpnref))
 				(s->do_animation)=value;
 				
 			break;
@@ -13032,19 +13032,19 @@ void set_register(int32_t arg, int32_t value)
 		{
 			//int32_t pitm = (vbound(value/10000,1,(MAXITEMS-1)));
 					
-			if(auto s=checkLWpn(ri->lwpn))
+			if(auto s=checkLWpn(ri->lwpnref))
 				(s->parentitem)=(vbound(value/10000,-1,(MAXITEMS-1)));
 			break;
 		}
 
 		case LWPNLEVEL:
-			if(auto s=checkLWpn(ri->lwpn))
+			if(auto s=checkLWpn(ri->lwpnref))
 				(s->level)=value/10000;
 				
 			break;
 		
 		case LWPNSCRIPT:
-			if(auto s=checkLWpn(ri->lwpn))
+			if(auto s=checkLWpn(ri->lwpnref))
 			{
 				(s->script)=vbound(value/10000,0,NUMSCRIPTWEAPONS-1);
 				if ( get_qr(qr_CLEARINITDONSCRIPTCHANGE))
@@ -13052,24 +13052,24 @@ void set_register(int32_t arg, int32_t value)
 					for(int32_t q=0; q<8; q++)
 						(s->initD[q]) = 0;
 				}
-				on_reassign_script_engine_data(ScriptType::Lwpn, ri->lwpn);
+				on_reassign_script_engine_data(ScriptType::Lwpn, ri->lwpnref);
 			}  
 			break;
 		
 		case LWPNUSEWEAPON:
-			if(auto s=checkLWpn(ri->lwpn))
+			if(auto s=checkLWpn(ri->lwpnref))
 			(s->useweapon)=vbound(value/10000,0,255);
 				
 			break;
 		
 		case LWPNUSEDEFENCE:
-			if(auto s=checkLWpn(ri->lwpn))
+			if(auto s=checkLWpn(ri->lwpnref))
 			(s->usedefense)=vbound(value/10000,0,255);
 				
 			break;
 
 		case LWPNFALLCLK:
-			if(auto s=checkLWpn(ri->lwpn))
+			if(auto s=checkLWpn(ri->lwpnref))
 			{
 				if(s->fallclk != 0 && value == 0)
 				{
@@ -13081,13 +13081,13 @@ void set_register(int32_t arg, int32_t value)
 			}
 			break;
 		case LWPNFALLCMB:
-			if(auto s=checkLWpn(ri->lwpn))
+			if(auto s=checkLWpn(ri->lwpnref))
 			{
 				s->fallCombo = vbound(value/10000,0,MAXCOMBOS-1);
 			}
 			break;
 		case LWPNDROWNCLK:
-			if(auto s=checkLWpn(ri->lwpn))
+			if(auto s=checkLWpn(ri->lwpnref))
 			{
 				if(s->drownclk != 0 && value == 0)
 				{
@@ -13099,13 +13099,13 @@ void set_register(int32_t arg, int32_t value)
 			}
 			break;
 		case LWPNDROWNCMB:
-			if(auto s=checkLWpn(ri->lwpn))
+			if(auto s=checkLWpn(ri->lwpnref))
 			{
 				s->drownCombo = vbound(value/10000,0,MAXCOMBOS-1);
 			}
 			break;
 		case LWPNFAKEZ:
-			if(auto s=checkLWpn(ri->lwpn))
+			if(auto s=checkLWpn(ri->lwpnref))
 			{
 				s->fakez=get_qr(qr_SPRITEXY_IS_FLOAT) ? zslongToFix(value) : zfix(value/10000);
 				if(s->fakez < 0) s->fakez = 0_zf;
@@ -13114,28 +13114,28 @@ void set_register(int32_t arg, int32_t value)
 			break;
 
 		case LWPNGLOWRAD:
-			if(auto s=checkLWpn(ri->lwpn))
+			if(auto s=checkLWpn(ri->lwpnref))
 			{
 				s->glowRad = vbound(value/10000,0,255);
 			}
 			break;
 			
 		case LWPNGLOWSHP:
-			if(auto s=checkLWpn(ri->lwpn))
+			if(auto s=checkLWpn(ri->lwpnref))
 			{
 				s->glowShape = vbound(value/10000,0,255);
 			}
 			break;
 			
 		case LWPNUNBL:
-			if(auto s=checkLWpn(ri->lwpn))
+			if(auto s=checkLWpn(ri->lwpnref))
 			{
 				s->unblockable = (value/10000)&WPNUNB_ALL;
 			}
 			break;
 			
 		case LWPNSHADOWSPR:
-			if(auto s=checkLWpn(ri->lwpn))
+			if(auto s=checkLWpn(ri->lwpnref))
 			{
 				s->spr_shadow = vbound(value/10000, 0, 255);
 			}
@@ -13143,55 +13143,55 @@ void set_register(int32_t arg, int32_t value)
 		case LWSWHOOKED:
 			break; //read-only
 		case LWPNTIMEOUT:
-			if(auto s=checkLWpn(ri->lwpn))
+			if(auto s=checkLWpn(ri->lwpnref))
 			{
 				s->weap_timeout = vbound(value/10000,0,214748);
 			}
 			break;
 		case LWPNDEATHITEM:
-			if(auto s=checkLWpn(ri->lwpn))
+			if(auto s=checkLWpn(ri->lwpnref))
 			{
 				s->death_spawnitem = vbound(value/10000,-1,MAXITEMS-1);
 			}
 			break;
 		case LWPNDEATHDROPSET:
-			if(auto s=checkLWpn(ri->lwpn))
+			if(auto s=checkLWpn(ri->lwpnref))
 			{
 				s->death_spawndropset = vbound(value/10000,-1,MAXITEMDROPSETS-1);
 			}
 			break;
 		case LWPNDEATHIPICKUP:
-			if(auto s=checkLWpn(ri->lwpn))
+			if(auto s=checkLWpn(ri->lwpnref))
 			{
 				s->death_item_pflags = value/10000;
 			}
 			break;
 		case LWPNDEATHSPRITE:
-			if(auto s=checkLWpn(ri->lwpn))
+			if(auto s=checkLWpn(ri->lwpnref))
 			{
 				s->death_sprite = vbound(value/10000,-255,MAXWPNS-1);
 			}
 			break;
 		case LWPNDEATHSFX:
-			if(auto s=checkLWpn(ri->lwpn))
+			if(auto s=checkLWpn(ri->lwpnref))
 			{
 				s->death_sfx = vbound(value/10000,0,WAV_COUNT);
 			}
 			break;
 		case LWPNLIFTLEVEL:
-			if(auto s=checkLWpn(ri->lwpn))
+			if(auto s=checkLWpn(ri->lwpnref))
 			{
 				s->lift_level = vbound(value/10000,0,255);
 			}
 			break;
 		case LWPNLIFTTIME:
-			if(auto s=checkLWpn(ri->lwpn))
+			if(auto s=checkLWpn(ri->lwpnref))
 			{
 				s->lift_time = vbound(value/10000,0,255);
 			}
 			break;
 		case LWPNLIFTHEIGHT:
-			if(auto s=checkLWpn(ri->lwpn))
+			if(auto s=checkLWpn(ri->lwpnref))
 			{
 				s->lift_height = zslongToFix(value);
 			}
@@ -13205,13 +13205,13 @@ void set_register(int32_t arg, int32_t value)
 				scripting_log_error_with_context("To use this you must disable the quest rule 'Old (Faster) Sprite Drawing'.");
 				break;
 			}
-			if(auto s=checkEWpn(ri->ewpn))
+			if(auto s=checkEWpn(ri->ewpnref))
 				s->scale=(zfix)(value/100.0);
 				
 			break;
 		
 		case EWPNX:
-			if(auto s=checkEWpn(ri->ewpn))
+			if(auto s=checkEWpn(ri->ewpnref))
 				s->x = (get_qr(qr_SPRITEXY_IS_FLOAT) ? zslongToFix(value) : zfix(value/10000));
 				
 			break;
@@ -13224,13 +13224,13 @@ void set_register(int32_t arg, int32_t value)
 		}
 		
 		case EWPNY:
-			if(auto s=checkEWpn(ri->ewpn))
+			if(auto s=checkEWpn(ri->ewpnref))
 				s->y = (get_qr(qr_SPRITEXY_IS_FLOAT) ? zslongToFix(value) : zfix(value/10000));
 				
 			break;
 			
 		case EWPNZ:
-			if(auto s=checkEWpn(ri->ewpn))
+			if(auto s=checkEWpn(ri->ewpnref))
 			{
 				s->z=get_qr(qr_SPRITEXY_IS_FLOAT) ? zslongToFix(value) : zfix(value/10000);
 				if(s->z < 0) s->z = 0_zf;
@@ -13239,19 +13239,19 @@ void set_register(int32_t arg, int32_t value)
 			break;
 			
 		case EWPNJUMP:
-			if(auto s=checkEWpn(ri->ewpn))
+			if(auto s=checkEWpn(ri->ewpnref))
 				s->fall=zslongToFix(value)*-100;
 				
 			break;
 			
 		case EWPNFAKEJUMP:
-			if(auto s=checkEWpn(ri->ewpn))
+			if(auto s=checkEWpn(ri->ewpnref))
 				s->fakefall=zslongToFix(value)*-100;
 				
 			break;
 			
 		case EWPNDIR:
-			if(auto s=checkEWpn(ri->ewpn))
+			if(auto s=checkEWpn(ri->ewpnref))
 			{
 				s->dir=(value/10000);
 				s->doAutoRotate(true);
@@ -13260,13 +13260,13 @@ void set_register(int32_t arg, int32_t value)
 			break;
 			
 		case EWPNLEVEL:
-			if(auto s=checkEWpn(ri->ewpn))
+			if(auto s=checkEWpn(ri->ewpnref))
 				s->level=(value/10000);
 				
 			break;
 		  
 		case EWPNGRAVITY:
-			if(auto s=checkEWpn(ri->ewpn))
+			if(auto s=checkEWpn(ri->ewpnref))
 			{
 				if(value)
 					s->moveflags |= move_obeys_grav;
@@ -13276,7 +13276,7 @@ void set_register(int32_t arg, int32_t value)
 			break;
 			
 		case EWPNSTEP:
-			if(auto s=checkEWpn(ri->ewpn))
+			if(auto s=checkEWpn(ri->ewpnref))
 			{
 				if ( get_qr(qr_STEP_IS_FLOAT) || replay_is_active() )
 				{
@@ -13297,7 +13297,7 @@ void set_register(int32_t arg, int32_t value)
 			break;
 			
 		case EWPNANGLE:
-			if(auto s=checkEWpn(ri->ewpn))
+			if(auto s=checkEWpn(ri->ewpnref))
 			{
 				s->angle=(double)(value/10000.0);
 				s->doAutoRotate();
@@ -13306,7 +13306,7 @@ void set_register(int32_t arg, int32_t value)
 			break;
 			
 		case EWPNDEGANGLE:
-			if(auto s=checkEWpn(ri->ewpn))
+			if(auto s=checkEWpn(ri->ewpnref))
 			{
 				double rangle = (value / 10000.0) * (PI / 180.0);
 				s->angle=(double)(rangle);
@@ -13316,7 +13316,7 @@ void set_register(int32_t arg, int32_t value)
 			break;
 			
 		case EWPNVX:
-			if(auto s=checkEWpn(ri->ewpn))
+			if(auto s=checkEWpn(ri->ewpnref))
 			{
 				double vy;
 				double vx = (value / 10000.0);
@@ -13351,7 +13351,7 @@ void set_register(int32_t arg, int32_t value)
 			break;
 		
 		case EWPNVY:
-			if(auto s=checkEWpn(ri->ewpn))
+			if(auto s=checkEWpn(ri->ewpnref))
 			{
 				double vx;
 				double vy = (value / 10000.0);
@@ -13386,7 +13386,7 @@ void set_register(int32_t arg, int32_t value)
 			break;
 			
 		case EWPNANGULAR:
-			if(auto s=checkEWpn(ri->ewpn))
+			if(auto s=checkEWpn(ri->ewpnref))
 			{
 				s->angular=(value!=0);
 				s->doAutoRotate(false, true);
@@ -13395,7 +13395,7 @@ void set_register(int32_t arg, int32_t value)
 			break;
 			
 		case EWPNAUTOROTATE:
-			if(auto s=checkEWpn(ri->ewpn))
+			if(auto s=checkEWpn(ri->ewpnref))
 			{
 				s->autorotate=(value!=0);
 				s->doAutoRotate(false, true);
@@ -13404,25 +13404,25 @@ void set_register(int32_t arg, int32_t value)
 			break;
 			
 		case EWPNBEHIND:
-			if(auto s=checkEWpn(ri->ewpn))
+			if(auto s=checkEWpn(ri->ewpnref))
 				s->behind=(value!=0);
 				
 			break;
 			
 		case EWPNDRAWTYPE:
-			if(auto s=checkEWpn(ri->ewpn))
+			if(auto s=checkEWpn(ri->ewpnref))
 				s->drawstyle=(value/10000);
 				
 			break;
 			
 		case EWPNPOWER:
-			if(auto s=checkEWpn(ri->ewpn))
+			if(auto s=checkEWpn(ri->ewpnref))
 				s->power=(value/10000);
 				
 			break;
 			
 		case EWPNDEAD:
-			if(auto s=checkEWpn(ri->ewpn))
+			if(auto s=checkEWpn(ri->ewpnref))
 			{
 				auto dead = value/10000;
 				s->dead=dead;
@@ -13432,67 +13432,67 @@ void set_register(int32_t arg, int32_t value)
 			break;
 			
 		case EWPNTYPE:
-			if(auto s=checkEWpn(ri->ewpn))
+			if(auto s=checkEWpn(ri->ewpnref))
 				s->id=(value/10000);
 				
 			break;
 			
 		case EWPNTILE:
-			if(auto s=checkEWpn(ri->ewpn))
+			if(auto s=checkEWpn(ri->ewpnref))
 				s->tile=(value/10000);
 				
 			break;
 			
 		case EWPNSCRIPTTILE:
-			if(auto s=checkEWpn(ri->ewpn))
+			if(auto s=checkEWpn(ri->ewpnref))
 				s->scripttile=vbound((value/10000),-1, NEWMAXTILES-1);
 				
 			break;
 		
 		case EWPNSCRIPTFLIP:
-			if(auto s=checkEWpn(ri->ewpn))
+			if(auto s=checkEWpn(ri->ewpnref))
 				s->scriptflip=vbound((value/10000),-1, 127);
 				
 			break;
 			
 		case EWPNCSET:
-			if(auto s=checkEWpn(ri->ewpn))
+			if(auto s=checkEWpn(ri->ewpnref))
 				s->cs=(value/10000)&15;
 				
 			break;
 			
 		case EWPNFLASHCSET:
-			if(auto s=checkEWpn(ri->ewpn))
+			if(auto s=checkEWpn(ri->ewpnref))
 				(s->o_cset)|=(value/10000)<<4;
 				
 			break;
 			
 		case EWPNFRAMES:
-			if(auto s=checkEWpn(ri->ewpn))
+			if(auto s=checkEWpn(ri->ewpnref))
 				s->frames=(value/10000);
 				
 			break;
 			
 		case EWPNFRAME:
-			if(auto s=checkEWpn(ri->ewpn))
+			if(auto s=checkEWpn(ri->ewpnref))
 				s->aframe=(value/10000);
 				
 			break;
 			
 		case EWPNASPEED:
-			if(auto s=checkEWpn(ri->ewpn))
+			if(auto s=checkEWpn(ri->ewpnref))
 				s->o_speed=(value/10000);
 				
 			break;
 			
 		case EWPNFLASH:
-			if(auto s=checkEWpn(ri->ewpn))
+			if(auto s=checkEWpn(ri->ewpnref))
 				s->flash=(value/10000);
 				
 			break;
 			
 		case EWPNFLIP:
-			if(auto s=checkEWpn(ri->ewpn))
+			if(auto s=checkEWpn(ri->ewpnref))
 				s->flip=(value/10000);
 				
 			break;
@@ -13503,19 +13503,19 @@ void set_register(int32_t arg, int32_t value)
 				scripting_log_error_with_context("To use this you must disable the quest rule 'Old (Faster) Sprite Drawing'");
 				break;
 			}
-			if(auto s=checkEWpn(ri->ewpn))
+			if(auto s=checkEWpn(ri->ewpnref))
 				s->rotation=(value/10000);
 				
 			break;
 			
 		case EWPNEXTEND:
-			if(auto s=checkEWpn(ri->ewpn))
+			if(auto s=checkEWpn(ri->ewpnref))
 				s->extend=(value/10000);
 				
 			break;
 			
 		case EWPNOTILE:
-			if(auto s=checkEWpn(ri->ewpn))
+			if(auto s=checkEWpn(ri->ewpnref))
 			{
 				s->o_tile=(value/10000);
 				s->ref_o_tile=(value/10000);
@@ -13524,109 +13524,109 @@ void set_register(int32_t arg, int32_t value)
 			break;
 			
 		case EWPNOCSET:
-			if(auto s=checkEWpn(ri->ewpn))
+			if(auto s=checkEWpn(ri->ewpnref))
 				(s->o_cset)|=(value/10000)&15;
 				
 			break;
 			
 		case EWPNHXOFS:
-			if(auto s=checkEWpn(ri->ewpn))
+			if(auto s=checkEWpn(ri->ewpnref))
 				(s->hxofs)=(value/10000);
 				
 			break;
 			
 		case EWPNHYOFS:
-			if(auto s=checkEWpn(ri->ewpn))
+			if(auto s=checkEWpn(ri->ewpnref))
 				(s->hyofs)=(value/10000);
 				
 			break;
 			
 		case EWPNXOFS:
-			if(auto s=checkEWpn(ri->ewpn))
+			if(auto s=checkEWpn(ri->ewpnref))
 				(s->xofs)=(zfix)(value/10000);
 				
 			break;
 			
 		case EWPNYOFS:
-			if(auto s=checkEWpn(ri->ewpn))
+			if(auto s=checkEWpn(ri->ewpnref))
 				(s->yofs)=(zfix)(value/10000)+(get_qr(qr_OLD_DRAWOFFSET)?playing_field_offset:original_playing_field_offset);
 				
 			break;
 			
 		case EWPNSHADOWXOFS:
-			if(auto s=checkEWpn(ri->ewpn))
+			if(auto s=checkEWpn(ri->ewpnref))
 				(s->shadowxofs)=(zfix)(value/10000);
 				
 			break;
 			
 		case EWPNSHADOWYOFS:
-			if(auto s=checkEWpn(ri->ewpn))
+			if(auto s=checkEWpn(ri->ewpnref))
 				(s->shadowyofs)=(zfix)(value/10000);
 				
 			break;
 			
 		case EWPNZOFS:
-			if(auto s=checkEWpn(ri->ewpn))
+			if(auto s=checkEWpn(ri->ewpnref))
 				(s->zofs)=(zfix)(value/10000);
 				
 			break;
 			
 		case EWPNHXSZ:
-			if(auto s=checkEWpn(ri->ewpn))
+			if(auto s=checkEWpn(ri->ewpnref))
 				(s->hit_width)=(value/10000);
 				
 			break;
 			
 		case EWPNHYSZ:
-			if(auto s=checkEWpn(ri->ewpn))
+			if(auto s=checkEWpn(ri->ewpnref))
 				(s->hit_height)=(value/10000);
 				
 			break;
 			
 		case EWPNHZSZ:
-			if(auto s=checkEWpn(ri->ewpn))
+			if(auto s=checkEWpn(ri->ewpnref))
 				(s->hzsz)=(value/10000);
 				
 			break;
 			
 		case EWPNTXSZ:
-			if(auto s=checkEWpn(ri->ewpn))
+			if(auto s=checkEWpn(ri->ewpnref))
 				(s->txsz)=vbound((value/10000),1,20);
 				
 			break;
 			
 		case EWPNTYSZ:
-			if(auto s=checkEWpn(ri->ewpn))
+			if(auto s=checkEWpn(ri->ewpnref))
 				(s->tysz)=vbound((value/10000),1,20);
 				
 			break;
 			
 		case EWPNCOLLDET:
-			if(auto s=checkEWpn(ri->ewpn))
+			if(auto s=checkEWpn(ri->ewpnref))
 				(s->scriptcoldet)=value;
 				
 			break;
 		
 		case EWPNENGINEANIMATE:
-			if(auto s=checkEWpn(ri->ewpn))
+			if(auto s=checkEWpn(ri->ewpnref))
 				(s->do_animation)=value;
 				
 			break;
 		
 		
 		case EWPNPARENTUID:
-			if(auto s=checkEWpn(ri->ewpn))
+			if(auto s=checkEWpn(ri->ewpnref))
 				s->setParent(sprite::getByUID(value));
 			break;
 		
 		case EWPNPARENT:
-			if(auto s=checkEWpn(ri->ewpn))
+			if(auto s=checkEWpn(ri->ewpnref))
 				(s->parentid)= ( (get_qr(qr_OLDEWPNPARENT)) ? value / 10000 : value );
 				
 			break;
 		
 		case EWPNSCRIPT:
-			if(auto s=checkEWpn(ri->ewpn))
+			if(auto s=checkEWpn(ri->ewpnref))
 			{
 				(s->script)=vbound(value/10000,0,NUMSCRIPTWEAPONS-1);
 				if ( get_qr(qr_CLEARINITDONSCRIPTCHANGE))
@@ -13634,12 +13634,12 @@ void set_register(int32_t arg, int32_t value)
 					for(int32_t q=0; q<8; q++)
 						(s->initD[q]) = 0;
 				}
-				on_reassign_script_engine_data(ScriptType::Ewpn, ri->ewpn);
+				on_reassign_script_engine_data(ScriptType::Ewpn, ri->ewpnref);
 			}
 			break;
 		
 		case EWPNFALLCLK:
-			if(auto s=checkEWpn(ri->ewpn))
+			if(auto s=checkEWpn(ri->ewpnref))
 			{
 				if(s->fallclk != 0 && value == 0)
 				{
@@ -13651,13 +13651,13 @@ void set_register(int32_t arg, int32_t value)
 			}
 			break;
 		case EWPNFALLCMB:
-			if(auto s=checkEWpn(ri->ewpn))
+			if(auto s=checkEWpn(ri->ewpnref))
 			{
 				s->fallCombo = vbound(value/10000,0,MAXCOMBOS-1);
 			}
 			break;
 		case EWPNDROWNCLK:
-			if(auto s=checkEWpn(ri->ewpn))
+			if(auto s=checkEWpn(ri->ewpnref))
 			{
 				if(s->drownclk != 0 && value == 0)
 				{
@@ -13669,13 +13669,13 @@ void set_register(int32_t arg, int32_t value)
 			}
 			break;
 		case EWPNDROWNCMB:
-			if(auto s=checkEWpn(ri->ewpn))
+			if(auto s=checkEWpn(ri->ewpnref))
 			{
 				s->drownCombo = vbound(value/10000,0,MAXCOMBOS-1);
 			}
 			break;
 		case EWPNFAKEZ:
-			if(auto s=checkEWpn(ri->ewpn))
+			if(auto s=checkEWpn(ri->ewpnref))
 			{
 				s->fakez=get_qr(qr_SPRITEXY_IS_FLOAT) ? zslongToFix(value) : zfix(value/10000);
 				if(s->fakez < 0) s->fakez = 0_zf;
@@ -13684,27 +13684,27 @@ void set_register(int32_t arg, int32_t value)
 			break;
 		
 		case EWPNGLOWRAD:
-			if(auto s=checkEWpn(ri->ewpn))
+			if(auto s=checkEWpn(ri->ewpnref))
 			{
 				s->glowRad = vbound(value/10000,0,255);
 			}
 			break;
 		case EWPNGLOWSHP:
-			if(auto s=checkEWpn(ri->ewpn))
+			if(auto s=checkEWpn(ri->ewpnref))
 			{
 				s->glowShape = vbound(value/10000,0,255);
 			}
 			break;
 			
 		case EWPNUNBL:
-			if(auto s=checkEWpn(ri->ewpn))
+			if(auto s=checkEWpn(ri->ewpnref))
 			{
 				s->unblockable = (value/10000)&WPNUNB_ALL;
 			}
 			break;
 			
 		case EWPNSHADOWSPR:
-			if(auto s=checkEWpn(ri->ewpn))
+			if(auto s=checkEWpn(ri->ewpnref))
 			{
 				s->spr_shadow = vbound(value/10000, 0, 255);
 			}
@@ -13712,54 +13712,54 @@ void set_register(int32_t arg, int32_t value)
 		case EWSWHOOKED:
 			break; //read-only
 		case EWPNTIMEOUT:
-			if(auto s=checkEWpn(ri->ewpn))
+			if(auto s=checkEWpn(ri->ewpnref))
 			{
 				s->weap_timeout = vbound(value/10000,0,214748);
 			}
 			break;case EWPNDEATHITEM:
-			if(auto s=checkEWpn(ri->ewpn))
+			if(auto s=checkEWpn(ri->ewpnref))
 			{
 				s->death_spawnitem = vbound(value/10000,-1,MAXITEMS-1);
 			}
 			break;
 		case EWPNDEATHDROPSET:
-			if(auto s=checkEWpn(ri->ewpn))
+			if(auto s=checkEWpn(ri->ewpnref))
 			{
 				s->death_spawndropset = vbound(value/10000,-1,MAXITEMDROPSETS-1);
 			}
 			break;
 		case EWPNDEATHIPICKUP:
-			if(auto s=checkEWpn(ri->ewpn))
+			if(auto s=checkEWpn(ri->ewpnref))
 			{
 				s->death_item_pflags = value/10000;
 			}
 			break;
 		case EWPNDEATHSPRITE:
-			if(auto s=checkEWpn(ri->ewpn))
+			if(auto s=checkEWpn(ri->ewpnref))
 			{
 				s->death_sprite = vbound(value/10000,-255,MAXWPNS-1);
 			}
 			break;
 		case EWPNDEATHSFX:
-			if(auto s=checkEWpn(ri->ewpn))
+			if(auto s=checkEWpn(ri->ewpnref))
 			{
 				s->death_sfx = vbound(value/10000,0,WAV_COUNT);
 			}
 			break;
 		case EWPNLIFTLEVEL:
-			if(auto s=checkEWpn(ri->ewpn))
+			if(auto s=checkEWpn(ri->ewpnref))
 			{
 				s->lift_level = vbound(value/10000,0,255);
 			}
 			break;
 		case EWPNLIFTTIME:
-			if(auto s=checkEWpn(ri->ewpn))
+			if(auto s=checkEWpn(ri->ewpnref))
 			{
 				s->lift_time = vbound(value/10000,0,255);
 			}
 			break;
 		case EWPNLIFTHEIGHT:
-			if(auto s=checkEWpn(ri->ewpn))
+			if(auto s=checkEWpn(ri->ewpnref))
 			{
 				s->lift_height = zslongToFix(value);
 			}
@@ -14213,7 +14213,7 @@ void set_register(int32_t arg, int32_t value)
 		
 		#define	SET_MAPDATA_VAR_INT32(member) \
 		{ \
-			if (mapscr *m = ResolveMapdataScr(ri->mapsref)) \
+			if (mapscr *m = ResolveMapdataScr(ri->mapref)) \
 			{ \
 				m->member = vbound((value / 10000),-214747,214747); \
 			} \
@@ -14222,7 +14222,7 @@ void set_register(int32_t arg, int32_t value)
 		
 		#define	SET_MAPDATA_VAR_INT16(member) \
 		{ \
-			if (mapscr *m = ResolveMapdataScr(ri->mapsref)) \
+			if (mapscr *m = ResolveMapdataScr(ri->mapref)) \
 			{ \
 				m->member = vbound((value / 10000),0,32767); \
 			} \
@@ -14231,7 +14231,7 @@ void set_register(int32_t arg, int32_t value)
 
 		#define	SET_MAPDATA_VAR_BYTE(member) \
 		{ \
-			if (mapscr *m = ResolveMapdataScr(ri->mapsref)) \
+			if (mapscr *m = ResolveMapdataScr(ri->mapref)) \
 			{ \
 				m->member = vbound((value / 10000),0,255); \
 			} \
@@ -14244,7 +14244,7 @@ void set_register(int32_t arg, int32_t value)
 			if (BC::checkIndex(indx, 0, indexbound) != SH::_NoError) \
 			{ \
 			} \
-			else if (mapscr *m = ResolveMapdataScr(ri->mapsref)) \
+			else if (mapscr *m = ResolveMapdataScr(ri->mapref)) \
 			{ \
 				m->member[indx] = vbound((value / 10000),-214747,214747); \
 			} \
@@ -14257,7 +14257,7 @@ void set_register(int32_t arg, int32_t value)
 			if (BC::checkIndex(indx, 0, indexbound) != SH::_NoError) \
 			{ \
 			} \
-			else if (mapscr *m = ResolveMapdataScr(ri->mapsref)) \
+			else if (mapscr *m = ResolveMapdataScr(ri->mapref)) \
 			{ \
 				m->member[indx] = vbound((value / 10000),-32767,32767); \
 			} \
@@ -14270,7 +14270,7 @@ void set_register(int32_t arg, int32_t value)
 			if (BC::checkIndex(indx, 0, indexbound) != SH::_NoError) \
 			{ \
 			} \
-			else if (mapscr *m = ResolveMapdataScr(ri->mapsref)) \
+			else if (mapscr *m = ResolveMapdataScr(ri->mapref)) \
 			{ \
 				m->member[indx] = vbound((value / 10000),0,255); \
 			} \
@@ -14284,7 +14284,7 @@ void set_register(int32_t arg, int32_t value)
 			if (BC::checkIndex(indx, 1, indexbound) != SH::_NoError) \
 			{ \
 			} \
-			else if (mapscr *m = ResolveMapdataScr(ri->mapsref)) \
+			else if (mapscr *m = ResolveMapdataScr(ri->mapref)) \
 			{ \
 				m->member[indx-1] = vbound((value / 10000),0,255); \
 			} \
@@ -14304,7 +14304,7 @@ void set_register(int32_t arg, int32_t value)
 				Z_scripterrlog("Script attempted to use a mapdata->LayerScreen[%d].\n",scrn_id); \
 				Z_scripterrlog("Valid Screen values are (0) through (%d).\n",MAPSCRS); \
 			} \
-			else if (mapscr *m = ResolveMapdataScr(ri->mapsref)) \
+			else if (mapscr *m = ResolveMapdataScr(ri->mapref)) \
 			{ \
 				m->member[indx-1] = vbound((scrn_id),0,MAPSCRS); \
 			} \
@@ -14317,7 +14317,7 @@ void set_register(int32_t arg, int32_t value)
 			if (BC::checkIndex(indx, 0, indexbound) != SH::_NoError) \
 			{ \
 			} \
-			else if (mapscr *m = ResolveMapdataScr(ri->mapsref)) \
+			else if (mapscr *m = ResolveMapdataScr(ri->mapref)) \
 			{ \
 				m->member[indx] =( (value/10000) ? 1 : 0 ); \
 			} \
@@ -14328,7 +14328,7 @@ void set_register(int32_t arg, int32_t value)
 		#define SET_FFC_MAPDATA_BOOL_INDEX(member, indexbound) \
 		{ \
 			int32_t index = GET_D(rINDEX) / 10000; \
-			if (auto handle = ResolveMapdataFFC(ri->mapsref, index)) \
+			if (auto handle = ResolveMapdataFFC(ri->mapref, index)) \
 			{ \
 				handle.ffc->member =( (value/10000) ? 1 : 0 ); \
 			} \
@@ -14338,7 +14338,7 @@ void set_register(int32_t arg, int32_t value)
 		#define SET_MAPDATA_FLAG(member) \
 		{ \
 			int32_t flag =  (value/10000);  \
-			if (mapscr *m = ResolveMapdataScr(ri->mapsref)) \
+			if (mapscr *m = ResolveMapdataScr(ri->mapref)) \
 			{ \
 				if ( flag != 0 ) \
 				{ \
@@ -14355,7 +14355,7 @@ void set_register(int32_t arg, int32_t value)
 		case MAPDATAROOM: 		SET_MAPDATA_VAR_BYTE(room);	break;		//b
 		case MAPDATAITEM:
 		{
-			if (mapscr *m = ResolveMapdataScr(ri->mapsref))
+			if (mapscr *m = ResolveMapdataScr(ri->mapref))
 			{
 				auto v = vbound((value / 10000),-1,255);
 				if(v > -1)
@@ -14370,7 +14370,7 @@ void set_register(int32_t arg, int32_t value)
 			if (BC::checkBounds(region_id, 0, 9) != SH::_NoError)
 				break;
 
-			auto result = decode_mapdata_ref(ri->mapsref);
+			auto result = decode_mapdata_ref(ri->mapref);
 			if (result.scr)
 			{
 				if (result.type == mapdata_type::CanonicalScreen)
@@ -14416,7 +14416,7 @@ void set_register(int32_t arg, int32_t value)
 		case MAPDATAVIEWX: 		break;//SET_MAPDATA_VAR_INT32(viewX, "ViewX"); break;	//W
 		case MAPDATASCRIPT:
 		{
-			auto result = decode_mapdata_ref(ri->mapsref);
+			auto result = decode_mapdata_ref(ri->mapref);
 			if (result.scr)
 			{
 				if (result.current())
@@ -14458,7 +14458,7 @@ void set_register(int32_t arg, int32_t value)
 			if (BC::checkBounds(dindex, 0, 7) != SH::_NoError)
 				break;
 
-			if (auto handle = ResolveMapdataFFC(ri->mapsref, index))
+			if (auto handle = ResolveMapdataFFC(ri->mapref, index))
 				handle.ffc->initd[dindex] = value;
 			break;
 		}	
@@ -14481,7 +14481,7 @@ void set_register(int32_t arg, int32_t value)
 
 		case MAPDATAOCEANSFX:
 		{
-			if (mapscr *m = ResolveMapdataScr(ri->mapsref))
+			if (mapscr *m = ResolveMapdataScr(ri->mapref))
 			{
 				int32_t v = vbound(value/10000, 0, 255);
 				if(m == hero_scr && m->oceansfx != v)
@@ -14499,7 +14499,7 @@ void set_register(int32_t arg, int32_t value)
 		case MAPDATAHOLDUPSFX:	 	SET_MAPDATA_VAR_BYTE(holdupsfx); break; //B
 		case MAPDATASCREENMIDI:
 		{
-			if (mapscr *m = ResolveMapdataScr(ri->mapsref))
+			if (mapscr *m = ResolveMapdataScr(ri->mapref))
 			{
 				m->screen_midi = vbound((value / 10000)-(MIDIOFFSET_MAPSCR-MIDIOFFSET_ZSCRIPT),-1,32767);
 			}
@@ -14507,7 +14507,7 @@ void set_register(int32_t arg, int32_t value)
 		}
 		case MAPDATA_GRAVITY_STRENGTH:
 		{
-			if (mapscr *m = ResolveMapdataScr(ri->mapsref))
+			if (mapscr *m = ResolveMapdataScr(ri->mapref))
 			{
 				m->screen_gravity = zslongToFix(value);
 			}
@@ -14515,7 +14515,7 @@ void set_register(int32_t arg, int32_t value)
 		}
 		case MAPDATA_TERMINAL_VELOCITY:
 		{
-			if (mapscr *m = ResolveMapdataScr(ri->mapsref))
+			if (mapscr *m = ResolveMapdataScr(ri->mapref))
 			{
 				m->screen_terminal_v = zslongToFix(value);
 			}
@@ -14525,9 +14525,9 @@ void set_register(int32_t arg, int32_t value)
 
 		case MAPDATASCRDATASIZE:
 		{
-			if (mapscr *m = ResolveMapdataScr(ri->mapsref))
+			if (mapscr *m = ResolveMapdataScr(ri->mapref))
 			{
-				int index = get_ref_map_index(ri->mapsref);
+				int index = get_ref_map_index(ri->mapref);
 				if (index < 0) break;
 
 				game->scriptDataResize(index, value/10000);
@@ -14536,9 +14536,9 @@ void set_register(int32_t arg, int32_t value)
 		}
 		case MAPDATAGUYCOUNT:
 		{
-			if (mapscr *m = ResolveMapdataScr(ri->mapsref))
+			if (mapscr *m = ResolveMapdataScr(ri->mapref))
 			{
-				int mi = get_mi(ri->mapsref);
+				int mi = get_mi(ri->mapref);
 				if(mi > -1)
 				{
 					game->guys[mi] = vbound(value/10000,10,0);
@@ -14549,9 +14549,9 @@ void set_register(int32_t arg, int32_t value)
 		}
 		case MAPDATAEXDOOR:
 		{
-			if (mapscr *m = ResolveMapdataScr(ri->mapsref))
+			if (mapscr *m = ResolveMapdataScr(ri->mapref))
 			{
-				int mi = get_mi(ri->mapsref);
+				int mi = get_mi(ri->mapref);
 				if(mi < 0) break;
 				int dir = SH::read_stack(ri->sp+1) / 10000;
 				int ind = SH::read_stack(ri->sp+0) / 10000;
@@ -14569,102 +14569,102 @@ void set_register(int32_t arg, int32_t value)
 		//dmapdata dmd-> Variables
 		case DMAPDATAMAP: 	//byte
 		{
-			DMaps[ri->dmapsref].map = ((byte)(value / 10000)) - 1; break;
+			DMaps[ri->dmapref].map = ((byte)(value / 10000)) - 1; break;
 		}
 		case DMAPDATALEVEL:	//word
 		{
-			DMaps[ri->dmapsref].level = ((word)(value / 10000)); break;
+			DMaps[ri->dmapref].level = ((word)(value / 10000)); break;
 		}
 		case DMAPDATAOFFSET:	//char
 		{
-			DMaps[ri->dmapsref].xoff = ((char)(value / 10000)); break;
+			DMaps[ri->dmapref].xoff = ((char)(value / 10000)); break;
 		}
 		case DMAPDATACOMPASS:	//byte
 		{
-			DMaps[ri->dmapsref].compass = ((byte)(value / 10000)); break;
+			DMaps[ri->dmapref].compass = ((byte)(value / 10000)); break;
 		}
 		case DMAPDATAPALETTE:	//word
 		{
-			DMaps[ri->dmapsref].color= ((word)(value / 10000));
-			if(ri->dmapsref == cur_dmap)
+			DMaps[ri->dmapref].color= ((word)(value / 10000));
+			if(ri->dmapref == cur_dmap)
 			{
-				loadlvlpal(DMaps[ri->dmapsref].color);
-				currcset = DMaps[ri->dmapsref].color;
+				loadlvlpal(DMaps[ri->dmapref].color);
+				currcset = DMaps[ri->dmapref].color;
 			}
 			break;
 		}
 		case DMAPDATAMIDI:	//byte
 		{
-			DMaps[ri->dmapsref].midi = ((byte)((value / 10000)+MIDIOFFSET_DMAP)); break;
+			DMaps[ri->dmapref].midi = ((byte)((value / 10000)+MIDIOFFSET_DMAP)); break;
 		}
 		case DMAPDATA_GRAVITY_STRENGTH:
 		{
-			DMaps[ri->dmapsref].dmap_gravity = zslongToFix(value);
+			DMaps[ri->dmapref].dmap_gravity = zslongToFix(value);
 			break;
 		}
 		case DMAPDATA_TERMINAL_VELOCITY:
 		{
-			DMaps[ri->dmapsref].dmap_terminal_v = zslongToFix(value);
+			DMaps[ri->dmapref].dmap_terminal_v = zslongToFix(value);
 			break;
 		}
 		case DMAPDATACONTINUE:	//byte
 		{
-			DMaps[ri->dmapsref].cont = ((byte)(value / 10000)); break;
+			DMaps[ri->dmapref].cont = ((byte)(value / 10000)); break;
 		}
 		case DMAPDATATYPE:	//byte
 		{
-			DMaps[ri->dmapsref].type = (((byte)(value / 10000))&dmfTYPE) | (DMaps[ri->dmapsref].type&~dmfTYPE); break;
+			DMaps[ri->dmapref].type = (((byte)(value / 10000))&dmfTYPE) | (DMaps[ri->dmapref].type&~dmfTYPE); break;
 		}
 		case DMAPSCRIPT:	//byte
 		{
-			DMaps[ri->dmapsref].script = vbound((value / 10000),0,NUMSCRIPTSDMAP-1);
-			on_reassign_script_engine_data(ScriptType::DMap, ri->dmapsref);
+			DMaps[ri->dmapref].script = vbound((value / 10000),0,NUMSCRIPTSDMAP-1);
+			on_reassign_script_engine_data(ScriptType::DMap, ri->dmapref);
 			break;
 		}
 		case DMAPDATASIDEVIEW:	//byte, treat as bool
 		{
-			DMaps[ri->dmapsref].sideview = ((value) ? 1 : 0); break;
+			DMaps[ri->dmapref].sideview = ((value) ? 1 : 0); break;
 		}
 		case DMAPDATAMUISCTRACK:	//byte
 		{
-			DMaps[ri->dmapsref].tmusictrack= ((byte)(value / 10000)); break;
+			DMaps[ri->dmapref].tmusictrack= ((byte)(value / 10000)); break;
 		}
 		case DMAPDATASUBSCRA:
 		{
-			bool changed = DMaps[ri->dmapsref].active_subscreen != ((byte)(value / 10000));
-			DMaps[ri->dmapsref].active_subscreen= ((byte)(value / 10000));
-			if(changed&&ri->dmapsref==cur_dmap)
+			bool changed = DMaps[ri->dmapref].active_subscreen != ((byte)(value / 10000));
+			DMaps[ri->dmapref].active_subscreen= ((byte)(value / 10000));
+			if(changed&&ri->dmapref==cur_dmap)
 				update_subscreens();
 			break;
 		}
 		case DMAPDATASUBSCRP:
 		{
-			bool changed = DMaps[ri->dmapsref].passive_subscreen != ((byte)(value / 10000));
-			DMaps[ri->dmapsref].passive_subscreen= ((byte)(value / 10000));
-			if(changed&&ri->dmapsref==cur_dmap)
+			bool changed = DMaps[ri->dmapref].passive_subscreen != ((byte)(value / 10000));
+			DMaps[ri->dmapref].passive_subscreen= ((byte)(value / 10000));
+			if(changed&&ri->dmapref==cur_dmap)
 				update_subscreens();
 			break;
 		}
 		case DMAPDATASUBSCRO:
 		{
-			bool changed = DMaps[ri->dmapsref].overlay_subscreen != ((byte)(value / 10000));
-			DMaps[ri->dmapsref].overlay_subscreen = ((byte)(value / 10000));
-			if(changed&&ri->dmapsref==cur_dmap)
+			bool changed = DMaps[ri->dmapref].overlay_subscreen != ((byte)(value / 10000));
+			DMaps[ri->dmapref].overlay_subscreen = ((byte)(value / 10000));
+			if(changed&&ri->dmapref==cur_dmap)
 				update_subscreens();
 			break;
 		}
 		case DMAPDATAFLAGS:	 //int32_t
 		{
-			DMaps[ri->dmapsref].flags = (value / 10000); break;
+			DMaps[ri->dmapref].flags = (value / 10000); break;
 		}
 		case DMAPDATAMIRRDMAP:
 		{
-			DMaps[ri->dmapsref].mirrorDMap = vbound(value / 10000, -1, MAXDMAPS); break;
+			DMaps[ri->dmapref].mirrorDMap = vbound(value / 10000, -1, MAXDMAPS); break;
 		}
 		case DMAPDATALOOPSTART:
 		{
-			DMaps[ri->dmapsref].tmusic_loop_start = value; 
-			if (ri->dmapsref == cur_dmap)
+			DMaps[ri->dmapref].tmusic_loop_start = value; 
+			if (ri->dmapref == cur_dmap)
 			{
 				if (FFCore.doing_dmap_enh_music(cur_dmap))
 				{
@@ -14675,8 +14675,8 @@ void set_register(int32_t arg, int32_t value)
 		}
 		case DMAPDATALOOPEND:
 		{
-			DMaps[ri->dmapsref].tmusic_loop_end = value;
-			if (ri->dmapsref == cur_dmap)
+			DMaps[ri->dmapref].tmusic_loop_end = value;
+			if (ri->dmapref == cur_dmap)
 			{
 				if (FFCore.doing_dmap_enh_music(cur_dmap))
 				{
@@ -14687,13 +14687,13 @@ void set_register(int32_t arg, int32_t value)
 		}
 		case DMAPDATAXFADEIN:
 		{
-			DMaps[ri->dmapsref].tmusic_xfade_in = (value / 10000);
+			DMaps[ri->dmapref].tmusic_xfade_in = (value / 10000);
 			break;
 		}
 		case DMAPDATAXFADEOUT:
 		{
-			DMaps[ri->dmapsref].tmusic_xfade_out = (value / 10000);
-			if (DMaps[cur_dmap].tmusic[0]!=0 && strcmp(DMaps[ri->dmapsref].tmusic, zcmusic->filename) == 0)
+			DMaps[ri->dmapref].tmusic_xfade_out = (value / 10000);
+			if (DMaps[cur_dmap].tmusic[0]!=0 && strcmp(DMaps[ri->dmapref].tmusic, zcmusic->filename) == 0)
 			{
 				zcmusic->fadeoutframes = (value / 10000);
 			}
@@ -14701,7 +14701,7 @@ void set_register(int32_t arg, int32_t value)
 		}
 		case DMAPDATAINTROSTRINGID:
 		{
-			DMaps[ri->dmapsref].intro_string_id = (value / 10000);
+			DMaps[ri->dmapref].intro_string_id = (value / 10000);
 			break;
 		}
 		case MUSICUPDATECOND:
@@ -14711,24 +14711,24 @@ void set_register(int32_t arg, int32_t value)
 		}
 		case DMAPDATAASUBSCRIPT:	//byte
 		{
-			DMaps[ri->dmapsref].active_sub_script = vbound((value / 10000),0,NUMSCRIPTSDMAP-1);
-			on_reassign_script_engine_data(ScriptType::ScriptedActiveSubscreen, ri->dmapsref);
+			DMaps[ri->dmapref].active_sub_script = vbound((value / 10000),0,NUMSCRIPTSDMAP-1);
+			on_reassign_script_engine_data(ScriptType::ScriptedActiveSubscreen, ri->dmapref);
 			break;
 		}
 		case DMAPDATAMAPSCRIPT:	//byte
 		{
-			DMaps[ri->dmapsref].onmap_script = vbound((value / 10000),0,NUMSCRIPTSDMAP-1);
-			on_reassign_script_engine_data(ScriptType::OnMap, ri->dmapsref);
+			DMaps[ri->dmapref].onmap_script = vbound((value / 10000),0,NUMSCRIPTSDMAP-1);
+			on_reassign_script_engine_data(ScriptType::OnMap, ri->dmapref);
 			break;
 		}
 		case DMAPDATAPSUBSCRIPT:	//byte
 		{
-			FFScript::deallocateAllScriptOwned(ScriptType::ScriptedPassiveSubscreen, ri->dmapsref);
+			FFScript::deallocateAllScriptOwned(ScriptType::ScriptedPassiveSubscreen, ri->dmapref);
 			word val = vbound((value / 10000),0,NUMSCRIPTSDMAP-1);
-			if (FFCore.doscript(ScriptType::ScriptedPassiveSubscreen) && ri->dmapsref == cur_dmap && val == DMaps[ri->dmapsref].passive_sub_script)
+			if (FFCore.doscript(ScriptType::ScriptedPassiveSubscreen) && ri->dmapref == cur_dmap && val == DMaps[ri->dmapref].passive_sub_script)
 				break;
-			DMaps[ri->dmapsref].passive_sub_script = val;
-			if(ri->dmapsref == cur_dmap)
+			DMaps[ri->dmapref].passive_sub_script = val;
+			if(ri->dmapref == cur_dmap)
 			{
 				FFCore.doscript(ScriptType::ScriptedPassiveSubscreen) = val != 0;
 			};
@@ -14741,7 +14741,7 @@ void set_register(int32_t arg, int32_t value)
 
 		case MESSAGEDATANEXT: //W
 		{
-			int32_t ID = ri->zmsgref;	
+			int32_t ID = GET_ZMSGREF;	
 
 			if(BC::checkMessage(ID) != SH::_NoError)
 				break;
@@ -14752,7 +14752,7 @@ void set_register(int32_t arg, int32_t value)
 
 		case MESSAGEDATATILE: //W
 		{
-			int32_t ID = ri->zmsgref;	
+			int32_t ID = GET_ZMSGREF;	
 
 			if(BC::checkMessage(ID) != SH::_NoError)
 				break;
@@ -14763,7 +14763,7 @@ void set_register(int32_t arg, int32_t value)
 
 		case MESSAGEDATACSET: //b
 		{
-			int32_t ID = ri->zmsgref;	
+			int32_t ID = GET_ZMSGREF;	
 
 			if(BC::checkMessage(ID) != SH::_NoError)
 				break;
@@ -14773,7 +14773,7 @@ void set_register(int32_t arg, int32_t value)
 		}	
 		case MESSAGEDATATRANS: //BOOL
 		{
-			int32_t ID = ri->zmsgref;	
+			int32_t ID = GET_ZMSGREF;	
 
 			if(BC::checkMessage(ID) != SH::_NoError)
 				break;
@@ -14783,7 +14783,7 @@ void set_register(int32_t arg, int32_t value)
 		}	
 		case MESSAGEDATAFONT: //B
 		{
-			int32_t ID = ri->zmsgref;	
+			int32_t ID = GET_ZMSGREF;	
 
 			if(BC::checkMessage(ID) != SH::_NoError)
 				break;
@@ -14793,7 +14793,7 @@ void set_register(int32_t arg, int32_t value)
 		}	
 		case MESSAGEDATAX: //SHORT
 		{
-			int32_t ID = ri->zmsgref;	
+			int32_t ID = GET_ZMSGREF;	
 
 			if(BC::checkMessage(ID) != SH::_NoError)
 				break;
@@ -14803,7 +14803,7 @@ void set_register(int32_t arg, int32_t value)
 		}	
 		case MESSAGEDATAY: //SHORT
 		{
-			int32_t ID = ri->zmsgref;	
+			int32_t ID = GET_ZMSGREF;	
 
 			if(BC::checkMessage(ID) != SH::_NoError)
 				break;
@@ -14813,7 +14813,7 @@ void set_register(int32_t arg, int32_t value)
 		}	
 		case MESSAGEDATAW: //UNSIGNED SHORT
 		{
-			int32_t ID = ri->zmsgref;	
+			int32_t ID = GET_ZMSGREF;	
 
 			if(BC::checkMessage(ID) != SH::_NoError)
 				break;
@@ -14823,7 +14823,7 @@ void set_register(int32_t arg, int32_t value)
 		}	
 		case MESSAGEDATAH: //UNSIGNED SHORT
 		{
-			int32_t ID = ri->zmsgref;	
+			int32_t ID = GET_ZMSGREF;	
 
 			if(BC::checkMessage(ID) != SH::_NoError)
 				break;
@@ -14833,7 +14833,7 @@ void set_register(int32_t arg, int32_t value)
 		}	
 		case MESSAGEDATASFX: //BYTE
 		{
-			int32_t ID = ri->zmsgref;	
+			int32_t ID = GET_ZMSGREF;	
 
 			if(BC::checkMessage(ID) != SH::_NoError)
 				break;
@@ -14843,7 +14843,7 @@ void set_register(int32_t arg, int32_t value)
 		}	
 		case MESSAGEDATALISTPOS: //WORD
 		{
-			int32_t ID = ri->zmsgref;	
+			int32_t ID = GET_ZMSGREF;	
 
 			if(BC::checkMessage(ID) != SH::_NoError)
 				break;
@@ -14853,7 +14853,7 @@ void set_register(int32_t arg, int32_t value)
 		}	
 		case MESSAGEDATAVSPACE: //BYTE
 		{
-			int32_t ID = ri->zmsgref;	
+			int32_t ID = GET_ZMSGREF;	
 
 			if(BC::checkMessage(ID) != SH::_NoError)
 				break;
@@ -14863,7 +14863,7 @@ void set_register(int32_t arg, int32_t value)
 		}	
 		case MESSAGEDATAHSPACE: //BYTE
 		{
-			int32_t ID = ri->zmsgref;	
+			int32_t ID = GET_ZMSGREF;	
 
 			if(BC::checkMessage(ID) != SH::_NoError)
 				break;
@@ -14873,7 +14873,7 @@ void set_register(int32_t arg, int32_t value)
 		}	
 		case MESSAGEDATAFLAGS: //BYTE
 		{
-			int32_t ID = ri->zmsgref;	
+			int32_t ID = GET_ZMSGREF;	
 
 			if(BC::checkMessage(ID) != SH::_NoError)
 				break;
@@ -14883,7 +14883,7 @@ void set_register(int32_t arg, int32_t value)
 		}
 		case MESSAGEDATAPORTTILE: //INT
 		{
-			int32_t ID = ri->zmsgref;
+			int32_t ID = GET_ZMSGREF;
 			
 			if(BC::checkMessage(ID) != SH::_NoError)
 				break;
@@ -14893,7 +14893,7 @@ void set_register(int32_t arg, int32_t value)
 		}
 		case MESSAGEDATAPORTCSET: //BYTE
 		{
-			int32_t ID = ri->zmsgref;
+			int32_t ID = GET_ZMSGREF;
 			
 			if(BC::checkMessage(ID) != SH::_NoError)
 				break;
@@ -14903,7 +14903,7 @@ void set_register(int32_t arg, int32_t value)
 		}
 		case MESSAGEDATAPORTX: //BYTE
 		{
-			int32_t ID = ri->zmsgref;
+			int32_t ID = GET_ZMSGREF;
 			
 			if(BC::checkMessage(ID) != SH::_NoError)
 				break;
@@ -14913,7 +14913,7 @@ void set_register(int32_t arg, int32_t value)
 		}
 		case MESSAGEDATAPORTY: //BYTE
 		{
-			int32_t ID = ri->zmsgref;
+			int32_t ID = GET_ZMSGREF;
 			
 			if(BC::checkMessage(ID) != SH::_NoError)
 				break;
@@ -14923,7 +14923,7 @@ void set_register(int32_t arg, int32_t value)
 		}
 		case MESSAGEDATAPORTWID: //BYTE
 		{
-			int32_t ID = ri->zmsgref;
+			int32_t ID = GET_ZMSGREF;
 			
 			if(BC::checkMessage(ID) != SH::_NoError)
 				break;
@@ -14933,7 +14933,7 @@ void set_register(int32_t arg, int32_t value)
 		}
 		case MESSAGEDATAPORTHEI: //BYTE
 		{
-			int32_t ID = ri->zmsgref;
+			int32_t ID = GET_ZMSGREF;
 			
 			if(BC::checkMessage(ID) != SH::_NoError)
 				break;
@@ -16511,15 +16511,15 @@ void set_register(int32_t arg, int32_t value)
 			break;
 			
 		case REFITEMCLASS:
-			ri->idata = value;
+			ri->itemclassref = value;
 			break;
 			
 		case REFLWPN:
-			ri->lwpn = value;
+			ri->lwpnref = value;
 			break;
 			
 		case REFEWPN:
-			ri->ewpn = value;
+			ri->ewpnref = value;
 			break;
 			
 		case REFNPC:
@@ -16530,7 +16530,7 @@ void set_register(int32_t arg, int32_t value)
 			ri->spriteref = value;
 			break;
 
-		case REFMAPDATA: ri->mapsref = value; break;
+		case REFMAPDATA: ri->mapref = value; break;
 		case REFSCREENDATA: ri->screenref = value; break;
 		case REFCOMBODATA: ri->combosref = value; break;
 		case REFCOMBOTRIGGER: ri->combotrigref = value; break;
@@ -16538,8 +16538,8 @@ void set_register(int32_t arg, int32_t value)
 		case REFBITMAP: ri->bitmapref = value; break;
 		case REFNPCCLASS: ri->npcdataref = value; break;
 		
-		case REFDMAPDATA: ri->dmapsref = value; break;
-		case REFSHOPDATA: ri->shopsref = value; break;
+		case REFDMAPDATA: ri->dmapref = value; break;
+		case REFSHOPDATA: ri->shopref = value; break;
 		case REFMSGDATA: ri->zmsgref = value; break;
 		
 		
@@ -18516,16 +18516,16 @@ void do_set(int reg, int value)
 			
 			if(collect)
 			{
-				if(reg==IDATAPSCRIPT && ri->idata==new_UID)
+				if(reg==IDATAPSCRIPT && ri->itemclassref==new_UID)
 					allowed = false;
 			}
-			else if(reg==IDATASCRIPT && ri->idata==new_UID)
+			else if(reg==IDATASCRIPT && ri->itemclassref==new_UID)
 				allowed = false;
 			break;
 		}
 		
 		case ScriptType::Lwpn:
-			if(reg==LWPNSCRIPT && ri->lwpn==whichUID)
+			if(reg==LWPNSCRIPT && ri->lwpnref==whichUID)
 				allowed = false;
 			break;
 			
@@ -18535,12 +18535,12 @@ void do_set(int reg, int value)
 			break;
 		
 		case ScriptType::Ewpn:
-			if(reg==EWPNSCRIPT && ri->ewpn==whichUID)
+			if(reg==EWPNSCRIPT && ri->ewpnref==whichUID)
 				allowed = false;
 			break;
 		
 		case ScriptType::DMap:
-			if(reg==DMAPSCRIPT && ri->dmapsref==whichUID)
+			if(reg==DMAPSCRIPT && ri->dmapref==whichUID)
 				allowed = false;
 			break;
 		
@@ -19594,7 +19594,7 @@ void do_mapdataissolid()
 	int32_t x = int32_t(GET_D(rINDEX) / 10000);
 	int32_t y = int32_t(GET_D(rINDEX2) / 10000);
 
-	auto result = decode_mapdata_ref(ri->mapsref);
+	auto result = decode_mapdata_ref(ri->mapref);
 	if (!result.scr)
 	{
 		scripting_log_error_with_context("mapdata pointer is either invalid or uninitialised");
@@ -19635,7 +19635,7 @@ void do_mapdataissolid_layer()
 	int32_t y = int32_t(GET_D(rINDEX2) / 10000);
 	int32_t layer = int32_t(GET_D(rEXP1) / 10000);
 
-	auto result = decode_mapdata_ref(ri->mapsref);
+	auto result = decode_mapdata_ref(ri->mapref);
 	if (!result.scr)
 	{
 		scripting_log_error_with_context("mapdata pointer is either invalid or uninitialised");
@@ -20038,7 +20038,7 @@ void do_isvalidewpn()
 
 void do_lwpnmakeangular()
 {
-	if(LwpnH::loadWeapon(ri->lwpn) == SH::_NoError)
+	if(LwpnH::loadWeapon(ri->lwpnref) == SH::_NoError)
 	{
 		auto w = LwpnH::getWeapon();
 		if (!w->angular)
@@ -20089,7 +20089,7 @@ void do_lwpnmakeangular()
 
 void do_lwpnmakedirectional()
 {
-	if(LwpnH::loadWeapon(ri->lwpn) == SH::_NoError)
+	if(LwpnH::loadWeapon(ri->lwpnref) == SH::_NoError)
 	{
 		if (LwpnH::getWeapon()->angular)
 		{
@@ -20102,7 +20102,7 @@ void do_lwpnmakedirectional()
 
 void do_ewpnmakeangular()
 {
-	if(EwpnH::loadWeapon(ri->ewpn) == SH::_NoError)
+	if(EwpnH::loadWeapon(ri->ewpnref) == SH::_NoError)
 	{
 		auto w = EwpnH::getWeapon();
 		if (!w->angular)
@@ -20153,7 +20153,7 @@ void do_ewpnmakeangular()
 
 void do_ewpnmakedirectional()
 {
-	if(EwpnH::loadWeapon(ri->lwpn) == SH::_NoError)
+	if(EwpnH::loadWeapon(ri->lwpnref) == SH::_NoError)
 	{
 		if (EwpnH::getWeapon()->angular)
 		{
@@ -20171,7 +20171,7 @@ void do_lwpnusesprite(const bool v)
 	if(BC::checkWeaponMiscSprite(ID) != SH::_NoError)
 		return;
 		
-	if(LwpnH::loadWeapon(ri->lwpn) == SH::_NoError)
+	if(LwpnH::loadWeapon(ri->lwpnref) == SH::_NoError)
 		LwpnH::getWeapon()->LOADGFX(ID);
 }
 
@@ -20182,7 +20182,7 @@ void do_ewpnusesprite(const bool v)
 	if(BC::checkWeaponMiscSprite(ID) != SH::_NoError)
 		return;
 		
-	if(EwpnH::loadWeapon(ri->ewpn) == SH::_NoError)
+	if(EwpnH::loadWeapon(ri->ewpnref) == SH::_NoError)
 		EwpnH::getWeapon()->LOADGFX(ID);
 }
 
@@ -20238,10 +20238,10 @@ void do_loadlweapon(const bool v)
 	int32_t index = SH::get_arg(sarg1, v) / 10000;
 	
 	if(BC::checkLWeaponIndex(index) != SH::_NoError)
-		ri->lwpn = 0; //MAX_DWORD; //Now NULL
+		ri->lwpnref = 0; //MAX_DWORD; //Now NULL
 	else
 	{
-		ri->lwpn = Lwpns.spr(index)->getUID();
+		ri->lwpnref = Lwpns.spr(index)->getUID();
 		// This is too trivial to log. -L
 	}
 }
@@ -20251,10 +20251,10 @@ void do_loadeweapon(const bool v)
 	int32_t index = SH::get_arg(sarg1, v) / 10000;
 	
 	if(BC::checkEWeaponIndex(index) != SH::_NoError)
-		ri->ewpn = 0; //MAX_DWORD; //Now NULL
+		ri->ewpnref = 0; //MAX_DWORD; //Now NULL
 	else
 	{
-		ri->ewpn = Ewpns.spr(index)->getUID();
+		ri->ewpnref = Ewpns.spr(index)->getUID();
 	}
 }
 
@@ -20278,10 +20278,10 @@ void do_loaditemdata(const bool v)
 	//I *think* this is the right check ~Joe
 	if(BC::checkItemID(ID) != SH::_NoError)
 	{
-		ri->idata = -1; //new null value
+		ri->itemclassref = -1; //new null value
 		return;
 	}
-	ri->idata = ID;
+	ri->itemclassref = ID;
 }
 
 void do_loadnpc(const bool v)
@@ -20303,9 +20303,9 @@ void FFScript::do_loaddmapdata(const bool v)
 	if ( ID < 0 || ID > 511 )
 	{
 		Z_scripterrlog("Invalid DMap ID passed to Game->LoadDMapData(): %d\n", ID);
-		ri->dmapsref = MAX_DWORD;
+		ri->dmapref = MAX_DWORD;
 	}
-	else ri->dmapsref = ID;
+	else ri->dmapref = ID;
 }
 
 void FFScript::do_load_active_subscreendata(const bool v)
@@ -21968,7 +21968,7 @@ void user_paldata::mix(user_paldata *pal_start, user_paldata *pal_end, double pe
 
 void item_display_name(const bool setter)
 {
-	int32_t ID = ri->idata;
+	int32_t ID = ri->itemclassref;
 	if(unsigned(ID) >= MAXITEMS)
 		return;
 	int32_t arrayptr = get_register(sarg1);
@@ -21986,7 +21986,7 @@ void item_display_name(const bool setter)
 }
 void item_shown_name()
 {
-	int32_t ID = ri->idata;
+	int32_t ID = ri->itemclassref;
 	if(unsigned(ID) >= MAXITEMS)
 		return;
 	int32_t arrayptr = get_register(sarg1);
@@ -21996,7 +21996,7 @@ void item_shown_name()
 
 void FFScript::do_getDMapData_dmapname(const bool v)
 {
-	int32_t ID = ri->dmapsref;
+	int32_t ID = GET_DMAPREF;
 	int32_t arrayptr = get_register(sarg1);
 	
 	if(BC::checkDMapID(ID) != SH::_NoError)
@@ -22008,7 +22008,7 @@ void FFScript::do_getDMapData_dmapname(const bool v)
 
 void FFScript::do_setDMapData_dmapname(const bool v)
 {
-	int32_t ID = ri->dmapsref;
+	int32_t ID = GET_DMAPREF;
 	int32_t arrayptr = get_register(sarg1);
 
 	string filename_str;
@@ -22024,7 +22024,7 @@ void FFScript::do_setDMapData_dmapname(const bool v)
 
 void FFScript::do_getDMapData_dmaptitle(const bool v)
 {
-	int32_t ID = ri->dmapsref;
+	int32_t ID = GET_DMAPREF;
 	int32_t arrayptr = get_register(sarg1);
 	
 	if(BC::checkDMapID(ID) != SH::_NoError)
@@ -22041,7 +22041,7 @@ void FFScript::do_getDMapData_dmaptitle(const bool v)
 
 void FFScript::do_setDMapData_dmaptitle(const bool v)
 {
-	int32_t ID = ri->dmapsref;
+	int32_t ID = GET_DMAPREF;
 	int32_t arrayptr = get_register(sarg1);
 	string filename_str;
 
@@ -22065,7 +22065,7 @@ void FFScript::do_setDMapData_dmaptitle(const bool v)
 
 void FFScript::do_getDMapData_dmapintro(const bool v)
 {
-	int32_t ID = ri->dmapsref;
+	int32_t ID = GET_DMAPREF;
 	int32_t arrayptr = get_register(sarg1);
 	
 	if(BC::checkDMapID(ID) != SH::_NoError)
@@ -22077,7 +22077,7 @@ void FFScript::do_getDMapData_dmapintro(const bool v)
 
 void FFScript::do_setDMapData_dmapintro(const bool v)
 {
-	int32_t ID = ri->dmapsref;
+	int32_t ID = GET_DMAPREF;
 	int32_t arrayptr = get_register(sarg1);
 	string filename_str;
 	
@@ -22092,7 +22092,7 @@ void FFScript::do_setDMapData_dmapintro(const bool v)
 
 void FFScript::do_getDMapData_music(const bool v)
 {
-	int32_t ID = ri->dmapsref;
+	int32_t ID = GET_DMAPREF;
 	int32_t arrayptr = get_register(sarg1);
 	
 	if(BC::checkDMapID(ID) != SH::_NoError)
@@ -22104,7 +22104,7 @@ void FFScript::do_getDMapData_music(const bool v)
 
 void FFScript::do_setDMapData_music(const bool v)
 {
-	int32_t ID = ri->dmapsref;
+	int32_t ID = GET_DMAPREF;
 	int32_t arrayptr = get_register(sarg1);
 	string filename_str;
 	
@@ -22146,7 +22146,7 @@ void FFScript::do_loadmessagedata(const bool v)
 void FFScript::do_messagedata_setstring(const bool v)
 {
 	int32_t arrayptr = get_register(sarg1);
-	int32_t ID = ri->zmsgref;
+	int32_t ID = GET_ZMSGREF;
 	if(BC::checkMessage(ID) != SH::_NoError)
 		return;
 	
@@ -22156,7 +22156,7 @@ void FFScript::do_messagedata_setstring(const bool v)
 }
 void FFScript::do_messagedata_getstring(const bool v)
 {
-	int32_t ID = ri->zmsgref;
+	int32_t ID = GET_ZMSGREF;
 	int32_t arrayptr = get_register(sarg1);
 	
 	if(BC::checkMessage(ID) != SH::_NoError)
@@ -22185,13 +22185,13 @@ void FFScript::do_loadmapdata_tempscr(const bool v)
 
 	if (BC::checkBounds(layer, 0, 6) != SH::_NoError)
 	{
-		ri->mapsref = 0;
-		set_register(sarg1, ri->mapsref);
+		ri->mapref = 0;
+		set_register(sarg1, ri->mapref);
 		return;
 	}
 
-	ri->mapsref = create_mapdata_temp_ref(mapdata_type::TemporaryCurrentRegion, cur_screen, layer);
-	set_register(sarg1, ri->mapsref);
+	ri->mapref = create_mapdata_temp_ref(mapdata_type::TemporaryCurrentRegion, cur_screen, layer);
+	set_register(sarg1, ri->mapref);
 }
 
 void FFScript::do_loadmapdata_tempscr2(const bool v)
@@ -22201,21 +22201,21 @@ void FFScript::do_loadmapdata_tempscr2(const bool v)
 
 	if (BC::checkBounds(layer, 0, 6) != SH::_NoError)
 	{
-		ri->mapsref = 0;
-		set_register(sarg1, ri->mapsref);
+		ri->mapref = 0;
+		set_register(sarg1, ri->mapref);
 		return;
 	}
 
 	if (!is_in_current_region(screen))
 	{
 		scripting_log_error_with_context("Must use a screen in the current region. got: {}", screen);
-		ri->mapsref = 0;
-		set_register(sarg1, ri->mapsref);
+		ri->mapref = 0;
+		set_register(sarg1, ri->mapref);
 		return;
 	}
 
-	ri->mapsref = create_mapdata_temp_ref(mapdata_type::TemporaryCurrentScreen, screen, layer);
-	set_register(sarg1, ri->mapsref);
+	ri->mapref = create_mapdata_temp_ref(mapdata_type::TemporaryCurrentScreen, screen, layer);
+	set_register(sarg1, ri->mapref);
 }
 
 static void do_loadtmpscrforcombopos(const bool v)
@@ -22225,14 +22225,14 @@ static void do_loadtmpscrforcombopos(const bool v)
 
 	if (BC::checkBoundsRpos(rpos, (rpos_t)0, region_max_rpos) != SH::_NoError)
 	{
-		ri->mapsref = 0;
-		set_register(sarg1, ri->mapsref);
+		ri->mapref = 0;
+		set_register(sarg1, ri->mapref);
 		return;
 	}
 	if (BC::checkBounds(layer, 0, 6) != SH::_NoError)
 	{
-		ri->mapsref = 0;
-		set_register(sarg1, ri->mapsref);
+		ri->mapref = 0;
+		set_register(sarg1, ri->mapref);
 		return;
 	}
 
@@ -22245,13 +22245,13 @@ void FFScript::do_loadmapdata_scrollscr(const bool v)
 
 	if (BC::checkBounds(layer, 0, 6) != SH::_NoError)
 	{
-		ri->mapsref = 0;
-		set_register(sarg1, ri->mapsref);
+		ri->mapref = 0;
+		set_register(sarg1, ri->mapref);
 		return;
 	}
 
-	ri->mapsref = create_mapdata_temp_ref(mapdata_type::TemporaryScrollingRegion, scrolling_hero_screen, layer);
-	set_register(sarg1, ri->mapsref);
+	ri->mapref = create_mapdata_temp_ref(mapdata_type::TemporaryScrollingRegion, scrolling_hero_screen, layer);
+	set_register(sarg1, ri->mapref);
 }
 
 void FFScript::do_loadmapdata_scrollscr2(const bool v)
@@ -22261,21 +22261,21 @@ void FFScript::do_loadmapdata_scrollscr2(const bool v)
 
 	if (BC::checkBounds(layer, 0, 6) != SH::_NoError)
 	{
-		ri->mapsref = 0;
-		set_register(sarg1, ri->mapsref);
+		ri->mapref = 0;
+		set_register(sarg1, ri->mapref);
 		return;
 	}
 
 	if (!is_in_screenscrolling_region(screen))
 	{
 		scripting_log_error_with_context("Must use a screen in the current scrolling region. got: {}", screen);
-		ri->mapsref = 0;
-		set_register(sarg1, ri->mapsref);
+		ri->mapref = 0;
+		set_register(sarg1, ri->mapref);
 		return;
 	}
 
-	ri->mapsref = create_mapdata_temp_ref(mapdata_type::TemporaryScrollingScreen, screen, layer);
-	set_register(sarg1, ri->mapsref);
+	ri->mapref = create_mapdata_temp_ref(mapdata_type::TemporaryScrollingScreen, screen, layer);
+	set_register(sarg1, ri->mapref);
 }
 	
 void FFScript::do_loadshopdata(const bool v)
@@ -22285,9 +22285,9 @@ void FFScript::do_loadshopdata(const bool v)
 	if ( (unsigned)ID > 255 )
 	{
 		Z_scripterrlog("Invalid Shop ID passed to Game->LoadShopData: %d\n", ID);
-		ri->shopsref = 0;
+		ri->shopref = 0;
 	}	
-	else ri->shopsref = ID;
+	else ri->shopref = ID;
 }
 
 
@@ -22298,9 +22298,9 @@ void FFScript::do_loadinfoshopdata(const bool v)
 	if ( (unsigned)ID > 255 )
 	{
 		Z_scripterrlog("Invalid Shop ID passed to Game->LoadShopData: %d\n", ID);
-		ri->shopsref = 0;
+		ri->shopref = 0;
 	}	
-	else ri->shopsref = ID+NUMSHOPS;
+	else ri->shopref = ID+NUMSHOPS;
 }
 
 void FFScript::do_loadspritedata(const bool v)
@@ -22366,17 +22366,17 @@ void do_createlweapon(const bool v)
 				(ID==wWind?1:0)  /*special*/
 			)
 		);
-		ri->lwpn = Lwpns.spr(Lwpns.Count() - 1)->getUID();
+		ri->lwpnref = Lwpns.spr(Lwpns.Count() - 1)->getUID();
 		weapon *w = (weapon*)Lwpns.spr(Lwpns.Count()-1); //last created
 		w->screen_spawned = ri->screenref;
 		w->ScriptGenerated = 1;
 		w->isLWeapon = 1;
 		if(ID == wWind) w->specialinfo = 1;
-		Z_eventlog("Script created lweapon %d with UID = %u\n", ID, ri->lwpn);
+		Z_eventlog("Script created lweapon %d with UID = %u\n", ID, ri->lwpnref);
 	}
 	else
 	{
-		ri->lwpn = 0; // Now NULL
+		ri->lwpnref = 0; // Now NULL
 		Z_scripterrlog("Couldn't create lweapon %d, screen lweapon limit reached\n", ID);
 	}
 }
@@ -22397,8 +22397,8 @@ void do_createeweapon(const bool v)
 			w->screen_spawned = ri->screenref;
 			w->ScriptGenerated = 1;
 			w->isLWeapon = 0;
-			ri->ewpn = Ewpns.spr(Ewpns.Count() - 1)->getUID();
-			Z_eventlog("Script created eweapon %d with UID = %u\n", ID, ri->ewpn);
+			ri->ewpnref = Ewpns.spr(Ewpns.Count() - 1)->getUID();
+			Z_eventlog("Script created eweapon %d with UID = %u\n", ID, ri->ewpnref);
 		}
 		else
 		{
@@ -22408,7 +22408,7 @@ void do_createeweapon(const bool v)
 	}
 	else
 	{
-		ri->ewpn = 0;
+		ri->ewpnref = 0;
 		Z_scripterrlog("Couldn't create eweapon %d, screen eweapon limit reached\n", ID);
 	}
 }
@@ -24380,13 +24380,13 @@ void do_toshort()
 void do_getitemname()
 {
 	int32_t arrayptr = get_register(sarg1);
-	if(unsigned(ri->idata) >= MAXITEMS)
+	if(unsigned(ri->itemclassref) >= MAXITEMS)
 	{
-		scripting_log_error_with_context("Invalid itemdata access: {}", ri->idata);
+		scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 		return;
 	}
 	
-	if(ArrayH::setArray(arrayptr, item_string[ri->idata]) == SH::_Overflow)
+	if(ArrayH::setArray(arrayptr, item_string[ri->itemclassref]) == SH::_Overflow)
 		Z_scripterrlog("Array supplied to 'itemdata->GetName' not large enough\n");
 }
 
@@ -24577,9 +24577,9 @@ sprite* get_own_sprite(ScriptType type)
 	switch(type)
 	{
 		case ScriptType::Lwpn:
-			return checkLWpn(ri->lwpn);
+			return checkLWpn(ri->lwpnref);
 		case ScriptType::Ewpn:
-			return checkEWpn(ri->ewpn);
+			return checkEWpn(ri->ewpnref);
 		case ScriptType::ItemSprite:
 			return checkItem(ri->itemref);
 		case ScriptType::NPC:
@@ -27503,7 +27503,7 @@ int32_t run_script_int(JittedScriptInstance* j_instance)
 				byte effect = vbound(get_register(sarg1)/10000, 0, 255);
 				set_register(sarg1,0);
 				if(Hero.switchhookclk) break; //Already switching!
-				if(LwpnH::loadWeapon(ri->lwpn) == SH::_NoError)
+				if(LwpnH::loadWeapon(ri->lwpnref) == SH::_NoError)
 				{
 					switching_object = LwpnH::getWeapon();
 					hooked_comborpos = rpos_t::None;
@@ -27520,7 +27520,7 @@ int32_t run_script_int(JittedScriptInstance* j_instance)
 				byte effect = vbound(get_register(sarg1)/10000, 0, 255);
 				set_register(sarg1,0);
 				if(Hero.switchhookclk) break; //Already switching!
-				if(EwpnH::loadWeapon(ri->ewpn) == SH::_NoError)
+				if(EwpnH::loadWeapon(ri->ewpnref) == SH::_NoError)
 				{
 					switching_object = EwpnH::getWeapon();
 					hooked_comborpos = rpos_t::None;
@@ -27820,7 +27820,7 @@ int32_t run_script_int(JittedScriptInstance* j_instance)
 				}
 				else
 				{
-					if(LwpnH::loadWeapon(ri->lwpn) == SH::_NoError)
+					if(LwpnH::loadWeapon(ri->lwpnref) == SH::_NoError)
 					{
 						LwpnH::getWeapon()->explode(mode);
 					}
@@ -27836,7 +27836,7 @@ int32_t run_script_int(JittedScriptInstance* j_instance)
 				}
 				else
 				{
-					if(EwpnH::loadWeapon(ri->ewpn) == SH::_NoError)
+					if(EwpnH::loadWeapon(ri->ewpnref) == SH::_NoError)
 					{
 						EwpnH::getWeapon()->explode(mode);
 					}
@@ -27903,7 +27903,7 @@ int32_t run_script_int(JittedScriptInstance* j_instance)
 			
 			case RUNITEMSCRIPT:
 			{
-				int32_t itemid = ri->idata;
+				int32_t itemid = ri->itemclassref;
 				if(unsigned(itemid) > MAXITEMS) break;
 				int32_t mode = get_register(sarg1) / 10000;
 				auto& data = get_script_engine_data(ScriptType::Item, itemid);
@@ -27969,7 +27969,7 @@ int32_t run_script_int(JittedScriptInstance* j_instance)
 			
 			case LWPNDEL:
 			{
-				if(type == ScriptType::Lwpn && ri->lwpn == i)
+				if(type == ScriptType::Lwpn && ri->lwpnref == i)
 				{
 					FFCore.do_lweapon_delete();
 					return RUNSCRIPT_SELFDELETE;
@@ -27980,7 +27980,7 @@ int32_t run_script_int(JittedScriptInstance* j_instance)
 			}
 			case EWPNDEL:
 			{
-				if(type == ScriptType::Ewpn && ri->ewpn == i)
+				if(type == ScriptType::Ewpn && ri->ewpnref == i)
 				{
 					FFCore.do_eweapon_delete();
 					return RUNSCRIPT_SELFDELETE;
@@ -30060,15 +30060,15 @@ int32_t FFScript::loadMapData()
 	 if ( map < 1 || map > map_count )
 	{
 		Z_scripterrlog("Invalid Map ID passed to Game->LoadMapData: %d\n", map);
-		ri->mapsref = MAX_SIGNED_32;
+		ri->mapref = MAX_SIGNED_32;
 	}
 	else if ( screen < 0 || screen > 129 ) //0x00 to 0x81 -Z
 	{
 		Z_scripterrlog("Invalid Screen Index passed to Game->LoadMapData: %d\n", screen);
-		ri->mapsref = MAX_SIGNED_32;
+		ri->mapref = MAX_SIGNED_32;
 	}
-	else ri->mapsref = indx;
-	return ri->mapsref;
+	else ri->mapref = indx;
+	return ri->mapref;
 }
 
 // Called when leaving a screen; deallocate arrays created by FFCs that aren't carried over
@@ -31311,7 +31311,7 @@ int32_t FFScript::getTime(int32_t type)
 
 void FFScript::do_lweapon_delete()
 {
-	if(auto s=checkLWpn(ri->lwpn))
+	if(auto s=checkLWpn(ri->lwpnref))
 	{
 		if(s==Hero.lift_wpn)
 		{
@@ -31324,7 +31324,7 @@ void FFScript::do_lweapon_delete()
 
 void FFScript::do_eweapon_delete()
 {
-	if(auto s=checkEWpn(ri->ewpn))
+	if(auto s=checkEWpn(ri->ewpnref))
 	{
 		Ewpns.del(s);
 	}
@@ -36635,10 +36635,10 @@ void FFScript::do_loadlweapon_by_script_uid(const bool v)
 {
 	int32_t uid = SH::get_arg(sarg1, v);
 	if (ResolveLWeapon_checkSpriteList(uid))
-		ri->lwpn = uid;
+		ri->lwpnref = uid;
 	else
 	{
-		ri->lwpn = 0;
+		ri->lwpnref = 0;
 	}
 }
 
@@ -36646,10 +36646,10 @@ void FFScript::do_loadeweapon_by_script_uid(const bool v)
 {
 	int32_t uid = SH::get_arg(sarg1, v);
 	if (ResolveEWeapon_checkSpriteList(uid))
-		ri->ewpn = uid;
+		ri->ewpnref = uid;
 	else
 	{
-		ri->ewpn = 0;
+		ri->ewpnref = 0;
 	}
 }
 
@@ -37058,13 +37058,14 @@ ScriptEngineData& get_item_script_engine_data(int index)
 #ifdef DEBUG_REGISTER_DEPS
 
 static std::array<int, 8> debug_deps_cur_regs;
+static int debug_ref;
 
 #define REG_R ((int)ARGTY::READ_REG)
 #define REG_W ((int)ARGTY::WRITE_REG)
 
 int debug_get_d(int r)
 {
-	assert(!(debug_deps_cur_regs[r] & REG_W));
+	CHECK(!(debug_deps_cur_regs[r] & REG_W));
 	debug_deps_cur_regs[r] |= REG_R;
 	return ri->d[r];
 }
@@ -37073,6 +37074,14 @@ int debug_set_d(int r, int v)
 {
 	debug_deps_cur_regs[r] |= REG_W;
 	return ri->d[r];
+}
+
+int debug_get_ref(int r)
+{
+	CHECK(get_ref(r) && r); // check valid ref.
+	CHECK(!debug_ref);
+	debug_ref = r;
+	return r;
 }
 
 static const char* get_d_reg_name(int r)
