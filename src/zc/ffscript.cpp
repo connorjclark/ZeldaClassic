@@ -1035,11 +1035,12 @@ static weapon* ResolveLWeapon_checkSpriteList(int32_t uid)
 // For compat, get the first `combo_trigger` of the current `ri->combosref`
 combo_trigger* get_first_combo_trigger()
 {
-	if(ri->combosref < 0 || ri->combosref > (MAXCOMBOS-1) )
+	int ref = ri->combosref;
+	if(ref < 0 || ref > (MAXCOMBOS-1) )
 		return nullptr;
-	if(combobuf[ri->combosref].triggers.empty())
-		return &(combobuf[ri->combosref].triggers.emplace_back());
-	return &(combobuf[ri->combosref].triggers[0]);
+	if(combobuf[ref].triggers.empty())
+		return &(combobuf[ref].triggers.emplace_back());
+	return &(combobuf[ref].triggers[0]);
 }
 // Get the combo trigger pointed to by `ref` (usually ri->combotrigref)
 combo_trigger* get_combo_trigger(dword ref)
@@ -1660,7 +1661,7 @@ static void set_current_script_engine_data(ScriptEngineData& data, ScriptType ty
 		{
 			curscript = subscreenscripts[script];
 			ri->subdataref = get_subref(-1, sstACTIVE);
-			auto [ptr,_ty] = load_subdata(ri->subdataref);
+			auto [ptr,_ty] = load_subdata(GET_SUBDATAREF);
 			
 			if (ptr && !data.initialized)
 			{
@@ -3111,21 +3112,21 @@ static void bad_subwidg_type(bool func, byte type)
 
 int32_t item_flag(item_flags flag)
 {
-	if(unsigned(ri->itemclassref) >= MAXITEMS)
+	if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 	{
 		scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 		return 0;
 	}
-	return (itemsbuf[ri->itemclassref].flags & flag) ? 10000 : 0;
+	return (itemsbuf[GET_ITEMCLASSREF].flags & flag) ? 10000 : 0;
 }
 void item_flag(item_flags flag, bool val)
 {
-	if(unsigned(ri->itemclassref) >= MAXITEMS)
+	if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 	{
 		scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 		return;
 	}
-	SETFLAG(itemsbuf[ri->itemclassref].flags, flag, val);
+	SETFLAG(itemsbuf[GET_ITEMCLASSREF].flags, flag, val);
 }
 
 bool scripting_use_8bit_colors;
@@ -3278,13 +3279,13 @@ int32_t get_register(int32_t arg)
 
 	#define GET_SPRITEDATA_VAR_INT(member) \
 	{ \
-		if(unsigned(ri->spritedataref) > (MAXWPNS-1) )    \
+		if(unsigned(GET_SPRITEDATAREF) > (MAXWPNS-1) )    \
 		{ \
 			ret = -10000; \
 			scripting_log_error_with_context("Invalid Sprite ID: {}", ri->spritedataref*10000); \
 		} \
 		else \
-			ret = (wpnsbuf[ri->spritedataref].member * 10000); \
+			ret = (wpnsbuf[GET_SPRITEDATAREF].member * 10000); \
 	}
 
 	current_zasm_register = arg;
@@ -3327,86 +3328,86 @@ int32_t get_register(int32_t arg)
 		///----------------------------------------------------------------------------------------------------//
 		//FFC Variables
 		case DATA:
-			if (auto ffc = ResolveFFC(ri->ffcref))
+			if (auto ffc = ResolveFFC(GET_FFCREF))
 				ret = ffc->data * 10000;
 			break;
 			
 		case FFSCRIPT:
-			if(auto ffc = ResolveFFC(ri->ffcref))
+			if(auto ffc = ResolveFFC(GET_FFCREF))
 				ret = ffc->script * 10000;
 			break;
 			
 		case FCSET:
-			if(auto ffc = ResolveFFC(ri->ffcref))
+			if(auto ffc = ResolveFFC(GET_FFCREF))
 				ret = ffc->cset * 10000;
 			break;
 			
 		case DELAY:
-			if(auto ffc = ResolveFFC(ri->ffcref))
+			if(auto ffc = ResolveFFC(GET_FFCREF))
 				ret = ffc->delay * 10000;
 			break;
 			
 		case FX:
-			if(auto ffc = ResolveFFC(ri->ffcref))
+			if(auto ffc = ResolveFFC(GET_FFCREF))
 				ret = ffc->x.getZLong();
 			break;
 			
 		case FY:
-			if(auto ffc = ResolveFFC(ri->ffcref))
+			if(auto ffc = ResolveFFC(GET_FFCREF))
 				ret = ffc->y.getZLong();
 			break;
 			
 		case XD:
-			if(auto ffc = ResolveFFC(ri->ffcref))
+			if(auto ffc = ResolveFFC(GET_FFCREF))
 				ret = ffc->vx.getZLong();
 			break;
 			
 		case YD:
-			if(auto ffc = ResolveFFC(ri->ffcref))
+			if(auto ffc = ResolveFFC(GET_FFCREF))
 				ret = ffc->vy.getZLong();
 			break;
 		case FFCID:
-			if (auto ffc = ResolveFFC(ri->ffcref))
+			if (auto ffc = ResolveFFC(GET_FFCREF))
 				ret = (get_region_screen_offset(ffc->screen_spawned) * MAXFFCS + ffc->index + 1) * 10000;
 			break;
 			
 		case XD2:
-			if(auto ffc = ResolveFFC(ri->ffcref))
+			if(auto ffc = ResolveFFC(GET_FFCREF))
 				ret = ffc->ax.getZLong();
 			break;
 			
 		case YD2:
-			if(auto ffc = ResolveFFC(ri->ffcref))
+			if(auto ffc = ResolveFFC(GET_FFCREF))
 				ret = ffc->ay.getZLong();
 			break;
 			
 		case FFCWIDTH:
-			if(auto ffc = ResolveFFC(ri->ffcref))
+			if(auto ffc = ResolveFFC(GET_FFCREF))
 				ret = ffc->hit_width * 10000;
 			break;
 			
 		case FFCHEIGHT:
-			if(auto ffc = ResolveFFC(ri->ffcref))
+			if(auto ffc = ResolveFFC(GET_FFCREF))
 				ret = ffc->hit_height * 10000;
 			break;
 			
 		case FFTWIDTH:
-			if(auto ffc = ResolveFFC(ri->ffcref))
+			if(auto ffc = ResolveFFC(GET_FFCREF))
 				ret = ffc->txsz * 10000;
 			break;
 			
 		case FFTHEIGHT:
-			if(auto ffc = ResolveFFC(ri->ffcref))
+			if(auto ffc = ResolveFFC(GET_FFCREF))
 				ret = ffc->tysz * 10000;
 			break;
 			
 		case FFCLAYER:
-			if (auto ffc = ResolveFFC(ri->ffcref))
+			if (auto ffc = ResolveFFC(GET_FFCREF))
 				ret = ffc->layer * 10000;
 			break;
 			
 		case FFLINK:
-			if(auto ffc = ResolveFFC(ri->ffcref))
+			if(auto ffc = ResolveFFC(GET_FFCREF))
 				ret = ffc->link * 10000;
 			break;
 		
@@ -4053,306 +4054,306 @@ int32_t get_register(int32_t arg)
 		
 		
 		case IDATAUSEWPN:
-			if(unsigned(ri->itemclassref) >= MAXITEMS)
+			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				ret = -10000;
 				break;
 			}
-			ret=(itemsbuf[ri->itemclassref].weap_data.imitate_weapon)*10000;
+			ret=(itemsbuf[GET_ITEMCLASSREF].weap_data.imitate_weapon)*10000;
 			break;
 		case IDATAUSEDEF:
-			if(unsigned(ri->itemclassref) >= MAXITEMS)
+			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				ret = -10000;
 				break;
 			}
-			ret=(itemsbuf[ri->itemclassref].weap_data.default_defense)*10000;
+			ret=(itemsbuf[GET_ITEMCLASSREF].weap_data.default_defense)*10000;
 			break;
 		case IDATAWRANGE:
-			if(unsigned(ri->itemclassref) >= MAXITEMS)
+			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				ret = -10000;
 				break;
 			}
-			ret=(itemsbuf[ri->itemclassref].weaprange)*10000;
+			ret=(itemsbuf[GET_ITEMCLASSREF].weaprange)*10000;
 			break;
 		case IDATAMAGICTIMER:
-			if(unsigned(ri->itemclassref) >= MAXITEMS)
+			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				ret = -10000;
 				break;
 			}
-			ret=(itemsbuf[ri->itemclassref].magiccosttimer[0])*10000;
+			ret=(itemsbuf[GET_ITEMCLASSREF].magiccosttimer[0])*10000;
 			break;
 		case IDATAMAGICTIMER2:
-			if(unsigned(ri->itemclassref) >= MAXITEMS)
+			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				ret = -10000;
 				break;
 			}
-			ret=(itemsbuf[ri->itemclassref].magiccosttimer[1])*10000;
+			ret=(itemsbuf[GET_ITEMCLASSREF].magiccosttimer[1])*10000;
 			break;
 		
 		case IDATADURATION:
-			if(unsigned(ri->itemclassref) >= MAXITEMS)
+			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				ret = -10000;
 				break;
 			}
-			ret=(itemsbuf[ri->itemclassref].weapduration)*10000;
+			ret=(itemsbuf[GET_ITEMCLASSREF].weapduration)*10000;
 			break;
 		
 		case IDATADUPLICATES:
-			if(unsigned(ri->itemclassref) >= MAXITEMS)
+			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				ret = -10000;
 				break;
 			}
-			ret=(itemsbuf[ri->itemclassref].duplicates)*10000;
+			ret=(itemsbuf[GET_ITEMCLASSREF].duplicates)*10000;
 			break;
 		case IDATADRAWLAYER:
-			if(unsigned(ri->itemclassref) >= MAXITEMS)
+			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				ret = -10000;
 				break;
 			}
-			ret=(itemsbuf[ri->itemclassref].drawlayer)*10000;
+			ret=(itemsbuf[GET_ITEMCLASSREF].drawlayer)*10000;
 			break;
 		case IDATACOLLECTFLAGS:
-			if(unsigned(ri->itemclassref) >= MAXITEMS)
+			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				ret = 0;
 				break;
 			}
-			ret=(itemsbuf[ri->itemclassref].collectflags)*10000;
+			ret=(itemsbuf[GET_ITEMCLASSREF].collectflags)*10000;
 			break;
 		case IDATAWEAPONSCRIPT:
-			if(unsigned(ri->itemclassref) >= MAXITEMS)
+			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				ret = -10000;
 				break;
 			}
-			ret=(itemsbuf[ri->itemclassref].weap_data.script)*10000;
+			ret=(itemsbuf[GET_ITEMCLASSREF].weap_data.script)*10000;
 			break;
 		case IDATAWEAPHXOFS:
-			if(unsigned(ri->itemclassref) >= MAXITEMS)
+			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				ret = -10000;
 				break;
 			}
-			ret=(itemsbuf[ri->itemclassref].weap_data.hxofs)*10000;
+			ret=(itemsbuf[GET_ITEMCLASSREF].weap_data.hxofs)*10000;
 			break;
 		case IDATAWEAPHYOFS:
-			if(unsigned(ri->itemclassref) >= MAXITEMS)
+			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				ret = -10000;
 				break;
 			}
-			ret=(itemsbuf[ri->itemclassref].weap_data.hyofs)*10000;
+			ret=(itemsbuf[GET_ITEMCLASSREF].weap_data.hyofs)*10000;
 			break;
 		case IDATAWEAPHXSZ:
-			if(unsigned(ri->itemclassref) >= MAXITEMS)
+			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				ret = -10000;
 				break;
 			}
-			ret=(itemsbuf[ri->itemclassref].weap_data.hxsz)*10000;
+			ret=(itemsbuf[GET_ITEMCLASSREF].weap_data.hxsz)*10000;
 			break;
 		case IDATAWEAPHYSZ:
-			if(unsigned(ri->itemclassref) >= MAXITEMS)
+			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				ret = -10000;
 				break;
 			}
-			ret=(itemsbuf[ri->itemclassref].weap_data.hysz)*10000;
+			ret=(itemsbuf[GET_ITEMCLASSREF].weap_data.hysz)*10000;
 			break;
 		case IDATAWEAPHZSZ:
-			if(unsigned(ri->itemclassref) >= MAXITEMS)
+			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				ret = -10000;
 				break;
 			}
-			ret=(itemsbuf[ri->itemclassref].weap_data.hzsz)*10000;
+			ret=(itemsbuf[GET_ITEMCLASSREF].weap_data.hzsz)*10000;
 			break;
 		case IDATAWEAPXOFS:
-			if(unsigned(ri->itemclassref) >= MAXITEMS)
+			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				ret = -10000;
 				break;
 			}
-			ret=(itemsbuf[ri->itemclassref].weap_data.xofs)*10000;
+			ret=(itemsbuf[GET_ITEMCLASSREF].weap_data.xofs)*10000;
 			break;
 		case IDATAWEAPYOFS:
-			if(unsigned(ri->itemclassref) >= MAXITEMS)
+			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				ret = -10000;
 				break;
 			}
-			ret=(itemsbuf[ri->itemclassref].weap_data.yofs)*10000;
+			ret=(itemsbuf[GET_ITEMCLASSREF].weap_data.yofs)*10000;
 			break;
 		case IDATAHXOFS:
-			if(unsigned(ri->itemclassref) >= MAXITEMS)
+			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				ret = -10000;
 				break;
 			}
-			ret=(itemsbuf[ri->itemclassref].hxofs)*10000;
+			ret=(itemsbuf[GET_ITEMCLASSREF].hxofs)*10000;
 			break;
 		case IDATAHYOFS:
-			if(unsigned(ri->itemclassref) >= MAXITEMS)
+			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				ret = -10000;
 				break;
 			}
-			ret=(itemsbuf[ri->itemclassref].hyofs)*10000;
+			ret=(itemsbuf[GET_ITEMCLASSREF].hyofs)*10000;
 			break;
 		case IDATAHXSZ:
-			if(unsigned(ri->itemclassref) >= MAXITEMS)
+			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				ret = -10000;
 				break;
 			}
-			ret=(itemsbuf[ri->itemclassref].hxsz)*10000;
+			ret=(itemsbuf[GET_ITEMCLASSREF].hxsz)*10000;
 			break;
 		case IDATAHYSZ:
-			if(unsigned(ri->itemclassref) >= MAXITEMS)
+			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				ret = -10000;
 				break;
 			}
-			ret=(itemsbuf[ri->itemclassref].hysz)*10000;
+			ret=(itemsbuf[GET_ITEMCLASSREF].hysz)*10000;
 			break;
 		case IDATAHZSZ:
-			if(unsigned(ri->itemclassref) >= MAXITEMS)
+			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				ret = -10000;
 				break;
 			}
-			ret=(itemsbuf[ri->itemclassref].hzsz)*10000;
+			ret=(itemsbuf[GET_ITEMCLASSREF].hzsz)*10000;
 			break;
 		case IDATADXOFS:
-			if(unsigned(ri->itemclassref) >= MAXITEMS)
+			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				ret = -10000;
 				break;
 			}
-			ret=(itemsbuf[ri->itemclassref].xofs)*10000;
+			ret=(itemsbuf[GET_ITEMCLASSREF].xofs)*10000;
 			break;
 		case IDATADYOFS:
-			if(unsigned(ri->itemclassref) >= MAXITEMS)
+			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				ret = -10000;
 				break;
 			}
-			ret=(itemsbuf[ri->itemclassref].yofs)*10000;
+			ret=(itemsbuf[GET_ITEMCLASSREF].yofs)*10000;
 			break;
 		case IDATATILEW:
-			if(unsigned(ri->itemclassref) >= MAXITEMS)
+			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				ret = -10000;
 				break;
 			}
-			ret=(itemsbuf[ri->itemclassref].tilew)*10000;
+			ret=(itemsbuf[GET_ITEMCLASSREF].tilew)*10000;
 			break;
 		case IDATATILEH:
-			if(unsigned(ri->itemclassref) >= MAXITEMS)
+			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				ret = -10000;
 				break;
 			}
-			ret=(itemsbuf[ri->itemclassref].tileh)*10000;
+			ret=(itemsbuf[GET_ITEMCLASSREF].tileh)*10000;
 			break;
 		case IDATAPICKUP:
-			if(unsigned(ri->itemclassref) >= MAXITEMS)
+			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				ret = -10000;
 				break;
 			}
-			ret=(itemsbuf[ri->itemclassref].pickup)*10000;
+			ret=(itemsbuf[GET_ITEMCLASSREF].pickup)*10000;
 			break;
 		case IDATAOVERRIDEFL:
-			if(unsigned(ri->itemclassref) >= MAXITEMS)
+			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				ret = 0;
 				break;
 			}
-			ret=(itemsbuf[ri->itemclassref].overrideFLAGS)*10000;
+			ret=(itemsbuf[GET_ITEMCLASSREF].overrideFLAGS)*10000;
 			break;
 
 		case IDATATILEWWEAP:
-			if(unsigned(ri->itemclassref) >= MAXITEMS)
+			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				ret = -10000;
 				break;
 			}
-			ret=(itemsbuf[ri->itemclassref].weap_data.tilew)*10000;
+			ret=(itemsbuf[GET_ITEMCLASSREF].weap_data.tilew)*10000;
 			break;
 		case IDATATILEHWEAP:
-			if(unsigned(ri->itemclassref) >= MAXITEMS)
+			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				ret = -10000;
 				break;
 			}
-			ret=(itemsbuf[ri->itemclassref].weap_data.tileh)*10000;
+			ret=(itemsbuf[GET_ITEMCLASSREF].weap_data.tileh)*10000;
 			break;
 		case IDATAOVERRIDEFLWEAP:
-			if(unsigned(ri->itemclassref) >= MAXITEMS)
+			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				ret = 0;
 				break;
 			}
-			ret=(itemsbuf[ri->itemclassref].weap_data.override_flags)*10000;
+			ret=(itemsbuf[GET_ITEMCLASSREF].weap_data.override_flags)*10000;
 			break;
 		
 		case IDATATYPE:
-			if(unsigned(ri->itemclassref) >= MAXITEMS)
+			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				ret = -10000;
 				break;
 			}
-			ret=(itemsbuf[ri->itemclassref].type)*10000;
+			ret=(itemsbuf[GET_ITEMCLASSREF].type)*10000;
 			break;
 			
 		case IDATALEVEL:
-			if(unsigned(ri->itemclassref) >= MAXITEMS)
+			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				ret = -10000;
 				break;
 			}
-			ret=(itemsbuf[ri->itemclassref].level)*10000;
+			ret=(itemsbuf[GET_ITEMCLASSREF].level)*10000;
 			break;
 			
 		case IDATAKEEP:
@@ -4361,25 +4362,25 @@ int32_t get_register(int32_t arg)
 			
 		case IDATAAMOUNT:
 		{
-			if(unsigned(ri->itemclassref) >= MAXITEMS)
+			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				ret = -10000;
 				break;
 			}
-			int32_t v = itemsbuf[ri->itemclassref].amount;
+			int32_t v = itemsbuf[GET_ITEMCLASSREF].amount;
 			ret = ((v&0x4000)?-1:1)*(v & 0x3FFF)*10000;
 			break;
 		}
 		case IDATAGRADUAL:
 		{
-			if(unsigned(ri->itemclassref) >= MAXITEMS)
+			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				ret = -10000;
 				break;
 			}
-			ret = (itemsbuf[ri->itemclassref].amount&0x8000) ? 10000 : 0;
+			ret = (itemsbuf[GET_ITEMCLASSREF].amount&0x8000) ? 10000 : 0;
 			break;
 		}
 		case IDATACONSTSCRIPT:
@@ -4398,86 +4399,86 @@ int32_t get_register(int32_t arg)
 			ret = item_flag(item_flip_jinx);
 			break;
 		case IDATAUSEBURNSPR:
-			if(unsigned(ri->itemclassref) >= MAXITEMS)
+			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				ret = 0;
 			}
-			else ret = (itemsbuf[ri->itemclassref].weap_data.wflags & WFLAG_UPDATE_IGNITE_SPRITE) ? 10000 : 0;
+			else ret = (itemsbuf[GET_ITEMCLASSREF].weap_data.wflags & WFLAG_UPDATE_IGNITE_SPRITE) ? 10000 : 0;
 			break;
 			
 		case IDATASETMAX:
-			if(unsigned(ri->itemclassref) >= MAXITEMS)
+			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				ret = -10000;
 				break;
 			}
-			ret=(itemsbuf[ri->itemclassref].setmax)*10000;
+			ret=(itemsbuf[GET_ITEMCLASSREF].setmax)*10000;
 			break;
 			
 		case IDATAMAX:
-			if(unsigned(ri->itemclassref) >= MAXITEMS)
+			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				ret = -10000;
 				break;
 			}
-			ret=(itemsbuf[ri->itemclassref].max)*10000;
+			ret=(itemsbuf[GET_ITEMCLASSREF].max)*10000;
 			break;
 			
 		case IDATACOUNTER:
-			if(unsigned(ri->itemclassref) >= MAXITEMS)
+			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				ret = -10000;
 				break;
 			}
-			ret=(itemsbuf[ri->itemclassref].count)*10000;
+			ret=(itemsbuf[GET_ITEMCLASSREF].count)*10000;
 			break;
 			
 		case IDATAPSOUND:
-			if(unsigned(ri->itemclassref) >= MAXITEMS)
+			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				ret = -10000;
 				break;
 			}
-			ret=(itemsbuf[ri->itemclassref].playsound)*10000;
+			ret=(itemsbuf[GET_ITEMCLASSREF].playsound)*10000;
 			break;
 		case IDATAUSESOUND:
-			if(unsigned(ri->itemclassref) >= MAXITEMS)
+			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				ret = -10000;
 				break;
 			}
-			ret=(itemsbuf[ri->itemclassref].usesound)*10000;
+			ret=(itemsbuf[GET_ITEMCLASSREF].usesound)*10000;
 			break;
 			
 		case IDATAUSESOUND2:
-			if(unsigned(ri->itemclassref) >= MAXITEMS)
+			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				ret = -10000;
 				break;
 			}
-			ret=(itemsbuf[ri->itemclassref].usesound2)*10000;
+			ret=(itemsbuf[GET_ITEMCLASSREF].usesound2)*10000;
 			break;
 			
 		case IDATAPOWER:
-			if(unsigned(ri->itemclassref) >= MAXITEMS)
+			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				ret = -10000;
 				break;
 			}
-			ret=(itemsbuf[ri->itemclassref].power)*10000;
+			ret=(itemsbuf[GET_ITEMCLASSREF].power)*10000;
 			break;
 		
 		//Get the ID of an item.
 		case IDATAID:
-			if(unsigned(ri->itemclassref) >= MAXITEMS)
+			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
 				//Don't error here //scripting_log_error_with_context("Invalid itemdata access: {}", ri->idata);
 				ret = -10000;
@@ -4488,167 +4489,167 @@ int32_t get_register(int32_t arg)
 		
 		//Get the script assigned to an item (active)
 		case IDATASCRIPT:
-			if(unsigned(ri->itemclassref) >= MAXITEMS)
+			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				ret = -10000;
 				break;
 			}
-			ret=(itemsbuf[ri->itemclassref].script)*10000;
+			ret=(itemsbuf[GET_ITEMCLASSREF].script)*10000;
 			break;
 		case IDATASPRSCRIPT:
-			if(unsigned(ri->itemclassref) >= MAXITEMS)
+			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				ret = -10000;
 				break;
 			}
-			ret=(itemsbuf[ri->itemclassref].sprite_script)*10000;
+			ret=(itemsbuf[GET_ITEMCLASSREF].sprite_script)*10000;
 			break;
 		//Hero TIle modifier
 		case IDATALTM:
-			if(unsigned(ri->itemclassref) >= MAXITEMS)
+			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				ret = 0;
 				break;
 			}
-			ret=(itemsbuf[ri->itemclassref].ltm)*10000;
+			ret=(itemsbuf[GET_ITEMCLASSREF].ltm)*10000;
 			break;
 		//Pickup script
 		case IDATAPSCRIPT:
-			if(unsigned(ri->itemclassref) >= MAXITEMS)
+			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				ret = -10000;
 				break;
 			}
-			ret=(itemsbuf[ri->itemclassref].collect_script)*10000;
+			ret=(itemsbuf[GET_ITEMCLASSREF].collect_script)*10000;
 			break;
 		//Pickup string
 		case IDATAPSTRING:
-			if(unsigned(ri->itemclassref) >= MAXITEMS)
+			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				ret = -10000;
 				break;
 			}
-			ret=(itemsbuf[ri->itemclassref].pstring)*10000;
+			ret=(itemsbuf[GET_ITEMCLASSREF].pstring)*10000;
 			break;
 		case IDATAPFLAGS:
-			if(unsigned(ri->itemclassref) >= MAXITEMS)
+			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				ret = 0;
 				break;
 			}
-			ret = (itemsbuf[ri->itemclassref].pickup_string_flags)*10000;
+			ret = (itemsbuf[GET_ITEMCLASSREF].pickup_string_flags)*10000;
 			break;
 		case IDATAPICKUPLITEMS:
-			if(unsigned(ri->itemclassref) >= MAXITEMS)
+			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				ret = 0;
 				break;
 			}
-			ret = (itemsbuf[ri->itemclassref].pickup_litems)*10000;
+			ret = (itemsbuf[GET_ITEMCLASSREF].pickup_litems)*10000;
 			break;
 		case IDATAPICKUPLITEMLEVEL:
-			if(unsigned(ri->itemclassref) >= MAXITEMS)
+			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				ret = 0;
 				break;
 			}
-			ret = (itemsbuf[ri->itemclassref].pickup_litem_level)*10000;
+			ret = (itemsbuf[GET_ITEMCLASSREF].pickup_litem_level)*10000;
 			break;
 		//Magic cost
 		case IDATAMAGCOST:
-			if(unsigned(ri->itemclassref) >= MAXITEMS)
+			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				ret = -10000;
 				break;
 			}
-			ret=(itemsbuf[ri->itemclassref].cost_amount[0])*10000;
+			ret=(itemsbuf[GET_ITEMCLASSREF].cost_amount[0])*10000;
 			break;
 		case IDATACOST2:
-			if(unsigned(ri->itemclassref) >= MAXITEMS)
+			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				ret = -10000;
 				break;
 			}
-			ret=(itemsbuf[ri->itemclassref].cost_amount[1])*10000;
+			ret=(itemsbuf[GET_ITEMCLASSREF].cost_amount[1])*10000;
 			break;
 		case IDATACOOLDOWN:
-			if(unsigned(ri->itemclassref) >= MAXITEMS)
+			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				ret = -10000;
 				break;
 			}
-			ret = (itemsbuf[ri->itemclassref].cooldown) * 10000;
+			ret = (itemsbuf[GET_ITEMCLASSREF].cooldown) * 10000;
 			break;
 		//cost counter ref
 		case IDATACOSTCOUNTER:
-			if(unsigned(ri->itemclassref) >= MAXITEMS)
+			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				ret = -10000;
 				break;
 			}
-			ret=(itemsbuf[ri->itemclassref].cost_counter[0])*10000;
+			ret=(itemsbuf[GET_ITEMCLASSREF].cost_counter[0])*10000;
 			break;
 		case IDATACOSTCOUNTER2:
-			if(unsigned(ri->itemclassref) >= MAXITEMS)
+			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				ret = -10000;
 				break;
 			}
-			ret=(itemsbuf[ri->itemclassref].cost_counter[1])*10000;
+			ret=(itemsbuf[GET_ITEMCLASSREF].cost_counter[1])*10000;
 			break;
 		//Min Hearts to Pick Up
 		case IDATAMINHEARTS:
-			if(unsigned(ri->itemclassref) >= MAXITEMS)
+			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				ret = -10000;
 				break;
 			}
-			ret=(itemsbuf[ri->itemclassref].pickup_hearts)*10000;
+			ret=(itemsbuf[GET_ITEMCLASSREF].pickup_hearts)*10000;
 			break;
 		//Tile used by the item
 		case IDATATILE:
-			if(unsigned(ri->itemclassref) >= MAXITEMS)
+			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				ret = -10000;
 				break;
 			}
-			ret=(itemsbuf[ri->itemclassref].tile)*10000;
+			ret=(itemsbuf[GET_ITEMCLASSREF].tile)*10000;
 			break;
 		//itemdata->Flash
 		case IDATAMISC:
-			if(unsigned(ri->itemclassref) >= MAXITEMS)
+			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				ret = -10000;
 				break;
 			}
-			ret=(itemsbuf[ri->itemclassref].misc_flags)*10000;
+			ret=(itemsbuf[GET_ITEMCLASSREF].misc_flags)*10000;
 			break;
 		//->CSet
 		case IDATACSET:
-			if(unsigned(ri->itemclassref) >= MAXITEMS)
+			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				ret = -10000;
 				break;
 			}
 
-			ret = (itemsbuf[ri->itemclassref].csets&15)*10000;
+			ret = (itemsbuf[GET_ITEMCLASSREF].csets&15)*10000;
 
 			// If we find quests that broke, use this code.
 			// if (QHeader.compareVer(2, 55, 9) >= 0)
@@ -4657,23 +4658,23 @@ int32_t get_register(int32_t arg)
 			// 	ret = itemsbuf[ri->idata].csets*10000;
 			break;
 		case IDATAFLASHCSET:
-			if(unsigned(ri->itemclassref) >= MAXITEMS)
+			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				ret = -10000;
 				break;
 			}
-			ret=(itemsbuf[ri->itemclassref].csets>>4)*10000;
+			ret=(itemsbuf[GET_ITEMCLASSREF].csets>>4)*10000;
 			break;
 		//->A.Frames
 		case IDATAFRAMES:
-			if(unsigned(ri->itemclassref) >= MAXITEMS)
+			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				ret = -10000;
 				break;
 			}
-			ret=(itemsbuf[ri->itemclassref].frames)*10000;
+			ret=(itemsbuf[GET_ITEMCLASSREF].frames)*10000;
 			break;
 		/*
 		case IDATAFRAME:
@@ -4682,23 +4683,23 @@ int32_t get_register(int32_t arg)
 		*/ 
 		//->A.Speed
 		case IDATAASPEED:
-			if(unsigned(ri->itemclassref) >= MAXITEMS)
+			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				ret = -10000;
 				break;
 			}
-			ret=(itemsbuf[ri->itemclassref].speed)*10000;
+			ret=(itemsbuf[GET_ITEMCLASSREF].speed)*10000;
 			break;
 		//->Delay
 		case IDATADELAY:
-			if(unsigned(ri->itemclassref) >= MAXITEMS)
+			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				ret = -10000;
 				break;
 			}
-			ret=(itemsbuf[ri->itemclassref].delay)*10000;
+			ret=(itemsbuf[GET_ITEMCLASSREF].delay)*10000;
 			break;
 		// teo of this item upgrades
 		case IDATACOMBINE:
@@ -4739,7 +4740,7 @@ int32_t get_register(int32_t arg)
 		///----------------------------------------------------------------------------------------------------//
 		//LWeapon Variables
 		case LWPNSPECIAL:
-			if(auto s=checkLWpn(ri->lwpnref))
+			if(auto s=checkLWpn(GET_LWPNREF))
 				ret=((int32_t)s->specialinfo)*10000;
 			
 				
@@ -4751,13 +4752,13 @@ int32_t get_register(int32_t arg)
 				scripting_log_error_with_context("To use this you must disable the quest rule 'Old (Faster) Sprite Drawing'.");
 				ret = -1; break;
 			}
-			if(auto s=checkLWpn(ri->lwpnref))
+			if(auto s=checkLWpn(GET_LWPNREF))
 				ret=((int32_t)s->scale)*100.0;
 				
 			break;
 		
 		case LWPNX:
-			if(auto s=checkLWpn(ri->lwpnref))
+			if(auto s=checkLWpn(GET_LWPNREF))
 			{
 				if ( get_qr(qr_SPRITEXY_IS_FLOAT) )
 				{
@@ -4777,7 +4778,7 @@ int32_t get_register(int32_t arg)
 		}
 	
 		case LWPNY:
-			if(auto s=checkLWpn(ri->lwpnref))
+			if(auto s=checkLWpn(GET_LWPNREF))
 			{
 				if ( get_qr(qr_SPRITEXY_IS_FLOAT) )
 				{
@@ -4789,7 +4790,7 @@ int32_t get_register(int32_t arg)
 			break;
 			
 		case LWPNZ:
-			if(auto s=checkLWpn(ri->lwpnref))
+			if(auto s=checkLWpn(GET_LWPNREF))
 			{
 				if ( get_qr(qr_SPRITEXY_IS_FLOAT) )
 				{
@@ -4802,7 +4803,7 @@ int32_t get_register(int32_t arg)
 			break;
 			
 		case LWPNJUMP:
-			if(auto s=checkLWpn(ri->lwpnref))
+			if(auto s=checkLWpn(GET_LWPNREF))
 			{
 				ret = s->fall.getZLong() / -100;
 				if (get_qr(qr_SPRITE_JUMP_IS_TRUNCATED)) ret = trunc(ret / 10000) * 10000;
@@ -4811,7 +4812,7 @@ int32_t get_register(int32_t arg)
 			break;
 		
 		case LWPNFAKEJUMP:
-			if(auto s=checkLWpn(ri->lwpnref))
+			if(auto s=checkLWpn(GET_LWPNREF))
 			{
 				ret = s->fakefall.getZLong() / -100;
 				if (get_qr(qr_SPRITE_JUMP_IS_TRUNCATED)) ret = trunc(ret / 10000) * 10000;
@@ -4820,19 +4821,19 @@ int32_t get_register(int32_t arg)
 			break;
 			
 		case LWPNDIR:
-			if(auto s=checkLWpn(ri->lwpnref))
+			if(auto s=checkLWpn(GET_LWPNREF))
 				ret=s->dir*10000;
 				
 			break;
 		 
 		case LWPNGRAVITY:
-			if(auto s=checkLWpn(ri->lwpnref))
+			if(auto s=checkLWpn(GET_LWPNREF))
 				ret= (s->moveflags & move_obeys_grav) ? 10000 : 0;
 				
 			break;
 			
 		case LWPNSTEP:
-			if(auto s=checkLWpn(ri->lwpnref))
+			if(auto s=checkLWpn(GET_LWPNREF))
 			{
 				if ( get_qr(qr_STEP_IS_FLOAT) || replay_is_active() )
 				{
@@ -4854,13 +4855,13 @@ int32_t get_register(int32_t arg)
 			break;
 			
 		case LWPNANGLE:
-			if(auto s=checkLWpn(ri->lwpnref))
+			if(auto s=checkLWpn(GET_LWPNREF))
 				ret=(int32_t)(s->angle*10000);
 				
 			break;
 		
 		case LWPNDEGANGLE:
-			if(auto s=checkLWpn(ri->lwpnref))
+			if(auto s=checkLWpn(GET_LWPNREF))
 			{
 				ret=(int32_t)(s->angle*(180.0 / PI)*10000);
 			}
@@ -4868,7 +4869,7 @@ int32_t get_register(int32_t arg)
 			break;
 			
 		case LWPNVX:
-			if(auto s=checkLWpn(ri->lwpnref))
+			if(auto s=checkLWpn(GET_LWPNREF))
 			{
 				if (s->angular)
 					ret = int32_t(zc::math::Cos(s->angle)*10000.0*s->step);
@@ -4898,7 +4899,7 @@ int32_t get_register(int32_t arg)
 			break;
 		
 		case LWPNVY:
-			if(auto s=checkLWpn(ri->lwpnref))
+			if(auto s=checkLWpn(GET_LWPNREF))
 			{
 				if (s->angular)
 					ret = int32_t(zc::math::Sin(s->angle)*10000.0*s->step);
@@ -4927,109 +4928,103 @@ int32_t get_register(int32_t arg)
 			break;
 				
 		case LWPNANGULAR:
-			if(auto s=checkLWpn(ri->lwpnref))
+			if(auto s=checkLWpn(GET_LWPNREF))
 				ret=s->angular*10000;
 				
 			break;
 			
 		case LWPNAUTOROTATE:
-			if(auto s=checkLWpn(ri->lwpnref))
+			if(auto s=checkLWpn(GET_LWPNREF))
 				ret=s->autorotate*10000;
 				
 			break;
 			
 		case LWPNBEHIND:
-			if(auto s=checkLWpn(ri->lwpnref))
+			if(auto s=checkLWpn(GET_LWPNREF))
 				ret=s->behind*10000;
 				
 			break;
 			
 		case LWPNDRAWTYPE:
-			if(auto s=checkLWpn(ri->lwpnref))
+			if(auto s=checkLWpn(GET_LWPNREF))
 				ret=s->drawstyle*10000;
 				
 			break;
 			
 		case LWPNPOWER:
-			if(auto s=checkLWpn(ri->lwpnref))
+			if(auto s=checkLWpn(GET_LWPNREF))
 				ret=s->power*10000;
 				
 			break;
-		/*
-		case LWPNRANGE:
-			if(auto s=checkLWpn(ri->lwpn))
-				ret=s->scriptrange*10000;
-				
-			break;
-		*/        
+
 		case LWPNDEAD:
-			if(auto s=checkLWpn(ri->lwpnref))
+			if(auto s=checkLWpn(GET_LWPNREF))
 				ret=s->dead*10000;
 				
 			break;
 			
 		case LWPNTYPE:
-			if(auto s=checkLWpn(ri->lwpnref))
+			if(auto s=checkLWpn(GET_LWPNREF))
 				ret=s->id*10000;
 				
 			break;
 			
 		case LWPNTILE:
-			if(auto s=checkLWpn(ri->lwpnref))
+			if(auto s=checkLWpn(GET_LWPNREF))
 				ret=s->tile*10000;
 				
 			break;
 		
 		case LWPNSCRIPTTILE:
-			if(auto s=checkLWpn(ri->lwpnref))
+			if(auto s=checkLWpn(GET_LWPNREF))
 				ret=s->scripttile*10000;
 				
 			break;
 		
 		case LWPNSCRIPTFLIP:
-			if(auto s=checkLWpn(ri->lwpnref))
+			if(auto s=checkLWpn(GET_LWPNREF))
 				ret=s->scriptflip*10000;
 				
 			break;
 			
 		case LWPNCSET:
-			if(auto s=checkLWpn(ri->lwpnref))
+			if(auto s=checkLWpn(GET_LWPNREF))
 				ret=s->cs*10000;
 				
 			break;
 			
 		case LWPNFLASHCSET:
-			if(auto s=checkLWpn(ri->lwpnref))
+			if(auto s=checkLWpn(GET_LWPNREF))
 				ret=(s->o_cset>>4)*10000;
 				
 			break;
 			
 		case LWPNFRAMES:
-			if(auto s=checkLWpn(ri->lwpnref))
+			if(auto s=checkLWpn(GET_LWPNREF))
 				ret=s->frames*10000;
 				
 			break;
 			
 		case LWPNFRAME:
-			if(auto s=checkLWpn(ri->lwpnref))
+			if(auto s=checkLWpn(GET_LWPNREF))
 				ret=s->aframe*10000;
 				
 			break;
 			
 		case LWPNASPEED:
-			if(auto s=checkLWpn(ri->lwpnref))
+			if(auto s=checkLWpn(GET_LWPNREF))
 				ret=s->o_speed*10000;
 				
 			break;
 			
 		case LWPNFLASH:
-			if(auto s=checkLWpn(ri->lwpnref))
+			if(auto s=checkLWpn(GET_LWPNREF))
 				ret=s->flash*10000;
 				
 			break;
 			
 		case LWPNFLIP:
-			if(auto s=checkLWpn(ri->lwpnref))
+			if(auto s=checkLWpn(GET_LWPNREF))
 				ret=s->flip*10000;
 				
 			break;
@@ -5039,146 +5034,146 @@ int32_t get_register(int32_t arg)
 			break;
 			
 		case LWPNEXTEND:
-			if(auto s=checkLWpn(ri->lwpnref))
+			if(auto s=checkLWpn(GET_LWPNREF))
 				ret=s->extend*10000;
 				
 			break;
 			
 		case LWPNOTILE:
-			if(auto s=checkLWpn(ri->lwpnref))
+			if(auto s=checkLWpn(GET_LWPNREF))
 				ret=s->o_tile*10000;
 				
 			break;
 			
 		case LWPNOCSET:
-			if(auto s=checkLWpn(ri->lwpnref))
+			if(auto s=checkLWpn(GET_LWPNREF))
 				ret=(s->o_cset&15)*10000;
 				
 			break;
 			
 		case LWPNHXOFS:
-			if(auto s=checkLWpn(ri->lwpnref))
+			if(auto s=checkLWpn(GET_LWPNREF))
 				ret=(s->hxofs)*10000;
 				
 			break;
 			
 		case LWPNHYOFS:
-			if(auto s=checkLWpn(ri->lwpnref))
+			if(auto s=checkLWpn(GET_LWPNREF))
 				ret=(s->hyofs)*10000;
 				
 			break;
 			
 		case LWPNXOFS:
-			if(auto s=checkLWpn(ri->lwpnref))
+			if(auto s=checkLWpn(GET_LWPNREF))
 				ret=((int32_t)(s->xofs))*10000;
 				
 			break;
 			
 		case LWPNYOFS:
-			if(auto s=checkLWpn(ri->lwpnref))
+			if(auto s=checkLWpn(GET_LWPNREF))
 				ret=((int32_t)(s->yofs-(get_qr(qr_OLD_DRAWOFFSET)?playing_field_offset:original_playing_field_offset)))*10000;
 				
 			break;
 			
 		case LWPNSHADOWXOFS:
-			if(auto s=checkLWpn(ri->lwpnref))
+			if(auto s=checkLWpn(GET_LWPNREF))
 				ret=((int32_t)(s->shadowxofs))*10000;
 				
 			break;
 			
 		case LWPNSHADOWYOFS:
-			if(auto s=checkLWpn(ri->lwpnref))
+			if(auto s=checkLWpn(GET_LWPNREF))
 				ret=((int32_t)(s->shadowyofs))*10000;
 				
 			break;
 			
 		case LWPNTOTALDYOFFS:
-			if(auto s=checkLWpn(ri->lwpnref))
+			if(auto s=checkLWpn(GET_LWPNREF))
 				ret = ((int32_t)(s->yofs-(get_qr(qr_OLD_DRAWOFFSET)?playing_field_offset:original_playing_field_offset))
 					+ ((s->switch_hooked && Hero.switchhookstyle == swRISE)
 						? -(8-(abs(Hero.switchhookclk-32)/4)) : 0)) * 10000;
 			break;
 			
 		case LWPNZOFS:
-			if(auto s=checkLWpn(ri->lwpnref))
+			if(auto s=checkLWpn(GET_LWPNREF))
 				ret=((int32_t)(s->zofs))*10000;
 				
 			break;
 			
 		case LWPNHXSZ:
-			if(auto s=checkLWpn(ri->lwpnref))
+			if(auto s=checkLWpn(GET_LWPNREF))
 				ret=(s->hit_width)*10000;
 				
 			break;
 			
 		case LWPNHYSZ:
-			if(auto s=checkLWpn(ri->lwpnref))
+			if(auto s=checkLWpn(GET_LWPNREF))
 				ret=(s->hit_height)*10000;
 				
 			break;
 			
 		case LWPNHZSZ:
-			if(auto s=checkLWpn(ri->lwpnref))
+			if(auto s=checkLWpn(GET_LWPNREF))
 				ret=(s->hzsz)*10000;
 				
 			break;
 			
 		case LWPNTXSZ:
-			if(auto s=checkLWpn(ri->lwpnref))
+			if(auto s=checkLWpn(GET_LWPNREF))
 				ret=(s->txsz)*10000;
 				
 			break;
 			
 		case LWPNTYSZ:
-			if(auto s=checkLWpn(ri->lwpnref))
+			if(auto s=checkLWpn(GET_LWPNREF))
 				ret=(s->tysz)*10000;
 				
 			break;
 			
 		case LWPNCOLLDET:
-			if(auto s=checkLWpn(ri->lwpnref))
+			if(auto s=checkLWpn(GET_LWPNREF))
 				ret=(s->scriptcoldet)*10000;
 				
 			break;
 		
 		case LWPNENGINEANIMATE:
-			if(auto s=checkLWpn(ri->lwpnref))
+			if(auto s=checkLWpn(GET_LWPNREF))
 				ret=(s->do_animation)*10000;
 				
 			break;
 		
 		case LWPNPARENT:
-			if(auto s=checkLWpn(ri->lwpnref))
+			if(auto s=checkLWpn(GET_LWPNREF))
 				ret=(s->parentitem)*10000;
 				
 			break;
 
 		case LWPNLEVEL:
-			if(auto s=checkLWpn(ri->lwpnref))
+			if(auto s=checkLWpn(GET_LWPNREF))
 				ret=(s->level)*10000;
 				
 			break;
 		
 		case LWPNSCRIPT:
-			if(auto s=checkLWpn(ri->lwpnref))
+			if(auto s=checkLWpn(GET_LWPNREF))
 				ret=(s->script)*10000;
 				
 			break;
 		
 		case LWPNUSEWEAPON:
-			if(auto s=checkLWpn(ri->lwpnref))
+			if(auto s=checkLWpn(GET_LWPNREF))
 				ret=(s->useweapon)*10000;
 				
 			break;
 		
 		case LWPNUSEDEFENCE:
-			if(auto s=checkLWpn(ri->lwpnref))
+			if(auto s=checkLWpn(GET_LWPNREF))
 				ret=(s->usedefense)*10000;
 				
 			break;
 		
 		case LWEAPONSCRIPTUID:
-			if(auto s=checkLWpn(ri->lwpnref))
+			if(auto s=checkLWpn(GET_LWPNREF))
 				ret=(s->getUID());
 				
 			break;
@@ -5189,41 +5184,41 @@ int32_t get_register(int32_t arg)
 				scripting_log_error_with_context("To use this you must disable the quest rule 'Old (Faster) Sprite Drawing'.");
 				ret = -1; break;
 			}
-			if(auto s=checkLWpn(ri->lwpnref))
+			if(auto s=checkLWpn(GET_LWPNREF))
 				ret=s->rotation*10000;
 				
 			break;
 		
 		case LWPNFALLCLK:
-			if(auto s=checkLWpn(ri->lwpnref))
+			if(auto s=checkLWpn(GET_LWPNREF))
 			{
 				ret = s->fallclk * 10000;
 			}
 			break;
 		
 		case LWPNFALLCMB:
-			if(auto s=checkLWpn(ri->lwpnref))
+			if(auto s=checkLWpn(GET_LWPNREF))
 			{
 				ret = s->fallCombo * 10000;
 			}
 			break;
 		
 		case LWPNDROWNCLK:
-			if(auto s=checkLWpn(ri->lwpnref))
+			if(auto s=checkLWpn(GET_LWPNREF))
 			{
 				ret = s->drownclk * 10000;
 			}
 			break;
 		
 		case LWPNDROWNCMB:
-			if(auto s=checkLWpn(ri->lwpnref))
+			if(auto s=checkLWpn(GET_LWPNREF))
 			{
 				ret = s->drownCombo * 10000;
 			}
 			break;
 			
 		case LWPNFAKEZ:
-			if(auto s=checkLWpn(ri->lwpnref))
+			if(auto s=checkLWpn(GET_LWPNREF))
 			{
 				if ( get_qr(qr_SPRITEXY_IS_FLOAT) )
 				{
@@ -5235,88 +5230,88 @@ int32_t get_register(int32_t arg)
 			break;
 
 		case LWPNGLOWRAD:
-			if(auto s=checkLWpn(ri->lwpnref))
+			if(auto s=checkLWpn(GET_LWPNREF))
 			{
 				ret = s->glowRad * 10000;
 			}
 			break;
 			
 		case LWPNGLOWSHP:
-			if(auto s=checkLWpn(ri->lwpnref))
+			if(auto s=checkLWpn(GET_LWPNREF))
 			{
 				ret = s->glowShape * 10000;
 			}
 			break;
 			
 		case LWPNUNBL:
-			if(auto s=checkLWpn(ri->lwpnref))
+			if(auto s=checkLWpn(GET_LWPNREF))
 			{
 				ret = s->unblockable * 10000;
 			}
 			break;
 			
 		case LWPNSHADOWSPR:
-			if(auto s=checkLWpn(ri->lwpnref))
+			if(auto s=checkLWpn(GET_LWPNREF))
 			{
 				ret = s->spr_shadow * 10000;
 			}
 			break;
 		case LWSWHOOKED:
-			if(auto s=checkLWpn(ri->lwpnref))
+			if(auto s=checkLWpn(GET_LWPNREF))
 			{
 				ret = s->switch_hooked ? 10000 : 0;
 			}
 			break;
 		case LWPNTIMEOUT:
-			if(auto s=checkLWpn(ri->lwpnref))
+			if(auto s=checkLWpn(GET_LWPNREF))
 			{
 				ret = s->weap_timeout * 10000;
 			}
 			break;
 		case LWPNDEATHITEM:
-			if(auto s=checkLWpn(ri->lwpnref))
+			if(auto s=checkLWpn(GET_LWPNREF))
 			{
 				ret = s->death_spawnitem * 10000;
 			}
 			break;
 		case LWPNDEATHDROPSET:
-			if(auto s=checkLWpn(ri->lwpnref))
+			if(auto s=checkLWpn(GET_LWPNREF))
 			{
 				ret = s->death_spawndropset * 10000;
 			}
 			break;
 		case LWPNDEATHIPICKUP:
-			if(auto s=checkLWpn(ri->lwpnref))
+			if(auto s=checkLWpn(GET_LWPNREF))
 			{
 				ret = s->death_item_pflags * 10000;
 			}
 			break;
 		case LWPNDEATHSPRITE:
-			if(auto s=checkLWpn(ri->lwpnref))
+			if(auto s=checkLWpn(GET_LWPNREF))
 			{
 				ret = s->death_sprite * 10000;
 			}
 			break;
 		case LWPNDEATHSFX:
-			if(auto s=checkLWpn(ri->lwpnref))
+			if(auto s=checkLWpn(GET_LWPNREF))
 			{
 				ret = s->death_sfx * 10000;
 			}
 			break;
 		case LWPNLIFTLEVEL:
-			if(auto s=checkLWpn(ri->lwpnref))
+			if(auto s=checkLWpn(GET_LWPNREF))
 			{
 				ret = s->lift_level * 10000;
 			}
 			break;
 		case LWPNLIFTTIME:
-			if(auto s=checkLWpn(ri->lwpnref))
+			if(auto s=checkLWpn(GET_LWPNREF))
 			{
 				ret = s->lift_time * 10000;
 			}
 			break;
 		case LWPNLIFTHEIGHT:
-			if(auto s=checkLWpn(ri->lwpnref))
+			if(auto s=checkLWpn(GET_LWPNREF))
 			{
 				ret = s->lift_height.getZLong();
 			}
@@ -5330,13 +5325,13 @@ int32_t get_register(int32_t arg)
 				scripting_log_error_with_context("To use this you must disable the quest rule 'Old (Faster) Sprite Drawing'.");
 				ret = -1; break;
 			}
-			if(auto s=checkEWpn(ri->ewpnref))
+			if(auto s=checkEWpn(GET_EWPNREF))
 				ret=((int32_t)s->scale)*100.0;
 				
 			break;
 
 		case EWPNX:
-			if(auto s=checkEWpn(ri->ewpnref))
+			if(auto s=checkEWpn(GET_EWPNREF))
 			{
 				if ( get_qr(qr_SPRITEXY_IS_FLOAT) )
 				{
@@ -5355,7 +5350,7 @@ int32_t get_register(int32_t arg)
 		}
 	
 		case EWPNY:
-			if(auto s=checkEWpn(ri->ewpnref))
+			if(auto s=checkEWpn(GET_EWPNREF))
 			{
 				if ( get_qr(qr_SPRITEXY_IS_FLOAT) )
 				{
@@ -5367,7 +5362,7 @@ int32_t get_register(int32_t arg)
 			break;
 			
 		case EWPNZ:
-			if(auto s=checkEWpn(ri->ewpnref))
+			if(auto s=checkEWpn(GET_EWPNREF))
 			{
 				if ( get_qr(qr_SPRITEXY_IS_FLOAT) )
 				{
@@ -5379,7 +5374,7 @@ int32_t get_register(int32_t arg)
 			break;
 			
 		case EWPNJUMP:
-			if(auto s=checkEWpn(ri->ewpnref))
+			if(auto s=checkEWpn(GET_EWPNREF))
 			{
 				ret = s->fall.getZLong() / -100;
 				if (get_qr(qr_SPRITE_JUMP_IS_TRUNCATED)) ret = trunc(ret / 10000) * 10000;
@@ -5388,7 +5383,7 @@ int32_t get_register(int32_t arg)
 			break;
 		
 		case EWPNFAKEJUMP:
-			if(auto s=checkEWpn(ri->ewpnref))
+			if(auto s=checkEWpn(GET_EWPNREF))
 			{
 				ret = s->fakefall.getZLong() / -100;
 				if (get_qr(qr_SPRITE_JUMP_IS_TRUNCATED)) ret = trunc(ret / 10000) * 10000;
@@ -5397,25 +5392,25 @@ int32_t get_register(int32_t arg)
 			break;
 			
 		case EWPNDIR:
-			if(auto s=checkEWpn(ri->ewpnref))
+			if(auto s=checkEWpn(GET_EWPNREF))
 				ret=s->dir*10000;
 				
 			break;
 			
 		case EWPNLEVEL:
-			if(auto s=checkEWpn(ri->ewpnref))
+			if(auto s=checkEWpn(GET_EWPNREF))
 				ret=s->level*10000;
 				
 			break;
 			
 		case EWPNGRAVITY:
-			if(auto s=checkEWpn(ri->ewpnref))
+			if(auto s=checkEWpn(GET_EWPNREF))
 				ret=((s->moveflags & move_obeys_grav) ? 10000 : 0);
 				
 			break;
 			
 		case EWPNSTEP:
-			if(auto s=checkEWpn(ri->ewpnref))
+			if(auto s=checkEWpn(GET_EWPNREF))
 			{
 				if ( get_qr(qr_STEP_IS_FLOAT) || replay_is_active() )
 				{
@@ -5435,13 +5430,13 @@ int32_t get_register(int32_t arg)
 			break;
 			
 		case EWPNANGLE:
-			if(auto s=checkEWpn(ri->ewpnref))
+			if(auto s=checkEWpn(GET_EWPNREF))
 				ret=(int32_t)(s->angle*10000);
 				
 			break;
 			
 		case EWPNDEGANGLE:
-			if(auto s=checkEWpn(ri->ewpnref))
+			if(auto s=checkEWpn(GET_EWPNREF))
 			{
 				ret=(int32_t)(s->angle*(180.0 / PI)*10000);
 			}
@@ -5449,7 +5444,7 @@ int32_t get_register(int32_t arg)
 			break;
 			
 		case EWPNVX:
-			if(auto s=checkEWpn(ri->ewpnref))
+			if(auto s=checkEWpn(GET_EWPNREF))
 			{
 				if (s->angular)
 					ret = int32_t(zc::math::Cos(s->angle)*10000.0*s->step);
@@ -5478,7 +5473,7 @@ int32_t get_register(int32_t arg)
 			break;
 		
 		case EWPNVY:
-			if(auto s=checkEWpn(ri->ewpnref))
+			if(auto s=checkEWpn(GET_EWPNREF))
 			{
 				if (s->angular)
 					ret = int32_t(zc::math::Sin(s->angle)*10000.0*s->step);
@@ -5508,103 +5503,103 @@ int32_t get_register(int32_t arg)
 			
 			
 		case EWPNANGULAR:
-			if(auto s=checkEWpn(ri->ewpnref))
+			if(auto s=checkEWpn(GET_EWPNREF))
 				ret=s->angular*10000;
 				
 			break;
 			
 		case EWPNAUTOROTATE:
-			if(auto s=checkEWpn(ri->ewpnref))
+			if(auto s=checkEWpn(GET_EWPNREF))
 				ret=s->autorotate*10000;
 				
 			break;
 			
 		case EWPNBEHIND:
-			if(auto s=checkEWpn(ri->ewpnref))
+			if(auto s=checkEWpn(GET_EWPNREF))
 				ret=s->behind*10000;
 				
 			break;
 			
 		case EWPNDRAWTYPE:
-			if(auto s=checkEWpn(ri->ewpnref))
+			if(auto s=checkEWpn(GET_EWPNREF))
 				ret=s->drawstyle*10000;
 				
 			break;
 			
 		case EWPNPOWER:
-			if(auto s=checkEWpn(ri->ewpnref))
+			if(auto s=checkEWpn(GET_EWPNREF))
 				ret=s->power*10000;
 				
 			break;
 			
 		case EWPNDEAD:
-			if(auto s=checkEWpn(ri->ewpnref))
+			if(auto s=checkEWpn(GET_EWPNREF))
 				ret=s->dead*10000;
 				
 			break;
 			
 		case EWPNTYPE:
-			if(auto s=checkEWpn(ri->ewpnref))
+			if(auto s=checkEWpn(GET_EWPNREF))
 				ret=s->id*10000;
 				
 			break;
 			
 		case EWPNTILE:
-			if(auto s=checkEWpn(ri->ewpnref))
+			if(auto s=checkEWpn(GET_EWPNREF))
 				ret=s->tile*10000;
 				
 			break;
 		
 		case EWPNSCRIPTTILE:
-			if(auto s=checkEWpn(ri->ewpnref))
+			if(auto s=checkEWpn(GET_EWPNREF))
 				ret=s->scripttile*10000;
 				
 			break;
 		
 		case EWPNSCRIPTFLIP:
-			if(auto s=checkEWpn(ri->ewpnref))
+			if(auto s=checkEWpn(GET_EWPNREF))
 				ret=s->scriptflip*10000;
 				
 			break;
 			
 		case EWPNCSET:
-			if(auto s=checkEWpn(ri->ewpnref))
+			if(auto s=checkEWpn(GET_EWPNREF))
 				ret=s->cs*10000;
 				
 			break;
 			
 		case EWPNFLASHCSET:
-			if(auto s=checkEWpn(ri->ewpnref))
+			if(auto s=checkEWpn(GET_EWPNREF))
 				ret=(s->o_cset>>4)*10000;
 				
 			break;
 			
 		case EWPNFRAMES:
-			if(auto s=checkEWpn(ri->ewpnref))
+			if(auto s=checkEWpn(GET_EWPNREF))
 				ret=s->frames*10000;
 				
 			break;
 			
 		case EWPNFRAME:
-			if(auto s=checkEWpn(ri->ewpnref))
+			if(auto s=checkEWpn(GET_EWPNREF))
 				ret=s->aframe*10000;
 				
 			break;
 			
 		case EWPNASPEED:
-			if(auto s=checkEWpn(ri->ewpnref))
+			if(auto s=checkEWpn(GET_EWPNREF))
 				ret=s->o_speed*10000;
 				
 			break;
 			
 		case EWPNFLASH:
-			if(auto s=checkEWpn(ri->ewpnref))
+			if(auto s=checkEWpn(GET_EWPNREF))
 				ret=s->flash*10000;
 				
 			break;
 			
 		case EWPNFLIP:
-			if(auto s=checkEWpn(ri->ewpnref))
+			if(auto s=checkEWpn(GET_EWPNREF))
 				ret=s->flip*10000;
 				
 			break;
@@ -5615,7 +5610,7 @@ int32_t get_register(int32_t arg)
 				scripting_log_error_with_context("To use this you must disable the quest rule 'Old (Faster) Sprite Drawing'");
 				break;
 			}
-			if(auto s=checkEWpn(ri->ewpnref))
+			if(auto s=checkEWpn(GET_EWPNREF))
 				ret=s->rotation*10000;
 				
 			break;
@@ -5625,166 +5620,166 @@ int32_t get_register(int32_t arg)
 			break;
 			
 		case EWPNEXTEND:
-			if(auto s=checkEWpn(ri->ewpnref))
+			if(auto s=checkEWpn(GET_EWPNREF))
 				ret=s->extend*10000;
 				
 			break;
 			
 		case EWPNOTILE:
-			if(auto s=checkEWpn(ri->ewpnref))
+			if(auto s=checkEWpn(GET_EWPNREF))
 				ret=s->o_tile*10000;
 				
 			break;
 			
 		case EWPNOCSET:
-			if(auto s=checkEWpn(ri->ewpnref))
+			if(auto s=checkEWpn(GET_EWPNREF))
 				ret=(s->o_cset&15)*10000;
 				
 			break;
 			
 		case EWPNHXOFS:
-			if(auto s=checkEWpn(ri->ewpnref))
+			if(auto s=checkEWpn(GET_EWPNREF))
 				ret=(s->hxofs)*10000;
 				
 			break;
 			
 		case EWPNHYOFS:
-			if(auto s=checkEWpn(ri->ewpnref))
+			if(auto s=checkEWpn(GET_EWPNREF))
 				ret=(s->hyofs)*10000;
 				
 			break;
 			
 		case EWPNXOFS:
-			if(auto s=checkEWpn(ri->ewpnref))
+			if(auto s=checkEWpn(GET_EWPNREF))
 				ret=((int32_t)(s->xofs))*10000;
 				
 			break;
 			
 		case EWPNYOFS:
-			if(auto s=checkEWpn(ri->ewpnref))
+			if(auto s=checkEWpn(GET_EWPNREF))
 				ret=((int32_t)(s->yofs-(get_qr(qr_OLD_DRAWOFFSET)?playing_field_offset:original_playing_field_offset)))*10000;
 				
 			break;
 			
 		case EWPNSHADOWXOFS:
-			if(auto s=checkEWpn(ri->ewpnref))
+			if(auto s=checkEWpn(GET_EWPNREF))
 				ret=((int32_t)(s->shadowxofs))*10000;
 				
 			break;
 			
 		case EWPNSHADOWYOFS:
-			if(auto s=checkEWpn(ri->ewpnref))
+			if(auto s=checkEWpn(GET_EWPNREF))
 				ret=((int32_t)(s->shadowyofs))*10000;
 				
 			break;
 		case EWPNTOTALDYOFFS:
-			if(auto s=checkEWpn(ri->ewpnref))
+			if(auto s=checkEWpn(GET_EWPNREF))
 				ret = ((int32_t)(s->yofs-(get_qr(qr_OLD_DRAWOFFSET)?playing_field_offset:original_playing_field_offset))
 					+ ((s->switch_hooked && Hero.switchhookstyle == swRISE)
 						? -(8-(abs(Hero.switchhookclk-32)/4)) : 0) * 10000);
 			break;
 			
 		case EWPNZOFS:
-			if(auto s=checkEWpn(ri->ewpnref))
+			if(auto s=checkEWpn(GET_EWPNREF))
 				ret=((int32_t)(s->zofs))*10000;
 				
 			break;
 			
 		case EWPNHXSZ:
-			if(auto s=checkEWpn(ri->ewpnref))
+			if(auto s=checkEWpn(GET_EWPNREF))
 				ret=(s->hit_width)*10000;
 				
 			break;
 			
 		case EWPNHYSZ:
-			if(auto s=checkEWpn(ri->ewpnref))
+			if(auto s=checkEWpn(GET_EWPNREF))
 				ret=(s->hit_height)*10000;
 				
 			break;
 			
 		case EWPNHZSZ:
-			if(auto s=checkEWpn(ri->ewpnref))
+			if(auto s=checkEWpn(GET_EWPNREF))
 				ret=(s->hzsz)*10000;
 				
 			break;
 			
 		case EWPNTXSZ:
-			if(auto s=checkEWpn(ri->ewpnref))
+			if(auto s=checkEWpn(GET_EWPNREF))
 				ret=(s->txsz)*10000;
 				
 			break;
 			
 		case EWPNTYSZ:
-			if(auto s=checkEWpn(ri->ewpnref))
+			if(auto s=checkEWpn(GET_EWPNREF))
 				ret=(s->tysz)*10000;
 				
 			break;
 			
 		case EWPNCOLLDET:
-			if(auto s=checkEWpn(ri->ewpnref))
+			if(auto s=checkEWpn(GET_EWPNREF))
 				ret=(s->scriptcoldet)*10000;
 				
 			break;
 		
 		case EWPNENGINEANIMATE:
-			if(auto s=checkEWpn(ri->ewpnref))
+			if(auto s=checkEWpn(GET_EWPNREF))
 				ret=(s->do_animation)*10000;
 				
 			break;
 		
 		case EWPNPARENT:
-			if(auto s=checkEWpn(ri->ewpnref))
+			if(auto s=checkEWpn(GET_EWPNREF))
 				ret= ((get_qr(qr_OLDEWPNPARENT)) ? (s->parentid)*10000 : (s->parentid));
 		
 			break;
 		
 		case EWEAPONSCRIPTUID:
-			if(auto s=checkEWpn(ri->ewpnref))
+			if(auto s=checkEWpn(GET_EWPNREF))
 				ret=(s->getUID());
 				
 			break;
 		
 		case EWPNPARENTUID:
-			if(auto s=checkEWpn(ri->ewpnref))
+			if(auto s=checkEWpn(GET_EWPNREF))
 				ret = s->parent ? s->parent->getUID() : 0;
 				
 			break;
 		
 		case EWPNSCRIPT:
-			if(auto s=checkEWpn(ri->ewpnref))
+			if(auto s=checkEWpn(GET_EWPNREF))
 				ret=(s->script)*10000;
 				
 			break;
 		
 		case EWPNFALLCLK:
-			if(auto s=checkEWpn(ri->ewpnref))
+			if(auto s=checkEWpn(GET_EWPNREF))
 			{
 				ret = s->fallclk * 10000;
 			}
 			break;
 		
 		case EWPNFALLCMB:
-			if(auto s=checkEWpn(ri->ewpnref))
+			if(auto s=checkEWpn(GET_EWPNREF))
 			{
 				ret = s->fallCombo * 10000;
 			}
 			break;
 		
 		case EWPNDROWNCLK:
-			if(auto s=checkEWpn(ri->ewpnref))
+			if(auto s=checkEWpn(GET_EWPNREF))
 			{
 				ret = s->drownclk * 10000;
 			}
 			break;
 		
 		case EWPNDROWNCMB:
-			if(auto s=checkEWpn(ri->ewpnref))
+			if(auto s=checkEWpn(GET_EWPNREF))
 			{
 				ret = s->drownCombo * 10000;
 			}
 			break;
 		case EWPNFAKEZ:
-			if(auto s=checkEWpn(ri->ewpnref))
+			if(auto s=checkEWpn(GET_EWPNREF))
 			{
 				if ( get_qr(qr_SPRITEXY_IS_FLOAT) )
 				{
@@ -5796,88 +5791,88 @@ int32_t get_register(int32_t arg)
 			break;
 		
 		case EWPNGLOWRAD:
-			if(auto s=checkEWpn(ri->ewpnref))
+			if(auto s=checkEWpn(GET_EWPNREF))
 			{
 				ret = s->glowRad * 10000;
 			}
 			break;
 			
 		case EWPNGLOWSHP:
-			if(auto s=checkEWpn(ri->ewpnref))
+			if(auto s=checkEWpn(GET_EWPNREF))
 			{
 				ret = s->glowShape * 10000;
 			}
 			break;
 			
 		case EWPNUNBL:
-			if(auto s=checkEWpn(ri->ewpnref))
+			if(auto s=checkEWpn(GET_EWPNREF))
 			{
 				ret = s->unblockable * 10000;
 			}
 			break;
 			
 		case EWPNSHADOWSPR:
-			if(auto s=checkEWpn(ri->ewpnref))
+			if(auto s=checkEWpn(GET_EWPNREF))
 			{
 				ret = s->spr_shadow * 10000;
 			}
 			break;
 		case EWSWHOOKED:
-			if(auto s=checkEWpn(ri->ewpnref))
+			if(auto s=checkEWpn(GET_EWPNREF))
 			{
 				ret = s->switch_hooked ? 10000 : 0;
 			}
 			break;
 		case EWPNTIMEOUT:
-			if(auto s=checkEWpn(ri->ewpnref))
+			if(auto s=checkEWpn(GET_EWPNREF))
 			{
 				ret = s->weap_timeout * 10000;
 			}
 			break;
 		case EWPNDEATHITEM:
-			if(auto s=checkEWpn(ri->ewpnref))
+			if(auto s=checkEWpn(GET_EWPNREF))
 			{
 				ret = s->death_spawnitem * 10000;
 			}
 			break;
 		case EWPNDEATHDROPSET:
-			if(auto s=checkEWpn(ri->ewpnref))
+			if(auto s=checkEWpn(GET_EWPNREF))
 			{
 				ret = s->death_spawndropset * 10000;
 			}
 			break;
 		case EWPNDEATHIPICKUP:
-			if(auto s=checkEWpn(ri->ewpnref))
+			if(auto s=checkEWpn(GET_EWPNREF))
 			{
 				ret = s->death_item_pflags * 10000;
 			}
 			break;
 		case EWPNDEATHSPRITE:
-			if(auto s=checkEWpn(ri->ewpnref))
+			if(auto s=checkEWpn(GET_EWPNREF))
 			{
 				ret = s->death_sprite * 10000;
 			}
 			break;
 		case EWPNDEATHSFX:
-			if(auto s=checkEWpn(ri->ewpnref))
+			if(auto s=checkEWpn(GET_EWPNREF))
 			{
 				ret = s->death_sfx * 10000;
 			}
 			break;
 		case EWPNLIFTLEVEL:
-			if(auto s=checkEWpn(ri->ewpnref))
+			if(auto s=checkEWpn(GET_EWPNREF))
 			{
 				ret = s->lift_level * 10000;
 			}
 			break;
 		case EWPNLIFTTIME:
-			if(auto s=checkEWpn(ri->ewpnref))
+			if(auto s=checkEWpn(GET_EWPNREF))
 			{
 				ret = s->lift_time * 10000;
 			}
 			break;
 		case EWPNLIFTHEIGHT:
-			if(auto s=checkEWpn(ri->ewpnref))
+			if(auto s=checkEWpn(GET_EWPNREF))
 			{
 				ret = s->lift_height.getZLong();
 			}
@@ -6001,7 +5996,7 @@ int32_t get_register(int32_t arg)
 		
 		case BOTTLENEXT:
 		{
-			if(bottletype* ptr = checkBottleData(ri->bottletyperef))
+			if(bottletype* ptr = checkBottleData(GET_BOTTLETYPEREF))
 			{
 				ret = 10000L * ptr->next_type;
 			}
@@ -6098,23 +6093,23 @@ int32_t get_register(int32_t arg)
 		
 			#define	GET_SCREENDATA_VAR_INT32(member) \
 		{ \
-			ret = (get_scr(ri->screenref)->member *10000); \
+			ret = (get_scr(GET_SCREENREF)->member *10000); \
 		} \
 
 		#define	GET_SCREENDATA_VAR_INT16(member) \
 		{ \
-			ret = (get_scr(ri->screenref)->member *10000); \
+			ret = (get_scr(GET_SCREENREF)->member *10000); \
 		} \
 
 		#define	GET_SCREENDATA_VAR_BYTE(member) \
 		{ \
-			ret = (get_scr(ri->screenref)->member *10000); \
+			ret = (get_scr(GET_SCREENREF)->member *10000); \
 		} \
 		
 		#define GET_SCREENDATA_BYTE_INDEX(member, indexbound) \
 		{ \
 			int32_t indx = GET_D(rINDEX) / 10000; \
-			ret = (get_scr(ri->screenref)->member[indx] *10000); \
+			ret = (get_scr(GET_SCREENREF)->member[indx] *10000); \
 		} \
 		
 		//byte
@@ -6127,7 +6122,7 @@ int32_t get_register(int32_t arg)
 			} \
 			else \
 			{ \
-				ret = (get_scr(ri->screenref)->member[indx-1] *10000); \
+				ret = (get_scr(GET_SCREENREF)->member[indx-1] *10000); \
 			} \
 		} \
 		
@@ -6140,7 +6135,7 @@ int32_t get_register(int32_t arg)
 			} \
 			else \
 			{ \
-				ret = (get_scr(ri->screenref)->member[indx]?10000:0); \
+				ret = (get_scr(GET_SCREENREF)->member[indx]?10000:0); \
 			} \
 		} \
 		
@@ -6148,7 +6143,7 @@ int32_t get_register(int32_t arg)
 		#define GET_SCREENDATA_FLAG(member, str, indexbound) \
 		{ \
 			int32_t flag =  (value/10000);  \
-			ret = (get_scr(ri->screenref)->member&flag) ? 10000 : 0); \
+			ret = (get_scr(GET_SCREENREF)->member&flag) ? 10000 : 0); \
 		} \
 		
 		case SCREENDATAVALID:		GET_SCREENDATA_VAR_BYTE(valid); break;		//b
@@ -6157,7 +6152,7 @@ int32_t get_register(int32_t arg)
 		case SCREENDATAROOM: 		GET_SCREENDATA_VAR_BYTE(room);	break;		//b
 		case SCREENDATAITEM:
 		{
-			mapscr* scr = get_scr(ri->screenref);
+			mapscr* scr = get_scr(GET_SCREENREF);
 			if(scr->hasitem)
 				ret = (scr->item *10000);
 			else ret = -10000;
@@ -6245,24 +6240,24 @@ int32_t get_register(int32_t arg)
 		case SCREENDATAHOLDUPSFX:	 	GET_SCREENDATA_VAR_BYTE(holdupsfx); break; //B
 		case SCREENDATASCREENMIDI:
 		{
-			ret = ((get_scr(ri->screenref)->screen_midi+(MIDIOFFSET_MAPSCR-MIDIOFFSET_ZSCRIPT)) *10000);
+			ret = ((get_scr(GET_SCREENREF)->screen_midi+(MIDIOFFSET_MAPSCR-MIDIOFFSET_ZSCRIPT)) *10000);
 			break;
 		}
 		case SCREENDATA_GRAVITY_STRENGTH:
 		{
-			ret = get_scr(ri->screenref)->screen_gravity.getZLong();
+			ret = get_scr(GET_SCREENREF)->screen_gravity.getZLong();
 			break;
 		}
 		case SCREENDATA_TERMINAL_VELOCITY:
 		{
-			ret = get_scr(ri->screenref)->screen_terminal_v.getZLong();
+			ret = get_scr(GET_SCREENREF)->screen_terminal_v.getZLong();
 			break;
 		}
 		case SCREENDATALENSLAYER:	 	GET_SCREENDATA_VAR_BYTE(lens_layer); break;	//B, OLD QUESTS ONLY?
 
 		case SCREENSECRETSTRIGGERED:
 		{
-			ret = get_screen_state(ri->screenref).triggered_secrets ? 10000L : 0L;
+			ret = get_screen_state(GET_SCREENREF).triggered_secrets ? 10000L : 0L;
 			break;
 		}
 		
@@ -6312,7 +6307,7 @@ int32_t get_register(int32_t arg)
 			break;
 
 		case SCREENSCRIPT:
-			ret=get_scr(ri->screenref)->script*10000;
+			ret=get_scr(GET_SCREENREF)->script*10000;
 			break;
 
 		//These use the same method as GetScreenD -Z
@@ -6349,11 +6344,11 @@ int32_t get_register(int32_t arg)
 			break;
 			
 		case ROOMDATA:
-			ret = get_scr(ri->screenref)->catchall*10000;
+			ret = get_scr(GET_SCREENREF)->catchall*10000;
 			break;
 			
 		case ROOMTYPE:
-			ret = get_scr(ri->screenref)->room*10000;
+			ret = get_scr(GET_SCREENREF)->room*10000;
 			break;
 			
 		case PUSHBLOCKX:
@@ -6377,11 +6372,11 @@ int32_t get_register(int32_t arg)
 			break;
 			
 		case UNDERCOMBO:
-			ret = get_scr(ri->screenref)->undercombo*10000;
+			ret = get_scr(GET_SCREENREF)->undercombo*10000;
 			break;
 			
 		case UNDERCSET:
-			ret = get_scr(ri->screenref)->undercset*10000;
+			ret = get_scr(GET_SCREENREF)->undercset*10000;
 			break;
 
 		case SCREEN_INDEX:
@@ -6458,7 +6453,7 @@ int32_t get_register(int32_t arg)
 		case SPRITEDATAMISC: GET_SPRITEDATA_VAR_INT(misc) break;
 		case SPRITEDATACSETS:
 		{
-			if (auto sd = checkSpriteData(ri->spritedataref); !sd)
+			if (auto sd = checkSpriteData(GET_SPRITEDATAREF); !sd)
 				ret = -10000;
 			else
 				ret = ((sd->csets & 0xF) * 10000);
@@ -6466,7 +6461,7 @@ int32_t get_register(int32_t arg)
 		}
 		case SPRITEDATAFLCSET:
 		{
-			if (auto sd = checkSpriteData(ri->spritedataref); !sd)
+			if (auto sd = checkSpriteData(GET_SPRITEDATAREF); !sd)
 				ret = -10000;
 			else
 				ret = (((sd->csets & 0xF0)>>4) * 10000);
@@ -6477,7 +6472,7 @@ int32_t get_register(int32_t arg)
 		case SPRITEDATATYPE: GET_SPRITEDATA_VAR_INT(type) break;
 		case SPRITEDATAID:
 		{
-			if(unsigned(ri->spritedataref) > (MAXWPNS-1) )
+			if(unsigned(GET_SPRITEDATAREF) > (MAXWPNS-1) )
 			{
 				ret = -10000;
 				Z_scripterrlog("Invalid Sprite ID passed to spritedata->ID: %d\n", (ri->spritedataref*10000));
@@ -6491,7 +6486,7 @@ int32_t get_register(int32_t arg)
 		//mapdata m-> variables
 		#define	GET_MAPDATA_VAR_INT32(member) \
 		{ \
-			if ( mapscr *m = ResolveMapdataScr(ri->mapref) ) \
+			if ( mapscr *m = ResolveMapdataScr(GET_MAPREF) ) \
 			{ \
 				ret = (m->member *10000); \
 			} \
@@ -6503,7 +6498,7 @@ int32_t get_register(int32_t arg)
 
 		#define	GET_MAPDATA_VAR_INT16(member) \
 		{ \
-			if ( mapscr *m = ResolveMapdataScr(ri->mapref) ) \
+			if ( mapscr *m = ResolveMapdataScr(GET_MAPREF) ) \
 			{ \
 				ret = (m->member *10000); \
 			} \
@@ -6515,7 +6510,7 @@ int32_t get_register(int32_t arg)
 
 		#define	GET_MAPDATA_VAR_BYTE(member) \
 		{ \
-			if ( mapscr *m = ResolveMapdataScr(ri->mapref) ) \
+			if ( mapscr *m = ResolveMapdataScr(GET_MAPREF) ) \
 			{ \
 				ret = (m->member *10000); \
 			} \
@@ -6528,7 +6523,7 @@ int32_t get_register(int32_t arg)
 		#define GET_MAPDATA_FLAG(member) \
 		{ \
 			int32_t flag =  (value/10000);  \
-			if (mapscr *m = ResolveMapdataScr(ri->mapref)) \
+			if (mapscr *m = ResolveMapdataScr(GET_MAPREF)) \
 			{ \
 				ret = (m->member&flag) ? 10000 : 0); \
 			} \
@@ -6593,7 +6588,7 @@ int32_t get_register(int32_t arg)
 		case MAPDATAROOM: 		GET_MAPDATA_VAR_BYTE(room);	break;		//b
 		case MAPDATAITEM:
 		{
-			if ( mapscr *m = ResolveMapdataScr(ri->mapref) )
+			if ( mapscr *m = ResolveMapdataScr(GET_MAPREF) )
 			{
 				if(m->hasitem)
 					ret = (m->item *10000);
@@ -6607,7 +6602,7 @@ int32_t get_register(int32_t arg)
 		}
 		case MAPDATAREGIONID:
 		{
-			if (auto scr = ResolveMapdataScr(ri->mapref))
+			if (auto scr = ResolveMapdataScr(GET_MAPREF))
 				ret = get_region_id(scr->map, scr->screen) * 10000;
 			break;
 		}
@@ -6704,7 +6699,7 @@ int32_t get_register(int32_t arg)
 		case MAPDATAHOLDUPSFX:	 	GET_MAPDATA_VAR_BYTE(holdupsfx); break; //B
 		case MAPDATASCREENMIDI:
 		{
-			if (mapscr *m = ResolveMapdataScr(ri->mapref))
+			if (mapscr *m = ResolveMapdataScr(GET_MAPREF))
 			{
 				ret = ((m->screen_midi+(MIDIOFFSET_MAPSCR-MIDIOFFSET_ZSCRIPT)) *10000);
 			}
@@ -6716,7 +6711,7 @@ int32_t get_register(int32_t arg)
 		}
 		case MAPDATA_GRAVITY_STRENGTH:
 		{
-			if (mapscr *m = ResolveMapdataScr(ri->mapref))
+			if (mapscr *m = ResolveMapdataScr(GET_MAPREF))
 			{
 				ret = m->screen_gravity.getZLong();
 			}
@@ -6725,7 +6720,7 @@ int32_t get_register(int32_t arg)
 		}
 		case MAPDATA_TERMINAL_VELOCITY:
 		{
-			if (mapscr *m = ResolveMapdataScr(ri->mapref))
+			if (mapscr *m = ResolveMapdataScr(GET_MAPREF))
 			{
 				ret = m->screen_terminal_v.getZLong();
 			}
@@ -6735,9 +6730,9 @@ int32_t get_register(int32_t arg)
 		case MAPDATALENSLAYER:	 	GET_MAPDATA_VAR_BYTE(lens_layer); break;	//B, OLD QUESTS ONLY?
 		case MAPDATAMAP:
 		{
-			if (mapscr *m = ResolveMapdataScr(ri->mapref))
+			if (mapscr *m = ResolveMapdataScr(GET_MAPREF))
 			{
-				ret = getMap(ri->mapref) * 10000;
+				ret = getMap(GET_MAPREF) * 10000;
 			}
 			else
 			{
@@ -6747,9 +6742,9 @@ int32_t get_register(int32_t arg)
 		}
 		case MAPDATASCREEN:
 		{
-			if (mapscr *m = ResolveMapdataScr(ri->mapref))
+			if (mapscr *m = ResolveMapdataScr(GET_MAPREF))
 			{
-				ret = getScreen(ri->mapref) * 10000;
+				ret = getScreen(GET_MAPREF) * 10000;
 			}
 			else
 			{
@@ -6760,9 +6755,9 @@ int32_t get_register(int32_t arg)
 		case MAPDATASCRDATASIZE:
 		{
 			ret = -10000;
-			if (mapscr *m = ResolveMapdataScr(ri->mapref))
+			if (mapscr *m = ResolveMapdataScr(GET_MAPREF))
 			{
-				int index = get_ref_map_index(ri->mapref);
+				int index = get_ref_map_index(GET_MAPREF);
 				if (index < 0) break;
 
 				ret = 10000*game->scriptDataSize(index);
@@ -6771,9 +6766,9 @@ int32_t get_register(int32_t arg)
 		}
 		case MAPDATAGUYCOUNT:
 		{
-			if (mapscr *m = ResolveMapdataScr(ri->mapref))
+			if (mapscr *m = ResolveMapdataScr(GET_MAPREF))
 			{
-				int mi = get_mi(ri->mapref);
+				int mi = get_mi(GET_MAPREF);
 				if(mi > -1)
 				{
 					ret = game->guys[mi] * 10000;
@@ -6786,9 +6781,9 @@ int32_t get_register(int32_t arg)
 		case MAPDATAEXDOOR:
 		{
 			ret = 0;
-			if (mapscr *m = ResolveMapdataScr(ri->mapref))
+			if (mapscr *m = ResolveMapdataScr(GET_MAPREF))
 			{
-				int mi = get_mi(ri->mapref);
+				int mi = get_mi(GET_MAPREF);
 				if(mi < 0) break;
 				int dir = SH::read_stack(ri->sp+1) / 10000;
 				int ind = SH::read_stack(ri->sp+0) / 10000;
@@ -6824,97 +6819,97 @@ int32_t get_register(int32_t arg)
 			
 		case DMAPDATAMAP: 	//byte
 		{
-			ret = ((byte)DMaps[ri->dmapref].map + 1) * 10000; break;
+			ret = ((byte)DMaps[GET_DMAPREF].map + 1) * 10000; break;
 		}
 		case DMAPDATALEVEL:	//word
 		{
-			ret = ((word)DMaps[ri->dmapref].level) * 10000; break;
+			ret = ((word)DMaps[GET_DMAPREF].level) * 10000; break;
 		}
 		case DMAPDATAOFFSET:	//char
 		{
-			ret = ((char)DMaps[ri->dmapref].xoff) * 10000; break;
+			ret = ((char)DMaps[GET_DMAPREF].xoff) * 10000; break;
 		}
 		case DMAPDATACOMPASS:	//byte
 		{
-			ret = ((byte)DMaps[ri->dmapref].compass) * 10000; break;
+			ret = ((byte)DMaps[GET_DMAPREF].compass) * 10000; break;
 		}
 		case DMAPDATAPALETTE:	//word
 		{
-			ret = ((word)DMaps[ri->dmapref].color) * 10000; break;
+			ret = ((word)DMaps[GET_DMAPREF].color) * 10000; break;
 		}
 		case DMAPSCRIPT:	//word
 		{
-			ret = (DMaps[ri->dmapref].script) * 10000; break;
+			ret = (DMaps[GET_DMAPREF].script) * 10000; break;
 		}
 		case DMAPDATAMIDI:	//byte
 		{
-			ret = (DMaps[ri->dmapref].midi-MIDIOFFSET_DMAP) * 10000; break;
+			ret = (DMaps[GET_DMAPREF].midi-MIDIOFFSET_DMAP) * 10000; break;
 		}
 		case DMAPDATA_GRAVITY_STRENGTH:
 		{
-			ret = DMaps[ri->dmapref].dmap_gravity.getZLong();
+			ret = DMaps[GET_DMAPREF].dmap_gravity.getZLong();
 			break;
 		}
 		case DMAPDATA_TERMINAL_VELOCITY:
 		{
-			ret = DMaps[ri->dmapref].dmap_terminal_v.getZLong();
+			ret = DMaps[GET_DMAPREF].dmap_terminal_v.getZLong();
 			break;
 		}
 		case DMAPDATACONTINUE:	//byte
 		{
-			ret = ((byte)DMaps[ri->dmapref].cont) * 10000; break;
+			ret = ((byte)DMaps[GET_DMAPREF].cont) * 10000; break;
 		}
 		case DMAPDATATYPE:	//byte
 		{
-			ret = ((byte)DMaps[ri->dmapref].type&dmfTYPE) * 10000; break;
+			ret = ((byte)DMaps[GET_DMAPREF].type&dmfTYPE) * 10000; break;
 		}
 		case DMAPDATASIDEVIEW:	//byte
 		{
-			ret = ((DMaps[ri->dmapref].sideview) ? 10000 : 0); break;
+			ret = ((DMaps[GET_DMAPREF].sideview) ? 10000 : 0); break;
 		}
 		case DMAPDATAMUISCTRACK:	//byte
 		{
-			ret = ((byte)DMaps[ri->dmapref].tmusictrack) * 10000; break;
+			ret = ((byte)DMaps[GET_DMAPREF].tmusictrack) * 10000; break;
 		}
 		case DMAPDATASUBSCRA:
 		{
-			ret = ((byte)DMaps[ri->dmapref].active_subscreen) * 10000; break;
+			ret = ((byte)DMaps[GET_DMAPREF].active_subscreen) * 10000; break;
 		}
 		case DMAPDATASUBSCRP:
 		{
-			ret = ((byte)DMaps[ri->dmapref].passive_subscreen) * 10000; break;
+			ret = ((byte)DMaps[GET_DMAPREF].passive_subscreen) * 10000; break;
 		}
 		case DMAPDATASUBSCRO:
 		{
-			ret = ((byte)DMaps[ri->dmapref].overlay_subscreen) * 10000; break;
+			ret = ((byte)DMaps[GET_DMAPREF].overlay_subscreen) * 10000; break;
 		}
 		case DMAPDATAFLAGS:	 //int32_t
 		{
-			ret = (DMaps[ri->dmapref].flags) * 10000; break;
+			ret = (DMaps[GET_DMAPREF].flags) * 10000; break;
 		}
 		case DMAPDATAMIRRDMAP:
 		{
-			ret = (DMaps[ri->dmapref].mirrorDMap) * 10000; break;
+			ret = (DMaps[GET_DMAPREF].mirrorDMap) * 10000; break;
 		}
 		case DMAPDATALOOPSTART:
 		{
-			ret = (DMaps[ri->dmapref].tmusic_loop_start); break;
+			ret = (DMaps[GET_DMAPREF].tmusic_loop_start); break;
 		}
 		case DMAPDATALOOPEND:
 		{
-			ret = (DMaps[ri->dmapref].tmusic_loop_end); break;
+			ret = (DMaps[GET_DMAPREF].tmusic_loop_end); break;
 		}
 		case DMAPDATAXFADEIN:
 		{
-			ret = (DMaps[ri->dmapref].tmusic_xfade_in * 10000); break;
+			ret = (DMaps[GET_DMAPREF].tmusic_xfade_in * 10000); break;
 		}
 		case DMAPDATAXFADEOUT:
 		{
-			ret = (DMaps[ri->dmapref].tmusic_xfade_out * 10000); break;
+			ret = (DMaps[GET_DMAPREF].tmusic_xfade_out * 10000); break;
 		}
 		case DMAPDATAINTROSTRINGID:
 		{
-			ret = (DMaps[ri->dmapref].intro_string_id * 10000); break;
+			ret = (DMaps[GET_DMAPREF].intro_string_id * 10000); break;
 		}
 		case MUSICUPDATECOND:
 		{
@@ -6922,15 +6917,15 @@ int32_t get_register(int32_t arg)
 		}
 		case DMAPDATAASUBSCRIPT:	//word
 		{
-			ret = (DMaps[ri->dmapref].active_sub_script) * 10000; break;
+			ret = (DMaps[GET_DMAPREF].active_sub_script) * 10000; break;
 		}
 		case DMAPDATAMAPSCRIPT:	//byte
 		{
-			ret = (DMaps[ri->dmapref].onmap_script) * 10000; break;
+			ret = (DMaps[GET_DMAPREF].onmap_script) * 10000; break;
 		}
 		case DMAPDATAPSUBSCRIPT:	//word
 		{
-			ret = (DMaps[ri->dmapref].passive_sub_script) * 10000; break;
+			ret = (DMaps[GET_DMAPREF].passive_sub_script) * 10000; break;
 		}
 			
 		///----------------------------------------------------------------------------------------------------//
@@ -7153,12 +7148,12 @@ int32_t get_register(int32_t arg)
 		}
 		case MESSAGEDATATEXTWID:
 		{
-			ret = do_msgwidth(ri->zmsgref)*10000;
+			ret = do_msgwidth(GET_ZMSGREF)*10000;
 			break;
 		}
 		case MESSAGEDATATEXTHEI:
 		{
-			ret = do_msgheight(ri->zmsgref)*10000;
+			ret = do_msgheight(GET_ZMSGREF)*10000;
 			break;
 		}
 
@@ -7173,7 +7168,7 @@ int32_t get_register(int32_t arg)
 			} \
 			else \
 			{ \
-				ret = (combobuf[ri->combosref].member *10000); \
+				ret = (combobuf[GET_COMBOSREF].member *10000); \
 			} \
 		} \
 
@@ -7186,7 +7181,7 @@ int32_t get_register(int32_t arg)
 			} \
 			else \
 			{ \
-				ret = (combobuf[ri->combosref].member *10000); \
+				ret = (combobuf[GET_COMBOSREF].member *10000); \
 			} \
 		} \
 		
@@ -7199,7 +7194,7 @@ int32_t get_register(int32_t arg)
 			} \
 			else \
 			{ \
-				ret = (combobuf[ri->combosref].member *10000); \
+				ret = (combobuf[GET_COMBOSREF].member *10000); \
 			} \
 		} \
 		
@@ -7218,7 +7213,7 @@ int32_t get_register(int32_t arg)
 				} \
 				else \
 				{ \
-					ret = (combobuf[ri->combosref].member[indx] * 10000); \
+					ret = (combobuf[GET_COMBOSREF].member[indx] * 10000); \
 				} \
 		}
 
@@ -7237,7 +7232,7 @@ int32_t get_register(int32_t arg)
 				} \
 				else \
 				{ \
-					ret = (combobuf[ri->combosref].member[indx] * 100000); \
+					ret = (combobuf[GET_COMBOSREF].member[indx] * 100000); \
 				} \
 		}
 		
@@ -7250,7 +7245,7 @@ int32_t get_register(int32_t arg)
 			} \
 			else \
 			{ \
-				ret = (combobuf[ri->combosref].member&flag) ? 10000 : 0); \
+				ret = (combobuf[GET_COMBOSREF].member&flag) ? 10000 : 0); \
 			} \
 		} \
 
@@ -7265,7 +7260,7 @@ int32_t get_register(int32_t arg)
 			} \
 			else \
 			{ \
-				ret = (combo_class_buf[combobuf[ri->combosref].type].member *10000); \
+				ret = (combo_class_buf[combobuf[GET_COMBOSREF].type].member *10000); \
 			} \
 		} \
 
@@ -7278,7 +7273,7 @@ int32_t get_register(int32_t arg)
 			} \
 			else \
 			{ \
-				ret = (combo_class_buf[combobuf[ri->combosref].type].member *10000); \
+				ret = (combo_class_buf[combobuf[GET_COMBOSREF].type].member *10000); \
 			} \
 		} \
 		
@@ -7291,7 +7286,7 @@ int32_t get_register(int32_t arg)
 			} \
 			else \
 			{ \
-				ret = (combo_class_buf[combobuf[ri->combosref].type].member *10000); \
+				ret = (combo_class_buf[combobuf[GET_COMBOSREF].type].member *10000); \
 			} \
 		} \
 		
@@ -7310,7 +7305,7 @@ int32_t get_register(int32_t arg)
 				} \
 				else \
 				{ \
-					ret = (combo_class_buf[combobuf[ri->combosref].type].member[indx] * 10000); \
+					ret = (combo_class_buf[combobuf[GET_COMBOSREF].type].member[indx] * 10000); \
 				} \
 		}
 
@@ -7329,7 +7324,7 @@ int32_t get_register(int32_t arg)
 				} \
 				else \
 				{ \
-					ret = (combo_class_buf[combobuf[ri->combosref].type].member[indx] * 100000); \
+					ret = (combo_class_buf[combobuf[GET_COMBOSREF].type].member[indx] * 100000); \
 				} \
 		}
 		
@@ -7342,7 +7337,7 @@ int32_t get_register(int32_t arg)
 			} \
 			else \
 			{ \
-				ret = (combo_class_buf[combobuf[ri->combosref].type].member&flag) ? 10000 : 0); \
+				ret = (combo_class_buf[combobuf[GET_COMBOSREF].type].member&flag) ? 10000 : 0); \
 			} \
 		} \
 		
@@ -7352,14 +7347,14 @@ int32_t get_register(int32_t arg)
 			//ri->comboposref = i; //used for X(), Y(), Layer(), and so forth.
 			if ( curScriptType == ScriptType::Combo )
 			{
-				rpos_t rpos = combopos_ref_to_rpos(ri->comboposref);
+				rpos_t rpos = combopos_ref_to_rpos(GET_COMBOPOSREF);
 				ret = (( COMBOX_REGION((rpos)) ) * 10000); //comboscriptstack[i]
 				//this may be wrong...may need a special new var for this, storing the exact combopos
 				//i is the current script number
 			}
 			else
 			{
-				scripting_log_error_with_context("Can only be called by combodata scripts, but you tried to use it from script type {}, script token {}", ScriptTypeToString(curScriptType), comboscriptmap[ri->combosref].scriptname);
+				scripting_log_error_with_context("Can only be called by combodata scripts, but you tried to use it from script type {}, script token {}", ScriptTypeToString(curScriptType), comboscriptmap[GET_COMBOSREF].scriptname);
 				ret = -10000;
 			}
 			break;
@@ -7369,12 +7364,12 @@ int32_t get_register(int32_t arg)
 		{
 			if ( curScriptType == ScriptType::Combo )
 			{
-				rpos_t rpos = combopos_ref_to_rpos(ri->comboposref);
+				rpos_t rpos = combopos_ref_to_rpos(GET_COMBOPOSREF);
 				ret = (( COMBOY_REGION((rpos)) ) * 10000); //comboscriptstack[i]
 			}
 			else
 			{
-				scripting_log_error_with_context("Can only be called by combodata scripts, but you tried to use it from script type {}, script token {}", ScriptTypeToString(curScriptType), comboscriptmap[ri->combosref].scriptname);				ret = -10000;
+				scripting_log_error_with_context("Can only be called by combodata scripts, but you tried to use it from script type {}, script token {}", ScriptTypeToString(curScriptType), comboscriptmap[GET_COMBOSREF].scriptname);				ret = -10000;
 			}
 			break;
 		}
@@ -7382,12 +7377,12 @@ int32_t get_register(int32_t arg)
 		{
 			if ( curScriptType == ScriptType::Combo )
 			{
-				rpos_t rpos = combopos_ref_to_rpos(ri->comboposref);
+				rpos_t rpos = combopos_ref_to_rpos(GET_COMBOPOSREF);
 				ret = (int)rpos * 10000; //comboscriptstack[i]
 			}
 			else
 			{
-				scripting_log_error_with_context("Can only be called by combodata scripts, but you tried to use it from script type {}, script token {}", ScriptTypeToString(curScriptType), comboscriptmap[ri->combosref].scriptname);				ret = -10000;
+				scripting_log_error_with_context("Can only be called by combodata scripts, but you tried to use it from script type {}, script token {}", ScriptTypeToString(curScriptType), comboscriptmap[GET_COMBOSREF].scriptname);				ret = -10000;
 			}
 			break;
 		}
@@ -7395,12 +7390,12 @@ int32_t get_register(int32_t arg)
 		{
 			if ( curScriptType == ScriptType::Combo )
 			{
-				int32_t layer = combopos_ref_to_layer(ri->comboposref);
+				int32_t layer = combopos_ref_to_layer(GET_COMBOPOSREF);
 				ret = layer * 10000; //comboscriptstack[i]
 			}
 			else
 			{
-				scripting_log_error_with_context("Can only be called by combodata scripts, but you tried to use it from script type {}, script token {}", ScriptTypeToString(curScriptType), comboscriptmap[ri->combosref].scriptname);				ret = -10000;
+				scripting_log_error_with_context("Can only be called by combodata scripts, but you tried to use it from script type {}, script token {}", ScriptTypeToString(curScriptType), comboscriptmap[GET_COMBOSREF].scriptname);				ret = -10000;
 			}
 			break;
 		}
@@ -7421,7 +7416,7 @@ int32_t get_register(int32_t arg)
 			}
 			else
 			{
-				ret = ((combobuf[ri->combosref].walk&0x0F) *10000);
+				ret = ((combobuf[GET_COMBOSREF].walk&0x0F) *10000);
 			}
 			break;
 		}
@@ -7434,7 +7429,7 @@ int32_t get_register(int32_t arg)
 			}
 			else
 			{
-				ret = (((combobuf[ri->combosref].walk&0xF0)>>4) *10000);
+				ret = (((combobuf[GET_COMBOSREF].walk&0xF0)>>4) *10000);
 			}
 			break;
 		}
@@ -7448,8 +7443,8 @@ int32_t get_register(int32_t arg)
 			}
 			else
 			{
-				bool neg = combobuf[ri->combosref].csets&0x8;
-				ret = ((combobuf[ri->combosref].csets&0x7) * (neg ? -10000 : 10000));
+				bool neg = combobuf[GET_COMBOSREF].csets&0x8;
+				ret = ((combobuf[GET_COMBOSREF].csets&0x7) * (neg ? -10000 : 10000));
 			}
 			break;
 		}
@@ -7461,7 +7456,7 @@ int32_t get_register(int32_t arg)
 			}
 			else
 			{
-				ret = ((combobuf[ri->combosref].csets & 0xF0) >> 4) * 10000;
+				ret = ((combobuf[GET_COMBOSREF].csets & 0xF0) >> 4) * 10000;
 			}
 			break;
 		}
@@ -7833,7 +7828,7 @@ int32_t get_register(int32_t arg)
 			{
 				scripting_log_error_with_context("Invalid combodata ID: {}", ri->combosref);
 			}
-			else ret = (combobuf[ri->combosref].liftcmb) * 10000;
+			else ret = (combobuf[GET_COMBOSREF].liftcmb) * 10000;
 			break;
 		}
 		case COMBODLIFTGFXCCSET:
@@ -7843,7 +7838,7 @@ int32_t get_register(int32_t arg)
 			{
 				scripting_log_error_with_context("Invalid combodata ID: {}", ri->combosref);
 			}
-			else ret = (combobuf[ri->combosref].liftcs) * 10000;
+			else ret = (combobuf[GET_COMBOSREF].liftcs) * 10000;
 			break;
 		}
 		case COMBODLIFTUNDERCMB:
@@ -7853,7 +7848,7 @@ int32_t get_register(int32_t arg)
 			{
 				scripting_log_error_with_context("Invalid combodata ID: {}", ri->combosref);
 			}
-			else ret = (combobuf[ri->combosref].liftundercmb) * 10000;
+			else ret = (combobuf[GET_COMBOSREF].liftundercmb) * 10000;
 			break;
 		}
 		case COMBODLIFTUNDERCS:
@@ -7863,7 +7858,7 @@ int32_t get_register(int32_t arg)
 			{
 				scripting_log_error_with_context("Invalid combodata ID: {}", ri->combosref);
 			}
-			else ret = (combobuf[ri->combosref].liftundercs) * 10000;
+			else ret = (combobuf[GET_COMBOSREF].liftundercs) * 10000;
 			break;
 		}
 		case COMBODLIFTDAMAGE:
@@ -7873,7 +7868,7 @@ int32_t get_register(int32_t arg)
 			{
 				scripting_log_error_with_context("Invalid combodata ID: {}", ri->combosref);
 			}
-			else ret = (combobuf[ri->combosref].liftdmg) * 10000;
+			else ret = (combobuf[GET_COMBOSREF].liftdmg) * 10000;
 			break;
 		}
 		case COMBODLIFTLEVEL:
@@ -7883,7 +7878,7 @@ int32_t get_register(int32_t arg)
 			{
 				scripting_log_error_with_context("Invalid combodata ID: {}", ri->combosref);
 			}
-			else ret = (combobuf[ri->combosref].liftlvl) * 10000;
+			else ret = (combobuf[GET_COMBOSREF].liftlvl) * 10000;
 			break;
 		}
 		case COMBODLIFTITEM:
@@ -7893,7 +7888,7 @@ int32_t get_register(int32_t arg)
 			{
 				scripting_log_error_with_context("Invalid combodata ID: {}", ri->combosref);
 			}
-			else ret = (combobuf[ri->combosref].liftitm) * 10000;
+			else ret = (combobuf[GET_COMBOSREF].liftitm) * 10000;
 			break;
 		}
 		case COMBODLIFTGFXTYPE:
@@ -7903,7 +7898,7 @@ int32_t get_register(int32_t arg)
 			{
 				scripting_log_error_with_context("Invalid combodata ID: {}", ri->combosref);
 			}
-			else ret = (combobuf[ri->combosref].liftgfx) * 10000;
+			else ret = (combobuf[GET_COMBOSREF].liftgfx) * 10000;
 			break;
 		}
 		case COMBODLIFTGFXSPRITE:
@@ -7913,7 +7908,7 @@ int32_t get_register(int32_t arg)
 			{
 				scripting_log_error_with_context("Invalid combodata ID: {}", ri->combosref);
 			}
-			else ret = (combobuf[ri->combosref].liftsprite) * 10000;
+			else ret = (combobuf[GET_COMBOSREF].liftsprite) * 10000;
 			break;
 		}
 		case COMBODLIFTSFX:
@@ -7923,7 +7918,7 @@ int32_t get_register(int32_t arg)
 			{
 				scripting_log_error_with_context("Invalid combodata ID: {}", ri->combosref);
 			}
-			else ret = (combobuf[ri->combosref].liftsfx) * 10000;
+			else ret = (combobuf[GET_COMBOSREF].liftsfx) * 10000;
 			break;
 		}
 		case COMBODLIFTBREAKSPRITE:
@@ -7933,7 +7928,7 @@ int32_t get_register(int32_t arg)
 			{
 				scripting_log_error_with_context("Invalid combodata ID: {}", ri->combosref);
 			}
-			else ret = (combobuf[ri->combosref].liftbreaksprite) * 10000;
+			else ret = (combobuf[GET_COMBOSREF].liftbreaksprite) * 10000;
 			break;
 		}
 		case COMBODLIFTBREAKSFX:
@@ -7943,7 +7938,7 @@ int32_t get_register(int32_t arg)
 			{
 				scripting_log_error_with_context("Invalid combodata ID: {}", ri->combosref);
 			}
-			else ret = (combobuf[ri->combosref].liftbreaksfx) * 10000;
+			else ret = (combobuf[GET_COMBOSREF].liftbreaksfx) * 10000;
 			break;
 		}
 		case COMBODLIFTHEIGHT:
@@ -7953,7 +7948,7 @@ int32_t get_register(int32_t arg)
 			{
 				scripting_log_error_with_context("Invalid combodata ID: {}", ri->combosref);
 			}
-			else ret = (combobuf[ri->combosref].lifthei) * 10000;
+			else ret = (combobuf[GET_COMBOSREF].lifthei) * 10000;
 			break;
 		}
 		case COMBODLIFTTIME:
@@ -7963,7 +7958,7 @@ int32_t get_register(int32_t arg)
 			{
 				scripting_log_error_with_context("Invalid combodata ID: {}", ri->combosref);
 			}
-			else ret = (combobuf[ri->combosref].lifttime) * 10000;
+			else ret = (combobuf[GET_COMBOSREF].lifttime) * 10000;
 			break;
 		}
 		case COMBODLIFTLIGHTRAD:
@@ -7973,7 +7968,7 @@ int32_t get_register(int32_t arg)
 			{
 				scripting_log_error_with_context("Invalid combodata ID: {}", ri->combosref);
 			}
-			else ret = (combobuf[ri->combosref].lift_weap_data.light_rads[WPNSPR_BASE]) * 10000;
+			else ret = (combobuf[GET_COMBOSREF].lift_weap_data.light_rads[WPNSPR_BASE]) * 10000;
 			break;
 		}
 		case COMBODLIFTLIGHTSHAPE:
@@ -7983,7 +7978,7 @@ int32_t get_register(int32_t arg)
 			{
 				scripting_log_error_with_context("Invalid combodata ID: {}", ri->combosref);
 			}
-			else ret = (combobuf[ri->combosref].lift_weap_data.glow_shape) * 10000;
+			else ret = (combobuf[GET_COMBOSREF].lift_weap_data.glow_shape) * 10000;
 			break;
 		}
 		case COMBODLIFTWEAPONITEM:
@@ -7993,7 +7988,7 @@ int32_t get_register(int32_t arg)
 			{
 				scripting_log_error_with_context("Invalid combodata ID: {}", ri->combosref);
 			}
-			else ret = (combobuf[ri->combosref].lift_parent_item) * 10000;
+			else ret = (combobuf[GET_COMBOSREF].lift_parent_item) * 10000;
 			break;
 		}
 		case COMBODTRIGGERLSTATE:
@@ -8082,7 +8077,7 @@ int32_t get_register(int32_t arg)
 			{
 				scripting_log_error_with_context("Invalid combodata ID: {}", ri->combosref);
 			}
-			else ret = combobuf[ri->combosref].triggers.size() * 10000;
+			else ret = combobuf[GET_COMBOSREF].triggers.size() * 10000;
 			break;
 		}
 		case COMBODONLYGEN:
@@ -8092,7 +8087,7 @@ int32_t get_register(int32_t arg)
 			{
 				scripting_log_error_with_context("Invalid combodata ID: {}", ri->combosref);
 			}
-			else ret = combobuf[ri->combosref].only_gentrig ? 10000 : 0;
+			else ret = combobuf[GET_COMBOSREF].only_gentrig ? 10000 : 0;
 			break;
 		}
 		case COMBOD_Z_HEIGHT:
@@ -8102,7 +8097,7 @@ int32_t get_register(int32_t arg)
 			{
 				scripting_log_error_with_context("Invalid combodata ID: {}", ri->combosref);
 			}
-			else ret = combobuf[ri->combosref].z_height.getZLong();
+			else ret = combobuf[GET_COMBOSREF].z_height.getZLong();
 			break;
 		}
 		case COMBOD_Z_STEP_HEIGHT:
@@ -8112,7 +8107,7 @@ int32_t get_register(int32_t arg)
 			{
 				scripting_log_error_with_context("Invalid combodata ID: {}", ri->combosref);
 			}
-			else ret = combobuf[ri->combosref].z_step_height.getZLong();
+			else ret = combobuf[GET_COMBOSREF].z_step_height.getZLong();
 			break;
 		}
 		case COMBOD_DIVE_UNDER_LEVEL:
@@ -8122,7 +8117,7 @@ int32_t get_register(int32_t arg)
 			{
 				scripting_log_error_with_context("Invalid combodata ID: {}", ri->combosref);
 			}
-			else ret = combobuf[ri->combosref].dive_under_level * 10000;
+			else ret = combobuf[GET_COMBOSREF].dive_under_level * 10000;
 			break;
 		}
 		//COMBOCLASS STRUCT
@@ -8195,7 +8190,7 @@ int32_t get_register(int32_t arg)
 		///----------------------------------------------------------------------------------------------------//
 		case CMBTRIGWPNLEVEL:
 		{
-			if(auto* trig = get_combo_trigger(ri->combotrigref))
+			if(auto* trig = get_combo_trigger(GET_COMBOTRIGREF))
 			{
 				ret = trig->triggerlevel * 10000;
 			}
@@ -8204,7 +8199,7 @@ int32_t get_register(int32_t arg)
 		}
 		case CMBTRIGREQITEM:
 		{
-			if(auto* trig = get_combo_trigger(ri->combotrigref))
+			if(auto* trig = get_combo_trigger(GET_COMBOTRIGREF))
 			{
 				ret = trig->triggeritem * 10000;
 			}
@@ -8213,7 +8208,7 @@ int32_t get_register(int32_t arg)
 		}
 		case CMBTRIGTIMER:
 		{
-			if(auto* trig = get_combo_trigger(ri->combotrigref))
+			if(auto* trig = get_combo_trigger(GET_COMBOTRIGREF))
 			{
 				ret = trig->trigtimer * 10000;
 			}
@@ -8222,7 +8217,7 @@ int32_t get_register(int32_t arg)
 		}
 		case CMBTRIGSFX:
 		{
-			if(auto* trig = get_combo_trigger(ri->combotrigref))
+			if(auto* trig = get_combo_trigger(GET_COMBOTRIGREF))
 			{
 				ret = trig->trigsfx * 10000;
 			}
@@ -8231,7 +8226,7 @@ int32_t get_register(int32_t arg)
 		}
 		case CMBTRIGCHANGECMB:
 		{
-			if(auto* trig = get_combo_trigger(ri->combotrigref))
+			if(auto* trig = get_combo_trigger(GET_COMBOTRIGREF))
 			{
 				ret = trig->trigchange * 10000;
 			}
@@ -8240,7 +8235,7 @@ int32_t get_register(int32_t arg)
 		}
 		case CMBTRIGCSETCHANGE:
 		{
-			if(auto* trig = get_combo_trigger(ri->combotrigref))
+			if(auto* trig = get_combo_trigger(GET_COMBOTRIGREF))
 			{
 				ret = trig->trigcschange * 10000;
 			}
@@ -8249,7 +8244,7 @@ int32_t get_register(int32_t arg)
 		}
 		case CMBTRIGPROX:
 		{
-			if(auto* trig = get_combo_trigger(ri->combotrigref))
+			if(auto* trig = get_combo_trigger(GET_COMBOTRIGREF))
 			{
 				ret = trig->trigprox * 10000;
 			}
@@ -8258,7 +8253,7 @@ int32_t get_register(int32_t arg)
 		}
 		case CMBTRIGLIGHTBEAM:
 		{
-			if(auto* trig = get_combo_trigger(ri->combotrigref))
+			if(auto* trig = get_combo_trigger(GET_COMBOTRIGREF))
 			{
 				ret = trig->triglbeam * 10000;
 			}
@@ -8267,7 +8262,7 @@ int32_t get_register(int32_t arg)
 		}
 		case CMBTRIGCTR:
 		{
-			if(auto* trig = get_combo_trigger(ri->combotrigref))
+			if(auto* trig = get_combo_trigger(GET_COMBOTRIGREF))
 			{
 				ret = trig->trigctr * 10000;
 			}
@@ -8276,7 +8271,7 @@ int32_t get_register(int32_t arg)
 		}
 		case CMBTRIGCTRAMNT:
 		{
-			if(auto* trig = get_combo_trigger(ri->combotrigref))
+			if(auto* trig = get_combo_trigger(GET_COMBOTRIGREF))
 			{
 				ret = trig->trigctramnt * 10000;
 			}
@@ -8285,7 +8280,7 @@ int32_t get_register(int32_t arg)
 		}
 		case CMBTRIGCOOLDOWN:
 		{
-			if(auto* trig = get_combo_trigger(ri->combotrigref))
+			if(auto* trig = get_combo_trigger(GET_COMBOTRIGREF))
 			{
 				ret = trig->trigcooldown * 10000;
 			}
@@ -8294,7 +8289,7 @@ int32_t get_register(int32_t arg)
 		}
 		case CMBTRIGCOPYCAT:
 		{
-			if(auto* trig = get_combo_trigger(ri->combotrigref))
+			if(auto* trig = get_combo_trigger(GET_COMBOTRIGREF))
 			{
 				ret = trig->trigcopycat * 10000;
 			}
@@ -8303,7 +8298,7 @@ int32_t get_register(int32_t arg)
 		}
 		case CMBTRIGITEMPICKUP:
 		{
-			if(auto* trig = get_combo_trigger(ri->combotrigref))
+			if(auto* trig = get_combo_trigger(GET_COMBOTRIGREF))
 			{
 				ret = trig->spawnip * 10000;
 			}
@@ -8312,7 +8307,7 @@ int32_t get_register(int32_t arg)
 		}
 		case CMBTRIGEXSTATE:
 		{
-			if(auto* trig = get_combo_trigger(ri->combotrigref))
+			if(auto* trig = get_combo_trigger(GET_COMBOTRIGREF))
 			{
 				ret = trig->exstate * 10000;
 			}
@@ -8321,7 +8316,7 @@ int32_t get_register(int32_t arg)
 		}
 		case CMBTRIGEXDOORDIR:
 		{
-			if(auto* trig = get_combo_trigger(ri->combotrigref))
+			if(auto* trig = get_combo_trigger(GET_COMBOTRIGREF))
 			{
 				ret = trig->exdoor_dir * 10000;
 			}
@@ -8330,7 +8325,7 @@ int32_t get_register(int32_t arg)
 		}
 		case CMBTRIGEXDOORIND:
 		{
-			if(auto* trig = get_combo_trigger(ri->combotrigref))
+			if(auto* trig = get_combo_trigger(GET_COMBOTRIGREF))
 			{
 				ret = trig->exdoor_ind * 10000;
 			}
@@ -8339,7 +8334,7 @@ int32_t get_register(int32_t arg)
 		}
 		case CMBTRIGSPAWNENEMY:
 		{
-			if(auto* trig = get_combo_trigger(ri->combotrigref))
+			if(auto* trig = get_combo_trigger(GET_COMBOTRIGREF))
 			{
 				ret = trig->spawnenemy * 10000;
 			}
@@ -8348,7 +8343,7 @@ int32_t get_register(int32_t arg)
 		}
 		case CMBTRIGSPAWNITEM:
 		{
-			if(auto* trig = get_combo_trigger(ri->combotrigref))
+			if(auto* trig = get_combo_trigger(GET_COMBOTRIGREF))
 			{
 				ret = trig->spawnitem * 10000;
 			}
@@ -8357,7 +8352,7 @@ int32_t get_register(int32_t arg)
 		}
 		case CMBTRIGLSTATE:
 		{
-			if(auto* trig = get_combo_trigger(ri->combotrigref))
+			if(auto* trig = get_combo_trigger(GET_COMBOTRIGREF))
 			{
 				ret = trig->trig_lstate * 10000;
 			}
@@ -8366,7 +8361,7 @@ int32_t get_register(int32_t arg)
 		}
 		case CMBTRIGGSTATE:
 		{
-			if(auto* trig = get_combo_trigger(ri->combotrigref))
+			if(auto* trig = get_combo_trigger(GET_COMBOTRIGREF))
 			{
 				ret = trig->trig_gstate * 10000;
 			}
@@ -8375,7 +8370,7 @@ int32_t get_register(int32_t arg)
 		}
 		case CMBTRIGGTIMER:
 		{
-			if(auto* trig = get_combo_trigger(ri->combotrigref))
+			if(auto* trig = get_combo_trigger(GET_COMBOTRIGREF))
 			{
 				ret = trig->trig_statetime * 10000;
 			}
@@ -8384,7 +8379,7 @@ int32_t get_register(int32_t arg)
 		}
 		case CMBTRIGGENSCRIPT:
 		{
-			if(auto* trig = get_combo_trigger(ri->combotrigref))
+			if(auto* trig = get_combo_trigger(GET_COMBOTRIGREF))
 			{
 				ret = trig->trig_genscr * 10000;
 			}
@@ -8393,7 +8388,7 @@ int32_t get_register(int32_t arg)
 		}
 		case CMBTRIGGROUP:
 		{
-			if(auto* trig = get_combo_trigger(ri->combotrigref))
+			if(auto* trig = get_combo_trigger(GET_COMBOTRIGREF))
 			{
 				ret = trig->trig_group * 10000;
 			}
@@ -8402,7 +8397,7 @@ int32_t get_register(int32_t arg)
 		}
 		case CMBTRIGGROUPVAL:
 		{
-			if(auto* trig = get_combo_trigger(ri->combotrigref))
+			if(auto* trig = get_combo_trigger(GET_COMBOTRIGREF))
 			{
 				ret = trig->trig_group_val * 10000;
 			}
@@ -8411,7 +8406,7 @@ int32_t get_register(int32_t arg)
 		}
 		case CMBTRIGLITEMS:
 		{
-			if(auto* trig = get_combo_trigger(ri->combotrigref))
+			if(auto* trig = get_combo_trigger(GET_COMBOTRIGREF))
 			{
 				ret = trig->trig_levelitems * 10000;
 			}
@@ -8420,7 +8415,7 @@ int32_t get_register(int32_t arg)
 		}
 		case CMBTRIGDMAPLVL:
 		{
-			if(auto* trig = get_combo_trigger(ri->combotrigref))
+			if(auto* trig = get_combo_trigger(GET_COMBOTRIGREF))
 			{
 				ret = trig->trigdmlevel * 10000;
 			}
@@ -8429,7 +8424,7 @@ int32_t get_register(int32_t arg)
 		}
 		case CMBTRIGTINTR:
 		{
-			if(auto* trig = get_combo_trigger(ri->combotrigref))
+			if(auto* trig = get_combo_trigger(GET_COMBOTRIGREF))
 			{
 				ret = trig->trigtint[0] * 10000;
 			}
@@ -8438,7 +8433,7 @@ int32_t get_register(int32_t arg)
 		}
 		case CMBTRIGTINTG:
 		{
-			if(auto* trig = get_combo_trigger(ri->combotrigref))
+			if(auto* trig = get_combo_trigger(GET_COMBOTRIGREF))
 			{
 				ret = trig->trigtint[1] * 10000;
 			}
@@ -8447,7 +8442,7 @@ int32_t get_register(int32_t arg)
 		}
 		case CMBTRIGTINTB:
 		{
-			if(auto* trig = get_combo_trigger(ri->combotrigref))
+			if(auto* trig = get_combo_trigger(GET_COMBOTRIGREF))
 			{
 				ret = trig->trigtint[2] * 10000;
 			}
@@ -8456,7 +8451,7 @@ int32_t get_register(int32_t arg)
 		}
 		case CMBTRIGLVLPAL:
 		{
-			if(auto* trig = get_combo_trigger(ri->combotrigref))
+			if(auto* trig = get_combo_trigger(GET_COMBOTRIGREF))
 			{
 				ret = trig->triglvlpalette * 10000;
 			}
@@ -8465,7 +8460,7 @@ int32_t get_register(int32_t arg)
 		}
 		case CMBTRIGBOSSPAL:
 		{
-			if(auto* trig = get_combo_trigger(ri->combotrigref))
+			if(auto* trig = get_combo_trigger(GET_COMBOTRIGREF))
 			{
 				ret = trig->trigbosspalette * 10000;
 			}
@@ -8474,7 +8469,7 @@ int32_t get_register(int32_t arg)
 		}
 		case CMBTRIGQUAKETIME:
 		{
-			if(auto* trig = get_combo_trigger(ri->combotrigref))
+			if(auto* trig = get_combo_trigger(GET_COMBOTRIGREF))
 			{
 				ret = trig->trigquaketime * 10000;
 			}
@@ -8483,7 +8478,7 @@ int32_t get_register(int32_t arg)
 		}
 		case CMBTRIGWAVYTIME:
 		{
-			if(auto* trig = get_combo_trigger(ri->combotrigref))
+			if(auto* trig = get_combo_trigger(GET_COMBOTRIGREF))
 			{
 				ret = trig->trigwavytime * 10000;
 			}
@@ -8492,7 +8487,7 @@ int32_t get_register(int32_t arg)
 		}
 		case CMBTRIGSWORDJINX:
 		{
-			if(auto* trig = get_combo_trigger(ri->combotrigref))
+			if(auto* trig = get_combo_trigger(GET_COMBOTRIGREF))
 			{
 				ret = trig->trig_swjinxtime * 10000;
 			}
@@ -8501,7 +8496,7 @@ int32_t get_register(int32_t arg)
 		}
 		case CMBTRIGITEMJINX:
 		{
-			if(auto* trig = get_combo_trigger(ri->combotrigref))
+			if(auto* trig = get_combo_trigger(GET_COMBOTRIGREF))
 			{
 				ret = trig->trig_itmjinxtime * 10000;
 			}
@@ -8510,7 +8505,7 @@ int32_t get_register(int32_t arg)
 		}
 		case CMBTRIGSHIELDJINX:
 		{
-			if(auto* trig = get_combo_trigger(ri->combotrigref))
+			if(auto* trig = get_combo_trigger(GET_COMBOTRIGREF))
 			{
 				ret = trig->trig_shieldjinxtime * 10000;
 			}
@@ -8519,7 +8514,7 @@ int32_t get_register(int32_t arg)
 		}
 		case CMBTRIGSTUN:
 		{
-			if(auto* trig = get_combo_trigger(ri->combotrigref))
+			if(auto* trig = get_combo_trigger(GET_COMBOTRIGREF))
 			{
 				ret = trig->trig_stuntime * 10000;
 			}
@@ -8528,7 +8523,7 @@ int32_t get_register(int32_t arg)
 		}
 		case CMBTRIGBUNNY:
 		{
-			if(auto* trig = get_combo_trigger(ri->combotrigref))
+			if(auto* trig = get_combo_trigger(GET_COMBOTRIGREF))
 			{
 				ret = trig->trig_bunnytime * 10000;
 			}
@@ -8537,7 +8532,7 @@ int32_t get_register(int32_t arg)
 		}
 		case CMBTRIGPUSHTIME:
 		{
-			if(auto* trig = get_combo_trigger(ri->combotrigref))
+			if(auto* trig = get_combo_trigger(GET_COMBOTRIGREF))
 			{
 				ret = trig->trig_pushtime * 10000;
 			}
@@ -8546,147 +8541,147 @@ int32_t get_register(int32_t arg)
 		}
 		case CMBTRIGGERPROMPTCID:
 		{
-			if(auto* trig = get_combo_trigger(ri->combotrigref))
+			if(auto* trig = get_combo_trigger(GET_COMBOTRIGREF))
 				ret = trig->prompt_cid * 10000;
 			else ret = -10000;
 			break;
 		}
 		case CMBTRIGGERPROMPTCS:
 		{
-			if(auto* trig = get_combo_trigger(ri->combotrigref))
+			if(auto* trig = get_combo_trigger(GET_COMBOTRIGREF))
 				ret = trig->prompt_cs * 10000;
 			else ret = -10000;
 			break;
 		}
 		case CMBTRIGGERFAILPROMPTCID:
 		{
-			if(auto* trig = get_combo_trigger(ri->combotrigref))
+			if(auto* trig = get_combo_trigger(GET_COMBOTRIGREF))
 				ret = trig->fail_prompt_cid * 10000;
 			else ret = -10000;
 			break;
 		}
 		case CMBTRIGGERFAILPROMPTCS:
 		{
-			if(auto* trig = get_combo_trigger(ri->combotrigref))
+			if(auto* trig = get_combo_trigger(GET_COMBOTRIGREF))
 				ret = trig->fail_prompt_cs * 10000;
 			else ret = -10000;
 			break;
 		}
 		case CMBTRIGGERPROMPTX:
 		{
-			if(auto* trig = get_combo_trigger(ri->combotrigref))
+			if(auto* trig = get_combo_trigger(GET_COMBOTRIGREF))
 				ret = trig->prompt_x * 10000;
 			else ret = -10000;
 			break;
 		}
 		case CMBTRIGGERPROMPTY:
 		{
-			if(auto* trig = get_combo_trigger(ri->combotrigref))
+			if(auto* trig = get_combo_trigger(GET_COMBOTRIGREF))
 				ret = trig->prompt_y * 10000;
 			else ret = -10000;
 			break;
 		}
 		case CMBTRIGGERTRIGSTR:
 		{
-			if(auto* trig = get_combo_trigger(ri->combotrigref))
+			if(auto* trig = get_combo_trigger(GET_COMBOTRIGREF))
 				ret = trig->trig_msgstr * 10000;
 			else ret = -10000;
 			break;
 		}
 		case CMBTRIGGERFAILSTR:
 		{
-			if(auto* trig = get_combo_trigger(ri->combotrigref))
+			if(auto* trig = get_combo_trigger(GET_COMBOTRIGREF))
 				ret = trig->fail_msgstr * 10000;
 			else ret = -10000;
 			break;
 		}
 		case CMBTRIGGERPLAYERBOUNCE:
 		{
-			if(auto* trig = get_combo_trigger(ri->combotrigref))
+			if(auto* trig = get_combo_trigger(GET_COMBOTRIGREF))
 				ret = trig->player_bounce;
 			else ret = -10000;
 			break;
 		}
 		case CMBTRIGGERREQPLAYERZ:
 		{
-			if(auto* trig = get_combo_trigger(ri->combotrigref))
+			if(auto* trig = get_combo_trigger(GET_COMBOTRIGREF))
 				ret = trig->req_player_z;
 			else ret = -10000;
 			break;
 		}
 		case CMBTRIGGERDESTHEROX:
 		{
-			if(auto* trig = get_combo_trigger(ri->combotrigref))
+			if(auto* trig = get_combo_trigger(GET_COMBOTRIGREF))
 				ret = trig->dest_player_x;
 			else ret = -10000;
 			break;
 		}
 		case CMBTRIGGERDESTHEROY:
 		{
-			if(auto* trig = get_combo_trigger(ri->combotrigref))
+			if(auto* trig = get_combo_trigger(GET_COMBOTRIGREF))
 				ret = trig->dest_player_y;
 			else ret = -10000;
 			break;
 		}
 		case CMBTRIGGERDESTHEROZ:
 		{
-			if(auto* trig = get_combo_trigger(ri->combotrigref))
+			if(auto* trig = get_combo_trigger(GET_COMBOTRIGREF))
 				ret = trig->dest_player_z;
 			else ret = -10000;
 			break;
 		}
 		case CMBTRIGGERREQPLAYERJUMP:
 		{
-			if(auto* trig = get_combo_trigger(ri->combotrigref))
+			if(auto* trig = get_combo_trigger(GET_COMBOTRIGREF))
 				ret = trig->req_player_jump;
 			else ret = -10000;
 			break;
 		}
 		case CMBTRIGGERREQPLAYERX:
 		{
-			if(auto* trig = get_combo_trigger(ri->combotrigref))
+			if(auto* trig = get_combo_trigger(GET_COMBOTRIGREF))
 				ret = trig->req_player_x;
 			else ret = -10000;
 			break;
 		}
 		case CMBTRIGGERREQPLAYERY:
 		{
-			if(auto* trig = get_combo_trigger(ri->combotrigref))
+			if(auto* trig = get_combo_trigger(GET_COMBOTRIGREF))
 				ret = trig->req_player_y;
 			else ret = -10000;
 			break;
 		}
 		case CMBTRIGGERFORCEPLAYERDIR:
 		{
-			if(auto* trig = get_combo_trigger(ri->combotrigref))
+			if(auto* trig = get_combo_trigger(GET_COMBOTRIGREF))
 				ret = trig->dest_player_dir * 10000;
 			else ret = -10000;
 			break;
 		}
 		case CMBTRIGGERICECOMBO:
 		{
-			if(auto* trig = get_combo_trigger(ri->combotrigref))
+			if(auto* trig = get_combo_trigger(GET_COMBOTRIGREF))
 				ret = trig->force_ice_combo * 10000;
 			else ret = -10000;
 			break;
 		}
 		case CMBTRIGGERICEVX:
 		{
-			if(auto* trig = get_combo_trigger(ri->combotrigref))
+			if(auto* trig = get_combo_trigger(GET_COMBOTRIGREF))
 				ret = trig->force_ice_vx;
 			else ret = -10000;
 			break;
 		}
 		case CMBTRIGGERICEVY:
 		{
-			if(auto* trig = get_combo_trigger(ri->combotrigref))
+			if(auto* trig = get_combo_trigger(GET_COMBOTRIGREF))
 				ret = trig->force_ice_vy;
 			else ret = -10000;
 			break;
 		}
 		case CMBTRIGGER_GRAVITY:
 		{
-			if(auto* trig = get_combo_trigger(ri->combotrigref))
+			if(auto* trig = get_combo_trigger(GET_COMBOTRIGREF))
 				ret = trig->trig_gravity;
 			else ret = -10000;
 			break;
@@ -8694,7 +8689,7 @@ int32_t get_register(int32_t arg)
 		}
 		case CMBTRIGGER_TERMINAL_VELOCITY:
 		{
-			if(auto* trig = get_combo_trigger(ri->combotrigref))
+			if(auto* trig = get_combo_trigger(GET_COMBOTRIGREF))
 				ret = trig->trig_terminal_v;
 			else ret = -10000;
 			break;
@@ -8712,7 +8707,7 @@ int32_t get_register(int32_t arg)
 			} \
 			else \
 			{ \
-				ret = (guysbuf[ri->npcdataref].member *10000); \
+				ret = (guysbuf[GET_NPCDATAREF].member *10000); \
 			} \
 		} \
 
@@ -8725,7 +8720,7 @@ int32_t get_register(int32_t arg)
 			} \
 			else \
 			{ \
-				ret = (guysbuf[ri->npcdataref].member *10000); \
+				ret = (guysbuf[GET_NPCDATAREF].member *10000); \
 			} \
 		} \
 		
@@ -8738,7 +8733,7 @@ int32_t get_register(int32_t arg)
 			} \
 			else \
 			{ \
-				ret = (guysbuf[ri->npcdataref].member *10000); \
+				ret = (guysbuf[GET_NPCDATAREF].member *10000); \
 			} \
 		} \
 
@@ -8765,7 +8760,7 @@ int32_t get_register(int32_t arg)
 			}
 			else
 			{
-				uint32_t value = guysbuf[ri->npcdataref].flags & 0xFFFFFFFFLL;
+				uint32_t value = guysbuf[GET_NPCDATAREF].flags & 0xFFFFFFFFLL;
 				ret = value * 10000;
 			}
 		}
@@ -8779,7 +8774,7 @@ int32_t get_register(int32_t arg)
 			}
 			else
 			{
-				uint32_t value = (guysbuf[ri->npcdataref].flags >> 32) & 0xFFFFFFFFLL;
+				uint32_t value = (guysbuf[GET_NPCDATAREF].flags >> 32) & 0xFFFFFFFFLL;
 				ret = value * 10000;
 			}
 		}
@@ -8832,7 +8827,7 @@ int32_t get_register(int32_t arg)
 				Z_scripterrlog("Invalid NPC ID passed to npcdata->WeaponScript: %d\n", (ri->npcdataref*10000));
 				ret = -10000;
 			}
-			else ret = (guysbuf[ri->npcdataref].weap_data.script *10000);
+			else ret = (guysbuf[GET_NPCDATAREF].weap_data.script *10000);
 			break;
 		}
 		case NPCDATASIZEFLAG: GET_NPCDATA_VAR_INT32(SIZEflags, "SizeFlags"); break;
@@ -8850,7 +8845,7 @@ int32_t get_register(int32_t arg)
 			} 
 			else 
 			{
-				ret = guysbuf[ri->npcdataref].spr_shadow * 10000;
+				ret = guysbuf[GET_NPCDATAREF].spr_shadow * 10000;
 			} 
 			break;
 		}
@@ -8863,7 +8858,7 @@ int32_t get_register(int32_t arg)
 			} 
 			else 
 			{
-				ret = guysbuf[ri->npcdataref].spr_spawn * 10000;
+				ret = guysbuf[GET_NPCDATAREF].spr_spawn * 10000;
 			} 
 			break;
 		}
@@ -8876,7 +8871,7 @@ int32_t get_register(int32_t arg)
 			} 
 			else 
 			{
-				ret = guysbuf[ri->npcdataref].spr_death * 10000;
+				ret = guysbuf[GET_NPCDATAREF].spr_death * 10000;
 			} 
 			break;
 		}
@@ -8898,7 +8893,7 @@ int32_t get_register(int32_t arg)
 			string name;
 			ArrayH::getString(arrayptr, name, 256); // What's the limit on name length?
 			
-			bool match = (!( strcmp(name.c_str(), guysbuf[ri->npcdataref].initD_label[init_d_index] )));
+			bool match = (!( strcmp(name.c_str(), guysbuf[GET_NPCDATAREF].initD_label[init_d_index] )));
 			
 			ret = ( match ? 10000 : 0 );
 			break;
@@ -8915,7 +8910,7 @@ int32_t get_register(int32_t arg)
 				ret = -10000;
 				break;
 			}
-			ret = item_drop_sets[ri->dropsetref].chance[0] * 10000;
+			ret = item_drop_sets[GET_DROPSETREF].chance[0] * 10000;
 			break;
 		}
 		case DROPSETCHOOSE:
@@ -8926,7 +8921,7 @@ int32_t get_register(int32_t arg)
 				ret = -10000;
 				break;
 			}
-			ret = select_dropitem(ri->dropsetref) * 10000;
+			ret = select_dropitem(GET_DROPSETREF) * 10000;
 			break;
 		}
 			
@@ -8953,7 +8948,7 @@ int32_t get_register(int32_t arg)
 
 		case BITMAPWIDTH:
 		{
-			if (auto bmp = user_bitmaps.check(ri->bitmapref); bmp && bmp->u_bmp)
+			if (auto bmp = user_bitmaps.check(GET_BITMAPREF); bmp && bmp->u_bmp)
 			{
 				ret = bmp->width * 10000;
 			}
@@ -8966,7 +8961,7 @@ int32_t get_register(int32_t arg)
 
 		case BITMAPHEIGHT:
 		{
-			if (auto bmp = user_bitmaps.check(ri->bitmapref); bmp && bmp->u_bmp)
+			if (auto bmp = user_bitmaps.check(GET_BITMAPREF); bmp && bmp->u_bmp)
 			{
 				ret = bmp->height * 10000;
 			}
@@ -9133,7 +9128,7 @@ int32_t get_register(int32_t arg)
 		case GENDATARUNNING:
 		{
 			ret = 0;
-			if(user_genscript* scr = checkGenericScr(ri->genericdataref))
+			if(user_genscript* scr = checkGenericScr(GET_GENERICDATAREF))
 			{
 				ret = scr->doscript() ? 10000L : 0L;
 			}
@@ -9142,7 +9137,7 @@ int32_t get_register(int32_t arg)
 		case GENDATASIZE:
 		{
 			ret = 0;
-			if(user_genscript* scr = checkGenericScr(ri->genericdataref))
+			if(user_genscript* scr = checkGenericScr(GET_GENERICDATAREF))
 			{
 				ret = scr->dataSize()*10000;
 			}
@@ -9154,77 +9149,77 @@ int32_t get_register(int32_t arg)
 		case PORTALX:
 		{
 			ret = -10000;
-			if(portal* p = checkPortal(ri->portalref))
+			if(portal* p = checkPortal(GET_PORTALREF))
 				ret = p->x.getZLong();
 			break;
 		}
 		case PORTALY:
 		{
 			ret = -10000;
-			if(portal* p = checkPortal(ri->portalref))
+			if(portal* p = checkPortal(GET_PORTALREF))
 				ret = p->y.getZLong();
 			break;
 		}
 		case PORTALDMAP:
 		{
 			ret = -10000;
-			if(portal* p = checkPortal(ri->portalref))
+			if(portal* p = checkPortal(GET_PORTALREF))
 				ret = p->destdmap*10000;
 			break;
 		}
 		case PORTALSCREEN:
 		{
 			ret = -10000;
-			if(portal* p = checkPortal(ri->portalref))
+			if(portal* p = checkPortal(GET_PORTALREF))
 				ret = p->destscr*10000;
 			break;
 		}
 		case PORTALACLK:
 		{
 			ret = -10000;
-			if(portal* p = checkPortal(ri->portalref))
+			if(portal* p = checkPortal(GET_PORTALREF))
 				ret = p->aclk*10000;
 			break;
 		}
 		case PORTALAFRM:
 		{
 			ret = -10000;
-			if(portal* p = checkPortal(ri->portalref))
+			if(portal* p = checkPortal(GET_PORTALREF))
 				ret = p->aframe*10000;
 			break;
 		}
 		case PORTALOTILE:
 		{
 			ret = -10000;
-			if(portal* p = checkPortal(ri->portalref))
+			if(portal* p = checkPortal(GET_PORTALREF))
 				ret = p->o_tile*10000;
 			break;
 		}
 		case PORTALASPD:
 		{
 			ret = -10000;
-			if(portal* p = checkPortal(ri->portalref))
+			if(portal* p = checkPortal(GET_PORTALREF))
 				ret = p->aspd*10000;
 			break;
 		}
 		case PORTALFRAMES:
 		{
 			ret = -10000;
-			if(portal* p = checkPortal(ri->portalref))
+			if(portal* p = checkPortal(GET_PORTALREF))
 				ret = p->frames*10000;
 			break;
 		}
 		case PORTALSAVED:
 		{
 			ret = 0;
-			if(portal* p = checkPortal(ri->portalref))
+			if(portal* p = checkPortal(GET_PORTALREF))
 				ret = p->saved_data;
 			break;
 		}
 		case PORTALCLOSEDIS:
 		{
 			ret = 0;
-			if(portal* p = checkPortal(ri->portalref))
+			if(portal* p = checkPortal(GET_PORTALREF))
 				ret = p->prox_active ? 0 : 10000; //Inverted
 			break;
 		}
@@ -9241,84 +9236,84 @@ int32_t get_register(int32_t arg)
 		case PORTALWARPSFX:
 		{
 			ret = 0;
-			if(portal* p = checkPortal(ri->portalref))
+			if(portal* p = checkPortal(GET_PORTALREF))
 				ret = p->wsfx ? 0 : 10000;
 			break;
 		}
 		case PORTALWARPVFX:
 		{
 			ret = 0;
-			if(portal* p = checkPortal(ri->portalref))
+			if(portal* p = checkPortal(GET_PORTALREF))
 				ret = p->weffect ? 0 : 10000;
 			break;
 		}
 		case SAVEDPORTALX:
 		{
 			ret = -10000;
-			if(savedportal* p = checkSavedPortal(ri->saveportalref))
+			if(savedportal* p = checkSavedPortal(GET_SAVEPORTALREF))
 				ret = p->x;
 			break;
 		}
 		case SAVEDPORTALY:
 		{
 			ret = -10000;
-			if(savedportal* p = checkSavedPortal(ri->saveportalref))
+			if(savedportal* p = checkSavedPortal(GET_SAVEPORTALREF))
 				ret = p->y;
 			break;
 		}
 		case SAVEDPORTALSRCDMAP:
 		{
 			ret = -10000;
-			if(savedportal* p = checkSavedPortal(ri->saveportalref))
+			if(savedportal* p = checkSavedPortal(GET_SAVEPORTALREF))
 				ret = p->srcdmap * 10000;
 			break;
 		}
 		case SAVEDPORTALDESTDMAP:
 		{
 			ret = -10000;
-			if(savedportal* p = checkSavedPortal(ri->saveportalref))
+			if(savedportal* p = checkSavedPortal(GET_SAVEPORTALREF))
 				ret = p->destdmap * 10000;
 			break;
 		}
 		case SAVEDPORTALSRCSCREEN:
 		{
 			ret = -10000;
-			if(savedportal* p = checkSavedPortal(ri->saveportalref))
+			if(savedportal* p = checkSavedPortal(GET_SAVEPORTALREF))
 				ret = p->srcscr * 10000;
 			break;
 		}
 		case SAVEDPORTALDSTSCREEN:
 		{
 			ret = -10000;
-			if(savedportal* p = checkSavedPortal(ri->saveportalref))
+			if(savedportal* p = checkSavedPortal(GET_SAVEPORTALREF))
 				ret = p->destscr * 10000;
 			break;
 		}
 		case SAVEDPORTALWARPSFX:
 		{
 			ret = -10000;
-			if(savedportal* p = checkSavedPortal(ri->saveportalref))
+			if(savedportal* p = checkSavedPortal(GET_SAVEPORTALREF))
 				ret = p->sfx * 10000;
 			break;
 		}
 		case SAVEDPORTALWARPVFX:
 		{
 			ret = -10000;
-			if(savedportal* p = checkSavedPortal(ri->saveportalref))
+			if(savedportal* p = checkSavedPortal(GET_SAVEPORTALREF))
 				ret = p->warpfx * 10000;
 			break;
 		}
 		case SAVEDPORTALSPRITE:
 		{
 			ret = -10000;
-			if(savedportal* p = checkSavedPortal(ri->saveportalref))
+			if(savedportal* p = checkSavedPortal(GET_SAVEPORTALREF))
 				ret = p->spr * 10000;
 			break;
 		}
 		case SAVEDPORTALPORTAL:
 		{
 			ret = 0;
-			if(savedportal* p = checkSavedPortal(ri->saveportalref))
+			if(savedportal* p = checkSavedPortal(GET_SAVEPORTALREF))
 				ret = getPortalFromSaved(p);
 			break;
 		}
@@ -9363,14 +9358,14 @@ int32_t get_register(int32_t arg)
 		
 		case SUBDATACURPG:
 		{
-			if(ZCSubscreen* sub = checkSubData(ri->subdataref))
+			if(ZCSubscreen* sub = checkSubData(GET_SUBDATAREF))
 				if(sub->sub_type == sstACTIVE)
 					ret = 10000*sub->curpage;
 			break;
 		}
 		case SUBDATANUMPG:
 		{
-			if(ZCSubscreen* sub = checkSubData(ri->subdataref))
+			if(ZCSubscreen* sub = checkSubData(GET_SUBDATAREF))
 			{
 				if(sub->sub_type == sstACTIVE)
 					ret = 10000*sub->pages.size();
@@ -9380,7 +9375,7 @@ int32_t get_register(int32_t arg)
 		}
 		case SUBDATATYPE:
 		{
-			if(ZCSubscreen* sub = checkSubData(ri->subdataref))
+			if(ZCSubscreen* sub = checkSubData(GET_SUBDATAREF))
 				ret = sub->sub_type*10000;
 			break;
 		}
@@ -9516,28 +9511,28 @@ int32_t get_register(int32_t arg)
 		///----------------------------------------------------------------------------------------------------//
 		case SUBPGINDEX: 
 		{
-			if(SubscrPage* pg = checkSubPage(ri->subpageref))
+			if(SubscrPage* pg = checkSubPage(GET_SUBPAGEREF))
 				ret = pg->getIndex() * 10000;
 			break;
 		}
 		case SUBPGNUMWIDG: 
 		{
-			if(SubscrPage* pg = checkSubPage(ri->subpageref))
+			if(SubscrPage* pg = checkSubPage(GET_SUBPAGEREF))
 				ret = pg->size() * 10000;
 			break;
 		}
 		case SUBPGSUBDATA: 
 		{
-			if(SubscrPage* pg = checkSubPage(ri->subpageref))
+			if(SubscrPage* pg = checkSubPage(GET_SUBPAGEREF))
 			{
-				auto [sub,ty,_pgid,_ind] = from_subref(ri->subpageref);
+				auto [sub,ty,_pgid,_ind] = from_subref(GET_SUBPAGEREF);
 				ret = get_subref(sub,ty,0,0);
 			}
 			break;
 		}
 		case SUBPGCURSORPOS: 
 		{
-			if(SubscrPage* pg = checkSubPage(ri->subpageref))
+			if(SubscrPage* pg = checkSubPage(GET_SUBPAGEREF))
 				ret = pg->cursor_pos * 10000;
 			break;
 		}
@@ -9545,22 +9540,22 @@ int32_t get_register(int32_t arg)
 		///---- ANY WIDGET TYPE
 		case SUBWIDGTYPE:
 		{
-			if(SubscrWidget* widg = checkSubWidg(ri->subwidgref))
+			if(SubscrWidget* widg = checkSubWidg(GET_SUBWIDGREF))
 				ret = 10000*widg->getType();
 			break;
 		}
 		case SUBWIDGINDEX:
 		{
-			if(SubscrWidget* widg = checkSubWidg(ri->subwidgref))
+			if(SubscrWidget* widg = checkSubWidg(GET_SUBWIDGREF))
 			{
-				auto [_sub,_ty,_pgid,ind] = from_subref(ri->subwidgref);
+				auto [_sub,_ty,_pgid,ind] = from_subref(GET_SUBWIDGREF);
 				ret = 10000*ind;
 			}
 			break;
 		}
 		case SUBWIDGDISPITM:
 		{
-			if(SubscrWidget* widg = checkSubWidg(ri->subwidgref))
+			if(SubscrWidget* widg = checkSubWidg(GET_SUBWIDGREF))
 			{
 				ret = 10000*widg->getDisplayItem();
 			}
@@ -9568,7 +9563,7 @@ int32_t get_register(int32_t arg)
 		}
 		case SUBWIDGEQPITM:
 		{
-			if(SubscrWidget* widg = checkSubWidg(ri->subwidgref))
+			if(SubscrWidget* widg = checkSubWidg(GET_SUBWIDGREF))
 			{
 				ret = 10000*widg->getItemVal();
 			}
@@ -9576,100 +9571,100 @@ int32_t get_register(int32_t arg)
 		}
 		case SUBWIDGPAGE:
 		{
-			if(SubscrWidget* widg = checkSubWidg(ri->subwidgref))
+			if(SubscrWidget* widg = checkSubWidg(GET_SUBWIDGREF))
 			{
-				auto [sub,ty,pgid,_ind] = from_subref(ri->subwidgref);
+				auto [sub,ty,pgid,_ind] = from_subref(GET_SUBWIDGREF);
 				ret = get_subref(sub,ty,pgid,0);
 			}
 			break;
 		}
 		case SUBWIDGPOS:
 		{
-			if(SubscrWidget* widg = checkSubWidg(ri->subwidgref))
+			if(SubscrWidget* widg = checkSubWidg(GET_SUBWIDGREF))
 				ret = 10000*widg->pos;
 			break;
 		}
 		case SUBWIDGX:
 		{
-			if(SubscrWidget* widg = checkSubWidg(ri->subwidgref))
+			if(SubscrWidget* widg = checkSubWidg(GET_SUBWIDGREF))
 				ret = 10000*widg->x;
 			break;
 		}
 		case SUBWIDGY:
 		{
-			if(SubscrWidget* widg = checkSubWidg(ri->subwidgref))
+			if(SubscrWidget* widg = checkSubWidg(GET_SUBWIDGREF))
 				ret = 10000*widg->y;
 			break;
 		}
 		case SUBWIDGW:
 		{
-			if(SubscrWidget* widg = checkSubWidg(ri->subwidgref))
+			if(SubscrWidget* widg = checkSubWidg(GET_SUBWIDGREF))
 				ret = 10000*widg->w;
 			break;
 		}
 		case SUBWIDGH:
 		{
-			if(SubscrWidget* widg = checkSubWidg(ri->subwidgref))
+			if(SubscrWidget* widg = checkSubWidg(GET_SUBWIDGREF))
 				ret = 10000*widg->h;
 			break;
 		}
 		case SUBWIDG_DISPX:
 		{
-			if(SubscrWidget* widg = checkSubWidg(ri->subwidgref))
+			if(SubscrWidget* widg = checkSubWidg(GET_SUBWIDGREF))
 				ret = 10000*widg->getX();
 			break;
 		}
 		case SUBWIDG_DISPY:
 		{
-			if(SubscrWidget* widg = checkSubWidg(ri->subwidgref))
+			if(SubscrWidget* widg = checkSubWidg(GET_SUBWIDGREF))
 				ret = 10000*widg->getY();
 			break;
 		}
 		case SUBWIDG_DISPW:
 		{
-			if(SubscrWidget* widg = checkSubWidg(ri->subwidgref))
+			if(SubscrWidget* widg = checkSubWidg(GET_SUBWIDGREF))
 				ret = 10000*widg->getW();
 			break;
 		}
 		case SUBWIDG_DISPH:
 		{
-			if(SubscrWidget* widg = checkSubWidg(ri->subwidgref))
+			if(SubscrWidget* widg = checkSubWidg(GET_SUBWIDGREF))
 				ret = 10000*widg->getH();
 			break;
 		}
 		case SUBWIDGREQCOUNTER:
 		{
-			if(SubscrWidget* widg = checkSubWidg(ri->subwidgref))
+			if(SubscrWidget* widg = checkSubWidg(GET_SUBWIDGREF))
 				ret = 10000 * widg->req_counter;
 			break;
 		}
 		case SUBWIDGREQCOUNTERCOND:
 		{
-			if(SubscrWidget* widg = checkSubWidg(ri->subwidgref))
+			if(SubscrWidget* widg = checkSubWidg(GET_SUBWIDGREF))
 				ret = 10000 * widg->req_counter_cond_type;
 			break;
 		}
 		case SUBWIDGREQCOUNTERVAL:
 		{
-			if(SubscrWidget* widg = checkSubWidg(ri->subwidgref))
+			if(SubscrWidget* widg = checkSubWidg(GET_SUBWIDGREF))
 				ret = 10000 * widg->req_counter_val;
 			break;
 		}
 		case SUBWIDGREQLITEMS:
 		{
-			if(SubscrWidget* widg = checkSubWidg(ri->subwidgref))
+			if(SubscrWidget* widg = checkSubWidg(GET_SUBWIDGREF))
 				ret = 10000 * widg->req_litems;
 			break;
 		}
 		case SUBWIDGREQLITEMLEVEL:
 		{
-			if(SubscrWidget* widg = checkSubWidg(ri->subwidgref))
+			if(SubscrWidget* widg = checkSubWidg(GET_SUBWIDGREF))
 				ret = 10000 * widg->req_litem_level;
 			break;
 		}
 		case SUBWIDGREQSCRIPTDISABLED:
 		{
-			if(SubscrWidget* widg = checkSubWidg(ri->subwidgref))
+			if(SubscrWidget* widg = checkSubWidg(GET_SUBWIDGREF))
 				ret = widg->is_disabled ? 10000 : 0;
 			break;
 		}
@@ -9739,7 +9734,7 @@ int32_t get_register(int32_t arg)
 		///---- VARYING WIDGET TYPES
 		case SUBWIDGTY_FONT:
 		{
-			if(SubscrWidget* widg = checkSubWidg(ri->subwidgref))
+			if(SubscrWidget* widg = checkSubWidg(GET_SUBWIDGREF))
 			{
 				auto ty = widg->getType();
 				switch(ty)
@@ -9781,7 +9776,7 @@ int32_t get_register(int32_t arg)
 		}
 		case SUBWIDGTY_ALIGN:
 		{
-			if(SubscrWidget* widg = checkSubWidg(ri->subwidgref))
+			if(SubscrWidget* widg = checkSubWidg(GET_SUBWIDGREF))
 			{
 				auto ty = widg->getType();
 				switch(ty)
@@ -9820,7 +9815,7 @@ int32_t get_register(int32_t arg)
 		}
 		case SUBWIDGTY_SHADOWTY:
 		{
-			if(SubscrWidget* widg = checkSubWidg(ri->subwidgref))
+			if(SubscrWidget* widg = checkSubWidg(GET_SUBWIDGREF))
 			{
 				auto ty = widg->getType();
 				switch(ty)
@@ -9862,7 +9857,7 @@ int32_t get_register(int32_t arg)
 		}
 		case SUBWIDGTY_COLOR_TXT:
 		{
-			if(SubscrWidget* widg = checkSubWidg(ri->subwidgref))
+			if(SubscrWidget* widg = checkSubWidg(GET_SUBWIDGREF))
 			{
 				auto ty = widg->getType();
 				switch(ty)
@@ -9906,7 +9901,7 @@ int32_t get_register(int32_t arg)
 		}
 		case SUBWIDGTY_COLOR_SHD:
 		{
-			if(SubscrWidget* widg = checkSubWidg(ri->subwidgref))
+			if(SubscrWidget* widg = checkSubWidg(GET_SUBWIDGREF))
 			{
 				auto ty = widg->getType();
 				switch(ty)
@@ -9947,7 +9942,7 @@ int32_t get_register(int32_t arg)
 		}
 		case SUBWIDGTY_COLOR_BG:
 		{
-			if(SubscrWidget* widg = checkSubWidg(ri->subwidgref))
+			if(SubscrWidget* widg = checkSubWidg(GET_SUBWIDGREF))
 			{
 				auto ty = widg->getType();
 				switch(ty)
@@ -9995,7 +9990,7 @@ int32_t get_register(int32_t arg)
 		
 		case SUBWIDGTY_COLOR_TXT2:
 		{
-			if(SubscrWidget* widg = checkSubWidg(ri->subwidgref))
+			if(SubscrWidget* widg = checkSubWidg(GET_SUBWIDGREF))
 			{
 				auto ty = widg->getType();
 				switch(ty)
@@ -10015,7 +10010,7 @@ int32_t get_register(int32_t arg)
 		}
 		case SUBWIDGTY_COLOR_SHD2:
 		{
-			if(SubscrWidget* widg = checkSubWidg(ri->subwidgref))
+			if(SubscrWidget* widg = checkSubWidg(GET_SUBWIDGREF))
 			{
 				auto ty = widg->getType();
 				switch(ty)
@@ -10035,7 +10030,7 @@ int32_t get_register(int32_t arg)
 		}
 		case SUBWIDGTY_COLOR_BG2:
 		{
-			if(SubscrWidget* widg = checkSubWidg(ri->subwidgref))
+			if(SubscrWidget* widg = checkSubWidg(GET_SUBWIDGREF))
 			{
 				auto ty = widg->getType();
 				switch(ty)
@@ -10055,7 +10050,7 @@ int32_t get_register(int32_t arg)
 		}
 		case SUBWIDGTY_COLOR_OLINE:
 		{
-			if(SubscrWidget* widg = checkSubWidg(ri->subwidgref))
+			if(SubscrWidget* widg = checkSubWidg(GET_SUBWIDGREF))
 			{
 				auto ty = widg->getType();
 				switch(ty)
@@ -10078,7 +10073,7 @@ int32_t get_register(int32_t arg)
 		}
 		case SUBWIDGTY_COLOR_FILL:
 		{
-			if(SubscrWidget* widg = checkSubWidg(ri->subwidgref))
+			if(SubscrWidget* widg = checkSubWidg(GET_SUBWIDGREF))
 			{
 				auto ty = widg->getType();
 				switch(ty)
@@ -10098,7 +10093,7 @@ int32_t get_register(int32_t arg)
 		}
 		case SUBWIDGTY_BUTTON:
 		{
-			if(SubscrWidget* widg = checkSubWidg(ri->subwidgref))
+			if(SubscrWidget* widg = checkSubWidg(GET_SUBWIDGREF))
 			{
 				auto ty = widg->getType();
 				switch(ty)
@@ -10125,7 +10120,7 @@ int32_t get_register(int32_t arg)
 		}
 		case SUBWIDGTY_MINDIG:
 		{
-			if(SubscrWidget* widg = checkSubWidg(ri->subwidgref))
+			if(SubscrWidget* widg = checkSubWidg(GET_SUBWIDGREF))
 			{
 				auto ty = widg->getType();
 				switch(ty)
@@ -10149,7 +10144,7 @@ int32_t get_register(int32_t arg)
 		}
 		case SUBWIDGTY_MAXDIG:
 		{
-			if(SubscrWidget* widg = checkSubWidg(ri->subwidgref))
+			if(SubscrWidget* widg = checkSubWidg(GET_SUBWIDGREF))
 			{
 				auto ty = widg->getType();
 				switch(ty)
@@ -10170,7 +10165,7 @@ int32_t get_register(int32_t arg)
 		}
 		case SUBWIDGTY_INFITM:
 		{
-			if(SubscrWidget* widg = checkSubWidg(ri->subwidgref))
+			if(SubscrWidget* widg = checkSubWidg(GET_SUBWIDGREF))
 			{
 				auto ty = widg->getType();
 				switch(ty)
@@ -10195,7 +10190,7 @@ int32_t get_register(int32_t arg)
 		}
 		case SUBWIDGTY_INFCHAR:
 		{
-			if(SubscrWidget* widg = checkSubWidg(ri->subwidgref))
+			if(SubscrWidget* widg = checkSubWidg(GET_SUBWIDGREF))
 			{
 				auto ty = widg->getType();
 				switch(ty)
@@ -10218,7 +10213,7 @@ int32_t get_register(int32_t arg)
 		}
 		case SUBWIDGTY_COSTIND:
 		{
-			if(SubscrWidget* widg = checkSubWidg(ri->subwidgref))
+			if(SubscrWidget* widg = checkSubWidg(GET_SUBWIDGREF))
 			{
 				auto ty = widg->getType();
 				switch(ty)
@@ -10236,7 +10231,7 @@ int32_t get_register(int32_t arg)
 		}
 		case SUBWIDGTY_COLOR_PLAYER:
 		{
-			if(SubscrWidget* widg = checkSubWidg(ri->subwidgref))
+			if(SubscrWidget* widg = checkSubWidg(GET_SUBWIDGREF))
 			{
 				auto ty = widg->getType();
 				switch(ty)
@@ -10256,7 +10251,7 @@ int32_t get_register(int32_t arg)
 		}
 		case SUBWIDGTY_COLOR_CMPBLNK:
 		{
-			if(SubscrWidget* widg = checkSubWidg(ri->subwidgref))
+			if(SubscrWidget* widg = checkSubWidg(GET_SUBWIDGREF))
 			{
 				auto ty = widg->getType();
 				switch(ty)
@@ -10273,7 +10268,7 @@ int32_t get_register(int32_t arg)
 		}
 		case SUBWIDGTY_COLOR_CMPOFF:
 		{
-			if(SubscrWidget* widg = checkSubWidg(ri->subwidgref))
+			if(SubscrWidget* widg = checkSubWidg(GET_SUBWIDGREF))
 			{
 				auto ty = widg->getType();
 				switch(ty)
@@ -10290,7 +10285,7 @@ int32_t get_register(int32_t arg)
 		}
 		case SUBWIDGTY_COLOR_ROOM:
 		{
-			if(SubscrWidget* widg = checkSubWidg(ri->subwidgref))
+			if(SubscrWidget* widg = checkSubWidg(GET_SUBWIDGREF))
 			{
 				auto ty = widg->getType();
 				switch(ty)
@@ -10307,7 +10302,7 @@ int32_t get_register(int32_t arg)
 		}
 		case SUBWIDGTY_ITEMCLASS:
 		{
-			if(SubscrWidget* widg = checkSubWidg(ri->subwidgref))
+			if(SubscrWidget* widg = checkSubWidg(GET_SUBWIDGREF))
 			{
 				auto ty = widg->getType();
 				switch(ty)
@@ -10330,7 +10325,7 @@ int32_t get_register(int32_t arg)
 		}
 		case SUBWIDGTY_ITEMID:
 		{
-			if(SubscrWidget* widg = checkSubWidg(ri->subwidgref))
+			if(SubscrWidget* widg = checkSubWidg(GET_SUBWIDGREF))
 			{
 				auto ty = widg->getType();
 				switch(ty)
@@ -10353,7 +10348,7 @@ int32_t get_register(int32_t arg)
 		}
 		case SUBWIDGTY_FRAMETILE:
 		{
-			if(SubscrWidget* widg = checkSubWidg(ri->subwidgref))
+			if(SubscrWidget* widg = checkSubWidg(GET_SUBWIDGREF))
 			{
 				auto ty = widg->getType();
 				switch(ty)
@@ -10370,7 +10365,7 @@ int32_t get_register(int32_t arg)
 		}
 		case SUBWIDGTY_FRAMECSET:
 		{
-			if(SubscrWidget* widg = checkSubWidg(ri->subwidgref))
+			if(SubscrWidget* widg = checkSubWidg(GET_SUBWIDGREF))
 			{
 				auto ty = widg->getType();
 				switch(ty)
@@ -10387,7 +10382,7 @@ int32_t get_register(int32_t arg)
 		}
 		case SUBWIDGTY_PIECETILE:
 		{
-			if(SubscrWidget* widg = checkSubWidg(ri->subwidgref))
+			if(SubscrWidget* widg = checkSubWidg(GET_SUBWIDGREF))
 			{
 				auto ty = widg->getType();
 				switch(ty)
@@ -10404,7 +10399,7 @@ int32_t get_register(int32_t arg)
 		}
 		case SUBWIDGTY_PIECECSET:
 		{
-			if(SubscrWidget* widg = checkSubWidg(ri->subwidgref))
+			if(SubscrWidget* widg = checkSubWidg(GET_SUBWIDGREF))
 			{
 				auto ty = widg->getType();
 				switch(ty)
@@ -10421,7 +10416,7 @@ int32_t get_register(int32_t arg)
 		}
 		case SUBWIDGTY_FLIP:
 		{
-			if(SubscrWidget* widg = checkSubWidg(ri->subwidgref))
+			if(SubscrWidget* widg = checkSubWidg(GET_SUBWIDGREF))
 			{
 				auto ty = widg->getType();
 				switch(ty)
@@ -10444,7 +10439,7 @@ int32_t get_register(int32_t arg)
 		}
 		case SUBWIDGTY_NUMBER:
 		{
-			if(SubscrWidget* widg = checkSubWidg(ri->subwidgref))
+			if(SubscrWidget* widg = checkSubWidg(GET_SUBWIDGREF))
 			{
 				auto ty = widg->getType();
 				switch(ty)
@@ -10461,7 +10456,7 @@ int32_t get_register(int32_t arg)
 		}
 		case SUBWIDGTY_FRAMES:
 		{
-			if(SubscrWidget* widg = checkSubWidg(ri->subwidgref))
+			if(SubscrWidget* widg = checkSubWidg(GET_SUBWIDGREF))
 			{
 				auto ty = widg->getType();
 				switch(ty)
@@ -10479,7 +10474,7 @@ int32_t get_register(int32_t arg)
 		}
 		case SUBWIDGTY_SPEED:
 		{
-			if(SubscrWidget* widg = checkSubWidg(ri->subwidgref))
+			if(SubscrWidget* widg = checkSubWidg(GET_SUBWIDGREF))
 			{
 				auto ty = widg->getType();
 				switch(ty)
@@ -10497,7 +10492,7 @@ int32_t get_register(int32_t arg)
 		}
 		case SUBWIDGTY_DELAY:
 		{
-			if(SubscrWidget* widg = checkSubWidg(ri->subwidgref))
+			if(SubscrWidget* widg = checkSubWidg(GET_SUBWIDGREF))
 			{
 				auto ty = widg->getType();
 				switch(ty)
@@ -10515,7 +10510,7 @@ int32_t get_register(int32_t arg)
 		}
 		case SUBWIDGTY_CONTAINER:
 		{
-			if(SubscrWidget* widg = checkSubWidg(ri->subwidgref))
+			if(SubscrWidget* widg = checkSubWidg(GET_SUBWIDGREF))
 			{
 				auto ty = widg->getType();
 				switch(ty)
@@ -10533,7 +10528,7 @@ int32_t get_register(int32_t arg)
 		}
 		case SUBWIDGTY_GAUGE_WID:
 		{
-			if(SubscrWidget* widg = checkSubWidg(ri->subwidgref))
+			if(SubscrWidget* widg = checkSubWidg(GET_SUBWIDGREF))
 			{
 				auto ty = widg->getType();
 				switch(ty)
@@ -10551,7 +10546,7 @@ int32_t get_register(int32_t arg)
 		}
 		case SUBWIDGTY_GAUGE_HEI:
 		{
-			if(SubscrWidget* widg = checkSubWidg(ri->subwidgref))
+			if(SubscrWidget* widg = checkSubWidg(GET_SUBWIDGREF))
 			{
 				auto ty = widg->getType();
 				switch(ty)
@@ -10569,7 +10564,7 @@ int32_t get_register(int32_t arg)
 		}
 		case SUBWIDGTY_UNITS:
 		{
-			if(SubscrWidget* widg = checkSubWidg(ri->subwidgref))
+			if(SubscrWidget* widg = checkSubWidg(GET_SUBWIDGREF))
 			{
 				auto ty = widg->getType();
 				switch(ty)
@@ -10587,7 +10582,7 @@ int32_t get_register(int32_t arg)
 		}
 		case SUBWIDGTY_HSPACE:
 		{
-			if(SubscrWidget* widg = checkSubWidg(ri->subwidgref))
+			if(SubscrWidget* widg = checkSubWidg(GET_SUBWIDGREF))
 			{
 				auto ty = widg->getType();
 				switch(ty)
@@ -10605,7 +10600,7 @@ int32_t get_register(int32_t arg)
 		}
 		case SUBWIDGTY_VSPACE:
 		{
-			if(SubscrWidget* widg = checkSubWidg(ri->subwidgref))
+			if(SubscrWidget* widg = checkSubWidg(GET_SUBWIDGREF))
 			{
 				auto ty = widg->getType();
 				switch(ty)
@@ -10623,7 +10618,7 @@ int32_t get_register(int32_t arg)
 		}
 		case SUBWIDGTY_GRIDX:
 		{
-			if(SubscrWidget* widg = checkSubWidg(ri->subwidgref))
+			if(SubscrWidget* widg = checkSubWidg(GET_SUBWIDGREF))
 			{
 				auto ty = widg->getType();
 				switch(ty)
@@ -10641,7 +10636,7 @@ int32_t get_register(int32_t arg)
 		}
 		case SUBWIDGTY_GRIDY:
 		{
-			if(SubscrWidget* widg = checkSubWidg(ri->subwidgref))
+			if(SubscrWidget* widg = checkSubWidg(GET_SUBWIDGREF))
 			{
 				auto ty = widg->getType();
 				switch(ty)
@@ -10659,7 +10654,7 @@ int32_t get_register(int32_t arg)
 		}
 		case SUBWIDGTY_ANIMVAL:
 		{
-			if(SubscrWidget* widg = checkSubWidg(ri->subwidgref))
+			if(SubscrWidget* widg = checkSubWidg(GET_SUBWIDGREF))
 			{
 				auto ty = widg->getType();
 				switch(ty)
@@ -10677,7 +10672,7 @@ int32_t get_register(int32_t arg)
 		}
 		case SUBWIDGTY_SHOWDRAIN:
 		{
-			if(SubscrWidget* widg = checkSubWidg(ri->subwidgref))
+			if(SubscrWidget* widg = checkSubWidg(GET_SUBWIDGREF))
 			{
 				auto ty = widg->getType();
 				switch(ty)
@@ -10695,7 +10690,7 @@ int32_t get_register(int32_t arg)
 		}
 		case SUBWIDGTY_PERCONTAINER:
 		{
-			if(SubscrWidget* widg = checkSubWidg(ri->subwidgref))
+			if(SubscrWidget* widg = checkSubWidg(GET_SUBWIDGREF))
 			{
 				auto ty = widg->getType();
 				switch(ty)
@@ -10716,7 +10711,7 @@ int32_t get_register(int32_t arg)
 		}
 		case SUBWIDGTY_TOTAL:
 		{
-			if(SubscrWidget* widg = checkSubWidg(ri->subwidgref))
+			if(SubscrWidget* widg = checkSubWidg(GET_SUBWIDGREF))
 			{
 				auto ty = widg->getType();
 				switch(ty)
@@ -10734,7 +10729,7 @@ int32_t get_register(int32_t arg)
 		}
 		case SUBWIDGTY_TABSIZE:
 		{
-			if(SubscrWidget* widg = checkSubWidg(ri->subwidgref))
+			if(SubscrWidget* widg = checkSubWidg(GET_SUBWIDGREF))
 			{
 				auto ty = widg->getType();
 				switch(ty)
@@ -10755,7 +10750,7 @@ int32_t get_register(int32_t arg)
 		}
 		case SUBWIDGTY_LITEMS:
 		{
-			if(SubscrWidget* widg = checkSubWidg(ri->subwidgref))
+			if(SubscrWidget* widg = checkSubWidg(GET_SUBWIDGREF))
 			{
 				auto ty = widg->getType();
 				switch(ty)
@@ -10811,25 +10806,25 @@ void set_register(int32_t arg, int32_t value)
 	
 	#define	SET_SPRITEDATA_VAR_INT(member, str) \
 	{ \
-		if(unsigned(ri->spritedataref) > (MAXWPNS-1) ) \
+		if(unsigned(GET_SPRITEDATAREF) > (MAXWPNS-1) ) \
 		{ \
 			Z_scripterrlog("Invalid Sprite ID passed to spritedata->%s: %d\n", str, (ri->spritedataref*10000)); \
 		} \
 		else \
 		{ \
-			wpnsbuf[ri->spritedataref].member = vbound((value / 10000),0,214747); \
+			wpnsbuf[GET_SPRITEDATAREF].member = vbound((value / 10000),0,214747); \
 		} \
 	} \
 
 	#define	SET_SPRITEDATA_VAR_BYTE(member, str) \
 	{ \
-		if(unsigned(ri->spritedataref) > (MAXWPNS-1) ) \
+		if(unsigned(GET_SPRITEDATAREF) > (MAXWPNS-1) ) \
 		{ \
 			Z_scripterrlog("Invalid Sprite ID passed to spritedata->%s: %d\n", str, (ri->spritedataref*10000)); \
 		} \
 		else \
 		{ \
-			wpnsbuf[ri->spritedataref].member = vbound((value / 10000),0,255); \
+			wpnsbuf[GET_SPRITEDATAREF].member = vbound((value / 10000),0,255); \
 		} \
 	} \
 
@@ -10841,14 +10836,14 @@ void set_register(int32_t arg, int32_t value)
 	///----------------------------------------------------------------------------------------------------//
 	//FFC Variables
 		case DATA:
-			if (auto ffc = ResolveFFC(ri->ffcref))
+			if (auto ffc = ResolveFFC(GET_FFCREF))
 			{
 				zc_ffc_set(*ffc, vbound(value/10000,0,MAXCOMBOS-1));
 			}
 			break;
 		
 		case FFSCRIPT:
-			if (auto ffc = ResolveFFC(ri->ffcref))
+			if (auto ffc = ResolveFFC(GET_FFCREF))
 			{
 				ffc->script = vbound(value/10000, 0, NUMSCRIPTFFC-1);
 				for(int32_t i=0; i<16; i++)
@@ -10864,32 +10859,32 @@ void set_register(int32_t arg, int32_t value)
 			
 			
 		case FCSET:
-			if (auto ffc = ResolveFFC(ri->ffcref))
+			if (auto ffc = ResolveFFC(GET_FFCREF))
 				ffc->cset = (value/10000)&15;
 			break;
 			
 		case DELAY:
-			if (auto ffc = ResolveFFC(ri->ffcref))
+			if (auto ffc = ResolveFFC(GET_FFCREF))
 				ffc->delay = value/10000;
 			break;
 			
 		case FX:
-			if (auto ffc = ResolveFFC(ri->ffcref))
+			if (auto ffc = ResolveFFC(GET_FFCREF))
 				ffc->x = zslongToFix(value);
 			break;
 			
 		case FY:
-			if (auto ffc = ResolveFFC(ri->ffcref))
+			if (auto ffc = ResolveFFC(GET_FFCREF))
 				ffc->y=zslongToFix(value);
 			break;
 			
 		case XD:
-			if (auto ffc = ResolveFFC(ri->ffcref))
+			if (auto ffc = ResolveFFC(GET_FFCREF))
 				ffc->vx=zslongToFix(value);
 			break;
 			
 		case YD:
-			if (auto ffc = ResolveFFC(ri->ffcref))
+			if (auto ffc = ResolveFFC(GET_FFCREF))
 				ffc->vy=zslongToFix(value);
 			break;
 		
@@ -10897,53 +10892,53 @@ void set_register(int32_t arg, int32_t value)
 			break;
 			
 		case XD2:
-			if (auto ffc = ResolveFFC(ri->ffcref))
+			if (auto ffc = ResolveFFC(GET_FFCREF))
 				ffc->ax=zslongToFix(value);
 			break;
 			
 		case YD2:
-			if (auto ffc = ResolveFFC(ri->ffcref))
+			if (auto ffc = ResolveFFC(GET_FFCREF))
 				ffc->ay=zslongToFix(value);
 			break;
 			
 		case FFCWIDTH:
-			if (auto ffc = ResolveFFC(ri->ffcref))
+			if (auto ffc = ResolveFFC(GET_FFCREF))
 				ffc->hit_width = (value/10000);
 			break;
 			
 		case FFCHEIGHT:
-			if (auto ffc = ResolveFFC(ri->ffcref))
+			if (auto ffc = ResolveFFC(GET_FFCREF))
 				ffc->hit_height = (value/10000);
 			break;
 			
 		case FFTWIDTH:
-			if (auto ffc = ResolveFFC(ri->ffcref))
+			if (auto ffc = ResolveFFC(GET_FFCREF))
 				ffc->txsz = vbound(value/10000, 1, 4);
 			break;
 			
 		case FFTHEIGHT:
-			if (auto ffc = ResolveFFC(ri->ffcref))
+			if (auto ffc = ResolveFFC(GET_FFCREF))
 				ffc->tysz = vbound(value/10000, 1, 4);
 			break;
 			
 		case FFCLAYER:
-			if (auto ffc = ResolveFFC(ri->ffcref))
+			if (auto ffc = ResolveFFC(GET_FFCREF))
 				ffc->layer = vbound(value/10000, 0, 7);
 			break;
 			
 		case FFLINK:
-			if (auto ffc = ResolveFFC(ri->ffcref))
+			if (auto ffc = ResolveFFC(GET_FFCREF))
 				(ffc->link)=vbound(value/10000, 0, MAXFFCS-1); // Allow "ffc->Link = 0" to unlink ffc.
 			//0 is none, setting this before made it impssible to clear it. -Z
 			break;
 			
 		case FFCLASTCHANGERX:
-			if (auto ffc = ResolveFFC(ri->ffcref) )
+			if (auto ffc = ResolveFFC(GET_FFCREF) )
 				ffc->changer_x=vbound(zslongToFix(value).getInt(),-32768, 32767);
 			break;
 			
 		case FFCLASTCHANGERY:
-			if (auto ffc = ResolveFFC(ri->ffcref) )
+			if (auto ffc = ResolveFFC(GET_FFCREF) )
 				ffc->changer_y=vbound(zslongToFix(value).getInt(),-32768, 32767);
 			break;
 		
@@ -11968,276 +11963,276 @@ void set_register(int32_t arg, int32_t value)
 		//not mine, but let;s guard some of them all the same -Z
 		//item class
 		case IDATATYPE:
-			if(unsigned(ri->itemclassref) >= MAXITEMS)
+			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				break;
 			}
-			(itemsbuf[ri->itemclassref].type)=vbound(value/10000,0, 254);
+			(itemsbuf[GET_ITEMCLASSREF].type)=vbound(value/10000,0, 254);
 			flushItemCache();
 			break;
 		
 		case IDATAUSEWPN:
-			if(unsigned(ri->itemclassref) >= MAXITEMS)
+			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				break;
 			}
-			(itemsbuf[ri->itemclassref].weap_data.imitate_weapon)=vbound(value/10000, 0, 255);
+			(itemsbuf[GET_ITEMCLASSREF].weap_data.imitate_weapon)=vbound(value/10000, 0, 255);
 			break;
 		case IDATAUSEDEF:
-			if(unsigned(ri->itemclassref) >= MAXITEMS)
+			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				break;
 			}
-			(itemsbuf[ri->itemclassref].weap_data.default_defense)=vbound(value/10000, 0, 255);
+			(itemsbuf[GET_ITEMCLASSREF].weap_data.default_defense)=vbound(value/10000, 0, 255);
 			break;
 		case IDATAWRANGE:
-			if(unsigned(ri->itemclassref) >= MAXITEMS)
+			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				break;
 			}
-			(itemsbuf[ri->itemclassref].weaprange)=vbound(value/10000, 0, 255);
+			(itemsbuf[GET_ITEMCLASSREF].weaprange)=vbound(value/10000, 0, 255);
 			break;
 		case IDATAMAGICTIMER:
-			if(unsigned(ri->itemclassref) >= MAXITEMS)
+			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				break;
 			}
-			(itemsbuf[ri->itemclassref].magiccosttimer[0])=vbound(value/10000, 0, 214747);
+			(itemsbuf[GET_ITEMCLASSREF].magiccosttimer[0])=vbound(value/10000, 0, 214747);
 			break;
 		case IDATAMAGICTIMER2:
-			if(unsigned(ri->itemclassref) >= MAXITEMS)
+			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				break;
 			}
-			(itemsbuf[ri->itemclassref].magiccosttimer[1])=vbound(value/10000, 0, 214747);
+			(itemsbuf[GET_ITEMCLASSREF].magiccosttimer[1])=vbound(value/10000, 0, 214747);
 			break;
 		case IDATADURATION:
-			if(unsigned(ri->itemclassref) >= MAXITEMS)
+			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				break;
 			}
-			(itemsbuf[ri->itemclassref].weapduration)=vbound(value/10000, 0, 255);
+			(itemsbuf[GET_ITEMCLASSREF].weapduration)=vbound(value/10000, 0, 255);
 			break;
 		 
 		case IDATADUPLICATES:
-			if(unsigned(ri->itemclassref) >= MAXITEMS)
+			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				break;
 			}
-			(itemsbuf[ri->itemclassref].duplicates)=vbound(value/10000, 0, 255);
+			(itemsbuf[GET_ITEMCLASSREF].duplicates)=vbound(value/10000, 0, 255);
 			break;
 		case IDATADRAWLAYER:
-			if(unsigned(ri->itemclassref) >= MAXITEMS)
+			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				break;
 			}
-			(itemsbuf[ri->itemclassref].drawlayer)=vbound(value/10000, 0, 7);
+			(itemsbuf[GET_ITEMCLASSREF].drawlayer)=vbound(value/10000, 0, 7);
 			break;
 		case IDATACOLLECTFLAGS:
-			if(unsigned(ri->itemclassref) >= MAXITEMS)
+			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				break;
 			}
 			//int32_t a = GET_D(rINDEX) / 10000;
-			(itemsbuf[ri->itemclassref].collectflags)=vbound(value/10000, 0, 214747);
+			(itemsbuf[GET_ITEMCLASSREF].collectflags)=vbound(value/10000, 0, 214747);
 			break;
 		case IDATAWEAPONSCRIPT:
-			if(unsigned(ri->itemclassref) >= MAXITEMS)
+			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				break;
 			}
-			(itemsbuf[ri->itemclassref].weap_data.script)=vbound(value/10000, 0, 255);
+			(itemsbuf[GET_ITEMCLASSREF].weap_data.script)=vbound(value/10000, 0, 255);
 			break;
 		case IDATAWEAPHXOFS:
-			if(unsigned(ri->itemclassref) >= MAXITEMS)
+			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				break;
 			}
-			(itemsbuf[ri->itemclassref].weap_data.hxofs)=(value/10000);
+			(itemsbuf[GET_ITEMCLASSREF].weap_data.hxofs)=(value/10000);
 			break;
 		case IDATAWEAPHYOFS:
-			if(unsigned(ri->itemclassref) >= MAXITEMS)
+			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				break;
 			}
-			(itemsbuf[ri->itemclassref].weap_data.hyofs)=(value/10000);
+			(itemsbuf[GET_ITEMCLASSREF].weap_data.hyofs)=(value/10000);
 			break;
 		case IDATAWEAPHXSZ:
-			if(unsigned(ri->itemclassref) >= MAXITEMS)
+			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				break;
 			}
-			(itemsbuf[ri->itemclassref].weap_data.hxsz)=(value/10000);
+			(itemsbuf[GET_ITEMCLASSREF].weap_data.hxsz)=(value/10000);
 			break;
 		case IDATAWEAPHYSZ:
-			if(unsigned(ri->itemclassref) >= MAXITEMS)
+			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				break;
 			}
-			(itemsbuf[ri->itemclassref].weap_data.hysz)=(value/10000);
+			(itemsbuf[GET_ITEMCLASSREF].weap_data.hysz)=(value/10000);
 			break;
 		case IDATAWEAPHZSZ:
-			if(unsigned(ri->itemclassref) >= MAXITEMS)
+			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				break;
 			}
-			(itemsbuf[ri->itemclassref].weap_data.hzsz)=(value/10000);
+			(itemsbuf[GET_ITEMCLASSREF].weap_data.hzsz)=(value/10000);
 			break;
 		case IDATAWEAPXOFS:
-			if(unsigned(ri->itemclassref) >= MAXITEMS)
+			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				break;
 			}
-			(itemsbuf[ri->itemclassref].weap_data.xofs)=(value/10000);
+			(itemsbuf[GET_ITEMCLASSREF].weap_data.xofs)=(value/10000);
 			break;
 		case IDATAWEAPYOFS:
-			if(unsigned(ri->itemclassref) >= MAXITEMS)
+			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				break;
 			}
-			(itemsbuf[ri->itemclassref].weap_data.yofs)=(value/10000);
+			(itemsbuf[GET_ITEMCLASSREF].weap_data.yofs)=(value/10000);
 			break;
 
 		
 		case IDATAHXOFS:
-			if(unsigned(ri->itemclassref) >= MAXITEMS)
+			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				break;
 			}
-			(itemsbuf[ri->itemclassref].hxofs)=(value/10000);
+			(itemsbuf[GET_ITEMCLASSREF].hxofs)=(value/10000);
 			break;
 		case IDATAHYOFS:
-			if(unsigned(ri->itemclassref) >= MAXITEMS)
+			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				break;
 			}
-			(itemsbuf[ri->itemclassref].hyofs)=(value/10000);
+			(itemsbuf[GET_ITEMCLASSREF].hyofs)=(value/10000);
 			break;
 		case IDATAHXSZ:
-			if(unsigned(ri->itemclassref) >= MAXITEMS)
+			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				break;
 			}
-			(itemsbuf[ri->itemclassref].hxsz)=(value/10000);
+			(itemsbuf[GET_ITEMCLASSREF].hxsz)=(value/10000);
 			break;
 		case IDATAHYSZ:
-			if(unsigned(ri->itemclassref) >= MAXITEMS)
+			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				break;
 			}
-			(itemsbuf[ri->itemclassref].hysz)=(value/10000);
+			(itemsbuf[GET_ITEMCLASSREF].hysz)=(value/10000);
 			break;
 		case IDATAHZSZ:
-			if(unsigned(ri->itemclassref) >= MAXITEMS)
+			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				break;
 			}
-			(itemsbuf[ri->itemclassref].hzsz)=(value/10000);
+			(itemsbuf[GET_ITEMCLASSREF].hzsz)=(value/10000);
 			break;
 		case IDATADXOFS:
-			if(unsigned(ri->itemclassref) >= MAXITEMS)
+			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				break;
 			}
-			(itemsbuf[ri->itemclassref].xofs)=(value/10000);
+			(itemsbuf[GET_ITEMCLASSREF].xofs)=(value/10000);
 			break;
 		case IDATADYOFS:
-			if(unsigned(ri->itemclassref) >= MAXITEMS)
+			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				break;
 			}
-			(itemsbuf[ri->itemclassref].yofs)=(value/10000);
+			(itemsbuf[GET_ITEMCLASSREF].yofs)=(value/10000);
 			break;
 		case IDATATILEW:
-			if(unsigned(ri->itemclassref) >= MAXITEMS)
+			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				break;
 			}
-			(itemsbuf[ri->itemclassref].tilew)=(value/10000);
+			(itemsbuf[GET_ITEMCLASSREF].tilew)=(value/10000);
 			break;
 		case IDATATILEH:
-			if(unsigned(ri->itemclassref) >= MAXITEMS)
+			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				break;
 			}
-			(itemsbuf[ri->itemclassref].tileh)=(value/10000);
+			(itemsbuf[GET_ITEMCLASSREF].tileh)=(value/10000);
 			break;
 		case IDATAPICKUP:
-			if(unsigned(ri->itemclassref) >= MAXITEMS)
+			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				break;
 			}
-			(itemsbuf[ri->itemclassref].pickup)=(value/10000);
+			(itemsbuf[GET_ITEMCLASSREF].pickup)=(value/10000);
 			break;
 		case IDATAOVERRIDEFL:
-			if(unsigned(ri->itemclassref) >= MAXITEMS)
+			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				break;
 			}
-			(itemsbuf[ri->itemclassref].overrideFLAGS)=(value/10000);
+			(itemsbuf[GET_ITEMCLASSREF].overrideFLAGS)=(value/10000);
 			break;
 
 		case IDATATILEWWEAP:
-			if(unsigned(ri->itemclassref) >= MAXITEMS)
+			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				break;
 			}
-			(itemsbuf[ri->itemclassref].weap_data.tilew)=(value/10000);
+			(itemsbuf[GET_ITEMCLASSREF].weap_data.tilew)=(value/10000);
 			break;
 		case IDATATILEHWEAP:
-			if(unsigned(ri->itemclassref) >= MAXITEMS)
+			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				break;
 			}
-			(itemsbuf[ri->itemclassref].weap_data.tileh)=(value/10000);
+			(itemsbuf[GET_ITEMCLASSREF].weap_data.tileh)=(value/10000);
 			break;
 		case IDATAOVERRIDEFLWEAP:
-			if(unsigned(ri->itemclassref) >= MAXITEMS)
+			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				break;
 			}
-			(itemsbuf[ri->itemclassref].weap_data.override_flags)=(value/10000);
+			(itemsbuf[GET_ITEMCLASSREF].weap_data.override_flags)=(value/10000);
 			break;
 		
 		case IDATALEVEL:
-			if(unsigned(ri->itemclassref) >= MAXITEMS)
+			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				break;
 			}
-			(itemsbuf[ri->itemclassref].level)=vbound(value/10000, 0, 512);
+			(itemsbuf[GET_ITEMCLASSREF].level)=vbound(value/10000, 0, 512);
 			flushItemCache();
 			break;
 		case IDATAKEEP:
@@ -12245,24 +12240,24 @@ void set_register(int32_t arg, int32_t value)
 			break;
 		case IDATAAMOUNT:
 		{
-			if(unsigned(ri->itemclassref) >= MAXITEMS)
+			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				break;
 			}
 			int32_t v = vbound(value/10000, -9999, 16383);
-			itemsbuf[ri->itemclassref].amount &= 0x8000;
-			itemsbuf[ri->itemclassref].amount |= (abs(v)&0x3FFF)|(v<0?0x4000:0);
+			itemsbuf[GET_ITEMCLASSREF].amount &= 0x8000;
+			itemsbuf[GET_ITEMCLASSREF].amount |= (abs(v)&0x3FFF)|(v<0?0x4000:0);
 			break;
 		}
 		case IDATAGRADUAL:
 		{
-			if(unsigned(ri->itemclassref) >= MAXITEMS)
+			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				break;
 			}
-			SETFLAG(itemsbuf[ri->itemclassref].amount, 0x8000, value!=0);
+			SETFLAG(itemsbuf[GET_ITEMCLASSREF].amount, 0x8000, value!=0);
 			break;
 		}
 		case IDATACONSTSCRIPT:
@@ -12281,73 +12276,73 @@ void set_register(int32_t arg, int32_t value)
 			item_flag(item_flip_jinx, value);
 			break;
 		case IDATAUSEBURNSPR:
-			if(unsigned(ri->itemclassref) >= MAXITEMS)
+			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 			}
-			else SETFLAG(itemsbuf[ri->itemclassref].weap_data.wflags, WFLAG_UPDATE_IGNITE_SPRITE, value);
+			else SETFLAG(itemsbuf[GET_ITEMCLASSREF].weap_data.wflags, WFLAG_UPDATE_IGNITE_SPRITE, value);
 			break;
 		case IDATASETMAX:
-			if(unsigned(ri->itemclassref) >= MAXITEMS)
+			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				break;
 			}
-			(itemsbuf[ri->itemclassref].setmax)=value/10000;
+			(itemsbuf[GET_ITEMCLASSREF].setmax)=value/10000;
 			break;
 			
 		case IDATAMAX:
-			if(unsigned(ri->itemclassref) >= MAXITEMS)
+			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				break;
 			}
-			(itemsbuf[ri->itemclassref].max)=value/10000;
+			(itemsbuf[GET_ITEMCLASSREF].max)=value/10000;
 			break;
 			
 		case IDATAPOWER:
-			if(unsigned(ri->itemclassref) >= MAXITEMS)
+			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				break;
 			}
-			(itemsbuf[ri->itemclassref].power)=value/10000;
+			(itemsbuf[GET_ITEMCLASSREF].power)=value/10000;
 			break;
 			
 		case IDATACOUNTER:
-			if(unsigned(ri->itemclassref) >= MAXITEMS)
+			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				break;
 			}
-			(itemsbuf[ri->itemclassref].count)=vbound(value/10000,0,31);
+			(itemsbuf[GET_ITEMCLASSREF].count)=vbound(value/10000,0,31);
 			break;
 			
 		case IDATAPSOUND:
-			if(unsigned(ri->itemclassref) >= MAXITEMS)
+			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				break;
 			}
-			(itemsbuf[ri->itemclassref].playsound)=vbound(value/10000, 0, 255);
+			(itemsbuf[GET_ITEMCLASSREF].playsound)=vbound(value/10000, 0, 255);
 			break;
 			
 		case IDATAUSESOUND:
-			if(unsigned(ri->itemclassref) >= MAXITEMS)
+			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				break;
 			}
-			(itemsbuf[ri->itemclassref].usesound)=vbound(value/10000, 0, 255);
+			(itemsbuf[GET_ITEMCLASSREF].usesound)=vbound(value/10000, 0, 255);
 			break;
 			
 		case IDATAUSESOUND2:
-			if(unsigned(ri->itemclassref) >= MAXITEMS)
+			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				break;
 			}
-			(itemsbuf[ri->itemclassref].usesound2)=vbound(value/10000, 0, 255);
+			(itemsbuf[GET_ITEMCLASSREF].usesound2)=vbound(value/10000, 0, 255);
 			break;
 		
 		//2.54
@@ -12391,162 +12386,162 @@ void set_register(int32_t arg, int32_t value)
 			break;
 		//Set the action script
 		case IDATASCRIPT:
-			if(unsigned(ri->itemclassref) >= MAXITEMS)
+			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				break;
 			}
 			FFScript::deallocateAllScriptOwned(ScriptType::Item, ri->itemclassref);
-			itemsbuf[ri->itemclassref].script=vbound(value/10000,0,255);
+			itemsbuf[GET_ITEMCLASSREF].script=vbound(value/10000,0,255);
 			break;
 		case IDATASPRSCRIPT:
-			if(unsigned(ri->itemclassref) >= MAXITEMS)
+			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				break;
 			}
-			itemsbuf[ri->itemclassref].sprite_script=vbound(value/10000,0,255);
+			itemsbuf[GET_ITEMCLASSREF].sprite_script=vbound(value/10000,0,255);
 			break;
 
 		//Hero tile modifier. 
 		case IDATALTM:
 		{
-			if(unsigned(ri->itemclassref) >= MAXITEMS)
+			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				break;
 			}
 			auto new_value = value/10000;
-			if (new_value != itemsbuf[ri->itemclassref].ltm)
+			if (new_value != itemsbuf[GET_ITEMCLASSREF].ltm)
 				cache_tile_mod_clear();
-			itemsbuf[ri->itemclassref].ltm = new_value;
+			itemsbuf[GET_ITEMCLASSREF].ltm = new_value;
 			break;
 		}
 		//Pickup script
 		case IDATAPSCRIPT:
 		{
-			if(unsigned(ri->itemclassref) >= MAXITEMS)
+			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				break;
 			}
 			//Need to get collect script ref, not standard idata ref!
-			const int32_t new_ref = ri->itemclassref!=0 ? -(ri->itemclassref) : COLLECT_SCRIPT_ITEM_ZERO;
+			const int32_t new_ref = ri->itemclassref!=0 ? -(GET_ITEMCLASSREF) : COLLECT_SCRIPT_ITEM_ZERO;
 			FFScript::deallocateAllScriptOwned(ScriptType::Item,new_ref);
-			itemsbuf[ri->itemclassref].collect_script=vbound(value/10000, 0, 255);
+			itemsbuf[GET_ITEMCLASSREF].collect_script=vbound(value/10000, 0, 255);
 			break;
 		}
 		//pickup string
 		case IDATAPSTRING:
-			if(unsigned(ri->itemclassref) >= MAXITEMS)
+			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				break;
 			}
-			itemsbuf[ri->itemclassref].pstring=vbound(value/10000, 1, 255);
+			itemsbuf[GET_ITEMCLASSREF].pstring=vbound(value/10000, 1, 255);
 			break;
 		case IDATAPFLAGS:
-			if(unsigned(ri->itemclassref) >= MAXITEMS)
+			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				break;
 			}
-			itemsbuf[ri->itemclassref].pickup_string_flags=vbound(value/10000, 0, 214748);
+			itemsbuf[GET_ITEMCLASSREF].pickup_string_flags=vbound(value/10000, 0, 214748);
 			break;
 		case IDATAPICKUPLITEMS:
-			if(unsigned(ri->itemclassref) >= MAXITEMS)
+			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				break;
 			}
-			itemsbuf[ri->itemclassref].pickup_litems = vbound(value/10000, 0, 214748) & LI_ALL;
+			itemsbuf[GET_ITEMCLASSREF].pickup_litems = vbound(value/10000, 0, 214748) & LI_ALL;
 			break;
 		case IDATAPICKUPLITEMLEVEL:
-			if(unsigned(ri->itemclassref) >= MAXITEMS)
+			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				break;
 			}
-			itemsbuf[ri->itemclassref].pickup_litem_level = vbound(value/10000, -1, MAXLEVELS-1);
+			itemsbuf[GET_ITEMCLASSREF].pickup_litem_level = vbound(value/10000, -1, MAXLEVELS-1);
 			break;
 		//magic cost
 		case IDATAMAGCOST:
-			if(unsigned(ri->itemclassref) >= MAXITEMS)
+			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				break;
 			}
-			itemsbuf[ri->itemclassref].cost_amount[0]=vbound(value/10000,32767,-32768);
+			itemsbuf[GET_ITEMCLASSREF].cost_amount[0]=vbound(value/10000,32767,-32768);
 			break;
 		case IDATACOST2:
-			if(unsigned(ri->itemclassref) >= MAXITEMS)
+			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				break;
 			}
-			itemsbuf[ri->itemclassref].cost_amount[1]=vbound(value/10000,32767,-32768);
+			itemsbuf[GET_ITEMCLASSREF].cost_amount[1]=vbound(value/10000,32767,-32768);
 			break;
 		case IDATACOOLDOWN:
-			if(unsigned(ri->itemclassref) >= MAXITEMS)
+			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				break;
 			}
-			itemsbuf[ri->itemclassref].cooldown = zc_max(value/10000,0);
+			itemsbuf[GET_ITEMCLASSREF].cooldown = zc_max(value/10000,0);
 			break;
 		//cost counter ref
 		case IDATACOSTCOUNTER:
-			if(unsigned(ri->itemclassref) >= MAXITEMS)
+			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				break;
 			}
-			itemsbuf[ri->itemclassref].cost_counter[0]=(vbound(value/10000,-1,32));
+			itemsbuf[GET_ITEMCLASSREF].cost_counter[0]=(vbound(value/10000,-1,32));
 			break;
 		case IDATACOSTCOUNTER2:
-			if(unsigned(ri->itemclassref) >= MAXITEMS)
+			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				break;
 			}
-			itemsbuf[ri->itemclassref].cost_counter[1]=(vbound(value/10000,-1,32));
+			itemsbuf[GET_ITEMCLASSREF].cost_counter[1]=(vbound(value/10000,-1,32));
 			break;
 		//min hearts to pick up
 		case IDATAMINHEARTS:
-			if(unsigned(ri->itemclassref) >= MAXITEMS)
+			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				break;
 			}
-			itemsbuf[ri->itemclassref].pickup_hearts=vbound(value/10000, 0, 214748);
+			itemsbuf[GET_ITEMCLASSREF].pickup_hearts=vbound(value/10000, 0, 214748);
 			break;
 		//item tile
 		case IDATATILE:
-			if(unsigned(ri->itemclassref) >= MAXITEMS)
+			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				break;
 			}
-			itemsbuf[ri->itemclassref].tile=vbound(value/10000, 0, NEWMAXTILES-1);
+			itemsbuf[GET_ITEMCLASSREF].tile=vbound(value/10000, 0, NEWMAXTILES-1);
 			break;
 		//flash
 		case IDATAMISC:
-			if(unsigned(ri->itemclassref) >= MAXITEMS)
+			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				break;
 			}
-			itemsbuf[ri->itemclassref].misc_flags=value/10000;
+			itemsbuf[GET_ITEMCLASSREF].misc_flags=value/10000;
 			break;
 		//cset
 		case IDATACSET:
-			if(unsigned(ri->itemclassref) >= MAXITEMS)
+			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				break;
 			}
 
-			itemsbuf[ri->itemclassref].csets = (itemsbuf[ri->itemclassref].csets & 0xF0) | vbound(value/10000,0,15);
+			itemsbuf[GET_ITEMCLASSREF].csets = (itemsbuf[GET_ITEMCLASSREF].csets & 0xF0) | vbound(value/10000,0,15);
 
 			// If we find quests that broke, use this code.
 			// if (QHeader.compareVer(2, 55, 9) >= 0)
@@ -12556,7 +12551,7 @@ void set_register(int32_t arg, int32_t value)
 			break;
 		
 		case IDATAFLASHCSET:
-			if(unsigned(ri->itemclassref) >= MAXITEMS)
+			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				break;
@@ -12571,30 +12566,30 @@ void set_register(int32_t arg, int32_t value)
 		*/
 		//A.Frames
 		case IDATAFRAMES:
-			if(unsigned(ri->itemclassref) >= MAXITEMS)
+			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				break;
 			}
-			(itemsbuf[ri->itemclassref].frames)=vbound(value/10000, 0, 214748);
+			(itemsbuf[GET_ITEMCLASSREF].frames)=vbound(value/10000, 0, 214748);
 			break;
 		//A.speed
 		case IDATAASPEED:
-			if(unsigned(ri->itemclassref) >= MAXITEMS)
+			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				break;
 			}
-			itemsbuf[ri->itemclassref].speed=vbound(value/10000, 0, 214748);
+			itemsbuf[GET_ITEMCLASSREF].speed=vbound(value/10000, 0, 214748);
 			break;
 		//Anim delay
 		case IDATADELAY:
-			if(unsigned(ri->itemclassref) >= MAXITEMS)
+			if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 				break;
 			}
-			itemsbuf[ri->itemclassref].delay=vbound(value/10000, 0, 214748);
+			itemsbuf[GET_ITEMCLASSREF].delay=vbound(value/10000, 0, 214748);
 			break;
 		
 	///----------------------------------------------------------------------------------------------------//
@@ -12606,13 +12601,13 @@ void set_register(int32_t arg, int32_t value)
 				scripting_log_error_with_context("To use this you must disable the quest rule 'Old (Faster) Sprite Drawing'.");
 				break;
 			}
-			if(auto s=checkLWpn(ri->lwpnref))
+			if(auto s=checkLWpn(GET_LWPNREF))
 				s->scale=(zfix)(value/100.0);
 				
 			break;
 		
 		case LWPNX:
-			if(auto s=checkLWpn(ri->lwpnref))
+			if(auto s=checkLWpn(GET_LWPNREF))
 				s->x=get_qr(qr_SPRITEXY_IS_FLOAT) ? zslongToFix(value) : zfix(value/10000);
 			break;
 		
@@ -12624,13 +12619,13 @@ void set_register(int32_t arg, int32_t value)
 		}
 			
 		case LWPNY:
-			if(auto s=checkLWpn(ri->lwpnref))
+			if(auto s=checkLWpn(GET_LWPNREF))
 				s->y=get_qr(qr_SPRITEXY_IS_FLOAT) ? zslongToFix(value) : zfix(value/10000);
 				
 			break;
 			
 		case LWPNZ:
-			if(auto s=checkLWpn(ri->lwpnref))
+			if(auto s=checkLWpn(GET_LWPNREF))
 			{
 				s->z=get_qr(qr_SPRITEXY_IS_FLOAT) ? zslongToFix(value) : zfix(value/10000);
 				if(s->z < 0) s->z = 0_zf;
@@ -12639,19 +12634,19 @@ void set_register(int32_t arg, int32_t value)
 			break;
 			
 		case LWPNJUMP:
-			if(auto s=checkLWpn(ri->lwpnref))
+			if(auto s=checkLWpn(GET_LWPNREF))
 				s->fall=zslongToFix(value)*-100;
 				
 			break;
 			
 		case LWPNFAKEJUMP:
-			if(auto s=checkLWpn(ri->lwpnref))
+			if(auto s=checkLWpn(GET_LWPNREF))
 				s->fakefall=zslongToFix(value)*-100;
 				
 			break;
 			
 		case LWPNDIR:
-			if(auto s=checkLWpn(ri->lwpnref))
+			if(auto s=checkLWpn(GET_LWPNREF))
 			{
 				s->dir=(value/10000);
 				s->doAutoRotate(true);
@@ -12660,13 +12655,13 @@ void set_register(int32_t arg, int32_t value)
 			break;
 			
 		case LWPNSPECIAL:
-			if(auto s=checkLWpn(ri->lwpnref))
+			if(auto s=checkLWpn(GET_LWPNREF))
 				s->specialinfo=(value/10000);
 				
 			break;
 		 
 		case LWPNGRAVITY:
-			if(auto s=checkLWpn(ri->lwpnref))
+			if(auto s=checkLWpn(GET_LWPNREF))
 			{
 				if(value)
 					s->moveflags |= move_obeys_grav;
@@ -12676,7 +12671,7 @@ void set_register(int32_t arg, int32_t value)
 			break;
 			
 		case LWPNSTEP:
-			if(auto s=checkLWpn(ri->lwpnref))
+			if(auto s=checkLWpn(GET_LWPNREF))
 			{
 				// fp math is bad for replay, so always ignore this QR when replay is active.
 				// TODO: can we just delete this QR? Would it actually break anything? For now,
@@ -12702,7 +12697,7 @@ void set_register(int32_t arg, int32_t value)
 			break;
 			
 		case LWPNANGLE:
-			if(auto s=checkLWpn(ri->lwpnref))
+			if(auto s=checkLWpn(GET_LWPNREF))
 			{
 				s->angle=(double)(value/10000.0);
 				s->doAutoRotate();
@@ -12711,7 +12706,7 @@ void set_register(int32_t arg, int32_t value)
 			break;
 			
 		case LWPNDEGANGLE:
-			if(auto s=checkLWpn(ri->lwpnref))
+			if(auto s=checkLWpn(GET_LWPNREF))
 			{
 				double rangle = (value / 10000.0) * (PI / 180.0);
 				s->angle=(double)(rangle);
@@ -12721,7 +12716,7 @@ void set_register(int32_t arg, int32_t value)
 			break;
 			
 		case LWPNVX:
-			if(auto s=checkLWpn(ri->lwpnref))
+			if(auto s=checkLWpn(GET_LWPNREF))
 			{
 				double vy;
 				double vx = (value / 10000.0);
@@ -12756,7 +12751,7 @@ void set_register(int32_t arg, int32_t value)
 			break;
 		
 		case LWPNVY:
-			if(auto s=checkLWpn(ri->lwpnref))
+			if(auto s=checkLWpn(GET_LWPNREF))
 			{
 				double vx;
 				double vy = (value / 10000.0);
@@ -12791,7 +12786,7 @@ void set_register(int32_t arg, int32_t value)
 			break;
 			
 		case LWPNANGULAR:
-			if(auto s=checkLWpn(ri->lwpnref))
+			if(auto s=checkLWpn(GET_LWPNREF))
 			{
 				s->angular=(value!=0);
 				s->doAutoRotate(false, true);
@@ -12800,7 +12795,7 @@ void set_register(int32_t arg, int32_t value)
 			break;
 			
 		case LWPNAUTOROTATE:
-			if(auto s=checkLWpn(ri->lwpnref))
+			if(auto s=checkLWpn(GET_LWPNREF))
 			{
 				s->autorotate=(value!=0);
 				s->doAutoRotate(false, true);
@@ -12809,30 +12804,24 @@ void set_register(int32_t arg, int32_t value)
 			break;
 			
 		case LWPNBEHIND:
-			if(auto s=checkLWpn(ri->lwpnref))
+			if(auto s=checkLWpn(GET_LWPNREF))
 				s->behind=(value!=0);
 				
 			break;
 			
 		case LWPNDRAWTYPE:
-			if(auto s=checkLWpn(ri->lwpnref))
+			if(auto s=checkLWpn(GET_LWPNREF))
 				s->drawstyle=(value/10000);
 				
 			break;
 			
 		case LWPNPOWER:
-			if(auto s=checkLWpn(ri->lwpnref))
+			if(auto s=checkLWpn(GET_LWPNREF))
 				s->power=(value/10000);
 				
 			break;
-		/*
-		case LWPNRANGE:
-			if(auto s=checkLWpn(ri->lwpn))
-			s->scriptrange=vbound((value/10000),0,512); //Allow it to move off-screen. -Z           
-			break;
-		*/        
 		case LWPNDEAD:
-			if(auto s=checkLWpn(ri->lwpnref))
+			if(auto s=checkLWpn(GET_LWPNREF))
 			{
 				auto dead = value/10000;
 				s->dead=dead;
@@ -12841,67 +12830,67 @@ void set_register(int32_t arg, int32_t value)
 			break;
 			
 		case LWPNTYPE:
-			if(auto s=checkLWpn(ri->lwpnref))
+			if(auto s=checkLWpn(GET_LWPNREF))
 				s->id=(value/10000);
 				
 			break;
 			
 		case LWPNTILE:
-			if(auto s=checkLWpn(ri->lwpnref))
+			if(auto s=checkLWpn(GET_LWPNREF))
 				s->tile=(value/10000);
 				
 			break;
 		
 		case LWPNSCRIPTTILE:
-			if(auto s=checkLWpn(ri->lwpnref))
+			if(auto s=checkLWpn(GET_LWPNREF))
 				s->scripttile=vbound((value/10000),-1,NEWMAXTILES-1);
 				
 			break;
 		
 		case LWPNSCRIPTFLIP:
-			if(auto s=checkLWpn(ri->lwpnref))
+			if(auto s=checkLWpn(GET_LWPNREF))
 				s->scriptflip=vbound((value/10000),-1,127);
 				
 			break;
 			
 		case LWPNCSET:
-			if(auto s=checkLWpn(ri->lwpnref))
+			if(auto s=checkLWpn(GET_LWPNREF))
 				s->cs=(value/10000)&15;
 				
 			break;
 			
 		case LWPNFLASHCSET:
-			if(auto s=checkLWpn(ri->lwpnref))
+			if(auto s=checkLWpn(GET_LWPNREF))
 				(s->o_cset)|=(value/10000)<<4;
 				
 			break;
 			
 		case LWPNFRAMES:
-			if(auto s=checkLWpn(ri->lwpnref))
+			if(auto s=checkLWpn(GET_LWPNREF))
 				s->frames=(value/10000);
 				
 			break;
 			
 		case LWPNFRAME:
-			if(auto s=checkLWpn(ri->lwpnref))
+			if(auto s=checkLWpn(GET_LWPNREF))
 				s->aframe=(value/10000);
 				
 			break;
 			
 		case LWPNASPEED:
-			if(auto s=checkLWpn(ri->lwpnref))
+			if(auto s=checkLWpn(GET_LWPNREF))
 				s->o_speed=(value/10000);
 				
 			break;
 			
 		case LWPNFLASH:
-			if(auto s=checkLWpn(ri->lwpnref))
+			if(auto s=checkLWpn(GET_LWPNREF))
 				s->flash=(value/10000);
 				
 			break;
 			
 		case LWPNFLIP:
-			if(auto s=checkLWpn(ri->lwpnref))
+			if(auto s=checkLWpn(GET_LWPNREF))
 				s->flip=(value/10000);
 				
 			break;
@@ -12912,19 +12901,19 @@ void set_register(int32_t arg, int32_t value)
 				scripting_log_error_with_context("To use this you must disable the quest rule 'Old (Faster) Sprite Drawing'.");
 				break;
 			}
-			if(auto s=checkLWpn(ri->lwpnref))
+			if(auto s=checkLWpn(GET_LWPNREF))
 				s->rotation=(value/10000);
 				
 			break;
 			
 		case LWPNEXTEND:
-			if(auto s=checkLWpn(ri->lwpnref))
+			if(auto s=checkLWpn(GET_LWPNREF))
 				s->extend=(value/10000);
 				
 			break;
 			
 		case LWPNOTILE:
-			if(auto s=checkLWpn(ri->lwpnref))
+			if(auto s=checkLWpn(GET_LWPNREF))
 			{
 					s->o_tile=(value/10000);
 					s->ref_o_tile=(value/10000);
@@ -12936,43 +12925,43 @@ void set_register(int32_t arg, int32_t value)
 			break;
 			
 		case LWPNOCSET:
-			if(auto s=checkLWpn(ri->lwpnref))
+			if(auto s=checkLWpn(GET_LWPNREF))
 				(s->o_cset)|=(value/10000)&15;
 				
 			break;
 			
 		case LWPNHXOFS:
-			if(auto s=checkLWpn(ri->lwpnref))
+			if(auto s=checkLWpn(GET_LWPNREF))
 				(s->hxofs)=(value/10000);
 				
 			break;
 			
 		case LWPNHYOFS:
-			if(auto s=checkLWpn(ri->lwpnref))
+			if(auto s=checkLWpn(GET_LWPNREF))
 				(s->hyofs)=(value/10000);
 				
 			break;
 			
 		case LWPNXOFS:
-			if(auto s=checkLWpn(ri->lwpnref))
+			if(auto s=checkLWpn(GET_LWPNREF))
 				(s->xofs)=(zfix)(value/10000);
 				
 			break;
 			
 		case LWPNYOFS:
-			if(auto s=checkLWpn(ri->lwpnref))
+			if(auto s=checkLWpn(GET_LWPNREF))
 				(s->yofs)=(zfix)(value/10000)+(get_qr(qr_OLD_DRAWOFFSET)?playing_field_offset:original_playing_field_offset);
 				
 			break;
 		
 		case LWPNSHADOWXOFS:
-			if(auto s=checkLWpn(ri->lwpnref))
+			if(auto s=checkLWpn(GET_LWPNREF))
 				(s->shadowxofs)=(zfix)(value/10000);
 				
 			break;
 		
 		case LWPNSHADOWYOFS:
-			if(auto s=checkLWpn(ri->lwpnref))
+			if(auto s=checkLWpn(GET_LWPNREF))
 				(s->shadowyofs)=(zfix)(value/10000);
 				
 			break;
@@ -12981,49 +12970,49 @@ void set_register(int32_t arg, int32_t value)
 			break; //READ-ONLY
 			
 		case LWPNZOFS:
-			if(auto s=checkLWpn(ri->lwpnref))
+			if(auto s=checkLWpn(GET_LWPNREF))
 				(s->zofs)=(zfix)(value/10000);
 				
 			break;
 			
 		case LWPNHXSZ:
-			if(auto s=checkLWpn(ri->lwpnref))
+			if(auto s=checkLWpn(GET_LWPNREF))
 				(s->hit_width)=(value/10000);
 				
 			break;
 			
 		case LWPNHYSZ:
-			if(auto s=checkLWpn(ri->lwpnref))
+			if(auto s=checkLWpn(GET_LWPNREF))
 				(s->hit_height)=(value/10000);
 				
 			break;
 			
 		case LWPNHZSZ:
-			if(auto s=checkLWpn(ri->lwpnref))
+			if(auto s=checkLWpn(GET_LWPNREF))
 				(s->hzsz)=(value/10000);
 				
 			break;
 			
 		case LWPNTXSZ:
-			if(auto s=checkLWpn(ri->lwpnref))
+			if(auto s=checkLWpn(GET_LWPNREF))
 				(s->txsz)=vbound((value/10000),1,20);
 				
 			break;
 			
 		case LWPNTYSZ:
-			if(auto s=checkLWpn(ri->lwpnref))
+			if(auto s=checkLWpn(GET_LWPNREF))
 				(s->tysz)=vbound((value/10000),1,20);
 				
 			break;
 
 		case LWPNCOLLDET:
-			if(auto s=checkLWpn(ri->lwpnref))
+			if(auto s=checkLWpn(GET_LWPNREF))
 				(s->scriptcoldet) = value;
 
 			break;
 		
 		case LWPNENGINEANIMATE:
-			if(auto s=checkLWpn(ri->lwpnref))
+			if(auto s=checkLWpn(GET_LWPNREF))
 				(s->do_animation)=value;
 				
 			break;
@@ -13032,19 +13021,19 @@ void set_register(int32_t arg, int32_t value)
 		{
 			//int32_t pitm = (vbound(value/10000,1,(MAXITEMS-1)));
 					
-			if(auto s=checkLWpn(ri->lwpnref))
+			if(auto s=checkLWpn(GET_LWPNREF))
 				(s->parentitem)=(vbound(value/10000,-1,(MAXITEMS-1)));
 			break;
 		}
 
 		case LWPNLEVEL:
-			if(auto s=checkLWpn(ri->lwpnref))
+			if(auto s=checkLWpn(GET_LWPNREF))
 				(s->level)=value/10000;
 				
 			break;
 		
 		case LWPNSCRIPT:
-			if(auto s=checkLWpn(ri->lwpnref))
+			if(auto s=checkLWpn(GET_LWPNREF))
 			{
 				(s->script)=vbound(value/10000,0,NUMSCRIPTWEAPONS-1);
 				if ( get_qr(qr_CLEARINITDONSCRIPTCHANGE))
@@ -13057,19 +13046,19 @@ void set_register(int32_t arg, int32_t value)
 			break;
 		
 		case LWPNUSEWEAPON:
-			if(auto s=checkLWpn(ri->lwpnref))
+			if(auto s=checkLWpn(GET_LWPNREF))
 			(s->useweapon)=vbound(value/10000,0,255);
 				
 			break;
 		
 		case LWPNUSEDEFENCE:
-			if(auto s=checkLWpn(ri->lwpnref))
+			if(auto s=checkLWpn(GET_LWPNREF))
 			(s->usedefense)=vbound(value/10000,0,255);
 				
 			break;
 
 		case LWPNFALLCLK:
-			if(auto s=checkLWpn(ri->lwpnref))
+			if(auto s=checkLWpn(GET_LWPNREF))
 			{
 				if(s->fallclk != 0 && value == 0)
 				{
@@ -13081,13 +13070,13 @@ void set_register(int32_t arg, int32_t value)
 			}
 			break;
 		case LWPNFALLCMB:
-			if(auto s=checkLWpn(ri->lwpnref))
+			if(auto s=checkLWpn(GET_LWPNREF))
 			{
 				s->fallCombo = vbound(value/10000,0,MAXCOMBOS-1);
 			}
 			break;
 		case LWPNDROWNCLK:
-			if(auto s=checkLWpn(ri->lwpnref))
+			if(auto s=checkLWpn(GET_LWPNREF))
 			{
 				if(s->drownclk != 0 && value == 0)
 				{
@@ -13099,13 +13088,13 @@ void set_register(int32_t arg, int32_t value)
 			}
 			break;
 		case LWPNDROWNCMB:
-			if(auto s=checkLWpn(ri->lwpnref))
+			if(auto s=checkLWpn(GET_LWPNREF))
 			{
 				s->drownCombo = vbound(value/10000,0,MAXCOMBOS-1);
 			}
 			break;
 		case LWPNFAKEZ:
-			if(auto s=checkLWpn(ri->lwpnref))
+			if(auto s=checkLWpn(GET_LWPNREF))
 			{
 				s->fakez=get_qr(qr_SPRITEXY_IS_FLOAT) ? zslongToFix(value) : zfix(value/10000);
 				if(s->fakez < 0) s->fakez = 0_zf;
@@ -13114,28 +13103,28 @@ void set_register(int32_t arg, int32_t value)
 			break;
 
 		case LWPNGLOWRAD:
-			if(auto s=checkLWpn(ri->lwpnref))
+			if(auto s=checkLWpn(GET_LWPNREF))
 			{
 				s->glowRad = vbound(value/10000,0,255);
 			}
 			break;
 			
 		case LWPNGLOWSHP:
-			if(auto s=checkLWpn(ri->lwpnref))
+			if(auto s=checkLWpn(GET_LWPNREF))
 			{
 				s->glowShape = vbound(value/10000,0,255);
 			}
 			break;
 			
 		case LWPNUNBL:
-			if(auto s=checkLWpn(ri->lwpnref))
+			if(auto s=checkLWpn(GET_LWPNREF))
 			{
 				s->unblockable = (value/10000)&WPNUNB_ALL;
 			}
 			break;
 			
 		case LWPNSHADOWSPR:
-			if(auto s=checkLWpn(ri->lwpnref))
+			if(auto s=checkLWpn(GET_LWPNREF))
 			{
 				s->spr_shadow = vbound(value/10000, 0, 255);
 			}
@@ -13143,55 +13132,55 @@ void set_register(int32_t arg, int32_t value)
 		case LWSWHOOKED:
 			break; //read-only
 		case LWPNTIMEOUT:
-			if(auto s=checkLWpn(ri->lwpnref))
+			if(auto s=checkLWpn(GET_LWPNREF))
 			{
 				s->weap_timeout = vbound(value/10000,0,214748);
 			}
 			break;
 		case LWPNDEATHITEM:
-			if(auto s=checkLWpn(ri->lwpnref))
+			if(auto s=checkLWpn(GET_LWPNREF))
 			{
 				s->death_spawnitem = vbound(value/10000,-1,MAXITEMS-1);
 			}
 			break;
 		case LWPNDEATHDROPSET:
-			if(auto s=checkLWpn(ri->lwpnref))
+			if(auto s=checkLWpn(GET_LWPNREF))
 			{
 				s->death_spawndropset = vbound(value/10000,-1,MAXITEMDROPSETS-1);
 			}
 			break;
 		case LWPNDEATHIPICKUP:
-			if(auto s=checkLWpn(ri->lwpnref))
+			if(auto s=checkLWpn(GET_LWPNREF))
 			{
 				s->death_item_pflags = value/10000;
 			}
 			break;
 		case LWPNDEATHSPRITE:
-			if(auto s=checkLWpn(ri->lwpnref))
+			if(auto s=checkLWpn(GET_LWPNREF))
 			{
 				s->death_sprite = vbound(value/10000,-255,MAXWPNS-1);
 			}
 			break;
 		case LWPNDEATHSFX:
-			if(auto s=checkLWpn(ri->lwpnref))
+			if(auto s=checkLWpn(GET_LWPNREF))
 			{
 				s->death_sfx = vbound(value/10000,0,WAV_COUNT);
 			}
 			break;
 		case LWPNLIFTLEVEL:
-			if(auto s=checkLWpn(ri->lwpnref))
+			if(auto s=checkLWpn(GET_LWPNREF))
 			{
 				s->lift_level = vbound(value/10000,0,255);
 			}
 			break;
 		case LWPNLIFTTIME:
-			if(auto s=checkLWpn(ri->lwpnref))
+			if(auto s=checkLWpn(GET_LWPNREF))
 			{
 				s->lift_time = vbound(value/10000,0,255);
 			}
 			break;
 		case LWPNLIFTHEIGHT:
-			if(auto s=checkLWpn(ri->lwpnref))
+			if(auto s=checkLWpn(GET_LWPNREF))
 			{
 				s->lift_height = zslongToFix(value);
 			}
@@ -13205,13 +13194,13 @@ void set_register(int32_t arg, int32_t value)
 				scripting_log_error_with_context("To use this you must disable the quest rule 'Old (Faster) Sprite Drawing'.");
 				break;
 			}
-			if(auto s=checkEWpn(ri->ewpnref))
+			if(auto s=checkEWpn(GET_EWPNREF))
 				s->scale=(zfix)(value/100.0);
 				
 			break;
 		
 		case EWPNX:
-			if(auto s=checkEWpn(ri->ewpnref))
+			if(auto s=checkEWpn(GET_EWPNREF))
 				s->x = (get_qr(qr_SPRITEXY_IS_FLOAT) ? zslongToFix(value) : zfix(value/10000));
 				
 			break;
@@ -13224,13 +13213,13 @@ void set_register(int32_t arg, int32_t value)
 		}
 		
 		case EWPNY:
-			if(auto s=checkEWpn(ri->ewpnref))
+			if(auto s=checkEWpn(GET_EWPNREF))
 				s->y = (get_qr(qr_SPRITEXY_IS_FLOAT) ? zslongToFix(value) : zfix(value/10000));
 				
 			break;
 			
 		case EWPNZ:
-			if(auto s=checkEWpn(ri->ewpnref))
+			if(auto s=checkEWpn(GET_EWPNREF))
 			{
 				s->z=get_qr(qr_SPRITEXY_IS_FLOAT) ? zslongToFix(value) : zfix(value/10000);
 				if(s->z < 0) s->z = 0_zf;
@@ -13239,19 +13228,19 @@ void set_register(int32_t arg, int32_t value)
 			break;
 			
 		case EWPNJUMP:
-			if(auto s=checkEWpn(ri->ewpnref))
+			if(auto s=checkEWpn(GET_EWPNREF))
 				s->fall=zslongToFix(value)*-100;
 				
 			break;
 			
 		case EWPNFAKEJUMP:
-			if(auto s=checkEWpn(ri->ewpnref))
+			if(auto s=checkEWpn(GET_EWPNREF))
 				s->fakefall=zslongToFix(value)*-100;
 				
 			break;
 			
 		case EWPNDIR:
-			if(auto s=checkEWpn(ri->ewpnref))
+			if(auto s=checkEWpn(GET_EWPNREF))
 			{
 				s->dir=(value/10000);
 				s->doAutoRotate(true);
@@ -13260,13 +13249,13 @@ void set_register(int32_t arg, int32_t value)
 			break;
 			
 		case EWPNLEVEL:
-			if(auto s=checkEWpn(ri->ewpnref))
+			if(auto s=checkEWpn(GET_EWPNREF))
 				s->level=(value/10000);
 				
 			break;
 		  
 		case EWPNGRAVITY:
-			if(auto s=checkEWpn(ri->ewpnref))
+			if(auto s=checkEWpn(GET_EWPNREF))
 			{
 				if(value)
 					s->moveflags |= move_obeys_grav;
@@ -13276,7 +13265,7 @@ void set_register(int32_t arg, int32_t value)
 			break;
 			
 		case EWPNSTEP:
-			if(auto s=checkEWpn(ri->ewpnref))
+			if(auto s=checkEWpn(GET_EWPNREF))
 			{
 				if ( get_qr(qr_STEP_IS_FLOAT) || replay_is_active() )
 				{
@@ -13297,7 +13286,7 @@ void set_register(int32_t arg, int32_t value)
 			break;
 			
 		case EWPNANGLE:
-			if(auto s=checkEWpn(ri->ewpnref))
+			if(auto s=checkEWpn(GET_EWPNREF))
 			{
 				s->angle=(double)(value/10000.0);
 				s->doAutoRotate();
@@ -13306,7 +13295,7 @@ void set_register(int32_t arg, int32_t value)
 			break;
 			
 		case EWPNDEGANGLE:
-			if(auto s=checkEWpn(ri->ewpnref))
+			if(auto s=checkEWpn(GET_EWPNREF))
 			{
 				double rangle = (value / 10000.0) * (PI / 180.0);
 				s->angle=(double)(rangle);
@@ -13316,7 +13305,7 @@ void set_register(int32_t arg, int32_t value)
 			break;
 			
 		case EWPNVX:
-			if(auto s=checkEWpn(ri->ewpnref))
+			if(auto s=checkEWpn(GET_EWPNREF))
 			{
 				double vy;
 				double vx = (value / 10000.0);
@@ -13351,7 +13340,7 @@ void set_register(int32_t arg, int32_t value)
 			break;
 		
 		case EWPNVY:
-			if(auto s=checkEWpn(ri->ewpnref))
+			if(auto s=checkEWpn(GET_EWPNREF))
 			{
 				double vx;
 				double vy = (value / 10000.0);
@@ -13386,7 +13375,7 @@ void set_register(int32_t arg, int32_t value)
 			break;
 			
 		case EWPNANGULAR:
-			if(auto s=checkEWpn(ri->ewpnref))
+			if(auto s=checkEWpn(GET_EWPNREF))
 			{
 				s->angular=(value!=0);
 				s->doAutoRotate(false, true);
@@ -13395,7 +13384,7 @@ void set_register(int32_t arg, int32_t value)
 			break;
 			
 		case EWPNAUTOROTATE:
-			if(auto s=checkEWpn(ri->ewpnref))
+			if(auto s=checkEWpn(GET_EWPNREF))
 			{
 				s->autorotate=(value!=0);
 				s->doAutoRotate(false, true);
@@ -13404,25 +13393,25 @@ void set_register(int32_t arg, int32_t value)
 			break;
 			
 		case EWPNBEHIND:
-			if(auto s=checkEWpn(ri->ewpnref))
+			if(auto s=checkEWpn(GET_EWPNREF))
 				s->behind=(value!=0);
 				
 			break;
 			
 		case EWPNDRAWTYPE:
-			if(auto s=checkEWpn(ri->ewpnref))
+			if(auto s=checkEWpn(GET_EWPNREF))
 				s->drawstyle=(value/10000);
 				
 			break;
 			
 		case EWPNPOWER:
-			if(auto s=checkEWpn(ri->ewpnref))
+			if(auto s=checkEWpn(GET_EWPNREF))
 				s->power=(value/10000);
 				
 			break;
 			
 		case EWPNDEAD:
-			if(auto s=checkEWpn(ri->ewpnref))
+			if(auto s=checkEWpn(GET_EWPNREF))
 			{
 				auto dead = value/10000;
 				s->dead=dead;
@@ -13432,67 +13421,67 @@ void set_register(int32_t arg, int32_t value)
 			break;
 			
 		case EWPNTYPE:
-			if(auto s=checkEWpn(ri->ewpnref))
+			if(auto s=checkEWpn(GET_EWPNREF))
 				s->id=(value/10000);
 				
 			break;
 			
 		case EWPNTILE:
-			if(auto s=checkEWpn(ri->ewpnref))
+			if(auto s=checkEWpn(GET_EWPNREF))
 				s->tile=(value/10000);
 				
 			break;
 			
 		case EWPNSCRIPTTILE:
-			if(auto s=checkEWpn(ri->ewpnref))
+			if(auto s=checkEWpn(GET_EWPNREF))
 				s->scripttile=vbound((value/10000),-1, NEWMAXTILES-1);
 				
 			break;
 		
 		case EWPNSCRIPTFLIP:
-			if(auto s=checkEWpn(ri->ewpnref))
+			if(auto s=checkEWpn(GET_EWPNREF))
 				s->scriptflip=vbound((value/10000),-1, 127);
 				
 			break;
 			
 		case EWPNCSET:
-			if(auto s=checkEWpn(ri->ewpnref))
+			if(auto s=checkEWpn(GET_EWPNREF))
 				s->cs=(value/10000)&15;
 				
 			break;
 			
 		case EWPNFLASHCSET:
-			if(auto s=checkEWpn(ri->ewpnref))
+			if(auto s=checkEWpn(GET_EWPNREF))
 				(s->o_cset)|=(value/10000)<<4;
 				
 			break;
 			
 		case EWPNFRAMES:
-			if(auto s=checkEWpn(ri->ewpnref))
+			if(auto s=checkEWpn(GET_EWPNREF))
 				s->frames=(value/10000);
 				
 			break;
 			
 		case EWPNFRAME:
-			if(auto s=checkEWpn(ri->ewpnref))
+			if(auto s=checkEWpn(GET_EWPNREF))
 				s->aframe=(value/10000);
 				
 			break;
 			
 		case EWPNASPEED:
-			if(auto s=checkEWpn(ri->ewpnref))
+			if(auto s=checkEWpn(GET_EWPNREF))
 				s->o_speed=(value/10000);
 				
 			break;
 			
 		case EWPNFLASH:
-			if(auto s=checkEWpn(ri->ewpnref))
+			if(auto s=checkEWpn(GET_EWPNREF))
 				s->flash=(value/10000);
 				
 			break;
 			
 		case EWPNFLIP:
-			if(auto s=checkEWpn(ri->ewpnref))
+			if(auto s=checkEWpn(GET_EWPNREF))
 				s->flip=(value/10000);
 				
 			break;
@@ -13503,19 +13492,19 @@ void set_register(int32_t arg, int32_t value)
 				scripting_log_error_with_context("To use this you must disable the quest rule 'Old (Faster) Sprite Drawing'");
 				break;
 			}
-			if(auto s=checkEWpn(ri->ewpnref))
+			if(auto s=checkEWpn(GET_EWPNREF))
 				s->rotation=(value/10000);
 				
 			break;
 			
 		case EWPNEXTEND:
-			if(auto s=checkEWpn(ri->ewpnref))
+			if(auto s=checkEWpn(GET_EWPNREF))
 				s->extend=(value/10000);
 				
 			break;
 			
 		case EWPNOTILE:
-			if(auto s=checkEWpn(ri->ewpnref))
+			if(auto s=checkEWpn(GET_EWPNREF))
 			{
 				s->o_tile=(value/10000);
 				s->ref_o_tile=(value/10000);
@@ -13524,109 +13513,109 @@ void set_register(int32_t arg, int32_t value)
 			break;
 			
 		case EWPNOCSET:
-			if(auto s=checkEWpn(ri->ewpnref))
+			if(auto s=checkEWpn(GET_EWPNREF))
 				(s->o_cset)|=(value/10000)&15;
 				
 			break;
 			
 		case EWPNHXOFS:
-			if(auto s=checkEWpn(ri->ewpnref))
+			if(auto s=checkEWpn(GET_EWPNREF))
 				(s->hxofs)=(value/10000);
 				
 			break;
 			
 		case EWPNHYOFS:
-			if(auto s=checkEWpn(ri->ewpnref))
+			if(auto s=checkEWpn(GET_EWPNREF))
 				(s->hyofs)=(value/10000);
 				
 			break;
 			
 		case EWPNXOFS:
-			if(auto s=checkEWpn(ri->ewpnref))
+			if(auto s=checkEWpn(GET_EWPNREF))
 				(s->xofs)=(zfix)(value/10000);
 				
 			break;
 			
 		case EWPNYOFS:
-			if(auto s=checkEWpn(ri->ewpnref))
+			if(auto s=checkEWpn(GET_EWPNREF))
 				(s->yofs)=(zfix)(value/10000)+(get_qr(qr_OLD_DRAWOFFSET)?playing_field_offset:original_playing_field_offset);
 				
 			break;
 			
 		case EWPNSHADOWXOFS:
-			if(auto s=checkEWpn(ri->ewpnref))
+			if(auto s=checkEWpn(GET_EWPNREF))
 				(s->shadowxofs)=(zfix)(value/10000);
 				
 			break;
 			
 		case EWPNSHADOWYOFS:
-			if(auto s=checkEWpn(ri->ewpnref))
+			if(auto s=checkEWpn(GET_EWPNREF))
 				(s->shadowyofs)=(zfix)(value/10000);
 				
 			break;
 			
 		case EWPNZOFS:
-			if(auto s=checkEWpn(ri->ewpnref))
+			if(auto s=checkEWpn(GET_EWPNREF))
 				(s->zofs)=(zfix)(value/10000);
 				
 			break;
 			
 		case EWPNHXSZ:
-			if(auto s=checkEWpn(ri->ewpnref))
+			if(auto s=checkEWpn(GET_EWPNREF))
 				(s->hit_width)=(value/10000);
 				
 			break;
 			
 		case EWPNHYSZ:
-			if(auto s=checkEWpn(ri->ewpnref))
+			if(auto s=checkEWpn(GET_EWPNREF))
 				(s->hit_height)=(value/10000);
 				
 			break;
 			
 		case EWPNHZSZ:
-			if(auto s=checkEWpn(ri->ewpnref))
+			if(auto s=checkEWpn(GET_EWPNREF))
 				(s->hzsz)=(value/10000);
 				
 			break;
 			
 		case EWPNTXSZ:
-			if(auto s=checkEWpn(ri->ewpnref))
+			if(auto s=checkEWpn(GET_EWPNREF))
 				(s->txsz)=vbound((value/10000),1,20);
 				
 			break;
 			
 		case EWPNTYSZ:
-			if(auto s=checkEWpn(ri->ewpnref))
+			if(auto s=checkEWpn(GET_EWPNREF))
 				(s->tysz)=vbound((value/10000),1,20);
 				
 			break;
 			
 		case EWPNCOLLDET:
-			if(auto s=checkEWpn(ri->ewpnref))
+			if(auto s=checkEWpn(GET_EWPNREF))
 				(s->scriptcoldet)=value;
 				
 			break;
 		
 		case EWPNENGINEANIMATE:
-			if(auto s=checkEWpn(ri->ewpnref))
+			if(auto s=checkEWpn(GET_EWPNREF))
 				(s->do_animation)=value;
 				
 			break;
 		
 		
 		case EWPNPARENTUID:
-			if(auto s=checkEWpn(ri->ewpnref))
+			if(auto s=checkEWpn(GET_EWPNREF))
 				s->setParent(sprite::getByUID(value));
 			break;
 		
 		case EWPNPARENT:
-			if(auto s=checkEWpn(ri->ewpnref))
+			if(auto s=checkEWpn(GET_EWPNREF))
 				(s->parentid)= ( (get_qr(qr_OLDEWPNPARENT)) ? value / 10000 : value );
 				
 			break;
 		
 		case EWPNSCRIPT:
-			if(auto s=checkEWpn(ri->ewpnref))
+			if(auto s=checkEWpn(GET_EWPNREF))
 			{
 				(s->script)=vbound(value/10000,0,NUMSCRIPTWEAPONS-1);
 				if ( get_qr(qr_CLEARINITDONSCRIPTCHANGE))
@@ -13639,7 +13628,7 @@ void set_register(int32_t arg, int32_t value)
 			break;
 		
 		case EWPNFALLCLK:
-			if(auto s=checkEWpn(ri->ewpnref))
+			if(auto s=checkEWpn(GET_EWPNREF))
 			{
 				if(s->fallclk != 0 && value == 0)
 				{
@@ -13651,13 +13640,13 @@ void set_register(int32_t arg, int32_t value)
 			}
 			break;
 		case EWPNFALLCMB:
-			if(auto s=checkEWpn(ri->ewpnref))
+			if(auto s=checkEWpn(GET_EWPNREF))
 			{
 				s->fallCombo = vbound(value/10000,0,MAXCOMBOS-1);
 			}
 			break;
 		case EWPNDROWNCLK:
-			if(auto s=checkEWpn(ri->ewpnref))
+			if(auto s=checkEWpn(GET_EWPNREF))
 			{
 				if(s->drownclk != 0 && value == 0)
 				{
@@ -13669,13 +13658,13 @@ void set_register(int32_t arg, int32_t value)
 			}
 			break;
 		case EWPNDROWNCMB:
-			if(auto s=checkEWpn(ri->ewpnref))
+			if(auto s=checkEWpn(GET_EWPNREF))
 			{
 				s->drownCombo = vbound(value/10000,0,MAXCOMBOS-1);
 			}
 			break;
 		case EWPNFAKEZ:
-			if(auto s=checkEWpn(ri->ewpnref))
+			if(auto s=checkEWpn(GET_EWPNREF))
 			{
 				s->fakez=get_qr(qr_SPRITEXY_IS_FLOAT) ? zslongToFix(value) : zfix(value/10000);
 				if(s->fakez < 0) s->fakez = 0_zf;
@@ -13684,27 +13673,27 @@ void set_register(int32_t arg, int32_t value)
 			break;
 		
 		case EWPNGLOWRAD:
-			if(auto s=checkEWpn(ri->ewpnref))
+			if(auto s=checkEWpn(GET_EWPNREF))
 			{
 				s->glowRad = vbound(value/10000,0,255);
 			}
 			break;
 		case EWPNGLOWSHP:
-			if(auto s=checkEWpn(ri->ewpnref))
+			if(auto s=checkEWpn(GET_EWPNREF))
 			{
 				s->glowShape = vbound(value/10000,0,255);
 			}
 			break;
 			
 		case EWPNUNBL:
-			if(auto s=checkEWpn(ri->ewpnref))
+			if(auto s=checkEWpn(GET_EWPNREF))
 			{
 				s->unblockable = (value/10000)&WPNUNB_ALL;
 			}
 			break;
 			
 		case EWPNSHADOWSPR:
-			if(auto s=checkEWpn(ri->ewpnref))
+			if(auto s=checkEWpn(GET_EWPNREF))
 			{
 				s->spr_shadow = vbound(value/10000, 0, 255);
 			}
@@ -13712,54 +13701,54 @@ void set_register(int32_t arg, int32_t value)
 		case EWSWHOOKED:
 			break; //read-only
 		case EWPNTIMEOUT:
-			if(auto s=checkEWpn(ri->ewpnref))
+			if(auto s=checkEWpn(GET_EWPNREF))
 			{
 				s->weap_timeout = vbound(value/10000,0,214748);
 			}
 			break;case EWPNDEATHITEM:
-			if(auto s=checkEWpn(ri->ewpnref))
+			if(auto s=checkEWpn(GET_EWPNREF))
 			{
 				s->death_spawnitem = vbound(value/10000,-1,MAXITEMS-1);
 			}
 			break;
 		case EWPNDEATHDROPSET:
-			if(auto s=checkEWpn(ri->ewpnref))
+			if(auto s=checkEWpn(GET_EWPNREF))
 			{
 				s->death_spawndropset = vbound(value/10000,-1,MAXITEMDROPSETS-1);
 			}
 			break;
 		case EWPNDEATHIPICKUP:
-			if(auto s=checkEWpn(ri->ewpnref))
+			if(auto s=checkEWpn(GET_EWPNREF))
 			{
 				s->death_item_pflags = value/10000;
 			}
 			break;
 		case EWPNDEATHSPRITE:
-			if(auto s=checkEWpn(ri->ewpnref))
+			if(auto s=checkEWpn(GET_EWPNREF))
 			{
 				s->death_sprite = vbound(value/10000,-255,MAXWPNS-1);
 			}
 			break;
 		case EWPNDEATHSFX:
-			if(auto s=checkEWpn(ri->ewpnref))
+			if(auto s=checkEWpn(GET_EWPNREF))
 			{
 				s->death_sfx = vbound(value/10000,0,WAV_COUNT);
 			}
 			break;
 		case EWPNLIFTLEVEL:
-			if(auto s=checkEWpn(ri->ewpnref))
+			if(auto s=checkEWpn(GET_EWPNREF))
 			{
 				s->lift_level = vbound(value/10000,0,255);
 			}
 			break;
 		case EWPNLIFTTIME:
-			if(auto s=checkEWpn(ri->ewpnref))
+			if(auto s=checkEWpn(GET_EWPNREF))
 			{
 				s->lift_time = vbound(value/10000,0,255);
 			}
 			break;
 		case EWPNLIFTHEIGHT:
-			if(auto s=checkEWpn(ri->ewpnref))
+			if(auto s=checkEWpn(GET_EWPNREF))
 			{
 				s->lift_height = zslongToFix(value);
 			}
@@ -13789,7 +13778,7 @@ void set_register(int32_t arg, int32_t value)
 		
 		case BOTTLENEXT:
 		{
-			if(bottletype* ptr = checkBottleData(ri->bottletyperef))
+			if(bottletype* ptr = checkBottleData(GET_BOTTLETYPEREF))
 			{
 				ptr->next_type = vbound(value/10000, 0, 64);
 			}
@@ -13855,23 +13844,23 @@ void set_register(int32_t arg, int32_t value)
 		
 		#define	SET_SCREENDATA_VAR_INT32(member, str) \
 		{ \
-			get_scr(ri->screenref)->member = vbound((value / 10000),-214747,214747); \
+			get_scr(GET_SCREENREF)->member = vbound((value / 10000),-214747,214747); \
 		} \
 		
 		#define	SET_SCREENDATA_VAR_INT16(member, str) \
 		{ \
-			get_scr(ri->screenref)->member = vbound((value / 10000),0,32767); \
+			get_scr(GET_SCREENREF)->member = vbound((value / 10000),0,32767); \
 		} \
 
 		#define	SET_SCREENDATA_VAR_BYTE(member, str) \
 		{ \
-			get_scr(ri->screenref)->member = vbound((value / 10000),0,255); \
+			get_scr(GET_SCREENREF)->member = vbound((value / 10000),0,255); \
 		} \
 		
 		#define SET_SCREENDATA_BYTE_INDEX(member, str, indexbound) \
 		{ \
 			int32_t indx = GET_D(rINDEX) / 10000; \
-			get_scr(ri->screenref)->member[indx] = vbound((value / 10000),0,255); \
+			get_scr(GET_SCREENREF)->member[indx] = vbound((value / 10000),0,255); \
 		}
 
 		///max screen id is higher! vbound properly... -Z
@@ -13888,7 +13877,7 @@ void set_register(int32_t arg, int32_t value)
 				Z_scripterrlog("Script attempted to use a mapdata->LayerScreen[%d].\n",scrn_id); \
 				Z_scripterrlog("Valid Screen values are (0) through (%d).\n",MAPSCRS); \
 			} \
-			else get_scr(ri->screenref)->member[indx-1] = vbound((scrn_id),0,MAPSCRS); \
+			else get_scr(GET_SCREENREF)->member[indx-1] = vbound((scrn_id),0,MAPSCRS); \
 		}
 		
 		#define SET_SCREENDATA_FLAG(member, str) \
@@ -13896,9 +13885,9 @@ void set_register(int32_t arg, int32_t value)
 			int32_t flag =  (value/10000);  \
 			if ( flag != 0 ) \
 			{ \
-				get_scr(ri->screenref)->member|=flag; \
+				get_scr(GET_SCREENREF)->member|=flag; \
 			} \
-			else get_scr(ri->screenref)->.member|= ~flag; \
+			else get_scr(GET_SCREENREF)->.member|= ~flag; \
 		} \
 		
 		#define SET_SCREENDATA_BOOL_INDEX(member, str, indexbound) \
@@ -13909,7 +13898,7 @@ void set_register(int32_t arg, int32_t value)
 				Z_scripterrlog("Invalid Index passed to Screen->%s[]: %d\n", (indx), str); \
 				break; \
 			} \
-			get_scr(ri->screenref)->member[indx] =( (value/10000) ? 1 : 0 ); \
+			get_scr(GET_SCREENREF)->member[indx] =( (value/10000) ? 1 : 0 ); \
 		}
 		
 		case SCREENDATAVALID:
@@ -13924,7 +13913,7 @@ void set_register(int32_t arg, int32_t value)
 		case SCREENDATAITEM:
 		{
 			auto v = vbound((value / 10000),-1,255);
-			auto scr = get_scr(ri->screenref);
+			auto scr = get_scr(GET_SCREENREF);
 			if(v > -1)
 				scr->item = v;
 			scr->hasitem = v > -1;
@@ -13963,7 +13952,7 @@ void set_register(int32_t arg, int32_t value)
 		case SCREENDATAENTRYX: 		
 		{
 			int32_t newx = vbound((value/10000),0,255);
-			get_scr(ri->screenref)->entry_x = newx;
+			get_scr(GET_SCREENREF)->entry_x = newx;
 			if ( get_qr(qr_WRITE_ENTRYPOINTS_AFFECTS_HEROCLASS) )
 			{
 				Hero.respawn_x = (zfix)(newx);
@@ -13974,7 +13963,7 @@ void set_register(int32_t arg, int32_t value)
 		{
 			
 			int32_t newy = vbound((value/10000),0,175);
-			get_scr(ri->screenref)->entry_y = newy;
+			get_scr(GET_SCREENREF)->entry_y = newy;
 			if ( get_qr(qr_WRITE_ENTRYPOINTS_AFFECTS_HEROCLASS) )
 			{
 				Hero.respawn_y = (zfix)(newy);
@@ -14018,7 +14007,7 @@ void set_register(int32_t arg, int32_t value)
 		case SCREENDATAOCEANSFX:
 		{
 			int32_t v = vbound(value/10000, 0, 255);
-			auto scr = get_scr(ri->screenref);
+			auto scr = get_scr(GET_SCREENREF);
 			if (scr == hero_scr && scr->oceansfx != v)
 			{
 				stop_sfx(scr->oceansfx);
@@ -14032,17 +14021,17 @@ void set_register(int32_t arg, int32_t value)
 		case SCREENDATAHOLDUPSFX:	 	SET_SCREENDATA_VAR_BYTE(holdupsfx,	"ItemSFX"); break; //B
 		case SCREENDATASCREENMIDI:
 		{
-			get_scr(ri->screenref)->screen_midi = vbound((value / 10000)-(MIDIOFFSET_MAPSCR-MIDIOFFSET_ZSCRIPT),-1,32767);
+			get_scr(GET_SCREENREF)->screen_midi = vbound((value / 10000)-(MIDIOFFSET_MAPSCR-MIDIOFFSET_ZSCRIPT),-1,32767);
 			break;
 		}
 		case SCREENDATA_GRAVITY_STRENGTH:
 		{
-			get_scr(ri->screenref)->screen_gravity = zslongToFix(value);
+			get_scr(GET_SCREENREF)->screen_gravity = zslongToFix(value);
 			break;
 		}
 		case SCREENDATA_TERMINAL_VELOCITY:
 		{
-			get_scr(ri->screenref)->screen_terminal_v = zslongToFix(value);
+			get_scr(GET_SCREENREF)->screen_terminal_v = zslongToFix(value);
 			break;
 		}
 		case SCREENDATALENSLAYER:	 	SET_SCREENDATA_VAR_BYTE(lens_layer, "LensLayer"); break;	//B, OLD QUESTS ONLY?
@@ -14102,7 +14091,7 @@ void set_register(int32_t arg, int32_t value)
 			
 		case SCREENSCRIPT:
 		{
-			mapscr* scr = get_scr(ri->screenref);
+			mapscr* scr = get_scr(GET_SCREENREF);
 
 			if ( get_qr(qr_CLEARINITDONSCRIPTCHANGE))
 			{
@@ -14128,10 +14117,10 @@ void set_register(int32_t arg, int32_t value)
 			break;
 			
 		case ROOMTYPE:
-			get_scr(ri->screenref)->room=value/10000; break; //this probably doesn't work too well...
+			get_scr(GET_SCREENREF)->room=value/10000; break; //this probably doesn't work too well...
 		
 		case ROOMDATA:
-			get_scr(ri->screenref)->catchall=value/10000;
+			get_scr(GET_SCREENREF)->catchall=value/10000;
 			break;
 			
 		case PUSHBLOCKLAYER:
@@ -14148,11 +14137,11 @@ void set_register(int32_t arg, int32_t value)
 			break;
 			
 		case UNDERCOMBO:
-			get_scr(ri->screenref)->undercombo=value/10000;
+			get_scr(GET_SCREENREF)->undercombo=value/10000;
 			break;
 			
 		case UNDERCSET:
-			get_scr(ri->screenref)->undercset=value/10000;
+			get_scr(GET_SCREENREF)->undercset=value/10000;
 			break;
 		
 		case SCREEN_DRAW_ORIGIN:
@@ -14179,27 +14168,27 @@ void set_register(int32_t arg, int32_t value)
 		case SPRITEDATAMISC: SET_SPRITEDATA_VAR_BYTE(misc, "Misc"); break;
 		case SPRITEDATACSETS:
 		{
-			if(unsigned(ri->spritedataref) > (MAXWPNS-1) )
+			if(unsigned(GET_SPRITEDATAREF) > (MAXWPNS-1) )
 			{
 				Z_scripterrlog("Invalid Sprite ID passed to spritedata->CSet: %d\n", (ri->spritedataref*10000));
 			}
 			else
 			{
-				wpnsbuf[ri->spritedataref].csets &= 0xF0;
-				wpnsbuf[ri->spritedataref].csets |= vbound((value / 10000),0,15);
+				wpnsbuf[GET_SPRITEDATAREF].csets &= 0xF0;
+				wpnsbuf[GET_SPRITEDATAREF].csets |= vbound((value / 10000),0,15);
 			}
 			break;
 		}
 		case SPRITEDATAFLCSET:
 		{
-			if(unsigned(ri->spritedataref) > (MAXWPNS-1) )
+			if(unsigned(GET_SPRITEDATAREF) > (MAXWPNS-1) )
 			{
 				Z_scripterrlog("Invalid Sprite ID passed to spritedata->FlashCSet: %d\n", (ri->spritedataref*10000));
 			}
 			else
 			{
-				wpnsbuf[ri->spritedataref].csets &= 0x0F;
-				wpnsbuf[ri->spritedataref].csets |= vbound((value / 10000),0,15)<<4;
+				wpnsbuf[GET_SPRITEDATAREF].csets &= 0x0F;
+				wpnsbuf[GET_SPRITEDATAREF].csets |= vbound((value / 10000),0,15)<<4;
 			}
 			break;
 		}
@@ -14213,7 +14202,7 @@ void set_register(int32_t arg, int32_t value)
 		
 		#define	SET_MAPDATA_VAR_INT32(member) \
 		{ \
-			if (mapscr *m = ResolveMapdataScr(ri->mapref)) \
+			if (mapscr *m = ResolveMapdataScr(GET_MAPREF)) \
 			{ \
 				m->member = vbound((value / 10000),-214747,214747); \
 			} \
@@ -14222,7 +14211,7 @@ void set_register(int32_t arg, int32_t value)
 		
 		#define	SET_MAPDATA_VAR_INT16(member) \
 		{ \
-			if (mapscr *m = ResolveMapdataScr(ri->mapref)) \
+			if (mapscr *m = ResolveMapdataScr(GET_MAPREF)) \
 			{ \
 				m->member = vbound((value / 10000),0,32767); \
 			} \
@@ -14231,7 +14220,7 @@ void set_register(int32_t arg, int32_t value)
 
 		#define	SET_MAPDATA_VAR_BYTE(member) \
 		{ \
-			if (mapscr *m = ResolveMapdataScr(ri->mapref)) \
+			if (mapscr *m = ResolveMapdataScr(GET_MAPREF)) \
 			{ \
 				m->member = vbound((value / 10000),0,255); \
 			} \
@@ -14244,7 +14233,7 @@ void set_register(int32_t arg, int32_t value)
 			if (BC::checkIndex(indx, 0, indexbound) != SH::_NoError) \
 			{ \
 			} \
-			else if (mapscr *m = ResolveMapdataScr(ri->mapref)) \
+			else if (mapscr *m = ResolveMapdataScr(GET_MAPREF)) \
 			{ \
 				m->member[indx] = vbound((value / 10000),-214747,214747); \
 			} \
@@ -14257,7 +14246,7 @@ void set_register(int32_t arg, int32_t value)
 			if (BC::checkIndex(indx, 0, indexbound) != SH::_NoError) \
 			{ \
 			} \
-			else if (mapscr *m = ResolveMapdataScr(ri->mapref)) \
+			else if (mapscr *m = ResolveMapdataScr(GET_MAPREF)) \
 			{ \
 				m->member[indx] = vbound((value / 10000),-32767,32767); \
 			} \
@@ -14270,7 +14259,7 @@ void set_register(int32_t arg, int32_t value)
 			if (BC::checkIndex(indx, 0, indexbound) != SH::_NoError) \
 			{ \
 			} \
-			else if (mapscr *m = ResolveMapdataScr(ri->mapref)) \
+			else if (mapscr *m = ResolveMapdataScr(GET_MAPREF)) \
 			{ \
 				m->member[indx] = vbound((value / 10000),0,255); \
 			} \
@@ -14284,7 +14273,7 @@ void set_register(int32_t arg, int32_t value)
 			if (BC::checkIndex(indx, 1, indexbound) != SH::_NoError) \
 			{ \
 			} \
-			else if (mapscr *m = ResolveMapdataScr(ri->mapref)) \
+			else if (mapscr *m = ResolveMapdataScr(GET_MAPREF)) \
 			{ \
 				m->member[indx-1] = vbound((value / 10000),0,255); \
 			} \
@@ -14304,7 +14293,7 @@ void set_register(int32_t arg, int32_t value)
 				Z_scripterrlog("Script attempted to use a mapdata->LayerScreen[%d].\n",scrn_id); \
 				Z_scripterrlog("Valid Screen values are (0) through (%d).\n",MAPSCRS); \
 			} \
-			else if (mapscr *m = ResolveMapdataScr(ri->mapref)) \
+			else if (mapscr *m = ResolveMapdataScr(GET_MAPREF)) \
 			{ \
 				m->member[indx-1] = vbound((scrn_id),0,MAPSCRS); \
 			} \
@@ -14317,7 +14306,7 @@ void set_register(int32_t arg, int32_t value)
 			if (BC::checkIndex(indx, 0, indexbound) != SH::_NoError) \
 			{ \
 			} \
-			else if (mapscr *m = ResolveMapdataScr(ri->mapref)) \
+			else if (mapscr *m = ResolveMapdataScr(GET_MAPREF)) \
 			{ \
 				m->member[indx] =( (value/10000) ? 1 : 0 ); \
 			} \
@@ -14338,7 +14327,7 @@ void set_register(int32_t arg, int32_t value)
 		#define SET_MAPDATA_FLAG(member) \
 		{ \
 			int32_t flag =  (value/10000);  \
-			if (mapscr *m = ResolveMapdataScr(ri->mapref)) \
+			if (mapscr *m = ResolveMapdataScr(GET_MAPREF)) \
 			{ \
 				if ( flag != 0 ) \
 				{ \
@@ -14355,7 +14344,7 @@ void set_register(int32_t arg, int32_t value)
 		case MAPDATAROOM: 		SET_MAPDATA_VAR_BYTE(room);	break;		//b
 		case MAPDATAITEM:
 		{
-			if (mapscr *m = ResolveMapdataScr(ri->mapref))
+			if (mapscr *m = ResolveMapdataScr(GET_MAPREF))
 			{
 				auto v = vbound((value / 10000),-1,255);
 				if(v > -1)
@@ -14370,7 +14359,7 @@ void set_register(int32_t arg, int32_t value)
 			if (BC::checkBounds(region_id, 0, 9) != SH::_NoError)
 				break;
 
-			auto result = decode_mapdata_ref(ri->mapref);
+			auto result = decode_mapdata_ref(GET_MAPREF);
 			if (result.scr)
 			{
 				if (result.type == mapdata_type::CanonicalScreen)
@@ -14416,7 +14405,7 @@ void set_register(int32_t arg, int32_t value)
 		case MAPDATAVIEWX: 		break;//SET_MAPDATA_VAR_INT32(viewX, "ViewX"); break;	//W
 		case MAPDATASCRIPT:
 		{
-			auto result = decode_mapdata_ref(ri->mapref);
+			auto result = decode_mapdata_ref(GET_MAPREF);
 			if (result.scr)
 			{
 				if (result.current())
@@ -14481,7 +14470,7 @@ void set_register(int32_t arg, int32_t value)
 
 		case MAPDATAOCEANSFX:
 		{
-			if (mapscr *m = ResolveMapdataScr(ri->mapref))
+			if (mapscr *m = ResolveMapdataScr(GET_MAPREF))
 			{
 				int32_t v = vbound(value/10000, 0, 255);
 				if(m == hero_scr && m->oceansfx != v)
@@ -14499,7 +14488,7 @@ void set_register(int32_t arg, int32_t value)
 		case MAPDATAHOLDUPSFX:	 	SET_MAPDATA_VAR_BYTE(holdupsfx); break; //B
 		case MAPDATASCREENMIDI:
 		{
-			if (mapscr *m = ResolveMapdataScr(ri->mapref))
+			if (mapscr *m = ResolveMapdataScr(GET_MAPREF))
 			{
 				m->screen_midi = vbound((value / 10000)-(MIDIOFFSET_MAPSCR-MIDIOFFSET_ZSCRIPT),-1,32767);
 			}
@@ -14507,7 +14496,7 @@ void set_register(int32_t arg, int32_t value)
 		}
 		case MAPDATA_GRAVITY_STRENGTH:
 		{
-			if (mapscr *m = ResolveMapdataScr(ri->mapref))
+			if (mapscr *m = ResolveMapdataScr(GET_MAPREF))
 			{
 				m->screen_gravity = zslongToFix(value);
 			}
@@ -14515,7 +14504,7 @@ void set_register(int32_t arg, int32_t value)
 		}
 		case MAPDATA_TERMINAL_VELOCITY:
 		{
-			if (mapscr *m = ResolveMapdataScr(ri->mapref))
+			if (mapscr *m = ResolveMapdataScr(GET_MAPREF))
 			{
 				m->screen_terminal_v = zslongToFix(value);
 			}
@@ -14525,9 +14514,9 @@ void set_register(int32_t arg, int32_t value)
 
 		case MAPDATASCRDATASIZE:
 		{
-			if (mapscr *m = ResolveMapdataScr(ri->mapref))
+			if (mapscr *m = ResolveMapdataScr(GET_MAPREF))
 			{
-				int index = get_ref_map_index(ri->mapref);
+				int index = get_ref_map_index(GET_MAPREF);
 				if (index < 0) break;
 
 				game->scriptDataResize(index, value/10000);
@@ -14536,9 +14525,9 @@ void set_register(int32_t arg, int32_t value)
 		}
 		case MAPDATAGUYCOUNT:
 		{
-			if (mapscr *m = ResolveMapdataScr(ri->mapref))
+			if (mapscr *m = ResolveMapdataScr(GET_MAPREF))
 			{
-				int mi = get_mi(ri->mapref);
+				int mi = get_mi(GET_MAPREF);
 				if(mi > -1)
 				{
 					game->guys[mi] = vbound(value/10000,10,0);
@@ -14549,9 +14538,9 @@ void set_register(int32_t arg, int32_t value)
 		}
 		case MAPDATAEXDOOR:
 		{
-			if (mapscr *m = ResolveMapdataScr(ri->mapref))
+			if (mapscr *m = ResolveMapdataScr(GET_MAPREF))
 			{
-				int mi = get_mi(ri->mapref);
+				int mi = get_mi(GET_MAPREF);
 				if(mi < 0) break;
 				int dir = SH::read_stack(ri->sp+1) / 10000;
 				int ind = SH::read_stack(ri->sp+0) / 10000;
@@ -14569,101 +14558,101 @@ void set_register(int32_t arg, int32_t value)
 		//dmapdata dmd-> Variables
 		case DMAPDATAMAP: 	//byte
 		{
-			DMaps[ri->dmapref].map = ((byte)(value / 10000)) - 1; break;
+			DMaps[GET_DMAPREF].map = ((byte)(value / 10000)) - 1; break;
 		}
 		case DMAPDATALEVEL:	//word
 		{
-			DMaps[ri->dmapref].level = ((word)(value / 10000)); break;
+			DMaps[GET_DMAPREF].level = ((word)(value / 10000)); break;
 		}
 		case DMAPDATAOFFSET:	//char
 		{
-			DMaps[ri->dmapref].xoff = ((char)(value / 10000)); break;
+			DMaps[GET_DMAPREF].xoff = ((char)(value / 10000)); break;
 		}
 		case DMAPDATACOMPASS:	//byte
 		{
-			DMaps[ri->dmapref].compass = ((byte)(value / 10000)); break;
+			DMaps[GET_DMAPREF].compass = ((byte)(value / 10000)); break;
 		}
 		case DMAPDATAPALETTE:	//word
 		{
-			DMaps[ri->dmapref].color= ((word)(value / 10000));
+			DMaps[GET_DMAPREF].color= ((word)(value / 10000));
 			if(ri->dmapref == cur_dmap)
 			{
-				loadlvlpal(DMaps[ri->dmapref].color);
-				currcset = DMaps[ri->dmapref].color;
+				loadlvlpal(DMaps[GET_DMAPREF].color);
+				currcset = DMaps[GET_DMAPREF].color;
 			}
 			break;
 		}
 		case DMAPDATAMIDI:	//byte
 		{
-			DMaps[ri->dmapref].midi = ((byte)((value / 10000)+MIDIOFFSET_DMAP)); break;
+			DMaps[GET_DMAPREF].midi = ((byte)((value / 10000)+MIDIOFFSET_DMAP)); break;
 		}
 		case DMAPDATA_GRAVITY_STRENGTH:
 		{
-			DMaps[ri->dmapref].dmap_gravity = zslongToFix(value);
+			DMaps[GET_DMAPREF].dmap_gravity = zslongToFix(value);
 			break;
 		}
 		case DMAPDATA_TERMINAL_VELOCITY:
 		{
-			DMaps[ri->dmapref].dmap_terminal_v = zslongToFix(value);
+			DMaps[GET_DMAPREF].dmap_terminal_v = zslongToFix(value);
 			break;
 		}
 		case DMAPDATACONTINUE:	//byte
 		{
-			DMaps[ri->dmapref].cont = ((byte)(value / 10000)); break;
+			DMaps[GET_DMAPREF].cont = ((byte)(value / 10000)); break;
 		}
 		case DMAPDATATYPE:	//byte
 		{
-			DMaps[ri->dmapref].type = (((byte)(value / 10000))&dmfTYPE) | (DMaps[ri->dmapref].type&~dmfTYPE); break;
+			DMaps[GET_DMAPREF].type = (((byte)(value / 10000))&dmfTYPE) | (DMaps[GET_DMAPREF].type&~dmfTYPE); break;
 		}
 		case DMAPSCRIPT:	//byte
 		{
-			DMaps[ri->dmapref].script = vbound((value / 10000),0,NUMSCRIPTSDMAP-1);
+			DMaps[GET_DMAPREF].script = vbound((value / 10000),0,NUMSCRIPTSDMAP-1);
 			on_reassign_script_engine_data(ScriptType::DMap, ri->dmapref);
 			break;
 		}
 		case DMAPDATASIDEVIEW:	//byte, treat as bool
 		{
-			DMaps[ri->dmapref].sideview = ((value) ? 1 : 0); break;
+			DMaps[GET_DMAPREF].sideview = ((value) ? 1 : 0); break;
 		}
 		case DMAPDATAMUISCTRACK:	//byte
 		{
-			DMaps[ri->dmapref].tmusictrack= ((byte)(value / 10000)); break;
+			DMaps[GET_DMAPREF].tmusictrack= ((byte)(value / 10000)); break;
 		}
 		case DMAPDATASUBSCRA:
 		{
-			bool changed = DMaps[ri->dmapref].active_subscreen != ((byte)(value / 10000));
-			DMaps[ri->dmapref].active_subscreen= ((byte)(value / 10000));
+			bool changed = DMaps[GET_DMAPREF].active_subscreen != ((byte)(value / 10000));
+			DMaps[GET_DMAPREF].active_subscreen= ((byte)(value / 10000));
 			if(changed&&ri->dmapref==cur_dmap)
 				update_subscreens();
 			break;
 		}
 		case DMAPDATASUBSCRP:
 		{
-			bool changed = DMaps[ri->dmapref].passive_subscreen != ((byte)(value / 10000));
-			DMaps[ri->dmapref].passive_subscreen= ((byte)(value / 10000));
+			bool changed = DMaps[GET_DMAPREF].passive_subscreen != ((byte)(value / 10000));
+			DMaps[GET_DMAPREF].passive_subscreen= ((byte)(value / 10000));
 			if(changed&&ri->dmapref==cur_dmap)
 				update_subscreens();
 			break;
 		}
 		case DMAPDATASUBSCRO:
 		{
-			bool changed = DMaps[ri->dmapref].overlay_subscreen != ((byte)(value / 10000));
-			DMaps[ri->dmapref].overlay_subscreen = ((byte)(value / 10000));
+			bool changed = DMaps[GET_DMAPREF].overlay_subscreen != ((byte)(value / 10000));
+			DMaps[GET_DMAPREF].overlay_subscreen = ((byte)(value / 10000));
 			if(changed&&ri->dmapref==cur_dmap)
 				update_subscreens();
 			break;
 		}
 		case DMAPDATAFLAGS:	 //int32_t
 		{
-			DMaps[ri->dmapref].flags = (value / 10000); break;
+			DMaps[GET_DMAPREF].flags = (value / 10000); break;
 		}
 		case DMAPDATAMIRRDMAP:
 		{
-			DMaps[ri->dmapref].mirrorDMap = vbound(value / 10000, -1, MAXDMAPS); break;
+			DMaps[GET_DMAPREF].mirrorDMap = vbound(value / 10000, -1, MAXDMAPS); break;
 		}
 		case DMAPDATALOOPSTART:
 		{
-			DMaps[ri->dmapref].tmusic_loop_start = value; 
+			DMaps[GET_DMAPREF].tmusic_loop_start = value; 
 			if (ri->dmapref == cur_dmap)
 			{
 				if (FFCore.doing_dmap_enh_music(cur_dmap))
@@ -14675,7 +14664,7 @@ void set_register(int32_t arg, int32_t value)
 		}
 		case DMAPDATALOOPEND:
 		{
-			DMaps[ri->dmapref].tmusic_loop_end = value;
+			DMaps[GET_DMAPREF].tmusic_loop_end = value;
 			if (ri->dmapref == cur_dmap)
 			{
 				if (FFCore.doing_dmap_enh_music(cur_dmap))
@@ -14687,13 +14676,13 @@ void set_register(int32_t arg, int32_t value)
 		}
 		case DMAPDATAXFADEIN:
 		{
-			DMaps[ri->dmapref].tmusic_xfade_in = (value / 10000);
+			DMaps[GET_DMAPREF].tmusic_xfade_in = (value / 10000);
 			break;
 		}
 		case DMAPDATAXFADEOUT:
 		{
-			DMaps[ri->dmapref].tmusic_xfade_out = (value / 10000);
-			if (DMaps[cur_dmap].tmusic[0]!=0 && strcmp(DMaps[ri->dmapref].tmusic, zcmusic->filename) == 0)
+			DMaps[GET_DMAPREF].tmusic_xfade_out = (value / 10000);
+			if (DMaps[cur_dmap].tmusic[0]!=0 && strcmp(DMaps[GET_DMAPREF].tmusic, zcmusic->filename) == 0)
 			{
 				zcmusic->fadeoutframes = (value / 10000);
 			}
@@ -14701,7 +14690,7 @@ void set_register(int32_t arg, int32_t value)
 		}
 		case DMAPDATAINTROSTRINGID:
 		{
-			DMaps[ri->dmapref].intro_string_id = (value / 10000);
+			DMaps[GET_DMAPREF].intro_string_id = (value / 10000);
 			break;
 		}
 		case MUSICUPDATECOND:
@@ -14711,13 +14700,13 @@ void set_register(int32_t arg, int32_t value)
 		}
 		case DMAPDATAASUBSCRIPT:	//byte
 		{
-			DMaps[ri->dmapref].active_sub_script = vbound((value / 10000),0,NUMSCRIPTSDMAP-1);
+			DMaps[GET_DMAPREF].active_sub_script = vbound((value / 10000),0,NUMSCRIPTSDMAP-1);
 			on_reassign_script_engine_data(ScriptType::ScriptedActiveSubscreen, ri->dmapref);
 			break;
 		}
 		case DMAPDATAMAPSCRIPT:	//byte
 		{
-			DMaps[ri->dmapref].onmap_script = vbound((value / 10000),0,NUMSCRIPTSDMAP-1);
+			DMaps[GET_DMAPREF].onmap_script = vbound((value / 10000),0,NUMSCRIPTSDMAP-1);
 			on_reassign_script_engine_data(ScriptType::OnMap, ri->dmapref);
 			break;
 		}
@@ -14725,9 +14714,9 @@ void set_register(int32_t arg, int32_t value)
 		{
 			FFScript::deallocateAllScriptOwned(ScriptType::ScriptedPassiveSubscreen, ri->dmapref);
 			word val = vbound((value / 10000),0,NUMSCRIPTSDMAP-1);
-			if (FFCore.doscript(ScriptType::ScriptedPassiveSubscreen) && ri->dmapref == cur_dmap && val == DMaps[ri->dmapref].passive_sub_script)
+			if (FFCore.doscript(ScriptType::ScriptedPassiveSubscreen) && ri->dmapref == cur_dmap && val == DMaps[GET_DMAPREF].passive_sub_script)
 				break;
-			DMaps[ri->dmapref].passive_sub_script = val;
+			DMaps[GET_DMAPREF].passive_sub_script = val;
 			if(ri->dmapref == cur_dmap)
 			{
 				FFCore.doscript(ScriptType::ScriptedPassiveSubscreen) = val != 0;
@@ -14953,9 +14942,9 @@ void set_register(int32_t arg, int32_t value)
 			} \
 			else \
 			{ \
-				screen_combo_modify_pre(ri->combosref); \
-				combobuf[ri->combosref].member = vbound((value / 10000),0,214747); \
-				screen_combo_modify_post(ri->combosref); \
+				screen_combo_modify_pre(GET_COMBOSREF); \
+				combobuf[GET_COMBOSREF].member = vbound((value / 10000),0,214747); \
+				screen_combo_modify_post(GET_COMBOSREF); \
 				\
 			} \
 		} \
@@ -14968,9 +14957,9 @@ void set_register(int32_t arg, int32_t value)
 			} \
 			else \
 			{ \
-				screen_combo_modify_pre(ri->combosref); \
-				combobuf[ri->combosref].member = vbound((value / 10000),0,32767); \
-				screen_combo_modify_post(ri->combosref); \
+				screen_combo_modify_pre(GET_COMBOSREF); \
+				combobuf[GET_COMBOSREF].member = vbound((value / 10000),0,32767); \
+				screen_combo_modify_post(GET_COMBOSREF); \
 			} \
 		} \
 
@@ -14982,9 +14971,9 @@ void set_register(int32_t arg, int32_t value)
 			} \
 			else \
 			{ \
-			    screen_combo_modify_pre(ri->combosref); \
-				combobuf[ri->combosref].member = vbound((value / 10000),0,255); \
-				screen_combo_modify_post(ri->combosref); \
+			    screen_combo_modify_pre(GET_COMBOSREF); \
+				combobuf[GET_COMBOSREF].member = vbound((value / 10000),0,255); \
+				screen_combo_modify_post(GET_COMBOSREF); \
 			} \
 		} \
 		
@@ -14999,9 +14988,9 @@ void set_register(int32_t arg, int32_t value)
 			{ \
 				if ( flag != 0 ) \
 				{ \
-					combobuf[ri->combosref].member|=flag; \
+					combobuf[GET_COMBOSREF].member|=flag; \
 				} \
-				else combobuf[ri->combosref].member|= ~flag; \
+				else combobuf[GET_COMBOSREF].member|= ~flag; \
 			} \
 		} \
 		
@@ -15014,7 +15003,7 @@ void set_register(int32_t arg, int32_t value)
 			} \
 			else \
 			{ \
-				combo_class_buf[combobuf[ri->combosref].type].member = vbound((value / 10000),0,214747); \
+				combo_class_buf[combobuf[GET_COMBOSREF].type].member = vbound((value / 10000),0,214747); \
 			} \
 		} \
 		
@@ -15026,7 +15015,7 @@ void set_register(int32_t arg, int32_t value)
 			} \
 			else \
 			{ \
-				combo_class_buf[combobuf[ri->combosref].type].member = vbound((value / 10000),0,32767); \
+				combo_class_buf[combobuf[GET_COMBOSREF].type].member = vbound((value / 10000),0,32767); \
 			} \
 		} \
 
@@ -15038,7 +15027,7 @@ void set_register(int32_t arg, int32_t value)
 			} \
 			else \
 			{ \
-				combo_class_buf[combobuf[ri->combosref].type].member = vbound((value / 10000),0,255); \
+				combo_class_buf[combobuf[GET_COMBOSREF].type].member = vbound((value / 10000),0,255); \
 			} \
 		} \
 
@@ -15055,7 +15044,7 @@ void set_register(int32_t arg, int32_t value)
 				} \
 				else \
 				{ \
-					combo_class_buf[combobuf[ri->combosref].type].member[indx] = vbound((value / 10000),0,255); \
+					combo_class_buf[combobuf[GET_COMBOSREF].type].member[indx] = vbound((value / 10000),0,255); \
 				} \
 		}
 		
@@ -15070,9 +15059,9 @@ void set_register(int32_t arg, int32_t value)
 			{ \
 				if ( flag != 0 ) \
 				{ \
-					combo_class_buf[combobuf[ri->combosref].type].member|=flag; \
+					combo_class_buf[combobuf[GET_COMBOSREF].type].member|=flag; \
 				} \
-				else combo_class_buf[combobuf[ri->combosref].type].member|= ~flag; \
+				else combo_class_buf[combobuf[GET_COMBOSREF].type].member|= ~flag; \
 			} \
 		} \
 		
@@ -15086,7 +15075,7 @@ void set_register(int32_t arg, int32_t value)
 			}
 			else
 			{
-				newcombo& cdata = combobuf[ri->combosref];
+				newcombo& cdata = combobuf[GET_COMBOSREF];
 				cdata.o_tile = vbound((value / 10000),0,NEWMAXTILES);
 				if(get_qr(qr_NEW_COMBO_ANIMATION))
 				{
@@ -15095,7 +15084,7 @@ void set_register(int32_t arg, int32_t value)
 					{
 						cdata.tile += cdata.skipanimy * rowoffset * TILES_PER_ROW;
 					}
-					combo_caches::drawing.refresh(ri->combosref);
+					combo_caches::drawing.refresh(GET_COMBOSREF);
 				}
 			}
 			break;
@@ -15113,8 +15102,8 @@ void set_register(int32_t arg, int32_t value)
 			}
 			else
 			{
-				combobuf[ri->combosref].walk &= ~0x0F;
-				combobuf[ri->combosref].walk |= (value / 10000)&0x0F;
+				combobuf[GET_COMBOSREF].walk &= ~0x0F;
+				combobuf[GET_COMBOSREF].walk |= (value / 10000)&0x0F;
 			}
 			break;
 		}
@@ -15126,8 +15115,8 @@ void set_register(int32_t arg, int32_t value)
 			}
 			else
 			{
-				combobuf[ri->combosref].walk &= ~0xF0;
-				combobuf[ri->combosref].walk |= ((value / 10000)&0x0F)<<4;
+				combobuf[GET_COMBOSREF].walk &= ~0xF0;
+				combobuf[GET_COMBOSREF].walk |= ((value / 10000)&0x0F)<<4;
 			}
 			break;
 		}
@@ -15139,9 +15128,9 @@ void set_register(int32_t arg, int32_t value)
 			}
 			else
 			{
-				screen_combo_modify_pre(ri->combosref);
-				combobuf[ri->combosref].type = vbound((value / 10000),0,255);
-				screen_combo_modify_post(ri->combosref);
+				screen_combo_modify_pre(GET_COMBOSREF);
+				combobuf[GET_COMBOSREF].type = vbound((value / 10000),0,255);
+				screen_combo_modify_post(GET_COMBOSREF);
 			}
 			break;
 		}
@@ -15153,11 +15142,11 @@ void set_register(int32_t arg, int32_t value)
 			}
 			else
 			{
-				screen_combo_modify_pre(ri->combosref);
+				screen_combo_modify_pre(GET_COMBOSREF);
 				int8_t v = vbound(value, -8, 7);
-				combobuf[ri->combosref].csets &= ~0xF;
-				combobuf[ri->combosref].csets |= v;
-				screen_combo_modify_post(ri->combosref);
+				combobuf[GET_COMBOSREF].csets &= ~0xF;
+				combobuf[GET_COMBOSREF].csets |= v;
+				screen_combo_modify_post(GET_COMBOSREF);
 			}
 			break;
 		}
@@ -15169,10 +15158,10 @@ void set_register(int32_t arg, int32_t value)
 			}
 			else
 			{
-				screen_combo_modify_pre(ri->combosref);
-				combobuf[ri->combosref].csets &= 0xF;
-				combobuf[ri->combosref].csets |= (value&0xF)<<4;
-				screen_combo_modify_post(ri->combosref);
+				screen_combo_modify_pre(GET_COMBOSREF);
+				combobuf[GET_COMBOSREF].csets &= 0xF;
+				combobuf[GET_COMBOSREF].csets |= (value&0xF)<<4;
+				screen_combo_modify_post(GET_COMBOSREF);
 			}
 			break;
 		}
@@ -15204,10 +15193,10 @@ void set_register(int32_t arg, int32_t value)
 			}
 			else
 			{
-				screen_combo_modify_pre(ri->combosref);
+				screen_combo_modify_pre(GET_COMBOSREF);
 				if(auto* trig = get_first_combo_trigger())
 					trig->trigtimer = vbound(value/10000,0,65535);
-				screen_combo_modify_post(ri->combosref);
+				screen_combo_modify_post(GET_COMBOSREF);
 			}
 			break;
 		}
@@ -15519,7 +15508,7 @@ void set_register(int32_t arg, int32_t value)
 			{
 				scripting_log_error_with_context("Invalid combodata ID: {}", ri->combosref);
 			}
-			else combobuf[ri->combosref].liftcmb = vbound(value/10000, 0, MAXCOMBOS);
+			else combobuf[GET_COMBOSREF].liftcmb = vbound(value/10000, 0, MAXCOMBOS);
 			break;
 		}
 		case COMBODLIFTGFXCCSET:
@@ -15528,7 +15517,7 @@ void set_register(int32_t arg, int32_t value)
 			{
 				scripting_log_error_with_context("Invalid combodata ID: {}", ri->combosref);
 			}
-			else combobuf[ri->combosref].liftcs = vbound(value/10000, 0, 13);
+			else combobuf[GET_COMBOSREF].liftcs = vbound(value/10000, 0, 13);
 			break;
 		}
 		case COMBODLIFTUNDERCMB:
@@ -15537,7 +15526,7 @@ void set_register(int32_t arg, int32_t value)
 			{
 				scripting_log_error_with_context("Invalid combodata ID: {}", ri->combosref);
 			}
-			else combobuf[ri->combosref].liftundercmb = vbound(value/10000, 0, MAXCOMBOS);
+			else combobuf[GET_COMBOSREF].liftundercmb = vbound(value/10000, 0, MAXCOMBOS);
 			break;
 		}
 		case COMBODLIFTUNDERCS:
@@ -15546,7 +15535,7 @@ void set_register(int32_t arg, int32_t value)
 			{
 				scripting_log_error_with_context("Invalid combodata ID: {}", ri->combosref);
 			}
-			else combobuf[ri->combosref].liftundercs = vbound(value/10000, 0, 13);
+			else combobuf[GET_COMBOSREF].liftundercs = vbound(value/10000, 0, 13);
 			break;
 		}
 		case COMBODLIFTDAMAGE:
@@ -15555,7 +15544,7 @@ void set_register(int32_t arg, int32_t value)
 			{
 				scripting_log_error_with_context("Invalid combodata ID: {}", ri->combosref);
 			}
-			else combobuf[ri->combosref].liftdmg = vbound(value/10000, 0, 255);
+			else combobuf[GET_COMBOSREF].liftdmg = vbound(value/10000, 0, 255);
 			break;
 		}
 		case COMBODLIFTLEVEL:
@@ -15564,7 +15553,7 @@ void set_register(int32_t arg, int32_t value)
 			{
 				scripting_log_error_with_context("Invalid combodata ID: {}", ri->combosref);
 			}
-			else combobuf[ri->combosref].liftlvl = vbound(value/10000, 0, 255);
+			else combobuf[GET_COMBOSREF].liftlvl = vbound(value/10000, 0, 255);
 			break;
 		}
 		case COMBODLIFTITEM:
@@ -15573,7 +15562,7 @@ void set_register(int32_t arg, int32_t value)
 			{
 				scripting_log_error_with_context("Invalid combodata ID: {}", ri->combosref);
 			}
-			else combobuf[ri->combosref].liftitm = vbound(value/10000, 0, 255);
+			else combobuf[GET_COMBOSREF].liftitm = vbound(value/10000, 0, 255);
 			break;
 		}
 		case COMBODLIFTGFXTYPE:
@@ -15582,7 +15571,7 @@ void set_register(int32_t arg, int32_t value)
 			{
 				scripting_log_error_with_context("Invalid combodata ID: {}", ri->combosref);
 			}
-			else combobuf[ri->combosref].liftgfx = vbound(value/10000, 0, 2);
+			else combobuf[GET_COMBOSREF].liftgfx = vbound(value/10000, 0, 2);
 			break;
 		}
 		case COMBODLIFTGFXSPRITE:
@@ -15591,7 +15580,7 @@ void set_register(int32_t arg, int32_t value)
 			{
 				scripting_log_error_with_context("Invalid combodata ID: {}", ri->combosref);
 			}
-			else combobuf[ri->combosref].liftsprite = vbound(value/10000, 0, 255);
+			else combobuf[GET_COMBOSREF].liftsprite = vbound(value/10000, 0, 255);
 			break;
 		}
 		case COMBODLIFTSFX:
@@ -15600,7 +15589,7 @@ void set_register(int32_t arg, int32_t value)
 			{
 				scripting_log_error_with_context("Invalid combodata ID: {}", ri->combosref);
 			}
-			else combobuf[ri->combosref].liftsfx = vbound(value/10000, 0, 255);
+			else combobuf[GET_COMBOSREF].liftsfx = vbound(value/10000, 0, 255);
 			break;
 		}
 		case COMBODLIFTBREAKSPRITE:
@@ -15609,7 +15598,7 @@ void set_register(int32_t arg, int32_t value)
 			{
 				scripting_log_error_with_context("Invalid combodata ID: {}", ri->combosref);
 			}
-			else combobuf[ri->combosref].liftbreaksprite = vbound(value/10000, -4, 255);
+			else combobuf[GET_COMBOSREF].liftbreaksprite = vbound(value/10000, -4, 255);
 			break;
 		}
 		case COMBODLIFTBREAKSFX:
@@ -15618,7 +15607,7 @@ void set_register(int32_t arg, int32_t value)
 			{
 				scripting_log_error_with_context("Invalid combodata ID: {}", ri->combosref);
 			}
-			else combobuf[ri->combosref].liftbreaksfx = vbound(value/10000, 0, 255);
+			else combobuf[GET_COMBOSREF].liftbreaksfx = vbound(value/10000, 0, 255);
 			break;
 		}
 		case COMBODLIFTHEIGHT:
@@ -15627,7 +15616,7 @@ void set_register(int32_t arg, int32_t value)
 			{
 				scripting_log_error_with_context("Invalid combodata ID: {}", ri->combosref);
 			}
-			else combobuf[ri->combosref].lifthei = vbound(value/10000, 0, 255);
+			else combobuf[GET_COMBOSREF].lifthei = vbound(value/10000, 0, 255);
 			break;
 		}
 		case COMBODLIFTTIME:
@@ -15636,7 +15625,7 @@ void set_register(int32_t arg, int32_t value)
 			{
 				scripting_log_error_with_context("Invalid combodata ID: {}", ri->combosref);
 			}
-			else combobuf[ri->combosref].lifttime = vbound(value/10000, 0, 255);
+			else combobuf[GET_COMBOSREF].lifttime = vbound(value/10000, 0, 255);
 			break;
 		}
 		case COMBODLIFTLIGHTRAD:
@@ -15645,7 +15634,7 @@ void set_register(int32_t arg, int32_t value)
 			{
 				scripting_log_error_with_context("Invalid combodata ID: {}", ri->combosref);
 			}
-			else combobuf[ri->combosref].lift_weap_data.light_rads[WPNSPR_BASE] = vbound(value/10000, 0, 255);
+			else combobuf[GET_COMBOSREF].lift_weap_data.light_rads[WPNSPR_BASE] = vbound(value/10000, 0, 255);
 			break;
 		}
 		case COMBODLIFTLIGHTSHAPE:
@@ -15654,7 +15643,7 @@ void set_register(int32_t arg, int32_t value)
 			{
 				scripting_log_error_with_context("Invalid combodata ID: {}", ri->combosref);
 			}
-			else combobuf[ri->combosref].lift_weap_data.glow_shape = vbound(value/10000, 0, 2);
+			else combobuf[GET_COMBOSREF].lift_weap_data.glow_shape = vbound(value/10000, 0, 2);
 			break;
 		}
 		case COMBODLIFTWEAPONITEM:
@@ -15663,7 +15652,7 @@ void set_register(int32_t arg, int32_t value)
 			{
 				scripting_log_error_with_context("Invalid combodata ID: {}", ri->combosref);
 			}
-			else combobuf[ri->combosref].lift_parent_item = vbound(value/10000, 0, 255);
+			else combobuf[GET_COMBOSREF].lift_parent_item = vbound(value/10000, 0, 255);
 			break;
 		}
 		case COMBODTRIGGERLSTATE:
@@ -15743,7 +15732,7 @@ void set_register(int32_t arg, int32_t value)
 				scripting_log_error_with_context("Invalid combodata ID: {}", ri->combosref);
 			}
 			else
-				combobuf[ri->combosref].triggers.resize(vbound(value / 10000, 0, MAX_COMBO_TRIGGERS));
+				combobuf[GET_COMBOSREF].triggers.resize(vbound(value / 10000, 0, MAX_COMBO_TRIGGERS));
 			break;
 		}
 		case COMBODONLYGEN:
@@ -15753,7 +15742,7 @@ void set_register(int32_t arg, int32_t value)
 				scripting_log_error_with_context("Invalid combodata ID: {}", ri->combosref);
 			}
 			else
-				combobuf[ri->combosref].only_gentrig = value != 0 ? 1 : 0;
+				combobuf[GET_COMBOSREF].only_gentrig = value != 0 ? 1 : 0;
 			break;
 		}
 		case COMBOD_Z_HEIGHT:
@@ -15763,7 +15752,7 @@ void set_register(int32_t arg, int32_t value)
 				scripting_log_error_with_context("Invalid combodata ID: {}", ri->combosref);
 			}
 			else
-				combobuf[ri->combosref].z_height = zslongToFix(value);
+				combobuf[GET_COMBOSREF].z_height = zslongToFix(value);
 			break;
 		}
 		case COMBOD_Z_STEP_HEIGHT:
@@ -15773,7 +15762,7 @@ void set_register(int32_t arg, int32_t value)
 				scripting_log_error_with_context("Invalid combodata ID: {}", ri->combosref);
 			}
 			else
-				combobuf[ri->combosref].z_step_height = zslongToFix(zc_max(0,value));
+				combobuf[GET_COMBOSREF].z_step_height = zslongToFix(zc_max(0,value));
 			break;
 		}
 		case COMBOD_DIVE_UNDER_LEVEL:
@@ -15783,7 +15772,7 @@ void set_register(int32_t arg, int32_t value)
 				scripting_log_error_with_context("Invalid combodata ID: {}", ri->combosref);
 			}
 			else
-				combobuf[ri->combosref].dive_under_level = (byte)vbound(value / 10000, 0, 255);
+				combobuf[GET_COMBOSREF].dive_under_level = (byte)vbound(value / 10000, 0, 255);
 			break;
 		}
 	
@@ -15861,7 +15850,7 @@ void set_register(int32_t arg, int32_t value)
 		///----------------------------------------------------------------------------------------------------//
 		case CMBTRIGWPNLEVEL:
 		{
-			if(auto* trig = get_combo_trigger(ri->combotrigref))
+			if(auto* trig = get_combo_trigger(GET_COMBOTRIGREF))
 			{
 				trig->triggerlevel = vbound(value/10000, 0, 214748);
 			}
@@ -15869,7 +15858,7 @@ void set_register(int32_t arg, int32_t value)
 		}
 		case CMBTRIGREQITEM:
 		{
-			if(auto* trig = get_combo_trigger(ri->combotrigref))
+			if(auto* trig = get_combo_trigger(GET_COMBOTRIGREF))
 			{
 				trig->triggeritem = vbound(value/10000, 0, MAXITEMS-1);
 			}
@@ -15877,7 +15866,7 @@ void set_register(int32_t arg, int32_t value)
 		}
 		case CMBTRIGTIMER:
 		{
-			if(auto* trig = get_combo_trigger(ri->combotrigref))
+			if(auto* trig = get_combo_trigger(GET_COMBOTRIGREF))
 			{
 				trig->trigtimer = vbound(value/10000, 0, 65535);
 			}
@@ -15885,7 +15874,7 @@ void set_register(int32_t arg, int32_t value)
 		}
 		case CMBTRIGSFX:
 		{
-			if(auto* trig = get_combo_trigger(ri->combotrigref))
+			if(auto* trig = get_combo_trigger(GET_COMBOTRIGREF))
 			{
 				trig->trigsfx = vbound(value/10000, 0, 255);
 			}
@@ -15893,7 +15882,7 @@ void set_register(int32_t arg, int32_t value)
 		}
 		case CMBTRIGCHANGECMB:
 		{
-			if(auto* trig = get_combo_trigger(ri->combotrigref))
+			if(auto* trig = get_combo_trigger(GET_COMBOTRIGREF))
 			{
 				trig->trigchange = value/10000;
 			}
@@ -15901,7 +15890,7 @@ void set_register(int32_t arg, int32_t value)
 		}
 		case CMBTRIGCSETCHANGE:
 		{
-			if(auto* trig = get_combo_trigger(ri->combotrigref))
+			if(auto* trig = get_combo_trigger(GET_COMBOTRIGREF))
 			{
 				trig->trigcschange = vbound(value/10000, -128, 127);
 			}
@@ -15909,7 +15898,7 @@ void set_register(int32_t arg, int32_t value)
 		}
 		case CMBTRIGPROX:
 		{
-			if(auto* trig = get_combo_trigger(ri->combotrigref))
+			if(auto* trig = get_combo_trigger(GET_COMBOTRIGREF))
 			{
 				trig->trigprox = vbound(value/10000, 0, 65535);
 			}
@@ -15917,7 +15906,7 @@ void set_register(int32_t arg, int32_t value)
 		}
 		case CMBTRIGLIGHTBEAM:
 		{
-			if(auto* trig = get_combo_trigger(ri->combotrigref))
+			if(auto* trig = get_combo_trigger(GET_COMBOTRIGREF))
 			{
 				trig->triglbeam = vbound(value/10000,0,32);
 			}
@@ -15925,7 +15914,7 @@ void set_register(int32_t arg, int32_t value)
 		}
 		case CMBTRIGCTR:
 		{
-			if(auto* trig = get_combo_trigger(ri->combotrigref))
+			if(auto* trig = get_combo_trigger(GET_COMBOTRIGREF))
 			{
 				trig->trigctr = vbound(value/10000, sscMIN, MAX_COUNTERS-1);
 			}
@@ -15933,7 +15922,7 @@ void set_register(int32_t arg, int32_t value)
 		}
 		case CMBTRIGCTRAMNT:
 		{
-			if(auto* trig = get_combo_trigger(ri->combotrigref))
+			if(auto* trig = get_combo_trigger(GET_COMBOTRIGREF))
 			{
 				trig->trigctramnt = vbound(value/10000, -65535, 65535);
 			}
@@ -15941,7 +15930,7 @@ void set_register(int32_t arg, int32_t value)
 		}
 		case CMBTRIGCOOLDOWN:
 		{
-			if(auto* trig = get_combo_trigger(ri->combotrigref))
+			if(auto* trig = get_combo_trigger(GET_COMBOTRIGREF))
 			{
 				trig->trigcooldown = vbound(value/10000, 0, 255);
 			}
@@ -15949,7 +15938,7 @@ void set_register(int32_t arg, int32_t value)
 		}
 		case CMBTRIGCOPYCAT:
 		{
-			if(auto* trig = get_combo_trigger(ri->combotrigref))
+			if(auto* trig = get_combo_trigger(GET_COMBOTRIGREF))
 			{
 				trig->trigcopycat = vbound(value/10000, 0, 255);
 			}
@@ -15958,7 +15947,7 @@ void set_register(int32_t arg, int32_t value)
 		case CMBTRIGITEMPICKUP:
 		{
 			const int32_t allowed_pflags = ipHOLDUP | ipTIMER | ipSECRETS | ipCANGRAB;
-			if(auto* trig = get_combo_trigger(ri->combotrigref))
+			if(auto* trig = get_combo_trigger(GET_COMBOTRIGREF))
 			{
 				trig->spawnip = (value/10000)&allowed_pflags;
 			}
@@ -15966,7 +15955,7 @@ void set_register(int32_t arg, int32_t value)
 		}
 		case CMBTRIGEXSTATE:
 		{
-			if(auto* trig = get_combo_trigger(ri->combotrigref))
+			if(auto* trig = get_combo_trigger(GET_COMBOTRIGREF))
 			{
 				trig->exstate = vbound(value/10000, -1, 31);
 			}
@@ -15974,7 +15963,7 @@ void set_register(int32_t arg, int32_t value)
 		}
 		case CMBTRIGEXDOORDIR:
 		{
-			if(auto* trig = get_combo_trigger(ri->combotrigref))
+			if(auto* trig = get_combo_trigger(GET_COMBOTRIGREF))
 			{
 				trig->exdoor_dir = vbound(value/10000, -1, 3);
 			}
@@ -15982,7 +15971,7 @@ void set_register(int32_t arg, int32_t value)
 		}
 		case CMBTRIGEXDOORIND:
 		{
-			if(auto* trig = get_combo_trigger(ri->combotrigref))
+			if(auto* trig = get_combo_trigger(GET_COMBOTRIGREF))
 			{
 				trig->exdoor_ind = vbound(value/10000, 0, 7);
 			}
@@ -15990,7 +15979,7 @@ void set_register(int32_t arg, int32_t value)
 		}
 		case CMBTRIGSPAWNENEMY:
 		{
-			if(auto* trig = get_combo_trigger(ri->combotrigref))
+			if(auto* trig = get_combo_trigger(GET_COMBOTRIGREF))
 			{
 				trig->spawnenemy = vbound(value/10000, 0, 511);
 			}
@@ -15998,7 +15987,7 @@ void set_register(int32_t arg, int32_t value)
 		}
 		case CMBTRIGSPAWNITEM:
 		{
-			if(auto* trig = get_combo_trigger(ri->combotrigref))
+			if(auto* trig = get_combo_trigger(GET_COMBOTRIGREF))
 			{
 				trig->spawnitem = vbound(value/10000, -255, 255);
 			}
@@ -16006,7 +15995,7 @@ void set_register(int32_t arg, int32_t value)
 		}
 		case CMBTRIGLSTATE:
 		{
-			if(auto* trig = get_combo_trigger(ri->combotrigref))
+			if(auto* trig = get_combo_trigger(GET_COMBOTRIGREF))
 			{
 				trig->trig_lstate = vbound(value/10000, 0, 31);
 			}
@@ -16014,7 +16003,7 @@ void set_register(int32_t arg, int32_t value)
 		}
 		case CMBTRIGGSTATE:
 		{
-			if(auto* trig = get_combo_trigger(ri->combotrigref))
+			if(auto* trig = get_combo_trigger(GET_COMBOTRIGREF))
 			{
 				trig->trig_gstate = vbound(value/10000, 0, 255);
 			}
@@ -16022,7 +16011,7 @@ void set_register(int32_t arg, int32_t value)
 		}
 		case CMBTRIGGTIMER:
 		{
-			if(auto* trig = get_combo_trigger(ri->combotrigref))
+			if(auto* trig = get_combo_trigger(GET_COMBOTRIGREF))
 			{
 				trig->trig_statetime = vbound(value/10000, 0, 214748);
 			}
@@ -16030,7 +16019,7 @@ void set_register(int32_t arg, int32_t value)
 		}
 		case CMBTRIGGENSCRIPT:
 		{
-			if(auto* trig = get_combo_trigger(ri->combotrigref))
+			if(auto* trig = get_combo_trigger(GET_COMBOTRIGREF))
 			{
 				trig->trig_genscr = vbound(value/10000, 0, 65535);
 			}
@@ -16038,7 +16027,7 @@ void set_register(int32_t arg, int32_t value)
 		}
 		case CMBTRIGGROUP:
 		{
-			if(auto* trig = get_combo_trigger(ri->combotrigref))
+			if(auto* trig = get_combo_trigger(GET_COMBOTRIGREF))
 			{
 				trig->trig_group = vbound(value/10000, 0, 255);
 			}
@@ -16046,7 +16035,7 @@ void set_register(int32_t arg, int32_t value)
 		}
 		case CMBTRIGGROUPVAL:
 		{
-			if(auto* trig = get_combo_trigger(ri->combotrigref))
+			if(auto* trig = get_combo_trigger(GET_COMBOTRIGREF))
 			{
 				trig->trig_group_val = vbound(value/10000, 0, 65535);
 			}
@@ -16054,7 +16043,7 @@ void set_register(int32_t arg, int32_t value)
 		}
 		case CMBTRIGLITEMS:
 		{
-			if(auto* trig = get_combo_trigger(ri->combotrigref))
+			if(auto* trig = get_combo_trigger(GET_COMBOTRIGREF))
 			{
 				trig->trig_levelitems = (value/10000) & LI_ALL;
 			}
@@ -16062,7 +16051,7 @@ void set_register(int32_t arg, int32_t value)
 		}
 		case CMBTRIGDMAPLVL:
 		{
-			if(auto* trig = get_combo_trigger(ri->combotrigref))
+			if(auto* trig = get_combo_trigger(GET_COMBOTRIGREF))
 			{
 				trig->trigdmlevel = vbound(value/10000, -1, MAXLEVELS-1);
 			}
@@ -16070,7 +16059,7 @@ void set_register(int32_t arg, int32_t value)
 		}
 		case CMBTRIGTINTR:
 		{
-			if(auto* trig = get_combo_trigger(ri->combotrigref))
+			if(auto* trig = get_combo_trigger(GET_COMBOTRIGREF))
 			{
 				trig->trigtint[0] = scripting_write_pal_color(vbound(value/10000, -scripting_max_color_val, scripting_max_color_val));
 			}
@@ -16078,7 +16067,7 @@ void set_register(int32_t arg, int32_t value)
 		}
 		case CMBTRIGTINTG:
 		{
-			if(auto* trig = get_combo_trigger(ri->combotrigref))
+			if(auto* trig = get_combo_trigger(GET_COMBOTRIGREF))
 			{
 				trig->trigtint[1] = scripting_write_pal_color(vbound(value/10000, -scripting_max_color_val, scripting_max_color_val));
 			}
@@ -16086,7 +16075,7 @@ void set_register(int32_t arg, int32_t value)
 		}
 		case CMBTRIGTINTB:
 		{
-			if(auto* trig = get_combo_trigger(ri->combotrigref))
+			if(auto* trig = get_combo_trigger(GET_COMBOTRIGREF))
 			{
 				trig->trigtint[2] = scripting_write_pal_color(vbound(value/10000, -scripting_max_color_val, scripting_max_color_val));
 			}
@@ -16094,7 +16083,7 @@ void set_register(int32_t arg, int32_t value)
 		}
 		case CMBTRIGLVLPAL:
 		{
-			if(auto* trig = get_combo_trigger(ri->combotrigref))
+			if(auto* trig = get_combo_trigger(GET_COMBOTRIGREF))
 			{
 				trig->triglvlpalette = vbound(value/10000, -1, 512);
 			}
@@ -16102,7 +16091,7 @@ void set_register(int32_t arg, int32_t value)
 		}
 		case CMBTRIGBOSSPAL:
 		{
-			if(auto* trig = get_combo_trigger(ri->combotrigref))
+			if(auto* trig = get_combo_trigger(GET_COMBOTRIGREF))
 			{
 				trig->trigbosspalette = vbound(value/10000, -1, 29);
 			}
@@ -16110,7 +16099,7 @@ void set_register(int32_t arg, int32_t value)
 		}
 		case CMBTRIGQUAKETIME:
 		{
-			if(auto* trig = get_combo_trigger(ri->combotrigref))
+			if(auto* trig = get_combo_trigger(GET_COMBOTRIGREF))
 			{
 				trig->trigquaketime = zc_max(value/10000, -1);
 			}
@@ -16118,7 +16107,7 @@ void set_register(int32_t arg, int32_t value)
 		}
 		case CMBTRIGWAVYTIME:
 		{
-			if(auto* trig = get_combo_trigger(ri->combotrigref))
+			if(auto* trig = get_combo_trigger(GET_COMBOTRIGREF))
 			{
 				trig->trigwavytime = zc_max(value/10000, -1);
 			}
@@ -16126,7 +16115,7 @@ void set_register(int32_t arg, int32_t value)
 		}
 		case CMBTRIGSWORDJINX:
 		{
-			if(auto* trig = get_combo_trigger(ri->combotrigref))
+			if(auto* trig = get_combo_trigger(GET_COMBOTRIGREF))
 			{
 				trig->trig_swjinxtime = zc_max(value/10000, -2);
 			}
@@ -16134,7 +16123,7 @@ void set_register(int32_t arg, int32_t value)
 		}
 		case CMBTRIGITEMJINX:
 		{
-			if(auto* trig = get_combo_trigger(ri->combotrigref))
+			if(auto* trig = get_combo_trigger(GET_COMBOTRIGREF))
 			{
 				trig->trig_itmjinxtime = zc_max(value/10000, -2);
 			}
@@ -16142,7 +16131,7 @@ void set_register(int32_t arg, int32_t value)
 		}
 		case CMBTRIGSHIELDJINX:
 		{
-			if(auto* trig = get_combo_trigger(ri->combotrigref))
+			if(auto* trig = get_combo_trigger(GET_COMBOTRIGREF))
 			{
 				trig->trig_shieldjinxtime = zc_max(value/10000, -2);
 			}
@@ -16150,7 +16139,7 @@ void set_register(int32_t arg, int32_t value)
 		}
 		case CMBTRIGSTUN:
 		{
-			if(auto* trig = get_combo_trigger(ri->combotrigref))
+			if(auto* trig = get_combo_trigger(GET_COMBOTRIGREF))
 			{
 				trig->trig_stuntime = zc_max(value/10000, -2);
 			}
@@ -16158,7 +16147,7 @@ void set_register(int32_t arg, int32_t value)
 		}
 		case CMBTRIGBUNNY:
 		{
-			if(auto* trig = get_combo_trigger(ri->combotrigref))
+			if(auto* trig = get_combo_trigger(GET_COMBOTRIGREF))
 			{
 				trig->trig_bunnytime = zc_max(value/10000, -2);
 			}
@@ -16166,7 +16155,7 @@ void set_register(int32_t arg, int32_t value)
 		}
 		case CMBTRIGPUSHTIME:
 		{
-			if(auto* trig = get_combo_trigger(ri->combotrigref))
+			if(auto* trig = get_combo_trigger(GET_COMBOTRIGREF))
 			{
 				trig->trig_pushtime = vbound(value/10000, 0, 255);
 			}
@@ -16174,133 +16163,133 @@ void set_register(int32_t arg, int32_t value)
 		}
 		case CMBTRIGGERPROMPTCID:
 		{
-			if(auto* trig = get_combo_trigger(ri->combotrigref))
+			if(auto* trig = get_combo_trigger(GET_COMBOTRIGREF))
 				trig->prompt_cid = vbound(value/10000, 0, MAXCOMBOS-1);
 			break;
 		}
 		case CMBTRIGGERPROMPTCS:
 		{
-			if(auto* trig = get_combo_trigger(ri->combotrigref))
+			if(auto* trig = get_combo_trigger(GET_COMBOTRIGREF))
 				trig->prompt_cs = (value/10000)&15;
 			break;
 		}
 		case CMBTRIGGERFAILPROMPTCID:
 		{
-			if(auto* trig = get_combo_trigger(ri->combotrigref))
+			if(auto* trig = get_combo_trigger(GET_COMBOTRIGREF))
 				trig->fail_prompt_cid = vbound(value/10000, 0, MAXCOMBOS-1);
 			break;
 		}
 		case CMBTRIGGERFAILPROMPTCS:
 		{
-			if(auto* trig = get_combo_trigger(ri->combotrigref))
+			if(auto* trig = get_combo_trigger(GET_COMBOTRIGREF))
 				trig->fail_prompt_cs = (value/10000)&15;
 			break;
 		}
 		case CMBTRIGGERPROMPTX:
 		{
-			if(auto* trig = get_combo_trigger(ri->combotrigref))
+			if(auto* trig = get_combo_trigger(GET_COMBOTRIGREF))
 				trig->prompt_x = vbound(value/10000, -32768, 32767);
 			break;
 		}
 		case CMBTRIGGERPROMPTY:
 		{
-			if(auto* trig = get_combo_trigger(ri->combotrigref))
+			if(auto* trig = get_combo_trigger(GET_COMBOTRIGREF))
 				trig->prompt_y = vbound(value/10000, -32768, 32767);
 			break;
 		}
 		case CMBTRIGGERTRIGSTR:
 		{
-			if(auto* trig = get_combo_trigger(ri->combotrigref))
+			if(auto* trig = get_combo_trigger(GET_COMBOTRIGREF))
 				trig->trig_msgstr = vbound(value/10000, 0, msg_count-1);
 			break;
 		}
 		case CMBTRIGGERFAILSTR:
 		{
-			if(auto* trig = get_combo_trigger(ri->combotrigref))
+			if(auto* trig = get_combo_trigger(GET_COMBOTRIGREF))
 				trig->fail_msgstr = vbound(value/10000, 0, msg_count-1);
 			break;
 		}
 		case CMBTRIGGERPLAYERBOUNCE:
 		{
-			if(auto* trig = get_combo_trigger(ri->combotrigref))
+			if(auto* trig = get_combo_trigger(GET_COMBOTRIGREF))
 				trig->player_bounce = zslongToFix(value);
 			break;
 		}
 		case CMBTRIGGERREQPLAYERZ:
 		{
-			if(auto* trig = get_combo_trigger(ri->combotrigref))
+			if(auto* trig = get_combo_trigger(GET_COMBOTRIGREF))
 				trig->req_player_z = zslongToFix(value);
 			break;
 		}
 		case CMBTRIGGERDESTHEROX:
 		{
-			if(auto* trig = get_combo_trigger(ri->combotrigref))
+			if(auto* trig = get_combo_trigger(GET_COMBOTRIGREF))
 				trig->dest_player_x = zslongToFix(value);
 			break;
 		}
 		case CMBTRIGGERDESTHEROY:
 		{
-			if(auto* trig = get_combo_trigger(ri->combotrigref))
+			if(auto* trig = get_combo_trigger(GET_COMBOTRIGREF))
 				trig->dest_player_y = zslongToFix(value);
 			break;
 		}
 		case CMBTRIGGERDESTHEROZ:
 		{
-			if(auto* trig = get_combo_trigger(ri->combotrigref))
+			if(auto* trig = get_combo_trigger(GET_COMBOTRIGREF))
 				trig->dest_player_z = zslongToFix(value);
 			break;
 		}
 		case CMBTRIGGERREQPLAYERJUMP:
 		{
-			if(auto* trig = get_combo_trigger(ri->combotrigref))
+			if(auto* trig = get_combo_trigger(GET_COMBOTRIGREF))
 				trig->req_player_jump = zslongToFix(value);
 			break;
 		}
 		case CMBTRIGGERREQPLAYERX:
 		{
-			if(auto* trig = get_combo_trigger(ri->combotrigref))
+			if(auto* trig = get_combo_trigger(GET_COMBOTRIGREF))
 				trig->req_player_x = zslongToFix(value);
 			break;
 		}
 		case CMBTRIGGERREQPLAYERY:
 		{
-			if(auto* trig = get_combo_trigger(ri->combotrigref))
+			if(auto* trig = get_combo_trigger(GET_COMBOTRIGREF))
 				trig->req_player_y = zslongToFix(value);
 			break;
 		}
 		case CMBTRIGGERFORCEPLAYERDIR:
 		{
-			if(auto* trig = get_combo_trigger(ri->combotrigref))
+			if(auto* trig = get_combo_trigger(GET_COMBOTRIGREF))
 				trig->dest_player_dir = vbound(value/10000, 3, -1);
 			break;
 		}
 		case CMBTRIGGERICECOMBO:
 		{
-			if(auto* trig = get_combo_trigger(ri->combotrigref))
+			if(auto* trig = get_combo_trigger(GET_COMBOTRIGREF))
 				trig->force_ice_combo = vbound(value/10000, MAXCOMBOS-1, -1);
 			break;
 		}
 		case CMBTRIGGERICEVX:
 		{
-			if(auto* trig = get_combo_trigger(ri->combotrigref))
+			if(auto* trig = get_combo_trigger(GET_COMBOTRIGREF))
 				trig->force_ice_vx = zslongToFix(value);
 			break;
 		}
 		case CMBTRIGGERICEVY:
 		{
-			if(auto* trig = get_combo_trigger(ri->combotrigref))
+			if(auto* trig = get_combo_trigger(GET_COMBOTRIGREF))
 				trig->force_ice_vy = zslongToFix(value);
 			break;
 		}
 		case CMBTRIGGER_GRAVITY:
 		{
-			if(auto* trig = get_combo_trigger(ri->combotrigref))
+			if(auto* trig = get_combo_trigger(GET_COMBOTRIGREF))
 				trig->trig_gravity = zslongToFix(value);
 			break;
 		}
 		case CMBTRIGGER_TERMINAL_VELOCITY:
 		{
-			if(auto* trig = get_combo_trigger(ri->combotrigref))
+			if(auto* trig = get_combo_trigger(GET_COMBOTRIGREF))
 				trig->trig_terminal_v = zslongToFix(value);
 			break;
 		}
@@ -16309,32 +16298,32 @@ void set_register(int32_t arg, int32_t value)
 		
 		#define	SET_NPCDATA_VAR_INT(member, str) \
 		{ \
-			if( auto nd = checkNPCData(ri->npcdataref) ) \
+			if( auto nd = checkNPCData(GET_NPCDATAREF) ) \
 				nd->member = vbound((value / 10000),0,214747); \
 		} \
 		
 		#define	SET_NPCDATA_VAR_DWORD(member, str) \
 		{ \
-			if( auto nd = checkNPCData(ri->npcdataref) ) \
+			if( auto nd = checkNPCData(GET_NPCDATAREF) ) \
 				nd->member = vbound((value / 10000),0,32767); \
 		} \
 
 		#define	SET_NPCDATA_VAR_ENUM(member, str) \
 		{ \
-			if( auto nd = checkNPCData(ri->npcdataref) ) \
-				nd->member = (decltype(guysbuf[ri->npcdataref].member))vbound((value / 10000),0,32767); \
+			if( auto nd = checkNPCData(GET_NPCDATAREF) ) \
+				nd->member = (decltype(guysbuf[GET_NPCDATAREF].member))vbound((value / 10000),0,32767); \
 		} \
 
 		#define	SET_NPCDATA_VAR_BYTE(member, str) \
 		{ \
-			if( auto nd = checkNPCData(ri->npcdataref) ) \
+			if( auto nd = checkNPCData(GET_NPCDATAREF) ) \
 				nd->member = vbound((value / 10000),0,255); \
 		} \
 		
 		#define SET_NPCDATA_FLAG(member, str) \
 		{ \
 			int32_t flag =  (value/10000);  \
-			if( auto nd = checkNPCData(ri->npcdataref) ) \
+			if( auto nd = checkNPCData(GET_NPCDATAREF) ) \
 			{ \
 				if ( flag ) \
 				{ \
@@ -16391,7 +16380,7 @@ void set_register(int32_t arg, int32_t value)
 			if( (unsigned) ri->npcdataref > (MAXNPCS-1) )
 				Z_scripterrlog("Invalid NPC ID passed to npcdata->WeaponScript: %d\n", (ri->npcdataref*10000));
 			else
-				guysbuf[ri->npcdataref].weap_data.script = vbound((value / 10000),0,214747);
+				guysbuf[GET_NPCDATAREF].weap_data.script = vbound((value / 10000),0,214747);
 			break;
 		}
 		case NPCDATASIZEFLAG: SET_NPCDATA_VAR_INT(SIZEflags, "SizeFlags"); break;
@@ -16408,7 +16397,7 @@ void set_register(int32_t arg, int32_t value)
 			} 
 			else 
 			{
-				guysbuf[ri->npcdataref].spr_shadow = vbound(value/10000, 0, 255);
+				guysbuf[GET_NPCDATAREF].spr_shadow = vbound(value/10000, 0, 255);
 			} 
 			break;
 		}
@@ -16420,7 +16409,7 @@ void set_register(int32_t arg, int32_t value)
 			} 
 			else 
 			{
-				guysbuf[ri->npcdataref].spr_spawn = vbound(value/10000, 0, 255);
+				guysbuf[GET_NPCDATAREF].spr_spawn = vbound(value/10000, 0, 255);
 			} 
 			break;
 		}
@@ -16432,7 +16421,7 @@ void set_register(int32_t arg, int32_t value)
 			} 
 			else 
 			{
-				guysbuf[ri->npcdataref].spr_death = vbound(value/10000, 0, 255);
+				guysbuf[GET_NPCDATAREF].spr_death = vbound(value/10000, 0, 255);
 			} 
 			break;
 		}
@@ -16448,7 +16437,7 @@ void set_register(int32_t arg, int32_t value)
 				Z_scripterrlog("Invalid dropset pointer %d\n", ri->dropsetref);
 				break;
 			}
-			item_drop_sets[ri->dropsetref].chance[0] = vbound((value / 10000),0,32767);
+			item_drop_sets[GET_DROPSETREF].chance[0] = vbound((value / 10000),0,32767);
 			break;
 		}
 
@@ -16563,7 +16552,7 @@ void set_register(int32_t arg, int32_t value)
 
 		case GENDATARUNNING:
 		{
-			if(user_genscript* scr = checkGenericScr(ri->genericdataref))
+			if(user_genscript* scr = checkGenericScr(GET_GENERICDATAREF))
 			{
 				if(value)
 					scr->launch();
@@ -16573,7 +16562,7 @@ void set_register(int32_t arg, int32_t value)
 		}
 		case GENDATASIZE:
 		{
-			if(user_genscript* scr = checkGenericScr(ri->genericdataref))
+			if(user_genscript* scr = checkGenericScr(GET_GENERICDATAREF))
 			{
 				scr->dataResize(value/10000);
 			}
@@ -16584,62 +16573,62 @@ void set_register(int32_t arg, int32_t value)
 		
 		case PORTALX:
 		{
-			if(portal* p = checkPortal(ri->portalref))
+			if(portal* p = checkPortal(GET_PORTALREF))
 				p->x = zslongToFix(value);
 			break;
 		}
 		case PORTALY:
 		{
-			if(portal* p = checkPortal(ri->portalref))
+			if(portal* p = checkPortal(GET_PORTALREF))
 				p->y = zslongToFix(value);
 			break;
 		}
 		case PORTALDMAP:
 		{
-			if(portal* p = checkPortal(ri->portalref))
+			if(portal* p = checkPortal(GET_PORTALREF))
 				p->destdmap = vbound(value/10000,-1,MAXDMAPS-1);
 			break;
 		}
 		case PORTALSCREEN:
 		{
-			if(portal* p = checkPortal(ri->portalref))
+			if(portal* p = checkPortal(GET_PORTALREF))
 				p->destscr = vbound(value/10000,0,255);
 			break;
 		}
 		case PORTALACLK:
 		{
-			if(portal* p = checkPortal(ri->portalref))
+			if(portal* p = checkPortal(GET_PORTALREF))
 				p->aclk = vbound(value/10000, 0, 9999);
 			break;
 		}
 		case PORTALAFRM:
 		{
-			if(portal* p = checkPortal(ri->portalref))
+			if(portal* p = checkPortal(GET_PORTALREF))
 				p->aframe = vbound(value/10000, 0, 9999);
 			break;
 		}
 		case PORTALOTILE:
 		{
-			if(portal* p = checkPortal(ri->portalref))
+			if(portal* p = checkPortal(GET_PORTALREF))
 				p->o_tile = vbound(value/10000, 0, NEWMAXTILES-1);
 			break;
 		}
 		case PORTALASPD:
 		{
-			if(portal* p = checkPortal(ri->portalref))
+			if(portal* p = checkPortal(GET_PORTALREF))
 				p->aspd = vbound(value/10000, 0, 9999);
 			break;
 		}
 		case PORTALFRAMES:
 		{
-			if(portal* p = checkPortal(ri->portalref))
+			if(portal* p = checkPortal(GET_PORTALREF))
 				p->frames = vbound(value/10000, 0, 9999);
 			break;
 		}
 		case PORTALSAVED:
 		{
 			if(ri->portalref < 0 || value < 0) break;
-			if(portal* p = checkPortal(ri->portalref))
+			if(portal* p = checkPortal(GET_PORTALREF))
 			{
 				if(!value)
 					p->saved_data = 0;
@@ -16650,7 +16639,7 @@ void set_register(int32_t arg, int32_t value)
 		}
 		case PORTALCLOSEDIS:
 		{
-			if(portal* p = checkPortal(ri->portalref))
+			if(portal* p = checkPortal(GET_PORTALREF))
 				p->prox_active = value==0; //Inverted
 			break;
 		}
@@ -16666,74 +16655,74 @@ void set_register(int32_t arg, int32_t value)
 		}
 		case PORTALWARPSFX:
 		{
-			if(portal* p = checkPortal(ri->portalref))
+			if(portal* p = checkPortal(GET_PORTALREF))
 				p->wsfx = vbound(value/10000,0,255);
 			break;
 		}
 		case PORTALWARPVFX:
 		{
-			if(portal* p = checkPortal(ri->portalref))
+			if(portal* p = checkPortal(GET_PORTALREF))
 				p->weffect = vbound(value/10000,0,255);
 			break;
 		}
 		case SAVEDPORTALX:
 		{
-			if(savedportal* p = checkSavedPortal(ri->saveportalref))
+			if(savedportal* p = checkSavedPortal(GET_SAVEPORTALREF))
 				p->x = value;
 			break;
 		}
 		case SAVEDPORTALY:
 		{
-			if(savedportal* p = checkSavedPortal(ri->saveportalref))
+			if(savedportal* p = checkSavedPortal(GET_SAVEPORTALREF))
 				p->y = value;
 			break;
 		}
 		case SAVEDPORTALSRCDMAP:
 		{
-			if(savedportal* p = checkSavedPortal(ri->saveportalref))
+			if(savedportal* p = checkSavedPortal(GET_SAVEPORTALREF))
 				p->srcdmap = vbound(value/10000, -1, MAXDMAPS-1);
 			break;
 		}
 		case SAVEDPORTALDESTDMAP:
 		{
-			if(savedportal* p = checkSavedPortal(ri->saveportalref))
+			if(savedportal* p = checkSavedPortal(GET_SAVEPORTALREF))
 				p->destdmap = vbound(value/10000, -1, MAXDMAPS-1);
 			break;
 		}
 		case SAVEDPORTALSRCSCREEN:
 		{
-			if(savedportal* p = checkSavedPortal(ri->saveportalref))
+			if(savedportal* p = checkSavedPortal(GET_SAVEPORTALREF))
 				p->srcscr = vbound(value/10000,0,255);
 			break;
 		}
 		case SAVEDPORTALDSTSCREEN:
 		{
-			if(savedportal* p = checkSavedPortal(ri->saveportalref))
+			if(savedportal* p = checkSavedPortal(GET_SAVEPORTALREF))
 				p->destscr = vbound(value/10000,0,255);
 			break;
 		}
 		case SAVEDPORTALWARPSFX:
 		{
-			if(savedportal* p = checkSavedPortal(ri->saveportalref))
+			if(savedportal* p = checkSavedPortal(GET_SAVEPORTALREF))
 				p->sfx = vbound(value/10000,0,255);
 			break;
 		}
 		case SAVEDPORTALWARPVFX:
 		{
-			if(savedportal* p = checkSavedPortal(ri->saveportalref))
+			if(savedportal* p = checkSavedPortal(GET_SAVEPORTALREF))
 				p->warpfx = vbound(value/10000,0,255);
 			break;
 		}
 		case SAVEDPORTALSPRITE:
 		{
-			if(savedportal* p = checkSavedPortal(ri->saveportalref))
+			if(savedportal* p = checkSavedPortal(GET_SAVEPORTALREF))
 				p->spr = vbound(value/10000,0,255);
 			break;
 		}
 		case SAVEDPORTALPORTAL:
 		{
 			if(ri->saveportalref < 0 || value < 0) break;
-			if(savedportal* sp = checkSavedPortal(ri->saveportalref))
+			if(savedportal* sp = checkSavedPortal(GET_SAVEPORTALREF))
 			{
 				int32_t id = getPortalFromSaved(sp);
 				if(id == value) break; //no change
@@ -16800,14 +16789,14 @@ void set_register(int32_t arg, int32_t value)
 		
 		case SUBDATACURPG:
 		{
-			if(ZCSubscreen* sub = checkSubData(ri->subdataref))
+			if(ZCSubscreen* sub = checkSubData(GET_SUBDATAREF))
 				if(sub->sub_type == sstACTIVE)
 					sub->curpage = vbound(value/10000,0,sub->pages.size()-1);
 			break;
 		}
 		case SUBDATANUMPG:
 		{
-			if(ZCSubscreen* sub = checkSubData(ri->subdataref))
+			if(ZCSubscreen* sub = checkSubData(GET_SUBDATAREF))
 				if(sub->sub_type == sstACTIVE && value >= 10000)
 				{
 					size_t sz = value/10000;
@@ -16968,7 +16957,7 @@ void set_register(int32_t arg, int32_t value)
 		case SUBPGSUBDATA: break; //READ-ONLY
 		case SUBPGCURSORPOS:
 		{
-			if(SubscrPage* pg = checkSubPage(ri->subpageref))
+			if(SubscrPage* pg = checkSubPage(GET_SUBPAGEREF))
 				pg->cursor_pos = vbound(value/10000,0,255);
 			break;
 		}
@@ -16981,67 +16970,67 @@ void set_register(int32_t arg, int32_t value)
 		case SUBWIDGEQPITM: break; //READ-ONLY
 		case SUBWIDGPOS:
 		{
-			if(SubscrWidget* widg = checkSubWidg(ri->subwidgref))
+			if(SubscrWidget* widg = checkSubWidg(GET_SUBWIDGREF))
 				widg->pos = vbound(value/10000,0,255);
 			break;
 		}
 		case SUBWIDGX:
 		{
-			if(SubscrWidget* widg = checkSubWidg(ri->subwidgref))
+			if(SubscrWidget* widg = checkSubWidg(GET_SUBWIDGREF))
 				widg->x = vbound(value/10000,-32768,32767);
 			break;
 		}
 		case SUBWIDGY:
 		{
-			if(SubscrWidget* widg = checkSubWidg(ri->subwidgref))
+			if(SubscrWidget* widg = checkSubWidg(GET_SUBWIDGREF))
 				widg->y = vbound(value/10000,-32768,32767);
 			break;
 		}
 		case SUBWIDGW:
 		{
-			if(SubscrWidget* widg = checkSubWidg(ri->subwidgref))
+			if(SubscrWidget* widg = checkSubWidg(GET_SUBWIDGREF))
 				widg->w = vbound(value/10000,0,65535);
 			break;
 		}
 		case SUBWIDGH:
 		{
-			if(SubscrWidget* widg = checkSubWidg(ri->subwidgref))
+			if(SubscrWidget* widg = checkSubWidg(GET_SUBWIDGREF))
 				widg->h = vbound(value/10000,0,65535);
 			break;
 		}
 		case SUBWIDGREQCOUNTER:
 		{
-			if(SubscrWidget* widg = checkSubWidg(ri->subwidgref))
+			if(SubscrWidget* widg = checkSubWidg(GET_SUBWIDGREF))
 				widg->req_counter = vbound(value/10000,sscMIN,MAX_COUNTERS);
 			break;
 		}
 		case SUBWIDGREQCOUNTERCOND:
 		{
-			if(SubscrWidget* widg = checkSubWidg(ri->subwidgref))
+			if(SubscrWidget* widg = checkSubWidg(GET_SUBWIDGREF))
 				widg->req_counter_cond_type = vbound(value/10000,CONDTY_NONE,CONDTY_MAX-1);
 			break;
 		}
 		case SUBWIDGREQCOUNTERVAL:
 		{
-			if(SubscrWidget* widg = checkSubWidg(ri->subwidgref))
+			if(SubscrWidget* widg = checkSubWidg(GET_SUBWIDGREF))
 				widg->req_counter_val = vbound(value/10000,0,65535);
 			break;
 		}
 		case SUBWIDGREQLITEMS:
 		{
-			if(SubscrWidget* widg = checkSubWidg(ri->subwidgref))
+			if(SubscrWidget* widg = checkSubWidg(GET_SUBWIDGREF))
 				widg->req_litems = vbound(value/10000,0,LI_ALL);
 			break;
 		}
 		case SUBWIDGREQLITEMLEVEL:
 		{
-			if(SubscrWidget* widg = checkSubWidg(ri->subwidgref))
+			if(SubscrWidget* widg = checkSubWidg(GET_SUBWIDGREF))
 				widg->req_litem_level = vbound(value/10000,-1,MAXLEVELS);
 			break;
 		}
 		case SUBWIDGREQSCRIPTDISABLED:
 		{
-			if(SubscrWidget* widg = checkSubWidg(ri->subwidgref))
+			if(SubscrWidget* widg = checkSubWidg(GET_SUBWIDGREF))
 				widg->is_disabled = value != 0;
 			break;
 		}
@@ -17110,7 +17099,7 @@ void set_register(int32_t arg, int32_t value)
 		}
 		case SUBWIDGTY_FONT:
 		{
-			if(SubscrWidget* widg = checkSubWidg(ri->subwidgref))
+			if(SubscrWidget* widg = checkSubWidg(GET_SUBWIDGREF))
 			{
 				auto val = vbound(value/10000,0,font_max-1);
 				auto ty = widg->getType();
@@ -17152,7 +17141,7 @@ void set_register(int32_t arg, int32_t value)
 		}
 		case SUBWIDGTY_ALIGN:
 		{
-			if(SubscrWidget* widg = checkSubWidg(ri->subwidgref))
+			if(SubscrWidget* widg = checkSubWidg(GET_SUBWIDGREF))
 			{
 				auto val = vbound(value/10000,0,sstaMAX-1);
 				auto ty = widg->getType();
@@ -17191,7 +17180,7 @@ void set_register(int32_t arg, int32_t value)
 		}
 		case SUBWIDGTY_SHADOWTY:
 		{
-			if(SubscrWidget* widg = checkSubWidg(ri->subwidgref))
+			if(SubscrWidget* widg = checkSubWidg(GET_SUBWIDGREF))
 			{
 				auto val = vbound(value/10000,0,sstsMAX-1);
 				auto ty = widg->getType();
@@ -17233,7 +17222,7 @@ void set_register(int32_t arg, int32_t value)
 		}
 		case SUBWIDGTY_COLOR_TXT:
 		{
-			if(SubscrWidget* widg = checkSubWidg(ri->subwidgref))
+			if(SubscrWidget* widg = checkSubWidg(GET_SUBWIDGREF))
 			{
 				auto val = vbound(value/10000,MIN_SUBSCR_COLOR,MAX_SUBSCR_COLOR);
 				auto ty = widg->getType();
@@ -17278,7 +17267,7 @@ void set_register(int32_t arg, int32_t value)
 		}
 		case SUBWIDGTY_COLOR_SHD:
 		{
-			if(SubscrWidget* widg = checkSubWidg(ri->subwidgref))
+			if(SubscrWidget* widg = checkSubWidg(GET_SUBWIDGREF))
 			{
 				auto val = vbound(value/10000,MIN_SUBSCR_COLOR,MAX_SUBSCR_COLOR);
 				auto ty = widg->getType();
@@ -17320,7 +17309,7 @@ void set_register(int32_t arg, int32_t value)
 		}
 		case SUBWIDGTY_COLOR_BG:
 		{
-			if(SubscrWidget* widg = checkSubWidg(ri->subwidgref))
+			if(SubscrWidget* widg = checkSubWidg(GET_SUBWIDGREF))
 			{
 				auto val = vbound(value/10000,MIN_SUBSCR_COLOR,MAX_SUBSCR_COLOR);
 				auto ty = widg->getType();
@@ -17369,7 +17358,7 @@ void set_register(int32_t arg, int32_t value)
 		
 		case SUBWIDGTY_COLOR_TXT2:
 		{
-			if(SubscrWidget* widg = checkSubWidg(ri->subwidgref))
+			if(SubscrWidget* widg = checkSubWidg(GET_SUBWIDGREF))
 			{
 				auto val = vbound(value/10000,MIN_SUBSCR_COLOR,MAX_SUBSCR_COLOR);
 				auto ty = widg->getType();
@@ -17390,7 +17379,7 @@ void set_register(int32_t arg, int32_t value)
 		}
 		case SUBWIDGTY_COLOR_SHD2:
 		{
-			if(SubscrWidget* widg = checkSubWidg(ri->subwidgref))
+			if(SubscrWidget* widg = checkSubWidg(GET_SUBWIDGREF))
 			{
 				auto val = vbound(value/10000,MIN_SUBSCR_COLOR,MAX_SUBSCR_COLOR);
 				auto ty = widg->getType();
@@ -17411,7 +17400,7 @@ void set_register(int32_t arg, int32_t value)
 		}
 		case SUBWIDGTY_COLOR_BG2:
 		{
-			if(SubscrWidget* widg = checkSubWidg(ri->subwidgref))
+			if(SubscrWidget* widg = checkSubWidg(GET_SUBWIDGREF))
 			{
 				auto val = vbound(value/10000,MIN_SUBSCR_COLOR,MAX_SUBSCR_COLOR);
 				auto ty = widg->getType();
@@ -17433,7 +17422,7 @@ void set_register(int32_t arg, int32_t value)
 		
 		case SUBWIDGTY_COLOR_OLINE:
 		{
-			if(SubscrWidget* widg = checkSubWidg(ri->subwidgref))
+			if(SubscrWidget* widg = checkSubWidg(GET_SUBWIDGREF))
 			{
 				auto val = vbound(value/10000,MIN_SUBSCR_COLOR,MAX_SUBSCR_COLOR);
 				auto ty = widg->getType();
@@ -17458,7 +17447,7 @@ void set_register(int32_t arg, int32_t value)
 		
 		case SUBWIDGTY_COLOR_FILL:
 		{
-			if(SubscrWidget* widg = checkSubWidg(ri->subwidgref))
+			if(SubscrWidget* widg = checkSubWidg(GET_SUBWIDGREF))
 			{
 				auto val = vbound(value/10000,MIN_SUBSCR_COLOR,MAX_SUBSCR_COLOR);
 				auto ty = widg->getType();
@@ -17479,7 +17468,7 @@ void set_register(int32_t arg, int32_t value)
 		}
 		case SUBWIDGTY_BUTTON:
 		{
-			if(SubscrWidget* widg = checkSubWidg(ri->subwidgref))
+			if(SubscrWidget* widg = checkSubWidg(GET_SUBWIDGREF))
 			{
 				auto val = vbound(value/10000,-1,3);
 				auto ty = widg->getType();
@@ -17506,7 +17495,7 @@ void set_register(int32_t arg, int32_t value)
 		}
 		case SUBWIDGTY_MINDIG:
 		{
-			if(SubscrWidget* widg = checkSubWidg(ri->subwidgref))
+			if(SubscrWidget* widg = checkSubWidg(GET_SUBWIDGREF))
 			{
 				auto val = vbound(value/10000,0,5);
 				auto ty = widg->getType();
@@ -17530,7 +17519,7 @@ void set_register(int32_t arg, int32_t value)
 		}
 		case SUBWIDGTY_MAXDIG:
 		{
-			if(SubscrWidget* widg = checkSubWidg(ri->subwidgref))
+			if(SubscrWidget* widg = checkSubWidg(GET_SUBWIDGREF))
 			{
 				auto val = vbound(value/10000,0,5);
 				auto ty = widg->getType();
@@ -17551,7 +17540,7 @@ void set_register(int32_t arg, int32_t value)
 		}
 		case SUBWIDGTY_INFITM:
 		{
-			if(SubscrWidget* widg = checkSubWidg(ri->subwidgref))
+			if(SubscrWidget* widg = checkSubWidg(GET_SUBWIDGREF))
 			{
 				auto val = vbound(value/10000,-1,MAXITEMS-1);
 				auto ty = widg->getType();
@@ -17576,7 +17565,7 @@ void set_register(int32_t arg, int32_t value)
 		}
 		case SUBWIDGTY_INFCHAR:
 		{
-			if(SubscrWidget* widg = checkSubWidg(ri->subwidgref))
+			if(SubscrWidget* widg = checkSubWidg(GET_SUBWIDGREF))
 			{
 				char val = vbound(value/10000,0,255);
 				auto ty = widg->getType();
@@ -17600,7 +17589,7 @@ void set_register(int32_t arg, int32_t value)
 		}
 		case SUBWIDGTY_COSTIND:
 		{
-			if(SubscrWidget* widg = checkSubWidg(ri->subwidgref))
+			if(SubscrWidget* widg = checkSubWidg(GET_SUBWIDGREF))
 			{
 				auto val = vbound(value/10000,0,1);
 				auto ty = widg->getType();
@@ -17618,7 +17607,7 @@ void set_register(int32_t arg, int32_t value)
 		}
 		case SUBWIDGTY_COLOR_PLAYER:
 		{
-			if(SubscrWidget* widg = checkSubWidg(ri->subwidgref))
+			if(SubscrWidget* widg = checkSubWidg(GET_SUBWIDGREF))
 			{
 				auto val = vbound(value/10000,MIN_SUBSCR_COLOR,MAX_SUBSCR_COLOR);
 				auto ty = widg->getType();
@@ -17639,7 +17628,7 @@ void set_register(int32_t arg, int32_t value)
 		}
 		case SUBWIDGTY_COLOR_CMPBLNK:
 		{
-			if(SubscrWidget* widg = checkSubWidg(ri->subwidgref))
+			if(SubscrWidget* widg = checkSubWidg(GET_SUBWIDGREF))
 			{
 				auto val = vbound(value/10000,MIN_SUBSCR_COLOR,MAX_SUBSCR_COLOR);
 				auto ty = widg->getType();
@@ -17657,7 +17646,7 @@ void set_register(int32_t arg, int32_t value)
 		}
 		case SUBWIDGTY_COLOR_CMPOFF:
 		{
-			if(SubscrWidget* widg = checkSubWidg(ri->subwidgref))
+			if(SubscrWidget* widg = checkSubWidg(GET_SUBWIDGREF))
 			{
 				auto val = vbound(value/10000,MIN_SUBSCR_COLOR,MAX_SUBSCR_COLOR);
 				auto ty = widg->getType();
@@ -17675,7 +17664,7 @@ void set_register(int32_t arg, int32_t value)
 		}
 		case SUBWIDGTY_COLOR_ROOM:
 		{
-			if(SubscrWidget* widg = checkSubWidg(ri->subwidgref))
+			if(SubscrWidget* widg = checkSubWidg(GET_SUBWIDGREF))
 			{
 				auto val = vbound(value/10000,MIN_SUBSCR_COLOR,MAX_SUBSCR_COLOR);
 				auto ty = widg->getType();
@@ -17693,7 +17682,7 @@ void set_register(int32_t arg, int32_t value)
 		}
 		case SUBWIDGTY_ITEMCLASS:
 		{
-			if(SubscrWidget* widg = checkSubWidg(ri->subwidgref))
+			if(SubscrWidget* widg = checkSubWidg(GET_SUBWIDGREF))
 			{
 				auto val = vbound(value/10000,0,itype_maxusable-1);
 				auto ty = widg->getType();
@@ -17717,7 +17706,7 @@ void set_register(int32_t arg, int32_t value)
 		}
 		case SUBWIDGTY_ITEMID:
 		{
-			if(SubscrWidget* widg = checkSubWidg(ri->subwidgref))
+			if(SubscrWidget* widg = checkSubWidg(GET_SUBWIDGREF))
 			{
 				auto val = vbound(value/10000,-1,MAXITEMS-1);
 				auto ty = widg->getType();
@@ -17741,7 +17730,7 @@ void set_register(int32_t arg, int32_t value)
 		}
 		case SUBWIDGTY_FRAMETILE:
 		{
-			if(SubscrWidget* widg = checkSubWidg(ri->subwidgref))
+			if(SubscrWidget* widg = checkSubWidg(GET_SUBWIDGREF))
 			{
 				auto val = vbound(value/10000,0,NEWMAXTILES-1);
 				auto ty = widg->getType();
@@ -17759,7 +17748,7 @@ void set_register(int32_t arg, int32_t value)
 		}
 		case SUBWIDGTY_FRAMECSET:
 		{
-			if(SubscrWidget* widg = checkSubWidg(ri->subwidgref))
+			if(SubscrWidget* widg = checkSubWidg(GET_SUBWIDGREF))
 			{
 				auto val = vbound(value/10000,0,15);
 				auto ty = widg->getType();
@@ -17777,7 +17766,7 @@ void set_register(int32_t arg, int32_t value)
 		}
 		case SUBWIDGTY_PIECETILE:
 		{
-			if(SubscrWidget* widg = checkSubWidg(ri->subwidgref))
+			if(SubscrWidget* widg = checkSubWidg(GET_SUBWIDGREF))
 			{
 				auto val = vbound(value/10000,0,NEWMAXTILES-1);
 				auto ty = widg->getType();
@@ -17795,7 +17784,7 @@ void set_register(int32_t arg, int32_t value)
 		}
 		case SUBWIDGTY_PIECECSET:
 		{
-			if(SubscrWidget* widg = checkSubWidg(ri->subwidgref))
+			if(SubscrWidget* widg = checkSubWidg(GET_SUBWIDGREF))
 			{
 				auto val = vbound(value/10000,0,15);
 				auto ty = widg->getType();
@@ -17813,7 +17802,7 @@ void set_register(int32_t arg, int32_t value)
 		}
 		case SUBWIDGTY_FLIP:
 		{
-			if(SubscrWidget* widg = checkSubWidg(ri->subwidgref))
+			if(SubscrWidget* widg = checkSubWidg(GET_SUBWIDGREF))
 			{
 				auto val = vbound(value/10000,0,15);
 				auto ty = widg->getType();
@@ -17837,7 +17826,7 @@ void set_register(int32_t arg, int32_t value)
 		}
 		case SUBWIDGTY_NUMBER:
 		{
-			if(SubscrWidget* widg = checkSubWidg(ri->subwidgref))
+			if(SubscrWidget* widg = checkSubWidg(GET_SUBWIDGREF))
 			{
 				auto val = vbound(value/10000,0,255);
 				auto ty = widg->getType();
@@ -17855,7 +17844,7 @@ void set_register(int32_t arg, int32_t value)
 		}
 		case SUBWIDGTY_FRAMES:
 		{
-			if(SubscrWidget* widg = checkSubWidg(ri->subwidgref))
+			if(SubscrWidget* widg = checkSubWidg(GET_SUBWIDGREF))
 			{
 				auto val = vbound(value/10000,1,65535);
 				auto ty = widg->getType();
@@ -17873,7 +17862,7 @@ void set_register(int32_t arg, int32_t value)
 		}
 		case SUBWIDGTY_SPEED:
 		{
-			if(SubscrWidget* widg = checkSubWidg(ri->subwidgref))
+			if(SubscrWidget* widg = checkSubWidg(GET_SUBWIDGREF))
 			{
 				auto val = vbound(value/10000,1,65535);
 				auto ty = widg->getType();
@@ -17891,7 +17880,7 @@ void set_register(int32_t arg, int32_t value)
 		}
 		case SUBWIDGTY_DELAY:
 		{
-			if(SubscrWidget* widg = checkSubWidg(ri->subwidgref))
+			if(SubscrWidget* widg = checkSubWidg(GET_SUBWIDGREF))
 			{
 				auto val = vbound(value/10000,0,65535);
 				auto ty = widg->getType();
@@ -17909,7 +17898,7 @@ void set_register(int32_t arg, int32_t value)
 		}
 		case SUBWIDGTY_CONTAINER:
 		{
-			if(SubscrWidget* widg = checkSubWidg(ri->subwidgref))
+			if(SubscrWidget* widg = checkSubWidg(GET_SUBWIDGREF))
 			{
 				auto val = vbound(value/10000,0,65535);
 				auto ty = widg->getType();
@@ -17927,7 +17916,7 @@ void set_register(int32_t arg, int32_t value)
 		}
 		case SUBWIDGTY_GAUGE_WID:
 		{
-			if(SubscrWidget* widg = checkSubWidg(ri->subwidgref))
+			if(SubscrWidget* widg = checkSubWidg(GET_SUBWIDGREF))
 			{
 				auto val = vbound(value/10000,1,32)-1;
 				auto ty = widg->getType();
@@ -17945,7 +17934,7 @@ void set_register(int32_t arg, int32_t value)
 		}
 		case SUBWIDGTY_GAUGE_HEI:
 		{
-			if(SubscrWidget* widg = checkSubWidg(ri->subwidgref))
+			if(SubscrWidget* widg = checkSubWidg(GET_SUBWIDGREF))
 			{
 				auto val = vbound(value/10000,1,32)-1;
 				auto ty = widg->getType();
@@ -17963,7 +17952,7 @@ void set_register(int32_t arg, int32_t value)
 		}
 		case SUBWIDGTY_UNITS:
 		{
-			if(SubscrWidget* widg = checkSubWidg(ri->subwidgref))
+			if(SubscrWidget* widg = checkSubWidg(GET_SUBWIDGREF))
 			{
 				auto val = vbound(value/10000,1,256);
 				auto ty = widg->getType();
@@ -17981,7 +17970,7 @@ void set_register(int32_t arg, int32_t value)
 		}
 		case SUBWIDGTY_HSPACE:
 		{
-			if(SubscrWidget* widg = checkSubWidg(ri->subwidgref))
+			if(SubscrWidget* widg = checkSubWidg(GET_SUBWIDGREF))
 			{
 				auto val = vbound(value/10000,-128,127);
 				auto ty = widg->getType();
@@ -17999,7 +17988,7 @@ void set_register(int32_t arg, int32_t value)
 		}
 		case SUBWIDGTY_VSPACE:
 		{
-			if(SubscrWidget* widg = checkSubWidg(ri->subwidgref))
+			if(SubscrWidget* widg = checkSubWidg(GET_SUBWIDGREF))
 			{
 				auto val = vbound(value/10000,-128,127);
 				auto ty = widg->getType();
@@ -18017,7 +18006,7 @@ void set_register(int32_t arg, int32_t value)
 		}
 		case SUBWIDGTY_GRIDX:
 		{
-			if(SubscrWidget* widg = checkSubWidg(ri->subwidgref))
+			if(SubscrWidget* widg = checkSubWidg(GET_SUBWIDGREF))
 			{
 				auto val = vbound(value/10000,-32768,32767);
 				auto ty = widg->getType();
@@ -18035,7 +18024,7 @@ void set_register(int32_t arg, int32_t value)
 		}
 		case SUBWIDGTY_GRIDY:
 		{
-			if(SubscrWidget* widg = checkSubWidg(ri->subwidgref))
+			if(SubscrWidget* widg = checkSubWidg(GET_SUBWIDGREF))
 			{
 				auto val = vbound(value/10000,-32768,32767);
 				auto ty = widg->getType();
@@ -18053,7 +18042,7 @@ void set_register(int32_t arg, int32_t value)
 		}
 		case SUBWIDGTY_ANIMVAL:
 		{
-			if(SubscrWidget* widg = checkSubWidg(ri->subwidgref))
+			if(SubscrWidget* widg = checkSubWidg(GET_SUBWIDGREF))
 			{
 				auto val = vbound(value/10000,0,65535);
 				auto ty = widg->getType();
@@ -18071,7 +18060,7 @@ void set_register(int32_t arg, int32_t value)
 		}
 		case SUBWIDGTY_SHOWDRAIN:
 		{
-			if(SubscrWidget* widg = checkSubWidg(ri->subwidgref))
+			if(SubscrWidget* widg = checkSubWidg(GET_SUBWIDGREF))
 			{
 				auto val = vbound(value/10000,-1,32767);
 				auto ty = widg->getType();
@@ -18089,7 +18078,7 @@ void set_register(int32_t arg, int32_t value)
 		}
 		case SUBWIDGTY_PERCONTAINER:
 		{
-			if(SubscrWidget* widg = checkSubWidg(ri->subwidgref))
+			if(SubscrWidget* widg = checkSubWidg(GET_SUBWIDGREF))
 			{
 				auto val = zc_max(value/10000,1);
 				auto ty = widg->getType();
@@ -18110,7 +18099,7 @@ void set_register(int32_t arg, int32_t value)
 		}
 		case SUBWIDGTY_TOTAL:
 		{
-			if(SubscrWidget* widg = checkSubWidg(ri->subwidgref))
+			if(SubscrWidget* widg = checkSubWidg(GET_SUBWIDGREF))
 			{
 				auto val = zc_max(value/10000,1);
 				auto ty = widg->getType();
@@ -18128,7 +18117,7 @@ void set_register(int32_t arg, int32_t value)
 		}
 		case SUBWIDGTY_TABSIZE:
 		{
-			if(SubscrWidget* widg = checkSubWidg(ri->subwidgref))
+			if(SubscrWidget* widg = checkSubWidg(GET_SUBWIDGREF))
 			{
 				auto val = vbound(value/10000,0,255);
 				auto ty = widg->getType();
@@ -18149,7 +18138,7 @@ void set_register(int32_t arg, int32_t value)
 		}
 		case SUBWIDGTY_LITEMS:
 		{
-			if(SubscrWidget* widg = checkSubWidg(ri->subwidgref))
+			if(SubscrWidget* widg = checkSubWidg(GET_SUBWIDGREF))
 			{
 				auto val = vbound(value/10000,0,255);
 				auto ty = widg->getType();
@@ -18499,7 +18488,7 @@ void do_set(int reg, int value)
 		case ScriptType::FFC:
 			if (reg == FFSCRIPT)
 			{
-				if (auto ffc = ResolveFFC(ri->ffcref); ffc && ffc->index == whichUID)
+				if (auto ffc = ResolveFFC(GET_FFCREF); ffc && ffc->index == whichUID)
 					allowed = false;
 			}
 			break;
@@ -19594,7 +19583,7 @@ void do_mapdataissolid()
 	int32_t x = int32_t(GET_D(rINDEX) / 10000);
 	int32_t y = int32_t(GET_D(rINDEX2) / 10000);
 
-	auto result = decode_mapdata_ref(ri->mapref);
+	auto result = decode_mapdata_ref(GET_MAPREF);
 	if (!result.scr)
 	{
 		scripting_log_error_with_context("mapdata pointer is either invalid or uninitialised");
@@ -19635,7 +19624,7 @@ void do_mapdataissolid_layer()
 	int32_t y = int32_t(GET_D(rINDEX2) / 10000);
 	int32_t layer = int32_t(GET_D(rEXP1) / 10000);
 
-	auto result = decode_mapdata_ref(ri->mapref);
+	auto result = decode_mapdata_ref(GET_MAPREF);
 	if (!result.scr)
 	{
 		scripting_log_error_with_context("mapdata pointer is either invalid or uninitialised");
@@ -19719,7 +19708,7 @@ void do_setsidewarp()
 
 	current_zasm_extra_context = "";
 	
-	mapscr* scr = get_scr(ri->screenref);
+	mapscr* scr = get_scr(GET_SCREENREF);
 		
 	if(scrn > -1)
 		scr->sidewarpscr[warp] = scrn;
@@ -19756,7 +19745,7 @@ void do_settilewarp()
 
 	current_zasm_extra_context = "";
 
-	mapscr* scr = get_scr(ri->screenref);
+	mapscr* scr = get_scr(GET_SCREENREF);
 		
 	if(scrn > -1)
 		scr->tilewarpscr[warp] = scrn;
@@ -19778,7 +19767,7 @@ void do_getsidewarpdmap(const bool v)
 		return;
 	}
 	
-	set_register(sarg1, get_scr(ri->screenref)->sidewarpdmap[warp]*10000);
+	set_register(sarg1, get_scr(GET_SCREENREF)->sidewarpdmap[warp]*10000);
 }
 
 void do_getsidewarpscr(const bool v)
@@ -19791,7 +19780,7 @@ void do_getsidewarpscr(const bool v)
 		return;
 	}
 	
-	set_register(sarg1, get_scr(ri->screenref)->sidewarpscr[warp]*10000);
+	set_register(sarg1, get_scr(GET_SCREENREF)->sidewarpscr[warp]*10000);
 }
 
 void do_getsidewarptype(const bool v)
@@ -19804,7 +19793,7 @@ void do_getsidewarptype(const bool v)
 		return;
 	}
 	
-	set_register(sarg1, get_scr(ri->screenref)->sidewarptype[warp]*10000);
+	set_register(sarg1, get_scr(GET_SCREENREF)->sidewarptype[warp]*10000);
 }
 
 void do_gettilewarpdmap(const bool v)
@@ -19817,7 +19806,7 @@ void do_gettilewarpdmap(const bool v)
 		return;
 	}
 	
-	set_register(sarg1, get_scr(ri->screenref)->tilewarpdmap[warp]*10000);
+	set_register(sarg1, get_scr(GET_SCREENREF)->tilewarpdmap[warp]*10000);
 }
 
 void do_gettilewarpscr(const bool v)
@@ -19830,7 +19819,7 @@ void do_gettilewarpscr(const bool v)
 		return;
 	}
 	
-	set_register(sarg1, get_scr(ri->screenref)->tilewarpscr[warp]*10000);
+	set_register(sarg1, get_scr(GET_SCREENREF)->tilewarpscr[warp]*10000);
 }
 
 void do_gettilewarptype(const bool v)
@@ -19843,27 +19832,27 @@ void do_gettilewarptype(const bool v)
 		return;
 	}
 	
-	set_register(sarg1, get_scr(ri->screenref)->tilewarptype[warp]*10000);
+	set_register(sarg1, get_scr(GET_SCREENREF)->tilewarptype[warp]*10000);
 }
 
 void do_layerscreen()
 {
 	int32_t layer = (get_register(sarg2) / 10000) - 1;
 	
-	if(BC::checkBounds(layer, 0, 5) != SH::_NoError || get_scr(ri->screenref)->layermap[layer] == 0)
+	if(BC::checkBounds(layer, 0, 5) != SH::_NoError || get_scr(GET_SCREENREF)->layermap[layer] == 0)
 		set_register(sarg1, -10000);
 	else
-		set_register(sarg1, get_scr(ri->screenref)->layerscreen[layer] * 10000);
+		set_register(sarg1, get_scr(GET_SCREENREF)->layerscreen[layer] * 10000);
 }
 
 void do_layermap()
 {
 	int32_t layer = (get_register(sarg2) / 10000) - 1;
 	
-	if(BC::checkBounds(layer, 0, 5) != SH::_NoError || get_scr(ri->screenref)->layermap[layer] == 0)
+	if(BC::checkBounds(layer, 0, 5) != SH::_NoError || get_scr(GET_SCREENREF)->layermap[layer] == 0)
 		set_register(sarg1, -10000);
 	else
-		set_register(sarg1, get_scr(ri->screenref)->layermap[layer] * 10000);
+		set_register(sarg1, get_scr(GET_SCREENREF)->layermap[layer] * 10000);
 }
 
 
@@ -20038,7 +20027,7 @@ void do_isvalidewpn()
 
 void do_lwpnmakeangular()
 {
-	if(LwpnH::loadWeapon(ri->lwpnref) == SH::_NoError)
+	if(LwpnH::loadWeapon(GET_LWPNREF) == SH::_NoError)
 	{
 		auto w = LwpnH::getWeapon();
 		if (!w->angular)
@@ -20089,7 +20078,7 @@ void do_lwpnmakeangular()
 
 void do_lwpnmakedirectional()
 {
-	if(LwpnH::loadWeapon(ri->lwpnref) == SH::_NoError)
+	if(LwpnH::loadWeapon(GET_LWPNREF) == SH::_NoError)
 	{
 		if (LwpnH::getWeapon()->angular)
 		{
@@ -20102,7 +20091,7 @@ void do_lwpnmakedirectional()
 
 void do_ewpnmakeangular()
 {
-	if(EwpnH::loadWeapon(ri->ewpnref) == SH::_NoError)
+	if(EwpnH::loadWeapon(GET_EWPNREF) == SH::_NoError)
 	{
 		auto w = EwpnH::getWeapon();
 		if (!w->angular)
@@ -20153,7 +20142,7 @@ void do_ewpnmakeangular()
 
 void do_ewpnmakedirectional()
 {
-	if(EwpnH::loadWeapon(ri->lwpnref) == SH::_NoError)
+	if(EwpnH::loadWeapon(GET_LWPNREF) == SH::_NoError)
 	{
 		if (EwpnH::getWeapon()->angular)
 		{
@@ -20171,7 +20160,7 @@ void do_lwpnusesprite(const bool v)
 	if(BC::checkWeaponMiscSprite(ID) != SH::_NoError)
 		return;
 		
-	if(LwpnH::loadWeapon(ri->lwpnref) == SH::_NoError)
+	if(LwpnH::loadWeapon(GET_LWPNREF) == SH::_NoError)
 		LwpnH::getWeapon()->LOADGFX(ID);
 }
 
@@ -20182,7 +20171,7 @@ void do_ewpnusesprite(const bool v)
 	if(BC::checkWeaponMiscSprite(ID) != SH::_NoError)
 		return;
 		
-	if(EwpnH::loadWeapon(ri->ewpnref) == SH::_NoError)
+	if(EwpnH::loadWeapon(GET_EWPNREF) == SH::_NoError)
 		EwpnH::getWeapon()->LOADGFX(ID);
 }
 
@@ -20193,7 +20182,7 @@ void do_portalusesprite()
 	if(BC::checkWeaponMiscSprite(ID) != SH::_NoError)
 		return;
 	
-	if(portal* p = checkPortal(ri->portalref))
+	if(portal* p = checkPortal(GET_PORTALREF))
 		p->LOADGFX(ID);
 }
 
@@ -20485,7 +20474,7 @@ void FFScript::do_create_paldata_clr()
 	ri->paldataref = user_paldatas.get_free();
 	if (ri->paldataref > 0)
 	{
-		user_paldata& pd = user_paldatas[ri->paldataref];
+		user_paldata& pd = user_paldatas[GET_PALDATAREF];
 		int32_t clri = get_register(sarg1);
 
 		RGB c = _RGB((clri >> 16) & 0xFF, (clri >> 8) & 0xFF, clri & 0xFF);
@@ -20636,7 +20625,7 @@ void FFScript::do_convert_to_rgb()
 
 void FFScript::do_paldata_load_level()
 {
-	if (user_paldata* pd = checkPalData(ri->paldataref))
+	if (user_paldata* pd = checkPalData(GET_PALDATAREF))
 	{
 		int32_t lvl = get_register(sarg1) / 10000;
 		//Load CSets 2-4
@@ -20656,7 +20645,7 @@ void FFScript::do_paldata_load_level()
 
 void FFScript::do_paldata_load_sprite()
 {
-	if (user_paldata* pd = checkPalData(ri->paldataref))
+	if (user_paldata* pd = checkPalData(GET_PALDATAREF))
 	{
 		int32_t page = get_register(sarg1) / 10000;
 
@@ -20679,7 +20668,7 @@ void FFScript::do_paldata_load_sprite()
 
 void FFScript::do_paldata_load_main()
 {
-	if (user_paldata* pd = checkPalData(ri->paldataref))
+	if (user_paldata* pd = checkPalData(GET_PALDATAREF))
 	{
 		for (int32_t q = 0; q <= 15; ++q)
 		{
@@ -20691,7 +20680,7 @@ void FFScript::do_paldata_load_main()
 
 void FFScript::do_paldata_load_cycle()
 {
-	if (user_paldata* pd = checkPalData(ri->paldataref))
+	if (user_paldata* pd = checkPalData(GET_PALDATAREF))
 	{
 		int32_t lvl = get_register(sarg1) / 10000;
 		for (int32_t q = 4; q <= 12; ++q)
@@ -20704,7 +20693,7 @@ void FFScript::do_paldata_load_cycle()
 
 void FFScript::do_paldata_load_bitmap()
 {
-	if (user_paldata* pd = checkPalData(ri->paldataref))
+	if (user_paldata* pd = checkPalData(GET_PALDATAREF))
 	{
 		int32_t pathptr = get_register(sarg1);
 		string user_path, str;
@@ -20759,7 +20748,7 @@ void FFScript::do_paldata_load_bitmap()
 
 void FFScript::do_paldata_write_level()
 {
-	if (user_paldata* pd = checkPalData(ri->paldataref))
+	if (user_paldata* pd = checkPalData(GET_PALDATAREF))
 	{
 		int32_t lvl = get_register(sarg1) / 10000;
 		bool changed = false;
@@ -20829,7 +20818,7 @@ void FFScript::do_paldata_write_level()
 
 void FFScript::do_paldata_write_levelcset()
 {
-	if (user_paldata* pd = checkPalData(ri->paldataref))
+	if (user_paldata* pd = checkPalData(GET_PALDATAREF))
 	{
 		int32_t lvl = get_register(sarg1) / 10000;
 		int32_t cs = get_register(sarg2) / 10000;
@@ -20920,7 +20909,7 @@ void FFScript::do_paldata_write_levelcset()
 
 void FFScript::do_paldata_write_sprite()
 {
-	if (user_paldata* pd = checkPalData(ri->paldataref))
+	if (user_paldata* pd = checkPalData(GET_PALDATAREF))
 	{
 		int32_t page = get_register(sarg1) / 10000;
 
@@ -20973,7 +20962,7 @@ void FFScript::do_paldata_write_sprite()
 
 void FFScript::do_paldata_write_spritecset()
 {
-	if (user_paldata* pd = checkPalData(ri->paldataref))
+	if (user_paldata* pd = checkPalData(GET_PALDATAREF))
 	{
 		int32_t page = get_register(sarg1) / 10000;
 		int32_t cs = get_register(sarg2) / 10000;
@@ -21029,7 +21018,7 @@ void FFScript::do_paldata_write_spritecset()
 
 void FFScript::do_paldata_write_main()
 {
-	if (user_paldata* pd = checkPalData(ri->paldataref))
+	if (user_paldata* pd = checkPalData(GET_PALDATAREF))
 	{
 		bool changed = false;
 		for (int32_t q = 0; q <= 15; ++q)
@@ -21051,7 +21040,7 @@ void FFScript::do_paldata_write_main()
 
 void FFScript::do_paldata_write_maincset()
 {
-	if (user_paldata* pd = checkPalData(ri->paldataref))
+	if (user_paldata* pd = checkPalData(GET_PALDATAREF))
 	{
 		int32_t cs = get_register(sarg1) / 10000;
 
@@ -21080,7 +21069,7 @@ void FFScript::do_paldata_write_maincset()
 
 void FFScript::do_paldata_write_cycle()
 {
-	if (user_paldata* pd = checkPalData(ri->paldataref))
+	if (user_paldata* pd = checkPalData(GET_PALDATAREF))
 	{
 		int32_t lvl = get_register(sarg1) / 10000;
 		for (int32_t q = 4; q <= 12; ++q)
@@ -21096,7 +21085,7 @@ void FFScript::do_paldata_write_cycle()
 
 void FFScript::do_paldata_write_cyclecset()
 {
-	if (user_paldata* pd = checkPalData(ri->paldataref))
+	if (user_paldata* pd = checkPalData(GET_PALDATAREF))
 	{
 		int32_t lvl = get_register(sarg1) / 10000;
 		int32_t cs = get_register(sarg2) / 10000;
@@ -21135,7 +21124,7 @@ void FFScript::do_paldata_write_cyclecset()
 
 void FFScript::do_paldata_colorvalid()
 {
-	if (user_paldata* pd = checkPalData(ri->paldataref))
+	if (user_paldata* pd = checkPalData(GET_PALDATAREF))
 	{
 		int32_t ind = get_register(sarg1) / 10000;
 		if (unsigned(ind) >= PALDATA_NUM_COLORS)
@@ -21158,7 +21147,7 @@ void FFScript::do_paldata_colorvalid()
 
 void FFScript::do_paldata_clearcolor()
 {
-	if (user_paldata* pd = checkPalData(ri->paldataref))
+	if (user_paldata* pd = checkPalData(GET_PALDATAREF))
 	{
 		int32_t ind = get_register(sarg1) / 10000;
 		if (unsigned(ind) >= PALDATA_NUM_COLORS)
@@ -21172,7 +21161,7 @@ void FFScript::do_paldata_clearcolor()
 
 void FFScript::do_paldata_clearcset()
 {
-	if (user_paldata* pd = checkPalData(ri->paldataref))
+	if (user_paldata* pd = checkPalData(GET_PALDATAREF))
 	{
 		int32_t cs = get_register(sarg1) / 10000;
 		if (unsigned(cs) > 15)
@@ -21297,7 +21286,7 @@ void FFScript::do_paldata_mixcset()
 
 void FFScript::do_paldata_copy()
 {
-	if (user_paldata* pd = checkPalData(ri->paldataref))
+	if (user_paldata* pd = checkPalData(GET_PALDATAREF))
 	{
 		int32_t ref_dest = get_register(sarg1);
 		if (user_paldata* pd_dest = checkPalData(ref_dest))
@@ -21317,7 +21306,7 @@ void FFScript::do_paldata_copy()
 void FFScript::do_paldata_copycset()
 {
 	ri->paldataref = SH::read_stack(ri->sp + 3);
-	if (user_paldata* pd = checkPalData(ri->paldataref))
+	if (user_paldata* pd = checkPalData(GET_PALDATAREF))
 	{
 		int32_t ref_dest = SH::read_stack(ri->sp + 2);
 		int32_t cs = SH::read_stack(ri->sp + 1) / 10000;
@@ -22481,7 +22470,7 @@ void do_message(const bool v)
 		Hero.finishedmsg();
 	}
 	else
-		donewmsg(get_scr(ri->screenref), ID);
+		donewmsg(get_scr(GET_SCREENREF), ID);
 }
 
 INLINE void set_drawing_command_args(const int32_t j, const word numargs)
@@ -24380,13 +24369,13 @@ void do_toshort()
 void do_getitemname()
 {
 	int32_t arrayptr = get_register(sarg1);
-	if(unsigned(ri->itemclassref) >= MAXITEMS)
+	if(unsigned(GET_ITEMCLASSREF) >= MAXITEMS)
 	{
 		scripting_log_error_with_context("Invalid itemdata access: {}", ri->itemclassref);
 		return;
 	}
 	
-	if(ArrayH::setArray(arrayptr, item_string[ri->itemclassref]) == SH::_Overflow)
+	if(ArrayH::setArray(arrayptr, item_string[GET_ITEMCLASSREF]) == SH::_Overflow)
 		Z_scripterrlog("Array supplied to 'itemdata->GetName' not large enough\n");
 }
 
@@ -24577,15 +24566,15 @@ sprite* get_own_sprite(ScriptType type)
 	switch(type)
 	{
 		case ScriptType::Lwpn:
-			return checkLWpn(ri->lwpnref);
+			return checkLWpn(GET_LWPNREF);
 		case ScriptType::Ewpn:
-			return checkEWpn(ri->ewpnref);
+			return checkEWpn(GET_EWPNREF);
 		case ScriptType::ItemSprite:
-			return checkItem(ri->itemref);
+			return checkItem(GET_ITEMREF);
 		case ScriptType::NPC:
-			return checkNPC(ri->guyref);
+			return checkNPC(GET_GUYREF);
 		case ScriptType::FFC:
-			return ResolveFFC(ri->ffcref);
+			return ResolveFFC(GET_FFCREF);
 	}
 	return nullptr;
 }
@@ -26844,7 +26833,7 @@ int32_t run_script_int(JittedScriptInstance* j_instance)
 				break;
 				
 			case SECRETS:
-				do_triggersecrets(ri->screenref);
+				do_triggersecrets(GET_SCREENREF);
 				break;
 
 			case REGION_TRIGGER_SECRETS:
@@ -27091,7 +27080,7 @@ int32_t run_script_int(JittedScriptInstance* j_instance)
 			
 			case BITMAPOWN:
 			{
-				if(FFCore.isSystemBitref(ri->bitmapref))
+				if(FFCore.isSystemBitref(GET_BITMAPREF))
 					break; //Don't attempt to own system bitmaps!
 
 				if (auto bitmap = checkBitmap(ri->bitmapref, false))
@@ -27434,7 +27423,7 @@ int32_t run_script_int(JittedScriptInstance* j_instance)
 			
 			case SCREENDOSPAWN:
 			{
-				SET_D(rEXP1, scriptloadenemies(ri->screenref) ? 10000 : 0);
+				SET_D(rEXP1, scriptloadenemies(GET_SCREENREF) ? 10000 : 0);
 				break;
 			}
 			
@@ -27469,9 +27458,9 @@ int32_t run_script_int(JittedScriptInstance* j_instance)
 				byte effect = vbound(get_register(sarg1)/10000, 0, 255);
 				set_register(sarg1,0);
 				if(Hero.switchhookclk) break; //Already switching!
-				if(GuyH::loadNPC(ri->guyref) == SH::_NoError)
+				if(GuyH::loadNPC(GET_GUYREF) == SH::_NoError)
 				{
-					switching_object = guys.getByUID(ri->guyref);
+					switching_object = guys.getByUID(GET_GUYREF);
 					hooked_comborpos = rpos_t::None;
 					hooked_layerbits = 0;
 					switching_object->switch_hooked = true;
@@ -27486,7 +27475,7 @@ int32_t run_script_int(JittedScriptInstance* j_instance)
 				byte effect = vbound(get_register(sarg1)/10000, 0, 255);
 				set_register(sarg1,0);
 				if(Hero.switchhookclk) break; //Already switching!
-				if(ItemH::loadItem(ri->itemref) == SH::_NoError)
+				if(ItemH::loadItem(GET_ITEMREF) == SH::_NoError)
 				{
 					switching_object = ItemH::getItem();
 					hooked_comborpos = rpos_t::None;
@@ -27503,7 +27492,7 @@ int32_t run_script_int(JittedScriptInstance* j_instance)
 				byte effect = vbound(get_register(sarg1)/10000, 0, 255);
 				set_register(sarg1,0);
 				if(Hero.switchhookclk) break; //Already switching!
-				if(LwpnH::loadWeapon(ri->lwpnref) == SH::_NoError)
+				if(LwpnH::loadWeapon(GET_LWPNREF) == SH::_NoError)
 				{
 					switching_object = LwpnH::getWeapon();
 					hooked_comborpos = rpos_t::None;
@@ -27520,7 +27509,7 @@ int32_t run_script_int(JittedScriptInstance* j_instance)
 				byte effect = vbound(get_register(sarg1)/10000, 0, 255);
 				set_register(sarg1,0);
 				if(Hero.switchhookclk) break; //Already switching!
-				if(EwpnH::loadWeapon(ri->ewpnref) == SH::_NoError)
+				if(EwpnH::loadWeapon(GET_EWPNREF) == SH::_NoError)
 				{
 					switching_object = EwpnH::getWeapon();
 					hooked_comborpos = rpos_t::None;
@@ -27753,7 +27742,7 @@ int32_t run_script_int(JittedScriptInstance* j_instance)
 			case SAVEDPORTALGENERATE:
 			{
 				auto retval = 0;
-				if(savedportal* sp = checkSavedPortal(ri->saveportalref))
+				if(savedportal* sp = checkSavedPortal(GET_SAVEPORTALREF))
 				{
 					retval = getPortalFromSaved(sp);
 					if(!retval)
@@ -27786,7 +27775,7 @@ int32_t run_script_int(JittedScriptInstance* j_instance)
 				}
 				else
 				{
-					if(GuyH::loadNPC(ri->guyref) == SH::_NoError)
+					if(GuyH::loadNPC(GET_GUYREF) == SH::_NoError)
 					{
 						GuyH::getNPC()->explode(mode);
 					}
@@ -27804,7 +27793,7 @@ int32_t run_script_int(JittedScriptInstance* j_instance)
 				}
 				else
 				{
-					if(ItemH::loadItem(ri->itemref) == SH::_NoError)
+					if(ItemH::loadItem(GET_ITEMREF) == SH::_NoError)
 					{
 						ItemH::getItem()->explode(mode);
 					}
@@ -27820,7 +27809,7 @@ int32_t run_script_int(JittedScriptInstance* j_instance)
 				}
 				else
 				{
-					if(LwpnH::loadWeapon(ri->lwpnref) == SH::_NoError)
+					if(LwpnH::loadWeapon(GET_LWPNREF) == SH::_NoError)
 					{
 						LwpnH::getWeapon()->explode(mode);
 					}
@@ -27836,7 +27825,7 @@ int32_t run_script_int(JittedScriptInstance* j_instance)
 				}
 				else
 				{
-					if(EwpnH::loadWeapon(ri->ewpnref) == SH::_NoError)
+					if(EwpnH::loadWeapon(GET_EWPNREF) == SH::_NoError)
 					{
 						EwpnH::getWeapon()->explode(mode);
 					}
@@ -28200,7 +28189,7 @@ int32_t run_script_int(JittedScriptInstance* j_instance)
 			}
 			case DIRECTORYOWN:
 			{
-				if(user_dir* dr = checkDir(ri->directoryref))
+				if(user_dir* dr = checkDir(GET_DIRECTORYREF))
 				{
 					own_script_object(dr, type, i);
 				}
@@ -28217,7 +28206,7 @@ int32_t run_script_int(JittedScriptInstance* j_instance)
 			}
 			case STACKOWN:
 			{
-				if(user_stack* st = checkStack(ri->stackref))
+				if(user_stack* st = checkStack(GET_STACKREF))
 				{
 					own_script_object(st, type, i);
 				}
@@ -28225,7 +28214,7 @@ int32_t run_script_int(JittedScriptInstance* j_instance)
 			}
 			case STACKCLEAR:
 			{
-				if(user_stack* st = checkStack(ri->stackref))
+				if(user_stack* st = checkStack(GET_STACKREF))
 				{
 					st->clearStack();
 				}
@@ -28333,55 +28322,55 @@ int32_t run_script_int(JittedScriptInstance* j_instance)
 			
 			//{ Randgen Stuff
 			case RNGRAND1:
-				if(user_rng* r = checkRNG(ri->rngref))
+				if(user_rng* r = checkRNG(GET_RNGREF))
 				{
 					SET_D(rEXP1, r->rand(214748, -214748)*10000L);
 				}
 				else SET_D(rEXP1, -10000L);
 				break;
 			case RNGRAND2:
-				if(user_rng* r = checkRNG(ri->rngref))
+				if(user_rng* r = checkRNG(GET_RNGREF))
 				{
 					set_register(sarg1,r->rand(get_register(sarg1)/10000L)*10000L);
 				}
 				else set_register(sarg1,-10000L);
 				break;
 			case RNGRAND3:
-				if(user_rng* r = checkRNG(ri->rngref))
+				if(user_rng* r = checkRNG(GET_RNGREF))
 				{
 					set_register(sarg1,r->rand(get_register(sarg1)/10000L, get_register(sarg2)/10000L)* 10000L);
 				}
 				else set_register(sarg1,-10000L);
 				break;
 			case RNGLRAND1:
-				if(user_rng* r = checkRNG(ri->rngref))
+				if(user_rng* r = checkRNG(GET_RNGREF))
 				{
 					SET_D(rEXP1, r->rand());
 				}
 				else SET_D(rEXP1, -10000L);
 				break;
 			case RNGLRAND2:
-				if(user_rng* r = checkRNG(ri->rngref))
+				if(user_rng* r = checkRNG(GET_RNGREF))
 				{
 					SET_D(rEXP1, r->rand(get_register(sarg1)));
 				}
 				else SET_D(rEXP1, -10000L);
 				break;
 			case RNGLRAND3:
-				if(user_rng* r = checkRNG(ri->rngref))
+				if(user_rng* r = checkRNG(GET_RNGREF))
 				{
 					SET_D(rEXP1, r->rand(get_register(sarg1), get_register(sarg2)));
 				}
 				else SET_D(rEXP1, -10000L);
 				break;
 			case RNGSEED:
-				if(user_rng* r = checkRNG(ri->rngref))
+				if(user_rng* r = checkRNG(GET_RNGREF))
 				{
 					r->srand(get_register(sarg1));
 				}
 				break;
 			case RNGRSEED:
-				if(user_rng* r = checkRNG(ri->rngref))
+				if(user_rng* r = checkRNG(GET_RNGREF))
 				{
 					SET_D(rEXP1, r->srand());
 				}
@@ -28404,7 +28393,7 @@ int32_t run_script_int(JittedScriptInstance* j_instance)
 				FFCore.do_loadgenericdata(false); break;
 			case RUNGENFRZSCR:
 			{
-				bool r = FFCore.runGenericFrozenEngine(word(ri->genericdataref));
+				bool r = FFCore.runGenericFrozenEngine(word(GET_GENERICDATAREF));
 				set_register(sarg1, r ? 10000L : 0L);
 				break;
 			}
@@ -28413,7 +28402,7 @@ int32_t run_script_int(JittedScriptInstance* j_instance)
 			
 			case SUBDATA_GET_NAME:
 			{
-				if(ZCSubscreen* sub = checkSubData(ri->subdataref))
+				if(ZCSubscreen* sub = checkSubData(GET_SUBDATAREF))
 				{
 					auto aptr = get_register(sarg1);
 					if(ArrayH::setArray(aptr, sub->name, true) == SH::_Overflow)
@@ -28424,7 +28413,7 @@ int32_t run_script_int(JittedScriptInstance* j_instance)
 			}
 			case SUBDATA_SET_NAME:
 			{
-				if(ZCSubscreen* sub = checkSubData(ri->subdataref))
+				if(ZCSubscreen* sub = checkSubData(GET_SUBDATAREF))
 				{
 					auto aptr = get_register(sarg1);
 					ArrayH::getString(aptr, sub->name);
@@ -28434,7 +28423,7 @@ int32_t run_script_int(JittedScriptInstance* j_instance)
 			case SUBDATA_SWAP_PAGES:
 			{
 				ri->subdataref = SH::read_stack(ri->sp+2);
-				if(ZCSubscreen* sub = checkSubData(ri->subdataref))
+				if(ZCSubscreen* sub = checkSubData(GET_SUBDATAREF))
 				{
 					int p1 = SH::read_stack(ri->sp+1) / 10000;
 					int p2 = SH::read_stack(ri->sp+0) / 10000;
@@ -28449,7 +28438,7 @@ int32_t run_script_int(JittedScriptInstance* j_instance)
 			case SUBPAGE_SWAP_WIDG:
 			{
 				ri->subpageref = SH::read_stack(ri->sp+2);
-				if(SubscrPage* pg = checkSubPage(ri->subpageref))
+				if(SubscrPage* pg = checkSubPage(GET_SUBPAGEREF))
 				{
 					int p1 = SH::read_stack(ri->sp+1) / 10000;
 					int p2 = SH::read_stack(ri->sp+0) / 10000;
@@ -28474,7 +28463,7 @@ int32_t run_script_int(JittedScriptInstance* j_instance)
 						auto q = pg->widget_index(widg);
 						if(q > -1)
 						{
-							auto [sub,ty,pgid,_ind] = from_subref(ri->subpageref);
+							auto [sub,ty,pgid,_ind] = from_subref(GET_SUBPAGEREF);
 							SET_D(rEXP1, get_subref(sub,ty,pgid,q));
 						}
 					}
@@ -28486,7 +28475,7 @@ int32_t run_script_int(JittedScriptInstance* j_instance)
 				SET_D(rEXP1, 0);
 
 				ri->subpageref = SH::read_stack(ri->sp+1);
-				if(SubscrPage* pg = checkSubPage(ri->subpageref))
+				if(SubscrPage* pg = checkSubPage(GET_SUBPAGEREF))
 				{
 					int aptr = SH::read_stack(ri->sp+0);
 					std::string lbl;
@@ -28496,7 +28485,7 @@ int32_t run_script_int(JittedScriptInstance* j_instance)
 						auto q = pg->find_label_index(lbl);
 						if(q > -1)
 						{
-							auto [sub,ty,pgid,_ind] = from_subref(ri->subpageref);
+							auto [sub,ty,pgid,_ind] = from_subref(GET_SUBPAGEREF);
 							SET_D(rEXP1, get_subref(sub,ty,pgid,q));
 						}
 					}
@@ -28511,7 +28500,7 @@ int32_t run_script_int(JittedScriptInstance* j_instance)
 				SET_D(rEXP1, 0);
 
 				ri->subpageref = SH::read_stack(ri->sp+3);
-				if(SubscrPage* pg = checkSubPage(ri->subpageref))
+				if(SubscrPage* pg = checkSubPage(GET_SUBPAGEREF))
 				{
 					int flags = SH::read_stack(ri->sp+0) / 10000;
 					int dir = SH::read_stack(ri->sp+1) / 10000;
@@ -28544,7 +28533,7 @@ int32_t run_script_int(JittedScriptInstance* j_instance)
 				SET_D(rEXP1, 0);
 
 				ri->subpageref = SH::read_stack(ri->sp+1);
-				if(SubscrPage* pg = checkSubPage(ri->subpageref))
+				if(SubscrPage* pg = checkSubPage(GET_SUBPAGEREF))
 				{
 					if(pg->size() == 0x2000)
 						break; //Page is full!
@@ -28555,7 +28544,7 @@ int32_t run_script_int(JittedScriptInstance* j_instance)
 						widg->w = 1;
 						widg->h = 1;
 						pg->push_back(widg);
-						auto [sub,ty,pgid,_ind] = from_subref(ri->subpageref);
+						auto [sub,ty,pgid,_ind] = from_subref(GET_SUBPAGEREF);
 						SET_D(rEXP1, get_subref(sub,ty,pgid,pg->size()-1));
 					}
 					else Z_scripterrlog("Invalid type %d passed to subscreenpage->CreateWidget()\n",ty);
@@ -28564,16 +28553,16 @@ int32_t run_script_int(JittedScriptInstance* j_instance)
 			}
 			case SUBPAGE_DELETE:
 			{
-				if(SubscrPage* pg = checkSubPage(ri->subpageref))
+				if(SubscrPage* pg = checkSubPage(GET_SUBPAGEREF))
 				{
-					auto [sub,_ty] = load_subdata(ri->subpageref);
+					auto [sub,_ty] = load_subdata(GET_SUBPAGEREF);
 					sub->delete_page(pg->getIndex());
 				}
 				break;
 			}
 			case SUBWIDG_GET_SELTEXT_OVERRIDE:
 			{
-				if(SubscrWidget* widg = checkSubWidg(ri->subwidgref))
+				if(SubscrWidget* widg = checkSubWidg(GET_SUBWIDGREF))
 				{
 					auto aptr = get_register(sarg1);
 					if(ArrayH::setArray(aptr, widg->override_text, true) == SH::_Overflow)
@@ -28584,7 +28573,7 @@ int32_t run_script_int(JittedScriptInstance* j_instance)
 			}
 			case SUBWIDG_SET_SELTEXT_OVERRIDE:
 			{
-				if(SubscrWidget* widg = checkSubWidg(ri->subwidgref))
+				if(SubscrWidget* widg = checkSubWidg(GET_SUBWIDGREF))
 				{
 					auto aptr = get_register(sarg1);
 					ArrayH::getString(aptr, widg->override_text);
@@ -28593,7 +28582,7 @@ int32_t run_script_int(JittedScriptInstance* j_instance)
 			}
 			case SUBWIDG_GET_LABEL:
 			{
-				if(SubscrWidget* widg = checkSubWidg(ri->subwidgref))
+				if(SubscrWidget* widg = checkSubWidg(GET_SUBWIDGREF))
 				{
 					auto aptr = get_register(sarg1);
 					if(ArrayH::setArray(aptr, widg->label, true) == SH::_Overflow)
@@ -28604,7 +28593,7 @@ int32_t run_script_int(JittedScriptInstance* j_instance)
 			}
 			case SUBWIDG_SET_LABEL:
 			{
-				if(SubscrWidget* widg = checkSubWidg(ri->subwidgref))
+				if(SubscrWidget* widg = checkSubWidg(GET_SUBWIDGREF))
 				{
 					auto aptr = get_register(sarg1);
 					ArrayH::getString(aptr, widg->label);
@@ -28613,7 +28602,7 @@ int32_t run_script_int(JittedScriptInstance* j_instance)
 			}
 			case SUBWIDG_CHECK_CONDITIONS:
 			{
-				if(SubscrWidget* widg = checkSubWidg(ri->subwidgref))
+				if(SubscrWidget* widg = checkSubWidg(GET_SUBWIDGREF))
 				{
 					set_register(sarg1, widg->check_conditions() ? 10000 : 0);
 				}
@@ -28621,7 +28610,7 @@ int32_t run_script_int(JittedScriptInstance* j_instance)
 			}
 			case SUBWIDG_CHECK_VISIBLE:
 			{
-				if(SubscrWidget* widg = checkSubWidg(ri->subwidgref))
+				if(SubscrWidget* widg = checkSubWidg(GET_SUBWIDGREF))
 				{
 					extern int current_subscr_pos;
 					set_register(sarg1, widg->visible(current_subscr_pos, game->should_show_time()) ? 10000 : 0);
@@ -28630,7 +28619,7 @@ int32_t run_script_int(JittedScriptInstance* j_instance)
 			}
 			case SUBWIDG_TY_GETTEXT:
 			{
-				if(SubscrWidget* widg = checkSubWidg(ri->subwidgref))
+				if(SubscrWidget* widg = checkSubWidg(GET_SUBWIDGREF))
 				{
 					optional<string> str;
 					byte ty = widg->getType();
@@ -28661,7 +28650,7 @@ int32_t run_script_int(JittedScriptInstance* j_instance)
 			}
 			case SUBWIDG_TY_SETTEXT:
 			{
-				if(SubscrWidget* widg = checkSubWidg(ri->subwidgref))
+				if(SubscrWidget* widg = checkSubWidg(GET_SUBWIDGREF))
 				{
 					std::string* str = nullptr;
 					byte ty = widg->getType();
@@ -28697,13 +28686,13 @@ int32_t run_script_int(JittedScriptInstance* j_instance)
 					auto aptr = get_register(sarg1) / 10000;
 					string name;
 					ArrayH::getString(aptr, name, 256);
-					newcombo const& cmb = combobuf[ri->combosref];
+					newcombo const& cmb = combobuf[GET_COMBOSREF];
 					int32_t ret = 0;
 					for(size_t idx = 0; idx < cmb.triggers.size(); ++idx)
 					{
 						if(cmb.triggers[idx].label == name)
 						{
-							ret = dword(ri->combosref) | (dword(idx)<<24);
+							ret = dword(GET_COMBOSREF) | (dword(idx)<<24);
 							break;
 						}
 					}
@@ -28714,7 +28703,7 @@ int32_t run_script_int(JittedScriptInstance* j_instance)
 			}
 			case CMBTRIG_GET_LABEL:
 			{
-				if(auto* trig = get_combo_trigger(ri->combotrigref))
+				if(auto* trig = get_combo_trigger(GET_COMBOTRIGREF))
 				{
 					auto aptr = get_register(sarg1) / 10000;
 					if(ArrayH::setArray(aptr, trig->label, true) == SH::_Overflow)
@@ -28725,7 +28714,7 @@ int32_t run_script_int(JittedScriptInstance* j_instance)
 			}
 			case CMBTRIG_SET_LABEL:
 			{
-				if (auto* trig = get_combo_trigger(ri->combotrigref))
+				if (auto* trig = get_combo_trigger(GET_COMBOTRIGREF))
 				{
 					auto aptr = get_register(sarg1) / 10000;
 					ArrayH::getString(aptr, trig->label);
@@ -29351,7 +29340,7 @@ void FFScript::do_fflush()
 	{
 		if(!fflush(f->file))
 			SET_D(rEXP1, 10000L);
-		check_file_error(ri->fileref);
+		check_file_error(GET_FILEREF);
 	}
 }
 
@@ -29397,7 +29386,7 @@ void FFScript::do_file_readchars()
 		}
 		am.set(q,0); //Force null-termination
 		ri->d[rEXP1] *= 10000L;
-		check_file_error(ri->fileref);
+		check_file_error(GET_FILEREF);
 	}
 }
 void FFScript::do_file_readbytes()
@@ -29427,7 +29416,7 @@ void FFScript::do_file_readbytes()
 		{
 			am.set(q+pos, 10000L * data[q]);
 		}
-		check_file_error(ri->fileref);
+		check_file_error(GET_FILEREF);
 	}
 }
 void FFScript::do_file_readstring()
@@ -29467,7 +29456,7 @@ void FFScript::do_file_readstring()
 		}
 		am.set(q,0); //Force null-termination
 		ri->d[rEXP1] *= 10000L;
-		check_file_error(ri->fileref);
+		check_file_error(GET_FILEREF);
 	}
 }
 void FFScript::do_file_readints()
@@ -29498,7 +29487,7 @@ void FFScript::do_file_readints()
 		{
 			am.set(q+pos,data[q]);
 		}
-		check_file_error(ri->fileref);
+		check_file_error(GET_FILEREF);
 	}
 }
 void FFScript::do_file_writechars()
@@ -29521,7 +29510,7 @@ void FFScript::do_file_writechars()
 				break;
 		}
 		SET_D(rEXP1, q * 10000L);
-		check_file_error(ri->fileref);
+		check_file_error(GET_FILEREF);
 	}
 }
 
@@ -29555,7 +29544,7 @@ void FFScript::do_file_writebytes()
 			data[q] = am.get(q+pos) / 10000;
 		}
 		SET_D(rEXP1, 10000L * fwrite((const void*)&(data[0]), 1, count, f->file));
-		check_file_error(ri->fileref);
+		check_file_error(GET_FILEREF);
 	}
 }
 void FFScript::do_file_writestring()
@@ -29574,7 +29563,7 @@ void FFScript::do_file_writestring()
 				break;
 		}
 		SET_D(rEXP1, q * 10000L);
-		check_file_error(ri->fileref);
+		check_file_error(GET_FILEREF);
 	}
 }
 void FFScript::do_file_writeints()
@@ -29605,7 +29594,7 @@ void FFScript::do_file_writeints()
 			data[q] = am.get(q+pos);
 		}
 		SET_D(rEXP1, 10000L * fwrite((const void*)&(data[0]), 4, count, f->file));
-		check_file_error(ri->fileref);
+		check_file_error(GET_FILEREF);
 	}
 }
 
@@ -29616,7 +29605,7 @@ void FFScript::do_file_getchar()
 	if(user_file* f = checkFile(ri->fileref, true))
 	{
 		SET_D(rEXP1, fgetc(f->file) * 10000L);
-		check_file_error(ri->fileref); // TODO: should be checking file error before setting rEXP1.
+		check_file_error(GET_FILEREF); // TODO: should be checking file error before setting rEXP1.
 	}
 }
 void FFScript::do_file_putchar()
@@ -29632,7 +29621,7 @@ void FFScript::do_file_putchar()
 			c = char(c);
 		}
 		SET_D(rEXP1, fputc(c, f->file) * 10000L);
-		check_file_error(ri->fileref); // TODO: should be checking file error before setting rEXP1.
+		check_file_error(GET_FILEREF); // TODO: should be checking file error before setting rEXP1.
 	}
 }
 void FFScript::do_file_ungetchar()
@@ -29647,7 +29636,7 @@ void FFScript::do_file_ungetchar()
 			c = char(c);
 		}
 		SET_D(rEXP1, ungetc(c,f->file) * 10000L);
-		check_file_error(ri->fileref); // TODO: should be checking file error before setting rEXP1.
+		check_file_error(GET_FILEREF); // TODO: should be checking file error before setting rEXP1.
 		return;
 	}
 	SET_D(rEXP1, -10000L); //-1 == EOF; error value
@@ -29662,7 +29651,7 @@ void FFScript::do_file_seek()
 	if(user_file* f = checkFile(ri->fileref, true))
 	{
 		SET_D(rEXP1, fseek(f->file, pos, origin) ? 0L : 10000L);
-		check_file_error(ri->fileref); // TODO: should be checking file error before setting rEXP1.
+		check_file_error(GET_FILEREF); // TODO: should be checking file error before setting rEXP1.
 	}
 }
 void FFScript::do_file_rewind()
@@ -29671,7 +29660,7 @@ void FFScript::do_file_rewind()
 	{
 		//fseek(f->file, 0L, SEEK_END);
 		rewind(f->file);
-		check_file_error(ri->fileref);
+		check_file_error(GET_FILEREF);
 	}
 }
 void FFScript::do_file_clearerr()
@@ -29879,7 +29868,7 @@ void FFScript::do_deallocate_bitmap()
 	if (ZScriptVersion::gc())
 		return;
 
-	if(isSystemBitref(ri->bitmapref))
+	if(isSystemBitref(GET_BITMAPREF))
 	{
 		return; //Don't attempt to deallocate system bitmaps!
 	}
@@ -31311,7 +31300,7 @@ int32_t FFScript::getTime(int32_t type)
 
 void FFScript::do_lweapon_delete()
 {
-	if(auto s=checkLWpn(ri->lwpnref))
+	if(auto s=checkLWpn(GET_LWPNREF))
 	{
 		if(s==Hero.lift_wpn)
 		{
@@ -31324,7 +31313,7 @@ void FFScript::do_lweapon_delete()
 
 void FFScript::do_eweapon_delete()
 {
-	if(auto s=checkEWpn(ri->ewpnref))
+	if(auto s=checkEWpn(GET_EWPNREF))
 	{
 		Ewpns.del(s);
 	}

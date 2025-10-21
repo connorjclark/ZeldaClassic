@@ -1336,7 +1336,7 @@ enum ASM_DEFINE
 #define LWPNJUMP             0x0270
 #define LWPNCOLLDET          0x0271
 //   0x0272-   0x028B are reserved for future weapon variables
-#define LWPNRANGE             0x0272
+#define DELETED_LWPNRANGE             0x0272
 #define LWPNPARENT             0x0273
 #define LWPNLEVEL             0x0274
 #define GETRENDERTARGET             0x0275
