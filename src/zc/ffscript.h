@@ -1642,46 +1642,13 @@ bool pc_overflow(dword pc, bool print_err = true);
 bool check_stack(uint32_t sp);
 
 // Uncomment locally to run the -debug-print-register-deps command
-#define DEBUG_REGISTER_DEPS
+// #define DEBUG_REGISTER_DEPS
 
 #ifdef DEBUG_REGISTER_DEPS
 
 #define GET_D(r) debug_get_d(r)
 #define SET_D(r, v) debug_set_d(r, v)
 #define GET_REF(x) debug_get_ref(#x)
-// #define GET_BITMAPREF debug_get_ref(REFBITMAP)
-// #define GET_BOTTLESHOPREF debug_get_ref(REFBOTTLESHOP)
-// #define GET_BOTTLETYPEREF debug_get_ref(REFBOTTLETYPE)
-// #define GET_COMBOPOSREF (0) // Note: there is no REF variable for this. Ignore it.
-// #define GET_COMBOREF debug_get_ref(REFCOMBODATA)
-// #define GET_COMBOTRIGREF debug_get_ref(REFCOMBOTRIGGER)
-// #define GET_DIRECTORYREF debug_get_ref(REFDIRECTORY)
-// #define GET_DMAPREF debug_get_ref(REFDMAPDATA)
-// #define GET_DROPSETREF debug_get_ref(REFDROPSETDATA)
-// #define GET_EWPNREF debug_get_ref(REFEWPN)
-// #define GET_FFCREF debug_get_ref(REFFFC)
-// #define GET_FILEREF debug_get_ref(REFFILE)
-// #define GET_GENERICDATAREF debug_get_ref(REFGENERICDATA)
-// #define GET_GUYREF debug_get_ref(REFNPC)
-// #define GET_ITEMCLASSREF debug_get_ref(REFITEMDATA)
-// #define GET_ITEMREF debug_get_ref(REFITEM)
-// #define GET_LWPNREF debug_get_ref(REFLWPN)
-// #define GET_MAPREF debug_get_ref(REFMAPDATA)
-// #define GET_NPCDATAREF debug_get_ref(REFNPCDATA)
-// #define GET_PALDATAREF debug_get_ref(REFPALDATA)
-// #define GET_PORTALREF debug_get_ref(REFPORTAL)
-// #define GET_RNGREF debug_get_ref(REFRNG)
-// #define GET_SAVEPORTALREF debug_get_ref(REFSAVPORTAL)
-// #define GET_SCREENREF debug_get_ref(REFSCREEN)
-// #define GET_SHOPSREF debug_get_ref(REFSHOPDATA)
-// #define GET_SPRITEDATAREF debug_get_ref(REFSPRITEDATA)
-// #define GET_SPRITEREF debug_get_ref(REFSPRITE)
-// #define GET_STACKREF debug_get_ref(REFSTACK)
-// #define GET_SUBDATAREF debug_get_ref(REFSUBSCREENDATA)
-// #define GET_SUBPAGEREF debug_get_ref(REFSUBSCREENPAGE)
-// #define GET_SUBWIDGREF debug_get_ref(REFSUBSCREENWIDG)
-// #define GET_WEBSOCKETREF debug_get_ref(REFWEBSOCKET)
-// #define GET_ZMSGREF debug_get_ref(REFMSGDATA)
 
 int debug_get_d(int r);
 int debug_set_d(int r, int v);
