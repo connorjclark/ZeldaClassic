@@ -1502,14 +1502,14 @@ enum ASM_DEFINE
 #define COMBOID              0x088D
 
 //Defines for all the extra crap that's been added since
-#define REFITEMCLASS         0x088E
+#define REFITEMDATA         0x088E
 #define REFITEM              0x088F
 #define REFFFC               0x0890
 #define REFLWPN              0x0891
 #define REFNPC               0x0892
 #define DELETED_REFLWPNCLASS         0x0893
-#define REFNPCCLASS          0x0894
-#define REFSUBSCREEN         0x0895
+#define REFNPCDATA          0x0894
+#define REFSUBSCREENDATA         0x0895
 #define REFEWPN              0x0896
 #define DELETED_REFEWPNCLASS         0x0897
 
@@ -1726,7 +1726,7 @@ enum ASM_DEFINE
 //! ItemData Misc# and Wpn#
 
 #define REFMAPDATA 0x10BA
-#define REFSCREENDATA 0x10BB
+#define REFSCREEN 0x10BB
 #define REFCOMBODATA 0x10BC
 #define REFSPRITEDATA 0x10BD
 #define REFBITMAP 0x10BE
@@ -1735,7 +1735,7 @@ enum ASM_DEFINE
 #define REFMSGDATA 0x10C1
 #define REFUNTYPED_UNUSED 0x10C2 // never used
 
-#define REFDROPS 0x10C3
+#define REFDROPSETDATA 0x10C3
 #define DELETED_REFPONDS 0x10C4
 #define DELETED_REFWARPRINGS 0x10C5
 #define DELETED_REFDOORS 0x10C6

@@ -95,7 +95,7 @@ std::optional<int32_t> websocket_get_register(int32_t reg)
 		case WEBSOCKET_STATE:
 		{
 			ret = 0;
-			auto ws = user_websockets.check(GET_WEBSOCKETREF);
+			auto ws = user_websockets.check(GET_REF(websocketref));
 			if (!ws) break;
 
 			ret = (int)ws->get_state();
@@ -104,7 +104,7 @@ std::optional<int32_t> websocket_get_register(int32_t reg)
 		case WEBSOCKET_HAS_MESSAGE:
 		{
 			ret = 0;
-			auto ws = user_websockets.check(GET_WEBSOCKETREF);
+			auto ws = user_websockets.check(GET_REF(websocketref));
 			if (!ws) break;
 
 			ret = ws->has_message() * 10000;
@@ -113,7 +113,7 @@ std::optional<int32_t> websocket_get_register(int32_t reg)
 		case WEBSOCKET_MESSAGE_TYPE:
 		{
 			ret = 0;
-			auto ws = user_websockets.check(GET_WEBSOCKETREF);
+			auto ws = user_websockets.check(GET_REF(websocketref));
 			if (!ws) break;
 
 			ret = (int)ws->last_message_type;
@@ -141,7 +141,7 @@ std::optional<int32_t> websocket_run_command(word command)
 	{
 		case WEBSOCKET_OWN:
 		{
-			if (auto ws = user_websockets.check(GET_WEBSOCKETREF))
+			if (auto ws = user_websockets.check(GET_REF(websocketref)))
 			{
 				own_script_object(ws, type, i);
 			}
@@ -175,7 +175,7 @@ std::optional<int32_t> websocket_run_command(word command)
 		}
 		case WEBSOCKET_FREE:
 		{
-			if (auto ws = user_websockets.check(GET_WEBSOCKETREF, true))
+			if (auto ws = user_websockets.check(GET_REF(websocketref), true))
 			{
 				free_script_object(ws->id);
 			}
@@ -184,7 +184,7 @@ std::optional<int32_t> websocket_run_command(word command)
 		case WEBSOCKET_ERROR:
 		{
 			int32_t arrayptr = get_register(sarg1);
-			if (auto ws = user_websockets.check(GET_WEBSOCKETREF))
+			if (auto ws = user_websockets.check(GET_REF(websocketref)))
 			{
 				ArrayH::setArray(arrayptr, ws->get_error(), true);
 			}
@@ -206,7 +206,7 @@ std::optional<int32_t> websocket_run_command(word command)
 
 			std::string message;
 			ArrayH::getString(arrayptr, message);
-			if (auto ws = user_websockets.check(GET_WEBSOCKETREF))
+			if (auto ws = user_websockets.check(GET_REF(websocketref)))
 			{
 				ws->send((WebSocketMessageType)type, message);
 			}
@@ -214,7 +214,7 @@ std::optional<int32_t> websocket_run_command(word command)
 		}
 		case WEBSOCKET_RECEIVE:
 		{
-			if (auto ws = user_websockets.check(GET_WEBSOCKETREF))
+			if (auto ws = user_websockets.check(GET_REF(websocketref)))
 			{
 				if (!ws->has_message())
 				{

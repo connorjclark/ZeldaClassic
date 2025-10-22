@@ -1297,18 +1297,18 @@ public:
 	uint32_t retsp; //stack pointer for the return stack
 	
 	uint32_t ffcref;
-	int32_t itemclassref;
-	dword itemref, guyref, lwpnref, ewpnref;
-	dword screenref, npcdataref, bitmapref, spriteref, spritedataref, dmapref, zmsgref, shopref;
-	int32_t mapref;
-	dword dropsetref;
+	int32_t itemdataref;
+	dword itemref, npcref, lwpnref, ewpnref;
+	dword screenref, npcdataref, bitmapref, spriteref, spritedataref, dmapdataref, msgdataref, shopdataref;
+	int32_t mapdataref;
+	dword dropsetdataref;
 	dword fileref, directoryref, rngref, stackref, paldataref;
 	dword bottletyperef, bottleshopref, genericdataref;
-	int32_t comboref, comboposref;
-	dword combotrigref;
-	int32_t portalref, saveportalref;
+	int32_t combodataref, comboposref;
+	dword combotriggerref;
+	int32_t portalref, savportalref;
 	int32_t websocketref;
-	dword subdataref, subpageref, subwidgref;
+	dword subscreendataref, subscreenpageref, subscreenwidgref;
 
 	int32_t switchkey; //used for switch statements
 	dword thiskey, thiskey2; //used for user class 'this' pointers

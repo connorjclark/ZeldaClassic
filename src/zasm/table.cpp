@@ -1,5 +1,6 @@
 #include "zasm/table.h"
-#include "base/zdefs.h"
+#include "allegro/base.h"
+#include "base/general.h"
 #include "zasm/defines.h"
 #include <optional>
 #include <utility>
@@ -1039,13 +1040,13 @@ static constexpr script_variable variable_list[]=
 	{ "COMBOTD", COMBOTD, 0},
 	{ "COMBOID", COMBOID, 0},
 	{ "COMBOSD", COMBOSD, 0},
-	{ "REFITEMCLASS", REFITEMCLASS, 0},
+	{ "REFITEMDATA", REFITEMDATA, 0},
 	{ "REFITEM", REFITEM, 0},
 	{ "REFFFC", REFFFC, 0},
 	{ "REFLWPN", REFLWPN, 0},
 	{ "REFEWPN", REFEWPN, 0},
 	{ "REFNPC", REFNPC, 0},
-	{ "REFNPCCLASS", REFNPCCLASS, 0},
+	{ "REFNPCDATA", REFNPCDATA, 0},
 	{ "LWPNX", LWPNX, 0},
 	{ "LWPNY", LWPNY, 0},
 	{ "LWPNZ", LWPNZ, 0},
@@ -1247,14 +1248,14 @@ static constexpr script_variable variable_list[]=
 	{ "DMAPMAP", DMAPMAP, 0},
 	// { "__RESERVED_FOR_GAMETHROTTLE", __RESERVED_FOR_GAMETHROTTLE, 0},
 	{ "REFMAPDATA", REFMAPDATA, 0},
-	{ "REFSCREENDATA", REFSCREENDATA, 0},
+	{ "REFSCREEN", REFSCREEN, 0},
 	{ "REFCOMBODATA", REFCOMBODATA, 0},
 	{ "REFSPRITEDATA", REFSPRITEDATA, 0},
 	{ "REFBITMAP", REFBITMAP, 0},
 	{ "REFDMAPDATA", REFDMAPDATA, 0},
 	{ "REFSHOPDATA", REFSHOPDATA, 0},
 	{ "REFMSGDATA", REFMSGDATA, 0},
-	{ "REFDROPS", REFDROPS, 0},
+	{ "REFDROPSETDATA", REFDROPSETDATA, 0},
 	{ "IDATAMAGICTIMER", IDATAMAGICTIMER, 0},
 	{ "IDATALTM", IDATALTM, 0},
 	{ "IDATASCRIPT", IDATASCRIPT, 0},
@@ -1391,7 +1392,7 @@ static constexpr script_variable variable_list[]=
 	
 	{"COMBODATAID", COMBODATAID, 0},
 	{"REFFILE", REFFILE, 0},
-	{"REFSUBSCREEN", REFSUBSCREEN, 0},
+	{"REFSUBSCREENDATA", REFSUBSCREENDATA, 0},
 	{"SETGAMEOVERELEMENT", SETGAMEOVERELEMENT, 0},
 	{"SETGAMEOVERSTRING", SETGAMEOVERSTRING, 0},
 	{"MOUSEARR", MOUSEARR, 0},
@@ -3699,7 +3700,7 @@ std::optional<int> get_register_ref_dependency(int reg)
 		case DROPSETCHOOSE:
 		case DROPSETITEMS:
 		case DROPSETNULLCHANCE:
-			return REFDROPS;
+			return REFDROPSETDATA;
 
 		case EWEAPONSCRIPTUID:
 		case EWPNANGLE:
@@ -3782,9 +3783,9 @@ std::optional<int> get_register_ref_dependency(int reg)
 		case EWSWHOOKED:
 			return REFEWPN;
 
-		case FCSET:
 		case DATA:
 		case DELAY:
+		case FCSET:
 		case FFCHEIGHT:
 		case FFCID:
 		case FFCLAYER:
@@ -3797,9 +3798,9 @@ std::optional<int> get_register_ref_dependency(int reg)
 		case FFTHEIGHT:
 		case FFTWIDTH:
 		case FX:
+		case FY:
 		case XD:
 		case XD2:
-		case FY:
 		case YD:
 		case YD2:
 			return REFFFC;
@@ -3883,8 +3884,8 @@ std::optional<int> get_register_ref_dependency(int reg)
 
 		case IDATAAMOUNT:
 		case IDATAASPEED:
-		case IDATAATTRIB_L:
 		case IDATAATTRIB:
+		case IDATAATTRIB_L:
 		case IDATABUNNYABLE:
 		case IDATABURNINGLIGHTRAD:
 		case IDATABURNINGSPR:
@@ -3972,7 +3973,7 @@ std::optional<int> get_register_ref_dependency(int reg)
 		case IDATAWMOVEFLAGS:
 		case IDATAWPNINITD:
 		case IDATAWRANGE:
-			return REFITEMCLASS;
+			return REFITEMDATA;
 
 		case LWEAPONSCRIPTUID:
 		case LWPNANGLE:
@@ -4057,9 +4058,6 @@ std::optional<int> get_register_ref_dependency(int reg)
 		case LWSWHOOKED:
 			return REFLWPN;
 
-		case MAPDATA_FLAG:
-		case MAPDATA_GRAVITY_STRENGTH:
-		case MAPDATA_TERMINAL_VELOCITY:
 		case MAPDATABOSSSFX:
 		case MAPDATACATCHALL:
 		case MAPDATACOLOUR:
@@ -4166,6 +4164,9 @@ std::optional<int> get_register_ref_dependency(int reg)
 		case MAPDATAWARPRETURNC:
 		case MAPDATAWARPRETX:
 		case MAPDATAWARPRETY:
+		case MAPDATA_FLAG:
+		case MAPDATA_GRAVITY_STRENGTH:
+		case MAPDATA_TERMINAL_VELOCITY:
 			return REFMAPDATA;
 
 		case MESSAGEDATACSET:
@@ -4347,7 +4348,7 @@ std::optional<int> get_register_ref_dependency(int reg)
 		case NPCDSHADOWSPR:
 		case NPCDSPAWNSPR:
 		case NPCMATCHINITDLABEL:
-			return REFNPCCLASS;
+			return REFNPCDATA;
 
 		case PALDATAB:
 		case PALDATACOLOR:
@@ -4385,9 +4386,6 @@ std::optional<int> get_register_ref_dependency(int reg)
 		case ROOMDATA:
 		case ROOMTYPE:
 		case SCRDOORD:
-		case SCREEN_FLAG:
-		case SCREENDATA_GRAVITY_STRENGTH:
-		case SCREENDATA_TERMINAL_VELOCITY:
 		case SCREENDATABOSSSFX:
 		case SCREENDATACATCHALL:
 		case SCREENDATACOLOUR:
@@ -4454,6 +4452,8 @@ std::optional<int> get_register_ref_dependency(int reg)
 		case SCREENDATAWARPRETURNC:
 		case SCREENDATAWARPRETX:
 		case SCREENDATAWARPRETY:
+		case SCREENDATA_GRAVITY_STRENGTH:
+		case SCREENDATA_TERMINAL_VELOCITY:
 		case SCREENEFLAGSD:
 		case SCREENEXSTATED:
 		case SCREENFLAGSD:
@@ -4465,10 +4465,11 @@ std::optional<int> get_register_ref_dependency(int reg)
 		case SCREENSECRETSTRIGGERED:
 		case SCREENSIDEWARPID:
 		case SCREENSTATED:
+		case SCREEN_FLAG:
 		case SDD:
 		case UNDERCOMBO:
 		case UNDERCSET:
-			return REFSCREENDATA;
+			return REFSCREEN;
 
 		case SHOPDATAHASITEM:
 		case SHOPDATAITEM:
@@ -4491,8 +4492,8 @@ std::optional<int> get_register_ref_dependency(int reg)
 		case SPRITE_FALL_CLK:
 		case SPRITE_FALL_CMB:
 		case SPRITE_FLIP:
-		case SPRITE_GRAVITY_STRENGTH:
 		case SPRITE_GRAVITY:
+		case SPRITE_GRAVITY_STRENGTH:
 		case SPRITE_HIT_HEIGHT:
 		case SPRITE_HIT_OFFSET_X:
 		case SPRITE_HIT_OFFSET_Y:
@@ -4513,15 +4514,15 @@ std::optional<int> get_register_ref_dependency(int reg)
 		case SPRITE_SPAWN_SCREEN:
 		case SPRITE_SWHOOKED:
 		case SPRITE_TERMINAL_VELOCITY:
+		case SPRITE_TILE:
 		case SPRITE_TILE_H:
 		case SPRITE_TILE_W:
-		case SPRITE_TILE:
-		case SPRITE_X_OFFSET:
 		case SPRITE_X:
-		case SPRITE_Y_OFFSET:
+		case SPRITE_X_OFFSET:
 		case SPRITE_Y:
-		case SPRITE_Z_OFFSET:
+		case SPRITE_Y_OFFSET:
 		case SPRITE_Z:
+		case SPRITE_Z_OFFSET:
 			return REFSPRITE;
 
 		case SPRITEDATACSETS:
@@ -4575,7 +4576,7 @@ std::optional<int> get_register_ref_dependency(int reg)
 		case SUBDATATRANSTOPG:
 		case SUBDATATRANSTY:
 		case SUBDATATYPE:
-			return REFSUBSCREEN;
+			return REFSUBSCREENDATA;
 
 		case SUBPGCURSORPOS:
 		case SUBPGINDEX:
@@ -4584,10 +4585,6 @@ std::optional<int> get_register_ref_dependency(int reg)
 		case SUBPGWIDGETS:
 			return REFSUBSCREENPAGE;
 
-		case SUBWIDG_DISPH:
-		case SUBWIDG_DISPW:
-		case SUBWIDG_DISPX:
-		case SUBWIDG_DISPY:
 		case SUBWIDGBTNPG:
 		case SUBWIDGBTNPRESS:
 		case SUBWIDGDISPITM:
@@ -4628,6 +4625,7 @@ std::optional<int> get_register_ref_dependency(int reg)
 		case SUBWIDGTRANSPGFLAGS:
 		case SUBWIDGTRANSPGSFX:
 		case SUBWIDGTRANSPGTY:
+		case SUBWIDGTYPE:
 		case SUBWIDGTY_ALIGN:
 		case SUBWIDGTY_ANIMVAL:
 		case SUBWIDGTY_BUTTON:
@@ -4678,10 +4676,13 @@ std::optional<int> get_register_ref_dependency(int reg)
 		case SUBWIDGTY_TOTAL:
 		case SUBWIDGTY_UNITS:
 		case SUBWIDGTY_VSPACE:
-		case SUBWIDGTYPE:
 		case SUBWIDGW:
 		case SUBWIDGX:
 		case SUBWIDGY:
+		case SUBWIDG_DISPH:
+		case SUBWIDG_DISPW:
+		case SUBWIDG_DISPX:
+		case SUBWIDG_DISPY:
 			return REFSUBSCREENWIDG;
 
 		case WEBSOCKET_HAS_MESSAGE:
