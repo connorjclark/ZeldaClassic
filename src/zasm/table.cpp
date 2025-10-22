@@ -2,6 +2,7 @@
 #include "allegro/base.h"
 #include "base/general.h"
 #include "zasm/defines.h"
+#include <array>
 #include <optional>
 #include <utility>
 
