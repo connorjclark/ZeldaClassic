@@ -3,12 +3,14 @@
 #include "base/render.h"
 #include "zconfig.h"
 #include "base/gui.h"
+#include "zq/zquest.h"
 
 extern int32_t prv_mode;
 extern bool DragAspect;
 
 static auto rti_root = RenderTreeItem("root");
 static auto rti_screen = LegacyBitmapRTI("screen");
+static auto rti_menu = LegacyBitmapRTI("menu");
 static bool screen_never_freeze;
 static bool center_root_rti = true;
 
@@ -55,7 +57,13 @@ static void init_render_tree()
 	rti_screen.a4_bitmap = screen;
 	rti_screen.visible = true;
 
+	rti_menu.set_size(screen->w, screen->h);
+	rti_menu.bitmap = create_a5_bitmap(screen->w, screen->h);
+	rti_menu.a4_bitmap = menu1;
+	rti_menu.transparency_index = 0;
+
 	rti_root.add_child(&rti_screen);
+	rti_root.add_child(&rti_menu);
 	rti_root.add_child(&rti_dialogs);
 
 	gui_mouse_x = zc_gui_mouse_x;
@@ -96,14 +104,16 @@ static void configure_render_tree()
 		rti_screen.a4_bitmap = zqdialog_bg_bmp ? zqdialog_bg_bmp : screen;
 	}
 
+	rti_menu.a4_bitmap = menu1;
+
 	// Not necessary, but a few things use `rti_dialogs.visible` for convenience.
 	rti_dialogs.visible = rti_dialogs.has_children();
 
 	// Freeze dialogs that won't be changing.
 	if (screen_never_freeze)
-		rti_screen.freeze = false;
+		rti_screen.freeze = rti_menu.freeze = false;
 	else
-		rti_screen.freeze = rti_dialogs.has_children();
+		rti_screen.freeze = rti_menu.freeze = rti_dialogs.has_children();
 	int i = 0;
 	while (i < rti_dialogs.get_children().size())
 	{
@@ -127,6 +137,11 @@ void set_center_root_rti(bool center)
 RenderTreeItem* get_screen_rti()
 {
 	return &rti_screen;
+}
+
+RenderTreeItem* get_menu_rti()
+{
+	return &rti_menu;
 }
 
 void zq_hide_screen(bool hidden)

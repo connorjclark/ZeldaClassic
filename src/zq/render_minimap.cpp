@@ -149,6 +149,6 @@ void mmap_set_zoom(bool zoomed)
 
 void mmap_init()
 {
-	get_screen_rti()->add_child(&rti_minimap);
+	get_menu_rti()->add_child(&rti_minimap);
 	mmap_set_zoom(false);
 }

@@ -16,6 +16,7 @@
 #include <base/new_menu.h>
 
 #include "dialog/info_lister.h"
+#include "zq/render_map_view.h"
 #ifdef __APPLE__
 // malloc.h is deprecated, but malloc also lives in stdlib
 #include <stdlib.h>
@@ -663,6 +664,11 @@ int MouseScroll = 0, SavePaths = 0, CycleOn = 0, ShowGrid = 0, ShowScreenGrid = 
 	ActiveLayerHighlight = 0, DragCenterOfSquares = 0;
 uint8_t InvalidBG = 0;
 bool NoHighlightLayer0 = false;
+// If true, uses "MapViewRTI" to draw editor screens. This allows for multiples palettes on the
+// screen at once, and for higher resolution.
+// Note: this is the default currently, and eventually the option should be removed and the
+// "low-quality" rendering removed. Hasn't been done just yet just in case this causes regressions.
+bool HighQualityScreenRendering = true;
 int32_t FlashWarpSquare = -1, FlashWarpClk = 0; // flash the destination warp return when ShowSquares is active
 uint8_t ViewLayer3BG = 0, ViewLayer2BG = 0;
 int32_t window_width, window_height;
@@ -1465,6 +1471,7 @@ int32_t onLayer2BG()
 	return D_O_K;
 }
 int onGridToggle();
+int onToggleHighQualityScreenRendering();
 enum
 {
 	MENUID_VIEW_WALKABILITY,
@@ -1483,6 +1490,7 @@ enum
 	MENUID_VIEW_L2BG,
 	MENUID_VIEW_L3BG,
 	MENUID_VIEW_LAYERHIGHLIGHT,
+	MENUID_VIEW_HIGH_QUALITY_SCREEN_RENDERING,
 };
 NewMenu view_menu
 {
@@ -1506,6 +1514,7 @@ NewMenu view_menu
 	{ "Layer 2 is Background", onLayer2BG, MENUID_VIEW_L2BG },
 	{ "Layer 3 is Background", onLayer3BG, MENUID_VIEW_L3BG },
 	{ "Highlight Current Layer", onToggleHighlightLayer, MENUID_VIEW_LAYERHIGHLIGHT },
+	{ "High &Quality Screen Rendering", onToggleHighQualityScreenRendering, MENUID_VIEW_HIGH_QUALITY_SCREEN_RENDERING },
 };
 
 void set_rules(byte* newrules)
@@ -1716,6 +1725,19 @@ int32_t onToggleGrid(bool color)
 int onGridToggle()
 {
 	return onToggleGrid(CHECK_CTRL_CMD);
+}
+
+int onToggleHighQualityScreenRendering()
+{
+	HighQualityScreenRendering = !HighQualityScreenRendering;
+	zc_set_config("zquest","high_quality_screen_rendering",HighQualityScreenRendering);
+
+	if (!HighQualityScreenRendering)
+	{
+		mapview_get_rti()->remove();
+	}
+
+	return D_O_K;
 }
 
 int32_t onToggleScreenGrid()
@@ -4501,45 +4523,6 @@ int32_t onViewPic()
     return launchPicViewer(&pic,picpal,&picx,&picy,&picscale,false);
 }
 
-
-class MapViewRTI : public RenderTreeItem
-{
-public:
-	MapViewRTI(): RenderTreeItem("map_view")
-	{
-	}
-
-	int bw, bh, sw, sh, flags;
-
-private:
-	void render(bool bitmap_resized)
-	{
-		MapCursor previous_cursor = Map.getCursor();
-		Map.setViewSize(1);
-
-		BITMAP* bmap4_single = create_bitmap_ex(8,256,176);
-		set_bitmap_create_flags(true);
-		ALLEGRO_BITMAP* bmap5_single = al_create_bitmap(256,176);
-		for(int32_t y=0; y<8; y++)
-		{
-			for(int32_t x=0; x<16; x++)
-			{
-				clear_bitmap(bmap4_single);
-				Map.setCurrScr(y*16+x);
-				Map.draw(bmap4_single, 0, 0, flags, -1, y*16+x, -1);
-				stretch_blit(bmap4_single, bmap4_single, 0, 0, 0, 0, 256, 176, 256, 176);
-				all_render_a5_bitmap(bmap4_single, bmap5_single);
-				al_draw_scaled_bitmap(bmap5_single, 0, 0, 256, 176, sw * x, sh * y, sw, sh, 0);
-			}
-		}
-
-		Map.setCursor(previous_cursor);
-		destroy_bitmap(bmap4_single);
-		al_destroy_bitmap(bmap5_single);
-	}
-};
-static MapViewRTI rti_map_view;
-
 int32_t launchPicViewer(BITMAP **pictoview, PALETTE pal, int32_t *px2, int32_t *py2, double *scale2, bool isviewingmap, bool skipmenu)
 {
 	restore_mouse();
@@ -4553,7 +4536,7 @@ int32_t launchPicViewer(BITMAP **pictoview, PALETTE pal, int32_t *px2, int32_t *
 	{
 		zc_set_palette(RAMpal);
 		popup_zqdialog_end();
-		close_the_map();
+		mapview_close();
 		return D_O_K;
 	}
 	
@@ -4568,7 +4551,7 @@ int32_t launchPicViewer(BITMAP **pictoview, PALETTE pal, int32_t *px2, int32_t *
 	{
 		jwin_alert("Error","Error creating temp bitmap",NULL,NULL,"OK",NULL,13,27,get_zc_font(font_lfont));
 		popup_zqdialog_end();
-		close_the_map();
+		mapview_close();
 		return D_O_K;
 	}
 
@@ -4580,12 +4563,14 @@ int32_t launchPicViewer(BITMAP **pictoview, PALETTE pal, int32_t *px2, int32_t *
 	
 	zc_set_palette(pal);
 
+	MapViewRTI* rti_map_view = mapview_get_rti();
+
 	if(isviewingmap)
 	{
 		set_center_root_rti(false);
 
-		int sw = rti_map_view.width / 16;
-		int sh = rti_map_view.height / 8;
+		int sw = rti_map_view->width / 16;
+		int sh = rti_map_view->height / 8;
 		int screen = Map.getCurrScr();
 		if (screen >= 0x00 && screen <= 0x7F)
 		{
@@ -4602,8 +4587,8 @@ int32_t launchPicViewer(BITMAP **pictoview, PALETTE pal, int32_t *px2, int32_t *
 		int w, h;
 		if (isviewingmap)
 		{
-			w = rti_map_view.width;
-			h = rti_map_view.height;
+			w = rti_map_view->width;
+			h = rti_map_view->height;
 		}
 		else
 		{
@@ -4621,7 +4606,7 @@ int32_t launchPicViewer(BITMAP **pictoview, PALETTE pal, int32_t *px2, int32_t *
 			mapy = std::max(mapy, (int)(-h*scale + dh));
 			mapx = std::min(mapx, 0);
 			mapy = std::min(mapy, 0);
-			rti_map_view.set_transform({mapx, mapy, scale, scale});
+			rti_map_view->set_transform({mapx, mapy, scale, scale});
 		}
 
 		if(redraw)
@@ -4779,7 +4764,7 @@ int32_t launchPicViewer(BITMAP **pictoview, PALETTE pal, int32_t *px2, int32_t *
 				break;
 				
 			case KEY_SPACE:
-				close_the_map();
+				mapview_close();
 				// TODO: why is `load_the_map` rendering a black dialog?
 				if(isviewingmap ? load_the_map(skipmenu) : load_the_pic(pictoview,pal)==2)
 				{
@@ -4809,7 +4794,7 @@ int32_t launchPicViewer(BITMAP **pictoview, PALETTE pal, int32_t *px2, int32_t *
 	position_mouse_z(0);
 	viewer_overlay_rti.remove();
 	set_center_root_rti(true);
-	close_the_map();
+	mapview_close();
 	return D_O_K;
 }
 
@@ -4898,15 +4883,7 @@ int32_t load_the_map(bool skipmenu)
 		sh = 176<<(res-2);
 	}
 
-	rti_map_view.flags = flags;
-	rti_map_view.bw = bw;
-	rti_map_view.bh = bh;
-	rti_map_view.sw = sw;
-	rti_map_view.sh = sh;
-	rti_map_view.set_size(bw, bh);
-	rti_map_view.dirty = true;
-	get_root_rti()->add_child(&rti_map_view);
-	render_zq();
+	mapview_open(flags, sw, sh, bw, bh);
 
     vp_showpal = false;
     get_bw(picpal,pblack,pwhite);
@@ -4914,16 +4891,11 @@ int32_t load_the_map(bool skipmenu)
     mapscale = 1;
     imagepath[0] = 0;
 
-    if(loadmap_dlg[13].flags & D_SELECTED) saveMapAsImage(rti_map_view.bitmap);
+    if(loadmap_dlg[13].flags & D_SELECTED) saveMapAsImage(mapview_get_rti()->bitmap);
 
 	memcpy(mappal,RAMpal,sizeof(RAMpal));
 
     return 0;
-}
-
-void close_the_map()
-{
-	rti_map_view.remove();
 }
 
 int32_t onViewMap()
@@ -5291,8 +5263,237 @@ void put_autocombo_engravings(BITMAP* dest, combo_auto const& ca, bool selected,
 	}
 }
 
-void draw_screenunit_map_screen(VisibleScreen visible_screen)
+static void draw_screenunit_map_screen2(VisibleScreen visible_screen)
 {
+	int num_screens_to_draw = Map.getViewSize();
+	int screen = visible_screen.screen;
+	int xoff = visible_screen.xoff;
+	int yoff = visible_screen.yoff;
+
+	mapscr* scr = visible_screen.scr;
+	if (!layers_valid(scr))
+		fix_layers(scr, true);
+
+	clear_to_color(mapscreenbmp, 0);
+
+	int view_scr_x = Map.getViewScr() % 16;
+	int view_scr_y = Map.getViewScr() / 16;
+	int scr_x = screen % 16;
+	int scr_y = screen / 16;
+	int edge_xoff = 0, edge_yoff = 0;
+	if(showedges)
+	{
+		if (scr_x == view_scr_x)
+			edge_xoff = 16;
+		else
+			xoff -= 16;
+		
+		if (scr_y == view_scr_y)
+			edge_yoff = 16;
+		else
+			yoff -= 16;
+	}
+
+	// combotile_add_x = mapscreen_x + xoff;
+	// combotile_add_y = mapscreen_y + yoff;
+	// combotile_mul_x = mapscreen_single_scale;
+	// combotile_mul_y = mapscreen_single_scale;
+	// Map.draw(mapscreenbmp, scr_x == view_scr_x && showedges ? 16 : 0, scr_y == view_scr_y && showedges ? 16 : 0, Flags, Map.getCurrMap(), screen, ActiveLayerHighlight ? CurrentLayer : -1);
+	// combotile_add_x = 0;
+	// combotile_add_y = 0;
+	// combotile_mul_x = 1;
+	// combotile_mul_y = 1;
+
+	// TODO: should be better to move this out of draw_screenunit_map_screen.
+	if (showedges && screen < 128)
+	{
+		bool peek_above = scr_y == view_scr_y;
+		bool peek_below = scr_y == view_scr_y + num_screens_to_draw - 1;
+		bool peek_left = scr_x == view_scr_x;
+		bool peek_right = scr_x == view_scr_x + num_screens_to_draw - 1;
+
+		int right_col = 272 - (num_screens_to_draw > 1 ? 16 : 0);
+		int bottom_row = 192 - (num_screens_to_draw > 1 ? 16 : 0);
+
+		//not the first row of screens
+		if (peek_above)
+		{
+			if(screen>15 && !NoScreenPreview)
+			{
+				Map.drawrow(mapscreenbmp, edge_xoff, 0, Flags, 160, -1, screen-16);
+			}
+			else
+			{
+				Map.drawstaticrow(mapscreenbmp, edge_xoff, 0);
+			}
+		}
+		
+		//not the last row of screens
+		if (peek_below)
+		{
+			if(screen + 16 < 0x80 && !NoScreenPreview)
+			{
+				Map.drawrow(mapscreenbmp, edge_xoff, bottom_row, Flags, 0, -1, screen+16);
+			}
+			else
+			{
+				Map.drawstaticrow(mapscreenbmp, edge_xoff, bottom_row);
+			}
+		}
+		
+		//not the first column of screens
+		if (peek_left)
+		{
+			if(screen&0x0F && !NoScreenPreview)
+			{
+				Map.drawcolumn(mapscreenbmp, 0, edge_yoff, Flags, 15, -1, screen-1);
+			}
+			else
+			{
+				Map.drawstaticcolumn(mapscreenbmp, 0, edge_yoff);
+			}
+		}
+		
+		//not the last column of screens
+		if (peek_right)
+		{
+			if((screen&0x0F)<15 && !NoScreenPreview)
+			{
+				Map.drawcolumn(mapscreenbmp, right_col, edge_yoff, Flags, 0, -1, screen+1);
+			}
+			else
+			{
+				Map.drawstaticcolumn(mapscreenbmp, right_col, edge_yoff);
+			}
+		}
+		
+		//not the first row or first column of screens
+		if (peek_above && peek_left)
+		{
+			if((screen>15)&&(screen&0x0F) && !NoScreenPreview)
+			{
+				Map.drawblock(mapscreenbmp, 0, 0, Flags, 175, -1, screen-17);
+			}
+			else
+			{
+				Map.drawstaticblock(mapscreenbmp, 0, 0);
+			}
+		}
+		
+		//not the first row or last column of screens
+		if (peek_above && peek_right)
+		{
+			if((screen>15)&&((screen&0x0F)<15) && !NoScreenPreview)
+			{
+				Map.drawblock(mapscreenbmp, right_col, 0, Flags, 160, -1, screen-15);
+			}
+			else
+			{
+				Map.drawstaticblock(mapscreenbmp, right_col, 0);
+			}
+		}
+		
+		//not the last row or first column of screens
+		if (peek_below && peek_left)
+		{
+			if((screen<112)&&(screen&0x0F) && !NoScreenPreview)
+			{
+				Map.drawblock(mapscreenbmp, 0, bottom_row, Flags, 15, -1, screen+15);
+			}
+			else
+			{
+				Map.drawstaticblock(mapscreenbmp, 0, bottom_row);
+			}
+		}
+		
+		//not the last row or last column of screens
+		if (peek_below && peek_right)
+		{
+			if((screen<112)&&((screen&0x0F)<15) && !NoScreenPreview)
+			{
+				Map.drawblock(mapscreenbmp, right_col, bottom_row, Flags, 0, -1, screen+17);
+			}
+			else
+			{
+				Map.drawstaticblock(mapscreenbmp, right_col, bottom_row);
+			}
+		}
+	}
+	
+	if (ShowSquares && Map.getViewSize() < 4)
+	{
+		if(scr->stairx || scr->stairy)
+		{
+			int32_t x1 = scr->stairx+edge_xoff;
+			int32_t y1 = scr->stairy+edge_yoff;
+			safe_rect(mapscreenbmp,x1,y1,x1+15,y1+15,vc(14));
+		}
+		
+		if(scr->warparrivalx || scr->warparrivaly)
+		{
+			int32_t x1 = scr->warparrivalx +edge_xoff;
+			int32_t y1 = scr->warparrivaly +edge_yoff;
+			safe_rect(mapscreenbmp,x1,y1,x1+15,y1+15,vc(10));
+		}
+		
+		for(int32_t i=0; i<4; i++) if(scr->warpreturnx[i] || scr->warpreturny[i])
+			{
+				int32_t x1 = scr->warpreturnx[i]+edge_xoff;
+				int32_t y1 = scr->warpreturny[i]+edge_yoff;
+				int32_t clr = vc(9);
+				
+				if(FlashWarpSquare==i)
+				{
+					if(!FlashWarpClk)
+						FlashWarpSquare=-1;
+					else if(!(--FlashWarpClk%3))
+						clr = vc(15);
+				}
+				
+				safe_rect(mapscreenbmp,x1,y1,x1+15,y1+15,clr);
+			}
+	}
+	
+	if(ShowFFCs)
+	{
+		mapscr* ffscr = prv_mode ? Map.get_prvscr() : scr;
+		int num_ffcs = ffscr->numFFC();
+		for(int32_t i=num_ffcs-1; i>=0; i--)
+		{
+			ffcdata& ff = ffscr->ffcs[i];
+			if(ff.data !=0 && (ff.layer >= CurrentLayer || (ff.flags&ffc_overlay)))
+			{
+				auto x = ff.x+edge_xoff;
+				auto y = ff.y+edge_yoff;
+				safe_rect(mapscreenbmp, x+0, y+0, x+ff.txsz*16-1, y+ff.tysz*16-1, vc(12));
+			}
+		}
+	}
+	
+	if(num_screens_to_draw == 1 && !(Flags&cDEBUG) && pixeldb==1)
+	{
+		for(int32_t j=168; j<176; j++)
+		{
+			for(int32_t i=0; i<256; i++)
+			{
+				if(((i^j)&1)==0)
+				{
+					putpixel(mapscreenbmp,edge_xoff+i,
+						edge_yoff+j,vc(blackout_color));
+				}
+			}
+		}
+	}
+
+	int w = mapscreenbmp->w * mapscreen_single_scale;
+	int h = mapscreenbmp->h * mapscreen_single_scale;
+	stretch_blit(mapscreenbmp, menu1, 0, 0, mapscreenbmp->w, mapscreenbmp->h, mapscreen_x + xoff, mapscreen_y + yoff, w, h);
+}
+
+static void draw_screenunit_map_screen(VisibleScreen visible_screen)
+{
+	if (HighQualityScreenRendering) return draw_screenunit_map_screen2(visible_screen);
+
 	int num_screens_to_draw = Map.getViewSize();
 	int screen = visible_screen.screen;
 	int xoff = visible_screen.xoff;
@@ -5505,7 +5706,7 @@ void draw_screenunit_map_screen(VisibleScreen visible_screen)
 		}
 	}
 	
-	if(!(Flags&cDEBUG) && pixeldb==1)
+	if(num_screens_to_draw == 1 && !(Flags&cDEBUG) && pixeldb==1)
 	{
 		for(int32_t j=168; j<176; j++)
 		{
@@ -5614,7 +5815,22 @@ void draw_screenunit(int32_t unit, int32_t flags)
 			
 			if(CurrentLayer > 0 && !mapscreen_valid_layers[CurrentLayer-1])
 				CurrentLayer = 0;
-			
+
+			if (HighQualityScreenRendering)
+			{
+				int startxint = mapscreen_x+(showedges?int(16*mapscreen_single_scale):0);
+				int startyint = mapscreen_y+(showedges?int(16*mapscreen_single_scale):0);
+				int w = 256*mapscreen_screenunit_scale*Map.getViewSize();
+				int h = 176*mapscreen_screenunit_scale*Map.getViewSize();
+
+				MapViewRTI* rti_map_view = mapview_get_rti();
+				rti_map_view->flags = Flags;
+				rti_map_view->set_transform({.x = startxint, .y = startyint, .xscale = (float)mapscreen_single_scale, .yscale = (float)mapscreen_single_scale});
+				rti_map_view->set_size(w, h);
+				rti_map_view->dirty = true;
+				get_screen_rti()->add_child(rti_map_view);
+			}
+
 			for (auto& vis_screen : visible_screens)
 			{
 				draw_screenunit_map_screen(vis_screen);
@@ -6706,7 +6922,8 @@ void refresh(int32_t flags, bool update)
 		//magic pink = 0xED
 		//system black = vc(0)
 		//Clear a4 menu
-		clear_to_color(menu1,jwin_pal[jcBOX]);
+		// clear_to_color(menu1,jwin_pal[jcBOX]);
+		clear_to_color(menu1,0);
 		
 		//Clears should refresh everything!
 		flags |= rALL;
@@ -7234,21 +7451,30 @@ void refresh(int32_t flags, bool update)
 	if(zoom_delay)
 		draw_screenunit(rSCRMAP,flags);
 	
-	
-	if(flags&rCLEAR)
-	{
-		//Draw the whole gui
-		blit(menu1,screen,0,0,0,0,zq_screen_w,zq_screen_h);
-	}
-	else
-	{
-		blit(menu1,screen,0,16,0,16,zq_screen_w,zq_screen_h-16);
-		blit(menu1,screen,combolist_window.x-64,0,combolist_window.x-64,0,combolist_window.w+64,16);
-		
-		if(flags&rCOMBO)
-			blit(menu1,screen,combo_preview.x,combo_preview.y,combo_preview.x,combo_preview.y,combo_preview.w,combo_preview.h);
-	}
-		
+	// if (!WIP)
+	// {
+	// 	if(flags&rCLEAR)
+	// 	{
+	// 		//Draw the whole gui
+	// 		blit(menu1,screen,0,0,0,0,zq_screen_w,zq_screen_h);
+	// 	}
+	// 	else
+	// 	{
+	// 		blit(menu1,screen,0,16,0,16,zq_screen_w,zq_screen_h-16);
+	// 		blit(menu1,screen,combolist_window.x-64,0,combolist_window.x-64,0,combolist_window.w+64,16);
+			
+	// 		if(flags&rCOMBO)
+	// 			blit(menu1,screen,combo_preview.x,combo_preview.y,combo_preview.x,combo_preview.y,combo_preview.w,combo_preview.h);
+	// 	}
+	// }
+
+	// if (WIP && !rti_map_view->has_children())
+	// {
+	// 	auto child = new LegacyBitmapRTI("menu1");
+	// 	child->a4_bitmap = menu1;
+	// 	rti_map_view->add_child(child);
+	// }
+
 	if(earlyret)
 		return;
 	
@@ -8627,9 +8853,9 @@ static void doxypos(byte &px2, byte &py2, int32_t color, SnapMode snap_mode,
 				
 				auto minx = zc_min(xpos[0],xpos[1]);
 				auto miny = zc_min(ypos[0],ypos[1]);
-				rectfill(screen,x1,y1,x2,y2,vc(0));
-                textprintf_ex(screen,font,xpos[0],ypos[0],vc(15),vc(0),"%s",b1);
-                textprintf_ex(screen,font,xpos[1],ypos[1],vc(15),vc(0),"%s",b2);
+				rectfill(menu1,x1,y1,x2,y2,vc(0));
+                textprintf_ex(menu1,font,xpos[0],ypos[0],vc(15),vc(0),"%s",b1);
+                textprintf_ex(menu1,font,xpos[1],ypos[1],vc(15),vc(0),"%s",b2);
 				update_hw_screen();
             }
             while(gui_mouse_b()==1);
@@ -22850,15 +23076,53 @@ void create_rgb_table2(RGB_MAP *table, AL_CONST PALETTE pal_8bit, void (*callbac
 
 void rebuild_trans_table()
 {
-    create_rgb_table2(&zq_rgb_table, RAMpal, NULL);
-    create_zc_trans_table(&trans_table, RAMpal, 128, 128, 128);
-    memcpy(&trans_table2, &trans_table, sizeof(COLOR_MAP));
+    // create_rgb_table2(&zq_rgb_table, RAMpal, NULL);
+    // create_zc_trans_table(&trans_table, RAMpal, 128, 128, 128);
+    // memcpy(&trans_table2, &trans_table, sizeof(COLOR_MAP));
     
-    for(int32_t q=0; q<PAL_SIZE; q++)
-    {
-        trans_table2.data[0][q] = q;
-        trans_table2.data[q][q] = q;
-    }
+    // for(int32_t q=0; q<PAL_SIZE; q++)
+    // {
+    //     trans_table2.data[0][q] = q;
+    //     trans_table2.data[q][q] = q;
+    // }
+
+	// Creating rgb_table and trans_table is pretty expensive, so try not to redo the same work
+	// within a short period of time by using a cache.
+	typedef std::array<uint32_t, PAL_SIZE> pal_table_cache_key;
+	struct pal_table_cache_entry {
+		RGB_MAP rgb_table;
+		COLOR_MAP trans_table;
+	};
+	static std::map<pal_table_cache_key, pal_table_cache_entry> pal_table_cache;
+
+	static constexpr int pal_table_cache_max_memory_mb = 10;
+	static constexpr int pal_table_cache_max_size = pal_table_cache_max_memory_mb / ((double)sizeof(pal_table_cache_entry) / 1024 / 1024);
+	if (pal_table_cache.size() > pal_table_cache_max_size)
+		pal_table_cache.clear();
+
+	pal_table_cache_key key;
+	for (int i = 0; i < PAL_SIZE; i++)
+		key[i] = RAMpal[i].r + (RAMpal[i].g << 8) + (RAMpal[i].b << 16);
+	auto cache_it = pal_table_cache.find(key);
+	if (cache_it == pal_table_cache.end())
+	{
+		create_rgb_table(&zq_rgb_table, RAMpal, NULL);
+		create_zc_trans_table(&trans_table, RAMpal, 128, 128, 128);
+		pal_table_cache[key] = {rgb_table, trans_table};
+		trans_table2 = trans_table;
+	}
+	else
+	{
+		zq_rgb_table = cache_it->second.rgb_table;
+		trans_table = cache_it->second.trans_table;
+		trans_table2 = cache_it->second.trans_table;
+	}
+
+	for (int i = 0; i < PAL_SIZE; i++)
+	{
+		trans_table2.data[0][i] = i;
+		trans_table2.data[i][i] = i;
+	}
 }
 
 int32_t isFullScreen()
@@ -23578,6 +23842,7 @@ int32_t main(int32_t argc,char **argv)
 	ShowCurScreenOutline			= zc_get_config("zquest","show_current_screen_outline",1);
 	ShowScreenGrid				   = zc_get_config("zquest","show_screen_grid",0);
 	ShowRegionGrid				   = zc_get_config("zquest","show_region_grid",1);
+	HighQualityScreenRendering	   = zc_get_config("zquest","high_quality_screen_rendering",1);
 	GridColor					  = zc_get_config("zquest","grid_color",15);
 	CmbCursorCol					  = zc_get_config("zquest","combo_cursor_color",15);
 	TilePgCursorCol					  = zc_get_config("zquest","tpage_cursor_color",15);
@@ -24164,6 +24429,7 @@ int32_t main(int32_t argc,char **argv)
 		view_menu.select_uid(MENUID_VIEW_L2BG, ViewLayer2BG);
 		view_menu.select_uid(MENUID_VIEW_L3BG, ViewLayer3BG);
 		view_menu.select_uid(MENUID_VIEW_LAYERHIGHLIGHT, ActiveLayerHighlight);
+		view_menu.select_uid(MENUID_VIEW_HIGH_QUALITY_SCREEN_RENDERING, HighQualityScreenRendering);
 		
 		maps_menu.disable_uid(MENUID_MAPS_NEXT, !map_count || Map.getCurrMap() >= map_count);
 		maps_menu.disable_uid(MENUID_MAPS_PREV, Map.getCurrMap()<=0);
@@ -24546,7 +24812,10 @@ void load_size_poses()
 		mapscreen_y=dialogs[0].h;
 		mapscreen_screenunit_scale=2;
 		mapscreen_single_scale = (double)mapscreen_screenunit_scale / Map.getViewSize();
-		showedges=Map.getViewSize() <= 2 ? 1 : 0;
+		if (HighQualityScreenRendering)
+			showedges=Map.getViewSize() == 1 ? 1 : 0;
+		else
+			showedges=Map.getViewSize() <= 2 ? 1 : 0;
 		showallpanels=0;
 		
 		blackout_color=8;
@@ -25290,6 +25559,7 @@ void run_zq_frame()
 		reload_fonts = false;
 	}
 
+	handlePreviewMode();
 	domouse();
 	custom_vsync();
 	refresh(rCLEAR|rALL);
@@ -25733,28 +26003,6 @@ int32_t count_lines(char const* str)
 	}
 	
 	return count;
-}
-
-void debug_pos(size_and_pos const& pos, int color)
-{
-	if(pos.w < 1 || pos.h < 1)
-		return;
-	if(pos.xscale > 1 || pos.yscale > 1)
-	{
-		auto maxind = pos.w*pos.h;
-		for(auto q = 0; q < maxind; ++q)
-		{
-			auto& sub = pos.subsquare(q);
-			if(sub.x < 0) break;
-			highlight_sqr(screen, color, sub, 1);
-		}
-	}
-	else
-	{
-		if(pos.fw > -1 && pos.fh > -1)
-			highlight_frag(screen, color, pos, 1);
-		else highlight_sqr(screen, color, pos, 1);
-	}
 }
 
 void textbox_out(BITMAP* dest, FONT* font, int x, int y, int fg, int bg, char const* str, int align, size_and_pos* dims)

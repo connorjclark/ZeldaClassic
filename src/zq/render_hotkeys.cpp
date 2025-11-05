@@ -415,7 +415,7 @@ void hotkeys_toggle_display(bool show)
 		return;
 	}
 
-	auto parent = get_screen_rti();
+	auto parent = get_menu_rti();
 	parent->add_child(&rti_hotkeys);
 	rti_hotkeys.set_size(parent->width, parent->height);
 }
