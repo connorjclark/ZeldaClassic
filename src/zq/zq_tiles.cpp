@@ -2097,7 +2097,6 @@ void edit_tile(int32_t tile,int32_t flip,int32_t &cs)
 	status_info.y = 308-(status_info.h*status_info.yscale);
 	hover_info.yscale = status_info.yscale;
 	hover_info.y = 338-(hover_info.h*hover_info.yscale);
-	go();
 	undocount = tilesize(newtilebuf[tile].format);
 	clear_selection_grid();
 	selecting_x1=selecting_x2=selecting_y1=selecting_y2=-1;
@@ -3243,7 +3242,6 @@ void edit_tile(int32_t tile,int32_t flip,int32_t &cs)
 	register_blank_tiles();
 	register_used_tiles();
 	clear_tooltip();
-	comeback();
 	destroy_bitmap(selection_pattern);
 	destroy_bitmap(selecting_pattern);
 	destroy_bitmap(intersection_pattern);
@@ -9009,9 +9007,7 @@ int32_t select_tile(int32_t &tile,int32_t &flip,int32_t type,int32_t &cs,bool ed
 	bool rect_sel=true;
 	bound(first,0,(TILES_PER_PAGE*TILE_PAGES)-1);
 	position_mouse_z(0);
-	
-	go();
-	
+
 	register_used_tiles();
 	int32_t w = 640;
 	int32_t h = 480;
@@ -10440,7 +10436,6 @@ REDRAW:
 		rest(1);
 	}
 	
-	comeback();
 	register_blank_tiles();
 	register_used_tiles();
 	setup_combo_animations();
@@ -10799,8 +10794,7 @@ bool select_combo_2(int32_t &cmb,int32_t &cs)
 	int32_t copycnt=0;
 	
 	position_mouse_z(0);
-		
-	go();
+
 	int32_t w = 640;
 	int32_t h = 480;
 	int32_t window_xofs=(zq_screen_w-w-12)>>1;
@@ -11112,7 +11106,6 @@ bool select_combo_2(int32_t &cmb,int32_t &cs)
 		rest(1);
 	}
 	
-	comeback();
 	setup_combo_animations();
 	setup_combo_animations2();
 	
@@ -11208,7 +11201,6 @@ int32_t combo_screen(int32_t pg, int32_t tl)
 	
 	bool masscopy;
 	
-	go();
 	int32_t w = 640;
 	int32_t h = 480;
 	int32_t window_xofs=(zq_screen_w-w-12)>>1;
@@ -11228,6 +11220,7 @@ int32_t combo_screen(int32_t pg, int32_t tl)
 	while(gui_mouse_b())
 	{
 		/* do nothing */
+		rest(1);
 	}
 	
 	bool bdown=false;
@@ -11983,7 +11976,6 @@ REDRAW:
 	
 	while(gui_mouse_b())
 		rest(1);
-	comeback();
 	setup_combo_animations();
 	setup_combo_animations2();
 	_selected_combo = tile;
