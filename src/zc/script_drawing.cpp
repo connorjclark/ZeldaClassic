@@ -11863,7 +11863,7 @@ void do_primitives(BITMAP *targetBitmap, int32_t type, int32_t xoff, int32_t yof
 	if(!script_drawing_commands.is_dirty(type))
 		return; //No draws to this layer
 
-	color_map = &trans_table2;
+	color_map = trans_table2;
 	//--script_drawing_commands[][] reference--
 	//[][0]: type
 	//[][1-16]: defined by type
@@ -12237,7 +12237,7 @@ void do_primitives(BITMAP *targetBitmap, int32_t type, int32_t xoff, int32_t yof
 	}
 	
 	
-	color_map=&trans_table;
+	color_map=trans_table;
 }
 
 void CScriptDrawingCommands::Clear()

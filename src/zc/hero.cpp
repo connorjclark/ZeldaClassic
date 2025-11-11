@@ -1,6 +1,7 @@
 #include "base/general.h"
 #include "base/handles.h"
 #include "base/mapscr.h"
+#include "base/pal_tables.h"
 #include "base/util.h"
 #include "base/zdefs.h"
 #include "zc/maps.h"
@@ -29167,7 +29168,7 @@ static void scrollscr_handle_dark(mapscr* newscr, mapscr* oldscr, const nearby_s
 		ditherblit(darkscr_bmp_trans,darkscr_bmp_trans,0,game->get_dither_type(),game->get_dither_arg());
 	}
 	
-	color_map = &trans_table2;
+	color_map = trans_table2;
 	if(hero_scr->flags9 & fDARK_TRANS) //draw the dark as transparent
 	{
 		draw_trans_sprite(framebuf, darkscr_bmp, 0, 0);
@@ -29179,7 +29180,7 @@ static void scrollscr_handle_dark(mapscr* newscr, mapscr* oldscr, const nearby_s
 		masked_blit(darkscr_bmp, framebuf, 0, 0, 0, 0, framebuf->w, framebuf->h);
 		draw_trans_sprite(framebuf, darkscr_bmp_trans, 0, 0);
 	}
-	color_map = &trans_table;
+	color_map = trans_table;
 	
 	set_clip_rect(framebuf, 0, 0, framebuf->w, framebuf->h);
 	do_primitives(framebuf, SPLAYER_DARKROOM_OVER);
@@ -32668,6 +32669,7 @@ void HeroClass::heroDeathAnimation()
 				}
 				QMisc.colors.hero_dot = tmp_hero_dot;
         bool clearedit = false;
+
 	do
 	{
 		if(f<254)
@@ -32944,7 +32946,7 @@ void HeroClass::heroDeathAnimation()
 		++f;
 	}
 	while(f<353 && !Quit);
-    
+
 	destroy_bitmap(subscrbmp);
 	action=none; FFCore.setHeroAction(none);
 	if ( dontdraw < 2 ) { dontdraw=0; }
