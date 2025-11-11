@@ -1,4 +1,9 @@
-cmake_minimum_required(VERSION 3.27)
+if(APPLE)
+	# needed for https://gitlab.kitware.com/cmake/cmake/-/commit/7b99c42e57b11afe818827ac537ca020c020addd
+	cmake_minimum_required(VERSION 3.29)
+else()
+	cmake_minimum_required(VERSION 3.27)
+endif()
 set(CMAKE_CONFIGURATION_TYPES Asan Debug Release RelWithDebInfo Coverage CACHE STRING INTERNAL FORCE)
 project (ZeldaClassic)
 
