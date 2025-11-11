@@ -161,7 +161,7 @@ if(NOT LINUX)
 else()
 	install(CODE "execute_process(COMMAND ${PYTHON} \"${CMAKE_CURRENT_SOURCE_DIR}/scripts/package.py\" --skip_binaries --skip_archive --build_folder \"\${BUILD_FOLDER}\" --package_folder \"$<INSTALL_PREFIX>\" --keep_existing_files COMMAND_ERROR_IS_FATAL ANY)")
 
-	set(CMAKE_INSTALL_RPATH "$ORIGIN/../lib")
+	# set(CMAKE_INSTALL_RPATH "$ORIGIN/../lib")
 	set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 endif()
 
