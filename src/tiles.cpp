@@ -2246,13 +2246,13 @@ void puttile16(BITMAP* dest,int32_t tile,int32_t x,int32_t y,int32_t cset,int32_
         cb = dest->cb;
     }
 
-	if (x + 16 < cl)
+	if (x + 16 <= cl)
 		return;
-	if (x > cr)
+	if (x >= cr)
 		return;
-	if (y + 16 < ct)
+	if (y + 16 <= ct)
 		return;
-	if (y > cb)
+	if (y >= cb)
 		return;
         
     if(tile<0 || tile>=NEWMAXTILES)
@@ -2270,99 +2270,7 @@ void puttile16(BITMAP* dest,int32_t tile,int32_t x,int32_t y,int32_t cset,int32_
     cset <<= CSET_SHFT;
     const byte *bytes = get_tile_bytes(tile, flip&5);
 
-    // 0: fast, no bounds checking
-    // 1: slow, bounds checking
-    int draw_mode = x < cl || y < ct || x >= cr-16 || y >= cb-16 || x%8 || y%8 ? 1 : 0;
-    if (draw_mode == 1)
-    {
-        draw_tile16_unified(dest, cl, ct, cr, cb, bytes, x, y, cset, flip, false);
-        return;
-    }
-    
-    switch(flip&2)
-    {
-        /*
-          case 1:
-          {
-          byte *si = unpackbuf;
-          for(int32_t dy=0; dy<16; ++dy)
-          {
-          // 1 byte at a time
-          byte *di = &(dest->line[y+dy][x+15]);
-          for(int32_t i=0; i<16; ++i)
-          *(di--) = *(si++) + cset;
-          }
-          } break;
-          */
-    case 2: //vertical
-    {
-        /*
-          dword *si = (dword*)unpackbuf;
-          for(int32_t dy=15; dy>=0; --dy)
-          {
-          // 4 bytes at a time
-          dword *di=&((dword*)dest->line[y+dy])[x>>2];
-          for(int32_t i=0; i<16; i+=4)
-          *(di++) = *(si++) + lcset;
-          }
-          */
-        qword llcset = (((qword)cset)<<56)+(((qword)cset)<<48)+(((qword)cset)<<40)+(((qword)cset)<<32)+(((qword)cset)<<24)+(cset<<16)+(cset<<8)+cset;
-        //      qword llcset = (((qword)cset)<<56)|(((qword)cset)<<48)|(((qword)cset)<<40)|(((qword)cset)<<32)|(((qword)cset)<<24)|(cset<<16)|(cset<<8)|cset;
-        const qword *si = (const qword*)bytes;
-        
-        for(int32_t dy=15; dy>=0; --dy)
-        {
-            // 4 bytes at a time
-            //        qword *di=&((qword*)dest->line[y+dy])[x>>3];
-            qword *di=(qword*)(dest->line[y+dy]+x);
-            
-            for(int32_t i=0; i<16; i+=8)
-                *(di++) = *(si++) + llcset;
-        }
-    }
-    break;
-    
-    /*
-      case 3:
-      {
-      byte *si = unpackbuf;
-      for(int32_t dy=15; dy>=0; --dy)
-      {
-      // 1 byte at a time
-      byte *di = &(dest->line[y+dy][x+15]);
-      for(int32_t i=0; i<16; ++i)
-      *(di--) = *(si++) + cset;
-      }
-      } break;
-      */
-    default: //none or invalid
-    {
-        /*
-          dword *si = (dword*)unpackbuf;
-          for(int32_t dy=0; dy<16; ++dy)
-          {
-          // 4 bytes at a time
-          dword *di=&((dword*)dest->line[y+dy])[x>>2];
-          for(int32_t i=0; i<16; i+=4)
-          *(di++) = *(si++) + lcset;
-          }
-          */
-        qword llcset = (((qword)cset)<<56)+(((qword)cset)<<48)+(((qword)cset)<<40)+(((qword)cset)<<32)+(((qword)cset)<<24)+(cset<<16)+(cset<<8)+cset;
-        //      qword llcset = (((qword)cset)<<56)|(((qword)cset)<<48)|(((qword)cset)<<40)|(((qword)cset)<<32)|(((qword)cset)<<24)|(cset<<16)|(cset<<8)|cset;
-        const qword *si = (const qword*)bytes;
-        
-        for(int32_t dy=0; dy<16; ++dy)
-        {
-            // 4 bytes at a time
-            //        qword *di=&((qword*)dest->line[y+dy])[x>>3];
-            qword *di=(qword*)(dest->line[y+dy]+x);
-            
-            for(int32_t i=0; i<16; i+=8)
-                *(di++) = *(si++) + llcset;
-        }
-    }
-    break;
-    }
+	draw_tile16_unified(dest, cl, ct, cr, cb, bytes, x, y, cset, flip, false);
 }
 
 void oldputtile16(BITMAP* dest,int32_t tile,int32_t x,int32_t y,int32_t cset,int32_t flip) //fixed
