@@ -66,6 +66,10 @@ build_dir: Path = Path.cwd() / args.build_folder
 packages_dir = build_dir / 'packages'
 package_dir = Path(args.package_folder) if args.package_folder else packages_dir / 'zc'
 
+print(package_dir, file=sys.stderr)
+print(sys.argv)
+# exit(1)
+
 
 def binary_file(base_dir: Path, path: str):
     as_path = base_dir / path

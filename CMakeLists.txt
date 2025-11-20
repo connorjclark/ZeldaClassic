@@ -48,6 +48,8 @@ if(ZC_OFFICIAL)
 	endif()
 endif()
 
+set(DEB_PACKAGE OFF)
+
 find_program(PYTHON python3 python REQUIRED)
 
 if(MSVC)
@@ -151,10 +153,42 @@ function(zc_install_targets)
 		ARCHIVE DESTINATION lib/zquestclassic)
 endfunction()
 
+get_property(is_multi_config GLOBAL PROPERTY GENERATOR_IS_MULTI_CONFIG)
+if(is_multi_config)
+	set(BUILD_FOLDER "${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>")
+else()
+	set(BUILD_FOLDER "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}")
+endif()
+
 if(NOT LINUX)
 	install(CODE "MESSAGE(FATAL_ERROR \"The cmake `install` target is currently only supported for linux. Use the `package` target instead.\")")
 else()
 	install(CODE "execute_process(COMMAND ${PYTHON} \"${CMAKE_CURRENT_SOURCE_DIR}/scripts/package.py\" --skip_binaries --skip_archive --build_folder \"\${BUILD_FOLDER}\" --package_folder \"$<INSTALL_PREFIX>\" --keep_existing_files COMMAND_ERROR_IS_FATAL ANY)")
+
+	# install(CODE "execute_process(COMMAND \"${PYTHON}\" \"${CMAKE_CURRENT_SOURCE_DIR}/scripts/package.py\" --skip_binaries --skip_archive --build_folder \"${BUILD_FOLDER}\" --package_folder \"$<INSTALL_PREFIX>\" --keep_existing_files COMMAND_ERROR_IS_FATAL ANY)")
+
+	# Handle installing resource files needed at runtime.
+	# install(CODE "
+    #     set(RESOURCE_DEST \"share/zquestclassic\")
+    #     set(FULL_RESOURCE_PATH \"$<INSTALL_PREFIX>/\${RESOURCE_DEST}\")
+    #     if(DEFINED ENV{DESTDIR})
+    #         set(FULL_RESOURCE_PATH \"\$ENV{DESTDIR}\${FULL_RESOURCE_PATH}\")
+    #     endif()
+    #     message(STATUS \"Installing resources to: \${FULL_RESOURCE_PATH}\")
+    #     execute_process(
+    #         COMMAND \"${PYTHON}\" \"${CMAKE_CURRENT_SOURCE_DIR}/scripts/package.py\"
+    #         --skip_binaries
+    #         --skip_archive
+    #         --build_folder \"${BUILD_FOLDER}\"
+    #         --package_folder \"\${FULL_RESOURCE_PATH}\"
+    #         --keep_existing_files
+    #         COMMAND_ERROR_IS_FATAL ANY
+    #     )
+    # ")
+
+	# set(CPACK_INSTALL_COMMANDS
+	# 	"\"${PYTHON}\" \"${CMAKE_CURRENT_SOURCE_DIR}/scripts/package.py\" --skip_binaries --skip_archive --build_folder \"${BUILD_FOLDER}\" --package_folder \"$<INSTALL_PREFIX>\" --keep_existing_files"
+	# )
 
 	set(CMAKE_INSTALL_RPATH "$ORIGIN/../lib")
 	set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
@@ -533,13 +567,6 @@ endif()
 
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
 	add_compile_options(-mssse3)
-endif()
-
-get_property(is_multi_config GLOBAL PROPERTY GENERATOR_IS_MULTI_CONFIG)
-if(is_multi_config)
-	set(BUILD_FOLDER "${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>")
-else()
-	set(BUILD_FOLDER "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}")
 endif()
 
 #############################################################
@@ -1274,41 +1301,44 @@ else()
 	set_source_files_properties(src/parser/lex.yy.cpp PROPERTIES COMPILE_FLAGS -Wno-everything)
 endif()
 
-add_custom_command(
-	COMMAND ${PYTHON} ${CMAKE_CURRENT_SOURCE_DIR}/scripts/package.py --skip_binaries --copy_to_build_folder --build_folder "${BUILD_FOLDER}" --keep_existing_files
-	OUTPUT copy_resources_if_not_exist.stamp
-)
-add_custom_target(copy_resources_if_not_exist DEPENDS copy_resources_if_not_exist.stamp)
-set_source_files_properties(copy_resources_if_not_exist.stamp PROPERTIES SYMBOLIC 1)
+# if(NOT DEB_PACKAGE)
+# 	add_custom_command(
+# 		COMMAND ${PYTHON} ${CMAKE_CURRENT_SOURCE_DIR}/scripts/package.py --skip_binaries --copy_to_build_folder --build_folder "${BUILD_FOLDER}" --keep_existing_files
+# 		OUTPUT copy_resources_if_not_exist.stamp
+# 	)
+# 	add_custom_target(copy_resources_if_not_exist DEPENDS copy_resources_if_not_exist.stamp)
+# 	set_source_files_properties(copy_resources_if_not_exist.stamp PROPERTIES SYMBOLIC 1)
+	
+# 	add_custom_command(
+# 		COMMAND ${PYTHON} ${CMAKE_CURRENT_SOURCE_DIR}/scripts/package.py --skip_binaries --copy_to_build_folder --build_folder "${BUILD_FOLDER}"
+# 		OUTPUT copy_resources.stamp
+# 	)
+# 	add_custom_target(copy_resources DEPENDS copy_resources.stamp)
+# 	set_source_files_properties(copy_resources.stamp PROPERTIES SYMBOLIC 1)
+	
+# 	add_custom_command(
+# 		COMMAND ${PYTHON} ${CMAKE_CURRENT_SOURCE_DIR}/scripts/package.py --build_folder "${BUILD_FOLDER}" --clean_first
+# 		OUTPUT package.stamp
+# 		DEPENDS ${zc_targets}
+# 	)
 
-add_custom_command(
-	COMMAND ${PYTHON} ${CMAKE_CURRENT_SOURCE_DIR}/scripts/package.py --skip_binaries --copy_to_build_folder --build_folder "${BUILD_FOLDER}"
-	OUTPUT copy_resources.stamp
-)
-add_custom_target(copy_resources DEPENDS copy_resources.stamp)
-set_source_files_properties(copy_resources.stamp PROPERTIES SYMBOLIC 1)
+# 	add_custom_target(package DEPENDS package.stamp)
+# 	set_source_files_properties(package.stamp PROPERTIES SYMBOLIC 1)
+	
+# 	add_custom_command(
+# 		COMMAND ${PYTHON} ${CMAKE_CURRENT_SOURCE_DIR}/scripts/package.py --build_folder "${BUILD_FOLDER}" --clean_first --skip_archive
+# 		OUTPUT package_no_archive.stamp
+# 		DEPENDS ${zc_targets}
+# 	)
+# 	add_custom_target(package_no_archive DEPENDS package_no_archive.stamp)
+# 	set_source_files_properties(package_no_archive.stamp PROPERTIES SYMBOLIC 1)
 
-add_custom_command(
-	COMMAND ${PYTHON} ${CMAKE_CURRENT_SOURCE_DIR}/scripts/package.py --build_folder "${BUILD_FOLDER}" --clean_first
-	OUTPUT package.stamp
-	DEPENDS ${zc_targets}
-)
-add_custom_target(package DEPENDS package.stamp)
-set_source_files_properties(package.stamp PROPERTIES SYMBOLIC 1)
-
-add_custom_command(
-	COMMAND ${PYTHON} ${CMAKE_CURRENT_SOURCE_DIR}/scripts/package.py --build_folder "${BUILD_FOLDER}" --clean_first --skip_archive
-	OUTPUT package_no_archive.stamp
-	DEPENDS ${zc_targets}
-)
-add_custom_target(package_no_archive DEPENDS package_no_archive.stamp)
-set_source_files_properties(package_no_archive.stamp PROPERTIES SYMBOLIC 1)
-
-if(COPY_RESOURCES AND NOT EMSCRIPTEN)
-	foreach(target IN LISTS zc_targets)
-		add_dependencies(${target} copy_resources_if_not_exist)
-	endforeach()
-endif()
+# 	if(COPY_RESOURCES AND NOT EMSCRIPTEN)
+# 		foreach(target IN LISTS zc_targets)
+# 			add_dependencies(${target} copy_resources_if_not_exist)
+# 		endforeach()
+# 	endif()
+# endif()
 
 # Add some targets for running replay tests.
 # TODO: Visual Studio can't cancel custom commands from CMake
@@ -1396,3 +1426,39 @@ if(EMSCRIPTEN)
 endif()
 
 zc_install_targets(allegro allegro-legacy allegro_with_legacy zlauncher zplayer zeditor zscript zcsound ${SOUNDLIBS})
+
+if(LINUX AND DEB_PACKAGE)
+    # 1. Packaging Install Prefix
+    # Your top-level CMake sets CMAKE_INSTALL_PREFIX to $HOME/zquestclassic.
+    # However, .deb packages usually install to /usr or /opt. 
+    # We override this for CPack so the internal paths in the .deb map correctly (e.g. /usr/bin).
+    set(CPACK_PACKAGING_INSTALL_PREFIX "/usr")
+
+    # 2. General Package Metadata
+    # Debian package names should be lower-case.
+    set(CPACK_PACKAGE_NAME "zquestclassic") 
+    set(CPACK_PACKAGE_VENDOR "Zelda Classic Team")
+    set(CPACK_PACKAGE_CONTACT "maintainer@zquestclassic.com") # Required by Debian
+    set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Zelda Classic Game Engine")
+    set(CPACK_PACKAGE_DESCRIPTION "The Zelda Classic game engine and editor.")
+    
+    # Handle Versioning
+    if(ZC_VERSION)
+        set(CPACK_PACKAGE_VERSION "${ZC_VERSION}")
+    else()
+        set(CPACK_PACKAGE_VERSION "2.55.0") # Fallback if ZC_VERSION isn't set in cache
+    endif()
+
+    # 3. Debian Specific Settings
+    set(CPACK_GENERATOR "DEB")
+    set(CPACK_DEBIAN_PACKAGE_MAINTAINER "Zelda Classic Team")
+    set(CPACK_DEBIAN_PACKAGE_SECTION "games")
+    
+    # This effectively "Auto-detects" dependencies (like libc, libpng, etc)
+    # by inspecting the binaries you are installing.
+    set(CPACK_DEBIAN_PACKAGE_SHLIBDEPS ON)
+
+    # 4. Initialize CPack
+    # This must be the last command in the CPack setup.
+    include(CPack)
+endif()
