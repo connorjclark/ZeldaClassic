@@ -74,7 +74,10 @@ mkdir -p "$tmp_libs_dir"
 find "$contents/Resources" -name "*.dylib" -exec mv {} "$tmp_libs_dir" \;
 
 # Correct the library paths in the executable, and codesign.
-dylibbundler -od -b -d "$contents/libs/" -s "$tmp_libs_dir"
+dylibbundler -od -b -d "$contents/libs/" -s "$tmp_libs_dir" \
+    -x "$contents/Resources/zlauncher" -x "$contents/Resources/zeditor" \
+    -x "$contents/Resources/zplayer" -x "$contents/Resources/zscript" \
+    -x "$contents/Resources/zupdater"
 rm -rf "$tmp_libs_dir"
 
 # Sign the app.
