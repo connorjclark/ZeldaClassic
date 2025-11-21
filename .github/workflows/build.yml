@@ -193,8 +193,6 @@ jobs:
       - run: ccache -s
 
       # Package.
-      - if: inputs.debug-info
-        run: echo "PACKAGE_DEBUG_INFO=1" >> "$GITHUB_ENV"
       - name: Set package vars
         id: set-package-vars
         shell: python
@@ -232,28 +230,38 @@ jobs:
             print('{0}={1}'.format('package-script-args', package_script_args), file=f)
             print('{0}={1}'.format('package-script-args-mac', package_script_args_mac), file=f)
       - name: Package
-        if: inputs.config != 'Coverage' && !contains(inputs.runs-on, 'mac')
         run: |
-          python scripts/package.py ${{ steps.set-package-vars.outputs.package-script-args }} --build_folder build/${{ inputs.config }}
-          mv build/${{ inputs.config }}/packages/${{ steps.set-package-vars.outputs.package-orig-name }} build/${{ inputs.config }}/packages/${{ steps.set-package-vars.outputs.package-name }}
-      - name: Package
-        if: inputs.config != 'Coverage' && contains(inputs.runs-on, 'mac')
-        run: |
-          sh scripts/package_mac.sh ${{ github.workspace }}/build/${{ inputs.config }} ${{ steps.set-package-vars.outputs.package-script-args-mac }}
-          mv build/${{ inputs.config }}/packages/${{ steps.set-package-vars.outputs.package-orig-name }} build/${{ inputs.config }}/packages/${{ steps.set-package-vars.outputs.package-name }}
-      # Coverage builds need the entire build folder.
-      - name: Package
-        if: inputs.config == 'Coverage'
-        run: |
-          python scripts/package.py --build_folder build/${{ inputs.config }} --copy_to_build_folder
           cd build
-          mkdir -p tmp-src/parser
-          cp ../src/parser/lex.yy.cpp tmp-src/parser
-          cp ../src/parser/y.tab.cpp tmp-src/parser
-          cp ../src/parser/y.tab.hpp tmp-src/parser
-          tar czpvf build.tar.gz * --preserve-permissions
-          mkdir ${{ inputs.config }}/packages
-          mv build.tar.gz ${{ inputs.config }}/packages/${{ steps.set-package-vars.outputs.package-name }}
+          cpack -D CPACK_PACKAGE_DIRECTORY=package_output
+          ls package_output
+
+          mv package_output build/${{ inputs.config }}/packages/${{ steps.set-package-vars.outputs.package-name }}
+
+      # - name: Package
+      #   if: inputs.config != 'Coverage' && !contains(inputs.runs-on, 'mac')
+      #   run: |
+      #     python scripts/package.py ${{ steps.set-package-vars.outputs.package-script-args }} --build_folder build/${{ inputs.config }}
+      #     mv build/${{ inputs.config }}/packages/${{ steps.set-package-vars.outputs.package-orig-name }} build/${{ inputs.config }}/packages/${{ steps.set-package-vars.outputs.package-name }}
+      # - name: Package
+      #   if: inputs.config != 'Coverage' && contains(inputs.runs-on, 'mac')
+      #   run: |
+      #     sh scripts/package_mac.sh ${{ github.workspace }}/build/${{ inputs.config }} ${{ steps.set-package-vars.outputs.package-script-args-mac }}
+      #     mv build/${{ inputs.config }}/packages/${{ steps.set-package-vars.outputs.package-orig-name }} build/${{ inputs.config }}/packages/${{ steps.set-package-vars.outputs.package-name }}
+      
+      # TODO !
+      # Coverage builds need the entire build folder.
+      # - name: Package
+      #   if: inputs.config == 'Coverage'
+      #   run: |
+      #     python scripts/package.py --build_folder build/${{ inputs.config }} --copy_to_build_folder
+      #     cd build
+      #     mkdir -p tmp-src/parser
+      #     cp ../src/parser/lex.yy.cpp tmp-src/parser
+      #     cp ../src/parser/y.tab.cpp tmp-src/parser
+      #     cp ../src/parser/y.tab.hpp tmp-src/parser
+      #     tar czpvf build.tar.gz * --preserve-permissions
+      #     mkdir ${{ inputs.config }}/packages
+      #     mv build.tar.gz ${{ inputs.config }}/packages/${{ steps.set-package-vars.outputs.package-name }}
 
       # Fail if any changes were written to any source files.
       - run: git diff --cached --exit-code
