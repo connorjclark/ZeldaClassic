@@ -143,24 +143,34 @@ endfunction(enable_unity_build)
 
 function(zc_install_targets)
 	# The cmake `install` target is currently only supported for linux.
-	if(NOT LINUX)
-		return()
+	# if(NOT LINUX)
+	# 	return()
+	# endif()
+
+	if(APPLE)
+		set_target_properties(${ARGV} PROPERTIES INSTALL_RPATH "@loader_path/../lib")
+	elseif(UNIX)
+		set_target_properties(${ARGV} PROPERTIES INSTALL_RPATH "$ORIGIN/../lib")
+		set_target_properties(${ARGV} PROPERTIES INSTALL_RPATH_USE_LINK_PATH TRUE)
 	endif()
 
 	install(TARGETS ${ARGV}
 		RUNTIME DESTINATION bin
 		LIBRARY DESTINATION lib
-		ARCHIVE DESTINATION lib/zquestclassic)
+		ARCHIVE DESTINATION lib/zquestclassic
+		BUNDLE DESTINATION .)
 endfunction()
 
-if(NOT LINUX)
-	install(CODE "MESSAGE(FATAL_ERROR \"The cmake `install` target is currently only supported for linux. Use the `package` target instead.\")")
-else()
-	install(CODE "execute_process(COMMAND ${PYTHON} \"${CMAKE_CURRENT_SOURCE_DIR}/scripts/package.py\" --skip_binaries --skip_archive --build_folder \"\${BUILD_FOLDER}\" --package_folder \"$<INSTALL_PREFIX>\" --keep_existing_files COMMAND_ERROR_IS_FATAL ANY)")
-
-	set(CMAKE_INSTALL_RPATH "$ORIGIN/../lib")
-	set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
-endif()
+install(CODE "
+	execute_process(
+		COMMAND ${PYTHON} \"${CMAKE_CURRENT_SOURCE_DIR}/scripts/package.py\"
+		--skip_binaries
+		--skip_archive
+		--build_folder \"\${BUILD_FOLDER}\"
+		--package_folder \"$<INSTALL_PREFIX>\"
+		--keep_existing_files
+		COMMAND_ERROR_IS_FATAL ANY)
+")
 
 #############################################################
 # deps
@@ -234,6 +244,8 @@ elseif(NOT EMSCRIPTEN)
 		set(PNG_INCLUDE_DIRS "${png_SOURCE_DIR}" "${png_BINARY_DIR}")
 		set(PNG_INCLUDE_DIR "${png_SOURCE_DIR}" "${png_BINARY_DIR}")
 	endif()
+
+	zc_install_targets(${PNG_LIBRARIES})
 endif()
 
 FetchContent_Declare(json
@@ -1039,6 +1051,62 @@ target_compile_definitions(zlauncher PRIVATE IS_LAUNCHER)
 set_property(TARGET zlauncher PROPERTY VS_DPI_AWARE "PerMonitor")
 target_link_libraries(zlauncher PRIVATE zalleg zcbase zcgui zconsolelogger ${LAUNCHERLIBSEXTRA})
 
+if(APPLE)
+	file(WRITE "${CMAKE_BINARY_DIR}/dummy_main.cpp" "int main() { return 0; }")
+
+	add_executable(ZQuestClassicAppBundle "${CMAKE_BINARY_DIR}/dummy_main.cpp")
+	add_dependencies(ZQuestClassicAppBundle zlauncher zplayer zeditor zscript)
+
+	set_target_properties(ZQuestClassicAppBundle PROPERTIES
+		MACOSX_BUNDLE TRUE
+		OUTPUT_NAME "ZQuest Classic"
+		MACOSX_BUNDLE_BUNDLE_NAME "ZQuest Classic"
+		MACOSX_BUNDLE_GUI_IDENTIFIER "com.zquestclassic.www"
+		MACOSX_BUNDLE_INFO_PLIST_KEYS "
+			<key>CFBundleExecutable</key>
+			<string>zlauncher</string>
+		"
+	)
+
+	# add_custom_command(TARGET ZeldaPackage POST_BUILD
+	# 	COMMAND ${CMAKE_COMMAND} -E make_directory 
+	# 			"$<TARGET_FILE_DIR:ZeldaPackage>"
+		
+	# 	# Copy zc_player
+	# 	COMMAND ${CMAKE_COMMAND} -E copy_if_different
+	# 			"$<TARGET_FILE:zc_player>"
+	# 			"$<TARGET_FILE_DIR:ZeldaPackage>/"
+
+	# 	# Copy zc_editor (optional, if you want it bundled too)
+	# 	COMMAND ${CMAKE_COMMAND} -E copy_if_different
+	# 			"$<TARGET_FILE:zc_editor>"
+	# 			"$<TARGET_FILE_DIR:ZeldaPackage>/"
+				
+	# 	COMMENT "Injecting real executables into Zelda Classic.app"
+	# )
+
+	 #--------------------------------------------------------------------------
+    # Apple specific
+    set(CPACK_GENERATOR "DragNDrop")
+    set(CPACK_PACKAGING_INSTALL_PREFIX "/")
+	# CPACK_BUNDLE_PLIST
+
+    set(MACOSX_BUNDLE_BUNDLE_NAME ${CPACK_PACKAGE_NAME})
+    set(MACOSX_BUNDLE_BUNDLE_GUI_IDENTIFIER "com.zquestclassic.www")
+    set(MACOSX_BUNDLE_ICON_FILE ${PROJECT_SOURCE_DIR}/packaging/ exampleApp.icns)
+    set(MACOSX_BUNDLE_INFO_PLIST ${PROJECT_SOURCE_DIR}/scrits/Info.plist)
+    set(MACOSX_BUNDLE_BUNDLE_VERSION "${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}.${PROJECT_VERSION_PATCH}")
+    
+    set_source_files_properties(${PROJECT_SOURCE_DIR}/packaging/exampleApp.icns PROPERTIES MACOSX_PACKAGE_LOCATION "Resources")
+    
+    set(CPACK_DMG_VOLUME_NAME "ZQuest Classic")
+    # set(CPACK_DMG_DS_STORE_SETUP_SCRIPT "${PROJECT_SOURCE_DIR}/packaging/DS_Store.scpt") 
+    # set(CPACK_DMG_BACKGROUND_IMAGE "${PROJECT_SOURCE_DIR}/packaging/dmg_background.png")
+    # set(CPACK_OSX_PACKAGE_VERSION "10.6") #min package version
+endif()
+
+include(CPack)
+
 #############################################################
 # Standalone
 #############################################################
@@ -1277,41 +1345,41 @@ else()
 	set_source_files_properties(src/parser/lex.yy.cpp PROPERTIES COMPILE_FLAGS -Wno-everything)
 endif()
 
-add_custom_command(
-	COMMAND ${PYTHON} ${CMAKE_CURRENT_SOURCE_DIR}/scripts/package.py --skip_binaries --copy_to_build_folder --build_folder "${BUILD_FOLDER}" --keep_existing_files
-	OUTPUT copy_resources_if_not_exist.stamp
-)
-add_custom_target(copy_resources_if_not_exist DEPENDS copy_resources_if_not_exist.stamp)
-set_source_files_properties(copy_resources_if_not_exist.stamp PROPERTIES SYMBOLIC 1)
+# add_custom_command(
+# 	COMMAND ${PYTHON} ${CMAKE_CURRENT_SOURCE_DIR}/scripts/package.py --skip_binaries --copy_to_build_folder --build_folder "${BUILD_FOLDER}" --keep_existing_files
+# 	OUTPUT copy_resources_if_not_exist.stamp
+# )
+# add_custom_target(copy_resources_if_not_exist DEPENDS copy_resources_if_not_exist.stamp)
+# set_source_files_properties(copy_resources_if_not_exist.stamp PROPERTIES SYMBOLIC 1)
 
-add_custom_command(
-	COMMAND ${PYTHON} ${CMAKE_CURRENT_SOURCE_DIR}/scripts/package.py --skip_binaries --copy_to_build_folder --build_folder "${BUILD_FOLDER}"
-	OUTPUT copy_resources.stamp
-)
-add_custom_target(copy_resources DEPENDS copy_resources.stamp)
-set_source_files_properties(copy_resources.stamp PROPERTIES SYMBOLIC 1)
+# add_custom_command(
+# 	COMMAND ${PYTHON} ${CMAKE_CURRENT_SOURCE_DIR}/scripts/package.py --skip_binaries --copy_to_build_folder --build_folder "${BUILD_FOLDER}"
+# 	OUTPUT copy_resources.stamp
+# )
+# add_custom_target(copy_resources DEPENDS copy_resources.stamp)
+# set_source_files_properties(copy_resources.stamp PROPERTIES SYMBOLIC 1)
 
-add_custom_command(
-	COMMAND ${PYTHON} ${CMAKE_CURRENT_SOURCE_DIR}/scripts/package.py --build_folder "${BUILD_FOLDER}" --clean_first
-	OUTPUT package.stamp
-	DEPENDS ${zc_targets}
-)
-add_custom_target(package DEPENDS package.stamp)
-set_source_files_properties(package.stamp PROPERTIES SYMBOLIC 1)
+# add_custom_command(
+# 	COMMAND ${PYTHON} ${CMAKE_CURRENT_SOURCE_DIR}/scripts/package.py --build_folder "${BUILD_FOLDER}" --clean_first
+# 	OUTPUT package.stamp
+# 	DEPENDS ${zc_targets}
+# )
+# add_custom_target(package DEPENDS package.stamp)
+# set_source_files_properties(package.stamp PROPERTIES SYMBOLIC 1)
 
-add_custom_command(
-	COMMAND ${PYTHON} ${CMAKE_CURRENT_SOURCE_DIR}/scripts/package.py --build_folder "${BUILD_FOLDER}" --clean_first --skip_archive
-	OUTPUT package_no_archive.stamp
-	DEPENDS ${zc_targets}
-)
-add_custom_target(package_no_archive DEPENDS package_no_archive.stamp)
-set_source_files_properties(package_no_archive.stamp PROPERTIES SYMBOLIC 1)
+# add_custom_command(
+# 	COMMAND ${PYTHON} ${CMAKE_CURRENT_SOURCE_DIR}/scripts/package.py --build_folder "${BUILD_FOLDER}" --clean_first --skip_archive
+# 	OUTPUT package_no_archive.stamp
+# 	DEPENDS ${zc_targets}
+# )
+# add_custom_target(package_no_archive DEPENDS package_no_archive.stamp)
+# set_source_files_properties(package_no_archive.stamp PROPERTIES SYMBOLIC 1)
 
-if(COPY_RESOURCES AND NOT EMSCRIPTEN)
-	foreach(target IN LISTS zc_targets)
-		add_dependencies(${target} copy_resources_if_not_exist)
-	endforeach()
-endif()
+# if(COPY_RESOURCES AND NOT EMSCRIPTEN)
+# 	foreach(target IN LISTS zc_targets)
+# 		add_dependencies(${target} copy_resources_if_not_exist)
+# 	endforeach()
+# endif()
 
 # Add some targets for running replay tests.
 # TODO: Visual Studio can't cancel custom commands from CMake
