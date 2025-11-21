@@ -69,13 +69,13 @@ iconutil -c icns -o "$contents/Resources/icons.icns" "$ICONDIR"
 rm -rf "$ICONDIR"
 
 # Move shared libraries out of bundle (to be re-placed by dylibbundler)
-tmp_libs_dir="$mac_package_dir/libs"
-mkdir -p "$tmp_libs_dir"
-find "$contents/Resources" -name "*.dylib" -exec mv {} "$tmp_libs_dir" \;
+# tmp_libs_dir="$mac_package_dir/libs"
+# mkdir -p "$tmp_libs_dir"
+# find "$contents/Resources" -name "*.dylib" -exec mv {} "$tmp_libs_dir" \;
 
-# Correct the library paths in the executable, and codesign.
-dylibbundler -od -b -d "$contents/libs/" -s "$tmp_libs_dir"
-rm -rf "$tmp_libs_dir"
+# # Correct the library paths in the executable, and codesign.
+# dylibbundler -od -b -d "$contents/libs/" -s "$tmp_libs_dir"
+# rm -rf "$tmp_libs_dir"
 
 # Sign the app.
 codesign --force --deep --preserve-metadata=entitlements,requirements,flags,runtime --sign - "$contents/MacOS/mac_entry.sh"
