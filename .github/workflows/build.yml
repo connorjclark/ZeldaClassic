@@ -233,10 +233,7 @@ jobs:
       - name: Package
         run: |
           cd build
-          echo ls
-          ls
-          echo ls Release
-          ls Release
+          cd ${{ inputs.config }}
           mkdir package_output
           cpack --verbose -D CPACK_PACKAGE_DIRECTORY=$PWD/package_output
 
