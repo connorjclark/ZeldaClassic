@@ -57,8 +57,6 @@ if(APPLE)
     set(CPACK_GENERATOR "DragNDrop")
     set(CPACK_PACKAGING_INSTALL_PREFIX "/")
     set(CPACK_DMG_VOLUME_NAME "ZQuest Classic")
-	# TODO ! Make it say "Take this!" at top.
-	# https://fontmeme.com/pixel-fonts/
 	set(CPACK_DMG_DS_STORE_SETUP_SCRIPT ${PROJECT_SOURCE_DIR}/packaging/MacDMGSetup.scpt)
 	set(CPACK_DMG_BACKGROUND_IMAGE ${PROJECT_SOURCE_DIR}/packaging/MacDMGBackground.png)
 
