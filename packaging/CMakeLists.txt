@@ -56,6 +56,7 @@ install(CODE "
 
 # TODO ! zstandalone ? crashpad handler ?
 # TODO ! run generate_mac_bundle_icons at install time?
+# TODO ! PACKAGE_DEBUG_INFO needed? Try causing error in zplayer CI job and see if stack trace is given.
 
 if(APPLE)
     set(CPACK_GENERATOR "DragNDrop")
