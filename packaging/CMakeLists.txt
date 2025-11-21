@@ -1,38 +1,38 @@
-# add_custom_command(
-# 	COMMAND ${PYTHON} ${CMAKE_CURRENT_SOURCE_DIR}/scripts/package.py --skip_binaries --copy_to_build_folder --build_folder "${BUILD_FOLDER}" --keep_existing_files
-# 	OUTPUT copy_resources_if_not_exist.stamp
-# )
-# add_custom_target(copy_resources_if_not_exist DEPENDS copy_resources_if_not_exist.stamp)
-# set_source_files_properties(copy_resources_if_not_exist.stamp PROPERTIES SYMBOLIC 1)
+add_custom_command(
+	COMMAND ${PYTHON} ${CMAKE_CURRENT_SOURCE_DIR}/scripts/package.py --skip_binaries --copy_to_build_folder --build_folder "${BUILD_FOLDER}" --keep_existing_files
+	OUTPUT copy_resources_if_not_exist.stamp
+)
+add_custom_target(copy_resources_if_not_exist DEPENDS copy_resources_if_not_exist.stamp)
+set_source_files_properties(copy_resources_if_not_exist.stamp PROPERTIES SYMBOLIC 1)
 
-# add_custom_command(
-# 	COMMAND ${PYTHON} ${CMAKE_CURRENT_SOURCE_DIR}/scripts/package.py --skip_binaries --copy_to_build_folder --build_folder "${BUILD_FOLDER}"
-# 	OUTPUT copy_resources.stamp
-# )
-# add_custom_target(copy_resources DEPENDS copy_resources.stamp)
-# set_source_files_properties(copy_resources.stamp PROPERTIES SYMBOLIC 1)
+add_custom_command(
+	COMMAND ${PYTHON} ${CMAKE_CURRENT_SOURCE_DIR}/scripts/package.py --skip_binaries --copy_to_build_folder --build_folder "${BUILD_FOLDER}"
+	OUTPUT copy_resources.stamp
+)
+add_custom_target(copy_resources DEPENDS copy_resources.stamp)
+set_source_files_properties(copy_resources.stamp PROPERTIES SYMBOLIC 1)
 
-# add_custom_command(
-# 	COMMAND ${PYTHON} ${CMAKE_CURRENT_SOURCE_DIR}/scripts/package.py --build_folder "${BUILD_FOLDER}" --clean_first
-# 	OUTPUT package.stamp
-# 	DEPENDS ${zc_targets}
-# )
-# add_custom_target(package DEPENDS package.stamp)
-# set_source_files_properties(package.stamp PROPERTIES SYMBOLIC 1)
+add_custom_command(
+	COMMAND ${PYTHON} ${CMAKE_CURRENT_SOURCE_DIR}/scripts/package.py --build_folder "${BUILD_FOLDER}" --clean_first
+	OUTPUT package.stamp
+	DEPENDS ${zc_targets}
+)
+add_custom_target(package_zc DEPENDS package.stamp)
+set_source_files_properties(package.stamp PROPERTIES SYMBOLIC 1)
 
-# add_custom_command(
-# 	COMMAND ${PYTHON} ${CMAKE_CURRENT_SOURCE_DIR}/scripts/package.py --build_folder "${BUILD_FOLDER}" --clean_first --skip_archive
-# 	OUTPUT package_no_archive.stamp
-# 	DEPENDS ${zc_targets}
-# )
-# add_custom_target(package_no_archive DEPENDS package_no_archive.stamp)
-# set_source_files_properties(package_no_archive.stamp PROPERTIES SYMBOLIC 1)
+add_custom_command(
+	COMMAND ${PYTHON} ${CMAKE_CURRENT_SOURCE_DIR}/scripts/package.py --build_folder "${BUILD_FOLDER}" --clean_first --skip_archive
+	OUTPUT package_no_archive.stamp
+	DEPENDS ${zc_targets}
+)
+add_custom_target(package_zc_no_archive DEPENDS package_no_archive.stamp)
+set_source_files_properties(package_no_archive.stamp PROPERTIES SYMBOLIC 1)
 
-# if(COPY_RESOURCES AND NOT EMSCRIPTEN)
-# 	foreach(target IN LISTS zc_targets)
-# 		add_dependencies(${target} copy_resources_if_not_exist)
-# 	endforeach()
-# endif()
+if(COPY_RESOURCES AND NOT EMSCRIPTEN)
+	foreach(target IN LISTS zc_targets)
+		add_dependencies(${target} copy_resources_if_not_exist)
+	endforeach()
+endif()
 
 if(APPLE)
     set(INSTALL_DATA_DIR "ZQuest Classic.app/Contents/Resources")
