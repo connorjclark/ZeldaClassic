@@ -233,9 +233,8 @@ jobs:
       - name: Package
         run: |
           cd build
-          cd ${{ inputs.config }}
           mkdir package_output
-          cpack --verbose -D CPACK_PACKAGE_DIRECTORY=$PWD/package_output
+          cpack --verbose -C ${{ inputs.config }} -D CPACK_PACKAGE_DIRECTORY=$PWD/package_output
 
           ls package_output
           mv package_output build/${{ inputs.config }}/packages/${{ steps.set-package-vars.outputs.package-name }}
