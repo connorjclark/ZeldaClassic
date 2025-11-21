@@ -29,6 +29,7 @@ set(WANT_NFD TRUE CACHE BOOL "Include nativefiledialog")
 set(WANT_DEBUG_FILES FALSE CACHE BOOL "Generate separate debug files - .dSYM on Mac, .debug on Linux")
 set(WANT_FUZZ FALSE CACHE BOOL "Set FUZZ CXX definition")
 set(WANT_GIT_HOOKS TRUE CACHE BOOL "Install git hooks")
+set(WANT_ZC_TESTS TRUE CACHE BOOL "Build tests")
 set(JIT_BACKEND "default" CACHE STRING "One of: default, x64, wasm, none")
 set(ZC_VERSION "" CACHE STRING "Version string")
 set(ZC_OFFICIAL "" CACHE BOOL "Official build")
@@ -662,12 +663,15 @@ if (USE_NFD)
 	target_compile_definitions(zcbase PUBLIC HAS_NFD)
 endif()
 
-add_executable(base_test_runner
-	src/test_runner/base_test_runner.cpp
-	src/test_runner/test_runner.cpp
-	src/base/scc_test.cpp
-)
-target_link_libraries(base_test_runner PRIVATE zcbase)
+if(WANT_ZC_TESTS)
+	add_executable(base_test_runner
+		src/test_runner/base_test_runner.cpp
+		src/test_runner/test_runner.cpp
+		src/base/scc_test.cpp
+	)
+	target_link_libraries(base_test_runner PRIVATE zcbase)
+	zc_install_targets(base_test_runner)
+endif()
 
 # std::execution supplementation.
 # For std::execution::par, seq, and par_unseq.

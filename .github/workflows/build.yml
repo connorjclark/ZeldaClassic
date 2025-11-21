@@ -183,6 +183,7 @@ jobs:
           -DRELEASE_CHANNEL="3"
           -DREPO="${{ github.repository }}"
           -DWANT_SENTRY="${{ inputs.sentry }}"
+          -DWANT_ZC_TESTS="${{ inputs.test-runner }}"
           -DWANT_DEBUG_FILES="${{ inputs.config == 'RelWithDebInfo' }}"
           -DCMAKE_WIN32_EXECUTABLE=1
           -DCMAKE_C_COMPILER_LAUNCHER=ccache
@@ -232,8 +233,12 @@ jobs:
       - name: Package
         run: |
           cd build
+          echo ls
+          ls
+          echo ls Release
+          ls Release
           mkdir package_output
-          cpack -D CPACK_PACKAGE_DIRECTORY=$PWD/package_output
+          cpack --verbose -D CPACK_PACKAGE_DIRECTORY=$PWD/package_output
 
           ls package_output
           mv package_output build/${{ inputs.config }}/packages/${{ steps.set-package-vars.outputs.package-name }}

@@ -54,12 +54,12 @@ install(CODE "
 		COMMAND_ERROR_IS_FATAL ANY)
 ")
 
-# TODO ! generate_licenses at install time ... above command should handle but double check it
+# TODO ! replace above with an install(FILES )?
+# TODO ! generate_licenses at install time ... above command should handle but double check it. and maybe do as a seperate install-time script.
 # TODO ! zstandalone ? crashpad handler ? zconsole ?
 # TODO ! test_runner ? add WANT_TESTS
 # TODO ! run generate_mac_bundle_icons at install time?
 # TODO ! PACKAGE_DEBUG_INFO needed? Try causing error in zplayer CI job and see if stack trace is given.
-
 if(APPLE)
     set(CPACK_GENERATOR "DragNDrop")
     set(CPACK_PACKAGING_INSTALL_PREFIX "/")
@@ -81,6 +81,10 @@ if(APPLE)
 		fixup_bundle(\"$<INSTALL_PREFIX>/ZQuest Classic.app\" \"\" \"$<INSTALL_PREFIX>/ZQuest Classic.app/Contents/Frameworks\")
 	")
 	# TODO ! verify_app?
+elseif(LINUX)
+	set(CPACK_GENERATOR "TGZ")
+elseif(WIN32)
+	set(CPACK_GENERATOR "ZIP")
 endif()
 
 include(CPack)
