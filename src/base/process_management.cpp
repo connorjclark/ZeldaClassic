@@ -443,8 +443,8 @@ std::string locate_zapp_file(std::string const& file)
 #ifdef _WIN32
 	return file + ".exe";
 #elif defined(ALLEGRO_MACOSX)
-	if (is_in_osx_application_bundle())
-		return "../MacOS/" + file;
+	// if (is_in_osx_application_bundle())
+	// 	return "../MacOS/" + file;
 	return "./" + file;
 #else
 	return file;

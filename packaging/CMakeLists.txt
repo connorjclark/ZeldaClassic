@@ -82,7 +82,11 @@ if(APPLE)
 	# CPACK_BUNDLE_STARTUP_COMMAND
 
 	install(FILES ${PROJECT_SOURCE_DIR}/scripts/Info.plist DESTINATION "ZQuest Classic.app/Contents")
-	install(FILES ${PROJECT_SOURCE_DIR}/scripts/mac_entry.sh DESTINATION "ZQuest Classic.app/Contents/MacOS")
+	install(
+		FILES ${PROJECT_SOURCE_DIR}/scripts/mac_entry.sh
+		PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ
+		DESTINATION "ZQuest Classic.app/Contents/MacOS"
+	)
 
 	install(CODE "
 			include(BundleUtilities)
