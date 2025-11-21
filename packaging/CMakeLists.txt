@@ -54,7 +54,9 @@ install(CODE "
 		COMMAND_ERROR_IS_FATAL ANY)
 ")
 
-# TODO ! zstandalone ? crashpad handler ?
+# TODO ! generate_licenses at install time ... above command should handle but double check it
+# TODO ! zstandalone ? crashpad handler ? zconsole ?
+# TODO ! test_runner ? add WANT_TESTS
 # TODO ! run generate_mac_bundle_icons at install time?
 # TODO ! PACKAGE_DEBUG_INFO needed? Try causing error in zplayer CI job and see if stack trace is given.
 
@@ -68,7 +70,7 @@ if(APPLE)
 	install(FILES ${PROJECT_SOURCE_DIR}/scripts/Info.plist DESTINATION "ZQuest Classic.app/Contents")
 	install(FILES ${PROJECT_SOURCE_DIR}/packaging/icons.icns DESTINATION "ZQuest Classic.app/Contents/Resources")
 	install(
-		FILES ${PROJECT_SOURCE_DIR}/scripts/mac_entry.sh
+		FILES ${PROJECT_SOURCE_DIR}/packaging/mac_entry.sh
 		PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ
 		DESTINATION "ZQuest Classic.app/Contents/MacOS"
 	)

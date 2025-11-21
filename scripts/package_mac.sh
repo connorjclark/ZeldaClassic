@@ -7,6 +7,8 @@
 # Does not need user input. When the Finder ZQuest Classic.app -> Applications window opens
 # don't do anything - just wait.
 
+# TODO ! delete.
+
 set -e
 
 DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
