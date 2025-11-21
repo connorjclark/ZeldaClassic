@@ -54,34 +54,16 @@ install(CODE "
 ")
 
 if(APPLE)
-	# file(WRITE "${CMAKE_BINARY_DIR}/dummy_main.cpp" "int main() { return 0; }")
-
-	# add_executable(ZQuestClassicAppBundle "${CMAKE_BINARY_DIR}/dummy_main.cpp")
-	# add_dependencies(ZQuestClassicAppBundle zlauncher zplayer zeditor zscript)
-
-	# set_target_properties(ZQuestClassicAppBundle PROPERTIES
-	# 	MACOSX_BUNDLE TRUE
-	# 	OUTPUT_NAME "ZQuest Classic"
-	# 	MACOSX_BUNDLE_BUNDLE_NAME "ZQuest Classic"
-	# 	MACOSX_BUNDLE_GUI_IDENTIFIER "com.zquestclassic.www"
-	# 	MACOSX_BUNDLE_INFO_PLIST_KEYS "
-	# 		<key>CFBundleExecutable</key>
-	# 		<string>zlauncher</string>
-	# 	"
-	# )
-
-	# zc_install_targets(ZQuestClassicAppBundle)
-
     set(CPACK_GENERATOR "DragNDrop")
     set(CPACK_PACKAGING_INSTALL_PREFIX "/")
-	# set(CPACK_SET_DESTDIR true)
-	# set(CPACK_BUNDLE_NAME "ZQuest Classic")
     set(CPACK_DMG_VOLUME_NAME "ZQuest Classic")
-	# set(CPACK_BUNDLE_PLIST ${PROJECT_SOURCE_DIR}/scripts/Info.plist)
-	# set(CPACK_BUNDLE_ICON ${PROJECT_SOURCE_DIR}/packaging/icons.icns)
-	# CPACK_BUNDLE_STARTUP_COMMAND
+	# TODO ! Make it say "Take this!" at top.
+	# https://fontmeme.com/pixel-fonts/
+	set(CPACK_DMG_DS_STORE_SETUP_SCRIPT ${PROJECT_SOURCE_DIR}/packaging/MacDMGSetup.scpt)
+	set(CPACK_DMG_BACKGROUND_IMAGE ${PROJECT_SOURCE_DIR}/packaging/MacDMGBackground.png)
 
 	install(FILES ${PROJECT_SOURCE_DIR}/scripts/Info.plist DESTINATION "ZQuest Classic.app/Contents")
+	install(FILES ${PROJECT_SOURCE_DIR}/packaging/icons.icns DESTINATION "ZQuest Classic.app/Contents/Resources")
 	install(
 		FILES ${PROJECT_SOURCE_DIR}/scripts/mac_entry.sh
 		PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ
@@ -89,8 +71,9 @@ if(APPLE)
 	)
 
 	install(CODE "
-			include(BundleUtilities)
-			fixup_bundle(\"$<INSTALL_PREFIX>/ZQuest Classic.app\" \"\" \"$<INSTALL_PREFIX>/ZQuest Classic.app/Contents/Frameworks\")")
+		include(BundleUtilities)
+		fixup_bundle(\"$<INSTALL_PREFIX>/ZQuest Classic.app\" \"\" \"$<INSTALL_PREFIX>/ZQuest Classic.app/Contents/Frameworks\")
+	")
 
     # set(MACOSX_BUNDLE_BUNDLE_NAME ${CPACK_PACKAGE_NAME})
     # set(MACOSX_BUNDLE_BUNDLE_GUI_IDENTIFIER "com.zquestclassic.www")
@@ -102,8 +85,6 @@ if(APPLE)
     # set(CPACK_DMG_DS_STORE_SETUP_SCRIPT "${PROJECT_SOURCE_DIR}/packaging/DS_Store.scpt") 
     # set(CPACK_DMG_BACKGROUND_IMAGE "${PROJECT_SOURCE_DIR}/packaging/dmg_background.png")
     # set(CPACK_OSX_PACKAGE_VERSION "10.6") #min package version
-
-	# TODO ! fixup bundle?
 endif()
 
 include(CPack)
