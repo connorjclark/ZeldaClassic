@@ -68,21 +68,11 @@ if(APPLE)
 		DESTINATION "ZQuest Classic.app/Contents/MacOS"
 	)
 
+	# Fixes the binaries to make them portable.
 	install(CODE "
 		include(BundleUtilities)
 		fixup_bundle(\"$<INSTALL_PREFIX>/ZQuest Classic.app\" \"\" \"$<INSTALL_PREFIX>/ZQuest Classic.app/Contents/Frameworks\")
 	")
-
-    # set(MACOSX_BUNDLE_BUNDLE_NAME ${CPACK_PACKAGE_NAME})
-    # set(MACOSX_BUNDLE_BUNDLE_GUI_IDENTIFIER "com.zquestclassic.www")
-    # set(MACOSX_BUNDLE_ICON_FILE ${PROJECT_SOURCE_DIR}/packaging/ exampleApp.icns)
-    # set(MACOSX_BUNDLE_INFO_PLIST ${PROJECT_SOURCE_DIR}/scripts/Info.plist)
-    # set(MACOSX_BUNDLE_BUNDLE_VERSION "${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}.${PROJECT_VERSION_PATCH}")
-    # set_source_files_properties(${PROJECT_SOURCE_DIR}/packaging/icons.icns PROPERTIES MACOSX_PACKAGE_LOCATION "Resources")
-
-    # set(CPACK_DMG_DS_STORE_SETUP_SCRIPT "${PROJECT_SOURCE_DIR}/packaging/DS_Store.scpt") 
-    # set(CPACK_DMG_BACKGROUND_IMAGE "${PROJECT_SOURCE_DIR}/packaging/dmg_background.png")
-    # set(CPACK_OSX_PACKAGE_VERSION "10.6") #min package version
 endif()
 
 include(CPack)
