@@ -151,11 +151,14 @@ function(zc_install_targets)
 	endif()
 
 	set(INSTALL_BIN_DIR "bin")
-    set(INSTALL_LIB_DIR "lib")
-    if(APPLE)
-        set(INSTALL_BIN_DIR "ZQuest Classic.app/Contents/Resources")
-        set(INSTALL_LIB_DIR "ZQuest Classic.app/Contents/Frameworks")
-    endif()
+	set(INSTALL_LIB_DIR "lib")
+	if(APPLE)
+		set(INSTALL_BIN_DIR "ZQuest Classic.app/Contents/Resources")
+		set(INSTALL_LIB_DIR "ZQuest Classic.app/Contents/Frameworks")
+	elseif(WIN32)
+		set(INSTALL_BIN_DIR "")
+		set(INSTALL_LIB_DIR "")
+	endif()
 
 	install(TARGETS ${ARGV}
 		RUNTIME DESTINATION "${INSTALL_BIN_DIR}"
