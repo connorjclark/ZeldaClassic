@@ -54,6 +54,7 @@ install(CODE "
 		COMMAND_ERROR_IS_FATAL ANY)
 ")
 
+# TODO ! create package_ci.py?
 # TODO ! replace above with an install(FILES )?
 # TODO ! generate_licenses at install time ... above command should handle but double check it. and maybe do as a seperate install-time script.
 # TODO ! zstandalone ? crashpad handler ? zconsole ?

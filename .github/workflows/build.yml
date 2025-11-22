@@ -237,7 +237,7 @@ jobs:
           cpack --verbose -C ${{ inputs.config }} -D CPACK_PACKAGE_DIRECTORY=$PWD/package_output
 
           ls package_output
-          mv package_output/* build/${{ inputs.config }}/packages/${{ steps.set-package-vars.outputs.package-name }}
+          mv package_output/* packages/${{ steps.set-package-vars.outputs.package-name }}
 
       # - name: Package
       #   if: inputs.config != 'Coverage' && !contains(inputs.runs-on, 'mac')
