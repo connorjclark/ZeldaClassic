@@ -223,7 +223,7 @@ jobs:
 
           ls package_output
           mkdir -p packages
-          mv package_output/* packages/${{ steps.set-package-vars.outputs.package-name }}
+          mv package_output/*.* packages/${{ steps.set-package-vars.outputs.package-name }}
 
       # TODO !
       # Coverage builds need the entire build folder.

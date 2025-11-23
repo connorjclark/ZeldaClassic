@@ -42,20 +42,20 @@ else()
     set(INSTALL_DATA_DIR "share/zquestclassic")
 endif()
 
-install(CODE "
-	execute_process(
-		COMMAND ${PYTHON} \"${PROJECT_SOURCE_DIR}/scripts/package.py\"
-		--skip_binaries
-		--skip_archive
-		$<$<BOOL:${ZC_VERSION}>:--version;${ZC_VERSION}>
-		--build_folder \"\${BUILD_FOLDER}\"
-		--package_folder \"$<INSTALL_PREFIX>/${INSTALL_DATA_DIR}\"
-		--keep_existing_files
-		COMMAND_ERROR_IS_FATAL ANY)
-")
+# install(CODE "
+# 	execute_process(
+# 		COMMAND ${PYTHON} \"${PROJECT_SOURCE_DIR}/scripts/package.py\"
+# 		--skip_binaries
+# 		--skip_archive
+# 		$<$<BOOL:${ZC_VERSION}>:--version;${ZC_VERSION}>
+# 		--build_folder \"\${BUILD_FOLDER}\"
+# 		--package_folder \"$<INSTALL_PREFIX>/${INSTALL_DATA_DIR}\"
+# 		--keep_existing_files
+# 		COMMAND_ERROR_IS_FATAL ANY)
+# ")
 
-# install(DIRECTORY ${PROJECT_SOURCE_DIR}/resources DESTINATION INSTALL_DATA_DIR)
-# install(DIRECTORY ${PROJECT_SOURCE_DIR}/changelogs DESTINATION "${INSTALL_DATA_DIR}/changelogs")
+install(DIRECTORY "${PROJECT_SOURCE_DIR}/resources/" DESTINATION "${INSTALL_DATA_DIR}")
+install(DIRECTORY "${PROJECT_SOURCE_DIR}/changelogs" DESTINATION "${INSTALL_DATA_DIR}/changelogs")
 
 # TODO ! replace above with an install(FILES )?
 # TODO ! generate_licenses at install time ... above command should handle but double check it. and maybe do as a seperate install-time script.
@@ -70,14 +70,14 @@ if(APPLE)
 	set(CPACK_DMG_DS_STORE_SETUP_SCRIPT ${PROJECT_SOURCE_DIR}/packaging/MacDMGSetup.scpt)
 	set(CPACK_DMG_BACKGROUND_IMAGE ${PROJECT_SOURCE_DIR}/packaging/MacDMGBackground.png)
 
-	install(FILES ${PROJECT_SOURCE_DIR}/scripts/Info.plist DESTINATION "ZQuest Classic.app/Contents")
-	install(FILES ${PROJECT_SOURCE_DIR}/packaging/icons.icns DESTINATION "ZQuest Classic.app/Contents/Resources")
+	install(FILES "${PROJECT_SOURCE_DIR}/scripts/Info.plist" DESTINATION "ZQuest Classic.app/Contents")
+	install(FILES "${PROJECT_SOURCE_DIR}/packaging/icons.icns" DESTINATION "ZQuest Classic.app/Contents/Resources")
 	# install(
 	# 	FILES ${PROJECT_SOURCE_DIR}/packaging/mac_entry.sh
 	# 	PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ
 	# 	DESTINATION "ZQuest Classic.app/Contents/MacOS"
 	# )
-	install(PROGRAMS ${PROJECT_SOURCE_DIR}/packaging/mac_entry.sh DESTINATION "ZQuest Classic.app/Contents/MacOS")
+	install(PROGRAMS "${PROJECT_SOURCE_DIR}/packaging/mac_entry.sh" DESTINATION "ZQuest Classic.app/Contents/MacOS")
 
 	# Fixes the binaries to make them portable.
 	install(CODE "
