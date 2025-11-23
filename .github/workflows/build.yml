@@ -208,28 +208,13 @@ jobs:
           if system == 'Windows':
             arch_label = 'x86' if arch == 'win32' else 'x64'
             package_name = f'{release_version}-windows-{arch_label}.zip'
-            package_orig_name = 'zc.zip'
           elif system == 'Darwin':
             package_name = f'{release_version}-mac.dmg'
-            package_orig_name = 'ZQuestClassic.dmg'
           elif system == 'Linux':
             package_name = f'{release_version}-linux.tar.gz'
-            package_orig_name = 'zc.tar.gz'
-
-          package_script_args = ''
-          package_script_args_mac = ''
-          if release_version != 'zc':
-            package_script_args = f'--version {release_version}'
-            package_script_args_mac = release_version
-
-          if '${{ inputs.test-runner }}' == 'true':
-            package_script_args += '--test_runner'
 
           with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
-            print('{0}={1}'.format('package-orig-name', package_orig_name), file=f)
             print('{0}={1}'.format('package-name', package_name), file=f)
-            print('{0}={1}'.format('package-script-args', package_script_args), file=f)
-            print('{0}={1}'.format('package-script-args-mac', package_script_args_mac), file=f)
       - name: Package
         run: |
           cd build
@@ -237,19 +222,9 @@ jobs:
           cpack --verbose -C ${{ inputs.config }} -D CPACK_PACKAGE_DIRECTORY=$PWD/package_output
 
           ls package_output
+          mkdir -p packages
           mv package_output/* packages/${{ steps.set-package-vars.outputs.package-name }}
 
-      # - name: Package
-      #   if: inputs.config != 'Coverage' && !contains(inputs.runs-on, 'mac')
-      #   run: |
-      #     python scripts/package.py ${{ steps.set-package-vars.outputs.package-script-args }} --build_folder build/${{ inputs.config }}
-      #     mv build/${{ inputs.config }}/packages/${{ steps.set-package-vars.outputs.package-orig-name }} build/${{ inputs.config }}/packages/${{ steps.set-package-vars.outputs.package-name }}
-      # - name: Package
-      #   if: inputs.config != 'Coverage' && contains(inputs.runs-on, 'mac')
-      #   run: |
-      #     sh scripts/package_mac.sh ${{ github.workspace }}/build/${{ inputs.config }} ${{ steps.set-package-vars.outputs.package-script-args-mac }}
-      #     mv build/${{ inputs.config }}/packages/${{ steps.set-package-vars.outputs.package-orig-name }} build/${{ inputs.config }}/packages/${{ steps.set-package-vars.outputs.package-name }}
-      
       # TODO !
       # Coverage builds need the entire build folder.
       # - name: Package
