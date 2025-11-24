@@ -57,6 +57,9 @@ endif()
 install(DIRECTORY "${PROJECT_SOURCE_DIR}/resources/" DESTINATION "${INSTALL_DATA_DIR}")
 install(DIRECTORY "${PROJECT_SOURCE_DIR}/changelogs" DESTINATION "${INSTALL_DATA_DIR}")
 
+# TODO !
+set(CPACK_INCLUDE_TOPLEVEL_DIRECTORY OFF)
+
 # TODO ! replace above with an install(FILES )?
 # TODO ! generate_licenses at install time ... above command should handle but double check it. and maybe do as a seperate install-time script.
 # TODO ! zstandalone ? crashpad handler ? zconsole ?

@@ -220,13 +220,8 @@ jobs:
           cd build
           mkdir package_output
           cpack --verbose -C ${{ inputs.config }} -D CPACK_PACKAGE_DIRECTORY=$PWD/package_output
-
-          ls package_output
           mkdir -p packages
           mv package_output/*.* packages/${{ steps.set-package-vars.outputs.package-name }}
-          pwd
-          ls packages/${{ steps.set-package-vars.outputs.package-name }}
-          ls packages
 
       # TODO !
       # Coverage builds need the entire build folder.
@@ -250,7 +245,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: build-${{ inputs.runs-on }}-${{ inputs.arch }}-${{ inputs.compiler }}-${{ inputs.config }}
-          path: build/packages/${{ steps.set-package-vars.outputs.package-name }}
+          path: build/packages/*
 
       # Upload debug symbols to Sentry.
       - name: Setup Sentry CLI
