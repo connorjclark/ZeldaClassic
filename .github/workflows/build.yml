@@ -224,6 +224,9 @@ jobs:
           ls package_output
           mkdir -p packages
           mv package_output/*.* packages/${{ steps.set-package-vars.outputs.package-name }}
+          pwd
+          ls packages/${{ steps.set-package-vars.outputs.package-name }}
+          ls packages
 
       # TODO !
       # Coverage builds need the entire build folder.
@@ -247,7 +250,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: build-${{ inputs.runs-on }}-${{ inputs.arch }}-${{ inputs.compiler }}-${{ inputs.config }}
-          path: build/${{ inputs.config }}/packages/${{ steps.set-package-vars.outputs.package-name }}
+          path: build/packages/${{ steps.set-package-vars.outputs.package-name }}
 
       # Upload debug symbols to Sentry.
       - name: Setup Sentry CLI
