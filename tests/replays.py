@@ -354,7 +354,13 @@ class CLIPlayerInterface:
         # Assertion failed: (mutex), function al_lock_mutex, file threads.Assertion failed: (mutex), function al_lock_mutex, file threads.c, line 324.
         # Assertion failed: (mutex), function al_lock_mutex, file threads.c, line 324.
 
-        candidates = ['zplayer.exe', 'zplayer', 'bin/zplayer']
+        ext = '.exe' if os.name == 'nt' else ''
+        candidates = [
+            f'zplayer{ext}',
+            f'zelda{ext}',
+            f'bin/zplayer{ext}',
+            f'bin/zelda{ext}',
+        ]
         exe_path = next(
             (p for c in candidates if (p := ctx.build_folder / c).exists()), None
         )
