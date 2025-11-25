@@ -245,7 +245,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: build-${{ inputs.runs-on }}-${{ inputs.arch }}-${{ inputs.compiler }}-${{ inputs.config }}
-          path: build/packages/*
+          path: build/packages/*.*
 
       # Upload debug symbols to Sentry.
       - name: Setup Sentry CLI

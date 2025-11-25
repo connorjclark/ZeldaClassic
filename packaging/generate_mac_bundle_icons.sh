@@ -1,12 +1,11 @@
-# Only run to re-generate icons.icns if the icon to use changes.
-
 DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 ROOT=$( dirname "$DIR" )
 
-# Generate icon.
+DEST="$1"
 ICONDIR="icons.iconset"
 ICON=resources/assets/zc/ZC_Icon_Medium_Launcher.png
 
+cd "$ROOT"
 mkdir "$ICONDIR"
 
 # Normal screen icons
@@ -20,5 +19,5 @@ sips -z $size $size $ICON --out "$ICONDIR"/icon_$(expr $size / 2)x$(expr $size /
 done
 
 # Make a multi-resolution Icon
-iconutil -c icns -o "$ROOT/packaging/icons.icns" "$ICONDIR"
+iconutil -c icns -o "$DEST" "$ICONDIR"
 rm -rf "$ICONDIR"

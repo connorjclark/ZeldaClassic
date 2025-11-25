@@ -64,7 +64,6 @@ set(CPACK_INCLUDE_TOPLEVEL_DIRECTORY OFF)
 # TODO ! generate_licenses at install time ... above command should handle but double check it. and maybe do as a seperate install-time script.
 # TODO ! zstandalone ? crashpad handler ? zconsole ?
 # TODO ! test_runner ? add WANT_TESTS
-# TODO ! run generate_mac_bundle_icons at install time?
 # TODO ! PACKAGE_DEBUG_INFO needed? Try causing error in zplayer CI job and see if stack trace is given.
 if(APPLE)
     set(CPACK_GENERATOR "DragNDrop")
@@ -74,20 +73,27 @@ if(APPLE)
 	set(CPACK_DMG_BACKGROUND_IMAGE ${PROJECT_SOURCE_DIR}/packaging/MacDMGBackground.png)
 
 	install(FILES "${PROJECT_SOURCE_DIR}/scripts/Info.plist" DESTINATION "ZQuest Classic.app/Contents")
-	install(FILES "${PROJECT_SOURCE_DIR}/packaging/icons.icns" DESTINATION "ZQuest Classic.app/Contents/Resources")
-	# install(
-	# 	FILES ${PROJECT_SOURCE_DIR}/packaging/mac_entry.sh
-	# 	PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ
-	# 	DESTINATION "ZQuest Classic.app/Contents/MacOS"
-	# )
 	install(PROGRAMS "${PROJECT_SOURCE_DIR}/packaging/mac_entry.sh" DESTINATION "ZQuest Classic.app/Contents/MacOS")
+
+	# Icons.
+	set(ICON_OUTPUT "${CMAKE_BINARY_DIR}/icons.icns")
+	add_custom_command(
+		OUTPUT "${ICON_OUTPUT}"
+		COMMAND bash "${PROJECT_SOURCE_DIR}/packaging/generate_mac_bundle_icons.sh" "${ICON_OUTPUT}"
+		# Script expects to find 'resources/...' in the current directory
+		WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}/packaging" 
+		DEPENDS "${ICON_SCRIPT}" "${ICON_SOURCE}"
+		COMMENT "Generating macOS icons.icns..."
+		VERBATIM
+	)
+	add_custom_target(generate_mac_icons ALL DEPENDS "${ICON_OUTPUT}")
+	install(FILES "${ICON_OUTPUT}" DESTINATION "ZQuest Classic.app/Contents/Resources")
 
 	# Fixes the binaries to make them portable.
 	install(CODE "
 		include(BundleUtilities)
 		fixup_bundle(\"$<INSTALL_PREFIX>/ZQuest Classic.app\" \"\" \"$<INSTALL_PREFIX>/ZQuest Classic.app/Contents/Frameworks\")
 	")
-	# TODO ! verify_app?
 elseif(LINUX)
 	set(CPACK_GENERATOR "TGZ")
 elseif(WIN32)
