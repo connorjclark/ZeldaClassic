@@ -91,66 +91,66 @@ if(APPLE)
 
 	# Generate debug info bundle (ZQuest Classic.app.dSYM) and strip debug info from
 	# .app.
-	install(CODE "
-		if(DEFINED ENV{DESTDIR})
-			set(INSTALL_ROOT \"\$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}\")
-		else()
-			set(INSTALL_ROOT \"\${CMAKE_INSTALL_PREFIX}\")
-		endif()
+	# install(CODE "
+	# 	if(DEFINED ENV{DESTDIR})
+	# 		set(INSTALL_ROOT \"\$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}\")
+	# 	else()
+	# 		set(INSTALL_ROOT \"\${CMAKE_INSTALL_PREFIX}\")
+	# 	endif()
 
-		set(APP_BUNDLE \"\${INSTALL_ROOT}/ZQuest Classic.app\")
-		set(DSYM_BUNDLE \"\${INSTALL_ROOT}/ZQuest Classic.app.dSYM\")
+	# 	set(APP_BUNDLE \"\${INSTALL_ROOT}/ZQuest Classic.app\")
+	# 	set(DSYM_BUNDLE \"\${INSTALL_ROOT}/ZQuest Classic.app.dSYM\")
 
-		file(GLOB_RECURSE CANDIDATES \"\${APP_BUNDLE}/Contents/Resources/*\")
-		set(EXECUTABLES \"\")
-		foreach(ITEM \${CANDIDATES})
-			# Skip directories
-			if(IS_DIRECTORY \"\${ITEM}\")
-				continue()
-			endif()
+	# 	file(GLOB_RECURSE CANDIDATES \"\${APP_BUNDLE}/Contents/Resources/*\")
+	# 	set(EXECUTABLES \"\")
+	# 	foreach(ITEM \${CANDIDATES})
+	# 		# Skip directories
+	# 		if(IS_DIRECTORY \"\${ITEM}\")
+	# 			continue()
+	# 		endif()
 
-			execute_process(
-				COMMAND file -b \"\${ITEM}\"
-				OUTPUT_VARIABLE FILE_TYPE
-				OUTPUT_STRIP_TRAILING_WHITESPACE
-			)
+	# 		execute_process(
+	# 			COMMAND file -b \"\${ITEM}\"
+	# 			OUTPUT_VARIABLE FILE_TYPE
+	# 			OUTPUT_STRIP_TRAILING_WHITESPACE
+	# 		)
 
-			if(FILE_TYPE MATCHES \"Mach-O.*executable\")
-				message(STATUS \"Found executable: \${ITEM}\")
-				list(APPEND EXECUTABLES \"\${ITEM}\")
-			endif()
-		endforeach()
+	# 		if(FILE_TYPE MATCHES \"Mach-O.*executable\")
+	# 			message(STATUS \"Found executable: \${ITEM}\")
+	# 			list(APPEND EXECUTABLES \"\${ITEM}\")
+	# 		endif()
+	# 	endforeach()
 
-		file(GLOB_RECURSE DYLIBS \"\${APP_BUNDLE}/Contents/libs/*.dylib\")
+	# 	file(GLOB_RECURSE DYLIBS \"\${APP_BUNDLE}/Contents/libs/*.dylib\")
 
-		set(ALL_BINARIES \${EXECUTABLES} \${DYLIBS})
+	# 	set(ALL_BINARIES \${EXECUTABLES} \${DYLIBS})
 
-		message(STATUS \"Generating debug symbols: \${DSYM_BUNDLE}\")
-		execute_process(
-			COMMAND xcrun dsymutil 
-			-o \"\${DSYM_BUNDLE}\" 
-			\${ALL_BINARIES}
-			RESULT_VARIABLE DSYM_RESULT
-			OUTPUT_VARIABLE DSYM_OUT
-			ERROR_VARIABLE DSYM_ERR
-		)
+	# 	message(STATUS \"Generating debug symbols: \${DSYM_BUNDLE}\")
+	# 	execute_process(
+	# 		COMMAND xcrun dsymutil 
+	# 		-o \"\${DSYM_BUNDLE}\" 
+	# 		\${ALL_BINARIES}
+	# 		RESULT_VARIABLE DSYM_RESULT
+	# 		OUTPUT_VARIABLE DSYM_OUT
+	# 		ERROR_VARIABLE DSYM_ERR
+	# 	)
 
-		if(NOT DSYM_RESULT EQUAL 0)
-			message(FATAL_ERROR \"Failed to generate dSYM: \${DSYM_ERR}\")
-		endif()
+	# 	if(NOT DSYM_RESULT EQUAL 0)
+	# 		message(FATAL_ERROR \"Failed to generate dSYM: \${DSYM_ERR}\")
+	# 	endif()
 
-		message(STATUS \"Stripping debug info from binaries...\")
-		foreach(BIN \${ALL_BINARIES})
-			execute_process(
-				COMMAND xcrun strip -S \"\${BIN}\"
-				RESULT_VARIABLE STRIP_RESULT
-				ERROR_VARIABLE STRIP_ERR
-			)
-			if(NOT STRIP_RESULT EQUAL 0)
-				message(WARNING \"Could not strip \${BIN}: \${STRIP_ERR}\")
-			endif()
-		endforeach()
-	")
+	# 	message(STATUS \"Stripping debug info from binaries...\")
+	# 	foreach(BIN \${ALL_BINARIES})
+	# 		execute_process(
+	# 			COMMAND xcrun strip -S \"\${BIN}\"
+	# 			RESULT_VARIABLE STRIP_RESULT
+	# 			ERROR_VARIABLE STRIP_ERR
+	# 		)
+	# 		if(NOT STRIP_RESULT EQUAL 0)
+	# 			message(WARNING \"Could not strip \${BIN}: \${STRIP_ERR}\")
+	# 		endif()
+	# 	endforeach()
+	# ")
 
 	# Fixes the binaries to make them portable.
 	install(CODE "
