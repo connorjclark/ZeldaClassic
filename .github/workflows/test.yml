@@ -118,8 +118,7 @@ jobs:
             hdiutil attach -mountpoint zc-mounted ${{ needs.build.outputs.artifact-name }}/${{ needs.build.outputs.package-name }}
             mkdir zc-extracted
             cp -r "zc-mounted/ZQuest Classic.app" zc-extracted
-            # TODO !
-            # cp -r "zc-mounted/ZQuest Classic.app.dSYM" zc-extracted
+            cp -r "zc-mounted/ZQuest Classic.app.dSYM" zc-extracted
             hdiutil unmount zc-mounted
           linux: |
             echo "BUILD_FOLDER=$PWD/zc-extracted/bin" >> "$GITHUB_ENV"
