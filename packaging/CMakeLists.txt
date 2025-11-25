@@ -76,10 +76,12 @@ if(APPLE)
 	install(PROGRAMS "${PROJECT_SOURCE_DIR}/packaging/mac_entry.sh" DESTINATION "ZQuest Classic.app/Contents/MacOS")
 
 	# Icons.
+	set(ICON_SCRIPT "${PROJECT_SOURCE_DIR}/packaging/generate_mac_bundle_icons.sh")
+	set(ICON_SOURCE "${PROJECT_SOURCE_DIR}/resources/assets/zc/ZC_Icon_Medium_Launcher.png")
 	set(ICON_OUTPUT "${CMAKE_BINARY_DIR}/icons.icns")
 	add_custom_command(
 		OUTPUT "${ICON_OUTPUT}"
-		COMMAND bash "${PROJECT_SOURCE_DIR}/packaging/generate_mac_bundle_icons.sh" "${ICON_OUTPUT}"
+		COMMAND bash "${ICON_SCRIPT}" "${ICON_OUTPUT}"
 		DEPENDS "${ICON_SCRIPT}" "${ICON_SOURCE}"
 		COMMENT "Generating macOS icons.icns..."
 		VERBATIM
