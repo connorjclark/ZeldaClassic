@@ -77,17 +77,12 @@ if(APPLE)
 
 	# Icons.
 	set(ICON_SCRIPT "${PROJECT_SOURCE_DIR}/packaging/generate_mac_bundle_icons.sh")
-	set(ICON_SOURCE "${PROJECT_SOURCE_DIR}/resources/assets/zc/ZC_Icon_Medium_Launcher.png")
-	set(ICON_OUTPUT "${CMAKE_BINARY_DIR}/icons.icns")
-	add_custom_command(
-		OUTPUT "${ICON_OUTPUT}"
-		COMMAND bash "${ICON_SCRIPT}" "${ICON_OUTPUT}"
-		DEPENDS "${ICON_SCRIPT}" "${ICON_SOURCE}"
-		COMMENT "Generating macOS icons.icns..."
-		VERBATIM
-	)
-	add_custom_target(generate_mac_icons ALL DEPENDS "${ICON_OUTPUT}")
-	install(FILES "${ICON_OUTPUT}" DESTINATION "ZQuest Classic.app/Contents/Resources")
+	install(CODE "
+		execute_process(
+			COMMAND bash \"${ICON_SCRIPT}\" \"ZQuest Classic.app/Contents/Resources/icons.icns\"
+			COMMAND_ERROR_IS_FATAL ANY
+		)
+	")
 
 	# Generate debug info bundle (ZQuest Classic.app.dSYM) and strip debug info from
 	# .app.
