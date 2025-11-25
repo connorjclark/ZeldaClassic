@@ -358,8 +358,6 @@ class CLIPlayerInterface:
         candidates = [
             f'zplayer{ext}',
             f'zelda{ext}',
-            f'bin/zplayer{ext}',
-            f'bin/zelda{ext}',
         ]
         exe_path = next(
             (p for c in candidates if (p := ctx.build_folder / c).exists()), None
