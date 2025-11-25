@@ -26,7 +26,6 @@ set(UNITY_BUILD FALSE CACHE BOOL "Unity build")
 set(WANT_SENTRY FALSE CACHE BOOL "Include Sentry for crash dump handling")
 set(WANT_WEBSOCKETS TRUE CACHE BOOL "Support websockets in zscript")
 set(WANT_NFD TRUE CACHE BOOL "Include nativefiledialog")
-set(WANT_DEBUG_FILES FALSE CACHE BOOL "Generate separate .debug files (Linux)")
 set(WANT_FUZZ FALSE CACHE BOOL "Set FUZZ CXX definition")
 set(WANT_GIT_HOOKS TRUE CACHE BOOL "Install git hooks")
 set(WANT_ZC_TESTS TRUE CACHE BOOL "Build tests")
@@ -115,7 +114,7 @@ if(APPLE)
 	endif()
 endif()
 
-if(LINUX AND WANT_DEBUG_FILES)
+if(LINUX)
 	find_program(EU_STRIP_PROGRAM eu-strip)
 	if (EU_STRIP_PROGRAM)
 		foreach(lang C CXX)
@@ -769,6 +768,7 @@ target_link_libraries(zasm PUBLIC allegro_with_legacy zcbase fmt)
 if(WIN32)
 	add_executable(zconsole src/zconsole/ConsoleLoggerHelper.cpp)
 	target_link_options(zconsole PRIVATE "/SUBSYSTEM:CONSOLE")
+	zc_install_targets(zconsole)
 endif()
 
 add_library(zconsolelogger STATIC src/zconsole/ConsoleLogger.cpp)
@@ -1058,6 +1058,7 @@ if(WIN32)
 	add_executable(zstandalone src/standalone/standalone.cpp)
 	target_link_options(zstandalone PRIVATE "/SUBSYSTEM:WINDOWS")
 	add_dependencies(zeditor zstandalone)
+	zc_install_targets(zstandalone)
 endif()
 
 #############################################################
@@ -1175,6 +1176,9 @@ if(WANT_SENTRY)
 		target_link_libraries(${target} PRIVATE sentry)
 		target_compile_definitions(${target} PRIVATE HAS_SENTRY)
 	endforeach()
+
+	# TODO ! test
+	zc_install_targets(sentry)
 endif()
 
 
@@ -1373,6 +1377,6 @@ if(EMSCRIPTEN)
 	add_subdirectory(web)
 endif()
 
-zc_install_targets(allegro allegro-legacy allegro_with_legacy zlauncher zplayer zeditor zscript zcsound ${SOUNDLIBS})
+zc_install_targets(allegro allegro-legacy allegro_with_legacy zlauncher zplayer zeditor zscript zcsound zupdater ${SOUNDLIBS})
 
 add_subdirectory(packaging)

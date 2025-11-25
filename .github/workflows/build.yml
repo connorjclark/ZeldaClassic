@@ -184,7 +184,6 @@ jobs:
           -DREPO="${{ github.repository }}"
           -DWANT_SENTRY="${{ inputs.sentry }}"
           -DWANT_ZC_TESTS="${{ inputs.test-runner }}"
-          -DWANT_DEBUG_FILES="${{ inputs.config == 'RelWithDebInfo' }}"
           -DCMAKE_WIN32_EXECUTABLE=1
           -DCMAKE_C_COMPILER_LAUNCHER=ccache
           -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
@@ -219,7 +218,7 @@ jobs:
         run: |
           cd build
           mkdir package_output
-          cpack --verbose -C ${{ inputs.config }} -D CPACK_PACKAGE_DIRECTORY=$PWD/package_output
+          cpack --verbose -C ${{ inputs.config }} -D CPACK_PACKAGE_DIRECTORY=$PWD/package_output -D CPACK_CUSTOM_INSTALL_VARIABLES=MAC_CREATE_DEBUG_SYMBOLS_BUNDLE=TRUE
           mkdir -p packages
           mv package_output/*.* packages/${{ steps.set-package-vars.outputs.package-name }}
 

@@ -34,6 +34,8 @@
 # 	endforeach()
 # endif()
 
+set(CPACK_INCLUDE_TOPLEVEL_DIRECTORY OFF)
+
 if(APPLE)
     set(INSTALL_DATA_DIR "ZQuest Classic.app/Contents/Resources")
 elseif(WIN32)
@@ -56,9 +58,6 @@ endif()
 
 install(DIRECTORY "${PROJECT_SOURCE_DIR}/resources/" DESTINATION "${INSTALL_DATA_DIR}")
 install(DIRECTORY "${PROJECT_SOURCE_DIR}/changelogs" DESTINATION "${INSTALL_DATA_DIR}")
-
-# TODO !
-set(CPACK_INCLUDE_TOPLEVEL_DIRECTORY OFF)
 
 # TODO ! generate_licenses at install time ... above command should handle but double check it. and maybe do as a seperate install-time script.
 # TODO ! zstandalone ? crashpad handler ? zconsole ?
@@ -84,7 +83,7 @@ if(APPLE)
 	")
 
 	# Generate debug info bundle (ZQuest Classic.app.dSYM).
-	#   cpack -D "CPACK_CUSTOM_INSTALL_VARIABLES=MAC_CREATE_DEBUG_SYMBOLS_BUNDLE=TRUE"
+	#   cpack -D CPACK_CUSTOM_INSTALL_VARIABLES=MAC_CREATE_DEBUG_SYMBOLS_BUNDLE=TRUE
 	install(CODE "
 		if(MAC_CREATE_DEBUG_SYMBOLS_BUNDLE)
 			set(APP_BUNDLE \"$<INSTALL_PREFIX>/ZQuest Classic.app\")
