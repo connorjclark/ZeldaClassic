@@ -59,14 +59,11 @@ install(DIRECTORY "${PROJECT_SOURCE_DIR}/changelogs" DESTINATION "${INSTALL_DATA
 
 # TODO !
 set(CPACK_INCLUDE_TOPLEVEL_DIRECTORY OFF)
-# set(CPACK_STRIP_FILES ON)
 
-# TODO ! replace above with an install(FILES )?
 # TODO ! generate_licenses at install time ... above command should handle but double check it. and maybe do as a seperate install-time script.
 # TODO ! zstandalone ? crashpad handler ? zconsole ?
 # TODO ! test_runner ? add WANT_TESTS
 # TODO ! PACKAGE_DEBUG_INFO needed? Try causing error in zplayer CI job and see if stack trace is given.
-# TODO ! CPACK_STRIP_FILES ?
 if(APPLE)
     set(CPACK_GENERATOR "DragNDrop")
     set(CPACK_PACKAGING_INSTALL_PREFIX "/")
@@ -81,72 +78,55 @@ if(APPLE)
 	set(ICON_SCRIPT "${PROJECT_SOURCE_DIR}/packaging/generate_mac_bundle_icons.sh")
 	install(CODE "
 		execute_process(
-			COMMAND bash \"${ICON_SCRIPT}\" \"ZQuest Classic.app/Contents/Resources/icons.icns\"
+			COMMAND bash \"${ICON_SCRIPT}\" \"$<INSTALL_PREFIX>/ZQuest Classic.app/Contents/Resources/icons.icns\"
 			COMMAND_ERROR_IS_FATAL ANY
 		)
 	")
 
-	# Generate debug info bundle (ZQuest Classic.app.dSYM) and strip debug info from
-	# .app.
+	# Generate debug info bundle (ZQuest Classic.app.dSYM).
+	#   cpack -D "CPACK_CUSTOM_INSTALL_VARIABLES=MAC_CREATE_DEBUG_SYMBOLS_BUNDLE=TRUE"
 	install(CODE "
-		if(DEFINED ENV{DESTDIR})
-			set(INSTALL_ROOT \"\$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}\")
-		else()
-			set(INSTALL_ROOT \"\${CMAKE_INSTALL_PREFIX}\")
-		endif()
+		if(MAC_CREATE_DEBUG_SYMBOLS_BUNDLE)
+			set(APP_BUNDLE \"$<INSTALL_PREFIX>/ZQuest Classic.app\")
+			set(DSYM_BUNDLE \"$<INSTALL_PREFIX>/ZQuest Classic.app.dSYM\")
 
-		set(APP_BUNDLE \"\${INSTALL_ROOT}/ZQuest Classic.app\")
-		set(DSYM_BUNDLE \"\${INSTALL_ROOT}/ZQuest Classic.app.dSYM\")
+			file(GLOB_RECURSE CANDIDATES \"\${APP_BUNDLE}/Contents/Resources/*\")
+			set(EXECUTABLES \"\")
+			foreach(ITEM \${CANDIDATES})
+				if(IS_DIRECTORY \"\${ITEM}\")
+					continue()
+				endif()
 
-		file(GLOB_RECURSE CANDIDATES \"\${APP_BUNDLE}/Contents/Resources/*\")
-		set(EXECUTABLES \"\")
-		foreach(ITEM \${CANDIDATES})
-			# Skip directories
-			if(IS_DIRECTORY \"\${ITEM}\")
-				continue()
-			endif()
+				execute_process(
+					COMMAND file -b \"\${ITEM}\"
+					OUTPUT_VARIABLE FILE_TYPE
+					OUTPUT_STRIP_TRAILING_WHITESPACE
+				)
 
+				if(FILE_TYPE MATCHES \"Mach-O.*executable\")
+					message(STATUS \"Found executable: \${ITEM}\")
+					list(APPEND EXECUTABLES \"\${ITEM}\")
+				endif()
+			endforeach()
+
+			file(GLOB_RECURSE DYLIBS \"\${APP_BUNDLE}/Contents/libs/*.dylib\")
+
+			set(ALL_BINARIES \${EXECUTABLES} \${DYLIBS})
+
+			message(STATUS \"Generating debug symbols: \${DSYM_BUNDLE}\")
 			execute_process(
-				COMMAND file -b \"\${ITEM}\"
-				OUTPUT_VARIABLE FILE_TYPE
-				OUTPUT_STRIP_TRAILING_WHITESPACE
+				COMMAND xcrun dsymutil
+				-o \"\${DSYM_BUNDLE}\"
+				\${ALL_BINARIES}
+				RESULT_VARIABLE DSYM_RESULT
+				OUTPUT_VARIABLE DSYM_OUT
+				ERROR_VARIABLE DSYM_ERR
 			)
 
-			if(FILE_TYPE MATCHES \"Mach-O.*executable\")
-				message(STATUS \"Found executable: \${ITEM}\")
-				list(APPEND EXECUTABLES \"\${ITEM}\")
+			if(NOT DSYM_RESULT EQUAL 0)
+				message(FATAL_ERROR \"Failed to generate dSYM: \${DSYM_ERR}\")
 			endif()
-		endforeach()
-
-		file(GLOB_RECURSE DYLIBS \"\${APP_BUNDLE}/Contents/libs/*.dylib\")
-
-		set(ALL_BINARIES \${EXECUTABLES} \${DYLIBS})
-
-		message(STATUS \"Generating debug symbols: \${DSYM_BUNDLE}\")
-		execute_process(
-			COMMAND xcrun dsymutil 
-			-o \"\${DSYM_BUNDLE}\" 
-			\${ALL_BINARIES}
-			RESULT_VARIABLE DSYM_RESULT
-			OUTPUT_VARIABLE DSYM_OUT
-			ERROR_VARIABLE DSYM_ERR
-		)
-
-		if(NOT DSYM_RESULT EQUAL 0)
-			message(FATAL_ERROR \"Failed to generate dSYM: \${DSYM_ERR}\")
 		endif()
-
-		message(STATUS \"Stripping debug info from binaries...\")
-		foreach(BIN \${ALL_BINARIES})
-			execute_process(
-				COMMAND xcrun strip -S \"\${BIN}\"
-				RESULT_VARIABLE STRIP_RESULT
-				ERROR_VARIABLE STRIP_ERR
-			)
-			if(NOT STRIP_RESULT EQUAL 0)
-				message(WARNING \"Could not strip \${BIN}: \${STRIP_ERR}\")
-			endif()
-		endforeach()
 	")
 
 	# Fixes the binaries to make them portable.
