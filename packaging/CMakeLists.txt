@@ -80,8 +80,6 @@ if(APPLE)
 	add_custom_command(
 		OUTPUT "${ICON_OUTPUT}"
 		COMMAND bash "${PROJECT_SOURCE_DIR}/packaging/generate_mac_bundle_icons.sh" "${ICON_OUTPUT}"
-		# Script expects to find 'resources/...' in the current directory
-		WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}/packaging" 
 		DEPENDS "${ICON_SCRIPT}" "${ICON_SOURCE}"
 		COMMENT "Generating macOS icons.icns..."
 		VERBATIM
