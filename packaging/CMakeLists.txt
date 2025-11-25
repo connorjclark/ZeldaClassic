@@ -65,6 +65,7 @@ set(CPACK_INCLUDE_TOPLEVEL_DIRECTORY OFF)
 # TODO ! zstandalone ? crashpad handler ? zconsole ?
 # TODO ! test_runner ? add WANT_TESTS
 # TODO ! PACKAGE_DEBUG_INFO needed? Try causing error in zplayer CI job and see if stack trace is given.
+# TODO ! CPACK_STRIP_FILES ?
 if(APPLE)
     set(CPACK_GENERATOR "DragNDrop")
     set(CPACK_PACKAGING_INSTALL_PREFIX "/")
