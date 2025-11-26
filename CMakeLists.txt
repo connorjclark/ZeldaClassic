@@ -157,9 +157,9 @@ function(zc_install_targets)
 		set(INSTALL_LIB_DIR "ZQuest Classic.app/Contents/Frameworks")
 		set(INSTALL_ARCHIVE_DIR "ZQuest Classic.app/Contents/Frameworks")
 	elseif(WIN32)
-		set(INSTALL_BIN_DIR "")
-		set(INSTALL_LIB_DIR "")
-		set(INSTALL_ARCHIVE_DIR "")
+		set(INSTALL_BIN_DIR ".")
+		set(INSTALL_LIB_DIR ".")
+		set(INSTALL_ARCHIVE_DIR ".")
 	endif()
 
 	install(TARGETS ${ARGV}
