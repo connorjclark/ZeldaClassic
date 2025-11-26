@@ -111,8 +111,6 @@ jobs:
             mkdir zc-extracted
             cd zc-extracted
             7z x ../${{ needs.build.outputs.artifact-name }}/${{ needs.build.outputs.package-name }}
-            # TODO !
-            ls
           macos: |
             echo "BUILD_FOLDER=$PWD/zc-extracted/ZQuest Classic.app/Contents/Resources" >> "$GITHUB_ENV"
             hdiutil attach -mountpoint zc-mounted ${{ needs.build.outputs.artifact-name }}/${{ needs.build.outputs.package-name }}
