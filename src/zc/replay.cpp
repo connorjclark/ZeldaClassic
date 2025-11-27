@@ -1310,10 +1310,6 @@ void replay_poll()
     if (mode == ReplayMode::Off)
         return;
 
-	// TODO !
-	if (frame_count == 123)
-		abort();
-
     if (did_attempt_input_during_replay && replay_is_replaying())
     {
         int key_copy[KEY_MAX];
