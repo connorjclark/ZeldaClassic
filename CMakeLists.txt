@@ -151,21 +151,17 @@ function(zc_install_targets)
 
 	set(INSTALL_BIN_DIR "bin")
 	set(INSTALL_LIB_DIR "lib")
-	set(INSTALL_ARCHIVE_DIR "lib/zquestclassic")
 	if(APPLE)
 		set(INSTALL_BIN_DIR "ZQuest Classic.app/Contents/Resources")
 		set(INSTALL_LIB_DIR "ZQuest Classic.app/Contents/Frameworks")
-		set(INSTALL_ARCHIVE_DIR "ZQuest Classic.app/Contents/Frameworks")
 	elseif(WIN32)
 		set(INSTALL_BIN_DIR ".")
 		set(INSTALL_LIB_DIR ".")
-		set(INSTALL_ARCHIVE_DIR ".")
 	endif()
 
 	install(TARGETS ${ARGV}
 		RUNTIME DESTINATION "${INSTALL_BIN_DIR}"
 		LIBRARY DESTINATION "${INSTALL_LIB_DIR}"
-		ARCHIVE DESTINATION "${INSTALL_ARCHIVE_DIR}"
 		BUNDLE DESTINATION .
 	)
 endfunction()
@@ -212,6 +208,8 @@ if(MSVC AND NOT (DEFINED ENV{CI} OR ZC_OFFICIAL) AND NOT ZLIB_LIBRARIES)
 		set(PNG_INCLUDE_DIRS "${png_SOURCE_DIR}" "${png_BINARY_DIR}")
 		set(PNG_INCLUDE_DIR "${png_SOURCE_DIR}" "${png_BINARY_DIR}")
 	endif()
+
+	zc_install_targets(${ZLIB_LIBRARIES} ${PNG_LIBRARIES})
 elseif(NOT EMSCRIPTEN)
 	FetchContent_Declare(
 		zlib
@@ -243,7 +241,7 @@ elseif(NOT EMSCRIPTEN)
 		set(PNG_INCLUDE_DIR "${png_SOURCE_DIR}" "${png_BINARY_DIR}")
 	endif()
 
-	zc_install_targets(${PNG_LIBRARIES})
+	zc_install_targets(${ZLIB_LIBRARIES} ${PNG_LIBRARIES})
 endif()
 
 FetchContent_Declare(json
@@ -384,6 +382,7 @@ endif()
 
 get_target_property(ALLEGRO_LINK_LIBRARIES allegro_with_legacy INTERFACE_LINK_LIBRARIES)
 zc_install_targets(${ALLEGRO_LINK_LIBRARIES})
+zc_install_targets(${VORBIS_LIBRARIES})
 
 if(DEFINED ENV{CI} OR ZC_OFFICIAL)
 	get_target_property(ALLEGRO_CODEC_SOURCES allegro_acodec SOURCES)
@@ -801,6 +800,7 @@ if(BUILD_SOUND_LIBS_FROM_SOURCE)
 	target_compile_definitions(gme_headers INTERFACE -DVGM_YM2612_NUKED)
 
 	set(SOUNDLIBS gme gme_headers)
+	zc_install_targets(gme)
 endif()
 
 find_package(dumb QUIET)
@@ -1105,6 +1105,8 @@ if(CURL_FOUND AND WIN32)
 	FetchContent_MakeAvailable(miniz)
 	set(BUILD_SHARED_LIBS BUILD_SHARED_LIBS_PREV)
 	target_link_libraries(zupdater PRIVATE miniz)
+
+	zc_install_targets(CURL::libcurl)
 else()
 	message(WARNING "Using Python for zupdater")
 
