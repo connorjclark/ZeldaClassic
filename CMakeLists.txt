@@ -278,7 +278,6 @@ if (WANT_NFD)
 			EXCLUDE_FROM_ALL
 		)
 		FetchContent_MakeAvailable(nativefiledialog) # exposed as nfd
-		zc_install_targets(nfd)
 		set(USE_NFD ON)
 	endif()
 endif()
@@ -656,6 +655,9 @@ if(CURL_FOUND)
 	target_sources(zcbase PRIVATE src/base/http.cpp)
 	target_link_libraries(zcbase PUBLIC CURL::libcurl)
 	target_compile_definitions(zcbase PUBLIC HAS_CURL)
+	# TODO !
+	# RUNTIME_DEPENDENCIES ?
+	# zc_install_targets(CURL::libcurl)
 else()
 	message(WARNING "libcurl not found - disabling base/http.cpp")
 endif()
@@ -665,6 +667,7 @@ endif()
 if (USE_NFD)
 	target_link_libraries(zcbase PUBLIC nfd)
 	target_compile_definitions(zcbase PUBLIC HAS_NFD)
+	zc_install_targets(nfd)
 endif()
 
 if(WANT_ZC_TESTS)
@@ -1105,8 +1108,6 @@ if(CURL_FOUND AND WIN32)
 	FetchContent_MakeAvailable(miniz)
 	set(BUILD_SHARED_LIBS BUILD_SHARED_LIBS_PREV)
 	target_link_libraries(zupdater PRIVATE miniz)
-
-	zc_install_targets(CURL::libcurl)
 else()
 	message(WARNING "Using Python for zupdater")
 
