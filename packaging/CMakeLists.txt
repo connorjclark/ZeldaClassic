@@ -38,11 +38,13 @@ endif()
 set(CPACK_INCLUDE_TOPLEVEL_DIRECTORY OFF)
 
 if(APPLE)
-    set(INSTALL_DATA_DIR "ZQuest Classic.app/Contents/Resources")
+	set(INSTALL_DATA_DIR "ZQuest Classic.app/Contents/Resources")
 elseif(WIN32)
-    set(INSTALL_DATA_DIR ".")
+	set(INSTALL_DATA_DIR ".")
 else()
-    set(INSTALL_DATA_DIR "share/zquestclassic")
+	# TODO !
+	# set(INSTALL_DATA_DIR "share/zquestclassic")
+	set(INSTALL_DATA_DIR ".")
 endif()
 
 # install(CODE "
