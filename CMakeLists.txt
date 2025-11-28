@@ -271,8 +271,8 @@ if (WANT_NFD)
 	if (EMSCRIPTEN)
 		message(WARNING "WANT_NFD is set, but can't support web, so ignoring")
 	else()
-		set(BUILD_SHARED_LIBS_PREV BUILD_SHARED_LIBS)
-		set(BUILD_SHARED_LIBS ON)
+		set(BUILD_SHARED_LIBS_PREV ${BUILD_SHARED_LIBS})
+		set(BUILD_SHARED_LIBS ON CACHE BOOL "" FORCE)
 		set(NFD_INSTALL OFF CACHE BOOL "" FORCE)
 		FetchContent_Declare(
 			nativefiledialog
@@ -283,7 +283,7 @@ if (WANT_NFD)
 			EXCLUDE_FROM_ALL
 		)
 		FetchContent_MakeAvailable(nativefiledialog) # exposed as nfd
-		set(BUILD_SHARED_LIBS BUILD_SHARED_LIBS_PREV)
+		set(BUILD_SHARED_LIBS ${BUILD_SHARED_LIBS_PREV} CACHE BOOL "" FORCE)
 		set(USE_NFD ON)
 	endif()
 endif()
@@ -1100,7 +1100,7 @@ if(CURL_FOUND AND WIN32)
 	# target_include_directories(json INTERFACE third_party/json)
 	target_link_libraries(zupdater PRIVATE nlohmann_json::nlohmann_json)
 
-	set(BUILD_SHARED_LIBS_PREV BUILD_SHARED_LIBS)
+	set(BUILD_SHARED_LIBS_PREV ${BUILD_SHARED_LIBS})
 	set(BUILD_SHARED_LIBS OFF)
 	FetchContent_Declare(
 		miniz
@@ -1111,7 +1111,7 @@ if(CURL_FOUND AND WIN32)
 		EXCLUDE_FROM_ALL
 	)
 	FetchContent_MakeAvailable(miniz)
-	set(BUILD_SHARED_LIBS BUILD_SHARED_LIBS_PREV)
+	set(BUILD_SHARED_LIBS ${BUILD_SHARED_LIBS_PREV} CACHE BOOL "" FORCE)
 	target_link_libraries(zupdater PRIVATE miniz)
 else()
 	message(WARNING "Using Python for zupdater")
