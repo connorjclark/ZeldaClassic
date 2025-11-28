@@ -193,9 +193,6 @@ if(MSVC AND NOT (DEFINED ENV{CI} OR ZC_OFFICIAL) AND NOT ZLIB_LIBRARIES)
 		set(ZLIB_LIBRARIES ZLIB::ZLIB)
 	endif()
 
-	set(PNG_BUILD_ZLIB ON CACHE BOOL "")
-	set(PNG_STATIC OFF CACHE BOOL "")
-	set(PNG_TESTS OFF CACHE BOOL "")
 	FetchContent_Declare(
 		png
 		GIT_REPOSITORY
@@ -204,6 +201,9 @@ if(MSVC AND NOT (DEFINED ENV{CI} OR ZC_OFFICIAL) AND NOT ZLIB_LIBRARIES)
 			v1.6.38
 		EXCLUDE_FROM_ALL
 	)
+	set(PNG_BUILD_ZLIB ON CACHE BOOL "")
+	set(PNG_STATIC OFF CACHE BOOL "")
+	set(PNG_TESTS OFF CACHE BOOL "")
 	FetchContent_MakeAvailable(png)
 
 	if(NOT PNG_LIBRARIES)
@@ -224,9 +224,6 @@ elseif(NOT EMSCRIPTEN)
 	)
 	FetchContent_MakeAvailable(zlib)
 
-	set(ZLIB_ROOT "${zlib_SOURCE_DIR}" CACHE INTERNAL "Root for the zlib library, used by libpng")
-	set(PNG_STATIC OFF CACHE INTERNAL BOOL "")
-	set(PNG_TESTS OFF CACHE INTERNAL BOOL "")
 	FetchContent_Declare(
 		png
 		GIT_REPOSITORY
@@ -235,6 +232,9 @@ elseif(NOT EMSCRIPTEN)
 			v1.6.47
 		EXCLUDE_FROM_ALL
 	)
+	set(ZLIB_ROOT "${zlib_SOURCE_DIR}" CACHE INTERNAL "Root for the zlib library, used by libpng")
+	set(PNG_STATIC OFF CACHE INTERNAL BOOL "")
+	set(PNG_TESTS OFF CACHE INTERNAL BOOL "")
 	FetchContent_MakeAvailable(png)
 
 	if(NOT PNG_LIBRARIES)
@@ -253,7 +253,6 @@ FetchContent_Declare(json
 FetchContent_MakeAvailable(json)
 
 if (NOT EMSCRIPTEN)
-	set(UUID_SYSTEM_GENERATOR ON CACHE INTERNAL "")
 	FetchContent_Declare(
 		stduuid
 		GIT_REPOSITORY
@@ -263,6 +262,7 @@ if (NOT EMSCRIPTEN)
 		PATCH_COMMAND  git restore . && git apply ${CMAKE_SOURCE_DIR}/third_party/stduuid.patch
 		EXCLUDE_FROM_ALL
 	)
+	set(UUID_SYSTEM_GENERATOR ON CACHE INTERNAL "")
 	FetchContent_MakeAvailable(stduuid)
 endif()
 
@@ -271,9 +271,6 @@ if (WANT_NFD)
 	if (EMSCRIPTEN)
 		message(WARNING "WANT_NFD is set, but can't support web, so ignoring")
 	else()
-		set(BUILD_SHARED_LIBS_PREV ${BUILD_SHARED_LIBS})
-		set(BUILD_SHARED_LIBS ON CACHE BOOL "" FORCE)
-		set(NFD_INSTALL OFF CACHE BOOL "" FORCE)
 		FetchContent_Declare(
 			nativefiledialog
 			GIT_REPOSITORY
@@ -282,6 +279,9 @@ if (WANT_NFD)
 				17b6e8ce219c0677f94b63636abb9296b28841ca
 			EXCLUDE_FROM_ALL
 		)
+		set(BUILD_SHARED_LIBS_PREV ${BUILD_SHARED_LIBS})
+		set(BUILD_SHARED_LIBS ON CACHE BOOL "" FORCE)
+		set(NFD_INSTALL OFF CACHE BOOL "" FORCE)
 		FetchContent_MakeAvailable(nativefiledialog) # exposed as nfd
 		set(BUILD_SHARED_LIBS ${BUILD_SHARED_LIBS_PREV} CACHE BOOL "" FORCE)
 		set(USE_NFD ON)
@@ -1100,8 +1100,6 @@ if(CURL_FOUND AND WIN32)
 	# target_include_directories(json INTERFACE third_party/json)
 	target_link_libraries(zupdater PRIVATE nlohmann_json::nlohmann_json)
 
-	set(BUILD_SHARED_LIBS_PREV ${BUILD_SHARED_LIBS})
-	set(BUILD_SHARED_LIBS OFF)
 	FetchContent_Declare(
 		miniz
 		GIT_REPOSITORY
@@ -1110,6 +1108,8 @@ if(CURL_FOUND AND WIN32)
 			9ae305f6e109f8f1fbd2130458f1ee6197269b3b
 		EXCLUDE_FROM_ALL
 	)
+	set(BUILD_SHARED_LIBS_PREV ${BUILD_SHARED_LIBS})
+	set(BUILD_SHARED_LIBS OFF)
 	FetchContent_MakeAvailable(miniz)
 	set(BUILD_SHARED_LIBS ${BUILD_SHARED_LIBS_PREV} CACHE BOOL "" FORCE)
 	target_link_libraries(zupdater PRIVATE miniz)
