@@ -159,6 +159,10 @@ function(zc_install_targets)
 	elseif(WIN32)
 		set(INSTALL_BIN_DIR ".")
 		set(INSTALL_LIB_DIR ".")
+	elseif(LINUX)
+		# TODO: remove this.
+		set(INSTALL_BIN_DIR ".")
+		set(INSTALL_LIB_DIR ".")
 	endif()
 
 	install(TARGETS ${ARGV}
