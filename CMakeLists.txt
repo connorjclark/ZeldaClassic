@@ -271,6 +271,7 @@ if (WANT_NFD)
 	if (EMSCRIPTEN)
 		message(WARNING "WANT_NFD is set, but can't support web, so ignoring")
 	else()
+		set(NFD_INSTALL OFF CACHE BOOL "" FORCE)
 		FetchContent_Declare(
 			nativefiledialog
 			GIT_REPOSITORY
