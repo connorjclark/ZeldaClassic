@@ -172,6 +172,8 @@ endfunction()
 # deps
 #############################################################
 
+set(BUILD_SHARED_LIBS ON)
+
 # Local windows development is for some reason more finnicky to setup with the very latest
 # zlib/png. For now, use older versions locally.
 if(MSVC AND NOT (DEFINED ENV{CI} OR ZC_OFFICIAL) AND NOT ZLIB_LIBRARIES)
@@ -183,7 +185,6 @@ if(MSVC AND NOT (DEFINED ENV{CI} OR ZC_OFFICIAL) AND NOT ZLIB_LIBRARIES)
 			19d7d6b32ee3af4ed4bdec415f42f518c93b5025
 		EXCLUDE_FROM_ALL
 	)
-	set(BUILD_SHARED_LIBS ON)
 	FetchContent_MakeAvailable(zlib)
 
 	if(NOT ZLIB_LIBRARIES)
@@ -221,7 +222,6 @@ elseif(NOT EMSCRIPTEN)
 			v1.3.1
 		EXCLUDE_FROM_ALL
 	)
-	set(BUILD_SHARED_LIBS ON)
 	FetchContent_MakeAvailable(zlib)
 
 	set(ZLIB_ROOT "${zlib_SOURCE_DIR}" CACHE INTERNAL "Root for the zlib library, used by libpng")
