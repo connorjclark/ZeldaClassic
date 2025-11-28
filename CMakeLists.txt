@@ -271,6 +271,8 @@ if (WANT_NFD)
 	if (EMSCRIPTEN)
 		message(WARNING "WANT_NFD is set, but can't support web, so ignoring")
 	else()
+		set(BUILD_SHARED_LIBS_PREV BUILD_SHARED_LIBS)
+		set(BUILD_SHARED_LIBS ON)
 		set(NFD_INSTALL OFF CACHE BOOL "" FORCE)
 		FetchContent_Declare(
 			nativefiledialog
@@ -281,6 +283,7 @@ if (WANT_NFD)
 			EXCLUDE_FROM_ALL
 		)
 		FetchContent_MakeAvailable(nativefiledialog) # exposed as nfd
+		set(BUILD_SHARED_LIBS BUILD_SHARED_LIBS_PREV)
 		set(USE_NFD ON)
 	endif()
 endif()
