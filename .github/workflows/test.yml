@@ -121,7 +121,8 @@ jobs:
             cp -r "zc-mounted/ZQuest Classic.app.dSYM" zc-extracted
             hdiutil unmount zc-mounted
           linux: |
-            echo "BUILD_FOLDER=$PWD/zc-extracted/bin" >> "$GITHUB_ENV"
+            # TODO ! bin
+            echo "BUILD_FOLDER=$PWD/zc-extracted" >> "$GITHUB_ENV"
             mkdir zc-extracted
             tar -xvzf ${{ needs.build.outputs.artifact-name }}/${{ needs.build.outputs.package-name }} -C zc-extracted
             # TODO !

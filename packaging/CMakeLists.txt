@@ -62,14 +62,14 @@ endif()
 install(DIRECTORY "${PROJECT_SOURCE_DIR}/resources/" DESTINATION "${INSTALL_DATA_DIR}")
 install(DIRECTORY "${PROJECT_SOURCE_DIR}/changelogs" DESTINATION "${INSTALL_DATA_DIR}")
 
-# TODO !
-if(WIN32)
-	get_target_property(CURL_LOCATION CURL::libcurl LOCATION)
-	install(FILES "${CURL_LOCATION}"
-			DESTINATION "."
-			CONFIGURATIONS Release RelWithDebInfo
-	)
-endif()
+# TODO ! rm
+# if(WIN32)
+# 	get_target_property(CURL_LOCATION CURL::libcurl LOCATION)
+# 	install(FILES "${CURL_LOCATION}"
+# 			DESTINATION "."
+# 			CONFIGURATIONS Release RelWithDebInfo
+# 	)
+# endif()
 
 # TODO ! generate_licenses at install time ... above command should handle but double check it. and maybe do as a seperate install-time script.
 # TODO ! zstandalone ? crashpad handler ? zconsole ?
