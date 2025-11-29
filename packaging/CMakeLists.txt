@@ -15,6 +15,10 @@ foreach(app ${MY_GAME_TARGETS})
 	elseif(WIN32)
 		set(INSTALL_BIN_DIR ".")
 		set(INSTALL_LIB_DIR ".")
+	elseif(LINUX)
+		# TODO ! remove this branch.
+		set(INSTALL_BIN_DIR ".")
+		set(INSTALL_LIB_DIR ".")
 	endif()
 
 	get_all_linked_targets("${app}" ALL_DEPS)
@@ -85,6 +89,15 @@ endif()
 install(DIRECTORY "${PROJECT_SOURCE_DIR}/resources/" DESTINATION "${INSTALL_DATA_DIR}")
 install(DIRECTORY "${PROJECT_SOURCE_DIR}/changelogs" DESTINATION "${INSTALL_DATA_DIR}")
 
+install(CODE "
+	execute_process(
+		COMMAND ${PYTHON} \"${PROJECT_SOURCE_DIR}/scripts/package.py\"
+		--preprocess_configs
+		--build_folder \"\${BUILD_FOLDER}\"
+		--package_folder \"$<INSTALL_PREFIX>/${INSTALL_DATA_DIR}\"
+		COMMAND_ERROR_IS_FATAL ANY)
+")
+
 # TODO ! rm
 # if(WIN32)
 # 	get_target_property(CURL_LOCATION CURL::libcurl LOCATION)
@@ -94,7 +107,6 @@ install(DIRECTORY "${PROJECT_SOURCE_DIR}/changelogs" DESTINATION "${INSTALL_DATA
 # 	)
 # endif()
 
-# TODO ! base_config parsing
 # TODO ! generate_licenses at install time ... above command should handle but double check it. and maybe do as a seperate install-time script.
 # TODO ! zstandalone ? crashpad handler ? zconsole ?
 # TODO ! test_runner ? add WANT_TESTS

@@ -27,6 +27,11 @@ parser.add_argument(
     help='package the extras instead of the main package',
 )
 parser.add_argument(
+    '--preprocess_configs',
+    action='store_true',
+    help='Process config files to set platform-specific values',
+)
+parser.add_argument(
     '--test_runner',
     action='store_true',
     help='package the test runner in main package',
@@ -449,6 +454,11 @@ if 'TEST' in os.environ:
     )
 elif args.extras:
     do_packaging(packages_dir / 'extras', glob(resources_extra_dir, '**/*'))
+elif args.preprocess_configs:
+    cfg_os = args.cfg_os or system_to_cfg_os(system)
+    for path in package_dir.rglob('*.cfg'):
+        print(f'preprocessing config: ${path}')
+        path.write_text(preprocess_base_config(path.read_text(), cfg_os))
 elif args.cfg_os == 'web':
     do_web_packaging()
 else:
