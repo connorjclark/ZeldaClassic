@@ -13,21 +13,21 @@ add_custom_target(copy_resources DEPENDS copy_resources.stamp)
 set_source_files_properties(copy_resources.stamp PROPERTIES SYMBOLIC 1)
 
 # TODO ! rm?
-# add_custom_command(
-# 	COMMAND ${PYTHON} ${PROJECT_SOURCE_DIR}/scripts/package.py --build_folder "${BUILD_FOLDER}" --clean_first
-# 	OUTPUT package.stamp
-# 	DEPENDS ${zc_targets}
-# )
-# add_custom_target(package_zc DEPENDS package.stamp)
-# set_source_files_properties(package.stamp PROPERTIES SYMBOLIC 1)
+add_custom_command(
+	COMMAND ${PYTHON} ${PROJECT_SOURCE_DIR}/scripts/package.py --build_folder "${BUILD_FOLDER}" --clean_first
+	OUTPUT package.stamp
+	DEPENDS ${zc_targets}
+)
+add_custom_target(package_zc DEPENDS package.stamp)
+set_source_files_properties(package.stamp PROPERTIES SYMBOLIC 1)
 
-# add_custom_command(
-# 	COMMAND ${PYTHON} ${PROJECT_SOURCE_DIR}/scripts/package.py --build_folder "${BUILD_FOLDER}" --clean_first --skip_archive
-# 	OUTPUT package_no_archive.stamp
-# 	DEPENDS ${zc_targets}
-# )
-# add_custom_target(package_zc_no_archive DEPENDS package_no_archive.stamp)
-# set_source_files_properties(package_no_archive.stamp PROPERTIES SYMBOLIC 1)
+add_custom_command(
+	COMMAND ${PYTHON} ${PROJECT_SOURCE_DIR}/scripts/package.py --build_folder "${BUILD_FOLDER}" --clean_first --skip_archive
+	OUTPUT package_no_archive.stamp
+	DEPENDS ${zc_targets}
+)
+add_custom_target(package_zc_no_archive DEPENDS package_no_archive.stamp)
+set_source_files_properties(package_no_archive.stamp PROPERTIES SYMBOLIC 1)
 
 if(COPY_RESOURCES AND NOT EMSCRIPTEN)
 	foreach(target IN LISTS zc_targets)
@@ -71,6 +71,7 @@ install(DIRECTORY "${PROJECT_SOURCE_DIR}/changelogs" DESTINATION "${INSTALL_DATA
 # 	)
 # endif()
 
+# TODO ! base_config parsing
 # TODO ! generate_licenses at install time ... above command should handle but double check it. and maybe do as a seperate install-time script.
 # TODO ! zstandalone ? crashpad handler ? zconsole ?
 # TODO ! test_runner ? add WANT_TESTS

@@ -302,7 +302,7 @@ if(MSVC AND NOT (DEFINED ENV{CI} OR ZC_OFFICIAL) AND NOT ZLIB_LIBRARIES)
 		set(PNG_INCLUDE_DIR "${png_SOURCE_DIR}" "${png_BINARY_DIR}")
 	endif()
 
-	zc_install_targets(${ZLIB_LIBRARIES} ${PNG_LIBRARIES})
+	zc_install_targets(${PNG_LIBRARIES})
 elseif(NOT EMSCRIPTEN)
 	FetchContent_Declare(
 		zlib
@@ -1435,7 +1435,8 @@ if(CMAKE_GENERATOR MATCHES "Visual Studio")
 
 	# Organize into folders
 	set_property(GLOBAL PROPERTY USE_FOLDERS ON)
-	set_target_properties(zplayer zeditor zscript zlauncher zupdater package_zc package_zc_no_archive PROPERTIES FOLDER "")
+	# TODO ! package_zc package_zc_no_archive
+	set_target_properties(zplayer zeditor zscript zlauncher zupdater PROPERTIES FOLDER "")
 	set_target_properties(run_replay_tests_all run_replay_tests_basic run_replay_tests_all_1s run_replay_tests_all_10s run_replay_tests_all_100s PROPERTIES FOLDER "Replay Tests")
 	set_target_properties(zcbase zalleg zcgui zcsound PROPERTIES FOLDER "Our Libraries")
 	set_target_properties(gme PROPERTIES FOLDER Sound)
@@ -1482,33 +1483,65 @@ endif()
 # zc_install_targets(allegro allegro-legacy allegro_with_legacy zlauncher zplayer zeditor zscript zupdater)
 zc_install_targets(allegro allegro-legacy allegro_with_legacy zlauncher zplayer zeditor zscript zcsound zupdater ${SOUNDLIBS})
 
-
-
 # set(MY_GAME_TARGETS zlauncher zplayer zeditor zscript zupdater)
 # get_all_linked_targets("${MY_GAME_TARGETS}" ZQ_DEPS)
 # message(STATUS "Found Recursive Dependencies: ${ZQ_DEPS}")
 
 # TODO ! all at once?
-# foreach(app ${MY_GAME_TARGETS})
-# 	set(INSTALL_BIN_DIR "bin")
-# 	set(INSTALL_LIB_DIR "lib")
-# 	if(APPLE)
-# 		set(INSTALL_BIN_DIR "ZQuest Classic.app/Contents/Resources")
-# 		set(INSTALL_LIB_DIR "ZQuest Classic.app/Contents/Frameworks")
-# 	elseif(WIN32)
-# 		set(INSTALL_BIN_DIR ".")
-# 		set(INSTALL_LIB_DIR ".")
-# 	endif()
+set(MY_GAME_TARGETS zlauncher zplayer zeditor zscript zupdater allegro_acodec)
 
-#     install(TARGETS ${app} 
-#         RUNTIME_DEPENDENCIES
-#         DIRECTORIES ${SEARCH_DIRS} # <--- THIS IS WHERE THE MAGIC HAPPENS
-#         PRE_EXCLUDE_REGEXES "api-ms-" "ext-ms-" # Standard Windows exclusions
-#         POST_EXCLUDE_REGEXES ".*system32/.*\\.dll"
-# 		RUNTIME DESTINATION "${INSTALL_BIN_DIR}"
-# 		LIBRARY DESTINATION "${INSTALL_LIB_DIR}"
-# 		FRAMEWORK DESTINATION "${INSTALL_LIB_DIR}"
-#     )
-# endforeach()
+foreach(app ${MY_GAME_TARGETS})
+	set(INSTALL_BIN_DIR "bin")
+	set(INSTALL_LIB_DIR "lib")
+	if(APPLE)
+		set(INSTALL_BIN_DIR "ZQuest Classic.app/Contents/MacOS")
+		set(INSTALL_LIB_DIR "ZQuest Classic.app/Contents/Frameworks")
+	elseif(WIN32)
+		set(INSTALL_BIN_DIR ".")
+		set(INSTALL_LIB_DIR ".")
+	endif()
+
+	get_all_linked_targets("${app}" ALL_DEPS)
+
+	# For debugging.
+	# message(STATUS "---------------------------------------------------")
+	# message(STATUS "DEBUG: Analyzing dependencies for app: ${app}")
+	# foreach(dep ${ALL_DEPS})
+	# 	get_target_property(type ${dep} TYPE)
+	# 	# Attempt to get the directory, but don't crash if it fails
+	# 	set(dir "NOT_FOUND")
+	# 	if(TARGET ${dep})
+	# 		# Check if we can get the file location
+	# 		get_property(is_imported TARGET ${dep} PROPERTY IMPORTED)
+	# 		if(is_imported OR type STREQUAL "SHARED_LIBRARY" OR type STREQUAL "STATIC_LIBRARY")
+	# 				# This gen-ex prints the path at configure time for us to see
+	# 				set(dir "$<TARGET_FILE_DIR:${dep}>") 
+	# 		endif()
+	# 	endif()
+	# 	message(STATUS "   Dependency: ${dep} [Type: ${type}] -> Dir: ${dir}")
+	# endforeach()
+	# message(STATUS "---------------------------------------------------")
+
+	set(SEARCH_DIRS "")
+	foreach(dep ${ALL_DEPS})
+		# Only look at targets that are actual libraries/executables (skip Headers/Interface)
+		get_target_property(type ${dep} TYPE)
+		if(NOT type STREQUAL "INTERFACE_LIBRARY" AND NOT type STREQUAL "UTILITY")
+			list(APPEND SEARCH_DIRS "$<TARGET_FILE_DIR:${dep}>")
+		endif()
+	endforeach()
+
+	install(TARGETS ${app} 
+		RUNTIME_DEPENDENCIES
+			DIRECTORIES "${SEARCH_DIRS}"
+			PRE_EXCLUDE_REGEXES "api-ms-" "ext-ms-" 
+			POST_EXCLUDE_REGEXES ".*system32/.*\\.dll"
+
+		RUNTIME DESTINATION "${INSTALL_BIN_DIR}"
+		LIBRARY DESTINATION "${INSTALL_LIB_DIR}"
+		FRAMEWORK DESTINATION "${INSTALL_LIB_DIR}"
+		BUNDLE DESTINATION .
+	)
+endforeach()
 
 add_subdirectory(packaging)
