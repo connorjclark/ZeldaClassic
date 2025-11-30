@@ -1,6 +1,7 @@
 set(CPACK_INCLUDE_TOPLEVEL_DIRECTORY OFF)
 
-if(NOT EMSCRIPTEN)
+# TODO !
+if(NOT EMSCRIPTEN AND WIN32)
 	# TODO !
 	zc_install_targets(allegro zcsound)
 
