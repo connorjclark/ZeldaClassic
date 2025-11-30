@@ -82,41 +82,6 @@ function(zc_install_targets)
 		LIBRARY DESTINATION "${INSTALL_LIB_DIR}"
 		BUNDLE DESTINATION .
 	)
-
-	# get_all_linked_targets("${ARGV}" ALL_DEPS)
-
-	# set(SEARCH_DIRS "")
-	# foreach(dep ${ALL_DEPS})
-	# 	# 1. Check the target type
-	# 	get_target_property(tgt_type ${dep} TYPE)
-
-	# 	# 2. If it is an INTERFACE_LIBRARY (Header-only), skip it.
-	# 	#    They don't have binary files to copy.
-	# 	if(tgt_type STREQUAL "INTERFACE_LIBRARY")
-	# 		continue()
-	# 	endif()
-
-	# 	# 3. If it is a UTILITY target, skip it.
-	# 	if(tgt_type STREQUAL "UTILITY")
-	# 		continue()
-	# 	endif()
-
-	# 	# 4. It is safe to ask for the file dir now
-	# 	list(APPEND SEARCH_DIRS "$<TARGET_FILE_DIR:${dep}>")
-	# endforeach()
-
-	# # list(APPEND SEARCH_DIRS "${INSTALL_BIN_DIR}")
-
-	# # 3. Install the executable and let CMake find the DLLs in SEARCH_DIRS
-	# install(TARGETS ${ARGV}
-	# 	RUNTIME_DEPENDENCIES
-	# 		DIRECTORIES ${SEARCH_DIRS}
-
-	# 	RUNTIME DESTINATION "${INSTALL_BIN_DIR}"
-	# 	LIBRARY DESTINATION "${INSTALL_LIB_DIR}"
-	# 	FRAMEWORK DESTINATION "${INSTALL_LIB_DIR}"
-	# 	BUNDLE DESTINATION .
-	# )
 endfunction()
 
 function(zc_install_targets_windows)
@@ -124,23 +89,23 @@ function(zc_install_targets_windows)
 		get_all_linked_targets("${app}" ALL_DEPS)
 
 		# For debugging.
-		message(STATUS "---------------------------------------------------")
-		message(STATUS "DEBUG: Analyzing dependencies for app: ${app}")
-		foreach(dep ${ALL_DEPS})
-			get_target_property(type ${dep} TYPE)
-			# Attempt to get the directory, but don't crash if it fails
-			set(dir "NOT_FOUND")
-			if(TARGET ${dep})
-				# Check if we can get the file location
-				get_property(is_imported TARGET ${dep} PROPERTY IMPORTED)
-				if(is_imported OR type STREQUAL "SHARED_LIBRARY" OR type STREQUAL "STATIC_LIBRARY")
-						# This gen-ex prints the path at configure time for us to see
-						set(dir "$<TARGET_FILE_DIR:${dep}>") 
-				endif()
-			endif()
-			message(STATUS "   Dependency: ${dep} [Type: ${type}] -> Dir: ${dir}")
-		endforeach()
-		message(STATUS "---------------------------------------------------")
+		# message(STATUS "---------------------------------------------------")
+		# message(STATUS "DEBUG: Analyzing dependencies for app: ${app}")
+		# foreach(dep ${ALL_DEPS})
+		# 	get_target_property(type ${dep} TYPE)
+		# 	# Attempt to get the directory, but don't crash if it fails
+		# 	set(dir "NOT_FOUND")
+		# 	if(TARGET ${dep})
+		# 		# Check if we can get the file location
+		# 		get_property(is_imported TARGET ${dep} PROPERTY IMPORTED)
+		# 		if(is_imported OR type STREQUAL "SHARED_LIBRARY" OR type STREQUAL "STATIC_LIBRARY")
+		# 			# This gen-ex prints the path at configure time for us to see
+		# 			set(dir "$<TARGET_FILE_DIR:${dep}>") 
+		# 		endif()
+		# 	endif()
+		# 	message(STATUS "   Dependency: ${dep} [Type: ${type}] -> Dir: ${dir}")
+		# endforeach()
+		# message(STATUS "---------------------------------------------------")
 
 		set(SEARCH_DIRS "")
 		foreach(dep ${ALL_DEPS})
@@ -187,15 +152,6 @@ install(CODE "
 			$<$<BOOL:${ZC_VERSION}>:--version;${ZC_VERSION}>
 		COMMAND_ERROR_IS_FATAL ANY)
 ")
-
-# TODO ! rm
-# if(WIN32)
-# 	get_target_property(CURL_LOCATION CURL::libcurl LOCATION)
-# 	install(FILES "${CURL_LOCATION}"
-# 			DESTINATION "."
-# 			CONFIGURATIONS Release RelWithDebInfo
-# 	)
-# endif()
 
 # TODO ! zstandalone ? crashpad handler ? zconsole ?
 # TODO ! test_runner ? add WANT_TESTS
