@@ -1,5 +1,23 @@
 set(CPACK_INCLUDE_TOPLEVEL_DIRECTORY OFF)
 
+if(APPLE)
+	set(INSTALL_BIN_DIR "ZQuest Classic.app/Contents/Resources") # TODO ! MacOS
+	set(INSTALL_LIB_DIR "ZQuest Classic.app/Contents/Frameworks")
+	set(INSTALL_DATA_DIR "ZQuest Classic.app/Contents/Resources")
+elseif(WIN32)
+	set(INSTALL_BIN_DIR ".")
+	set(INSTALL_LIB_DIR ".")
+	set(INSTALL_DATA_DIR ".")
+else()
+	# TODO !
+	# set(INSTALL_BIN_DIR "bin")
+	# set(INSTALL_LIB_DIR "lib")
+	# set(INSTALL_DATA_DIR "share/zquestclassic")
+	set(INSTALL_BIN_DIR ".")
+	set(INSTALL_LIB_DIR ".")
+	set(INSTALL_DATA_DIR ".")
+endif()
+
 function(get_all_linked_targets input_targets output_var)
 	set(targets_to_process ${input_targets})
 	set(processed_targets "")
@@ -65,20 +83,6 @@ function(zc_install_targets)
 		set_target_properties(${ARGV} PROPERTIES INSTALL_RPATH_USE_LINK_PATH TRUE)
 	endif()
 
-	set(INSTALL_BIN_DIR "bin")
-	set(INSTALL_LIB_DIR "lib")
-	if(APPLE)
-		set(INSTALL_BIN_DIR "ZQuest Classic.app/Contents/Resources")
-		set(INSTALL_LIB_DIR "ZQuest Classic.app/Contents/Frameworks")
-	elseif(WIN32)
-		set(INSTALL_BIN_DIR ".")
-		set(INSTALL_LIB_DIR ".")
-	elseif(LINUX)
-		# TODO ! remove this branch.
-		set(INSTALL_BIN_DIR ".")
-		set(INSTALL_LIB_DIR ".")
-	endif()
-
 	install(TARGETS ${ARGV}
 		RUNTIME DESTINATION "${INSTALL_BIN_DIR}"
 		LIBRARY DESTINATION "${INSTALL_LIB_DIR}"
@@ -133,21 +137,6 @@ elseif(WIN32)
 	set(TARGETS zlauncher zplayer zeditor zscript zupdater allegro_acodec)
 
 	foreach(app ${TARGETS})
-		set(INSTALL_BIN_DIR "bin")
-		set(INSTALL_LIB_DIR "lib")
-		if(APPLE)
-			# TODO ! MacOS
-			set(INSTALL_BIN_DIR "ZQuest Classic.app/Contents/Resources")
-			set(INSTALL_LIB_DIR "ZQuest Classic.app/Contents/Frameworks")
-		elseif(WIN32)
-			set(INSTALL_BIN_DIR ".")
-			set(INSTALL_LIB_DIR ".")
-		elseif(LINUX)
-			# TODO ! remove this branch.
-			set(INSTALL_BIN_DIR ".")
-			set(INSTALL_LIB_DIR ".")
-		endif()
-
 		get_all_linked_targets("${app}" ALL_DEPS)
 
 		# For debugging.
@@ -197,16 +186,6 @@ else()
 
 	list(APPEND ZC_INSTALL_TARGETS allegro zlauncher zplayer zeditor zscript zcsound zupdater)
 	zc_install_targets("${ZC_INSTALL_TARGETS}")
-endif()
-
-if(APPLE)
-	set(INSTALL_DATA_DIR "ZQuest Classic.app/Contents/Resources")
-elseif(WIN32)
-	set(INSTALL_DATA_DIR ".")
-else()
-	# TODO !
-	# set(INSTALL_DATA_DIR "share/zquestclassic")
-	set(INSTALL_DATA_DIR ".")
 endif()
 
 install(DIRECTORY "${CMAKE_SOURCE_DIR}/resources/" DESTINATION "${INSTALL_DATA_DIR}")
