@@ -70,10 +70,6 @@ function(get_all_linked_targets input_targets output_var)
 endfunction()
 
 function(zc_install_targets)
-	if(EMSCRIPTEN)
-		return()
-	endif()
-
 	if(APPLE)
 		set_target_properties(${ARGV} PROPERTIES INSTALL_RPATH "@loader_path/../Frameworks")
 	elseif(LINUX)
