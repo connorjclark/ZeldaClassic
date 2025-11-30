@@ -193,11 +193,15 @@ function(get_all_linked_targets input_targets output_var)
 endfunction()
 
 function(zc_install_targets)
+	if(EMSCRIPTEN)
+		return()
+	endif()
+
 	if(APPLE)
 		# TODO !
 		# set_target_properties(${ARGV} PROPERTIES INSTALL_RPATH "@loader_path/../lib")
 		set_target_properties(${ARGV} PROPERTIES INSTALL_RPATH "@loader_path/../Frameworks")
-	elseif(UNIX)
+	elseif(LINUX)
 		set_target_properties(${ARGV} PROPERTIES INSTALL_RPATH "$ORIGIN/../lib")
 		set_target_properties(${ARGV} PROPERTIES INSTALL_RPATH_USE_LINK_PATH TRUE)
 	endif()

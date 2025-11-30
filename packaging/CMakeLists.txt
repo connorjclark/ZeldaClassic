@@ -1,68 +1,70 @@
 set(CPACK_INCLUDE_TOPLEVEL_DIRECTORY OFF)
 
-# TODO !
-zc_install_targets(allegro zcsound)
+if(NOT EMSCRIPTEN)
+	# TODO !
+	zc_install_targets(allegro zcsound)
 
-# TODO ! all at once?
-set(MY_GAME_TARGETS zlauncher zplayer zeditor zscript zupdater allegro_acodec)
+	# TODO ! all at once?
+	set(MY_GAME_TARGETS zlauncher zplayer zeditor zscript zupdater allegro_acodec)
 
-foreach(app ${MY_GAME_TARGETS})
-	set(INSTALL_BIN_DIR "bin")
-	set(INSTALL_LIB_DIR "lib")
-	if(APPLE)
-		set(INSTALL_BIN_DIR "ZQuest Classic.app/Contents/MacOS")
-		set(INSTALL_LIB_DIR "ZQuest Classic.app/Contents/Frameworks")
-	elseif(WIN32)
-		set(INSTALL_BIN_DIR ".")
-		set(INSTALL_LIB_DIR ".")
-	elseif(LINUX)
-		# TODO ! remove this branch.
-		set(INSTALL_BIN_DIR ".")
-		set(INSTALL_LIB_DIR ".")
-	endif()
-
-	get_all_linked_targets("${app}" ALL_DEPS)
-
-	# For debugging.
-	# message(STATUS "---------------------------------------------------")
-	# message(STATUS "DEBUG: Analyzing dependencies for app: ${app}")
-	# foreach(dep ${ALL_DEPS})
-	# 	get_target_property(type ${dep} TYPE)
-	# 	# Attempt to get the directory, but don't crash if it fails
-	# 	set(dir "NOT_FOUND")
-	# 	if(TARGET ${dep})
-	# 		# Check if we can get the file location
-	# 		get_property(is_imported TARGET ${dep} PROPERTY IMPORTED)
-	# 		if(is_imported OR type STREQUAL "SHARED_LIBRARY" OR type STREQUAL "STATIC_LIBRARY")
-	# 				# This gen-ex prints the path at configure time for us to see
-	# 				set(dir "$<TARGET_FILE_DIR:${dep}>") 
-	# 		endif()
-	# 	endif()
-	# 	message(STATUS "   Dependency: ${dep} [Type: ${type}] -> Dir: ${dir}")
-	# endforeach()
-	# message(STATUS "---------------------------------------------------")
-
-	set(SEARCH_DIRS "")
-	foreach(dep ${ALL_DEPS})
-		# Only look at targets that are actual libraries/executables (skip Headers/Interface)
-		get_target_property(type ${dep} TYPE)
-		if(NOT type STREQUAL "INTERFACE_LIBRARY" AND NOT type STREQUAL "UTILITY")
-			list(APPEND SEARCH_DIRS "$<TARGET_FILE_DIR:${dep}>")
+	foreach(app ${MY_GAME_TARGETS})
+		set(INSTALL_BIN_DIR "bin")
+		set(INSTALL_LIB_DIR "lib")
+		if(APPLE)
+			set(INSTALL_BIN_DIR "ZQuest Classic.app/Contents/MacOS")
+			set(INSTALL_LIB_DIR "ZQuest Classic.app/Contents/Frameworks")
+		elseif(WIN32)
+			set(INSTALL_BIN_DIR ".")
+			set(INSTALL_LIB_DIR ".")
+		elseif(LINUX)
+			# TODO ! remove this branch.
+			set(INSTALL_BIN_DIR ".")
+			set(INSTALL_LIB_DIR ".")
 		endif()
+
+		get_all_linked_targets("${app}" ALL_DEPS)
+
+		# For debugging.
+		# message(STATUS "---------------------------------------------------")
+		# message(STATUS "DEBUG: Analyzing dependencies for app: ${app}")
+		# foreach(dep ${ALL_DEPS})
+		# 	get_target_property(type ${dep} TYPE)
+		# 	# Attempt to get the directory, but don't crash if it fails
+		# 	set(dir "NOT_FOUND")
+		# 	if(TARGET ${dep})
+		# 		# Check if we can get the file location
+		# 		get_property(is_imported TARGET ${dep} PROPERTY IMPORTED)
+		# 		if(is_imported OR type STREQUAL "SHARED_LIBRARY" OR type STREQUAL "STATIC_LIBRARY")
+		# 				# This gen-ex prints the path at configure time for us to see
+		# 				set(dir "$<TARGET_FILE_DIR:${dep}>") 
+		# 		endif()
+		# 	endif()
+		# 	message(STATUS "   Dependency: ${dep} [Type: ${type}] -> Dir: ${dir}")
+		# endforeach()
+		# message(STATUS "---------------------------------------------------")
+
+		set(SEARCH_DIRS "")
+		foreach(dep ${ALL_DEPS})
+			# Only look at targets that are actual libraries/executables (skip Headers/Interface)
+			get_target_property(type ${dep} TYPE)
+			if(NOT type STREQUAL "INTERFACE_LIBRARY" AND NOT type STREQUAL "UTILITY")
+				list(APPEND SEARCH_DIRS "$<TARGET_FILE_DIR:${dep}>")
+			endif()
+		endforeach()
+
+		install(TARGETS ${app} 
+			RUNTIME_DEPENDENCIES
+				DIRECTORIES "${SEARCH_DIRS}"
+				PRE_EXCLUDE_REGEXES "api-ms-" "ext-ms-" 
+				POST_EXCLUDE_REGEXES ".*system32/.*\\.dll"
+
+			RUNTIME DESTINATION "${INSTALL_BIN_DIR}"
+			LIBRARY DESTINATION "${INSTALL_LIB_DIR}"
+			FRAMEWORK DESTINATION "${INSTALL_LIB_DIR}"
+			BUNDLE DESTINATION .
+		)
 	endforeach()
-
-	install(TARGETS ${app} 
-		RUNTIME_DEPENDENCIES
-			DIRECTORIES "${SEARCH_DIRS}"
-			PRE_EXCLUDE_REGEXES "api-ms-" "ext-ms-" 
-			POST_EXCLUDE_REGEXES ".*system32/.*\\.dll"
-
-		RUNTIME DESTINATION "${INSTALL_BIN_DIR}"
-		LIBRARY DESTINATION "${INSTALL_LIB_DIR}"
-		FRAMEWORK DESTINATION "${INSTALL_LIB_DIR}"
-		BUNDLE DESTINATION .
-	)
-endforeach()
+endif()
 
 if(APPLE)
 	set(INSTALL_DATA_DIR "ZQuest Classic.app/Contents/Resources")
