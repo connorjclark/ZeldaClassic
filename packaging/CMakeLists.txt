@@ -188,14 +188,14 @@ else()
 	zc_install_targets("${ZC_INSTALL_TARGETS}")
 endif()
 
-install(DIRECTORY "${CMAKE_SOURCE_DIR}/resources/" DESTINATION "${INSTALL_DATA_DIR}")
+install(DIRECTORY "${CMAKE_SOURCE_DIR}/resources/" DESTINATION "${INSTALL_DATA_DIR}" PATTERN ".gitkeep" EXCLUDE)
 install(DIRECTORY "${CMAKE_SOURCE_DIR}/changelogs" DESTINATION "${INSTALL_DATA_DIR}")
 
 install(CODE "
 	execute_process(
 		COMMAND ${PYTHON} \"${CMAKE_SOURCE_DIR}/scripts/package.py\"
 			--new_packager
-			--build_folder \"\${BUILD_FOLDER}\"
+			--build_folder \"${BUILD_FOLDER}\"
 			--package_folder \"$<INSTALL_PREFIX>/${INSTALL_DATA_DIR}\"
 			$<$<BOOL:${ZC_VERSION}>:--version;${ZC_VERSION}>
 		COMMAND_ERROR_IS_FATAL ANY)
