@@ -130,7 +130,7 @@ if(EMSCRIPTEN)
 	# TODO ! ...
 elseif(WIN32)
 	# TODO !
-	list(APPEND ZC_INSTALL_TARGETS allegro zcsound)
+	list(APPEND ZC_INSTALL_TARGETS zcsound)
 	zc_install_targets("${ZC_INSTALL_TARGETS}")
 
 	# TODO ! all at once?
@@ -184,7 +184,7 @@ else()
 	# get_all_linked_targets("${TARGETS}" ALL_DEPS)
 	# zc_install_targets("${ALL_DEPS}")
 
-	list(APPEND ZC_INSTALL_TARGETS allegro zlauncher zplayer zeditor zscript zcsound zupdater)
+	list(APPEND ZC_INSTALL_TARGETS zlauncher zplayer zeditor zscript zcsound zupdater)
 	zc_install_targets("${ZC_INSTALL_TARGETS}")
 endif()
 
