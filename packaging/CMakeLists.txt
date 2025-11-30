@@ -68,7 +68,11 @@ elseif(WIN32)
 		)
 	endforeach()
 else()
-	zc_install_targets(zlauncher zplayer zeditor zscript zupdater)
+	# set(TARGETS zlauncher zplayer zeditor zscript zupdater allegro_acodec)
+	# get_all_linked_targets("${TARGETS}" ALL_DEPS)
+	# zc_install_targets("${ALL_DEPS}")
+
+	zc_install_targets(allegro allegro-legacy allegro_with_legacy zlauncher zplayer zeditor zscript zcsound ${SOUNDLIBS})
 endif()
 
 if(APPLE)
