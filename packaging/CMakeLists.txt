@@ -1,7 +1,9 @@
 set(CPACK_INCLUDE_TOPLEVEL_DIRECTORY OFF)
 
 # TODO !
-if(NOT EMSCRIPTEN AND WIN32)
+if(EMSCRIPTEN)
+	# TODO ! ...
+elseif(WIN32)
 	# TODO !
 	zc_install_targets(allegro zcsound)
 
@@ -65,6 +67,8 @@ if(NOT EMSCRIPTEN AND WIN32)
 			BUNDLE DESTINATION .
 		)
 	endforeach()
+else()
+	zc_install_targets(zlauncher zplayer zeditor zscript zupdater)
 endif()
 
 if(APPLE)
@@ -83,10 +87,10 @@ install(DIRECTORY "${CMAKE_SOURCE_DIR}/changelogs" DESTINATION "${INSTALL_DATA_D
 install(CODE "
 	execute_process(
 		COMMAND ${PYTHON} \"${CMAKE_SOURCE_DIR}/scripts/package.py\"
-		--new_packager
-		--build_folder \"\${BUILD_FOLDER}\"
-		--package_folder \"$<INSTALL_PREFIX>/${INSTALL_DATA_DIR}\"
-		$<$<BOOL:${ZC_VERSION}>:--version;${ZC_VERSION}>
+			--new_packager
+			--build_folder \"\${BUILD_FOLDER}\"
+			--package_folder \"$<INSTALL_PREFIX>/${INSTALL_DATA_DIR}\"
+			$<$<BOOL:${ZC_VERSION}>:--version;${ZC_VERSION}>
 		COMMAND_ERROR_IS_FATAL ANY)
 ")
 

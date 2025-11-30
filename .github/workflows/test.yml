@@ -126,7 +126,6 @@ jobs:
             mkdir zc-extracted
             tar -xvzf ${{ needs.build.outputs.artifact-name }}/${{ needs.build.outputs.package-name }} -C zc-extracted
             # TODO !
-            ls
             ls zc-extracted
       - name: Prepare build folder
         if: inputs.config == 'Coverage'
