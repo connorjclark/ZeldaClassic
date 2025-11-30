@@ -141,126 +141,7 @@ function(enable_unity_build UB_SUFFIX SOURCE_VARIABLE_NAME)
   set(${SOURCE_VARIABLE_NAME} ${${SOURCE_VARIABLE_NAME}} ${unit_build_file} PARENT_SCOPE)
 endfunction(enable_unity_build)
 
-function(get_all_linked_targets input_targets output_var)
-	set(targets_to_process ${input_targets})
-	set(processed_targets "")
-	set(found_dependencies "")
-
-	while(targets_to_process)
-		list(GET targets_to_process 0 current_target)
-		list(REMOVE_AT targets_to_process 0)
-
-		if(current_target IN_LIST processed_targets)
-			continue()
-		endif()
-		list(APPEND processed_targets "${current_target}")
-
-		get_target_property(direct_libs "${current_target}" LINK_LIBRARIES)
-		get_target_property(interface_libs "${current_target}" INTERFACE_LINK_LIBRARIES)
-		
-		set(all_links "")
-		if(direct_libs)
-			list(APPEND all_links ${direct_libs})
-		endif()
-		if(interface_libs)
-			list(APPEND all_links ${interface_libs})
-		endif()
-
-		foreach(lib IN LISTS all_links)
-			if(TARGET "${lib}")
-				get_target_property(aliased_target "${lib}" ALIASED_TARGET)
-				if(aliased_target)
-					set(real_target "${aliased_target}")
-				else()
-					set(real_target "${lib}")
-				endif()
-				# ----------------------------------
-
-				# Only add if we haven't processed this REAL target yet
-				if(NOT real_target IN_LIST processed_targets)
-					list(APPEND found_dependencies "${real_target}")
-					list(APPEND targets_to_process "${real_target}")
-				endif()
-			endif()
-		endforeach()
-	endwhile()
-
-	if(found_dependencies)
-		list(REMOVE_DUPLICATES found_dependencies)
-	endif()
-
-	set(${output_var} ${found_dependencies} PARENT_SCOPE)
-endfunction()
-
-function(zc_install_targets)
-	if(EMSCRIPTEN)
-		return()
-	endif()
-
-	if(APPLE)
-		# TODO !
-		# set_target_properties(${ARGV} PROPERTIES INSTALL_RPATH "@loader_path/../lib")
-		set_target_properties(${ARGV} PROPERTIES INSTALL_RPATH "@loader_path/../Frameworks")
-	elseif(LINUX)
-		set_target_properties(${ARGV} PROPERTIES INSTALL_RPATH "$ORIGIN/../lib")
-		set_target_properties(${ARGV} PROPERTIES INSTALL_RPATH_USE_LINK_PATH TRUE)
-	endif()
-
-	set(INSTALL_BIN_DIR "bin")
-	set(INSTALL_LIB_DIR "lib")
-	if(APPLE)
-		set(INSTALL_BIN_DIR "ZQuest Classic.app/Contents/Resources")
-		set(INSTALL_LIB_DIR "ZQuest Classic.app/Contents/Frameworks")
-	elseif(WIN32)
-		set(INSTALL_BIN_DIR ".")
-		set(INSTALL_LIB_DIR ".")
-	elseif(LINUX)
-		# TODO ! remove this branch.
-		set(INSTALL_BIN_DIR ".")
-		set(INSTALL_LIB_DIR ".")
-	endif()
-
-	install(TARGETS ${ARGV}
-		RUNTIME DESTINATION "${INSTALL_BIN_DIR}"
-		LIBRARY DESTINATION "${INSTALL_LIB_DIR}"
-		BUNDLE DESTINATION .
-	)
-
-	# get_all_linked_targets("${ARGV}" ALL_DEPS)
-
-	# set(SEARCH_DIRS "")
-	# foreach(dep ${ALL_DEPS})
-	# 	# 1. Check the target type
-	# 	get_target_property(tgt_type ${dep} TYPE)
-
-	# 	# 2. If it is an INTERFACE_LIBRARY (Header-only), skip it.
-	# 	#    They don't have binary files to copy.
-	# 	if(tgt_type STREQUAL "INTERFACE_LIBRARY")
-	# 		continue()
-	# 	endif()
-
-	# 	# 3. If it is a UTILITY target, skip it.
-	# 	if(tgt_type STREQUAL "UTILITY")
-	# 		continue()
-	# 	endif()
-
-	# 	# 4. It is safe to ask for the file dir now
-	# 	list(APPEND SEARCH_DIRS "$<TARGET_FILE_DIR:${dep}>")
-	# endforeach()
-
-	# # list(APPEND SEARCH_DIRS "${INSTALL_BIN_DIR}")
-
-	# # 3. Install the executable and let CMake find the DLLs in SEARCH_DIRS
-	# install(TARGETS ${ARGV}
-	# 	RUNTIME_DEPENDENCIES
-	# 		DIRECTORIES ${SEARCH_DIRS}
-
-	# 	RUNTIME DESTINATION "${INSTALL_BIN_DIR}"
-	# 	LIBRARY DESTINATION "${INSTALL_LIB_DIR}"
-	# 	FRAMEWORK DESTINATION "${INSTALL_LIB_DIR}"
-	# 	BUNDLE DESTINATION .
-	# )
-endfunction()
+set(ZC_INSTALL_TARGETS "")
 
 #############################################################
 # deps
@@ -306,7 +187,7 @@ if(MSVC AND NOT (DEFINED ENV{CI} OR ZC_OFFICIAL) AND NOT ZLIB_LIBRARIES)
 		set(PNG_INCLUDE_DIR "${png_SOURCE_DIR}" "${png_BINARY_DIR}")
 	endif()
 
-	zc_install_targets(${PNG_LIBRARIES})
+	list(APPEND ZC_INSTALL_TARGETS ${PNG_LIBRARIES})
 elseif(NOT EMSCRIPTEN)
 	FetchContent_Declare(
 		zlib
@@ -337,7 +218,7 @@ elseif(NOT EMSCRIPTEN)
 		set(PNG_INCLUDE_DIR "${png_SOURCE_DIR}" "${png_BINARY_DIR}")
 	endif()
 
-	zc_install_targets(${ZLIB_LIBRARIES} ${PNG_LIBRARIES})
+	list(APPEND ZC_INSTALL_TARGETS ${ZLIB_LIBRARIES} ${PNG_LIBRARIES})
 endif()
 
 FetchContent_Declare(json
@@ -480,8 +361,8 @@ if (NOT EMSCRIPTEN)
 endif()
 
 get_target_property(ALLEGRO_LINK_LIBRARIES allegro_with_legacy INTERFACE_LINK_LIBRARIES)
-zc_install_targets(${ALLEGRO_LINK_LIBRARIES})
-zc_install_targets(${VORBIS_LIBRARIES})
+# TODO ! rm VORBIS_LIBRARIES, I think it's empty?
+list(APPEND ZC_INSTALL_TARGETS ${ALLEGRO_LINK_LIBRARIES} ${VORBIS_LIBRARIES})
 
 if(DEFINED ENV{CI} OR ZC_OFFICIAL)
 	get_target_property(ALLEGRO_CODEC_SOURCES allegro_acodec SOURCES)
@@ -755,8 +636,6 @@ if(CURL_FOUND)
 	target_sources(zcbase PRIVATE src/base/http.cpp)
 	target_link_libraries(zcbase PUBLIC CURL::libcurl)
 	target_compile_definitions(zcbase PUBLIC HAS_CURL)
-	# TODO !
-	# zc_install_targets(CURL::libcurl)
 else()
 	message(WARNING "libcurl not found - disabling base/http.cpp")
 endif()
@@ -766,7 +645,7 @@ endif()
 if (USE_NFD)
 	target_link_libraries(zcbase PUBLIC nfd)
 	target_compile_definitions(zcbase PUBLIC HAS_NFD)
-	zc_install_targets(nfd)
+	list(APPEND ZC_INSTALL_TARGETS nfd)
 endif()
 
 if(WANT_ZC_TESTS)
@@ -776,7 +655,7 @@ if(WANT_ZC_TESTS)
 		src/base/scc_test.cpp
 	)
 	target_link_libraries(base_test_runner PRIVATE zcbase)
-	zc_install_targets(base_test_runner)
+	list(APPEND ZC_INSTALL_TARGETS base_test_runner)
 endif()
 
 # std::execution supplementation.
@@ -872,7 +751,7 @@ target_link_libraries(zasm PUBLIC allegro_with_legacy zcbase fmt)
 if(WIN32)
 	add_executable(zconsole src/zconsole/ConsoleLoggerHelper.cpp)
 	target_link_options(zconsole PRIVATE "/SUBSYSTEM:CONSOLE")
-	zc_install_targets(zconsole)
+	list(APPEND ZC_INSTALL_TARGETS zconsole)
 endif()
 
 add_library(zconsolelogger STATIC src/zconsole/ConsoleLogger.cpp)
@@ -902,7 +781,7 @@ if(BUILD_SOUND_LIBS_FROM_SOURCE)
 	target_compile_definitions(gme_headers INTERFACE -DVGM_YM2612_NUKED)
 
 	set(SOUNDLIBS gme gme_headers)
-	zc_install_targets(gme)
+	list(APPEND ZC_INSTALL_TARGETS gme)
 endif()
 
 find_package(dumb QUIET)
@@ -1046,7 +925,7 @@ elseif(JIT_BACKEND STREQUAL "x64")
 	)
 	FetchContent_MakeAvailable(asmjit)
 	target_link_libraries(zplayer PRIVATE asmjit)
-	zc_install_targets(asmjit)
+	list(APPEND ZC_INSTALL_TARGETS asmjit)
 
 	get_target_property(asm_compile_options asmjit COMPILE_OPTIONS)
 	string(REPLACE "$<NOT:$<CONFIG:Debug>>" "$<NOT:$<CONFIG:Debug,Asan>>" asm_compile_options "${asm_compile_options}")
@@ -1163,7 +1042,7 @@ if(WIN32)
 	add_executable(zstandalone src/standalone/standalone.cpp)
 	target_link_options(zstandalone PRIVATE "/SUBSYSTEM:WINDOWS")
 	add_dependencies(zeditor zstandalone)
-	zc_install_targets(zstandalone)
+	list(APPEND ZC_INSTALL_TARGETS zstandalone)
 endif()
 
 #############################################################
@@ -1283,7 +1162,7 @@ if(WANT_SENTRY)
 	endforeach()
 
 	# TODO ! test
-	zc_install_targets(sentry)
+	list(APPEND ZC_INSTALL_TARGETS sentry)
 endif()
 
 

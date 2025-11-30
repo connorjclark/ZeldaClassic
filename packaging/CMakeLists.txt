@@ -1,11 +1,133 @@
 set(CPACK_INCLUDE_TOPLEVEL_DIRECTORY OFF)
 
+function(get_all_linked_targets input_targets output_var)
+	set(targets_to_process ${input_targets})
+	set(processed_targets "")
+	set(found_dependencies "")
+
+	while(targets_to_process)
+		list(GET targets_to_process 0 current_target)
+		list(REMOVE_AT targets_to_process 0)
+
+		if(current_target IN_LIST processed_targets)
+			continue()
+		endif()
+		list(APPEND processed_targets "${current_target}")
+
+		get_target_property(direct_libs "${current_target}" LINK_LIBRARIES)
+		get_target_property(interface_libs "${current_target}" INTERFACE_LINK_LIBRARIES)
+		
+		set(all_links "")
+		if(direct_libs)
+			list(APPEND all_links ${direct_libs})
+		endif()
+		if(interface_libs)
+			list(APPEND all_links ${interface_libs})
+		endif()
+
+		foreach(lib IN LISTS all_links)
+			if(TARGET "${lib}")
+				get_target_property(aliased_target "${lib}" ALIASED_TARGET)
+				if(aliased_target)
+					set(real_target "${aliased_target}")
+				else()
+					set(real_target "${lib}")
+				endif()
+				# ----------------------------------
+
+				# Only add if we haven't processed this REAL target yet
+				if(NOT real_target IN_LIST processed_targets)
+					list(APPEND found_dependencies "${real_target}")
+					list(APPEND targets_to_process "${real_target}")
+				endif()
+			endif()
+		endforeach()
+	endwhile()
+
+	if(found_dependencies)
+		list(REMOVE_DUPLICATES found_dependencies)
+	endif()
+
+	set(${output_var} ${found_dependencies} PARENT_SCOPE)
+endfunction()
+
+function(zc_install_targets)
+	if(EMSCRIPTEN)
+		return()
+	endif()
+
+	if(APPLE)
+		# TODO !
+		# set_target_properties(${ARGV} PROPERTIES INSTALL_RPATH "@loader_path/../lib")
+		set_target_properties(${ARGV} PROPERTIES INSTALL_RPATH "@loader_path/../Frameworks")
+	elseif(LINUX)
+		set_target_properties(${ARGV} PROPERTIES INSTALL_RPATH "$ORIGIN/../lib")
+		set_target_properties(${ARGV} PROPERTIES INSTALL_RPATH_USE_LINK_PATH TRUE)
+	endif()
+
+	set(INSTALL_BIN_DIR "bin")
+	set(INSTALL_LIB_DIR "lib")
+	if(APPLE)
+		set(INSTALL_BIN_DIR "ZQuest Classic.app/Contents/Resources")
+		set(INSTALL_LIB_DIR "ZQuest Classic.app/Contents/Frameworks")
+	elseif(WIN32)
+		set(INSTALL_BIN_DIR ".")
+		set(INSTALL_LIB_DIR ".")
+	elseif(LINUX)
+		# TODO ! remove this branch.
+		set(INSTALL_BIN_DIR ".")
+		set(INSTALL_LIB_DIR ".")
+	endif()
+
+	install(TARGETS ${ARGV}
+		RUNTIME DESTINATION "${INSTALL_BIN_DIR}"
+		LIBRARY DESTINATION "${INSTALL_LIB_DIR}"
+		BUNDLE DESTINATION .
+	)
+
+	# get_all_linked_targets("${ARGV}" ALL_DEPS)
+
+	# set(SEARCH_DIRS "")
+	# foreach(dep ${ALL_DEPS})
+	# 	# 1. Check the target type
+	# 	get_target_property(tgt_type ${dep} TYPE)
+
+	# 	# 2. If it is an INTERFACE_LIBRARY (Header-only), skip it.
+	# 	#    They don't have binary files to copy.
+	# 	if(tgt_type STREQUAL "INTERFACE_LIBRARY")
+	# 		continue()
+	# 	endif()
+
+	# 	# 3. If it is a UTILITY target, skip it.
+	# 	if(tgt_type STREQUAL "UTILITY")
+	# 		continue()
+	# 	endif()
+
+	# 	# 4. It is safe to ask for the file dir now
+	# 	list(APPEND SEARCH_DIRS "$<TARGET_FILE_DIR:${dep}>")
+	# endforeach()
+
+	# # list(APPEND SEARCH_DIRS "${INSTALL_BIN_DIR}")
+
+	# # 3. Install the executable and let CMake find the DLLs in SEARCH_DIRS
+	# install(TARGETS ${ARGV}
+	# 	RUNTIME_DEPENDENCIES
+	# 		DIRECTORIES ${SEARCH_DIRS}
+
+	# 	RUNTIME DESTINATION "${INSTALL_BIN_DIR}"
+	# 	LIBRARY DESTINATION "${INSTALL_LIB_DIR}"
+	# 	FRAMEWORK DESTINATION "${INSTALL_LIB_DIR}"
+	# 	BUNDLE DESTINATION .
+	# )
+endfunction()
+
 # TODO !
 if(EMSCRIPTEN)
 	# TODO ! ...
 elseif(WIN32)
 	# TODO !
-	zc_install_targets(allegro zcsound)
+	list(APPEND ZC_INSTALL_TARGETS allegro zcsound)
+	zc_install_targets("${ZC_INSTALL_TARGETS}")
 
 	# TODO ! all at once?
 	set(TARGETS zlauncher zplayer zeditor zscript zupdater allegro_acodec)
@@ -73,7 +195,8 @@ else()
 	# get_all_linked_targets("${TARGETS}" ALL_DEPS)
 	# zc_install_targets("${ALL_DEPS}")
 
-	zc_install_targets(allegro zlauncher zplayer zeditor zscript zcsound zupdater)
+	list(APPEND ZC_INSTALL_TARGETS allegro zlauncher zplayer zeditor zscript zcsound zupdater)
+	zc_install_targets("${ZC_INSTALL_TARGETS}")
 endif()
 
 if(APPLE)
