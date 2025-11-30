@@ -11,10 +11,9 @@ elseif(WIN32)
 else()
 	# TODO !
 	# set(INSTALL_BIN_DIR "bin")
-	# set(INSTALL_LIB_DIR "lib")
+	set(INSTALL_LIB_DIR "lib")
 	# set(INSTALL_DATA_DIR "share/zquestclassic")
 	set(INSTALL_BIN_DIR ".")
-	set(INSTALL_LIB_DIR ".")
 	set(INSTALL_DATA_DIR ".")
 endif()
 
