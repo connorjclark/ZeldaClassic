@@ -1,7 +1,13 @@
 set(CPACK_INCLUDE_TOPLEVEL_DIRECTORY OFF)
 
 if(APPLE)
-	set(INSTALL_BIN_DIR "ZQuest Classic.app/Contents/Resources") # TODO ! MacOS
+	# Note: ideally this would be "MacOS", which is where binaries go in an .app bundle.
+	# But for some reason when the launcher opens zplayer/zeditor, the new window appears
+	# behind the launcher window. That doesn't happen when the executables are all in Resources.
+	# So for now, keep them in the "wrong" place.
+	# If this changes to MacOS, "locate_zapp_file" would have to be updated too. And mac_entry.sh
+	# could be deleted.
+	set(INSTALL_BIN_DIR "ZQuest Classic.app/Contents/Resources")
 	set(INSTALL_LIB_DIR "ZQuest Classic.app/Contents/Frameworks")
 	set(INSTALL_DATA_DIR "ZQuest Classic.app/Contents/Resources")
 elseif(WIN32)
@@ -162,7 +168,7 @@ if(APPLE)
 	set(CPACK_DMG_DS_STORE_SETUP_SCRIPT "${CMAKE_SOURCE_DIR}/packaging/MacDMGSetup.scpt")
 	set(CPACK_DMG_BACKGROUND_IMAGE "${CMAKE_SOURCE_DIR}/packaging/MacDMGBackground.png")
 
-	install(FILES "${CMAKE_SOURCE_DIR}/scripts/Info.plist" DESTINATION "ZQuest Classic.app/Contents")
+	install(FILES "${CMAKE_SOURCE_DIR}/packaging/Info.plist" DESTINATION "ZQuest Classic.app/Contents")
 	install(PROGRAMS "${CMAKE_SOURCE_DIR}/packaging/mac_entry.sh" DESTINATION "ZQuest Classic.app/Contents/MacOS")
 
 	# Icons.
