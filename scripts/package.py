@@ -27,9 +27,8 @@ parser.add_argument(
     help='package the extras instead of the main package',
 )
 parser.add_argument(
-    '--preprocess_configs',
+    '--new_packager',
     action='store_true',
-    help='Process config files to set platform-specific values',
 )
 parser.add_argument(
     '--test_runner',
@@ -410,6 +409,70 @@ def do_web_packaging():
     (build_dir / 'zscript-playground.data.js').write_text(text)
 
 
+def generate_changelog(package_dir: Path):
+    # Generate changelog for changes since last stable release.
+    # For nightly releases, this changelog is saved as `changelogs/nightly.txt` and includes all changes since the last stable release.
+    # For stable releases, this changelog is the same as we would save to `resources/changelogs/DATE-TAG.txt` in source control, except
+    # that hasn't happened yet so it's done here for the release job.
+
+    # May already exist from build cache.
+    nightly_changelog_path = package_dir / 'changelogs/nightly.txt'
+    if nightly_changelog_path.exists():
+        nightly_changelog_path.unlink()
+
+    changelog = None
+    if args.version:
+        major, minor, patch = map(
+            int, re.search(r'^(\d+)\.(\d+)\.(\d+)', args.version).groups()
+        )
+        is_stable_release = patch == '0'
+        # Tag either already exists (we are re-publishing for some reason), or doesn't yet.
+        try:
+            date = subprocess.check_output(
+                f'git log -1 --format=%cs {args.version}', shell=True, encoding='utf-8'
+            ).strip()
+            date = date.replace('-', '_')
+        except:
+            date = time.strftime("%Y_%m_%d")
+
+        try:
+            last_stable = subprocess.check_output(
+                f'git describe --tags --abbrev=0 --match "*.*.0" --match "2.55-alpha-1??" --exclude {args.version}',
+                shell=True,
+                encoding='utf-8',
+            ).strip()
+            changelog = subprocess.check_output(
+                [
+                    sys.executable,
+                    script_dir / 'generate_changelog.py',
+                    '--from',
+                    last_stable,
+                    '--to',
+                    'HEAD',
+                    '--version',
+                    args.version,
+                ],
+                encoding='utf-8',
+            ).strip()
+        except Exception as e:
+            changelog = None
+            print(e)
+
+        if is_stable_release:
+            new_changelog_path = package_dir / f'changelogs/${date}-{args.version}.txt'
+        else:
+            new_changelog_path = package_dir / 'changelogs/nightly.txt'
+
+        if changelog:
+            if is_stable_release:
+                new_changelog_path.write_text(changelog)
+            else:
+                new_changelog_path.write_text(
+                    f'Changes since {last_stable}\n\n{changelog}'
+                )
+        elif new_changelog_path.exists():
+            new_changelog_path.unlink()
+
 if 'TEST' in os.environ:
     import unittest
 
@@ -454,75 +517,21 @@ if 'TEST' in os.environ:
     )
 elif args.extras:
     do_packaging(packages_dir / 'extras', glob(resources_extra_dir, '**/*'))
-elif args.preprocess_configs:
+elif args.new_packager:
     cfg_os = args.cfg_os or system_to_cfg_os(system)
     for path in package_dir.rglob('*.cfg'):
         print(f'preprocessing config: ${path}')
         path.write_text(preprocess_base_config(path.read_text(), cfg_os))
+
+    print('copying software licenses...')
+    collect_licenses(package_dir)
+
+    print('generating changelog...')
+    generate_changelog(package_dir)
 elif args.cfg_os == 'web':
     do_web_packaging()
 else:
-    # May already exist from build cache.
-    nightly_changelog_path = root_dir / 'changelogs/nightly.txt'
-    if nightly_changelog_path.exists():
-        nightly_changelog_path.unlink()
-
-    # Generate changelog for changes since last stable release.
-    # For nightly releases, this changelog is saved as `changelogs/nightly.txt` and includes all changes since the last stable release.
-    # For stable releases, this changelog is the same as we would save to `resources/changelogs/DATE-TAG.txt` in source control, except
-    # that hasn't happened yet so it's done here for the release job.
-    changelog = None
-    if args.version:
-        major, minor, patch = map(
-            int, re.search(r'^(\d+)\.(\d+)\.(\d+)', args.version).groups()
-        )
-        is_stable_release = patch == '0'
-        # Tag either already exists (we are re-publishing for some reason), or doesn't yet.
-        try:
-            date = subprocess.check_output(
-                f'git log -1 --format=%cs {args.version}', shell=True, encoding='utf-8'
-            ).strip()
-            date = date.replace('-', '_')
-        except:
-            date = time.strftime("%Y_%m_%d")
-
-        try:
-            last_stable = subprocess.check_output(
-                f'git describe --tags --abbrev=0 --match "*.*.0" --match "2.55-alpha-1??" --exclude {args.version}',
-                shell=True,
-                encoding='utf-8',
-            ).strip()
-            changelog = subprocess.check_output(
-                [
-                    sys.executable,
-                    script_dir / 'generate_changelog.py',
-                    '--from',
-                    last_stable,
-                    '--to',
-                    'HEAD',
-                    '--version',
-                    args.version,
-                ],
-                encoding='utf-8',
-            ).strip()
-        except Exception as e:
-            changelog = None
-            print(e)
-
-        if is_stable_release:
-            new_changelog_path = root_dir / f'changelogs/${date}-{args.version}.txt'
-        else:
-            new_changelog_path = root_dir / 'changelogs/nightly.txt'
-
-        if changelog:
-            if is_stable_release:
-                new_changelog_path.write_text(changelog)
-            else:
-                new_changelog_path.write_text(
-                    f'Changes since {last_stable}\n\n{changelog}'
-                )
-        elif new_changelog_path.exists():
-            new_changelog_path.unlink()
+    generate_changelog(package_dir)
 
     zc_files = [
         *glob(resources_dir, '**/*'),
