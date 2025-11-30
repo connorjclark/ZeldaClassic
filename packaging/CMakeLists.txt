@@ -8,13 +8,14 @@ elseif(WIN32)
 	zc_install_targets(allegro zcsound)
 
 	# TODO ! all at once?
-	set(MY_GAME_TARGETS zlauncher zplayer zeditor zscript zupdater allegro_acodec)
+	set(TARGETS zlauncher zplayer zeditor zscript zupdater allegro_acodec)
 
-	foreach(app ${MY_GAME_TARGETS})
+	foreach(app ${TARGETS})
 		set(INSTALL_BIN_DIR "bin")
 		set(INSTALL_LIB_DIR "lib")
 		if(APPLE)
-			set(INSTALL_BIN_DIR "ZQuest Classic.app/Contents/MacOS")
+			# TODO ! MacOS
+			set(INSTALL_BIN_DIR "ZQuest Classic.app/Contents/Resources")
 			set(INSTALL_LIB_DIR "ZQuest Classic.app/Contents/Frameworks")
 		elseif(WIN32)
 			set(INSTALL_BIN_DIR ".")
@@ -28,23 +29,23 @@ elseif(WIN32)
 		get_all_linked_targets("${app}" ALL_DEPS)
 
 		# For debugging.
-		# message(STATUS "---------------------------------------------------")
-		# message(STATUS "DEBUG: Analyzing dependencies for app: ${app}")
-		# foreach(dep ${ALL_DEPS})
-		# 	get_target_property(type ${dep} TYPE)
-		# 	# Attempt to get the directory, but don't crash if it fails
-		# 	set(dir "NOT_FOUND")
-		# 	if(TARGET ${dep})
-		# 		# Check if we can get the file location
-		# 		get_property(is_imported TARGET ${dep} PROPERTY IMPORTED)
-		# 		if(is_imported OR type STREQUAL "SHARED_LIBRARY" OR type STREQUAL "STATIC_LIBRARY")
-		# 				# This gen-ex prints the path at configure time for us to see
-		# 				set(dir "$<TARGET_FILE_DIR:${dep}>") 
-		# 		endif()
-		# 	endif()
-		# 	message(STATUS "   Dependency: ${dep} [Type: ${type}] -> Dir: ${dir}")
-		# endforeach()
-		# message(STATUS "---------------------------------------------------")
+		message(STATUS "---------------------------------------------------")
+		message(STATUS "DEBUG: Analyzing dependencies for app: ${app}")
+		foreach(dep ${ALL_DEPS})
+			get_target_property(type ${dep} TYPE)
+			# Attempt to get the directory, but don't crash if it fails
+			set(dir "NOT_FOUND")
+			if(TARGET ${dep})
+				# Check if we can get the file location
+				get_property(is_imported TARGET ${dep} PROPERTY IMPORTED)
+				if(is_imported OR type STREQUAL "SHARED_LIBRARY" OR type STREQUAL "STATIC_LIBRARY")
+						# This gen-ex prints the path at configure time for us to see
+						set(dir "$<TARGET_FILE_DIR:${dep}>") 
+				endif()
+			endif()
+			message(STATUS "   Dependency: ${dep} [Type: ${type}] -> Dir: ${dir}")
+		endforeach()
+		message(STATUS "---------------------------------------------------")
 
 		set(SEARCH_DIRS "")
 		foreach(dep ${ALL_DEPS})
@@ -72,7 +73,7 @@ else()
 	# get_all_linked_targets("${TARGETS}" ALL_DEPS)
 	# zc_install_targets("${ALL_DEPS}")
 
-	zc_install_targets(allegro allegro-legacy allegro_with_legacy zlauncher zplayer zeditor zscript zcsound ${SOUNDLIBS})
+	zc_install_targets(allegro zlauncher zplayer zeditor zscript zcsound zupdater)
 endif()
 
 if(APPLE)

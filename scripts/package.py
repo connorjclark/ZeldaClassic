@@ -392,7 +392,9 @@ def do_web_packaging():
         *glob(resources_dir, 'headers/**/*'),
         *files(resources_dir, ['base_config/zscript.cfg']),
     ]
-    copy_files_to_package(zscript_playground_data_files, packages_dir / 'web_zscript_playground_data')
+    copy_files_to_package(
+        zscript_playground_data_files, packages_dir / 'web_zscript_playground_data'
+    )
     subprocess.check_call(
         [
             'python',
@@ -405,7 +407,9 @@ def do_web_packaging():
             f'--js-output={build_dir / "zscript-playground.data.js"}',
         ]
     )
-    text = (build_dir / 'zscript-playground.data.js').read_text() + '\nexport default Module;'
+    text = (
+        build_dir / 'zscript-playground.data.js'
+    ).read_text() + '\nexport default Module;'
     (build_dir / 'zscript-playground.data.js').write_text(text)
 
 
@@ -473,6 +477,7 @@ def generate_changelog(package_dir: Path):
         elif new_changelog_path.exists():
             new_changelog_path.unlink()
 
+
 if 'TEST' in os.environ:
     import unittest
 
@@ -523,10 +528,10 @@ elif args.new_packager:
         print(f'preprocessing config: ${path}')
         path.write_text(preprocess_base_config(path.read_text(), cfg_os))
 
-    print('copying software licenses...')
+    print('copying software licenses ...')
     collect_licenses(package_dir)
 
-    print('generating changelog...')
+    print('generating changelog ...')
     generate_changelog(package_dir)
 elif args.cfg_os == 'web':
     do_web_packaging()
