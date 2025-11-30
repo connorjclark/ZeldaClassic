@@ -525,7 +525,7 @@ elif args.extras:
 elif args.new_packager:
     cfg_os = args.cfg_os or system_to_cfg_os(system)
     for path in package_dir.rglob('*.cfg'):
-        print(f'preprocessing config: ${path}')
+        print(f'preprocessing config: {path}')
         path.write_text(preprocess_base_config(path.read_text(), cfg_os))
 
     print('copying software licenses ...')

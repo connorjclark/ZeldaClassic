@@ -75,8 +75,6 @@ function(zc_install_targets)
 	endif()
 
 	if(APPLE)
-		# TODO !
-		# set_target_properties(${ARGV} PROPERTIES INSTALL_RPATH "@loader_path/../lib")
 		set_target_properties(${ARGV} PROPERTIES INSTALL_RPATH "@loader_path/../Frameworks")
 	elseif(LINUX)
 		set_target_properties(${ARGV} PROPERTIES INSTALL_RPATH "$ORIGIN/../lib")
@@ -125,18 +123,8 @@ function(zc_install_targets)
 	# )
 endfunction()
 
-# TODO !
-if(EMSCRIPTEN)
-	# TODO ! ...
-elseif(WIN32)
-	# TODO !
-	list(APPEND ZC_INSTALL_TARGETS zcsound)
-	zc_install_targets("${ZC_INSTALL_TARGETS}")
-
-	# TODO ! all at once?
-	set(TARGETS zlauncher zplayer zeditor zscript zupdater allegro_acodec)
-
-	foreach(app ${TARGETS})
+function(zc_install_targets_windows)
+	foreach(app ${ARGV})
 		get_all_linked_targets("${app}" ALL_DEPS)
 
 		# For debugging.
@@ -179,13 +167,16 @@ elseif(WIN32)
 			BUNDLE DESTINATION .
 		)
 	endforeach()
-else()
-	# set(TARGETS zlauncher zplayer zeditor zscript zupdater allegro_acodec)
-	# get_all_linked_targets("${TARGETS}" ALL_DEPS)
-	# zc_install_targets("${ALL_DEPS}")
+endfunction()
 
+if(NOT EMSCRIPTEN)
 	list(APPEND ZC_INSTALL_TARGETS zlauncher zplayer zeditor zscript zcsound zupdater)
 	zc_install_targets("${ZC_INSTALL_TARGETS}")
+	if(WIN32)
+		# This copies additional dlls that for some reason the above install command ignores:
+		# zlib1.dll vorbisfile.dll vorbis.dll ogg.dll libcurl.dll
+		zc_install_targets_windows("${ZC_INSTALL_TARGETS}")
+	endif()
 endif()
 
 install(DIRECTORY "${CMAKE_SOURCE_DIR}/resources/" DESTINATION "${INSTALL_DATA_DIR}" PATTERN ".gitkeep" EXCLUDE)
