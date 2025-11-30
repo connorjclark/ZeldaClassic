@@ -78,7 +78,9 @@ function(zc_install_targets)
 	if(APPLE)
 		set_target_properties(${ARGV} PROPERTIES INSTALL_RPATH "@loader_path/../Frameworks")
 	elseif(LINUX)
-		set_target_properties(${ARGV} PROPERTIES INSTALL_RPATH "$ORIGIN/../lib")
+		# TODO !
+		# set_target_properties(${ARGV} PROPERTIES INSTALL_RPATH "$ORIGIN/../lib")
+		set_target_properties(${ARGV} PROPERTIES INSTALL_RPATH "$ORIGIN/lib")
 		set_target_properties(${ARGV} PROPERTIES INSTALL_RPATH_USE_LINK_PATH TRUE)
 	endif()
 
