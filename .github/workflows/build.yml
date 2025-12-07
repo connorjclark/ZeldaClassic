@@ -106,6 +106,8 @@ jobs:
         with:
           python-version: '3.12.8'
           cache: pip
+        env:
+          PIP_CACHE_DIR: /tmp/pip_cache
       - run: pip install -r requirements.txt
 
       - if: ${{ contains(inputs.runs-on, 'windows') }}
