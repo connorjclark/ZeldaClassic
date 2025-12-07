@@ -63,9 +63,17 @@ env:
 jobs:
   build:
     runs-on: ${{ inputs.runs-on }}
+    container: ${{ contains(inputs.runs-on, 'ubuntu') && 'ubuntu:20.04' || null }}
+
     outputs:
       package-name: ${{ steps.set-package-vars.outputs.package-name }}
     steps:
+      - if: ${{ contains(inputs.runs-on, 'ubuntu') }}
+        name: Prepare Docker Environment
+        run: |
+          apt-get update
+          apt-get install -y git sudo software-properties-common wget build-essential
+
       - name: Install cmake
         uses: jwlawson/actions-setup-cmake@v2
         with:
@@ -187,6 +195,9 @@ jobs:
           -DCMAKE_WIN32_EXECUTABLE=1
           -DCMAKE_C_COMPILER_LAUNCHER=ccache
           -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
+          -DCMAKE_EXE_LINKER_FLAGS="-static-libgcc -static-libstdc++"
+          -DCMAKE_SHARED_LINKER_FLAGS="-static-libgcc -static-libstdc++"
+
 
       - run: ccache -z
       - run: cmake --build build --config ${{ inputs.config }} --target ${{ env.TARGET }} -j 4 -- -k 0
