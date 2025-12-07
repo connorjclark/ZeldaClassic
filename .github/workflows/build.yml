@@ -198,9 +198,8 @@ jobs:
           -DCMAKE_WIN32_EXECUTABLE=1
           -DCMAKE_C_COMPILER_LAUNCHER=ccache
           -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
-          -DCMAKE_EXE_LINKER_FLAGS="-static-libgcc -static-libstdc++"
-          -DCMAKE_SHARED_LINKER_FLAGS="-static-libgcc -static-libstdc++"
-
+          -DCMAKE_EXE_LINKER_FLAGS="${{ contains(inputs.runs-on, 'ubuntu') && '-static-libgcc -static-libstdc++' || '' }}"
+          -DCMAKE_SHARED_LINKER_FLAGS="${{ contains(inputs.runs-on, 'ubuntu') && '-static-libgcc -static-libstdc++' || '' }}"
 
       - run: ccache -z
       - run: cmake --build build --config ${{ inputs.config }} --target ${{ env.TARGET }} -j 4 -- -k 0
