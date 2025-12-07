@@ -70,9 +70,12 @@ jobs:
     steps:
       - if: ${{ contains(inputs.runs-on, 'ubuntu') }}
         name: Prepare Docker Environment
+        env:
+          DEBIAN_FRONTEND: noninteractive
+          TZ: Etc/UTC
         run: |
           apt-get update
-          apt-get install -y git sudo software-properties-common wget build-essential
+          apt-get install -yq git sudo software-properties-common wget build-essential
 
       - name: Install cmake
         uses: jwlawson/actions-setup-cmake@v2
