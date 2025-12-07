@@ -77,6 +77,8 @@ jobs:
           apt-get update
           apt-get install -yq git git-lfs sudo software-properties-common wget build-essential
 
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+
       - name: Install cmake
         uses: jwlawson/actions-setup-cmake@v2
         with:
