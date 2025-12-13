@@ -28762,7 +28762,6 @@ void FFScript::init()
 	}
 	subscreen_scroll_speed = 0; //make a define for a default and read quest override! -Z
 	kb_typing_mode = false;
-	initIncludePaths();
 	//clearRunningItemScripts();
 	ScrollingScreensAll.clear();
 	memset(ScrollingData, 0, sizeof(int32_t) * SZ_SCROLLDATA);
