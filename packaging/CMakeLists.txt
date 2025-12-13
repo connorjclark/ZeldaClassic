@@ -261,6 +261,9 @@ elseif(WIN32)
 
 	# Note: on Windows the allegro 5 CMakeLists.txt totally effs up CMAKE_INSTALL_PREFIX.
 	# So `--prefix` is always required to be set by the user on Windows.
+
+	include(InstallRequiredSystemLibraries)
+	INSTALL(FILES ${CMAKE_INSTALL_SYSTEM_RUNTIME_LIBS} DESTINATION "${INSTALL_LIB_DIR}")
 endif()
 
 get_cmake_property(CPACK_COMPONENTS_ALL COMPONENTS)
