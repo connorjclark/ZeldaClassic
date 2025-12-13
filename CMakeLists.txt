@@ -181,7 +181,7 @@ if (WANT_NFD)
 			GIT_REPOSITORY
 				https://github.com/btzy/nativefiledialog-extended
 			GIT_TAG
-				17b6e8ce219c0677f94b63636abb9296b28841ca
+				660493307dd6a8d7fe5fa77cb1c23cbb18ff17c3
 			EXCLUDE_FROM_ALL
 		)
 		set(BUILD_SHARED_LIBS_PREV ${BUILD_SHARED_LIBS})
