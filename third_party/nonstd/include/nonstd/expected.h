@@ -1734,14 +1734,14 @@ struct error_traits
     }
 };
 
-template<>
-struct error_traits< std::exception_ptr >
-{
-    static void rethrow( std::exception_ptr const & e )
-    {
-        std::rethrow_exception( e );
-    }
-};
+// template<>
+// struct error_traits< std::exception_ptr >
+// {
+//     static void rethrow( std::exception_ptr const & e )
+//     {
+//         std::rethrow_exception( e );
+//     }
+// };
 
 template<>
 struct error_traits< std::error_code >
