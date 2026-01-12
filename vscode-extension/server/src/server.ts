@@ -519,6 +519,7 @@ async function processScript(uri: string, content: string, signal: AbortSignal):
 			'-metadata-tmp-path', tmpScript,
 			'-metadata-orig-path', originPath,
 			'-json',
+			'-no-codegen',
 		];
 		if (settings.ignoreConstAssert)
 			args.push('-ignore_cassert');
