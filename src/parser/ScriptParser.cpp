@@ -178,34 +178,38 @@ static unique_ptr<ScriptsData> _compile_helper(string const& filename, bool incl
 			return result;
 		}
 
-		zconsole_info("%s", "Pass 6: Generating object code");
-		zconsole_idle();
-
-		unique_ptr<IntermediateData> id(ScriptParser::generateOCode(fd));
-		if (zscript_error_out || !id.get())
+		if (do_codegen())
 		{
-			if (include_metadata)
-				_fill_metadata(filename, &program, result.get());
-			return result;
+			zconsole_info("%s", "Pass 6: Generating object code");
+			zconsole_idle();
+	
+			unique_ptr<IntermediateData> id(ScriptParser::generateOCode(fd));
+			if (zscript_error_out || !id.get())
+			{
+				if (include_metadata)
+					_fill_metadata(filename, &program, result.get());
+				return result;
+			}
+	
+			zconsole_info("%s", "Pass 7: Assembling");
+			zconsole_idle();
+			
+			ScriptAssembler sa(*id.get());
+			sa.assemble();
+			if (sa.assemble_err)
+			{
+				if (include_metadata)
+					_fill_metadata(filename, &program, result.get());
+				return result;
+			}
+	
+			result->fillFromAssembler(sa);
+			if (zscript_error_out || (!ignore_asserts && casserts.size()))
+			{
+				return result;
+			}
 		}
 
-		zconsole_info("%s", "Pass 7: Assembling");
-		zconsole_idle();
-		
-		ScriptAssembler sa(*id.get());
-		sa.assemble();
-		if (sa.assemble_err)
-		{
-			if (include_metadata)
-				_fill_metadata(filename, &program, result.get());
-			return result;
-		}
-
-		result->fillFromAssembler(sa);
-		if (zscript_error_out || (!ignore_asserts && casserts.size()))
-		{
-			return result;
-		}
 
 		if (include_metadata)
 			_fill_metadata(filename, &program, result.get());

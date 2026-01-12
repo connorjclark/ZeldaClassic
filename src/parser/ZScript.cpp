@@ -846,6 +846,12 @@ bool ZScript::debug_data_should_emit_inlined_functions()
 	return emit_inlined_functions;
 }
 
+extern bool codegen;
+bool ZScript::do_codegen()
+{
+	return codegen;
+}
+
 struct cache_entry
 {
 	cache_entry() : has_made_lines(false) {}

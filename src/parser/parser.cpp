@@ -322,7 +322,7 @@ static void fill_result(json& data, int code, ZScript::ScriptsData* result)
 		data["metadata"] = result->metadata;
 }
 
-bool delay_asserts = false, ignore_asserts = false, is_json_output = false, emit_inlined_functions = true;
+bool delay_asserts = false, ignore_asserts = false, is_json_output = false, emit_inlined_functions = true, codegen = true;
 std::vector<std::filesystem::path> force_ignores;
 int32_t main(int32_t argc, char **argv)
 {
@@ -383,6 +383,8 @@ int32_t main(int32_t argc, char **argv)
 
 	// For use by the debugger.
 	emit_inlined_functions = get_flag_bool("-emit-inlined-functions").value_or(true);
+
+	codegen = get_flag_bool("-codegen").value_or(true);
 
 	if(auto index = used_switch(argc, argv, "-force_ignore"))
 	{
