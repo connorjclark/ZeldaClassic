@@ -317,10 +317,13 @@ void write_compile_data(const ZScript::ZasmCompilerResult& zasmCompilerResult)
 
 void write_script(ZScript::ZasmCompilerResult& zasmCompilerResult, string& dest, bool commented, bool write_meta = true)
 {
-	auto& debugData = zasmCompilerResult.debugData;
+	// Estimate size of string to reduce re-allocations.
+	if (commented || write_meta)
+		dest.reserve(dest.size() + (zasmCompilerResult.zasm.size() * 140));
+	else
+		dest.reserve(dest.size() + (zasmCompilerResult.zasm.size() * 50));
 
-	std::ostringstream output;
-	string str;
+	auto& debugData = zasmCompilerResult.debugData;
 	map<uint,string> meta_map;
 
 	if (write_meta)
@@ -331,23 +334,24 @@ void write_script(ZScript::ZasmCompilerResult& zasmCompilerResult, string& dest,
 
 	for(uint q = 0; q < zasmCompilerResult.zasm.size(); ++q)
 	{
-		auto it = meta_map.find(q);
-		if(it != meta_map.end())
-			output << it->second;
+		if (write_meta)
+		{
+			auto it = meta_map.find(q);
+			if (it != meta_map.end())
+				dest += it->second;
+		}
+
 		ZScript::Opcode* line = zasmCompilerResult.zasm[q].get();
-		str = line->printLine(false, commented, line->file >= 0 ? debugData.source_files[line->file].path : "", q);
-		output << str;
+		line->writeLine(dest, false, commented, line->file >= 0 ? debugData.source_files[line->file].path : "", q);
 	}
 
 	if (write_meta)
 	{
-		output << "\n\n";
-		output << zasmCompilerResult.debugData.internalToStringForDebugging();
+		dest += "\n\n";
+		dest += zasmCompilerResult.debugData.internalToStringForDebugging();
 	}
 
-	output << "\n";
-
-	dest += output.str();
+	dest += "\n";
 }
 
 #ifndef IS_PARSER

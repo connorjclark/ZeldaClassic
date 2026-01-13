@@ -91,19 +91,57 @@ namespace ZScript
 		{
 			Opcode::mergeComment(comment, str, before);
 		}
-		string printLine(bool showlabel = false, bool showcomment = true, std::string fname = "", int pc = 0)
+		void writeLine(std::string& out, bool showlabel = false, bool showcomment = true, std::string_view fname = "", int pc = 0)
 		{
-			string labelstr = " ";
-			if(showlabel && label > -1)
-				labelstr = fmt::format("l{}:",label);
-            string commentstr;
-			if(showcomment && comment.size())
-				commentstr = fmt::format("; {}",comment);
+			size_t line_start_idx = out.size();
+			if (showlabel && label > -1)
+			{
+				// "l{}:"
+				out += 'l';
 
-			string s = fmt::format("{}{}{}",labelstr,toString(),commentstr);
+				fmt::format_int fLabel(label);
+				out.append(fLabel.data(), fLabel.size());
+
+				out += ':';
+			}
+			else
+			{
+				out += ' ';
+			}
+
+			out += toString();
+
+			if (showcomment && !comment.empty())
+			{
+				out += "; ";
+				out += comment;
+			}
+
 			if (showcomment && line > 0)
-				s += std::string(std::max(0, 80 - (int)s.size()), ' ') + fmt::format(" | {} {}:{}", pc, fname, line);
-			return s + "\n";
+			{
+				size_t current_len = out.size() - line_start_idx;
+				if (current_len < 80)
+					out.append(80 - current_len, ' ');
+
+				// " | {} {}:{}\n"
+				out += " | ";
+
+				fmt::format_int fPc(pc);
+				out.append(fPc.data(), fPc.size());
+
+				out += ' ';
+				out += fname;
+				out += ':';
+
+				fmt::format_int fLine(line);
+				out.append(fLine.data(), fLine.size());
+
+				out += '\n';
+			}
+			else
+			{
+				out += '\n';
+			}
 		}
 		Opcode * makeClone(bool copylabel = true, bool copycomment = true)
 		{
