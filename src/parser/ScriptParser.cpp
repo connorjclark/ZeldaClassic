@@ -2260,6 +2260,7 @@ void ScriptAssembler::fill_debug_data()
 	int32_t prev_file = 0;
 	int32_t prev_line = 1;
 	int32_t prev_pc = 0;
+	std::set<int> seen_files;
 
 	std::set<int> prologue_end_labels;
 	for (auto& fn : allFunctions)
@@ -2288,6 +2289,7 @@ void ScriptAssembler::fill_debug_data()
 			debug_data.appendLineInfoSetFile(op->file);
 			prev_file = op->file;
 			file_changed = true;
+			seen_files.insert(op->file);
 		}
 
 		// Skip if line hasn't changed (and we didn't just switch files).
@@ -2309,12 +2311,17 @@ void ScriptAssembler::fill_debug_data()
 		prev_pc = pc;
 	}
 
+	seen_files.insert(rval.back()->file);
+
 	auto cur_path = fs::current_path();
-	for (auto& file : program.getFiles())
+	const auto& files = program.getFiles();
+	for (int i = 0; i < files.size(); i++)
 	{
+		const std::string& file = files[i];
+		const std::string& contents = getSourceCodeContents(file);
 		debug_data.source_files.push_back({
 			.path = normalize_file_path(file, cur_path),
-			.contents = getSourceCodeContents(file),
+			.contents = seen_files.contains(i) ? contents : "",
 		});
 	}
 

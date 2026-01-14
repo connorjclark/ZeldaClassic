@@ -12,6 +12,7 @@
 #include "zc/zasm_utils.h"
 #include "zc/zc_sys.h"
 #include "zc/zelda.h"
+#include <fstream>
 
 void do_load_and_quit_command(const char* quest_path, bool jit_precompile)
 {
@@ -48,7 +49,21 @@ void do_extract_zasm_command(const char* quest_path)
 		ScriptDebugHandle h(script, ScriptDebugHandle::OutputSplit::ByScript, script->name);
 		h.print(zasm_to_string(script, top_functions, generate_yielder).c_str());
 	});
+	if (zasm_debug_data.exists())
+	{
+		auto output_folder = get_flag_string("-script-runtime-debug-folder").value_or("zscript-debug");
+		for (auto source_file : zasm_debug_data.source_files)
+		{
+			std::string path = fmt::format("{}/scripts/{}/{}", output_folder, get_filename(qstpath), source_file.path);
+			util::replstr(path, "..", "");
+			fs::create_directories(fs::path(path).parent_path().string());
+			std::ofstream out(path, std::ios::binary);
+			out << source_file.contents;
+			out.close();
+		}
+	}
 
+	set_is_exiting();
 	exit(0);
 }
 
