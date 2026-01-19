@@ -202,9 +202,9 @@ public:
 	void for_all_items(std::function<void(ListItem const&)>);
 	//Modifies the listdata, and returns a self-reference
 	ListData& filter(std::function<bool(ListItem&)>);
-	ListData& valsort(size_t frozen = 0);
-	ListData& tagsort(size_t frozen = 0);
-	ListData& alphabetize(size_t frozen = 0);
+	ListData& valsort(size_t frozen_start = 0, size_t frozen_end = 0);
+	ListData& tagsort(size_t frozen_start = 0, size_t frozen_end = 0);
+	ListData& alphabetize(size_t frozen_start = 0, size_t frozen_end = 0);
 	ListData& tag(int32_t tagval, bool onlyUntagged = false);
 	
 	ListItem& accessItem(int32_t val);
