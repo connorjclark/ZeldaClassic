@@ -1,3 +1,4 @@
+#include "zc/ffscript.h"
 #include "zc/guys.h"
 #include "zc/scripting/arrays.h"
 #include "zscriptversion.h"
@@ -741,7 +742,7 @@ static ArrayRegistrar SCREEN_FFCS_registrar(SCREEN_FFCS, []{
 			return MAX_FFCID + 1;
 		},
 		[](int, int index){
-			if (auto ffc = checkFFC(index))
+			if (auto ffc = ResolveFFCWithID(index))
 			{
 				if (ZScriptVersion::ffcRefIsSpriteId())
 					return ffc->getUID();
