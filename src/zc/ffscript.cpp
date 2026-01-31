@@ -318,15 +318,19 @@ int32_t CScriptDrawingCommands::GetCount()
 // - a temporary mapscr, loaded via `Game->LoadTempScreen(int layer, int? screen)`
 // - a temporary mapscr, loaded via `Game->LoadScrollingScreen(int layer, int? screen)`
 //
-// The canonical maprefs are >=0, and temporary ones are all negative.
+// The canonical maprefs are > 0, and temporary ones are all negative. 0 is invalid (null).
 //
 // If temporary, and loaded without specifiying a screen index, we allow combo array variables (like
 // `ComboX[pos]`) to address any rpos in the region. Otherwise, only positions in the exact screen
 // referenced by `mapdataref` can be used (0-175). See ResolveMapdataPos.
 mapdata decode_mapdata_ref(int ref)
 {
-	if (ref >= 0)
+	if (ref == 0)
+		return mapdata{};
+
+	if (ref > 0)
 	{
+		ref -= 1;
 		if (ref >= TheMaps.size())
 			return mapdata{};
 
@@ -412,79 +416,6 @@ mapscr* GetScrollingMapscr(int layer, int x, int y)
 		return nullptr;
 
 	return m;
-}
-
-int32_t getMap(int32_t ref)
-{
-	switch(ref)
-	{
-		case MAPSCR_TEMP0:
-			return cur_map+1;
-		case MAPSCR_TEMP1:
-			return origin_scr->layermap[0];
-		case MAPSCR_TEMP2:
-			return origin_scr->layermap[1];
-		case MAPSCR_TEMP3:
-			return origin_scr->layermap[2];
-		case MAPSCR_TEMP4:
-			return origin_scr->layermap[3];
-		case MAPSCR_TEMP5:
-			return origin_scr->layermap[4];
-		case MAPSCR_TEMP6:
-			return origin_scr->layermap[5];
-		case MAPSCR_SCROLL0:
-			return scrolling_map+1;
-		case MAPSCR_SCROLL1:
-			return special_warp_return_scr->layermap[0];
-		case MAPSCR_SCROLL2:
-			return special_warp_return_scr->layermap[1];
-		case MAPSCR_SCROLL3:
-			return special_warp_return_scr->layermap[2];
-		case MAPSCR_SCROLL4:
-			return special_warp_return_scr->layermap[3];
-		case MAPSCR_SCROLL5:
-			return special_warp_return_scr->layermap[4];
-		case MAPSCR_SCROLL6:
-			return special_warp_return_scr->layermap[5];
-		default:
-			return (ref / MAPSCRS + 1);
-	}
-}
-int32_t getScreen(int32_t ref)
-{
-	switch(ref)
-	{
-		case MAPSCR_TEMP0:
-			return cur_screen;
-		case MAPSCR_TEMP1:
-			return origin_scr->layerscreen[0];
-		case MAPSCR_TEMP2:
-			return origin_scr->layerscreen[1];
-		case MAPSCR_TEMP3:
-			return origin_scr->layerscreen[2];
-		case MAPSCR_TEMP4:
-			return origin_scr->layerscreen[3];
-		case MAPSCR_TEMP5:
-			return origin_scr->layerscreen[4];
-		case MAPSCR_TEMP6:
-			return origin_scr->layerscreen[5];
-		case MAPSCR_SCROLL0:
-			return scrolling_hero_screen;
-		case MAPSCR_SCROLL1:
-			return special_warp_return_scr->layerscreen[0];
-		case MAPSCR_SCROLL2:
-			return special_warp_return_scr->layerscreen[1];
-		case MAPSCR_SCROLL3:
-			return special_warp_return_scr->layerscreen[2];
-		case MAPSCR_SCROLL4:
-			return special_warp_return_scr->layerscreen[3];
-		case MAPSCR_SCROLL5:
-			return special_warp_return_scr->layerscreen[4];
-		case MAPSCR_SCROLL6:
-			return special_warp_return_scr->layerscreen[5];
-		default:
-			return (ref % MAPSCRS);
-	}
 }
 
 static ffcdata* get_ffc(ffc_id_t ffc_id)
@@ -6508,7 +6439,7 @@ int32_t get_register(int32_t arg)
 		{
 			if (mapscr *m = ResolveMapdataScr(GET_REF(mapdataref)))
 			{
-				ret = getMap(GET_REF(mapdataref)) * 10000;
+				ret = (m->map + 1) * 10000;
 			}
 			else
 			{
@@ -6520,7 +6451,7 @@ int32_t get_register(int32_t arg)
 		{
 			if (mapscr *m = ResolveMapdataScr(GET_REF(mapdataref)))
 			{
-				ret = getScreen(GET_REF(mapdataref)) * 10000;
+				ret = m->screen * 10000;
 			}
 			else
 			{
@@ -28623,14 +28554,14 @@ int32_t FFScript::loadMapData()
 	 if ( map < 1 || map > map_count )
 	{
 		Z_scripterrlog("Invalid Map ID passed to Game->LoadMapData: %d\n", map);
-		ri->mapdataref = MAX_SIGNED_32;
+		ri->mapdataref = 0;
 	}
 	else if ( screen < 0 || screen > 129 ) //0x00 to 0x81 -Z
 	{
 		Z_scripterrlog("Invalid Screen Index passed to Game->LoadMapData: %d\n", screen);
-		ri->mapdataref = MAX_SIGNED_32;
+		ri->mapdataref = 0;
 	}
-	else ri->mapdataref = indx;
+	else ri->mapdataref = indx + 1;
 	return ri->mapdataref;
 }
 

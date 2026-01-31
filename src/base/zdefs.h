@@ -2052,24 +2052,6 @@ extern void removeFromItemCache(int32_t itemclass);
 
 bool runscript_do_earlyret(int runscript_val);
 
-enum //Mapscr hardcodes for temp mapscrs
-{
-	MAPSCR_SCROLL6 = -14,
-	MAPSCR_SCROLL5,
-	MAPSCR_SCROLL4,
-	MAPSCR_SCROLL3,
-	MAPSCR_SCROLL2,
-	MAPSCR_SCROLL1,
-	MAPSCR_SCROLL0,
-	MAPSCR_TEMP6,
-	MAPSCR_TEMP5,
-	MAPSCR_TEMP4,
-	MAPSCR_TEMP3,
-	MAPSCR_TEMP2,
-	MAPSCR_TEMP1,
-	MAPSCR_TEMP0
-};
-
 //MIDI States
 enum { midissuspNONE, midissuspHALTED, midissuspRESUME };
 
