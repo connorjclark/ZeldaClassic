@@ -17,9 +17,9 @@ stdout:
   "success": true,
   "diagnostics": [],
   "metadata": {
-    "currentFileSymbols": 16,
+    "currentFileSymbols": 17,
     "symbols": 19,
-    "identifiers": 104,
+    "identifiers": 106,
     "elided": true
   }
 }
@@ -77,45 +77,45 @@ COMPAREV D2 0
 GOTOCMP 52 ==; Test 'while'
 WAITFRAME; InlineFunc[void Waitframe()] Body AND while() #1 Body
 GOTO 44; while() #1 End
-CALLFUNC 0.0332; UsrFunc[void End()] Call AND [Opt:NeverRet]
+CALLFUNC 0.0333; UsrFunc[void End()] Call AND [Opt:NeverRet]
 REF_REMOVE 0.0002; [Opt:NeverRet] AND void run() Body End
 PUSHR REFGENERICDATA; void run() Body Start
 PUSHV 0
 SETR D4 SP2
 PUSHR D4
 PUSHV 0; UsrFunc[void Init(int)] Params
-CALLFUNC 0.0339; UsrFunc[void Init(int)] Call
+CALLFUNC 0.0340; UsrFunc[void Init(int)] Call
 POP D4
 WAITFRAME; InlineFunc[void Waitframe()] Body
 PUSHARGSR D4 0.0002; UsrFunc[void AssertEqual(int, int)] Params Start
 MAKEVARGARRAY 0; Allocate Vargs array AND UsrFunc[int sum(...int[])] Params Start
 PUSHR D2; Push the Vargs array pointer AND UsrFunc[int sum(...int[])] Params End
-CALLFUNC 0.0262; UsrFunc[int sum(...int[])] Call
+CALLFUNC 0.0263; UsrFunc[int sum(...int[])] Call
 POP D4
 PUSHR D2
 PUSHV 0; UsrFunc[void AssertEqual(int, int)] Params End
-CALLFUNC 0.0434; UsrFunc[void AssertEqual(int, int)] Call
+CALLFUNC 0.0435; UsrFunc[void AssertEqual(int, int)] Call
 PEEK D4
 PUSHR D4; UsrFunc[void AssertEqual(int, int)] Params Start
 PUSHVARGV 1; UsrFunc[int sum(...int[])] Params Start
 MAKEVARGARRAY 0; Allocate Vargs array
 PUSHR D2; Push the Vargs array pointer AND UsrFunc[int sum(...int[])] Params End
-CALLFUNC 0.0262; UsrFunc[int sum(...int[])] Call
+CALLFUNC 0.0263; UsrFunc[int sum(...int[])] Call
 POP D4
 PUSHR D2
 PUSHV 1; UsrFunc[void AssertEqual(int, int)] Params End
-CALLFUNC 0.0434; UsrFunc[void AssertEqual(int, int)] Call
+CALLFUNC 0.0435; UsrFunc[void AssertEqual(int, int)] Call
 PEEK D4
 PUSHR D4; UsrFunc[void AssertEqual(int, int)] Params Start
 PUSHVARGV 1; UsrFunc[int sum(...int[])] Params Start
 PUSHVARGV 2
 MAKEVARGARRAY 0; Allocate Vargs array
 PUSHR D2; Push the Vargs array pointer AND UsrFunc[int sum(...int[])] Params End
-CALLFUNC 0.0262; UsrFunc[int sum(...int[])] Call
+CALLFUNC 0.0263; UsrFunc[int sum(...int[])] Call
 POP D4
 PUSHR D2
 PUSHV 3; UsrFunc[void AssertEqual(int, int)] Params End
-CALLFUNC 0.0434; UsrFunc[void AssertEqual(int, int)] Call
+CALLFUNC 0.0435; UsrFunc[void AssertEqual(int, int)] Call
 PEEK D4
 PUSHR D4; UsrFunc[void AssertEqual(int, int)] Params Start
 PUSHVARGV 1; UsrFunc[int sum(...int[])] Params Start
@@ -123,21 +123,21 @@ PUSHVARGV 2
 PUSHVARGV 3
 MAKEVARGARRAY 0; Allocate Vargs array
 PUSHR D2; Push the Vargs array pointer AND UsrFunc[int sum(...int[])] Params End
-CALLFUNC 0.0262; UsrFunc[int sum(...int[])] Call
+CALLFUNC 0.0263; UsrFunc[int sum(...int[])] Call
 POP D4
 PUSHR D2
 PUSHV 6; UsrFunc[void AssertEqual(int, int)] Params End
-CALLFUNC 0.0434; UsrFunc[void AssertEqual(int, int)] Call
+CALLFUNC 0.0435; UsrFunc[void AssertEqual(int, int)] Call
 PEEK D4
 PUSHR D4; UsrFunc[void AssertEqual(int, int)] Params Start
 PUSHV 1; UsrFunc[int sumAndMultiply(int, ...int[])] Params Start
 MAKEVARGARRAY 0; Allocate Vargs array
 PUSHR D2; Push the Vargs array pointer AND UsrFunc[int sumAndMultiply(int, ...int[])] Params End
-CALLFUNC 0.0295; UsrFunc[int sumAndMultiply(int, ...int[])] Call
+CALLFUNC 0.0296; UsrFunc[int sumAndMultiply(int, ...int[])] Call
 POP D4
 PUSHR D2
 PUSHV 0; UsrFunc[void AssertEqual(int, int)] Params End
-CALLFUNC 0.0434; UsrFunc[void AssertEqual(int, int)] Call
+CALLFUNC 0.0435; UsrFunc[void AssertEqual(int, int)] Call
 PEEK D4
 PUSHR D4; UsrFunc[void AssertEqual(int, int)] Params Start
 PUSHV 1; UsrFunc[int sumAndMultiply(int, ...int[])] Params Start
@@ -145,11 +145,11 @@ PUSHVARGV 2
 PUSHVARGV 3
 MAKEVARGARRAY 0; Allocate Vargs array
 PUSHR D2; Push the Vargs array pointer AND UsrFunc[int sumAndMultiply(int, ...int[])] Params End
-CALLFUNC 0.0295; UsrFunc[int sumAndMultiply(int, ...int[])] Call
+CALLFUNC 0.0296; UsrFunc[int sumAndMultiply(int, ...int[])] Call
 POP D4
 PUSHR D2
 PUSHV 5; UsrFunc[void AssertEqual(int, int)] Params End
-CALLFUNC 0.0434; UsrFunc[void AssertEqual(int, int)] Call
+CALLFUNC 0.0435; UsrFunc[void AssertEqual(int, int)] Call
 PEEK D4
 PUSHR D4; UsrFunc[void AssertEqual(int, int)] Params Start
 PUSHV 2; UsrFunc[int sumAndMultiply(int, ...int[])] Params Start
@@ -157,16 +157,17 @@ PUSHVARGV 2
 PUSHVARGV 3
 MAKEVARGARRAY 0; Allocate Vargs array
 PUSHR D2; Push the Vargs array pointer AND UsrFunc[int sumAndMultiply(int, ...int[])] Params End
-CALLFUNC 0.0295; UsrFunc[int sumAndMultiply(int, ...int[])] Call
+CALLFUNC 0.0296; UsrFunc[int sumAndMultiply(int, ...int[])] Call
 POP D4
 PUSHR D2
 PUSHV 10; UsrFunc[void AssertEqual(int, int)] Params End
-CALLFUNC 0.0434; UsrFunc[void AssertEqual(int, int)] Call
+CALLFUNC 0.0435; UsrFunc[void AssertEqual(int, int)] Call
 POP D4
-SETV D2 0; ProtoFunc[TestClass TestClass::TestClass()] Set Destructor
 PUSHR CLASS_THISKEY
-ZCLASS_CONSTRUCT D2 {0}
-POP CLASS_THISKEY; ProtoFunc[TestClass TestClass::TestClass()] Default Construct
+PUSHR D4
+CALLFUNC 0.0456; ClassFunc[TestClass TestClass::TestClass()] Constructor Call
+POP D4
+POP CLASS_THISKEY
 STORE_OBJECT D2 0
 PUSHR D4
 PUSHR CLASS_THISKEY; UsrFunc[void AssertEqual(int, int)] Params Start
@@ -175,12 +176,12 @@ MAKEVARGARRAY 0; Allocate Vargs array AND ClassFunc[int TestClass::sum(...int[])
 PUSHR D2; Push the Vargs array pointer
 LOAD D2 0
 SETR CLASS_THISKEY D2; ClassFunc[int TestClass::sum(...int[])] Params End
-CALLFUNC 0.0360; ClassFunc[int TestClass::sum(...int[])] Call
+CALLFUNC 0.0361; ClassFunc[int TestClass::sum(...int[])] Call
 POP D4
 POP CLASS_THISKEY
 PUSHR D2
 PUSHV 0; UsrFunc[void AssertEqual(int, int)] Params End
-CALLFUNC 0.0434; UsrFunc[void AssertEqual(int, int)] Call
+CALLFUNC 0.0435; UsrFunc[void AssertEqual(int, int)] Call
 PEEK D4
 PUSHR CLASS_THISKEY; UsrFunc[void AssertEqual(int, int)] Params Start
 PUSHR D4
@@ -189,12 +190,12 @@ MAKEVARGARRAY 0; Allocate Vargs array
 PUSHR D2; Push the Vargs array pointer
 LOAD D2 0
 SETR CLASS_THISKEY D2; ClassFunc[int TestClass::sum(...int[])] Params End
-CALLFUNC 0.0360; ClassFunc[int TestClass::sum(...int[])] Call
+CALLFUNC 0.0361; ClassFunc[int TestClass::sum(...int[])] Call
 POP D4
 POP CLASS_THISKEY
 PUSHR D2
 PUSHV 1; UsrFunc[void AssertEqual(int, int)] Params End
-CALLFUNC 0.0434; UsrFunc[void AssertEqual(int, int)] Call
+CALLFUNC 0.0435; UsrFunc[void AssertEqual(int, int)] Call
 PEEK D4
 PUSHR CLASS_THISKEY; UsrFunc[void AssertEqual(int, int)] Params Start
 PUSHR D4
@@ -204,12 +205,12 @@ MAKEVARGARRAY 0; Allocate Vargs array
 PUSHR D2; Push the Vargs array pointer
 LOAD D2 0
 SETR CLASS_THISKEY D2; ClassFunc[int TestClass::sum(...int[])] Params End
-CALLFUNC 0.0360; ClassFunc[int TestClass::sum(...int[])] Call
+CALLFUNC 0.0361; ClassFunc[int TestClass::sum(...int[])] Call
 POP D4
 POP CLASS_THISKEY
 PUSHR D2
 PUSHV 3; UsrFunc[void AssertEqual(int, int)] Params End
-CALLFUNC 0.0434; UsrFunc[void AssertEqual(int, int)] Call
+CALLFUNC 0.0435; UsrFunc[void AssertEqual(int, int)] Call
 PEEK D4
 PUSHR CLASS_THISKEY; UsrFunc[void AssertEqual(int, int)] Params Start
 PUSHR D4
@@ -220,12 +221,12 @@ MAKEVARGARRAY 0; Allocate Vargs array
 PUSHR D2; Push the Vargs array pointer
 LOAD D2 0
 SETR CLASS_THISKEY D2; ClassFunc[int TestClass::sum(...int[])] Params End
-CALLFUNC 0.0360; ClassFunc[int TestClass::sum(...int[])] Call
+CALLFUNC 0.0361; ClassFunc[int TestClass::sum(...int[])] Call
 POP D4
 POP CLASS_THISKEY
 PUSHR D2
 PUSHV 6; UsrFunc[void AssertEqual(int, int)] Params End
-CALLFUNC 0.0434; UsrFunc[void AssertEqual(int, int)] Call
+CALLFUNC 0.0435; UsrFunc[void AssertEqual(int, int)] Call
 PEEK D4
 PUSHR CLASS_THISKEY; UsrFunc[void AssertEqual(int, int)] Params Start
 PUSHR D4
@@ -234,12 +235,12 @@ MAKEVARGARRAY 0; Allocate Vargs array
 PUSHR D2; Push the Vargs array pointer
 LOAD D2 0
 SETR CLASS_THISKEY D2; ClassFunc[int TestClass::sumAndMultiply(int, ...int[])] Params End
-CALLFUNC 0.0395; ClassFunc[int TestClass::sumAndMultiply(int, ...int[])] Call
+CALLFUNC 0.0396; ClassFunc[int TestClass::sumAndMultiply(int, ...int[])] Call
 POP D4
 POP CLASS_THISKEY
 PUSHR D2
 PUSHV 0; UsrFunc[void AssertEqual(int, int)] Params End
-CALLFUNC 0.0434; UsrFunc[void AssertEqual(int, int)] Call
+CALLFUNC 0.0435; UsrFunc[void AssertEqual(int, int)] Call
 PEEK D4
 PUSHR CLASS_THISKEY; UsrFunc[void AssertEqual(int, int)] Params Start
 PUSHR D4
@@ -250,12 +251,12 @@ MAKEVARGARRAY 0; Allocate Vargs array
 PUSHR D2; Push the Vargs array pointer
 LOAD D2 0
 SETR CLASS_THISKEY D2; ClassFunc[int TestClass::sumAndMultiply(int, ...int[])] Params End
-CALLFUNC 0.0395; ClassFunc[int TestClass::sumAndMultiply(int, ...int[])] Call
+CALLFUNC 0.0396; ClassFunc[int TestClass::sumAndMultiply(int, ...int[])] Call
 POP D4
 POP CLASS_THISKEY
 PUSHR D2
 PUSHV 5; UsrFunc[void AssertEqual(int, int)] Params End
-CALLFUNC 0.0434; UsrFunc[void AssertEqual(int, int)] Call
+CALLFUNC 0.0435; UsrFunc[void AssertEqual(int, int)] Call
 PEEK D4
 PUSHR CLASS_THISKEY; UsrFunc[void AssertEqual(int, int)] Params Start
 PUSHR D4
@@ -266,26 +267,26 @@ MAKEVARGARRAY 0; Allocate Vargs array
 PUSHR D2; Push the Vargs array pointer
 LOAD D2 0
 SETR CLASS_THISKEY D2; ClassFunc[int TestClass::sumAndMultiply(int, ...int[])] Params End
-CALLFUNC 0.0395; ClassFunc[int TestClass::sumAndMultiply(int, ...int[])] Call
+CALLFUNC 0.0396; ClassFunc[int TestClass::sumAndMultiply(int, ...int[])] Call
 POP D4
 POP CLASS_THISKEY
 PUSHR D2
 PUSHV 10; UsrFunc[void AssertEqual(int, int)] Params End
-CALLFUNC 0.0434; UsrFunc[void AssertEqual(int, int)] Call
+CALLFUNC 0.0435; UsrFunc[void AssertEqual(int, int)] Call
 PEEK D4
 PUSHARGSV 2 0.0002; UsrFunc[void AssertEqual(int, int)] Params Start AND UsrFunc[void AssertEqual(int, int)] Params End
-CALLFUNC 0.0434; UsrFunc[void AssertEqual(int, int)] Call
+CALLFUNC 0.0435; UsrFunc[void AssertEqual(int, int)] Call
 PEEK D4
 PUSHARGSV 3 0.0002; UsrFunc[void AssertEqual(int, int)] Params Start AND UsrFunc[void AssertEqual(int, int)] Params End
-CALLFUNC 0.0434; UsrFunc[void AssertEqual(int, int)] Call
+CALLFUNC 0.0435; UsrFunc[void AssertEqual(int, int)] Call
 PEEK D4
 PUSHARGSV 5 0.0002; UsrFunc[void AssertEqual(int, int)] Params Start AND UsrFunc[void AssertEqual(int, int)] Params End
-CALLFUNC 0.0434; UsrFunc[void AssertEqual(int, int)] Call
+CALLFUNC 0.0435; UsrFunc[void AssertEqual(int, int)] Call
 PEEK D4
 PUSHARGSV 99 0.0002; UsrFunc[void AssertEqual(int, int)] Params Start AND UsrFunc[void AssertEqual(int, int)] Params End
-CALLFUNC 0.0434; UsrFunc[void AssertEqual(int, int)] Call
+CALLFUNC 0.0435; UsrFunc[void AssertEqual(int, int)] Call
 POP D4
-CALLFUNC 0.0332; UsrFunc[void End()] Call AND [Opt:NeverRet]
+CALLFUNC 0.0333; UsrFunc[void End()] Call AND [Opt:NeverRet]
 REF_REMOVE 0; [Opt:NeverRet] AND void run() Body End
 PUSHARGSV 0 0.0002; Func[int sum(...int[])] Body Start
 SETR D4 SP2
@@ -301,7 +302,7 @@ POP D3
 COMPARER D3 D2
 SETCMP D2 I<
 COMPAREV D2 0
-GOTOCMP 291 ==; for() #3 TestFail?
+GOTOCMP 292 ==; for() #3 TestFail?
 LOAD D2 0.0001; for() #3 Body Start
 PUSHR D2
 LOAD D2 0.0002
@@ -315,7 +316,7 @@ STORE D2 0.0001; for() #3 Body End
 LOAD D2 0; for() #3 LoopIncrement
 ADDV D2 1
 STORE D2 0
-GOTO 268; for() #3 End
+GOTO 269; for() #3 End
 LOAD D2 0.0001; return Start
 REF_REMOVE 0.0002; return End
 POPARGS D5 0.0003
@@ -334,7 +335,7 @@ POP D3
 COMPARER D3 D2
 SETCMP D2 I<
 COMPAREV D2 0
-GOTOCMP 324 ==; for() #4 TestFail?
+GOTOCMP 325 ==; for() #4 TestFail?
 LOAD D2 0.0001; for() #4 Body Start
 PUSHR D2
 LOAD D2 0.0002
@@ -348,7 +349,7 @@ STORE D2 0.0001; for() #4 Body End
 LOAD D2 0; for() #4 LoopIncrement
 ADDV D2 1
 STORE D2 0
-GOTO 301; for() #4 End
+GOTO 302; for() #4 End
 LOAD D2 0.0001; return Start
 PUSHR D2
 LOAD D2 0.0003
@@ -377,7 +378,7 @@ LOAD D2 0; if() #8 Test
 COMPAREV D2 0
 SETCMP D2 I!=
 COMPAREV D2 0
-GOTOCMP 358 ==; Test 'if'
+GOTOCMP 359 ==; Test 'if'
 PUSHV 5; InlineFunc[void hero::Warp(int, int)] Params Start AND if() #8 Body Start
 LOAD D2 0; InlineFunc[void hero::Warp(int, int)] Params End
 POP D3; InlineFunc[void hero::Warp(int, int)] Body Start
@@ -400,7 +401,7 @@ POP D3
 COMPARER D3 D2
 SETCMP D2 I<
 COMPAREV D2 0
-GOTOCMP 390 ==; for() #7 TestFail?
+GOTOCMP 391 ==; for() #7 TestFail?
 LOAD D2 0.0001; for() #7 Body Start
 PUSHR D2
 LOAD D2 0.0002
@@ -414,7 +415,7 @@ STORE D2 0.0001; for() #7 Body End
 LOAD D2 0; for() #7 LoopIncrement
 ADDV D2 1
 STORE D2 0
-GOTO 367; for() #7 End
+GOTO 368; for() #7 End
 LOAD D2 0.0001; return Start
 REF_REMOVE 0.0002; return End
 POPARGS D5 0.0003
@@ -435,7 +436,7 @@ POP D3
 COMPARER D3 D2
 SETCMP D2 I<
 COMPAREV D2 0
-GOTOCMP 425 ==; for() #8 TestFail?
+GOTOCMP 426 ==; for() #8 TestFail?
 LOAD D2 0.0001; for() #8 Body Start
 PUSHR D2
 LOAD D2 0.0002
@@ -449,7 +450,7 @@ STORE D2 0.0001; for() #8 Body End
 LOAD D2 0; for() #8 LoopIncrement
 ADDV D2 1
 STORE D2 0
-GOTO 402; for() #8 End
+GOTO 403; for() #8 End
 LOAD D2 0.0001; return Start
 PUSHR D2
 LOAD D2 0.0003
@@ -467,7 +468,7 @@ POP D3
 COMPARER D3 D2
 SETCMP D2 I!=
 COMPAREV D2 0
-GOTOCMP 453 ==; Test 'if'
+GOTOCMP 454 ==; Test 'if'
 ALLOCATEMEMV D2 49 0; InlineFunc[void printf(char32[], ...untyped[])] Params Start AND if() #10 Body Start
 WRITEPODSTRING D2 "[Test] failed assertion: expected %d but got %d\n"
 PUSHR D2
@@ -480,3 +481,14 @@ POP D5; InlineFunc[void printf(char32[], ...untyped[])] Body End
 GAMEEXIT; InlineFunc[void Game::Exit()] Body AND if() #10 Body End
 POPARGS D5 0.0002
 RETURNFUNC; Func[void AssertEqual(int, int)] Body End
+SETV D2 0; Func[TestClass TestClass::TestClass()] Body Start
+SETR CLASS_THISKEY2 CLASS_THISKEY
+ZCLASS_CONSTRUCT CLASS_THISKEY {0}
+REF_INC -0.0001
+SETR D4 SP2
+PUSHR CLASS_THISKEY2
+REF_AUTORELEASE CLASS_THISKEY
+REF_DEC -0.0001
+SETR D2 CLASS_THISKEY
+POP CLASS_THISKEY
+RETURNFUNC; Func[TestClass TestClass::TestClass()] Body End

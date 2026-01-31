@@ -17,9 +17,9 @@ stdout:
   "success": true,
   "diagnostics": [],
   "metadata": {
-    "currentFileSymbols": 39,
+    "currentFileSymbols": 40,
     "symbols": 69,
-    "identifiers": 222,
+    "identifiers": 224,
     "elided": true
   }
 }
@@ -377,11 +377,11 @@ PUSHR D2
 PUSHV 2; UsrFunc[void AssertEqual(int, int)] Params End
 CALLFUNC 0.0735; UsrFunc[void AssertEqual(int, int)] Call
 POP D4
-SETV D2 0; ProtoFunc[CarArrays CarArrays::CarArrays()] Set Destructor
 PUSHR CLASS_THISKEY
-ZCLASS_CONSTRUCT D2 {0,0.0004,0}
-ZCLASS_MARK_TYPE {0,0,0.0001,0}
-POP CLASS_THISKEY; ProtoFunc[CarArrays CarArrays::CarArrays()] Default Construct
+PUSHR D4
+CALLFUNC 0.0800; ClassFunc[CarArrays CarArrays::CarArrays()] Constructor Call
+POP D4
+POP CLASS_THISKEY
 STORE_OBJECT D2 0.0007
 PUSHR D4
 LOAD D2 0.0007; InlineFunc[int SizeOfArray(untyped[])] Params Start AND UsrFunc[void AssertEqual(int, int)] Params Start
@@ -403,7 +403,7 @@ PUSHR D4
 LOAD D2 0.0006; UsrFunc[void AssertEqual(int[], int[])] Params Start
 PUSHR D2
 PUSHV 0; UsrFunc[void AssertEqual(int[], int[])] Params End
-CALLFUNC 0.0800; UsrFunc[void AssertEqual(int[], int[])] Call
+CALLFUNC 0.0812; UsrFunc[void AssertEqual(int[], int[])] Call
 PEEK D4
 LOAD_INTERNAL_ARRAY D2 @BUTTONINPUT; InlineFunc[int SizeOfArray(untyped[])] Params AND UsrFunc[void AssertEqual(int, int)] Params Start
 ARRAYSIZE D2; InlineFunc[int SizeOfArray(untyped[])] Body
@@ -564,7 +564,7 @@ PUSHV 175; UsrFunc[bool ArrayContains(int[], int)] Params End
 CALLFUNC 0.0637; UsrFunc[bool ArrayContains(int[], int)] Call
 POP D4
 PUSHR D2; UsrFunc[void Assert(bool)] Params End
-CALLFUNC 0.0827; UsrFunc[void Assert(bool)] Call
+CALLFUNC 0.0839; UsrFunc[void Assert(bool)] Call
 PEEK D4
 PUSHR D4; UsrFunc[void Assert(bool)] Params Start
 LOAD_INTERNAL_ARRAY_REF D2 @COMBODD REFSCREEN; UsrFunc[bool ArrayContains(int[], int)] Params Start
@@ -575,19 +575,19 @@ POP D4
 COMPAREV D2 0
 SETCMP D2 I==
 PUSHR D2; UsrFunc[void Assert(bool)] Params End
-CALLFUNC 0.0827; UsrFunc[void Assert(bool)] Call
+CALLFUNC 0.0839; UsrFunc[void Assert(bool)] Call
 PEEK D4
 LOAD_INTERNAL_ARRAY_REF D2 @COMBODD REFSCREEN; UsrFunc[void AssertEqual(int[], int[])] Params Start
 PUSHR D2
 LOAD_INTERNAL_ARRAY_REF D2 @COMBODD REFSCREEN
 PUSHR D2; UsrFunc[void AssertEqual(int[], int[])] Params End
-CALLFUNC 0.0800; UsrFunc[void AssertEqual(int[], int[])] Call
+CALLFUNC 0.0812; UsrFunc[void AssertEqual(int[], int[])] Call
 PEEK D4
 LOAD_INTERNAL_ARRAY_REF D2 @COMBODD REFSCREEN; UsrFunc[void AssertEqual(int[], int[])] Params Start
 PUSHR D2
 LOAD D2 0.0004
 PUSHR D2; UsrFunc[void AssertEqual(int[], int[])] Params End
-CALLFUNC 0.0800; UsrFunc[void AssertEqual(int[], int[])] Call
+CALLFUNC 0.0812; UsrFunc[void AssertEqual(int[], int[])] Call
 POP D4
 SETV D2 1; InlineFunc[lweapon screendata::CreateLWeapon(int)] Params
 CREATELWEAPONR D2; InlineFunc[lweapon screendata::CreateLWeapon(int)] Body Start
@@ -611,7 +611,7 @@ POP D0
 READPODARRAYV D2 1
 PUSHR D2
 PUSHV 1; UsrFunc[void AssertEqual(untyped, untyped)] Params End
-CALLFUNC 0.0837; UsrFunc[void AssertEqual(untyped, untyped)] Call
+CALLFUNC 0.0849; UsrFunc[void AssertEqual(untyped, untyped)] Call
 PEEK D4
 LOAD D2 0.0002; UsrFunc[void AssertEqual(untyped, untyped)] Params Start
 PUSHR D2
@@ -621,12 +621,12 @@ POP D0
 POP REFLWPN
 PUSHR LWPNINITD
 PUSHV 1; UsrFunc[void AssertEqual(untyped, untyped)] Params End
-CALLFUNC 0.0837; UsrFunc[void AssertEqual(untyped, untyped)] Call
+CALLFUNC 0.0849; UsrFunc[void AssertEqual(untyped, untyped)] Call
 PEEK D4
 LOAD D2 0.0001; InlineFunc[bool IsValidArray(untyped[])] Params AND UsrFunc[void Assert(bool)] Params Start
 ISVALIDARRAY D2; InlineFunc[bool IsValidArray(untyped[])] Body
 PUSHR D2; UsrFunc[void Assert(bool)] Params End
-CALLFUNC 0.0827; UsrFunc[void Assert(bool)] Call
+CALLFUNC 0.0839; UsrFunc[void Assert(bool)] Call
 POP D4
 LOAD D2 0.0002; InlineFunc[void lweapon::Remove()] Params Start
 SETR REFLWPN D2; InlineFunc[void lweapon::Remove()] Params End
@@ -637,7 +637,7 @@ ISVALIDARRAY D2; InlineFunc[bool IsValidArray(untyped[])] Body
 COMPAREV D2 0
 SETCMP D2 I==
 PUSHR D2; UsrFunc[void Assert(bool)] Params End
-CALLFUNC 0.0827; UsrFunc[void Assert(bool)] Call
+CALLFUNC 0.0839; UsrFunc[void Assert(bool)] Call
 POP D4
 SETV D2 0
 PUSHR D2
@@ -825,6 +825,18 @@ POP D5; InlineFunc[void printf(char32[], ...untyped[])] Body End
 GAMEEXIT; InlineFunc[void Game::Exit()] Body AND if() #445 Body End
 POPARGS D5 0.0002
 RETURNFUNC; Func[void AssertEqual(itemsprite, itemsprite)] Body End
+SETV D2 0; Func[CarArrays CarArrays::CarArrays()] Body Start
+SETR CLASS_THISKEY2 CLASS_THISKEY
+ZCLASS_CONSTRUCT CLASS_THISKEY {0,0.0004,0}
+ZCLASS_MARK_TYPE {0,0,0.0001,0}
+REF_INC -0.0001
+SETR D4 SP2
+PUSHR CLASS_THISKEY2
+REF_AUTORELEASE CLASS_THISKEY
+REF_DEC -0.0001
+SETR D2 CLASS_THISKEY
+POP CLASS_THISKEY
+RETURNFUNC; Func[CarArrays CarArrays::CarArrays()] Body End
 SETR D4 SP2; Func[void AssertEqual(int[], int[])] Body Start
 MARK_TYPE_STACK 0.0009 0.0001
 REF_INC 0.0001
@@ -837,7 +849,7 @@ POP D3
 COMPARER D3 D2
 SETCMP D2 I!=
 COMPAREV D2 0
-GOTOCMP 823 ==; Test 'if'
+GOTOCMP 835 ==; Test 'if'
 ALLOCATEMEMV D2 49 0; InlineFunc[void printf(char32[], ...untyped[])] Params Start AND if() #446 Body Start
 WRITEPODSTRING D2 "[Test] failed assertion: expected %d but got %d\n"
 PUSHR D2
@@ -855,7 +867,7 @@ RETURNFUNC; Func[void AssertEqual(int[], int[])] Body End
 SETR D4 SP2; Func[void Assert(bool)] Body Start
 LOAD D2 0; unless() #443 Test
 COMPAREV D2 0
-GOTOCMP 835 !=; Test 'unless'
+GOTOCMP 847 !=; Test 'unless'
 ALLOCATEMEMV D2 1 0; UsrFunc[void Fail(char32[])] Params Start AND unless() #443 Body Start
 WRITEPODSTRING D2 ""
 PUSHR D2; UsrFunc[void Fail(char32[])] Params End
@@ -870,7 +882,7 @@ POP D3
 COMPARER D3 D2
 SETCMP D2 I!=
 COMPAREV D2 0
-GOTOCMP 856 ==; Test 'if'
+GOTOCMP 868 ==; Test 'if'
 ALLOCATEMEMV D2 49 0; InlineFunc[void printf(char32[], ...untyped[])] Params Start AND if() #447 Body Start
 WRITEPODSTRING D2 "[Test] failed assertion: expected %d but got %d\n"
 PUSHR D2

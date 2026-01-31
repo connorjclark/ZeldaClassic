@@ -1924,56 +1924,14 @@ void BuildOpcodes::caseExprCall(ASTExprCall& host, void* param)
 		commentStartEnd(targ_sz, fmt::format("Proto{} Visit Params",func_comment));
 		
 		//Set the return to the default value
-		if(classfunc && func.getFlag(FUNCFLAG_CONSTRUCTOR))
+		DataType const& retType = *func.returnType;
+		if(!retType.isVoid() && !sidefx_only)
 		{
-			ClassScope* cscope = func.getInternalScope()->getClass();
-			UserClass& user_class = cscope->user_class;
-			vector<Function*> destr = cscope->getDestructor();
-			Function* destructor = destr.size() == 1 ? destr.at(0) : nullptr;
-			if(destructor && !destructor->isNil())
-			{
-				Function* destructor = destr[0];
-				addOpcode(new OSetImmediateLabel(new VarArgument(EXP1),
-					new LabelArgument(destructor->getLabel(), true)));
-			}
-			else addOpcode(new OSetImmediate(new VarArgument(EXP1),
-				new LiteralArgument(0)));
-			commentBack(fmt::format("Proto{} Set Destructor",func_comment));
-			addOpcode(new OPushRegister(new VarArgument(CLASS_THISKEY)));
-			addOpcode(new OConstructClass(new VarArgument(EXP1),
-				new VectorArgument(user_class.members)));
-			std::vector<int> object_indices;
-			for (auto&& member : user_class.getScope().getClassData())
-			{
-				auto& type = member.second->getNode()->resolveType(scope, nullptr);
-				if (type.isObject())
-				{
-					object_indices.push_back(member.second->getIndex());
-
-					script_object_type object_type;
-					if (type.isArray())
-						object_type = static_cast<const DataTypeArray*>(&type)->getElementType().getScriptObjectTypeId();
-					else
-						object_type = type.getScriptObjectTypeId();
-					object_indices.push_back((int)object_type);
-				}
-			}
-			if (!object_indices.empty())
-				addOpcode(new OMarkTypeClass(new VectorArgument(object_indices)));
-			addOpcode(new OPopRegister(new VarArgument(CLASS_THISKEY)));
-			commentBack(fmt::format("Proto{} Default Construct",func_comment));
-		}
-		else
-		{
-			DataType const& retType = *func.returnType;
-			if(!retType.isVoid() && !sidefx_only)
-			{
-				int32_t retval = 0;
-				if (auto val = func.defaultReturn)
-					retval = *val;
-				addOpcode(new OSetImmediate(new VarArgument(EXP1), new LiteralArgument(retval)));
-				commentBack(fmt::format("Proto{} Default RetVal",func_comment));
-			}
+			int32_t retval = 0;
+			if (auto val = func.defaultReturn)
+				retval = *val;
+			addOpcode(new OSetImmediate(new VarArgument(EXP1), new LiteralArgument(retval)));
+			commentBack(fmt::format("Proto{} Default RetVal",func_comment));
 		}
 	}
 	else if(func.getFlag(FUNCFLAG_INLINE) && (func.isInternal() || func.getFlag(FUNCFLAG_INTERNAL))) //Inline function

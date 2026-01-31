@@ -8,6 +8,8 @@
 #include "base/headers.h"
 #include "parser/AST.h"
 #include "parser/ASTVisitors.h"
+#include "parser/BuildVisitors.h"
+#include "parser/ByteCode.h"
 #include "parser/CompilerUtils.h"
 #include "parser/parserDefs.h"
 using std::ostringstream;
@@ -1062,10 +1064,10 @@ void SemanticAnalyzer::caseClass(ASTClass& host, void* param)
 	if(!host.constructors.size())
 	{
 		ASTFuncDecl* defcon = new ASTFuncDecl(host.identifier->location);
-		ASTExprIdentifier* iden = new ASTExprIdentifier(name, host.identifier->location);
+		std::shared_ptr<ASTString> identifier(host.identifier.clone());
+		ASTExprIdentifier* iden = new ASTExprIdentifier(identifier, host.location);
 		defcon->identifier = iden;
 		defcon->doc_comment = host.doc_comment;
-		defcon->prototype = true;
 		defcon->defaultReturn = new ASTExprConst(new ASTExprCast(
 				new ASTDataType(DataType::CUNTYPED, host.location),
 				new ASTNumberLiteral(new ASTFloat(0, 0, host.location), host.location), host.location
@@ -1079,6 +1081,47 @@ void SemanticAnalyzer::caseClass(ASTClass& host, void* param)
 		block_visit_vec(host.constructors, param);
 		scope = scope->getParent();
 		parsing_user_class = puc_none;
+
+		// Add function code.
+		Function& func = *defcon->func;
+		std::vector<std::shared_ptr<Opcode>> code;
+
+		ClassScope* cscope = func.getInternalScope()->getClass();
+		UserClass& user_class = cscope->user_class;
+		vector<Function*> destr = cscope->getDestructor();
+		Function* destructor = destr.size() == 1 ? destr.at(0) : nullptr;
+		if(destructor && !destructor->isNil())
+		{
+			Function* destructor = destr[0];
+			addOpcode2(code, new OSetImmediateLabel(new VarArgument(EXP1),
+				new LabelArgument(destructor->getLabel(), true)));
+		}
+		else addOpcode2(code, new OSetImmediate(new VarArgument(EXP1),
+			new LiteralArgument(0)));
+		addOpcode2(code, new OPushRegister(new VarArgument(CLASS_THISKEY)));
+		addOpcode2(code, new OConstructClass(new VarArgument(EXP1),
+			new VectorArgument(user_class.members)));
+		std::vector<int> object_indices;
+		for (auto&& member : user_class.getScope().getClassData())
+		{
+			auto& type = member.second->getNode()->resolveType(scope, nullptr);
+			if (type.isObject())
+			{
+				object_indices.push_back(member.second->getIndex());
+
+				script_object_type object_type;
+				if (type.isArray())
+					object_type = static_cast<const DataTypeArray*>(&type)->getElementType().getScriptObjectTypeId();
+				else
+					object_type = type.getScriptObjectTypeId();
+				object_indices.push_back((int)object_type);
+			}
+		}
+		if (!object_indices.empty())
+			addOpcode2(code, new OMarkTypeClass(new VectorArgument(object_indices)));
+		addOpcode2(code, new OPopRegister(new VarArgument(CLASS_THISKEY)));
+
+		defcon->func->giveCode(code);
 	}
 	else for (auto it = host.constructors.cbegin();
 		 it != host.constructors.cend(); ++it)

@@ -1049,7 +1049,33 @@ stdout:
             "character": 19
           }
         },
-        "children": []
+        "children": [
+          {
+            "name": "IhaveAdefCtor",
+            "kind": 9,
+            "range": {
+              "start": {
+                "line": 41,
+                "character": 6
+              },
+              "end": {
+                "line": 41,
+                "character": 19
+              }
+            },
+            "selectionRange": {
+              "start": {
+                "line": 41,
+                "character": 6
+              },
+              "end": {
+                "line": 41,
+                "character": 19
+              }
+            },
+            "children": []
+          }
+        ]
       }
     ],
     "symbols": {
@@ -2535,6 +2561,22 @@ stdout:
           "length": 13
         },
         "symbol": "IhaveAdefCtor"
+      },
+      {
+        "loc": {
+          "line": 41,
+          "character": 6,
+          "length": 13
+        },
+        "symbol": "ctor-IhaveAdefCtor"
+      },
+      {
+        "loc": {
+          "line": 41,
+          "character": 6,
+          "length": 13
+        },
+        "symbol": "IhaveAdefCtor"
       }
     ]
   }
@@ -2574,12 +2616,12 @@ PRINTFVARG; InlineFunc[void printf(char32[], ...untyped[])] Body Start
 POP D5; InlineFunc[void printf(char32[], ...untyped[])] Body End
 PUSHR D4
 PUSHV 1; UsrFunc[FilterBitflags do_filter(FilterBitflags)] Params
-CALLFUNC 0.0114; UsrFunc[FilterBitflags do_filter(FilterBitflags)] Call
+CALLFUNC 0.0115; UsrFunc[FilterBitflags do_filter(FilterBitflags)] Call
 POP D4
 PUSHR CLASS_THISKEY
 PUSHR D4
 PUSHV 2; ClassFunc[Car Car::Car(int)] Params
-CALLFUNC 0.0120; ClassFunc[Car Car::Car(int)] Constructor Call
+CALLFUNC 0.0121; ClassFunc[Car Car::Car(int)] Constructor Call
 POP D4
 POP CLASS_THISKEY
 STORE_OBJECT D2 0.0007
@@ -2605,15 +2647,16 @@ ADDV D2 2
 PUSHVARGR D2; InlineFunc[void printf(char32[], ...untyped[])] Params End
 PRINTFVARG; InlineFunc[void printf(char32[], ...untyped[])] Body Start
 POP D5; InlineFunc[void printf(char32[], ...untyped[])] Body End
-SETV D2 0; ProtoFunc[IhaveAdefCtor IhaveAdefCtor::IhaveAdefCtor()] Set Destructor
 PUSHR CLASS_THISKEY
-ZCLASS_CONSTRUCT D2 {0}
-POP CLASS_THISKEY; ProtoFunc[IhaveAdefCtor IhaveAdefCtor::IhaveAdefCtor()] Default Construct
+PUSHR D4
+CALLFUNC 0.0139; ClassFunc[IhaveAdefCtor IhaveAdefCtor::IhaveAdefCtor()] Constructor Call
+POP D4
+POP CLASS_THISKEY
 STORE_OBJECT D2 0.0006
 PUSHR CLASS_THISKEY
 PUSHR D4
 PUSHV 2; ClassFunc[Car Car::Car(int)] Params
-CALLFUNC 0.0120; ClassFunc[Car Car::Car(int)] Constructor Call
+CALLFUNC 0.0121; ClassFunc[Car Car::Car(int)] Constructor Call
 POP D4
 POP CLASS_THISKEY
 STORE_OBJECT D2 0.0005
@@ -2635,14 +2678,14 @@ LOAD D0 0.0001; for(each) #1 EndArrayCheck
 ARRAYSIZE D0
 LOAD D3 0.0002
 COMPARER D3 D2
-GOTOCMP 102 >=; for(each) #1 to Else
+GOTOCMP 103 >=; for(each) #1 to Else
 READPODARRAYR D2 D3; for(each) #1 Next Index
 STORE D2 0
 ADDV D3 1
 STORE D3 0.0002
 LOAD D2 0; InlineFunc[void Trace(untyped)] Params AND for(each) #1 Body Start
 TRACER D2; InlineFunc[void Trace(untyped)] Body AND for(each) #1 Body End
-GOTO 90; for(each) #1 End
+GOTO 91; for(each) #1 End
 STOREV 1 0.0002; if(ahhh=true) #8 [Opt:AlwaysOn]
 LOAD D2 0.0002; InlineFunc[void Trace(untyped)] Params
 TRACER D2; InlineFunc[void Trace(untyped)] Body
@@ -2679,3 +2722,14 @@ REF_DEC -0.0001
 SETR D2 CLASS_THISKEY
 POP CLASS_THISKEY
 RETURNFUNC; Func[Car Car::Car(int)] Body End
+SETV D2 0; Func[IhaveAdefCtor IhaveAdefCtor::IhaveAdefCtor()] Body Start
+SETR CLASS_THISKEY2 CLASS_THISKEY
+ZCLASS_CONSTRUCT CLASS_THISKEY {0}
+REF_INC -0.0001
+SETR D4 SP2
+PUSHR CLASS_THISKEY2
+REF_AUTORELEASE CLASS_THISKEY
+REF_DEC -0.0001
+SETR D2 CLASS_THISKEY
+POP CLASS_THISKEY
+RETURNFUNC; Func[IhaveAdefCtor IhaveAdefCtor::IhaveAdefCtor()] Body End

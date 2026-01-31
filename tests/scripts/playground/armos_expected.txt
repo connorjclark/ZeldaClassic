@@ -137,7 +137,7 @@ LOAD D2 0.0003; UsrFunc[void SpawnAnimation(ffc, npc)] Params Start
 PUSHR D2
 LOAD D2 0.0002
 PUSHR D2; UsrFunc[void SpawnAnimation(ffc, npc)] Params End
-CALLFUNC 1.5261; UsrFunc[void SpawnAnimation(ffc, npc)] Call
+CALLFUNC 1.5273; UsrFunc[void SpawnAnimation(ffc, npc)] Call
 POP D4
 LOAD D2 0.0002
 PUSHR D2
@@ -5898,11 +5898,11 @@ SETR D2 SPRITE_MISCD
 REF_AUTORELEASE D2
 REF_REMOVE 0
 GOTO 5913; return End AND if() #732 Body End
-SETV D2 0; ProtoFunc[GhostData GhostData::GhostData()] Set Destructor
 PUSHR CLASS_THISKEY
-ZCLASS_CONSTRUCT D2 {0.0003,0.0024,0}
-ZCLASS_MARK_TYPE {0.0003,0,0.0004,0}
-POP CLASS_THISKEY; ProtoFunc[GhostData GhostData::GhostData()] Default Construct
+PUSHR D4
+CALLFUNC 1.5261; ClassFunc[GhostData GhostData::GhostData()] Constructor Call
+POP D4
+POP CLASS_THISKEY
 STORE_OBJECT D2 0
 LOAD D2 0.0001
 PUSHR D2
@@ -15286,6 +15286,18 @@ GOTO 15213; for() #183 End
 SETV D2 0; return Start
 POPARGS D5 0.0007; return End
 RETURNFUNC; Func[bool ghost2__OnSidePlatform(int, int, int, int, int, int)] Body End
+SETV D2 0; Func[GhostData GhostData::GhostData()] Body Start
+SETR CLASS_THISKEY2 CLASS_THISKEY
+ZCLASS_CONSTRUCT CLASS_THISKEY {0.0003,0.0024,0}
+ZCLASS_MARK_TYPE {0.0003,0,0.0004,0}
+REF_INC -0.0001
+SETR D4 SP2
+PUSHR CLASS_THISKEY2
+REF_AUTORELEASE CLASS_THISKEY
+REF_DEC -0.0001
+SETR D2 CLASS_THISKEY
+POP CLASS_THISKEY
+RETURNFUNC; Func[GhostData GhostData::GhostData()] Body End
 PUSHARGSV 0 0.0004; Func[void SpawnAnimation(ffc, npc)] Body Start
 SETR D4 SP2
 LOAD D2 0.0005
@@ -15325,7 +15337,7 @@ LOAD D2 0; for() #220 LoopTest
 COMPAREV D2 32
 SETCMP D2 I<
 COMPAREV D2 0
-GOTOCMP 15404 ==; for() #220 TestFail?
+GOTOCMP 15416 ==; for() #220 TestFail?
 SETV D2 0; for() #220 Body Start
 PUSHR D2
 LOAD D2 0.0005
@@ -15392,7 +15404,7 @@ LOAD D2 0; if() #833 Test
 COMPAREV D2 29
 SETCMP D2 I==
 COMPAREV D2 0
-GOTOCMP 15400 ==; Test 'if'
+GOTOCMP 15412 ==; Test 'if'
 SETR D2 UNDERCOMBO; if() #833 Body Start
 PUSHR D2
 LOAD D2 0.0005; InlineFunc[int ComboAt(int, int)] Params Start
@@ -15428,7 +15440,7 @@ SETR COMBOCD D2; if() #833 Body End
 LOAD D2 0; for() #220 Body End AND for() #220 LoopIncrement
 ADDV D2 1
 STORE D2 0
-GOTO 15296; for() #220 End
+GOTO 15308; for() #220 End
 LOAD D2 0.0003
 PUSHR D2
 LOAD D2 0.0005

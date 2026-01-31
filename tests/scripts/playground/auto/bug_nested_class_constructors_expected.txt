@@ -17,9 +17,9 @@ stdout:
   "success": true,
   "diagnostics": [],
   "metadata": {
-    "currentFileSymbols": 20,
+    "currentFileSymbols": 22,
     "symbols": 32,
-    "identifiers": 62,
+    "identifiers": 66,
     "elided": true
   }
 }
@@ -96,11 +96,11 @@ PUSHR D4
 LOAD D2 0.0002; UsrFunc[void Assert(InnerDefaultCtorNoFields)] Params Start
 ZCLASS_READ D2 0
 PUSHR D2; UsrFunc[void Assert(InnerDefaultCtorNoFields)] Params End
-CALLFUNC 0.0174; UsrFunc[void Assert(InnerDefaultCtorNoFields)] Call
+CALLFUNC 0.0175; UsrFunc[void Assert(InnerDefaultCtorNoFields)] Call
 POP D4
 PUSHR CLASS_THISKEY
 PUSHR D4
-CALLFUNC 0.0187; ClassFunc[Outer1 Outer1::Outer1()] Constructor Call
+CALLFUNC 0.0188; ClassFunc[Outer1 Outer1::Outer1()] Constructor Call
 POP D4
 POP CLASS_THISKEY
 STORE_OBJECT D2 0.0001
@@ -110,11 +110,11 @@ ZCLASS_READ D2 0
 ZCLASS_READ D2 0
 PUSHR D2
 PUSHV 123; UsrFunc[void AssertEqual(int, int)] Params End
-CALLFUNC 0.0212; UsrFunc[void AssertEqual(int, int)] Call
+CALLFUNC 0.0214; UsrFunc[void AssertEqual(int, int)] Call
 POP D4
 PUSHR CLASS_THISKEY
 PUSHR D4
-CALLFUNC 0.0233; ClassFunc[Outer2 Outer2::Outer2()] Constructor Call
+CALLFUNC 0.0235; ClassFunc[Outer2 Outer2::Outer2()] Constructor Call
 POP D4
 POP CLASS_THISKEY
 STORE_OBJECT D2 0
@@ -124,7 +124,7 @@ ZCLASS_READ D2 0
 ZCLASS_READ D2 0
 PUSHR D2
 PUSHV 124; UsrFunc[void AssertEqual(int, int)] Params End
-CALLFUNC 0.0212; UsrFunc[void AssertEqual(int, int)] Call
+CALLFUNC 0.0214; UsrFunc[void AssertEqual(int, int)] Call
 POP D4
 CALLFUNC 0.0105; UsrFunc[void End()] Call AND [Opt:NeverRet]
 REF_REMOVE 0.0002
@@ -189,10 +189,11 @@ ZCLASS_MARK_TYPE {0,0.0008}
 REF_INC -0.0001
 SETR D4 SP2
 PUSHR CLASS_THISKEY2
-SETV D2 0; ProtoFunc[InnerDefaultCtorNoFields InnerDefaultCtorNoFields::InnerDefaultCtorNoFields()] Set Destructor
 PUSHR CLASS_THISKEY
-ZCLASS_CONSTRUCT D2 {0}
-POP CLASS_THISKEY; ProtoFunc[InnerDefaultCtorNoFields InnerDefaultCtorNoFields::InnerDefaultCtorNoFields()] Default Construct
+PUSHR D4
+CALLFUNC 0.0261; ClassFunc[InnerDefaultCtorNoFields InnerDefaultCtorNoFields::InnerDefaultCtorNoFields()] Constructor Call
+POP D4
+POP CLASS_THISKEY
 ZCLASS_WRITE CLASS_THISKEY 0
 REF_AUTORELEASE CLASS_THISKEY
 REF_DEC -0.0001
@@ -204,7 +205,7 @@ MARK_TYPE_STACK 0.0008 0
 REF_INC 0
 LOAD D2 0; unless() #10 Test
 COMPAREV D2 0
-GOTOCMP 184 !=; Test 'unless'
+GOTOCMP 185 !=; Test 'unless'
 ALLOCATEMEMV D2 1 0; UsrFunc[void Fail(char32[])] Params Start AND unless() #10 Body Start
 WRITEPODSTRING D2 ""
 PUSHR D2; UsrFunc[void Fail(char32[])] Params End
@@ -219,10 +220,11 @@ ZCLASS_MARK_TYPE {0,0.0008}
 REF_INC -0.0001
 SETR D4 SP2
 PUSHR CLASS_THISKEY2
-SETV D2 0; ProtoFunc[InnerDefaultCtor InnerDefaultCtor::InnerDefaultCtor()] Set Destructor
 PUSHR CLASS_THISKEY
-ZCLASS_CONSTRUCT D2 {0.0001}
-POP CLASS_THISKEY; ProtoFunc[InnerDefaultCtor InnerDefaultCtor::InnerDefaultCtor()] Default Construct
+PUSHR D4
+CALLFUNC 0.0272; ClassFunc[InnerDefaultCtor InnerDefaultCtor::InnerDefaultCtor()] Constructor Call
+POP D4
+POP CLASS_THISKEY
 ZCLASS_WRITE CLASS_THISKEY 0
 ZCLASS_READ CLASS_THISKEY 0
 ZCLASS_READ D2 0
@@ -245,7 +247,7 @@ POP D3
 COMPARER D3 D2
 SETCMP D2 I!=
 COMPAREV D2 0
-GOTOCMP 231 ==; Test 'if'
+GOTOCMP 233 ==; Test 'if'
 ALLOCATEMEMV D2 49 0; InlineFunc[void printf(char32[], ...untyped[])] Params Start AND if() #11 Body Start
 WRITEPODSTRING D2 "[Test] failed assertion: expected %d but got %d\n"
 PUSHR D2
@@ -267,7 +269,7 @@ SETR D4 SP2
 PUSHR CLASS_THISKEY2
 PUSHR CLASS_THISKEY
 PUSHR D4
-CALLFUNC 0.0259; ClassFunc[InnerUserCtor InnerUserCtor::InnerUserCtor()] Constructor Call
+CALLFUNC 0.0283; ClassFunc[InnerUserCtor InnerUserCtor::InnerUserCtor()] Constructor Call
 POP D4
 POP CLASS_THISKEY
 ZCLASS_WRITE CLASS_THISKEY 0
@@ -284,6 +286,28 @@ REF_DEC -0.0001
 SETR D2 CLASS_THISKEY
 POP CLASS_THISKEY
 RETURNFUNC; Func[Outer2 Outer2::Outer2()] Body End
+SETV D2 0; Func[InnerDefaultCtorNoFields InnerDefaultCtorNoFields::InnerDefaultCtorNoFields()] Body Start
+SETR CLASS_THISKEY2 CLASS_THISKEY
+ZCLASS_CONSTRUCT CLASS_THISKEY {0}
+REF_INC -0.0001
+SETR D4 SP2
+PUSHR CLASS_THISKEY2
+REF_AUTORELEASE CLASS_THISKEY
+REF_DEC -0.0001
+SETR D2 CLASS_THISKEY
+POP CLASS_THISKEY
+RETURNFUNC; Func[InnerDefaultCtorNoFields InnerDefaultCtorNoFields::InnerDefaultCtorNoFields()] Body End
+SETV D2 0; Func[InnerDefaultCtor InnerDefaultCtor::InnerDefaultCtor()] Body Start
+SETR CLASS_THISKEY2 CLASS_THISKEY
+ZCLASS_CONSTRUCT CLASS_THISKEY {0.0001}
+REF_INC -0.0001
+SETR D4 SP2
+PUSHR CLASS_THISKEY2
+REF_AUTORELEASE CLASS_THISKEY
+REF_DEC -0.0001
+SETR D2 CLASS_THISKEY
+POP CLASS_THISKEY
+RETURNFUNC; Func[InnerDefaultCtor InnerDefaultCtor::InnerDefaultCtor()] Body End
 SETV D2 0; Func[InnerUserCtor InnerUserCtor::InnerUserCtor()] Body Start
 SETR CLASS_THISKEY2 CLASS_THISKEY
 ZCLASS_CONSTRUCT CLASS_THISKEY {0.0001}

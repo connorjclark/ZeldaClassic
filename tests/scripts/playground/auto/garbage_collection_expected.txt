@@ -110,9 +110,9 @@ stdout:
     }
   ],
   "metadata": {
-    "currentFileSymbols": 168,
-    "symbols": 140,
-    "identifiers": 1412,
+    "currentFileSymbols": 170,
+    "symbols": 141,
+    "identifiers": 1416,
     "elided": true
   }
 }
@@ -2946,11 +2946,11 @@ SETR GD4 D2
 PUSHVARGR D2; InlineFunc[void printf(char32[], ...untyped[])] Params End
 PRINTFVARG; InlineFunc[void printf(char32[], ...untyped[])] Body Start
 POP D5; InlineFunc[void printf(char32[], ...untyped[])] Body End
-SETV D2 0; ProtoFunc[List List::List()] Set Destructor
 PUSHR CLASS_THISKEY
-ZCLASS_CONSTRUCT D2 {0.0001,0}
-ZCLASS_MARK_TYPE {0.0001,0,0,0.0008}
-POP CLASS_THISKEY; ProtoFunc[List List::List()] Default Construct
+PUSHR D4
+CALLFUNC 0.4580; ClassFunc[List List::List()] Constructor Call
+POP D4
+POP CLASS_THISKEY
 STORE_OBJECT D2 0.0003
 LOAD D2 0.0003; InlineFunc[bool ArrayPushBack(int[], int)] Params Start
 ZCLASS_READ D2 0.0001
@@ -3822,7 +3822,7 @@ PUSHVARGV 2
 PUSHVARGV 3
 MAKEVARGARRAY 0; Allocate Vargs array
 PUSHR D2; Push the Vargs array pointer AND UsrFunc[void storeVarargs(...int[])] Params End
-CALLFUNC 0.4580; UsrFunc[void storeVarargs(...int[])] Call
+CALLFUNC 0.4592; UsrFunc[void storeVarargs(...int[])] Call
 PEEK D4
 ALLOCATEMEMV D2 24 0; UsrFunc[void check(char32[], int, int)] Params Start
 WRITEPODSTRING D2 "RefCount(storedVarargs)"
@@ -4084,7 +4084,7 @@ WRITEPODARRAYVR 1 D2 0.0008
 REF_REMOVE 0
 POP D5
 RETURNFUNC; Func[void assignToUntypedArr(untyped[])] Body End
-SETV D2 0.4604; Func[Person Person::Person(int)] Body Start
+SETV D2 0.4616; Func[Person Person::Person(int)] Body Start
 SETR CLASS_THISKEY2 CLASS_THISKEY
 ZCLASS_CONSTRUCT CLASS_THISKEY {0.0003,0.0003}
 ZCLASS_MARK_TYPE {0.0003,0.0008,0.0001,0.0008,0.0002,0.0008}
@@ -4305,7 +4305,7 @@ SETR D2 GD5
 ADDV D2 1
 SETR GD5 D2
 RETURNFUNC; Func[void yield()] Body End
-SETV D2 0.4598; Func[Hat Hat::Hat()] Body Start
+SETV D2 0.4610; Func[Hat Hat::Hat()] Body Start
 SETR CLASS_THISKEY2 CLASS_THISKEY
 ZCLASS_CONSTRUCT CLASS_THISKEY {0}
 REF_INC -0.0001
@@ -4646,7 +4646,7 @@ REF_REMOVE 0.0004
 REF_REMOVE 0.0006
 POPARGS D5 0.0007
 RETURNFUNC; Func[Person usePerson5(Person, bool)] Body End
-SETV D2 0.4610; Func[SelfRetainingRng SelfRetainingRng::SelfRetainingRng(randgen)] Body Start
+SETV D2 0.4622; Func[SelfRetainingRng SelfRetainingRng::SelfRetainingRng(randgen)] Body Start
 SETR CLASS_THISKEY2 CLASS_THISKEY
 ZCLASS_CONSTRUCT CLASS_THISKEY {0.0002}
 ZCLASS_MARK_TYPE {0.0001,0.0005,0,0.0008}
@@ -4698,6 +4698,18 @@ POP D5; InlineFunc[void printf(char32[], ...untyped[])] Body End
 GAMEEXIT; InlineFunc[void Game::Exit()] Body AND if() #454 Body End
 POPARGS D5 0.0002
 RETURNFUNC; Func[void AssertEqual(int, int)] Body End
+SETV D2 0; Func[List List::List()] Body Start
+SETR CLASS_THISKEY2 CLASS_THISKEY
+ZCLASS_CONSTRUCT CLASS_THISKEY {0.0001,0}
+ZCLASS_MARK_TYPE {0.0001,0,0,0.0008}
+REF_INC -0.0001
+SETR D4 SP2
+PUSHR CLASS_THISKEY2
+REF_AUTORELEASE CLASS_THISKEY
+REF_DEC -0.0001
+SETR D2 CLASS_THISKEY
+POP CLASS_THISKEY
+RETURNFUNC; Func[List List::List()] Body End
 SETR D4 SP2; Func[void storeVarargs(...int[])] Body Start
 MARK_TYPE_STACK 0.0009 0
 REF_INC 0
