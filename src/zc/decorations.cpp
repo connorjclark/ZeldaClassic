@@ -11,7 +11,7 @@ decoration::decoration(zfix X,zfix Y,int32_t Id,int32_t Clk, int32_t wpnSpr) : s
 {
 	x=X;
 	y=Y;
-	screen_spawned=get_screen_for_world_xy(x.getInt(), y.getInt());
+	screen_spawned=current_screen=get_screen_for_world_xy(x.getInt(), y.getInt());
 	id=Id;
 	clk=Clk;
 	misc = 0;

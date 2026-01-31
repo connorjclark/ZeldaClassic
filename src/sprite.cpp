@@ -158,6 +158,7 @@ sprite::sprite(sprite const & other):
 	parent = nullptr;
 	setParent(other.parent);
 	screen_spawned = other.screen_spawned;
+	current_screen = other.current_screen;
 	isspawning = other.isspawning;
     
     for(int32_t i=0; i<10; ++i)
@@ -186,7 +187,7 @@ sprite::sprite(zfix X,zfix Y,int32_t T,int32_t CS,int32_t F,int32_t Clk,int32_t 
 	x = X;
 	y = Y;
     uid = 0;
-	screen_spawned = get_screen_for_world_xy(x.getInt(), y.getInt());
+	screen_spawned=current_screen=get_screen_for_world_xy(x.getInt(), y.getInt());
     isspawning = false;
     slopeid = 0;
     onplatid = 0;
