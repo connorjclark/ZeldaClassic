@@ -135,5 +135,5 @@ shutil.copytree(root_dir / 'timidity', dist_dir / 'timidity')
 shutil.copytree(build_dir / 'packages/web_lazy_files', dist_dir / 'files')
 
 (dist_dir / 'index.html').write_text(
-    '<a href=create>create</a> <br> <a href=play>play</a> <br> <a href=zscript>zscript playground</a>'
+    '<a href=create>create</a> <br> <a href=play>play</a> <br> <a href=zscript/>zscript playground</a>'
 )

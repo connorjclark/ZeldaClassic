@@ -48,12 +48,13 @@ set(playground_bundle_command
     $<$<NOT:$<CONFIG:Debug>>:--minify>
 )
 add_custom_command(
-    OUTPUT ${BUILD_FOLDER}/playground/playground.js ${BUILD_FOLDER}/playground/playground.worker.js
+    OUTPUT ${BUILD_FOLDER}/playground/playground.js ${BUILD_FOLDER}/playground/playground.worker.js ${BUILD_FOLDER}/playground/index.html
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/playground
     COMMAND ${playground_bundle_command}
     COMMAND_EXPAND_LISTS
     DEPENDS
         playground/build.js
+        playground/index.html
         playground/logger.ts
         playground/playground.ts
         playground/playground.worker.ts
@@ -61,7 +62,7 @@ add_custom_command(
         package.json
     VERBATIM
 )
-add_custom_target(web_zscript_playground DEPENDS npm_install_web zscript ${BUILD_FOLDER}/playground/playground.js ${BUILD_FOLDER}/playground/playground.worker.js)
+add_custom_target(web_zscript_playground DEPENDS npm_install_web zscript ${BUILD_FOLDER}/playground/playground.js ${BUILD_FOLDER}/playground/playground.worker.js ${BUILD_FOLDER}/playground/index.html)
 
 function (create_web_target target)
     add_custom_command(
