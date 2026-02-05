@@ -2,6 +2,7 @@ add_custom_command(
     OUTPUT ${CMAKE_BINARY_DIR}/npm_install.stamp
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
     COMMAND npm install
+    COMMAND ${CMAKE_COMMAND} -E touch "${CMAKE_BINARY_DIR}/npm_install.stamp"
     DEPENDS package.json package-lock.json
     COMMENT "Installing npm packages..."
     VERBATIM
@@ -31,6 +32,7 @@ add_custom_command(
     COMMAND ${main_bundle_command}
     COMMAND_EXPAND_LISTS
     DEPENDS
+        "${CMAKE_BINARY_DIR}/npm_install.stamp"
         file_launch.js
         fsfs.js
         main.js
@@ -48,12 +50,14 @@ set(playground_bundle_command
     $<$<NOT:$<CONFIG:Debug>>:--minify>
 )
 add_custom_command(
-    OUTPUT ${BUILD_FOLDER}/playground/playground.js ${BUILD_FOLDER}/playground/playground.worker.js
+    OUTPUT ${BUILD_FOLDER}/playground/playground.js ${BUILD_FOLDER}/playground/playground.worker.js ${BUILD_FOLDER}/playground/index.html
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/playground
     COMMAND ${playground_bundle_command}
     COMMAND_EXPAND_LISTS
     DEPENDS
+        "${CMAKE_BINARY_DIR}/npm_install.stamp"
         playground/build.js
+        playground/index.html
         playground/logger.ts
         playground/playground.ts
         playground/playground.worker.ts
@@ -61,7 +65,7 @@ add_custom_command(
         package.json
     VERBATIM
 )
-add_custom_target(web_zscript_playground DEPENDS npm_install_web zscript ${BUILD_FOLDER}/playground/playground.js ${BUILD_FOLDER}/playground/playground.worker.js)
+add_custom_target(web_zscript_playground DEPENDS npm_install_web zscript ${BUILD_FOLDER}/playground/playground.js ${BUILD_FOLDER}/playground/playground.worker.js ${BUILD_FOLDER}/playground/index.html)
 
 function (create_web_target target)
     add_custom_command(

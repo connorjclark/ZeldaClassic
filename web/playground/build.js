@@ -1,7 +1,7 @@
 // Don't run directly, instead:
 //
 // 1. Follow the instructions for configuring a web build in "docs/building.md"
-// 2. build via cmake target "web_zscript_playground"
+// 2. build via cmake target "web"
 
 import fs from 'fs';
 import path from 'path';
