@@ -180,7 +180,7 @@ void DocVisitor::caseClass(ASTClass& host, void* param)
 {
 	auto symbol = appendSymbol(SymbolKind::Class, host);
 
-	if (auto parent = host.user_class->getParentClass())
+	if (auto parent = host.user_class->getBaseClass())
 		(*symbol)["parent"] = parent->getName();
 
 	auto prev_active = active;

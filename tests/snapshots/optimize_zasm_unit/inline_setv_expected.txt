@@ -12,7 +12,7 @@ rewrite 11: 3 -> 0 commands
 11: NOP            
 12: NOP            
 13: NOP            
-Function #0 (run_none-0)
+Function run_none-0
     0: SETV            D3               100         [Block 0 -> ]
     1: TRACER          D3
     2: NOP

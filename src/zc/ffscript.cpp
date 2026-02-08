@@ -30530,11 +30530,14 @@ static std::string get_script_location(int pc)
 	auto [fname, line] = zasm_debug_data.resolveLocation(pc);
 	if (line > 0)
 	{
+		const DebugScope* scope = zasm_debug_data.resolveFunctionScope(pc);
+		std::string fn_name = scope ? zasm_debug_data.getFullScopeName(scope) : "?";
+
 		// Just print the filename, not the entire path.
 		std::string fname_str = fname;
 		size_t pos = fname_str.find_last_of("/\\") + 1;
-		return fmt::format("{}:{}", fname_str.substr(pos), line);
-		// return fmt::format("{}:{} (pc: {})", fname_str.substr(pos), line, pc); // Useful for debugging.
+		return fmt::format("{} ({}:{})", fn_name, fname_str.substr(pos), line);
+		// return fmt::format("{} ({}:{}) pc: {}", fn_name, fname_str.substr(pos), line, pc); // Useful for debugging.
 	}
 	else if (devpwd())
 	{
@@ -30546,12 +30549,7 @@ static std::string get_script_location(int pc)
 	return "";
 }
 
-void traceStr(string const& str)
-{
-	FFCore.handle_trace(str + "\n");
-}
-
-void FFScript::handle_trace(const std::string& s, bool is_error)
+void FFScript::handle_trace(const std::string& s, bool is_error, bool no_prefix)
 {
 	bool user_visible_trace = true;
 	if (is_error)
@@ -30570,8 +30568,11 @@ void FFScript::handle_trace(const std::string& s, bool is_error)
 
 	if (user_visible_trace)
 	{
-		bool force_context = is_error;
-		PrintTracePrefix(force_context, is_error);
+		if (!no_prefix)
+		{
+			bool force_context = is_error;
+			PrintTracePrefix(force_context, is_error);
+		}
 		safe_al_trace(s);
 		if (!stack_trace_string.empty())
 			safe_al_trace(stack_trace_string);
@@ -30579,7 +30580,8 @@ void FFScript::handle_trace(const std::string& s, bool is_error)
 
 	if (do_replay_comment)
 	{
-		replay_step_comment(fmt::format("{}: {}", is_error ? "Error" : "Trace", s));
+		if (s.size() != 1 || s[0] != '\n')
+			replay_step_comment(fmt::format("{}: {}", is_error ? "Error" : "Trace", s));
 		if (stack_trace)
 		{
 			for (auto& frame : stack_trace->frames)
@@ -30607,7 +30609,6 @@ std::string StackTrace::to_string() const
 	return fmt::format("{}", fmt::join(frames, "\n"));
 }
 
-// TODO: add function names. ex: at somefn (main.zs:12)
 std::optional<StackTrace> FFScript::create_stack_trace()
 {
 	if (zasm_debug_data.debug_lines_encoded.empty() && !devpwd())
@@ -30698,7 +30699,7 @@ void FFScript::do_tracestring()
 	int32_t arrayptr = get_register(sarg1);
 	string str;
 	ArrayH::getString(arrayptr, str, 512);
-	traceStr(str);
+	handle_trace(str);
 }
 
 static int32_t zspr_varg_getter(int32_t,int32_t next_arg)
@@ -30728,7 +30729,7 @@ void FFScript::do_printf(const bool v, const bool varg)
 	{
 		string formatstr;
 		ArrayH::getString(format_arrayptr, formatstr, MAX_ZC_ARRAY_SIZE);
-		traceStr(zs_sprintf(formatstr.c_str(), num_args, varg ? zspr_varg_getter : zspr_stack_getter));
+		handle_trace(zs_sprintf(formatstr.c_str(), num_args, varg ? zspr_varg_getter : zspr_stack_getter));
 	}
 	if(varg)
 		zs_vargs.clear();
@@ -30745,7 +30746,7 @@ void FFScript::do_printfarr()
 		auto num_args = arg_am.size();
 		string formatstr;
 		ArrayH::getString(format_arrayptr, formatstr, MAX_ZC_ARRAY_SIZE);
-		traceStr(zs_sprintf(formatstr.c_str(), num_args,
+		handle_trace(zs_sprintf(formatstr.c_str(), num_args,
 			[&](int32_t,int32_t next_arg)
 			{
 				return arg_am.get(next_arg);
@@ -30852,13 +30853,7 @@ void FFScript::do_breakpoint()
 
 void FFScript::do_tracenl()
 {
-	safe_al_trace("\n");
-	
-	if ( console_enabled ) 
-	{
-		zscript_coloured_console.safeprint((CConsoleLoggerEx::COLOR_WHITE | 
-			CConsoleLoggerEx::COLOR_BACKGROUND_BLACK),"\n");
-	}
+	handle_trace("\n", false, true);
 }
 
 void FFScript::PrintTracePrefix(bool force_show_context, bool is_error)
@@ -31077,7 +31072,7 @@ void FFScript::do_tracetobase()
 	}
 
 	s2 += "\n";
-	traceStr(s2);
+	handle_trace(s2);
 }
 
 int32_t FFScript::getHeroOTile(int32_t index1, int32_t index2)

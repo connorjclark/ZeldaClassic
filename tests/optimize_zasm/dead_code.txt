@@ -1,12 +1,12 @@
-Function #0 (run_none-0)
-    0: CALLFUNC        5                            [Block 0 -> ][Call Function #1]
-    1: CALLFUNC        14                           [Call Function #2]
-    2: CALLFUNC        22                           [Call Function #3]
+Function run_none-0
+    0: CALLFUNC        5                            [Block 0 -> ][Function #1]
+    1: CALLFUNC        14                           [Function #2]
+    2: CALLFUNC        22                           [Function #3]
     3: NOP
     4: QUIT
 
 
-Function #1
+Function Function #1
     5: SETV            D3               10          [Block 0 -> ]
     6: SETV            D3               10
     7: SETV            D3               10
@@ -18,7 +18,7 @@ Function #1
    13: RETURNFUNC
 
 
-Function #2
+Function Function #2
    14: SETV            D0               1337        [Block 0 -> 1, 2]
    15: SETV            D1               1337
    16: SETR            D3               LINKX
@@ -29,7 +29,7 @@ Function #2
    21: RETURNFUNC
 
 
-Function #3
+Function Function #3
    22: SETV            D0               1337        [Block 0 -> ]
    23: SETV            D1               1337
    24: SETR            D3               LINKX

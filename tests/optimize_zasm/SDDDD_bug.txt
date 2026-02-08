@@ -1,14 +1,14 @@
 ; The compiler output for SDDDD used to be bugged, which means there can be functions that read D2
 ; without first setting it.
-Function #0 (run_none-0)
-    0: CALLFUNC        5                            [Block 0 -> ][Call Function #1]
-    1: CALLFUNC        21                           [Call Function #3]
+Function run_none-0
+    0: CALLFUNC        5                            [Block 0 -> ][Function #1]
+    1: CALLFUNC        21                           [Function #3]
     2: SETV            D2               1000
     3: PUSHR           D2
     4: QUIT
 
 
-Function #1
+Function Function #1
     5: PUSHV           999                          [Block 0 -> ]
     6: SETV            D2               1000
     7: PUSHR           D2
@@ -16,12 +16,12 @@ Function #1
     9: PUSHR           D2
    10: SETV            D2               1002
    11: PUSHR           D2
-   12: CALLFUNC        15                           [Call Function #2]
+   12: CALLFUNC        15                           [Function #2]
    13: TRACER          D2
    14: RETURNFUNC
 
 
-Function #2
+Function Function #2
    15: POP             D6                           [Block 0 -> ]
    16: POP             D1
    17: POP             D0
@@ -30,7 +30,7 @@ Function #2
    20: RETURNFUNC
 
 
-Function #3
+Function Function #3
    21: PUSHV           999                          [Block 0 -> ]
    22: SETV            D2               1000
    23: PUSHR           D2
@@ -38,12 +38,12 @@ Function #3
    25: PUSHR           D2
    26: SETV            D2               1002
    27: PUSHR           D2
-   28: CALLFUNC        31                           [Call Function #4]
+   28: CALLFUNC        31                           [Function #4]
    29: TRACER          D2
    30: RETURNFUNC
 
 
-Function #4
+Function Function #4
    31: POP             D2                           [Block 0 -> ]
    32: POP             D1
    33: POP             D0

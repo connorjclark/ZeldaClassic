@@ -10,6 +10,7 @@
 #include "parser/AST.h"
 #include "parser/CompileError.h"
 #include "parser/CompileOption.h"
+#include "test_runner/test_runner.h"
 #include "zasm/table.h"
 #include "zasm/serialize.h"
 #include "zc/ffscript.h"
@@ -321,11 +322,28 @@ static void fill_result(json& data, int code, ZScript::ScriptsData* result)
 		data["metadata"] = result->metadata;
 }
 
-bool delay_asserts = false, ignore_asserts = false, is_json_output = false;
+bool delay_asserts = false, ignore_asserts = false, is_json_output = false, emit_inlined_functions = true;
 std::vector<std::filesystem::path> force_ignores;
 int32_t main(int32_t argc, char **argv)
 {
 	common_main_setup(App::zscript, argc, argv);
+
+	int test_zc_arg = zapp_check_switch("-test-zc", {"test_dir"});
+	if (test_zc_arg)
+	{
+		bool verbose = zapp_check_switch("-verbose") || zapp_check_switch("-v");
+		bool success = true;
+
+		extern TestResults test_parser(bool);
+		if (!run_tests(test_parser, "test_parser", verbose)) success = false;
+
+		if (success)
+			printf("all tests passed\n");
+		else
+			printf("tests failed\n");
+
+		exit(success ? 0 : 1);
+	}
 
 	if (used_switch(argc, argv, "-print-zasm-commands"))
 	{
@@ -362,7 +380,10 @@ int32_t main(int32_t argc, char **argv)
 		delay_asserts = ignore_asserts = true;
 	else if(used_switch(argc, argv, "-delay_cassert"))
 		delay_asserts = true;
-	
+
+	// For use by the debugger.
+	emit_inlined_functions = get_flag_bool("-emit-inlined-functions").value_or(true);
+
 	if(auto index = used_switch(argc, argv, "-force_ignore"))
 	{
 		for(int q = index+1; q < argc; ++q)
@@ -565,6 +586,7 @@ extern "C" int compile_script(const char* script_path)
 
 	bool metadata = true;
 	bool docs = false;
+	emit_inlined_functions = false;
 	unique_ptr<ZScript::ScriptsData> result(compile(script_path, metadata, docs));
 	int32_t code = (result && result->success ? 0 : (zscript_failcode ? zscript_failcode : -1));
 

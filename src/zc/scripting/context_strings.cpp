@@ -1606,7 +1606,7 @@ const char* scripting_get_zasm_command_context_string(ASM_DEFINE command)
 		case COMBO_AT: return "ComboAt()";
 		case COPYTILERR: return "CopyTile()";
 		case COSR: return "Cos()";
-		case DEGTORAD: return "DegtoRad()";
+		case DEGTORAD: return "DegToRad()";
 		case DESTROYARRAYR: return "DestroyArray()";
 		case FACTORIAL: return "Factorial()";
 		case DIREXISTS: return "FileSystem->DirExists()";
@@ -1730,7 +1730,7 @@ const char* scripting_get_zasm_command_context_string(ASM_DEFINE command)
 		case POWERR: return "Pow()";
 		case QUIT: return "Quit()";
 		case QUIT_NO_DEALLOC: return "QuitNoKill()";
-		case RADTODEG: return "RadtoDeg()";
+		case RADTODEG: return "RadToDeg()";
 		case RNDR: return "Rand()";
 		case REF_COUNT: return "RefCount()";
 		case RESIZEARRAYR: return "ResizeArray()";

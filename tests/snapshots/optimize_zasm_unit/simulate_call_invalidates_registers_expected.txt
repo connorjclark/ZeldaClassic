@@ -80,14 +80,14 @@ rewrite 8: 2 -> 2 commands
 rewrite 12: 2 -> 2 commands
 12: COMPAREV        D3               0      
 13: GOTOCMP         15               ==     
-Function #0 (run_none-0)
+Function run_none-0
     0: SETV            D3               0           [Block 0 -> 1, 2]
     1: PUSHR           D4
     2: NOP
     3: PUSHV           80000
     4: NOP
     5: PUSHR           GD0
-    6: CALLFUNC        16                           [Call Function #1]
+    6: CALLFUNC        16                           [Function #1]
     7: POP             D4
     8: COMPAREV        D2               0
     9: GOTOCMP         12               ==
@@ -99,7 +99,7 @@ Function #0 (run_none-0)
    15: RETURN                                       [Block 4 -> ]
 
 
-Function #1
+Function Function #1
    16: POP             D2                           [Block 0 -> ]
    17: NOP
    18: ADDR            D2               LINKX

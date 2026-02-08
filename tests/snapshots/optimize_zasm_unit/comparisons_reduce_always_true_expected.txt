@@ -38,7 +38,7 @@ rewrite 1: 6 -> 1 commands
 4: NOP            
 5: NOP            
 6: NOP            
-Function #0 (run_none-0)
+Function run_none-0
     0: NOP                                          [Block 0 -> 2]
     1: GOTO            9
     2: NOP                                          [Block 1 -> 2]

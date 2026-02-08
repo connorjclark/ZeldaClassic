@@ -84,7 +84,6 @@ void RegistrationVisitor::caseRoot(ASTFile& host, void* param)
 	int32_t recursionLimit = REGISTRATION_REC_LIMIT;
 	while(--recursionLimit)
 	{
-		// printf("GO!\n");
 		caseFile(host, param);
 		if(registered(host)) return;
 		if(!hasChanged) return; //Nothing new was registered on this pass. Only errors remain.
@@ -219,9 +218,9 @@ void RegistrationVisitor::caseScript(ASTScript& host, void* param)
 	script.setRun(possibleRuns[0]);
 }
 
-void RegistrationVisitor::initInternalVar(ASTDataDeclList* var)
+void RegistrationVisitor::initInternalVar(ASTDataDeclList* node)
 {
-	auto& parsed_comment = var->getParsedComment();
+	auto& parsed_comment = node->getParsedComment();
 
 	int refvar = NUL;
 	UserClass* user_class = nullptr;
@@ -231,7 +230,7 @@ void RegistrationVisitor::initInternalVar(ASTDataDeclList* var)
 		refvar = user_class->internalRefVar;
 	}
 
-	for (auto decl : var->getDeclarations())
+	for (auto decl : node->getDeclarations())
 	{
 		// Internal variables in classes must have a zasm_var.
 		if (user_class && !parsed_comment.contains_tag("zasm_var"))
@@ -247,6 +246,10 @@ void RegistrationVisitor::initInternalVar(ASTDataDeclList* var)
 			if (auto sv = get_script_variable(*zasm_var))
 			{
 				fn_value = *sv;
+				if (auto v = dynamic_cast<InternalVariable*>(decl->manager))
+					v->zasm_register = *sv;
+				else if (auto v = dynamic_cast<UserClassVar*>(decl->manager))
+					v->zasm_register = *sv;
 			}
 			else
 			{
@@ -385,7 +388,7 @@ void RegistrationVisitor::initInternalVar(ASTDataDeclList* var)
 				fn->setInfo(*deprecated);
 			}
 
-			if (var->readonly)
+			if (node->readonly)
 				fn->setFlag(FUNCFLAG_READ_ONLY);
 		}
 	}
@@ -394,7 +397,7 @@ void RegistrationVisitor::initInternalVar(ASTDataDeclList* var)
 void RegistrationVisitor::caseClass(ASTClass& host, void* param)
 {
 	auto& parsed_comment = host.getParsedComment();
-	UserClass* parent_class = nullptr;
+	UserClass* base_class = nullptr;
 	if (auto parent_class_name = parsed_comment.get_tag("extends"))
 	{
 		ASTExprIdentifier ident{};
@@ -402,7 +405,7 @@ void RegistrationVisitor::caseClass(ASTClass& host, void* param)
 		if (auto type = lookupDataType(*scope, ident, nullptr))
 		{
 			if (auto custom_type = dynamic_cast<const DataTypeCustom*>(type); custom_type)
-				parent_class = custom_type->getUsrClass();
+				base_class = custom_type->getUsrClass();
 		}
 		else
 		{
@@ -412,7 +415,7 @@ void RegistrationVisitor::caseClass(ASTClass& host, void* param)
 
 	if (!host.user_class)
 	{
-		host.user_class = program.addClass(host, parent_class ? parent_class->getScope() : *scope, this);
+		host.user_class = program.addClass(host, *scope, base_class, this);
 		if (!host.user_class)
 		{
 			doRegister(host);
@@ -432,8 +435,6 @@ void RegistrationVisitor::caseClass(ASTClass& host, void* param)
 		user_class.internalRefVar = NUL;
 	}
 
-	if (parent_class)
-		user_class.setParentClass(parent_class);
 	if (breakRecursion(host))
 	{
 		doRegister(host);
@@ -519,17 +520,17 @@ void RegistrationVisitor::caseClass(ASTClass& host, void* param)
 	ScopeReverter sr(&scope);
 	scope = &user_class.getScope();
 
-	for (auto var : host.variables)
+	for (auto node : host.variables)
 	{
-		if (var->internal)
-			initInternalVar(var);
+		if (node->internal)
+			initInternalVar(node);
 	}
 
 	for (auto fn_decl : host.functions)
 	{
 		scope->initFunctionBinding(fn_decl->func, this);
 		
-		if (!fn_decl->getFlag(FUNCFLAG_INTERNAL))
+		if (!fn_decl->isBinding())
 			continue;
 
 		if (user_class.internalRefVarString.empty())
@@ -540,13 +541,12 @@ void RegistrationVisitor::caseClass(ASTClass& host, void* param)
 	{
 		scope->initFunctionBinding(fn_decl->func, this);
 		
-		if (!fn_decl->getFlag(FUNCFLAG_INTERNAL))
+		if (!fn_decl->isBinding())
 			continue;
 
 		if (fn_decl->func->getFlag(FUNCFLAG_NIL))
 		{
 			scope->removeFunction(fn_decl->func);
-			delete fn_decl->func;
 			fn_decl->func = nullptr;
 		}
 	}
@@ -935,6 +935,15 @@ void RegistrationVisitor::caseDataDecl(ASTDataDecl& host, void* param)
 				auto copy = host.clone();
 				copy->identifier->setValue(alias);
 				copy->list = host.list;
+				copy->setFlag(ASTDataDecl::FL_HIDDEN, true);
+				UserClassVar::create(*scope, *copy, *type, this);
+			}
+			for (auto alias : host.list->getParsedComment().get_multi_tag("deprecated_alias"))
+			{
+				auto copy = host.clone();
+				copy->identifier->setValue(alias);
+				copy->list = host.list;
+				copy->setFlag(ASTDataDecl::FL_HIDDEN, true);
 				UserClassVar::create(*scope, *copy, *type, this);
 			}
 		}
@@ -1040,7 +1049,7 @@ void RegistrationVisitor::caseFuncDecl(ASTFuncDecl& host, void* param)
 		return;
 	}
 
-	if (host.getFlag(FUNCFLAG_CONSTEXPR) && !host.getFlag(FUNCFLAG_INTERNAL))
+	if (host.getFlag(FUNCFLAG_CONSTEXPR) && !host.isBinding())
 	{
 		host.invalidMsg += " `constexpr` is currently only allowed for internal function bindings.";
 		handleError(CompileError::BadFuncModifiers(&host, host.invalidMsg));

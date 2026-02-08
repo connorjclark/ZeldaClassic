@@ -12,6 +12,7 @@
 #include <vector>
 #include <set>
 
+int getFileDebugIndex(ZScript::Program& program, const std::string& fname);
 void setLocation2(ZScript::Program& program, const ZScript::AST* node);
 void setLocation2(ZScript::Program& program, const std::string& fname, int line);
 void addOpcode2(std::vector<std::shared_ptr<ZScript::Opcode>>& v, ZScript::Opcode* code);
@@ -108,6 +109,9 @@ namespace ZScript
 		// Types
 		void caseDataType(ASTDataType& host, void* param) {}
 
+		void startScope(AST& host);
+		void finalizeScope();
+
 		std::vector<std::shared_ptr<Opcode>> const& getResult() const {return result;}
 		int32_t getReturnLabelID() const {return returnlabelid;}
 
@@ -135,6 +139,7 @@ namespace ZScript
 		std::vector<uint> break_to_counts;
 		std::vector<uint> scope_allocations;
 		std::vector<Scope*> cur_scopes;
+		std::vector<size_t> cur_scope_start_op_index;
 		// Stack of opcode targets. Only the latest is used.
 		std::vector<std::vector<std::shared_ptr<Opcode>>*> opcodeTargets;
 		

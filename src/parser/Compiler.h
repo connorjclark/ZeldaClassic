@@ -194,29 +194,62 @@ namespace ZScript
 		ScriptAssembler(IntermediateData& id);
 		void assemble();
 		vector<shared_ptr<Opcode>>& getCode() {return rval;}
+		DebugData& getDebugData() {return debug_data;}
 		map<Script*,std::pair<int32_t,int32_t>>& getLabelMap() {return runlabels;}
 		bool assemble_err;
+
 	private:
 		vector<shared_ptr<Opcode>>& ginit;
-		
+
+		vector<Function*> allFunctions;
+		map<int32_t, Function*> functionsByLabel;
 		vector<Function*> used_functions;
+		vector<Function*> run_functions;
 		vector<shared_ptr<Opcode>> rval;
 		map<Script*,std::pair<int32_t,int32_t>> runlabels;
-		vector<int32_t*> runlbl_ptrs;
+		// label id -> 1-indexed lines (aka pc + 1 of rval).
+		map<int32_t, int32_t> linenos;
+		vector<int32_t*> lbl_ptrs;
+		vector<int32_t*> lbl_ptrs_no_scopes;
+		std::set<int> scope_labels;
 		LabelUsageIndex label_index;
+		LabelUsageIndex label_index_no_scopes;
 		// Temporarly hold deleted arguments, such that label_index never points to released memory.
 		std::vector<std::unique_ptr<Argument>> argument_trash_bin;
+		DebugData debug_data;
 
 		void assemble_init();
 		void assemble_script(Script* scr, Function* run_fn, string const& runsig);
 		void assemble_scripts();
-		void gather_labels();
+		void gather_run_labels();
 		void link_functions();
+		void gather_scope_labels();
 		void optimize();
 		void optimize_function(Function* fn);
-		void optimize_code(vector<shared_ptr<Opcode>>& code);
+		void optimize_code(vector<shared_ptr<Opcode>>& code, bool only_remove_nops = false);
 		void output_code();
 		void finalize_labels();
+		void fill_debug_data();
+
+		struct ScopeProcessingContext
+		{
+			DebugData& debug_data;
+			std::map<const Scope*, int32_t> scope_ptr_to_index;
+			std::map<int, int> enum_id_to_scope_index;
+			std::set<Datum*> processed_datum;
+			std::vector<Scope*> compiler_scopes;       // Index matches debug_data.scopes
+			std::vector<const DataType*> scope_types;  // Index matches debug_data.scopes
+			std::vector<const DataType*> symbol_types; // Index matches debug_data.symbols
+
+			ScopeProcessingContext(DebugData& dd) : debug_data(dd) {}
+		};
+
+		void fill_debug_scopes();
+		bool init_debug_scope(Scope* scope, DebugScope& dScope, const fs::path& cur_path, bool& isWithinFunc, bool& skip_emit);
+		void resolve_debug_scope_ranges(Scope* scope, DebugScope& dScope);
+		bool fill_debug_scope_locals(Scope* scope, int32_t scopeIdx, ScopeProcessingContext& ctx);
+		void process_enum_definition(const DataTypeCustom* customType, int32_t parentIdx, ScopeProcessingContext& ctx);
+		void finalize_debug_scopes(ScopeProcessingContext& ctx);
 	};
 
 	class ScriptsData

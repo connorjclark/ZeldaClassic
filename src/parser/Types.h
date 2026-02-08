@@ -239,7 +239,6 @@ namespace ZScript
 
 		// Derived class info.
 		virtual bool isArray() const {return false;}
-		virtual bool isClass() const {return false;}
 		virtual bool isConstant() const {return false;}
 		virtual bool isUntyped() const {return false;}
 		virtual bool isVoid() const {return false;}
@@ -247,7 +246,7 @@ namespace ZScript
 		virtual bool isCustom() const {return false;}
 		virtual bool isEnum() const {return false;}
 		virtual bool isBitflagsEnum() const {return false;}
-		virtual bool isUsrClass() const {return false;}
+		virtual bool isClass() const {return false;}
 		virtual bool isLong() const {return false;}
 		virtual bool isTemplate() const {return false;}
 		virtual UserClass* getUsrClass() const {return nullptr;}
@@ -428,7 +427,7 @@ namespace ZScript
 		virtual bool isEnum() const;
 		virtual bool isBitflagsEnum() const;
 		virtual bool isLong() const;
-		virtual bool isUsrClass() const {return user_class != nullptr;}
+		virtual bool isClass() const {return user_class != nullptr;}
 		virtual bool canHoldObject() const;
 		virtual script_object_type getScriptObjectTypeId() const {
 			if (isUntyped()) return script_object_type::untyped;

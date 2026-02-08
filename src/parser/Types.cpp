@@ -490,7 +490,7 @@ bool DataTypeCustom::canCastTo(DataType const& target, bool allowDeprecatedArray
 		return false;
 	}
 	
-	if(!isClass() && !isUsrClass())
+	if(!isClass())
 	{
 		if (DataTypeSimple const* t =
 				dynamic_cast<DataTypeSimple const*>(&target))
@@ -507,15 +507,15 @@ bool DataTypeCustom::canCastTo(DataType const& target, bool allowDeprecatedArray
 	if (DataTypeCustom const* t =
 			dynamic_cast<DataTypeCustom const*>(&target))
 	{
-		UserClass* parent = user_class ? user_class->getParentClass() : nullptr;
-		while (parent)
+		const UserClass* base_class = user_class ? user_class->getBaseClass() : nullptr;
+		while (base_class)
 		{
-			if (DataTypeCustom const* parent_type = dynamic_cast<DataTypeCustom const*>(parent->getType()))
+			if (DataTypeCustom const* parent_type = dynamic_cast<DataTypeCustom const*>(base_class->getType()))
 			{
 				if (parent_type->id == t->id)
 					return true;
 			}
-			parent = parent->getParentClass();
+			base_class = base_class->getBaseClass();
 		}
 
 		//Enum-declared types and class types cannot cast to each other,
@@ -532,7 +532,7 @@ DataType const& DataTypeCustom::getShared(DataType const& target, Scope const* s
 	if(target.isUntyped()) return *this;
 	if(target.isArray()) return UNTYPED;
 	
-	if(!isClass() && !isUsrClass())
+	if(!isClass())
 	{
 		if (DataTypeSimple const* t =
 				dynamic_cast<DataTypeSimple const*>(&target))
