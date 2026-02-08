@@ -116,6 +116,11 @@ bool DebugData::exists() const
 	return !source_files.empty();
 }
 
+int DebugData::getScopeIndex(const DebugScope* scope) const
+{
+	return (int32_t)(scope - &scopes[0]);
+}
+
 std::pair<const char*, int> DebugData::resolveLocation(pc_t pc) const
 {
 	if (debug_lines_encoded.empty()) return {};
@@ -284,12 +289,33 @@ const DebugScope* DebugData::resolveFileScope(std::string fname) const
 	return nullptr;
 }
 
+static DebugType BasicTypes[] = {
+	DebugType{TYPE_VOID, TYPE_VOID},
+	DebugType{TYPE_TEMPLATE_UNBOUNDED, TYPE_TEMPLATE_UNBOUNDED},
+	DebugType{TYPE_UNTYPED, TYPE_UNTYPED},
+	DebugType{TYPE_BOOL, TYPE_BOOL},
+	DebugType{TYPE_INT, TYPE_INT},
+	DebugType{TYPE_LONG, TYPE_LONG},
+	DebugType{TYPE_CHAR32, TYPE_CHAR32},
+	DebugType{TYPE_RGB, TYPE_RGB},
+};
+
 const DebugType* DebugData::getType(uint32_t type_id) const
 {
+	if (type_id <= TYPE_RGB) return &BasicTypes[type_id];
+
 	int32_t table_idx = type_id - DEBUG_TYPE_TAG_TABLE_START;
-	if (table_idx < 0 || table_idx >= types.size()) return nullptr;
+	if (table_idx >= types.size()) return nullptr;
 
 	return &types[table_idx];
+}
+
+const DebugType* DebugData::getTypeUnwrapConst(uint32_t type_id) const
+{
+	const DebugType* type = getType(type_id);
+	if (type->tag == TYPE_CONST)
+		type = getType(type->extra);
+	return type;
 }
 
 std::string DebugData::getTypeName(uint32_t type_id) const
@@ -307,7 +333,7 @@ std::string DebugData::getTypeName(uint32_t type_id) const
 	}
 
 	uint32_t table_idx = type_id - DEBUG_TYPE_TAG_TABLE_START;
-	if (table_idx < 0 || table_idx >= types.size()) return "unknown";
+	if (table_idx >= types.size()) return "unknown";
 
 	const DebugType& t = types[table_idx];
 
@@ -423,15 +449,14 @@ std::vector<const DebugSymbol*> DebugData::getChildSymbols(const DebugScope* sco
 {
 	buildSymbolCache();
 
-	int32_t s_idx = (int32_t)(scope - &scopes[0]);
-	return scope_symbol_cache[s_idx];
+	return scope_symbol_cache[getScopeIndex(scope)];
 }
 
 std::vector<const DebugScope*> DebugData::getChildScopes(const DebugScope* scope) const
 {
 	buildScopeChildrenCache();
 
-	int32_t s_idx = (int32_t)(scope - &scopes[0]);
+	int32_t s_idx = getScopeIndex(scope);
 	auto& child_indices = scope_children_cache[s_idx];
 
 	std::vector<const DebugScope*> child_scopes;
@@ -466,7 +491,7 @@ DebugData::ResolveResult DebugData::resolveEntity(const std::string& identifier,
 	if (tokens.empty()) return {};
 
 	ResolveResult current_res;
-	int32_t ctx_scope_idx = current_scope ? (int32_t)(current_scope - &scopes[0]) : -1;
+	int32_t ctx_scope_idx = current_scope ? getScopeIndex(current_scope) : -1;
 
 	// Only used within find_member, but declared here to avoid allocating a ton.
 	std::vector<int32_t> search_queue;
@@ -553,7 +578,7 @@ DebugData::ResolveResult DebugData::resolveEntity(const std::string& identifier,
 
 		while (walker)
 		{
-			int32_t s_idx = (int32_t)(walker - &scopes[0]);
+			int32_t s_idx = getScopeIndex(walker);
 			
 			// Collect scan targets: Self + Imports
 			std::vector<int32_t> lookups = { s_idx };
@@ -666,7 +691,7 @@ std::vector<const DebugScope*> DebugData::resolveFunctions(const std::string& id
 	if (tokens.size() == 1)
 	{
 		const DebugScope* walker = current_scope;
-		int32_t ctx_idx = current_scope ? (int32_t)(current_scope - &scopes[0]) : -1;
+		int32_t ctx_idx = current_scope ? getScopeIndex(current_scope) : -1;
 
 		while (ctx_idx != -1)
 		{
@@ -706,13 +731,68 @@ std::vector<const DebugScope*> DebugData::resolveFunctions(const std::string& id
 		const DebugScope* container = resolveScope(parent_path, current_scope);
 		if (!container) return {};
 
-		int32_t container_idx = (int32_t)(container - &scopes[0]);
+		int32_t container_idx = getScopeIndex(container);
 		
 		// B. Collect functions inside that container
 		collect_functions_recursive(container_idx, tokens.back());
 		
 		return candidates;
 	}
+}
+
+bool DebugData::canCoerceTypes(int type_index_1, int type_index_2) const
+{
+	if (type_index_1 == type_index_2) return true;
+
+	const DebugType* t1 = getType(type_index_1);
+	const DebugType* t2 = getType(type_index_2);
+
+	// Handle const (strip and recurse).
+	if (t1->tag == TYPE_CONST) return canCoerceTypes(t1->extra, type_index_2);
+	if (t2->tag == TYPE_CONST) return canCoerceTypes(type_index_1, t2->extra);
+
+	// Numeric promotions.
+	bool t1_is_numeric = t1->tag == TYPE_INT || t1->tag == TYPE_LONG || t1->tag == TYPE_BOOL;
+	bool t2_is_numeric = t2->tag == TYPE_INT || t2->tag == TYPE_LONG || t2->tag == TYPE_BOOL;
+
+	// ZScript is very loose: Int <-> Long <-> Bool are all implicitly convertible in function calls.
+	if (t1_is_numeric && t2_is_numeric)
+		return true;
+
+	// Enum -> Integer
+	// Enums/Bitflags can be passed to functions expecting Integers
+	if ((t1->tag == TYPE_ENUM || t1->tag == TYPE_BITFLAGS) && t2_is_numeric)
+		return true;
+
+	// Note: Integer -> Enum is usually NOT allowed implicitly, so we don't check the reverse.
+
+	// Class Inheritance (Derived -> Base)
+	if (t1->tag == TYPE_CLASS && t2->tag == TYPE_CLASS)
+	{
+		// t1 (Source) must be a subclass of t2 (Target)
+
+		int32_t s1_idx = t1->extra; // Points to Scope (e.g., Orc)
+		int32_t s2_idx = t2->extra; // Points to Scope (e.g., Enemy)
+
+		// Walk up inheritance chain.
+		int safety = 0;
+		while (s1_idx != -1 && safety++ < 100)
+		{
+			if (s1_idx == s2_idx) return true;
+
+			if (s1_idx >= scopes.size()) break;
+
+			s1_idx = scopes[s1_idx].inheritance_index;
+		}
+
+		return false;
+	}
+
+	// untyped -> any other type.
+	if (t1->tag == TYPE_UNTYPED)
+		return true;
+
+	return false;
 }
 
 std::optional<DebugData> DebugData::decode(const std::vector<byte>& buffer)
