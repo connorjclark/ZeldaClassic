@@ -675,6 +675,7 @@ target_include_directories(zcgui PRIVATE src)
 
 add_library(zasm STATIC
 	src/zasm/debug_data.cpp
+	src/zasm/eval.cpp
 	src/zasm/serialize.cpp
 	src/zasm/table.cpp
 )

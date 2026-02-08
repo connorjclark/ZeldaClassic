@@ -6,9 +6,11 @@
 #include "parser/config.h"
 #include "base/zsys.h"
 #include "zasm/debug_data.h"
+#include "zasm/eval.h"
 #include <functional>
 #include <memory>
 #include <set>
+#include <stdexcept>
 
 using namespace std::literals::string_literals;
 
@@ -33,9 +35,9 @@ static void TEST(std::string name, TestResults& tr, std::function<bool()> cb)
 		if (!cb())
 			tr.failed++;
 	}
-	catch (std::string err)
+	catch (const std::exception& e)
 	{
-		fmt::println("[{}] error: {}", name, err);
+		fmt::println("[{}] error: {}", name, e.what());
 		tr.failed++;
 	}
 
@@ -55,8 +57,8 @@ static const DebugScope* resolveScope(const DebugData& debugData, std::string id
 {
 	const DebugScope* scope = debugData.resolveScope(identifier, current_scope);
 	if (!scope)
-		throw fmt::format("could not find scope: {} (scope: {})", identifier, debugData.getFullScopeName(current_scope));
-
+		throw std::runtime_error(
+			fmt::format("could not find scope: {} (scope: {})", identifier, debugData.getFullScopeName(current_scope)));
 	return scope;
 }
 
@@ -64,7 +66,8 @@ static const DebugSymbol* resolveSymbol(const DebugData& debugData, std::string 
 {
 	const DebugSymbol* symbol = debugData.resolveSymbol(identifier, current_scope);
 	if (!symbol)
-		throw fmt::format("could not find symbol: {} (scope: {})", identifier, debugData.getFullScopeName(current_scope));
+		throw std::runtime_error(
+			fmt::format("could not find symbol: {} (scope: {})", identifier, debugData.getFullScopeName(current_scope)));
 
 	return symbol;
 }
@@ -73,7 +76,8 @@ static const DebugType* resolveSymbolTypeUnwrap(const DebugData& debugData, std:
 {
 	const DebugSymbol* symbol = debugData.resolveSymbol(identifier, current_scope);
 	if (!symbol)
-		throw fmt::format("could not find symbol: {} (scope: {})", identifier, debugData.getFullScopeName(current_scope));
+		throw std::runtime_error(
+			fmt::format("could not find symbol: {} (scope: {})", identifier, debugData.getFullScopeName(current_scope)));
 
 	auto* type = debugData.getType(symbol->type_id);
 	while (type->tag == TYPE_CONST || type->tag == TYPE_ARRAY)
@@ -85,7 +89,8 @@ static std::string resolveSymbolTypeName(const DebugData& debugData, std::string
 {
 	const DebugSymbol* symbol = debugData.resolveSymbol(identifier, current_scope);
 	if (!symbol)
-		throw fmt::format("could not find symbol: {} (scope: {})", identifier, debugData.getFullScopeName(current_scope));
+		throw std::runtime_error(
+			fmt::format("could not find symbol: {} (scope: {})", identifier, debugData.getFullScopeName(current_scope)));
 
 	return debugData.getTypeName(symbol->type_id);
 }
@@ -131,11 +136,14 @@ TestResults test_parser(bool verbose)
 	CHECK(test_zc_arg > 0);
 	std::string test_dir = zapp_get_arg_string(test_zc_arg + 1);
 
-	TEST("debug data scopes", tr, [&]{
-		auto results = runCompiler(test_dir + "/scripts/playground/auto/scopes.zs");
-		if (!results->success)
-			return false;
+	auto results = runCompiler(test_dir + "/scripts/playground/auto/scopes.zs");
+	if (!results->success)
+	{
+		tr.failed++;
+		return tr;
+	}
 
+	TEST("debug data scopes", tr, [&]{
 		// Roundtrip.
 		auto encoded_debug_data = results->zasmCompilerResult.debugData.encode();
 		results->zasmCompilerResult.debugData = DebugData::decode(encoded_debug_data).value();
@@ -329,6 +337,361 @@ TestResults test_parser(bool verbose)
 		const DebugScope* audio_adjust_fn_scope = resolveScope(debugData, "Audio::AdjustMusicVolume", file_scope);
 		assertGreaterThan(audio_adjust_fn_scope->start_pc, (pc_t)0);
 		assertGreaterThan(audio_adjust_fn_scope->end_pc, (pc_t)0);
+
+		return true;
+	});
+
+	struct MockVM : VMInterface
+	{
+		pc_t debug_add_int_start_pc;
+		pc_t debug_add_int_int_start_pc;
+		pc_t debug_add_int_long_start_pc;
+
+		std::map<int32_t, int32_t> stack;
+		std::map<int32_t, int32_t> globals;
+		std::map<int32_t, int32_t> registers;
+		std::map<int32_t, std::map<int32_t, int32_t>> heap; // ObjPtr -> { Offset -> Val }
+		
+		int32_t current_this_ptr = 0;
+		int32_t next_heap_addr = 1000;
+
+		int32_t readStack(int32_t offset) override
+		{
+			return stack[offset];
+		}
+
+		int32_t readGlobal(int32_t idx) override
+		{
+			return globals[idx];
+		}
+
+		int32_t readRegister(int32_t id) override
+		{
+			return registers[id];
+		}
+
+		int32_t readObjectMember(int32_t ptr, int32_t offset) override
+		{
+			if (heap.find(ptr) == heap.end()) throw std::runtime_error("Segfault: Invalid object pointer");
+			return heap[ptr][offset];
+		}
+
+		int32_t executeSandboxed(pc_t start_pc, const std::vector<int32_t>& args) override
+		{
+			if (start_pc == debug_add_int_start_pc)
+			{
+				// DebugAdd(int a) -> returns a + 10
+				return args[0] + (10 * FIXED_ONE);
+			}
+
+			if (start_pc == debug_add_int_int_start_pc)
+			{
+				// DebugAdd(int a, int b) -> returns a + b
+				return args[0] + args[1];
+			}
+
+			if (start_pc == debug_add_int_long_start_pc)
+			{
+				// DebugAdd(int a, long b) -> returns a + b + 100L
+				return args[0] + args[1] + 100;
+			}
+
+			return 0;
+		}
+
+		int32_t allocateObject(int32_t class_idx) override
+		{
+			return next_heap_addr++;
+		}
+
+		int32_t getCurrentThisPointer() override {
+			return current_this_ptr;
+		}
+
+		void setGlobal(int idx, int val) { globals[idx] = val; }
+		void setStack(int off, int val) { stack[off] = val; }
+		void setObjectMember(int ptr, int off, int val) { heap[ptr][off] = val; }
+	};
+
+	TEST("expression evaluator logical", tr, [&]{
+		auto& debugData = results->zasmCompilerResult.debugData;
+		const DebugScope* root_scope = &debugData.scopes[0];
+		MockVM vm{};
+
+		auto eval = [&](const std::string& expr) -> DebugValue {
+			ExpressionParser parser(expr);
+			auto ast = parser.parseExpression();
+			ExpressionEvaluator eval(debugData, root_scope, vm);
+			return eval.evaluate(ast);
+		};
+
+		// Basic Logical AND (&&)
+		{
+			// Fixed Point (1.0 && 1.0 -> 1.0)
+			assertEqual(eval("1 && 1").raw_value, FIXED_ONE);
+			assertEqual(eval("1 && 0").raw_value, 0);
+			assertEqual(eval("0 && 1").raw_value, 0);
+			assertEqual(eval("0 && 0").raw_value, 0);
+
+			DebugValue v = eval("1L && 1L");
+			assertEqual(v.raw_value, FIXED_ONE);
+			assertTrue(v.isBool());
+
+			v = eval("1 && 1L");
+			assertEqual(v.raw_value, FIXED_ONE);
+			assertTrue(v.isBool());
+		}
+
+		// Basic Logical OR (||)
+		{
+			assertEqual(eval("1 || 0").raw_value, FIXED_ONE);
+			assertEqual(eval("0 || 1").raw_value, FIXED_ONE);
+			assertEqual(eval("0 || 0").raw_value, 0);
+			assertEqual(eval("1 || 1").raw_value, FIXED_ONE);
+		}
+
+		// Precedence (|| < &&)
+		{
+			// 1 || 0 && 0
+			assertEqual(eval("1 || 0 && 0").raw_value, FIXED_ONE);
+
+			// 0 && 0 || 1
+			assertEqual(eval("0 && 0 || 1").raw_value, FIXED_ONE);
+		}
+
+		// Comparisons
+		{
+			// Equality.
+			assertEqual(eval("1 == 1").raw_value, FIXED_ONE); // 1.0 == 1.0
+			assertEqual(eval("1 != 2").raw_value, FIXED_ONE);
+			assertEqual(eval("1 == 2").raw_value, 0);
+
+			// Relational.
+			assertEqual(eval("1 < 2").raw_value, FIXED_ONE);
+			assertEqual(eval("2 > 1").raw_value, FIXED_ONE);
+			assertEqual(eval("1 >= 1").raw_value, FIXED_ONE);
+			assertEqual(eval("1 <= 0").raw_value, 0);
+
+			// Mixed Types (Fixed vs Long).
+			// Comparison should NOT promote before comparing.
+			DebugValue v = eval("1 == 1L");
+			assertEqual(v.raw_value, 0);
+			assertTrue(v.isBool());
+
+			// 0.5 < 1L
+			assertEqual(eval("(1/2) < 1L").raw_value, 0);
+
+			// 0.5 > 1L
+			assertEqual(eval("(1/2) > 1L").raw_value, FIXED_ONE);
+
+			// 1 < 2 == 1 -> (1 < 2) == 1 -> 1 == 1 -> True
+			assertEqual(eval("1 < 2 == 1").raw_value, FIXED_ONE);
+
+			// 1 + 1 > 1 -> 2 > 1 -> True
+			assertEqual(eval("1 + 1 > 1").raw_value, FIXED_ONE);
+
+			// 5 == 4 + 1 -> 5 == 5 -> True
+			assertEqual(eval("5 == 4 + 1").raw_value, FIXED_ONE);
+		}
+
+		// Precedence (Comparison vs Logical).
+		{
+			// Equality (==) has higher precedence than Logical AND (&&).
+			assertEqual(eval("0 == 1 && 0").raw_value, 0);
+
+			// .Equality (==) has higher precedence than Logical OR (||)
+			assertEqual(eval("0 == 1 || 1").raw_value, FIXED_ONE);
+
+			// Relational (<) has higher precedence than Logical AND (&&).
+			assertEqual(eval("2 < 10 && 1").raw_value, FIXED_ONE);
+
+			// Unary (!) has higher precedence than Relational (<).
+			assertEqual(eval("!0 < 2").raw_value, FIXED_ONE);
+
+			// Complex chaining.
+			assertEqual(eval("1 == 1 || 1 == 0").raw_value, FIXED_ONE);
+		}
+
+		// Short-circuiting.
+		{
+			// Division by zero throws in evalBinaryOp.
+			// 0 && (1/0) -> Left is false, Right (Error) is never evaluated.
+			try {
+				DebugValue res = eval("0 && (10 / 0)");
+				assertEqual(res.raw_value, 0);
+			} catch (const std::runtime_error& e) {
+				tr.failed++;
+				fmt::println("Short-circuit AND failed: Evaluated right side (DivByZero)");
+			}
+
+			// 1 || (1/0) -> Left is true, Right (Error) is never evaluated.
+			try {
+				DebugValue res = eval("1 || (10 / 0)");
+				assertEqual(res.raw_value, FIXED_ONE);
+			} catch (const std::runtime_error& e) {
+				tr.failed++;
+				fmt::println("Short-circuit OR failed: Evaluated right side (DivByZero)");
+			}
+		}
+
+		// Complex Grouping
+		{
+			// (1 || 0) && 0 -> 1 && 0 -> 0
+			assertEqual(eval("(1 || 0) && 0").raw_value, 0);
+
+			// !1 || 1 -> 0 || 1 -> 1
+			// ! binds tighter than ||
+			assertEqual(eval("!1 || 1").raw_value, FIXED_ONE);
+		}
+
+		return true;
+	});
+
+	TEST("expression evaluator", tr, [&]{
+		auto& debugData = results->zasmCompilerResult.debugData;
+		const DebugScope* root_scope = &debugData.scopes[0];
+		MockVM vm{};
+
+		auto eval = [&](const std::string& expr, const DebugScope* scope = nullptr) -> DebugValue {
+			if (!scope) scope = &debugData.scopes[0];
+
+			ExpressionParser parser(expr);
+			auto ast = parser.parseExpression();
+			ExpressionEvaluator eval(debugData, scope, vm);
+			return eval.evaluate(ast);
+		};
+
+		// Math.
+		{
+			// Fixed point literals (aka "int").
+			auto val = eval("1 + 2");
+			assertEqual(val.raw_value, 3 * FIXED_ONE);
+			assertTrue(val.isFixed());
+
+			// Long literals (1L = 1).
+			val = eval("1L + 2L");
+			assertEqual(val.raw_value, 3);
+			assertTrue(val.isLong());
+
+			// Mixed math (Fixed + Long = Fixed).
+			val = eval("1 + 1L");
+			assertEqual(val.raw_value, 10001);
+			assertTrue(val.isFixed());
+
+			// Division.
+			val = eval("10 / 2");
+			assertEqual(val.raw_value, 5 * FIXED_ONE);
+			val = eval("10 / 2L");
+			assertEqual(val.raw_value, 5 * FIXED_ONE * FIXED_ONE);
+
+			// Multiplication.
+			val = eval("10 * 2L");
+			assertEqual(val.raw_value, ((10 * FIXED_ONE) * 2) / FIXED_ONE);
+		}
+
+		// Variables.
+		{
+			const DebugSymbol* global_var = resolveSymbol(debugData, "GLOBAL_VAR", root_scope);
+			vm.setGlobal(global_var->offset, 50 * FIXED_ONE);
+
+			auto val = eval("GLOBAL_VAR");
+			assertEqual(val.raw_value, 50 * FIXED_ONE);
+
+			val = eval("GLOBAL_VAR + 10");
+			assertEqual(val.raw_value, 60 * FIXED_ONE);
+		}
+
+		// Bitflags.
+		{
+			auto val = eval("BITDX_TRANS | BITDX_PIVOT");
+			assertEqual(val.raw_value, 3 * FIXED_ONE);
+			assertEqual(val.type_id, resolveSymbol(debugData, "BITDX_TRANS", root_scope)->type_id);
+
+			val = eval("(BITDX_TRANS | BITDX_PIVOT) ^ BITDX_TRANS");
+			assertEqual(val.raw_value, 2 * FIXED_ONE);
+			assertEqual(val.type_id, resolveSymbol(debugData, "BITDX_TRANS", root_scope)->type_id);
+
+			// Illegal op (should throw).
+			assertThrows(eval("BITDX_TRANS + 1"));
+			assertThrows(eval("BITDX_TRANS | UNBLOCK_NORM"));
+		}
+
+		// Objects.
+		{
+			int a_var_idx = resolveSymbol(debugData, "A::CL::A_var", root_scope)->offset;
+			const DebugScope* cl_trace_function_scope = resolveScope(debugData, "A::CL::trace", root_scope);
+
+			// Setup an object manually.
+			int objPtr = 555;
+			vm.current_this_ptr = objPtr;
+			vm.setObjectMember(objPtr, a_var_idx, 100 * FIXED_ONE); // A_var = 100
+
+			// Implicit 'this' access.
+			auto val = eval("A_var", cl_trace_function_scope);
+			assertEqual(val.raw_value, 100 * FIXED_ONE);
+
+			// A_var is not defined in global scope.
+			assertThrows(eval("A_var", root_scope));
+
+			// Explicit 'obj->member' access.
+			// We need a variable 'hero' that points to objPtr.
+			// Let's hack a global variable for this test.
+			vm.setGlobal(resolveSymbol(debugData, "A::cl", root_scope)->offset, objPtr);
+			val = eval("A::cl->A_var", root_scope);
+			assertEqual(val.raw_value, 100 * FIXED_ONE);
+
+			const DebugScope* a_namespace_scope = resolveScope(debugData, "A", root_scope);
+			val = eval("cl->A_var", a_namespace_scope);
+			assertEqual(val.raw_value, 100 * FIXED_ONE);
+			val = eval("A::cl->A_var", a_namespace_scope);
+			assertEqual(val.raw_value, 100 * FIXED_ONE);
+
+			// cl is not defined in global scope.
+			assertThrows(eval("cl->A_var", root_scope));
+
+			// new object.
+			val = eval("new A::CL()");
+			assertNotEqual(val.raw_value, 0);
+			// Get type index of CL from the ctor.
+			uint32_t cl_type_index = resolveScope(debugData, "A::CL::CL", root_scope)->type_id;
+			assertEqual(val.type_id, cl_type_index);
+		}
+
+		// Functions.
+		{
+			auto debug_add_fns = debugData.resolveFunctions("DebugAdd", root_scope);
+			assertEqual(debugData.getFunctionSignature(debug_add_fns[0]), "int DebugAdd(int a)"s);
+			assertEqual(debugData.getFunctionSignature(debug_add_fns[1]), "int DebugAdd(int a, int b)"s);
+			assertEqual(debugData.getFunctionSignature(debug_add_fns[2]), "int DebugAdd(int a, long b)"s);
+			vm.debug_add_int_start_pc = debug_add_fns[0]->start_pc;
+			vm.debug_add_int_int_start_pc = debug_add_fns[1]->start_pc;
+			vm.debug_add_int_long_start_pc = debug_add_fns[2]->start_pc;
+
+			auto val = eval("DebugAdd(1)"); // a + 10
+			assertEqual(val.raw_value, 11 * FIXED_ONE);
+
+			// There is no DebugAdd(long a), but type coercion kicks in.
+			val = eval("DebugAdd(1L)"); // a + 10
+			assertEqual(val.raw_value, 1 + 10 * FIXED_ONE);
+
+			val = eval("DebugAdd(1, 2)");
+			assertEqual(val.raw_value, 3 * FIXED_ONE);
+
+			val = eval("DebugAdd(1, 2L)");  // a + b + 100L
+			assertEqual(val.raw_value, 1 * FIXED_ONE + 2 + 100);
+
+			val = eval("DebugAdd(1, 2) + 3");
+			assertEqual(val.raw_value, 6 * FIXED_ONE);
+
+			// Too many options, so should throw.
+			assertThrows(eval("DebugAdd(0L, 0L)"));
+
+			// A::cl is not const, but the param of DebugPrintCL is. Should get promoted.
+			eval("DebugPrintCL(A::cl)");
+			// untyped should be coerced to other types.
+			eval("DebugPrintCL(NULL)");
+			eval("long_fn(NULL)");
+		}
 
 		return true;
 	});
