@@ -1,8 +1,10 @@
+#include "base/check.h"
 #include "base/util.h"
 #include "base/zdefs.h"
 #include "parser/BuildVisitors.h"
 #include "parser/ByteCode.h"
 #include "parser/CompileOption.h"
+#include "parser/CompilerUtils.h"
 #include "parser/ParserHelper.h"
 #include "parserDefs.h"
 #include "Scope.h"
@@ -50,7 +52,7 @@ void Scope::initFunctionBinding(Function* fn, CompileErrorHandler* handler)
 		fn->setInfo(*depr_message);
 	}
 	
-	if (!fn->getFlag(FUNCFLAG_INTERNAL))
+	if (!fn->isBinding())
 		return;
 	
 	if (parsed_comment.contains_tag("delete"))
@@ -64,17 +66,13 @@ void Scope::initFunctionBinding(Function* fn, CompileErrorHandler* handler)
 
 	for (auto alias : parsed_comment.get_multi_tag("alias"))
 	{
-		auto alias_fn = new Function();
-		alias_fn->name = alias;
-		alias_fn->alias(fn);
+		auto alias_fn = fn->createAlias(alias);
 		addAlias(alias_fn, handler);
 	}
 
 	for (auto alias : parsed_comment.get_multi_tag("deprecated_alias"))
 	{
-		auto alias_fn = new Function();
-		alias_fn->name = alias;
-		alias_fn->alias(fn);
+		auto alias_fn = fn->createAlias(alias);
 		alias_fn->setFlag(FUNCFLAG_DEPRECATED);
 		alias_fn->setInfo(fmt::format("Use {} instead", fn->name));
 		addAlias(alias_fn, handler);
@@ -713,11 +711,6 @@ vector<Function*> ZScript::lookupClassFuncs(UserClass const& user_class,
 	std::string const& name, vector<DataType const*> const& parameterTypes, Scope const* scope, bool ignoreParams)
 {
 	vector<Function*> functions = user_class.getScope().getLocalFunctions(name);
-	if (user_class.getParentClass())
-	{
-		vector<Function*> parentFunctions = user_class.getParentClass()->getScope().getLocalFunctions(name);
-		functions.insert(functions.end(), parentFunctions.begin(), parentFunctions.end());
-	}
 	if (!ignoreParams)
 		trimBadFunctions(functions, parameterTypes, scope, false);
 	for (vector<Function*>::iterator it = functions.begin();
@@ -1438,6 +1431,11 @@ CompileOptionSetting BasicScope::getLocalOption(CompileOption option) const
 }
 
 // Get All Local
+
+vector<const ZScript::DataType*> BasicScope::getLocalDataTypes() const
+{
+	return getSeconds<const ZScript::DataType*>(dataTypes_);
+}
 
 vector<Datum*> BasicScope::getLocalData() const
 {
@@ -2322,15 +2320,16 @@ void ClassScope::parse_ucv()
 	}
 }
 
-UserClassVar* ClassScope::getClassVar(std::string const& name)
+UserClassVar* ClassScope::getClassVar(std::string const& name) const
 {
 	if (auto var = find<UserClassVar*>(classData_, name))
 	{
 		return *var;
 	}
-	if (user_class.getParentClass())
+
+	if (user_class.getBaseClass())
 	{
-		if (auto var = user_class.getParentClass()->getScope().getClassVar(name))
+		if (auto var = user_class.getBaseClass()->getScope().getClassVar(name))
 		{
 			return var;
 		}
@@ -2341,6 +2340,38 @@ UserClassVar* ClassScope::getClassVar(std::string const& name)
 const std::map<std::string, UserClassVar*>& ClassScope::getClassData()
 {
 	return classData_;
+}
+
+std::vector<Function*> ClassScope::getLocalFunctions(std::string const& name) const
+{
+	auto functions = BasicScope::getLocalFunctions(name);
+	if (user_class.getBaseClass())
+		appendElements(functions, user_class.getBaseClass()->getScope().getLocalFunctions(name));
+	return functions;
+}
+
+Function* ClassScope::getLocalGetter(std::string const& name) const
+{
+	auto function = BasicScope::getLocalGetter(name);
+	if (function)
+		return function;
+
+	if (user_class.getBaseClass())
+		return user_class.getBaseClass()->getScope().getLocalGetter(name);
+
+	return nullptr;
+}
+
+Function* ClassScope::getLocalSetter(std::string const& name) const
+{
+	auto function = BasicScope::getLocalSetter(name);
+	if (function)
+		return function;
+
+	if (user_class.getBaseClass())
+		return user_class.getBaseClass()->getScope().getLocalSetter(name);
+
+	return nullptr;
 }
 
 std::vector<Function*> ClassScope::getConstructors() const
@@ -2443,7 +2474,6 @@ Function* ClassScope::addFunction(
 	}
 	if (flags&FUNCFLAG_INTERNAL)
 	{
-		// initInternalFunction(fun, handler);
 		if (fun->getFlag(FUNCFLAG_NIL))
 		{
 			delete fun;

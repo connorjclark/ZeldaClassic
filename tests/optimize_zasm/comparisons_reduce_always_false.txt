@@ -1,5 +1,5 @@
 ; Reduce a complex comparison that always evaluate to true.
-Function #0 (run_none-0)
+Function run_none-0
     0: SETR            D2               SPRITE_TILE [Block 0 -> 1, 2]
     1: COMPAREV        D2               0
     2: SETCMP          D2               I==

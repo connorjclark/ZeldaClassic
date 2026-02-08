@@ -6,6 +6,9 @@
 #include "DataStructs.h"
 #include "Types.h"
 #include "Scope.h"
+#include "base/check.h"
+#include "base/zapp.h"
+#include "zasm/table.h"
 #include <fmt/ranges.h>
 
 
@@ -74,9 +77,9 @@ UserClass* Program::getClass(ASTClass* node) const
 	return find<UserClass*>(classesByNode_, node).value_or(std::add_pointer<UserClass>::type());
 }
 UserClass* Program::addClass(
-		ASTClass& node, Scope& parentScope, CompileErrorHandler* handler)
+		ASTClass& node, Scope& parentScope, UserClass* baseClass, CompileErrorHandler* handler)
 {
-	UserClass* user_class = createClass(*this, parentScope, node, handler);
+	UserClass* user_class = createClass(*this, parentScope, node, baseClass, handler);
 	if (!user_class) return NULL;
 
 	classes.push_back(user_class);
@@ -158,8 +161,8 @@ vector<Function*> ZScript::getFunctions(Program const& program)
 ////////////////////////////////////////////////////////////////
 // ZScript::UserClass
 
-UserClass::UserClass(Program& program, ASTClass& user_class)
-	: classType(nullptr), program(program), node(user_class), parentClass(nullptr)
+UserClass::UserClass(Program& program, ASTClass& node, UserClass* base_class)
+	: classType(nullptr), program(program), node(node), baseClass(base_class)
 {
 	members.push_back(0);
 }
@@ -168,10 +171,10 @@ UserClass::~UserClass()
 {}
 
 UserClass* ZScript::createClass(
-		Program& program, Scope& parentScope, ASTClass& node,
+		Program& program, Scope& parentScope, ASTClass& node, UserClass* baseClass,
 		CompileErrorHandler* errorHandler)
 {
-	UserClass* user_class = new UserClass(program, node);
+	UserClass* user_class = new UserClass(program, node, baseClass);
 
 	ClassScope* scope = parentScope.makeClassChild(*user_class);
 	if (!scope)
@@ -433,9 +436,30 @@ UserClassVar* UserClassVar::create(
 UserClassVar::UserClassVar(
 		Scope& scope, ASTDataDecl& node, DataType const& type)
 	: Datum(scope, type), is_arr(false),
-	  is_internal(false), is_readonly(false), _index(0), node(node)
+	  is_internal(false), is_readonly(false), zasm_register(-1), _index(0), node(node)
 {
 	node.manager = this;
+}
+
+int UserClassVar::getZasmRegister()
+{
+	// Should usually already be set. One exception is @alias variable.
+	// TODO: clean up how internal UserClassVar registers are initialized to make this not
+	// necessary.
+	if (zasm_register == -1)
+	{
+		if (node.list->internal)
+		{
+			auto parsed_comment = node.list->getParsedComment();
+			if (auto zasm_var = parsed_comment.get_tag("zasm_var"))
+			{
+				if (auto sv = get_script_variable(*zasm_var))
+					zasm_register = *sv;
+			}
+		}
+	}
+
+	return zasm_register;
 }
 
 // ZScript::BuiltinVariable
@@ -656,6 +680,15 @@ bool Function::shouldShowDepr(bool err) const
 	return getFlag(FUNCFLAG_DEPRECATED);
 }
 
+Function* Function::createAlias(std::string name)
+{
+	auto alias_fn = new Function();
+	aliases.push_back(alias_fn);
+	alias_fn->name = name;
+	alias_fn->alias(this);
+	return alias_fn;
+}
+
 void Function::alias(Function* func, bool force)
 {
 	assert(!aliased_func); //Should never change once set
@@ -796,13 +829,21 @@ int32_t ZScript::getStackSize(Function const& function)
 
 int32_t ZScript::getParameterCount(Function const& function)
 {
-	return function.paramTypes.size() + (isRun(function) ? 1 : 0);
+	return function.paramTypes.size();
 }
 
 bool ZScript::is_test()
 {
 	static bool state = std::getenv("TEST_ZSCRIPT") != nullptr;
 	return state;
+}
+
+extern bool emit_inlined_functions;
+bool ZScript::debug_data_should_emit_inlined_functions()
+{
+	// Only for test purposes: to exclude unrelated code from the outputed "expected.txt" files, or
+	// from the webapp playground ZASM output.
+	return emit_inlined_functions;
 }
 
 struct cache_entry

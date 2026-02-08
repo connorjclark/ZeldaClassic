@@ -295,7 +295,7 @@ static std::map<std::string, CONSTEXPR_CBACK_TY> const_expr_global_impl = {
 		}
 	},
 
-	{"DegtoRad", CONSTEXPR_CBACK_HEADER()
+	{"DegToRad", CONSTEXPR_CBACK_HEADER()
 		{
 			optional<int> val;
 			if(args[0])
@@ -308,7 +308,7 @@ static std::map<std::string, CONSTEXPR_CBACK_TY> const_expr_global_impl = {
 		}
 	},
 
-	{"RadtoDeg", CONSTEXPR_CBACK_HEADER()
+	{"RadToDeg", CONSTEXPR_CBACK_HEADER()
 		{
 			optional<int> val;
 			if(args[0])

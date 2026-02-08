@@ -761,7 +761,7 @@ Function :
 	| INTERNAL Function
 	{
 		ASTFuncDecl* func = (ASTFuncDecl*)$2;
-		if(func->getFlag(FUNCFLAG_INTERNAL))
+		if(func->isBinding())
 		{
 			func->setFlag(FUNCFLAG_INVALID);
 			func->invalidMsg += " Duplicate `internal`.";
@@ -973,7 +973,7 @@ Class_Block_List :
 Class_Constructor :
 	INTERNAL Class_Constructor {
 		ASTFuncDecl* func = (ASTFuncDecl*)$2;
-		if(func->getFlag(FUNCFLAG_INTERNAL))
+		if(func->isBinding())
 		{
 			func->setFlag(FUNCFLAG_INVALID);
 			func->invalidMsg += " Duplicate `internal`.";

@@ -3,16 +3,16 @@
 ; pops N items from the stack, and the last one is written to the register.
 ; D5 is special - its the null register. So POPs to that can be combined
 ; with POPs to another register.
-Function #0 (run_none-0)
+Function run_none-0
     0: TRACEV          1337                         [Block 0 -> ]
-    1: CALLFUNC        6                            [Call Function #1]
-    2: CALLFUNC        11                           [Call Function #2]
-    3: CALLFUNC        16                           [Call Function #3]
-    4: CALLFUNC        21                           [Call Function #4]
+    1: CALLFUNC        6                            [Function #1]
+    2: CALLFUNC        11                           [Function #2]
+    3: CALLFUNC        16                           [Function #3]
+    4: CALLFUNC        21                           [Function #4]
     5: QUIT
 
 
-Function #1
+Function Function #1
     6: POP             D3                           [Block 0 -> ]
     7: POP             D3
     8: POP             D3
@@ -20,7 +20,7 @@ Function #1
    10: RETURNFUNC
 
 
-Function #2
+Function Function #2
    11: POP             D3                           [Block 0 -> ]
    12: POP             D3
    13: POP             D3
@@ -28,7 +28,7 @@ Function #2
    15: RETURNFUNC
 
 
-Function #3
+Function Function #3
    16: POP             D3                           [Block 0 -> ]
    17: POP             D3
    18: POP             D5
@@ -36,7 +36,7 @@ Function #3
    20: RETURNFUNC
 
 
-Function #4
+Function Function #4
    21: POP             D5                           [Block 0 -> ]
    22: POP             D3
    23: POP             D5

@@ -52,7 +52,7 @@ namespace ZScript
 		Script* addScript(ASTScript& node, Scope& parentScope, CompileErrorHandler* handler);
 		UserClass* getClass(std::string const& name) const;
 		UserClass* getClass(ASTClass* node) const;
-		UserClass* addClass(ASTClass& node, Scope& parentScope, CompileErrorHandler* handler);
+		UserClass* addClass(ASTClass& node, Scope& parentScope, UserClass* baseClass, CompileErrorHandler* handler);
 		Namespace* addNamespace(
 			ASTNamespace& node, Scope& parentScope, CompileErrorHandler* handler);
 
@@ -186,7 +186,7 @@ namespace ZScript
 	class UserClass
 	{
 		friend UserClass* createClass(
-			Program&, Scope&, ASTClass&, CompileErrorHandler*);
+			Program&, Scope&, ASTClass&, UserClass*, CompileErrorHandler*);
 	public:
 		~UserClass();
 
@@ -194,26 +194,25 @@ namespace ZScript
 		ASTClass* getNode() const {return &node;}
 		ClassScope& getScope() {return *scope;}
 		ClassScope const& getScope() const {return *scope;}
-		DataType* getType() {return classType;}
+		DataType* getType() const {return classType;}
 		void setType(DataType* t) {classType = t;}
-		void setParentClass(UserClass* c) {parentClass = c;}
-		UserClass* getParentClass() const {return parentClass;}
+		const UserClass* getBaseClass() const {return baseClass;}
 		
 		std::string internalRefVarString;
 		int internalRefVar;
 		std::vector<int32_t> members;
 	protected:
-		UserClass(Program& program, ASTClass& user_class);
+		UserClass(Program& program, ASTClass& node, UserClass* base_class);
 		DataType* classType;
 
 	private:
 		Program& program;
 		ASTClass& node;
 		ClassScope* scope;
-		UserClass* parentClass;
+		UserClass* baseClass;
 	};
 
-	UserClass* createClass(Program&, Scope&, ASTClass&, CompileErrorHandler* = NULL);
+	UserClass* createClass(Program&, Scope&, ASTClass&, UserClass*, CompileErrorHandler* = NULL);
 
 	
 	////////////////////////////////////////////////////////////////
@@ -325,6 +324,7 @@ namespace ZScript
 		ASTDataDecl* getNode() const {return &node;}
 		Function* readfn;
 		Function* writefn;
+		int zasm_register = -1;
 	private:
 		InternalVariable(Scope& scope, ASTDataDecl& node, DataType const& type);
 
@@ -347,10 +347,12 @@ namespace ZScript
 		void setIndex(int32_t ind) {_index = ind;}
 		int32_t getOrder() const {return _order_ind;}
 		void setOrder(int32_t ind) {_order_ind = ind;}
+		int getZasmRegister();
 		
 		bool is_arr;
 		bool is_internal;
 		bool is_readonly;
+		int zasm_register = -1;
 	private:
 		UserClassVar(Scope& scope, ASTDataDecl& node, DataType const& type);
 		
@@ -534,11 +536,12 @@ namespace ZScript
 		}
 		
 		bool isInternal() const {return !node;}
+		bool isBinding() const {return getFlag(FUNCFLAG_INTERNAL);}
 		bool isNil() const {
 			if (prototype || getFlag(FUNCFLAG_NIL|FUNCFLAG_READ_ONLY))
 				return true;
 
-			if (getFlag(FUNCFLAG_INTERNAL))
+			if (isBinding())
 			{
 				assert(!getCode().empty());
 				return false;
@@ -555,6 +558,8 @@ namespace ZScript
 		
 		bool shouldShowDepr(bool err) const;
 		
+		Function* createAlias(std::string name);
+		const std::vector<Function*>& getAliases() const {return aliases;}
 		void alias(Function* func, bool force = false);
 		bool is_aliased() const {return bool(aliased_func);}
 		
@@ -633,7 +638,7 @@ namespace ZScript
 		
 		bool isTemplateSkip() const
 		{
-			return !getFlag(FUNCFLAG_INTERNAL) && isTemplate();
+			return !isBinding() && isTemplate();
 		}
 		
 		Function* apply_templ_func(std::vector<DataType const*> const& bound_ts);
@@ -654,6 +659,7 @@ namespace ZScript
 		string info;
 		
 		std::vector<std::shared_ptr<Function>> applied_funcs;
+		std::vector<Function*> aliases;
 
 		// Code implementing this function.
 		std::vector<std::shared_ptr<Opcode>> ownedCode;
@@ -670,6 +676,7 @@ namespace ZScript
 	int32_t getParameterCount(Function const&);
 
 	bool is_test();
+	bool debug_data_should_emit_inlined_functions();
 
 	int getSourceCodeNumLines(const std::string& fname);
 	const std::string& getSourceCodeContents(const std::string& fname);

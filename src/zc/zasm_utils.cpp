@@ -1,5 +1,7 @@
 #include "zc/zasm_utils.h"
+#include "base/qst.h"
 #include "base/zdefs.h"
+#include "zasm/debug_data.h"
 #include "zasm/defines.h"
 #include "zc/ffscript.h"
 #include "zc/parallel.h"
@@ -86,10 +88,49 @@ bool StructuredZasm::is_modern_function_calling()
 
 StructuredZasm zasm_construct_structured(const zasm_script* script)
 {
-	// Find all function calls.
+	std::vector<ZasmFunction> functions;
 	std::set<pc_t> function_calls;
-	std::set<pc_t> function_calls_goto_pc;
-	std::map<pc_t, pc_t> function_calls_pc_to_pc;
+	std::map<pc_t, pc_t> start_pc_to_function;
+
+	if (zasm_debug_data.exists())
+	{
+		for (const auto& scope : zasm_debug_data.scopes)
+		{
+			if (scope.tag == TAG_FUNCTION)
+			{
+				if (scope.start_pc == 0 && scope.end_pc == 0)
+					continue;
+
+				functions.push_back({0, zasm_debug_data.getFullScopeName(&scope), scope.start_pc, scope.end_pc});
+			}
+		}
+
+		std::sort(functions.begin(), functions.end(), [](auto& a, auto& b){
+			return a.start_pc < b.start_pc;
+		});
+
+		for (int i = 0; i < functions.size(); i++)
+		{
+			functions[i].id = i;
+			start_pc_to_function[functions[i].start_pc] = i;
+		}
+
+		// Find all function calls.
+		for (pc_t i = 0; i < script->size; i++)
+		{
+			int command = script->zasm[i].command;
+			if (command == CALLFUNC)
+				function_calls.insert(i);
+		}
+
+		for (auto sd : script->script_datas)
+		{
+			auto& fn = functions.at(start_pc_to_function.at(sd->pc));
+			fn.is_entry_function = true;
+		}
+
+		return {functions, function_calls, start_pc_to_function, StructuredZasm::CALLING_MODE_CALLFUNC_RETURNFUNC};
+	}
 
 	// Three forms of function calls over the ages:
 
@@ -162,6 +203,8 @@ StructuredZasm zasm_construct_structured(const zasm_script* script)
 	for (auto sd : script->script_datas)
 		function_start_pcs_set.insert(sd->pc);
 
+	// Find all function calls.
+	std::map<pc_t, pc_t> function_calls_pc_to_pc;
 	for (pc_t i = 0; i < script->size; i++)
 	{
 		int command = script->zasm[i].command;
@@ -205,7 +248,6 @@ StructuredZasm zasm_construct_structured(const zasm_script* script)
 
 	std::vector<pc_t> function_start_pcs(function_start_pcs_set.begin(), function_start_pcs_set.end());
 	std::vector<pc_t> function_final_pcs;
-	std::map<pc_t, pc_t> start_pc_to_function;
 	{
 		start_pc_to_function[0] = 0;
 
@@ -227,7 +269,6 @@ StructuredZasm zasm_construct_structured(const zasm_script* script)
 		function_start_pcs.push_back(script->size);
 	}
 
-	std::vector<ZasmFunction> functions;
 	for (pc_t i = 0; i < function_final_pcs.size(); i++)
 	{
 		functions.push_back({i, "", function_start_pcs.at(i), function_final_pcs.at(i)});
@@ -539,7 +580,7 @@ static std::string zasm_fn_get_label(const ZasmFunction& function)
 	if (function._name.empty())
 		return fmt::format("Function #{}", function.id);
 	else
-		return fmt::format("Function #{} ({})", function.id, function._name);
+		return function.signature();
 }
 
 static std::string zasm_to_string(const zasm_script* script, const StructuredZasm& structured_zasm, const ZasmCFG& cfg, std::set<pc_t> function_ids)
@@ -556,17 +597,31 @@ static std::string zasm_to_string(const zasm_script* script, const StructuredZas
 			const auto& op = script->zasm[i];
 			pc_t command = op.command;
 			std::string str = zasm_op_to_string(op);
-			ss <<
+
+			std::stringstream line_ss;
+			line_ss <<
 				std::setw(5) << std::right << i << ": " <<
 				std::left << std::setw(45) << str;
+
 			if (cfg.contains_block_start(i))
 			{
 				auto& edges = cfg.block_edges[block_id];
-				ss << fmt::format("[Block {} -> {}]", block_id++, fmt::join(edges, ", "));
+				line_ss << fmt::format("[Block {} -> {}]", block_id++, fmt::join(edges, ", "));
 			}
 			if ((command == GOTO && structured_zasm.start_pc_to_function.contains(op.arg1)) || command == CALLFUNC)
 			{
-				ss << fmt::format("[Call {}]", zasm_fn_get_label(structured_zasm.functions[structured_zasm.start_pc_to_function.at(op.arg1)]));
+				line_ss << fmt::format("[{}]", zasm_fn_get_label(structured_zasm.functions[structured_zasm.start_pc_to_function.at(op.arg1)]));
+			}
+
+			std::string line_content = line_ss.str();
+			ss << line_content;
+
+			if (zasm_debug_data.exists())
+			{
+				auto [source_file, line] = zasm_debug_data.resolveLocation(i);
+				int current_len = line_content.length();
+				int padding = std::max(1, 95 - current_len);
+				ss << std::string(padding, ' ') << fmt::format("| {}:{}", source_file, line);
 			}
 			ss << '\n';
 		}
@@ -628,7 +683,7 @@ std::string zasm_to_string(const zasm_script* script, bool top_functions, bool g
 
 		auto& fn = structured_zasm.functions[fn_id];
 		auto cfg = zasm_construct_cfg(script, {{fn.start_pc, fn.final_pc}});
-		ss << zasm_fn_get_label(fn) << '\n';
+		ss << "Function " << zasm_fn_get_label(fn) << '\n';
 		ss << zasm_to_string(script, structured_zasm, cfg, {fn_id});
 		ss << '\n';
 

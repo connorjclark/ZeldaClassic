@@ -724,28 +724,28 @@ internal bool IsValidArray<T>(T[] arr);
 // where the old conversion could potentially be 2 entire degrees off at certain
 // angles, while this version only loses about 0.0004 degrees of accuracy.
 //
-// In addition, casting between [DegtoRad] and [RadtoDeg] repeatedly will *not*
+// In addition, casting between [DegToRad] and [RadToDeg] repeatedly will *not*
 // lose additional precision with each call; only the first call will lose
 // precision.
 //
-// @alias DegToRad
+// @alias DegtoRad
 // @deprecated_alias EngineDegtoRad
 // @zasm
 //   POP D3
 //   DEGTORAD D2 D3
-internal constexpr int DegtoRad(int degrees);
+internal constexpr int DegToRad(int degrees);
 
 // Converts Radians to Degrees. More accurate than the old std_functions
 // RadtoDeg.
 //
-// See [DegtoRad] for more details on how this is more accurate.
+// See [DegToRad] for more details on how this is more accurate.
 //
-// @alias RadToDeg
+// @alias RadtoDeg
 // @deprecated_alias EngineRadtoDeg
 // @zasm
 //   POP D3
 //   RADTODEG D2 D3
-internal constexpr int RadtoDeg(int radians);
+internal constexpr int RadToDeg(int radians);
 
 // Returns the [radians] value, wrapped between [-PI,PI)
 //
@@ -801,19 +801,19 @@ internal int sprintfa(char32[] dest, char32[] format, untyped[] args);
 //
 // @zasm
 //   MAXVARG
-internal constexpr T Max<T>(...T[] rest);
+internal constexpr T Max<T>(...T[] values);
 
 // Returns the smallest parameter.
 //
 // @zasm
 //   MINVARG
-internal constexpr T Min<T>(...T[] rest);
+internal constexpr T Min<T>(...T[] values);
 
 // Returns a random parameter, using the global RandGen.
 //
 // @zasm
 //   CHOOSEVARG
-internal T Choose<T>(...T[] rest);
+internal T Choose<T>(...T[] values);
 
 // Increases the size of the array by 1, inserting [val] at the
 // back of the array.

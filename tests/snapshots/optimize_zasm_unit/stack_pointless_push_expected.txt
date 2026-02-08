@@ -1,12 +1,12 @@
-Function #0 (run_none-0)
-    0: CALLFUNC        5                            [Block 0 -> ][Call Function #1]
-    1: CALLFUNC        39                           [Call Function #2]
-    2: CALLFUNC        54                           [Call Function #4]
-    3: CALLFUNC        71                           [Call Function #5]
+Function run_none-0
+    0: CALLFUNC        5                            [Block 0 -> ][Function #1]
+    1: CALLFUNC        39                           [Function #2]
+    2: CALLFUNC        54                           [Function #4]
+    3: CALLFUNC        71                           [Function #5]
     4: QUIT
 
 
-Function #1
+Function Function #1
     5: LOAD            D0               0           [Block 0 -> ]
     6: NOP
     7: SETV            D2               750000
@@ -43,7 +43,7 @@ Function #1
    38: RETURNFUNC
 
 
-Function #2
+Function Function #2
    39: LOAD            D0               0           [Block 0 -> ]
    40: NOP
    41: SETV            D2               750000
@@ -52,19 +52,19 @@ Function #2
    44: SETR            SCRIPTRAM        D2
    45: PUSHR           D0
    46: PUSHR           D4
-   47: CALLFUNC        50                           [Call Function #3]
+   47: CALLFUNC        50                           [Function #3]
    48: POP             D4
    49: RETURNFUNC
 
 
-Function #3
+Function Function #3
    50: SETR            D0               LINKX       [Block 0 -> ]
    51: TRACER          D0
    52: TRACER          D0
    53: RETURNFUNC
 
 
-Function #4
+Function Function #4
    54: PUSHR           D0                           [Block 0 -> ]
    55: PUSHR           REFFFC
    56: PUSHARGSV       0                7
@@ -84,7 +84,7 @@ Function #4
    70: RETURNFUNC
 
 
-Function #5
+Function Function #5
    71: LOAD            D3               0           [Block 0 -> ]
    72: NOP
    73: NOP

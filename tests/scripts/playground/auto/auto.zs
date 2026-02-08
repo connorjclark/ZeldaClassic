@@ -13,6 +13,7 @@
 #include "auto/instant_reload_on_death.zs"
 #include "auto/optional_params.zs"
 #include "auto/scc.zs"
+#include "auto/scopes.zs"
 #include "auto/script_drawing.zs"
 #include "auto/sprites.zs"
 #include "auto/stack_limit.zs"

@@ -6,18 +6,18 @@ rewrite 17: 3 -> 2 commands
 17: SETR            D2               LINKY  
 18: ADDV            D2               80000  
 19: NOP            
-Function #0 (run_none-0)
+Function run_none-0
     0: SETR            D4               SP2         [Block 0 -> ]
     1: PUSHARGSR       SP2              2
     2: LOAD            D2               7
     3: PUSHR           D2
-    4: CALLFUNC        43                           [Call Function #3]
+    4: CALLFUNC        43                           [Function #3]
     5: POP             D4
     6: PUSHR           D2
     7: PUSHR           D4
     8: LOAD            D2               7
     9: PUSHR           D2
-   10: CALLFUNC        32                           [Call Function #1]
+   10: CALLFUNC        32                           [Function #1]
    11: POP             D4
    12: PUSHR           D2
    13: SETR            D2               LINKX
@@ -28,7 +28,7 @@ Function #0 (run_none-0)
    18: ADDV            D2               80000
    19: NOP
    20: PUSHR           D2
-   21: CALLFUNC        37                           [Call Function #2]
+   21: CALLFUNC        37                           [Function #2]
    22: POP             D4
    23: QUIT
    24: NOP
@@ -41,7 +41,7 @@ Function #0 (run_none-0)
    31: NOP
 
 
-Function #1
+Function Function #1
    32: NOP                                          [Block 0 -> ]
    33: POP             D2
    34: TRACER          D2
@@ -49,7 +49,7 @@ Function #1
    36: RETURNFUNC
 
 
-Function #2
+Function Function #2
    37: POP             D2                           [Block 0 -> ]
    38: POP             D1
    39: POP             D0
@@ -58,7 +58,7 @@ Function #2
    42: RETURNFUNC
 
 
-Function #3
+Function Function #3
    43: SETR            D0               LINKX       [Block 0 -> ]
    44: TRACER          D0
    45: TRACER          D0

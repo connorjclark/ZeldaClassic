@@ -46,7 +46,9 @@ void SemanticAnalyzer::analyzeFunctionInternals(Function& function)
 		DataType const* thisType = &_class->getNode()->type->resolve(*scope,this);
 		DataType const* constType = thisType->getConstType();
 		function.thisVar = BuiltinVariable::create(*function.getInternalScope(), *constType, "this", this);
-		function.getInternalScope()->stackDepth_--;
+		// User-defined class functions don't push 'this' on the stack. But internal binding functions do. Blegh.
+		if (!function.isBinding())
+			function.getInternalScope()->stackDepth_--;
 	}
 
 	// Grab the script.
@@ -79,11 +81,6 @@ void SemanticAnalyzer::analyzeFunctionInternals(Function& function)
 			auto t = klass->getType();
 			function.thisVar =
 				BuiltinVariable::create(*scope, *t, "this");
-		}
-		else
-		{
-			function.thisVar =
-				BuiltinVariable::create(*scope, DataType::ZVOID, "", 0);
 		}
 
 		if (parameters.size() > 8)
@@ -298,12 +295,14 @@ void SemanticAnalyzer::caseStmtForEach(ASTStmtForEach& host, void* param)
 		ASTDataDecl* indxdecl = new ASTDataDecl(host.location);
 		indxdecl->identifier = new ASTString("__LOOP_ITER", host.identifier->location);
 		indxdecl->baseType = new ASTDataType(DataType::FLOAT, host.location);
+		indxdecl->setFlag(ASTDataDecl::FL_HIDDEN);
 		host.indxdecl = indxdecl;
 		//The array holder declaration
 		ASTDataDecl* arrdecl = new ASTDataDecl(host.location);
 		arrdecl->identifier = new ASTString("__LOOP_ARR", host.identifier->location);
 		arrdecl->setInitializer(host.arrExpr.clone());
 		arrdecl->baseType = new ASTDataType(arrtype, host.location);
+		arrdecl->setFlag(ASTDataDecl::FL_HIDDEN);
 		host.arrdecl = arrdecl;
 		//The data declaration
 		ASTDataDecl* decl = new ASTDataDecl(host.location);
@@ -1020,7 +1019,7 @@ void SemanticAnalyzer::caseScript(ASTScript& host, void* param)
 
 void SemanticAnalyzer::caseClass(ASTClass& host, void* param)
 {
-	UserClass& user_class = host.user_class ? *host.user_class : *(host.user_class = program.addClass(host, *scope, this));
+	UserClass& user_class = host.user_class ? *host.user_class : *(host.user_class = program.addClass(host, *scope, nullptr, this));
 	if (breakRecursion(host)) return;
 	string name = user_class.getName();
 	
@@ -1815,7 +1814,7 @@ void SemanticAnalyzer::caseExprDelete(ASTExprDelete& host, void*)
 	if (breakRecursion(host)) return;
 	
 	DataType const* optype = host.operand->getReadType(scope, this);
-	if(!optype->isUsrClass())
+	if(!optype->isClass())
 	{
 		handleError(CompileError::BadDelete(&host));
 	}

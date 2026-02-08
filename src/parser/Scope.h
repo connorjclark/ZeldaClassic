@@ -69,7 +69,6 @@ namespace ZScript
 		virtual bool isFunction() const {return false;}
 		virtual bool isNamespace() const {return false;}
 		virtual bool isFile() const {return false;}
-		virtual bool isNamedEnum() const {return false;}
 		
 		// Accessors
 		TypeStore const& getTypeStore() const {return typeStore_;}
@@ -104,6 +103,7 @@ namespace ZScript
 				const = 0;
 	
 		// Get All Local.
+		virtual std::vector<const DataType*> getLocalDataTypes() const = 0;
 		virtual std::vector<Datum*> getLocalData() const = 0;
 		virtual std::vector<Function*> getLocalFunctions() const = 0;
 		virtual std::vector<Function*> getLocalGetters() const = 0;
@@ -125,7 +125,6 @@ namespace ZScript
 		= 0;
 		virtual bool addScriptType(
 			std::string const& name, ParserScriptType type, AST* node) = 0;
-		//virtual ZClass* addClass(string const& name, AST* node) = 0;
 		virtual Function* addGetter(
 				DataType const* returnType, std::string const& name,
 				std::vector<DataType const*> const& paramTypes, std::vector<std::shared_ptr<const std::string>> const& paramNames,
@@ -175,12 +174,15 @@ namespace ZScript
 		void initFunctionBinding(Function* fn, CompileErrorHandler* handler);
 	
 	Scope* lexical_options_scope;
+	int32_t start_label = -1;
+	int32_t end_label = -1;
+
+	int32_t getId() const {return id;}
 
 	protected:
 		TypeStore& typeStore_;
 		std::optional<std::string> name_;
 		std::vector<NamespaceScope*> usingNamespaces;
-		int32_t getId() const {return id;}
 
 	private:
 		// Add/Remove the datum to this scope, returning if successful. Called by
@@ -345,6 +347,7 @@ namespace ZScript
 		virtual CompileOptionSetting getLocalOption(CompileOption option) const;
 		
 		// Get All Local
+		virtual std::vector<const ZScript::DataType*> getLocalDataTypes() const;
 		virtual std::vector<ZScript::Datum*> getLocalData() const;
 		virtual std::vector<ZScript::Function*> getLocalFunctions() const;
 		virtual std::vector<ZScript::Function*> getLocalGetters() const;
@@ -556,14 +559,16 @@ namespace ZScript
 		ClassScope(Scope* parent, FileScope* parentFile, UserClass& user_class);
 		virtual bool isClass() const {return true;}
 		UserClass& user_class;
-		
-		std::vector<Function*> getMemberFuncs() const;
+
+		std::vector<Function*> getLocalFunctions(std::string const& name) const;
+		Function* getLocalGetter(std::string const& name) const;
+		Function* getLocalSetter(std::string const& name) const;
 		std::vector<Function*> getConstructors() const;
 		std::vector<Function*> getDestructor() const;
 		bool add(Datum& datum, CompileErrorHandler* errorHandler);
 		void removeFunction(Function* function);
 		void parse_ucv();
-		UserClassVar* getClassVar(std::string const& name);
+		UserClassVar* getClassVar(std::string const& name) const;
 		const std::map<std::string, UserClassVar*>& getClassData();
 		virtual Function* addFunction(
 				DataType const* returnType, std::string const& name,

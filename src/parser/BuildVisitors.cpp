@@ -125,7 +125,7 @@ BuildOpcodes::BuildOpcodes(Program& program, LValBOHelper* helper)
 	in_func = helper->in_func;
 }
 
-static int getFileDebugIndex(Program& program, const std::string& fname)
+int getFileDebugIndex(Program& program, const std::string& fname)
 {
 	auto& files = program.getFiles();
 	if (auto it = std::find(files.begin(), files.end(), fname); it != files.end())
@@ -356,6 +356,45 @@ void BuildOpcodes::caseUsing(ASTUsingDecl& host, void*)
 	// Do nothing, not even recurse.
 }
 
+void BuildOpcodes::startScope(AST& host)
+{
+	scope = host.getScope();
+	cur_scopes.push_back(scope);
+	cur_scope_start_op_index.push_back(result.size());
+}
+
+void BuildOpcodes::finalizeScope()
+{
+	Scope* scope = cur_scopes.back();
+	cur_scopes.pop_back();
+
+	size_t start_index = cur_scope_start_op_index.back();
+	cur_scope_start_op_index.pop_back();
+
+	if (start_index != result.size())
+	{
+		if (int label = result[start_index]->getLabel(); label != -1)
+		{
+			scope->start_label = label;
+		}
+		else
+		{
+			scope->start_label = ScriptParser::getUniqueLabelID();
+			result[start_index]->setLabel(scope->start_label);
+		}
+
+		if (int label = result.back()->getLabel(); label != -1)
+		{
+			scope->end_label = label;
+		}
+		else
+		{
+			scope->end_label = ScriptParser::getUniqueLabelID();
+			result.back()->setLabel(scope->end_label);
+		}
+	}
+}
+
 // Statements
 
 void BuildOpcodes::caseBlock(ASTBlock &host, void *param)
@@ -366,14 +405,12 @@ void BuildOpcodes::caseBlock(ASTBlock &host, void *param)
 	}
 
 	ScopeReverter sr(&scope);
-	scope = host.getScope();
-
-	cur_scopes.push_back(scope);
+	startScope(host);
 
 	for (auto it = host.statements.begin(); it != host.statements.end(); ++it)
 		literal_visit(*it, param);
 
-	cur_scopes.pop_back();
+	finalizeScope();
 
 	if (host.getScope() != scope)
 		throw compile_exception("host.getScope() != scope");
@@ -395,10 +432,9 @@ void BuildOpcodes::caseStmtIf(ASTStmtIf &host, void *param)
 		{
 			host.setScope(scope->makeChild());
 		}
-		ScopeReverter sr(&scope);
-		scope = host.getScope();
 
-		cur_scopes.push_back(scope);
+		ScopeReverter sr(&scope);
+		startScope(host);
 		
 		if(auto val = host.declaration->getInitializer()->getCompileTimeValue(this, scope))
 		{
@@ -410,7 +446,7 @@ void BuildOpcodes::caseStmtIf(ASTStmtIf &host, void *param)
 				visit(host.thenStatement.get(), param);
 			} //Either true or false, it's constant, so no checks required.
 
-			cur_scopes.pop_back();
+			finalizeScope();
 			return;
 		}
 		
@@ -442,11 +478,12 @@ void BuildOpcodes::caseStmtIf(ASTStmtIf &host, void *param)
 		//nop
 		addOpcode(new ONoOp(endif));
 
-		cur_scopes.pop_back();
+		finalizeScope();
 	}
 	else
 	{
 		ScopeReverter sr(&scope);
+		startScope(host);
 
 		if(auto val = host.condition->getCompileTimeValue(this, scope))
 		{
@@ -456,6 +493,7 @@ void BuildOpcodes::caseStmtIf(ASTStmtIf &host, void *param)
 				visit(host.thenStatement.get(), param);
 				commentAt(targ_sz, fmt::format("{}({}) #{} [Opt:AlwaysOn]",ifstr,truestr,ifid));
 			} //Either true or false, it's constant, so no checks required.
+			finalizeScope();
 			return;
 		}
 
@@ -482,6 +520,8 @@ void BuildOpcodes::caseStmtIf(ASTStmtIf &host, void *param)
 		commentStartEnd(targ_sz, fmt::format("{}() #{} Body",ifstr,ifid));
 		//nop
 		addOpcode(new ONoOp(endif));
+
+		finalizeScope();
 	}
 }
 
@@ -499,10 +539,9 @@ void BuildOpcodes::caseStmtIfElse(ASTStmtIfElse &host, void *param)
 		{
 			host.setScope(scope->makeChild());
 		}
-		ScopeReverter sr(&scope);
-		scope = host.getScope();
 
-		cur_scopes.push_back(scope);
+		ScopeReverter sr(&scope);
+		startScope(host);
 		
 		if(auto val = host.declaration->getInitializer()->getCompileTimeValue(this, scope))
 		{
@@ -520,7 +559,7 @@ void BuildOpcodes::caseStmtIfElse(ASTStmtIfElse &host, void *param)
 				commentStartEnd(targ_sz, fmt::format("{}({}={}) #{} Else [Opt:AlwaysOff]",ifstr,declname,falsestr,ifid));
 			}
 			//Either way, ignore the rest and return.
-			cur_scopes.pop_back();
+			finalizeScope();
 			return;
 		}
 		
@@ -562,11 +601,12 @@ void BuildOpcodes::caseStmtIfElse(ASTStmtIfElse &host, void *param)
 		
 		addOpcode(new ONoOp(endif));
 
-		cur_scopes.pop_back();
+		finalizeScope();
 	}
 	else
 	{
 		ScopeReverter sr(&scope);
+		startScope(host);
 
 		if(auto val = host.condition->getCompileTimeValue(this, scope))
 		{
@@ -582,6 +622,7 @@ void BuildOpcodes::caseStmtIfElse(ASTStmtIfElse &host, void *param)
 				commentAt(targ_sz, fmt::format("{}({}) #{} [Opt:AlwaysOff]",ifstr,falsestr,ifid));
 			}
 			//Either way, ignore the rest and return.
+			finalizeScope();
 			return;
 		}
 		//run the test
@@ -613,6 +654,8 @@ void BuildOpcodes::caseStmtIfElse(ASTStmtIfElse &host, void *param)
 		visit(host.elseStatement.get(), param);
 		commentStartEnd(targ_sz, fmt::format("{}() #{} Else",ifstr,ifid));
 		addOpcode(new ONoOp(endif));
+
+		finalizeScope();
 	}
 }
 
@@ -866,8 +909,10 @@ void BuildOpcodes::caseStmtFor(ASTStmtFor &host, void *param)
 	{
 		host.setScope(scope->makeChild());
 	}
-	scope = host.getScope();
-	cur_scopes.push_back(scope);
+
+	ScopeReverter sr(&scope);
+	startScope(host);
+
 	auto targ_sz = commentTarget();
 	//run the precondition
 	literal_visit(host.setup.get(), param);
@@ -886,7 +931,7 @@ void BuildOpcodes::caseStmtFor(ASTStmtFor &host, void *param)
 				visit(host.elseBlock.get(), param);
 				commentStartEnd(targ_sz, fmt::format("for() #{} Else [Opt:AlwaysFalse]",forid));
 			}
-			cur_scopes.pop_back();
+			finalizeScope();
 			return;
 		}
 	}
@@ -938,7 +983,7 @@ void BuildOpcodes::caseStmtFor(ASTStmtFor &host, void *param)
 	//nop
 	addOpcode(new ONoOp(loopend));
 
-	cur_scopes.pop_back();
+	finalizeScope();
 }
 
 void BuildOpcodes::caseStmtForEach(ASTStmtForEach &host, void *param)
@@ -948,8 +993,9 @@ void BuildOpcodes::caseStmtForEach(ASTStmtForEach &host, void *param)
 	{
 		host.setScope(scope->makeChild());
 	}
-	scope = host.getScope();
-	cur_scopes.push_back(scope);
+
+	ScopeReverter sr(&scope);
+	startScope(host);
 	
 	uint forid = host.get_comment_id();
 	//Declare the local variable that will hold the array ptr
@@ -1010,7 +1056,7 @@ void BuildOpcodes::caseStmtForEach(ASTStmtForEach &host, void *param)
 		addOpcode(new OGotoImmediate(new LabelArgument(loopstart)));
 	commentBack(fmt::format("for(each) #{} End",forid));
 
-	cur_scopes.pop_back();
+	finalizeScope();
 	
 	scope = scope->getParent();
 	
@@ -1032,9 +1078,9 @@ void BuildOpcodes::caseStmtRangeLoop(ASTStmtRangeLoop &host, void *param)
 	{
 		host.setScope(scope->makeChild());
 	}
+
 	ScopeReverter sr(&scope);
-	scope = host.getScope();
-	cur_scopes.push_back(scope);
+	startScope(host);
 	
 	uint loopid = host.get_comment_id();
 	//Declare the local variable that will hold the current loop value
@@ -1346,8 +1392,8 @@ void BuildOpcodes::caseStmtRangeLoop(ASTStmtRangeLoop &host, void *param)
 
 	setLocation2(program, nullptr);
 
-	cur_scopes.pop_back();
-	
+	finalizeScope();
+
 	scope = scope->getParent();
 	
 	addOpcode(new OPopArgsRegister(new VarArgument(NUL), new LiteralArgument(mgr.pop_all())));
@@ -1992,7 +2038,7 @@ void BuildOpcodes::caseExprCall(ASTExprCall& host, void* param)
 			commentBack(fmt::format("Proto{} Default RetVal",func_comment));
 		}
 	}
-	else if(func.getFlag(FUNCFLAG_INLINE) && (func.isInternal() || func.getFlag(FUNCFLAG_INTERNAL))) //Inline function
+	else if(func.getFlag(FUNCFLAG_INLINE) && (func.isInternal() || func.isBinding())) //Inline function
 	{
 		// User functions actually can't really benefit from any optimization like this... -Em
 		bool vargs = func.getFlag(FUNCFLAG_VARARGS);
@@ -2001,10 +2047,10 @@ void BuildOpcodes::caseExprCall(ASTExprCall& host, void* param)
 		
 		if (host.left->isTypeArrow())
 		{
-			// Note: FUNCFLAG_INTERNAL are bindings written in .zs w/ 'internal' keyword.
+			// Note: Bindings are written in .zs w/ 'internal' keyword.
 			// But Function.isInternal is for symbols written in src/parser/symbols/*.cpp
 			// Only the latter have an actual parameter of the LHS type in their param list.
-			if (!func.getFlag(FUNCFLAG_INTERNAL))
+			if (!func.isBinding())
 				++num_used_params;
 			if (!(func.getIntFlag(IFUNCFLAG_SKIPPOINTER)))
 			{
@@ -2024,7 +2070,7 @@ void BuildOpcodes::caseExprCall(ASTExprCall& host, void* param)
 		for (; param_indx < host.parameters.size()-vargcount; ++param_indx)
 		{
 			auto& arg = host.parameters.at(param_indx);
-			bool unused = !func.isInternal() && !func.getFlag(FUNCFLAG_INTERNAL) && func.paramDatum[param_indx]->is_erased();
+			bool unused = !func.isInternal() && !func.isBinding() && func.paramDatum[param_indx]->is_erased();
 			//Compile-time constants can be optimized slightly...
 			if(auto val = arg->getCompileTimeValue(this, scope))
 			{
@@ -2232,7 +2278,7 @@ void BuildOpcodes::caseExprCall(ASTExprCall& host, void* param)
 	}
 	else
 	{
-		const string comment_pref = func.isInternal() || func.getFlag(FUNCFLAG_INTERNAL) ? "Int." : "Usr";
+		const string comment_pref = func.isInternal() || func.isBinding() ? "Int." : "Usr";
 		int32_t funclabel = func.getLabel();
 		
 		bool vargs = func.getFlag(FUNCFLAG_VARARGS);
@@ -2258,7 +2304,7 @@ void BuildOpcodes::caseExprCall(ASTExprCall& host, void* param)
 		for (; param_indx < num_used_params-vargcount; ++param_indx)
 		{
 			auto& arg = host.parameters.at(param_indx);
-			bool unused = !func.isInternal() && !func.getFlag(FUNCFLAG_INTERNAL) && func.paramDatum.size() > param_indx && func.paramDatum[param_indx]->is_erased();
+			bool unused = !func.isInternal() && !func.isBinding() && func.paramDatum.size() > param_indx && func.paramDatum[param_indx]->is_erased();
 			//Compile-time constants can be optimized slightly...
 			if(auto val = arg->getCompileTimeValue(this, scope))
 			{

@@ -79,7 +79,7 @@ rewrite 10: 5 -> 2 commands
 12: NOP            
 13: NOP            
 14: NOP            
-Function #0 (run_none-0)
+Function run_none-0
     0: COMPARER        D3               D2          [Block 0 -> 1, 3]
     1: GOTOCMP         16               >=
     2: NOP                                          [Block 1 -> 2, 3]
@@ -88,7 +88,7 @@ Function #0 (run_none-0)
     5: NOP
     6: PUSHR           D4
     7: PUSHV           1337
-    8: CALLFUNC        17                           [Call Function #1]
+    8: CALLFUNC        17                           [Function #1]
     9: POP             D4
    10: COMPAREV        D2               0
    11: GOTOCMP         16               ==
@@ -99,7 +99,7 @@ Function #0 (run_none-0)
    16: QUIT                                         [Block 3 -> ]
 
 
-Function #1
+Function Function #1
    17: POP             D2                           [Block 0 -> ]
    18: ADDV            D2               1000
    19: ADDV            D2               1000

@@ -1,13 +1,13 @@
-Function #0 (run_none-0)
-    0: CALLFUNC        15                           [Block 0 -> ][Call Function #1]
-    1: CALLFUNC        21                           [Call Function #2]
-    2: CALLFUNC        30                           [Call Function #3]
-    3: CALLFUNC        39                           [Call Function #4]
-    4: CALLFUNC        52                           [Call Function #5]
-    5: CALLFUNC        59                           [Call Function #6]
-    6: CALLFUNC        66                           [Call Function #7]
-    7: CALLFUNC        73                           [Call Function #8]
-    8: CALLFUNC        80                           [Call Function #9]
+Function run_none-0
+    0: CALLFUNC        15                           [Block 0 -> ][Function #1]
+    1: CALLFUNC        21                           [Function #2]
+    2: CALLFUNC        30                           [Function #3]
+    3: CALLFUNC        39                           [Function #4]
+    4: CALLFUNC        52                           [Function #5]
+    5: CALLFUNC        59                           [Function #6]
+    6: CALLFUNC        66                           [Function #7]
+    7: CALLFUNC        73                           [Function #8]
+    8: CALLFUNC        80                           [Function #9]
     9: NOP
    10: NOP
    11: NOP
@@ -16,7 +16,7 @@ Function #0 (run_none-0)
    14: QUIT
 
 
-Function #1
+Function Function #1
    15: SETR            D3               LINKX       [Block 0 -> ]
    16: TRACER          D3
    17: SETR            D3               LINKY
@@ -25,7 +25,7 @@ Function #1
    20: RETURNFUNC
 
 
-Function #2
+Function Function #2
    21: SETR            D2               GD56        [Block 0 -> ]
    22: PUSHR           D2
    23: LOADD           D2               30000
@@ -37,7 +37,7 @@ Function #2
    29: RETURNFUNC
 
 
-Function #3
+Function Function #3
    30: SETR            D2               GD56        [Block 0 -> ]
    31: PUSHR           D2
    32: LOADD           D2               30000
@@ -49,7 +49,7 @@ Function #3
    38: RETURNFUNC
 
 
-Function #4
+Function Function #4
    39: SETR            D2               GD56        [Block 0 -> ]
    40: SETV            D3               1000
    41: ADDR            D3               GD56
@@ -65,7 +65,7 @@ Function #4
    51: RETURNFUNC
 
 
-Function #5
+Function Function #5
    52: SETR            D3               FFSCRIPT    [Block 0 -> ]
    53: PUSHR           D3
    54: LOAD            D0               0
@@ -75,7 +75,7 @@ Function #5
    58: RETURNFUNC
 
 
-Function #6
+Function Function #6
    59: LOAD            D2               23          [Block 0 -> ]
    60: PUSHR           D2
    61: LOAD            D2               21
@@ -85,7 +85,7 @@ Function #6
    65: RETURNFUNC
 
 
-Function #7
+Function Function #7
    66: SETR            D3               LINKX       [Block 0 -> ]
    67: ADDV            D3               1
    68: SETR            LINKX            D3
@@ -95,7 +95,7 @@ Function #7
    72: RETURNFUNC
 
 
-Function #8
+Function Function #8
    73: NOP                                          [Block 0 -> ]
    74: NOP
    75: NOP
@@ -105,7 +105,7 @@ Function #8
    79: RETURNFUNC
 
 
-Function #9
+Function Function #9
    80: NOP                                          [Block 0 -> ]
    81: NOP
    82: NOP
