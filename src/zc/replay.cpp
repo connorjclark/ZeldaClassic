@@ -1729,7 +1729,7 @@ void replay_step_comment(std::string comment)
 {
     if (replay_is_recording())
     {
-        util::trimstr(comment);
+        util::trimstr_trailing(comment);
         record_log.push_back(std::make_unique<CommentReplayStep>(frame_count, comment));
         // Not necessary to call this here, but helps to halt the program exactly when an unexpected
         // comment occurs instead of at the next call to replay_poll.

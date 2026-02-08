@@ -125,10 +125,48 @@ BuildOpcodes::BuildOpcodes(Program& program, LValBOHelper* helper)
 	in_func = helper->in_func;
 }
 
+static int getFileDebugIndex(Program& program, const std::string& fname)
+{
+	auto& files = program.getFiles();
+	if (auto it = std::find(files.begin(), files.end(), fname); it != files.end())
+	{
+		return std::distance(files.begin(), it);
+	}
+	else
+	{
+		files.push_back(fname);
+		return files.size() - 1;
+	}
+}
+
+static int opcode2_file = -1, opcode2_line = 0;
+
+void setLocation2(Program& program, const AST* node)
+{
+	if (node)
+	{
+		opcode2_file = getFileDebugIndex(program, node->location.fname);
+		opcode2_line = node->location.first_line;
+	}
+	else
+	{
+		opcode2_file = -1;
+		opcode2_line = 0;
+	}
+}
+
+void setLocation2(ZScript::Program& program, const std::string& fname, int line)
+{
+	opcode2_file = getFileDebugIndex(program, fname);
+	opcode2_line = line;
+}
+
 void addOpcode2(vector<shared_ptr<Opcode>>& v, Opcode* code)
 {
 	shared_ptr<Opcode> op(code);
 	v.push_back(op);
+	if (opcode2_line > 0)
+		op->setLocation(opcode2_file, opcode2_line);
 }
 
 void addOpcode2PopArgs(vector<shared_ptr<Opcode>>& v, int amount)
@@ -146,6 +184,14 @@ void BuildOpcodes::visit(AST& node, void* param)
 {
 	if(node.isDisabled()) return; //Don't visit disabled nodes.
 	if(!node.reachable()) return; //Don't visit unreachable nodes for ZASM generation
+
+	auto prev_file = current_file;
+	auto prev_line = current_line;
+
+	CHECK(node.location.first_line > 0);
+	current_file = getFileDebugIndex(program, node.location.fname);
+	current_line = node.location.first_line;
+
 	if(sidefx_only) return sidefx_visit(node, param);
 	RecursiveVisitor::visit(node, param);
 	for (auto it = node.compileErrorCatches.cbegin(); it != node.compileErrorCatches.cend(); ++it)
@@ -155,6 +201,9 @@ void BuildOpcodes::visit(AST& node, void* param)
 		assert(errorId);
 		handleError(CompileError::MissingCompileError(&node, int32_t(*errorId / 10000L)));
 	}
+
+	current_file = prev_file;
+	current_line = prev_line;
 }
 
 void BuildOpcodes::literal_visit(AST& node, void* param)
@@ -240,11 +289,17 @@ void BuildOpcodes::addOpcode(Opcode* code)
 {
 	std::shared_ptr<Opcode> op(code);
 	opcodeTargets.back()->push_back(op);
+	code->setLocation(current_file, current_line);
+	DCHECK(current_file>=0);
+	DCHECK(current_line>0);
 }
 
 void BuildOpcodes::addOpcode(std::shared_ptr<Opcode> &code)
 {
 	opcodeTargets.back()->push_back(code);
+	code->setLocation(current_file, current_line);
+	DCHECK(current_file>=0);
+	DCHECK(current_line>0);
 }
 Opcode* BuildOpcodes::backOpcode()
 {
@@ -1205,6 +1260,7 @@ void BuildOpcodes::caseStmtRangeLoop(ASTStmtRangeLoop &host, void *param)
 		auto& targ = backTarget();
 		optional<int> sv, ev, targv;
 		//calculate and store the code to grab target value
+		setLocation2(program, &host);
 		if(host.overflow == ASTStmtRangeLoop::OVERFLOW_LONG)
 		{
 			if(startval)
@@ -1287,6 +1343,8 @@ void BuildOpcodes::caseStmtRangeLoop(ASTStmtRangeLoop &host, void *param)
 		else addOpcode(new OStore(new VarArgument(EXP1), new LiteralArgument(decloffset)));
 		addOpcode(new OGotoImmediate(new LabelArgument(loopstart)));
 	}
+
+	setLocation2(program, nullptr);
 
 	cur_scopes.pop_back();
 	
@@ -2372,7 +2430,9 @@ void BuildOpcodes::caseExprIncrement(ASTExprIncrement& host, void* param)
 	vector<shared_ptr<Opcode>> ops;
 	
 	// Increment EXP1
+	setLocation2(program, &host);
 	addOpcode2(ops, new OAddImmediate(new VarArgument(EXP1),new LiteralArgument(10000)));
+	setLocation2(program, nullptr);
 	
 	if(host.is_pre)
 		buildPreOp(host.operand.get(), param, ops);
@@ -2384,7 +2444,9 @@ void BuildOpcodes::caseExprDecrement(ASTExprDecrement& host, void* param)
 	vector<shared_ptr<Opcode>> ops;
 	
 	// Increment EXP1
+	setLocation2(program, &host);
 	addOpcode2(ops, new OSubImmediate(new VarArgument(EXP1),new LiteralArgument(10000)));
+	setLocation2(program, nullptr);
 	
 	if(host.is_pre)
 		buildPreOp(host.operand.get(), param, ops);

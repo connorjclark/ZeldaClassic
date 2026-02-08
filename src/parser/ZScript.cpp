@@ -144,6 +144,11 @@ vector<Function*> Program::getUserClassDestructors() const
 	return functions;
 }
 
+std::vector<std::string>& Program::getFiles()
+{
+	return files_;
+}
+
 vector<Function*> ZScript::getFunctions(Program const& program)
 {
 	vector<Function*> functions = getFunctionsInBranch(program.getScope());
@@ -567,7 +572,7 @@ Function::Function(DataType const* returnType, string const& name,
 	  paramTypes(paramTypes), paramNames(paramNames), numOptionalParams(), id(id),
 	  node(NULL), data_decl_source_node(NULL), internalScope(NULL), externalScope(NULL), thisVar(NULL),
 	  internal_flags(internal_flags), prototype(prototype),
-	  defaultReturn(defaultReturn), label(std::nullopt), flags(flags),
+	  defaultReturn(defaultReturn), label(std::nullopt), prologue_end_label(std::nullopt), flags(flags),
 	  aliased_func(nullptr), paramDatum(), templ_bound_ts()
 {
 	assert(returnType);
@@ -617,6 +622,19 @@ int32_t Function::getLabel() const
 	if (!label) label = ScriptParser::getUniqueLabelID();
 	return *label;
 }
+int32_t Function::getPrologueEndLabel() const
+{
+	if(aliased_func)
+		return aliased_func->getPrologueEndLabel();
+	if (!prologue_end_label) prologue_end_label = ScriptParser::getUniqueLabelID();
+	return *prologue_end_label;
+}
+void Function::setPrologueEndLabel(int label)
+{
+	if(aliased_func)
+		return aliased_func->setPrologueEndLabel(label);
+	prologue_end_label = label;
+}
 int32_t Function::getAltLabel() const
 {
 	if(aliased_func)
@@ -657,6 +675,7 @@ void Function::alias(Function* func, bool force)
 		returnType = func->returnType;
 		ownedCode.clear();
 		label.reset();
+		prologue_end_label.reset();
 		altlabel.reset();
 	}
 	else
@@ -788,43 +807,62 @@ bool ZScript::is_test()
 
 struct cache_entry
 {
+	cache_entry() : has_made_lines(false) {}
+	cache_entry(std::string c) : contents(std::move(c)), has_made_lines(false) {}
+
 	std::string contents;
+
+	const std::vector<uint32_t>& getLines()
+	{
+		if (!has_made_lines)
+		{
+			uint32_t count = 0;
+			std::vector<std::string> line_strings = util::split(contents, "\n");
+			for (auto& line : line_strings)
+			{
+				lines.push_back(count);
+				count += line.size() + 1;
+			}
+			lines.push_back(count);
+			has_made_lines = true;
+		}
+
+		return lines;
+	}
+
+private:
 	std::vector<uint32_t> lines;
+	bool has_made_lines;
 };
+
 static std::map<std::string, cache_entry> sourceContentsCache;
-static const cache_entry* getSourceCodeCacheEntry(const std::string& fname)
+static cache_entry* getSourceCodeCacheEntry(const std::string& fname)
 {
-	cache_entry* entry;
 	auto it = sourceContentsCache.find(fname);
 	if (it != sourceContentsCache.end())
 		return &it->second;
 
-	sourceContentsCache[fname] = {util::read_text_file(fname), {}};
-	entry = &sourceContentsCache[fname];
-
-	uint32_t count = 0;
-	std::vector<std::string> lines = util::split(entry->contents, "\n");
-	for (auto& line : lines)
-	{
-		entry->lines.push_back(count);
-		count += line.size() + 1;
-	}
-	entry->lines.push_back(count);
-
-	return entry;
+	sourceContentsCache[fname] = {util::read_text_file(fname)};
+	return &sourceContentsCache[fname];
 }
 
-int ZScript::getSourceCodeNumLines(const LocationData& loc)
+int ZScript::getSourceCodeNumLines(const std::string& fname)
 {
-	return getSourceCodeCacheEntry(loc.fname)->lines.size();
+	return getSourceCodeCacheEntry(fname)->getLines().size();
+}
+
+const std::string& ZScript::getSourceCodeContents(const std::string& fname)
+{
+	return getSourceCodeCacheEntry(fname)->contents;
 }
 
 std::string ZScript::getSourceCodeSnippet(const LocationData& loc)
 {
 	auto entry = getSourceCodeCacheEntry(loc.fname);
-	uint32_t start = entry->lines[loc.first_line - 1] + loc.first_column - 1;
-	uint32_t end = loc.last_line - 1 < entry->lines.size() ?
-		entry->lines[loc.last_line - 1] + loc.last_column - 1 :
+	auto& lines = entry->getLines();
+	uint32_t start = lines[loc.first_line - 1] + loc.first_column - 1;
+	uint32_t end = loc.last_line - 1 < lines.size() ?
+		lines[loc.last_line - 1] + loc.last_column - 1 :
 		entry->contents.size();
 	return entry->contents.substr(start, end - start);
 }
@@ -841,7 +879,7 @@ std::string ZScript::getErrorContext(const LocationData& loc)
 
 	LocationData expanded_loc = loc;
 	expanded_loc.first_line -= num_lines_prev;
-	expanded_loc.last_line = std::min(expanded_loc.last_line, getSourceCodeNumLines(loc)) + 1;
+	expanded_loc.last_line = std::min(expanded_loc.last_line, getSourceCodeNumLines(loc.fname)) + 1;
 	expanded_loc.first_column = 1;
 	expanded_loc.last_column = 1;
 

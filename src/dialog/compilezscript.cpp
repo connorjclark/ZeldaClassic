@@ -1,6 +1,7 @@
 #include "compilezscript.h"
 #include <gui/builder.h>
 #include "base/files.h"
+#include "parser/Compiler.h"
 #include "zalleg/zalleg.h"
 #include "zq/zquest.h"
 #include "alertfunc.h"
@@ -22,8 +23,7 @@ using std::string;
 
 void doEditZScript();
 void clear_map_states();
-bool do_slots(vector<shared_ptr<ZScript::Opcode>> const& zasm,
-	map<string, disassembled_script_data> &scripts, int assign_mode);
+bool do_slots(ZScript::ZasmCompilerResult& zasmCompilerResult, int assign_mode);
 int32_t onZScriptCompilerSettings();
 
 extern string zScript;
@@ -94,13 +94,7 @@ bool do_compile_and_slots(int assign_mode, bool delay)
 	fwrite(zScript.c_str(), sizeof(char), zScript.size(), tempfile);
 	fclose(tempfile);
 
-	script_data* old_init_script = nullptr;
-	if (globalscripts[0])
-		old_init_script = globalscripts[0];
-
-	map<string, ZScript::ScriptTypeID> stypes;
-	map<string, disassembled_script_data> scripts;
-	vector<shared_ptr<ZScript::Opcode>> zasm;
+	ZScript::ZasmCompilerResult zasmCompilerResult;
 	
 	std::string quest_rules_hex = get_qr_hexstr();
 	auto start_compile_time = std::chrono::steady_clock::now();
@@ -235,7 +229,7 @@ bool do_compile_and_slots(int assign_mode, bool delay)
 	
 	if(!code)
 	{
-		read_compile_data(zasm, stypes, scripts);
+		read_compile_data(zasmCompilerResult);
 		if (!(DisableCompileConsole || hasWarnErr)) 
 		{
 			parser_console.kill();
@@ -313,50 +307,50 @@ bool do_compile_and_slots(int assign_mode, bool delay)
 	globalmap[0].updateName("~Init"); //force name to ~Init
 	
 	using namespace ZScript;
-	for (auto it = stypes.begin(); it != stypes.end(); ++it)
+	for (auto it = zasmCompilerResult.scriptTypes.begin(); it != zasmCompilerResult.scriptTypes.end(); ++it)
 	{
 		string const& name = it->first;
 		if(name.size() && name[0] == '~')
 			continue; //hidden script
 		switch(it->second)
 		{
-			case scrTypeIdFfc:
+			case ZScript::ParserScriptType::idFfc:
 				asffcscripts.push_back(name);
 				break;
-			case scrTypeIdItem:
+			case ZScript::ParserScriptType::idItem:
 				asitemscripts.push_back(name);
 				break;
-			case scrTypeIdNPC:
+			case ZScript::ParserScriptType::idNPC:
 				asnpcscripts.push_back(name);
 				break;
-			case scrTypeIdEWeapon:
+			case ZScript::ParserScriptType::idEWeapon:
 				aseweaponscripts.push_back(name);
 				break;
-			case scrTypeIdLWeapon:
+			case ZScript::ParserScriptType::idLWeapon:
 				aslweaponscripts.push_back(name);
 				break;
-			case scrTypeIdPlayer:
+			case ZScript::ParserScriptType::idPlayer:
 				asplayerscripts.push_back(name);
 				break;
-			case scrTypeIdDMap:
+			case ZScript::ParserScriptType::idDMap:
 				asdmapscripts.push_back(name);
 				break;
-			case scrTypeIdScreen:
+			case ZScript::ParserScriptType::idScreen:
 				asscreenscripts.push_back(name);
 				break;
-			case scrTypeIdItemSprite:
+			case ZScript::ParserScriptType::idItemSprite:
 				asitemspritescripts.push_back(name);
 				break;
-			case scrTypeIdComboData:
+			case ZScript::ParserScriptType::idComboData:
 				ascomboscripts.push_back(name);
 				break;
-			case scrTypeIdGeneric:
+			case ZScript::ParserScriptType::idGenericScript:
 				asgenericscripts.push_back(name);
 				break;
-			case scrTypeIdGlobal:
+			case ZScript::ParserScriptType::idGlobal:
 				asglobalscripts.push_back(name);
 				break;
-			case scrTypeIdSusbcrData:
+			case ZScript::ParserScriptType::idSubscreenData:
 				assubscreenscripts.push_back(name);
 				break;
 		}
@@ -368,7 +362,7 @@ bool do_compile_and_slots(int assign_mode, bool delay)
 	zprint2("Compiled scripts in version: %d\n", QMisc.zscript_last_compiled_version);
 	
 	//assign scripts to slots
-	if (!do_slots(zasm, scripts, assign_mode))
+	if (!do_slots(zasmCompilerResult, assign_mode))
 		return false;
 
 	return true;

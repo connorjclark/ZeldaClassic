@@ -4,6 +4,7 @@
 #include "dialog/edit_region.h"
 
 #include <memory>
+#include <optional>
 #include <stdio.h>
 #include <stdlib.h>
 #include <cstring>
@@ -138,8 +139,7 @@
 extern CConsoleLoggerEx parser_console;
 
 using ZScript::disassembled_script_data;
-void write_script(vector<shared_ptr<ZScript::Opcode>> const& zasm, string& dest,
-	bool commented, map<string,disassembled_script_data>* scr_meta_map);
+void write_script(ZScript::ZasmCompilerResult& zasmCompilerResult, string& dest, bool commented, bool write_meta);
 
 namespace fs = std::filesystem;
 
@@ -212,8 +212,6 @@ FFScript FFCore;
 
 void load_size_poses();
 void do_previewtext();
-bool do_slots(vector<shared_ptr<ZScript::Opcode>> const& zasm,
-	map<string, disassembled_script_data> &scripts, int assign_mode);
 
 int32_t tooltip_timer=0, tooltip_maxtimer=30, tooltip_current_ffc=0;
 int32_t combobrushoverride=-1;
@@ -491,6 +489,7 @@ int compact_active_panel = 0;
 int combo_col_scale = 1;
 
 std::vector<std::shared_ptr<zasm_script>> zasm_scripts;
+DebugData zasm_debug_data;
 script_data *ffscripts[NUMSCRIPTFFC];
 script_data *itemscripts[NUMSCRIPTITEM];
 script_data *guyscripts[NUMSCRIPTGUYS];
@@ -18107,9 +18106,10 @@ void smart_slot_type(map<string, disassembled_script_data> &scripts,
 	}
 }
 
-bool do_slots(vector<shared_ptr<ZScript::Opcode>> const& zasm,
-	map<string, disassembled_script_data> &scripts, int assign_mode)
+bool do_slots(ZScript::ZasmCompilerResult& zasmCompilerResult, int assign_mode)
 {
+	auto& scripts = zasmCompilerResult.theScripts;
+
 	large_dialog(assignscript_dlg);
 	int32_t ret = 3;
 	char slots_msg[SLOTMSG_SIZE] = {0};
@@ -18694,12 +18694,12 @@ auto_do_slots:
 		if(doslots_log_output)
 		{
 			string outstr;
-			write_script(zasm, outstr, doslots_comment_output, doslot_scripts);
+			write_script(zasmCompilerResult, outstr, doslots_comment_output, true);
 			safe_al_trace(outstr);
 		}
 		auto start_assign_time = std::chrono::steady_clock::now();
 		string zasm_str;
-		write_script(zasm, zasm_str, false, nullptr);
+		write_script(zasmCompilerResult, zasm_str, false, false);
 
 		std::vector<ffscript> zasm;
 		if(parse_script_string(zasm, zasm_str, false))
@@ -18707,6 +18707,7 @@ auto_do_slots:
 
 		zasm_scripts.clear();
 		zasm_scripts.emplace_back(std::make_shared<zasm_script>(std::move(zasm)));
+		zasm_debug_data = std::move(zasmCompilerResult.debugData);
 
 		if(!handle_slot_map(ffcmap, 1, ffscripts))
 			goto exit_do_slots;

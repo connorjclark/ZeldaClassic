@@ -1,3 +1,4 @@
+#include "base/util.h"
 #include "parser/AST.h"
 #include "parser/Compiler.h"
 #include "parser/DocVisitor.h"
@@ -11,7 +12,7 @@
 #include "CompileOption.h"
 #include "LibrarySymbols.h"
 #include "y.tab.hpp"
-#include <iostream>
+#include <filesystem>
 #include <assert.h>
 #include <cstdlib>
 #include <string>
@@ -590,7 +591,7 @@ unique_ptr<IntermediateData> ScriptParser::generateOCode(FunctionData& fdata)
 		OpcodeContext oc(typeStore);
 
 		BuildOpcodes bo(program, scope);
-		node.execute(bo, &oc);
+		bo.visit(node, &oc);
 		if (bo.hasError()) failure = true;
 		appendElements(rval->globalsInit, oc.initCode);
 		appendElements(rval->globalsInit, bo.getResult());
@@ -646,6 +647,8 @@ unique_ptr<IntermediateData> ScriptParser::generateOCode(FunctionData& fdata)
 		}
 		scope = function.getInternalScope();
 
+		setLocation2(program, &node);
+
 		if (classfunc)
 		{
 			UserClass& user_class = scope->getClass()->user_class;
@@ -657,18 +660,18 @@ unique_ptr<IntermediateData> ScriptParser::generateOCode(FunctionData& fdata)
 			if (puc == puc_construct)
 			{
 				vector<Function*> destr = user_class.getScope().getDestructor();
-				std::shared_ptr<Opcode> first;
+				Opcode* first = nullptr;
 				Function* destructor = destr.size() == 1 ? destr.at(0) : nullptr;
 				if(destructor && !destructor->isNil())
 				{
 					Function* destructor = destr[0];
-					first.reset(new OSetImmediateLabel(new VarArgument(EXP1),
-						new LabelArgument(destructor->getLabel(), true)));
+					first = new OSetImmediateLabel(new VarArgument(EXP1), new LabelArgument(destructor->getLabel(), true));
 				}
-				else first.reset(new OSetImmediate(new VarArgument(EXP1),
-					new LiteralArgument(0)));
+				else
+					first = new OSetImmediate(new VarArgument(EXP1), new LiteralArgument(0));
+
 				first->setLabel(function.getLabel());
-				funccode.push_back(std::move(first));
+				addOpcode2(funccode, first);
 				addOpcode2(funccode, new OSetRegister(new VarArgument(CLASS_THISKEY2),new VarArgument(CLASS_THISKEY)));
 				addOpcode2(funccode, new OConstructClass(new VarArgument(CLASS_THISKEY),
 					new VectorArgument(user_class.members)));
@@ -696,9 +699,9 @@ unique_ptr<IntermediateData> ScriptParser::generateOCode(FunctionData& fdata)
 			}
 			else if(puc == puc_destruct)
 			{
-				std::shared_ptr<Opcode> first(new ODestructor(new StringArgument(user_class.getName())));
+				Opcode* first = new ODestructor(new StringArgument(user_class.getName()));
 				first->setLabel(function.getLabel());
-				funccode.push_back(std::move(first));
+				addOpcode2(funccode, first);
 			}
 			else
 			{
@@ -741,10 +744,11 @@ unique_ptr<IntermediateData> ScriptParser::generateOCode(FunctionData& fdata)
 			OpcodeContext oc(typeStore);
 			BuildOpcodes bo(program, scope);
 			bo.parsing_user_class = puc;
-			node.execute(bo, &oc);
+			bo.visit(node, &oc);
 			
 			if (bo.hasError()) failure = true;
 			
+			size_t prologue_end_index = funccode.size();
 			appendElements(funccode, bo.getResult());
 			
 			if(function.getFlag(FUNCFLAG_NEVER_RETURN))
@@ -754,6 +758,11 @@ unique_ptr<IntermediateData> ScriptParser::generateOCode(FunctionData& fdata)
 			}
 			else
 			{
+				if (node.block && !node.block->statements.empty())
+					setLocation2(program, node.block->statements.back()->location.fname, node.block->statements.back()->location.last_line);
+				else
+					setLocation2(program, nullptr);
+
 				addOpcode2(funccode, new ONoOp(bo.getReturnLabelID()));
 
 				// Release references from parameters that are objects.
@@ -784,6 +793,12 @@ unique_ptr<IntermediateData> ScriptParser::generateOCode(FunctionData& fdata)
 				}
 				addOpcode2(funccode, new OReturnFunc());
 			}
+
+			if (funccode[prologue_end_index]->getLabel())
+				function.setPrologueEndLabel(funccode[prologue_end_index]->getLabel());
+			else
+				funccode[prologue_end_index]->setLabel(function.getPrologueEndLabel());
+
 			function.giveCode(funccode);
 		}
 		else
@@ -882,10 +897,11 @@ unique_ptr<IntermediateData> ScriptParser::generateOCode(FunctionData& fdata)
 			node.execute(cv);
 			OpcodeContext oc(typeStore);
 			BuildOpcodes bo(program,scope);
-			node.execute(bo, &oc);
+			bo.visit(node, &oc);
 
 			if (bo.hasError()) failure = true;
 			
+			size_t prologue_end_index = funccode.size();
 			appendElements(funccode, bo.getResult());
 			
 			if(function.getFlag(FUNCFLAG_NEVER_RETURN))
@@ -895,6 +911,11 @@ unique_ptr<IntermediateData> ScriptParser::generateOCode(FunctionData& fdata)
 			}
 			else
 			{
+				if (node.block && !node.block->statements.empty())
+					setLocation2(program, node.block->statements.back()->location.fname, node.block->statements.back()->location.last_line);
+				else
+					setLocation2(program, nullptr);
+
 				// Add appendix code.
 				funccode.push_back(std::shared_ptr<Opcode>(new ONoOp(bo.getReturnLabelID())));
 
@@ -915,9 +936,16 @@ unique_ptr<IntermediateData> ScriptParser::generateOCode(FunctionData& fdata)
 					addOpcode2(funccode, new OQuit()); //exit the script
 				else addOpcode2(funccode, new OReturnFunc());
 			}
-			
+
+			if (funccode[prologue_end_index]->getLabel())
+				function.setPrologueEndLabel(funccode[prologue_end_index]->getLabel());
+			else
+				funccode[prologue_end_index]->setLabel(function.getPrologueEndLabel());
+
 			function.giveCode(funccode);
 		}
+
+		setLocation2(program, nullptr);
 	}
 
 	if (failure)
@@ -926,7 +954,6 @@ unique_ptr<IntermediateData> ScriptParser::generateOCode(FunctionData& fdata)
 		return unique_ptr<IntermediateData>(rval.release());;
 	}
 
-	//Z_message("yes");
 	return unique_ptr<IntermediateData>(rval.release());
 }
 
@@ -982,7 +1009,9 @@ void ScriptAssembler::assemble_init()
 			Script& script = **it;
 			Function* run = script.getRun();
 			vector<shared_ptr<Opcode>> const& runCode = run->getCode();
-			
+
+			setLocation2(program, run->node);
+
 			//Function call the run function
 			//push the stack frame pointer
 			addOpcode2(ginit, new OPushRegister(new VarArgument(SFRAME)));
@@ -1016,19 +1045,29 @@ void ScriptAssembler::assemble_init()
 				; //function ends in a return already
 			else
 				addOpcode2(ginit_mergefuncs, new OReturnFunc());
+
+			setLocation2(program, nullptr);
 		}
 	}
+
 	addOpcode2(ginit, new OQuit());
 	ginit.insert(ginit.end(), ginit_mergefuncs.begin(), ginit_mergefuncs.end());
 	optimize_code(ginit);
 
 	Script* init = program.getScript("~Init");
-	assemble_script(init, ginit, 0, "void run()");
+	Function* init_fn = init->getScope().addFunction(&DataType::ZVOID, "run", {}, {});
+	init_fn->giveCode(ginit);
+	assemble_script(init, init_fn, "void run()");
 }
 
-void ScriptAssembler::assemble_script(Script* scr,
-	vector<shared_ptr<Opcode>> runCode, int numparams, string const& runsig)
+void ScriptAssembler::assemble_script(Script* scr, Function* run_fn, string const& runsig)
 {
+	int32_t numparams = run_fn->paramTypes.size();
+	std::vector<std::shared_ptr<Opcode>> new_code;
+	setLocation2(program, run_fn->getNode());
+
+	auto fn_code = run_fn->takeCode();
+
 	// Push on the params to the run.
 	auto script_start_indx = rval.size();
 	int i = 0;
@@ -1039,8 +1078,8 @@ void ScriptAssembler::assemble_script(Script* scr,
 
 	// Make the rval
 	auto rv_sz = rval.size();
-	for (vector<shared_ptr<Opcode>>::iterator it = runCode.begin();
-	     it != runCode.end(); ++it)
+	for (vector<shared_ptr<Opcode>>::iterator it = fn_code.begin();
+	     it != fn_code.end(); ++it)
 		addOpcode2(rval, (*it)->makeClone());
 	if(rval.size() == rv_sz+1)
 		rval.back()->mergeComment(fmt::format("{} Body",runsig));
@@ -1082,8 +1121,7 @@ void ScriptAssembler::assemble_scripts()
 		if(run.prototype)
 			continue; //Skip if run is prototype
 		optimize_function(&run);
-		int32_t numparams = script.getRun()->paramTypes.size();
-		assemble_script(&script, run.getCode(), numparams, run.getUnaliasedSignature(true).asString());
+		assemble_script(&script, &run, run.getUnaliasedSignature(true).asString());
 	}
 }
 
@@ -1247,7 +1285,9 @@ void ScriptAssembler::optimize_code(vector<shared_ptr<Opcode>>& code_vec)
 			{ \
 				Opcode* ocode = it->get(); \
 				auto lbl = ocode->getLabel(); \
-				string comment = ocode->getComment();
+				string comment = ocode->getComment(); \
+				int file = ocode->file; \
+				int line = ocode->line;
 			#define END_OPT_PASS() \
 				++it; \
 			}
@@ -1296,10 +1336,11 @@ void ScriptAssembler::optimize_code(vector<shared_ptr<Opcode>>& code_vec)
 			if(ty* op = dynamic_cast<ty*>(ocode)) \
 			{ \
 				LabelArgument* label_arg = static_cast<LabelArgument*>(op->takeArgument()); \
-				it = code.erase(it); \
 				OGotoCompare* newop = new OGotoCompare(label_arg,new CompareArgument(cmp)); \
 				newop->setLabel(lbl); \
 				newop->setComment(comment); \
+				newop->setLocation(file, line); \
+				it = code.erase(it); \
 				it = code.insert(it,std::shared_ptr<Opcode>(newop)); \
 				continue; \
 			}
@@ -1398,12 +1439,14 @@ void ScriptAssembler::optimize_code(vector<shared_ptr<Opcode>>& code_vec)
 							it = code.insert(it,std::shared_ptr<Opcode>(new ty2(arg,new LiteralArgument(addcount+1)))); \
 							(*it)->setLabel(lbl); \
 							(*it)->setComment(comment); \
+							(*it)->setLocation(file, line);\
 						} \
 						else /*if multi_op*/ \
 						{ \
 							LiteralArgument* litarg = multi_op->getSecondArgument(); \
 							litarg->value += addcount; \
 							multi_op->setComment(comment); \
+							multi_op->setLocation(file, line);\
 						} \
 					} \
 					else if(multi_op) \
@@ -1416,6 +1459,7 @@ void ScriptAssembler::optimize_code(vector<shared_ptr<Opcode>>& code_vec)
 							it = code.insert(it,std::shared_ptr<Opcode>(new ty1(arg))); \
 							(*it)->setLabel(lbl); \
 							(*it)->setComment(comment); \
+							(*it)->setLocation(file, line);\
 						} \
 					} \
 					++it; \
@@ -1669,7 +1713,7 @@ void ScriptAssembler::optimize_code(vector<shared_ptr<Opcode>>& code_vec)
 		START_OPT_PASS()
 			MERGE_GOTO_NEXT(OGotoImmediate) //Redo this here due to timing stuff -Em
 			MERGE_GOTO_NEXT2(OGotoCompare) //Redo this here due to timing stuff -Em
-			//OSetImmediate -> OTraceRegister ('Trace()' optimization)
+			// OSetImmediate + OTraceRegister -> OTraceImmediate
 			if(OSetImmediate* setop = dynamic_cast<OSetImmediate*>(ocode))
 			{
 				Argument const* regarg = setop->getFirstArgument();
@@ -1678,15 +1722,48 @@ void ScriptAssembler::optimize_code(vector<shared_ptr<Opcode>>& code_vec)
 				Opcode* nextcode = it2->get();
 				if(OTraceRegister* traceop = dynamic_cast<OTraceRegister*>(nextcode))
 				{
-					if(traceop->getLabel() == -1 && *regarg == *traceop->getArgument())
+					if(*regarg == *traceop->getArgument())
 					{
 						auto arg = setop->takeSecondArgument();
 						Opcode::mergeComment(comment, traceop->getComment());
+
+						// Capture labels before erasing
+						int set_lbl = lbl; // The label on the SETV
+						int trace_lbl = traceop->getLabel(); // The label on the TRACER
+
 						it2 = code.erase(it2);
 						it = code.erase(it);
+
+						// Insert new op.
 						it = code.insert(it, std::shared_ptr<Opcode>(new OTraceImmediate(arg)));
-						(*it)->setLabel(lbl);
-						(*it)->setComment(comment);
+						Opcode* new_op = it->get();
+						new_op->setComment(comment);
+						new_op->setLocation(file, line);
+
+						if (trace_lbl != -1)
+						{
+							if (set_lbl != -1)
+							{
+								// CASE 1: Both had labels.
+								// We keep the SET label, and alias the TRACE label to it.
+								// This updates the DebugScope pointers automatically.
+								MergeLabels::merge(set_lbl, {trace_lbl}, code, nullptr, &label_index);
+								new_op->setLabel(set_lbl);
+							}
+							else
+							{
+								// CASE 2: Only TRACE had a label.
+								// Move it to the new op (expanding the scope backwards).
+								new_op->setLabel(trace_lbl);
+							}
+						}
+						else
+						{
+							// CASE 3: Only SET (or neither) had a label.
+							// Keep the original SET label.
+							new_op->setLabel(set_lbl);
+						}
+
 						++it;
 						continue;
 					}
@@ -1701,6 +1778,26 @@ void ScriptAssembler::optimize_code(vector<shared_ptr<Opcode>>& code_vec)
 // Insert every used function's code into `rval`.
 void ScriptAssembler::output_code()
 {
+	// Sort by source location. This improves the debug info encoding.
+	auto& files = program.getFiles();
+	std::map<std::string, int> fileToDebugIndexMap;
+	for (int i = 0; i < files.size(); i++)
+		fileToDebugIndexMap[files[i]] = i;
+
+	std::sort(used_functions.begin(), used_functions.end(), [&](const auto* a, const auto* b){
+		int file_a = fileToDebugIndexMap[a->node->location.fname];
+		int file_b = fileToDebugIndexMap[b->node->location.fname];
+		if (file_a != file_b) return file_b > file_a;
+
+		int line_a = a->node->location.first_line;
+		int line_b = b->node->location.first_line;
+		if (line_a != line_b) return line_b > line_a;
+
+		return b->id > a->id;
+	});
+
+	setLocation2(program, nullptr);
+
 	for (auto fn : used_functions)
 	{
 		vector<shared_ptr<Opcode>> functionCode = fn->getCode();
@@ -1838,10 +1935,10 @@ void ScriptsData::fillFromAssembler(ScriptAssembler& assembler)
 		auto& pcs = pair.second;
 		string const& name = script->getName();
 		
-		zasm_meta& meta = theScripts[name].meta;
-		theScripts[name].pc = pcs.first;
-		theScripts[name].end_pc = pcs.second;
-		scriptTypes[name] = script->getType();
+		zasm_meta& meta = zasmCompilerResult.theScripts[name].meta;
+		zasmCompilerResult.theScripts[name].pc = pcs.first;
+		zasmCompilerResult.theScripts[name].end_pc = pcs.second;
+		zasmCompilerResult.scriptTypes[name] = script->getType().getId();
 		
 		meta = script->getMetadata();
 		meta.script_type = script->getType().getTrueId();
@@ -1884,6 +1981,85 @@ void ScriptsData::fillFromAssembler(ScriptAssembler& assembler)
 			}
 		}
 	}
-	zasm = std::move(assembler.getCode());
-}
 
+	zasmCompilerResult.zasm = std::move(assembler.getCode());
+
+	int32_t prev_file = 0;
+	int32_t prev_line = 1;
+	int32_t prev_pc = 0;
+
+	auto allFunctions = getFunctions(assembler.program);
+	appendElements(allFunctions, assembler.program.getUserClassConstructors());
+	appendElements(allFunctions, assembler.program.getUserClassDestructors());
+	for (size_t i = 0; i < allFunctions.size(); i++)
+	{
+		Function& function = *allFunctions[i];
+		if(function.is_aliased())
+			continue;
+		if(function.isTemplateSkip())
+		{
+			for(auto& applied : function.get_applied_funcs())
+				allFunctions.push_back(applied.get());
+			continue;
+		}
+	}
+
+	std::set<int> prologue_end_labels;
+	for (auto& fn : allFunctions)
+		prologue_end_labels.insert(fn->getPrologueEndLabel());
+
+	for (size_t pc = 0; pc < zasmCompilerResult.zasm.size(); ++pc)
+	{
+		Opcode* op = zasmCompilerResult.zasm[pc].get();
+
+		if (op->line <= 0) continue;
+
+		int label = op->getLabel();
+		bool is_prologue_end = label != -1 && prologue_end_labels.contains(label);
+
+		bool file_changed = false;
+		if (op->file >= 0 && op->file != prev_file)
+		{
+			// Flush the range using the old file.
+			int32_t gap = pc - prev_pc;
+			if (gap > 0)
+			{
+				zasmCompilerResult.debugData.appendLineInfoExtendedStep(gap, 0);
+				prev_pc = pc;
+			}
+
+			zasmCompilerResult.debugData.appendLineInfoSetFile(op->file);
+			prev_file = op->file;
+			file_changed = true;
+		}
+
+		// Skip if line hasn't changed (and we didn't just switch files).
+		if (!file_changed && !is_prologue_end && op->line == prev_line)
+			continue;
+
+		int32_t d_line = op->line - prev_line;
+		int32_t d_pc = pc - prev_pc;
+
+		if (d_line == 1 && d_pc >= 0 && d_pc <= DebugData::DEBUG_LINE_OP_SIMPLE_STEP_MAX)
+			zasmCompilerResult.debugData.appendLineInfoSimpleStep(d_pc);
+		else
+			zasmCompilerResult.debugData.appendLineInfoExtendedStep(d_pc, d_line);
+
+		if (is_prologue_end)
+			zasmCompilerResult.debugData.appendLineInfoPrologueEnd();
+
+		prev_line = op->line;
+		prev_pc = pc;
+	}
+
+	auto cur_path = fs::current_path();
+	for (auto& file : assembler.program.getFiles())
+	{
+		auto path = fs::path(file);
+		auto relative_path = path.lexically_normal().lexically_relative(cur_path);
+		zasmCompilerResult.debugData.source_files.push_back({
+			.path = relative_path.empty() ? path : relative_path,
+			.contents = getSourceCodeContents(file),
+		});
+	}
+}

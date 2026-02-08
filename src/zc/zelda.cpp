@@ -27,6 +27,7 @@
 
 #include <stdlib.h>
 
+#include "zasm/debug_data.h"
 #include "zc/commands.h"
 #include "zc/frame_timings.h"
 #include "zc/replay_upload.h"
@@ -361,6 +362,7 @@ mapscr* special_warp_return_scr = &special_warp_return_scrs[0];
 mapscr* hero_scr;
 mapscr* prev_hero_scr;
 std::vector<std::shared_ptr<zasm_script>> zasm_scripts;
+DebugData zasm_debug_data;
 script_data *ffscripts[NUMSCRIPTFFC];
 script_data *itemscripts[NUMSCRIPTITEM];
 script_data *globalscripts[NUMSCRIPTGLOBAL];
@@ -945,14 +947,6 @@ void Z_eventlog(const char *format,...)
 
 void Z_scripterrlog(const char * const format,...)
 {
-	bool do_user_visible_log = get_qr(qr_SCRIPTERRLOG) || DEVLEVEL > 0; // TODO: consider removing this, always logging.
-	bool do_replay_log = replay_is_recording() && replay_get_meta_bool("script_trace");
-	if (!do_replay_log && !do_user_visible_log)
-		return;
-
-	if (do_user_visible_log)
-		FFCore.TraceScriptIDs(true);
-
 	char buf[2048];
 
 	va_list ap;
@@ -960,16 +954,7 @@ void Z_scripterrlog(const char * const format,...)
 	vsnprintf(buf, 2048, format, ap);
 	va_end(ap);
 
-	if (do_user_visible_log)
-		al_trace("%s",buf);
-	if (do_replay_log)
-		replay_step_comment(fmt::format("error: {}", buf));
-
-	if ( console_enabled && do_user_visible_log ) 
-	{
-		zscript_coloured_console.cprintf((CConsoleLoggerEx::COLOR_RED | CConsoleLoggerEx::COLOR_INTENSITY | 
-			CConsoleLoggerEx::COLOR_BACKGROUND_BLACK),"%s",buf);
-	}
+	FFCore.handle_trace(buf, true);
 }
 
 // TODO: remove if Z_scripterrlog ever is changed to ignore qr_SCRIPTERRLOG, at least for allegro.log.
@@ -980,7 +965,7 @@ void Z_scripterrlog_force_trace(const char * const format,...)
 
 	if(get_qr(qr_SCRIPTERRLOG) || DEVLEVEL > 0)
 	{
-		FFCore.TraceScriptIDs(true);
+		FFCore.PrintTracePrefix(true);
 		
 		va_list ap;
 		va_start(ap, format);

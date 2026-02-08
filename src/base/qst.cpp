@@ -36,6 +36,7 @@
 #include "subscr.h"
 #include "sfx.h"
 #include "base/md5.h"
+#include "zasm/debug_data.h"
 #include "zc/replay.h"
 #include "zc/zelda.h"
 #include "zinfo.h"
@@ -12310,8 +12311,6 @@ int32_t setupsubscreens()
     return 0;
 }
 
-extern std::vector<std::shared_ptr<zasm_script>> zasm_scripts;
-
 extern script_data *ffscripts[NUMSCRIPTFFC];
 extern script_data *itemscripts[NUMSCRIPTITEM];
 extern script_data *guyscripts[NUMSCRIPTGUYS];
@@ -12339,6 +12338,7 @@ int32_t readffscript(PACKFILE *f, zquestheader *Header)
 	int32_t ret;
 	read_scripts.clear();
 	zasm_scripts.clear();
+	zasm_debug_data = {};
 	
 	//section version info
 	if(!p_igetw(&s_version,f))
@@ -13010,6 +13010,23 @@ int32_t readffscript(PACKFILE *f, zquestheader *Header)
 					
 				delete[] buf;
 			}
+		}
+	}
+
+	if (s_version >= 29)
+	{
+		std::vector<byte> debugDataBytes;
+		if(!p_getlvec(&debugDataBytes, f))
+			return qe_invalid;
+
+		if (auto debugData = DebugData::decode(debugDataBytes))
+		{
+			zasm_debug_data = std::move(*debugData);
+		}
+		else
+		{
+			zprint2("Error: failed to decode zscript debug data\n");
+			return qe_invalid;
 		}
 	}
 

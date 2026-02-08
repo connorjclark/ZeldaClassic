@@ -8,7 +8,8 @@
 #include "base/qrs.h"
 #include "new_subscr.h"
 #include "zc/ffscript.h"
-#include "zc/scripting/types.h"
+#include "zc/scripting/types/savemenu.h"
+#include "zc/scripting/types/websocket.h"
 #include <cstddef>
 #include <functional>
 #include <optional>

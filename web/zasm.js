@@ -60,6 +60,7 @@ export async function compileScriptWasmModule(name, ptr, size) {
     emFunctions.doCommandsAsync = Module.cwrap('em_do_commands', 'int', ['int', 'int', 'int'], {async: true});
     emFunctions.getRegister = Module.cwrap('em_get_register', 'int', ['int']);
     emFunctions.setRegister = Module.cwrap('em_set_register', 'void', ['int', 'int']);
+    emFunctions.setGuardedRegister = Module.cwrap('em_set_guarded_register', 'void', ['int', 'int', 'int']);
     emFunctions.runtimeDebug = Module.cwrap('em_runtime_script_debug', 'void', ['int', 'int']);
     emFunctions.logError = Module.cwrap('em_log_error', 'void', ['int']);
   }
@@ -79,6 +80,7 @@ export async function compileScriptWasmModule(name, ptr, size) {
         do_commands_async: emFunctions.doCommandsAsync,
         get_register: emFunctions.getRegister,
         set_register: emFunctions.setRegister,
+        set_guarded_register: emFunctions.setGuardedRegister,
         runtime_debug: emFunctions.runtimeDebug,
         log_error: emFunctions.logError,
       },

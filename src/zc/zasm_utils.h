@@ -2,14 +2,13 @@
 #define ZASM_UTILS_H_
 
 #include "base/zdefs.h"
+#include "zasm/pc.h"
 #include <map>
 #include <set>
 #include <stdint.h>
 #include <string>
 #include <vector>
 #include <functional>
-
-typedef uint32_t pc_t;
 
 struct CommandArgumentInfo
 {
