@@ -135,11 +135,14 @@ struct DebugData
 
 	bool exists() const;
 
+	int getScopeIndex(const DebugScope* scope) const;
+
 	std::pair<const char*, int> resolveLocation(pc_t pc) const;
 	const DebugScope* resolveScope(pc_t pc) const;
 	const DebugScope* resolveFunctionScope(pc_t pc) const;
 	const DebugScope* resolveFileScope(std::string fname) const;
 	const DebugType* getType(uint32_t type_id) const;
+	const DebugType* getTypeUnwrapConst(uint32_t type_id) const;
 	std::string getTypeName(uint32_t type_id) const;
 	std::string getFullScopeName(const DebugScope* scope) const;
 	std::string getFunctionSignature(const DebugScope* scope) const;
@@ -152,6 +155,8 @@ struct DebugData
     // Returns the DebugScope (class/namespace) if found, else nullptr.
     const DebugScope* resolveScope(const std::string& identifier, const DebugScope* current_scope) const;
 	std::vector<const DebugScope*> resolveFunctions(const std::string& identifier, const DebugScope* current_scope) const;
+
+	bool canCoerceTypes(int type_index_1, int type_index_2) const;
 
 	std::vector<byte> encode() const;
 	std::string internalToStringForDebugging() const;
