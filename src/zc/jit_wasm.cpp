@@ -28,6 +28,7 @@
 #include "base/general.h"
 #include "base/zapp.h"
 #include "base/zdefs.h"
+#include "zasm/pc.h"
 #include "zasm/table.h"
 #include "zc/ffscript.h"
 #include "zc/jit.h"
@@ -51,11 +52,14 @@ struct CompilationState
 	WasmAssembler* wasm;
 	bool runtime_debugging;
 
+	pc_t pc;
+
 	uint8_t f_idx_set_return_value;
 	uint8_t f_idx_do_commands;
 	uint8_t f_idx_do_commands_async;
 	uint8_t f_idx_get_register;
 	uint8_t f_idx_set_register;
+	uint8_t f_idx_set_guarded_register;
 	uint8_t f_idx_runtime_debug;
 	uint8_t f_idx_log_error;
 
@@ -271,7 +275,17 @@ static void set_z_register(CompilationState& state, int r, std::function<void()>
 
 		state.wasm->emitI32Const(r);
 		fn();
-		state.wasm->emitCall(state.f_idx_set_register);
+
+		// Some registers have an extra check when writing to them.
+		if (is_guarded_script_register(r))
+		{
+			state.wasm->emitI32Const(state.pc); // Needed for accurate stack trace should an error occur.
+			state.wasm->emitCall(state.f_idx_set_guarded_register);
+		}
+		else
+		{
+			state.wasm->emitCall(state.f_idx_set_register);
+		}
 	}
 }
 
@@ -509,6 +523,8 @@ static WasmAssembler compile_function(CompilationState& state, const zasm_script
 	{
 		for (pc_t i = start_pc; i <= final_pc; i++)
 		{
+			state.pc = i;
+
 			if (cfg.contains_block_start(i))
 			{
 				wasm.emitEnd();
@@ -1368,6 +1384,7 @@ JittedScript* jit_compile_script(zasm_script* script)
 	state.f_idx_do_commands_async = comp.builder.importFunction("do_commands_async", 4, 1);
 	state.f_idx_get_register = comp.builder.importFunction("get_register", 1, 1);
 	state.f_idx_set_register = comp.builder.importFunction("set_register", 2, 0);
+	state.f_idx_set_guarded_register = comp.builder.importFunction("set_guarded_register", 3, 0);
 	state.f_idx_runtime_debug = comp.builder.importFunction("runtime_debug", 2, 0);
 	state.f_idx_log_error = comp.builder.importFunction("log_error", 1, 0);
 
@@ -1627,8 +1644,15 @@ extern "C" int em_get_register(int r)
 
 extern "C" void em_set_register(int r, int value)
 {
-	// TODO: should select the correct command at compile time, like jix_x64 does. Just being lazy.
-	do_set(r, value);
+	set_register(r, value);
+}
+
+extern "C" void em_set_guarded_register(int32_t arg, int32_t value, pc_t pc)
+{
+	extern refInfo *ri;
+
+	ri->pc = pc;
+	do_set(arg, value);
 }
 
 extern "C" void em_runtime_script_debug(int pc, int sp)

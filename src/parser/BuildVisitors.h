@@ -12,6 +12,8 @@
 #include <vector>
 #include <set>
 
+void setLocation2(ZScript::Program& program, const ZScript::AST* node);
+void setLocation2(ZScript::Program& program, const std::string& fname, int line);
 void addOpcode2(std::vector<std::shared_ptr<ZScript::Opcode>>& v, ZScript::Opcode* code);
 void addOpcode2PopArgs(vector<shared_ptr<ZScript::Opcode>>& v, int amount);
 

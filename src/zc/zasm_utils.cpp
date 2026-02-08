@@ -761,8 +761,6 @@ static uint64_t generate_function_hash(const zasm_script* script, const Structur
 
 void zasm_for_every_script(bool parallel, std::function<void(zasm_script*)> fn)
 {
-	extern std::vector<std::shared_ptr<zasm_script>> zasm_scripts;
-
 	std::vector<zasm_script*> scripts;
 	scripts.reserve(zasm_scripts.size());
 	for (auto& script : zasm_scripts)

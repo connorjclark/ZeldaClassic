@@ -4,6 +4,7 @@
 #include "base/qrs.h"
 #include "base/util.h"
 #include "base/zdefs.h"
+#include "zasm/pc.h"
 #include "zasm/table.h"
 #include "zc/jit.h"
 #include "zc/ffscript.h"
@@ -50,6 +51,7 @@ struct CompilationState
 {
 	zasm_script* script;
 	JittedScript* j_script;
+	pc_t pc;
 	pc_t start_pc;
 	pc_t final_pc;
 	CallConvId calling_convention;
@@ -322,6 +324,14 @@ static void set_register_and_restore_sp(int32_t arg, int32_t value, uint32_t sp)
 	set_register(arg, value);
 }
 
+static void set_guarded_register(int32_t arg, int32_t value, pc_t pc)
+{
+	extern refInfo *ri;
+
+	ri->pc = pc;
+	do_set(arg, value);
+}
+
 // Must use virtual register to pass as function argument via cc.invoke.
 static x86::Gp get_tmp_sp(CompilationState& state, x86::Compiler& cc)
 {
@@ -532,18 +542,25 @@ static void set_z_register(CompilationState& state, x86::Compiler& cc, int r, T 
 		invokeNode->setArg(1, val);
 		invokeNode->setArg(2, stackIndex);
 	}
+	else if (is_guarded_script_register(r))
+	{
+		// Some registers have an extra check when writing to them.
+		flush_cache_for_dependent_registers(state, cc, r);
+
+		// Call external set_guarded_register.
+		InvokeNode *invokeNode;
+		cc.invoke(&invokeNode, set_guarded_register, FuncSignatureT<void, int32_t, int32_t, pc_t>(state.calling_convention));
+		invokeNode->setArg(0, r);
+		invokeNode->setArg(1, val);
+		invokeNode->setArg(2, state.pc); // Needed for accurate stack trace should an error occur.
+	}
 	else
 	{
 		flush_cache_for_dependent_registers(state, cc, r);
 
-		// Only some registers have an extra check when writing to them.
-		auto set_fn = set_register;
-		if (is_guarded_script_register(r))
-			set_fn = do_set;
-
 		// Call external set_register.
 		InvokeNode *invokeNode;
-		cc.invoke(&invokeNode, set_fn, FuncSignatureT<void, int32_t, int32_t>(state.calling_convention));
+		cc.invoke(&invokeNode, set_register, FuncSignatureT<void, int32_t, int32_t>(state.calling_convention));
 		invokeNode->setArg(0, r);
 		invokeNode->setArg(1, val);
 	}
@@ -881,7 +898,7 @@ static void ret_if_not_ok(CompilationState& state, x86::Compiler& cc, x86::Gp re
 }
 
 // Defer to the ZASM command interpreter for 1+ commands.
-static void compile_command_interpreter(CompilationState& state, x86::Compiler& cc, zasm_script *script, int i, int count, bool is_wait = false)
+static void compile_command_interpreter(CompilationState& state, x86::Compiler& cc, zasm_script *script, int count, bool is_wait = false)
 {
 	x86::Gp scriptInstancePtr = get_ctx_script_instance(state, cc);
 	x86::Gp stackIndex = get_tmp_sp(state, cc);
@@ -889,23 +906,23 @@ static void compile_command_interpreter(CompilationState& state, x86::Compiler& 
 	InvokeNode *invokeNode;
 	if (count == 1)
 	{
-		cc.invoke(&invokeNode, run_script_jit_one, FuncSignatureT<int32_t, JittedScriptInstance*, int32_t, uint32_t>(state.calling_convention));
+		cc.invoke(&invokeNode, run_script_jit_one, FuncSignatureT<int32_t, JittedScriptInstance*, pc_t, uint32_t>(state.calling_convention));
 		invokeNode->setArg(0, scriptInstancePtr);
-		invokeNode->setArg(1, i);
+		invokeNode->setArg(1, state.pc);
 		invokeNode->setArg(2, stackIndex);
 	}
 	else
 	{
-		cc.invoke(&invokeNode, run_script_jit_sequence, FuncSignatureT<int32_t, JittedScriptInstance*, int32_t, uint32_t, int32_t>(state.calling_convention));
+		cc.invoke(&invokeNode, run_script_jit_sequence, FuncSignatureT<int32_t, JittedScriptInstance*, pc_t, uint32_t, int32_t>(state.calling_convention));
 		invokeNode->setArg(0, scriptInstancePtr);
-		invokeNode->setArg(1, i);
+		invokeNode->setArg(1, state.pc);
 		invokeNode->setArg(2, stackIndex);
 		invokeNode->setArg(3, count);
 	}
 
 	if (is_wait)
 	{
-		set_ctx_pc(state, cc, i + 1);
+		set_ctx_pc(state, cc, state.pc + 1);
 
 		x86::Gp retVal = cc.newInt32();
 		invokeNode->setRet(0, retVal);
@@ -916,14 +933,14 @@ static void compile_command_interpreter(CompilationState& state, x86::Compiler& 
 		// here because RUNSCRIPT_OK is the default value.
 		cc.je(state.L_End);
 
-		cc.bind(state.resume_labels[i]);
+		cc.bind(state.resume_labels[state.pc]);
 		return;
 	}
 
 	bool could_return_not_ok = false;
 	for (int j = 0; j < count; j++)
 	{
-		int index = i + j;
+		int index = state.pc + j;
 		if (command_could_return_not_ok(script->zasm[index].command))
 		{
 			could_return_not_ok = true;
@@ -1029,14 +1046,14 @@ static bool command_is_compiled(int command)
 }
 
 // Check for stack overflows, but only once per contiguous series of PUSH (or POP) commands.
-static void handle_check_sp_push(CompilationState& state, x86::Compiler& cc, const zasm_script* script, pc_t cur, x86::Gp vStackIndex)
+static void handle_check_sp_push(CompilationState& state, x86::Compiler& cc, const zasm_script* script, x86::Gp vStackIndex)
 {
-	if (cur >= state.num_push_commands_in_row_end_pc)
+	if (state.pc >= state.num_push_commands_in_row_end_pc)
 	{
 		int stack_delta = 1;
 		int max_stack_delta = 1;
 
-		int j = cur + 1;
+		int j = state.pc + 1;
 		for (; j < script->size; j++)
 		{
 			const auto& op = script->zasm[j];
@@ -1123,7 +1140,7 @@ static x86::Gp compile_modv(CompilationState& state, x86::Compiler& cc, x86::Gp 
 }
 
 // Every command here must be reflected in command_is_compiled!
-static void compile_single_command(CompilationState& state, x86::Compiler& cc, const ffscript& instr, pc_t pc, zasm_script *script)
+static void compile_single_command(CompilationState& state, x86::Compiler& cc, const ffscript& instr, zasm_script *script)
 {
 	int command = instr.command;
 	int arg1 = instr.arg1;
@@ -1135,7 +1152,7 @@ static void compile_single_command(CompilationState& state, x86::Compiler& cc, c
 			break;
 		case QUIT:
 		{
-			compile_command_interpreter(state, cc, script, pc, 1);
+			compile_command_interpreter(state, cc, script, 1);
 			cc.mov(state.vResult, EXEC_RESULT_EXIT);
 			set_ctx_ret_code(state, cc, RUNSCRIPT_STOPPED);
 			cc.jmp(state.L_End);
@@ -1160,25 +1177,15 @@ static void compile_single_command(CompilationState& state, x86::Compiler& cc, c
 		break;
 		case CALLFUNC:
 		{
-			if (pc == state.final_pc)
-			{
-				// If CALLFUNC is the last command, then it is calling a function that never
-				// returns. Let's just move the pc to the target function.
-				set_ctx_pc(state, cc, arg1);
-				cc.mov(state.vResult, EXEC_RESULT_CONTINUE);
-				cc.jmp(state.L_End);
-			}
-			else
-			{
-				set_ctx_pc(state, cc, pc);
-				set_ctx_call_pc(state, cc, arg1);
-				if (state.modified_stack)
-					set_ctx_sp(state, cc, state.vSp);
-				cc.mov(state.vResult, EXEC_RESULT_CALL);
-				restore_regs(state, cc);
-				cc.ret(state.vResult);
-				cc.bind(state.resume_labels[pc]);
-			}
+			set_ctx_pc(state, cc, state.pc);
+			set_ctx_call_pc(state, cc, arg1);
+			if (state.modified_stack)
+				set_ctx_sp(state, cc, state.vSp);
+			cc.mov(state.vResult, EXEC_RESULT_CALL);
+			restore_regs(state, cc);
+			cc.ret(state.vResult);
+			if (state.pc != state.final_pc)
+				cc.bind(state.resume_labels[state.pc]);
 		}
 		break;
 		case RETURNFUNC:
@@ -1205,7 +1212,7 @@ static void compile_single_command(CompilationState& state, x86::Compiler& cc, c
 				break;
 			}
 
-			handle_check_sp_push(state, cc, script, pc, state.vSp);
+			handle_check_sp_push(state, cc, script, state.vSp);
 
 			modify_sp(state, cc, state.vSp, -1);
 			cc.mov(x86::ptr_32(state.ptrStackBase, state.vSp, 2), arg1);
@@ -1225,7 +1232,7 @@ static void compile_single_command(CompilationState& state, x86::Compiler& cc, c
 				break;
 			}
 
-			handle_check_sp_push(state, cc, script, pc, state.vSp);
+			handle_check_sp_push(state, cc, script, state.vSp);
 
 			// Grab value from register and push onto stack.
 			x86::Gp val = get_z_register(state, cc, arg1);
@@ -1241,7 +1248,7 @@ static void compile_single_command(CompilationState& state, x86::Compiler& cc, c
 				break;
 			}
 
-			handle_check_sp_push(state, cc, script, pc, state.vSp);
+			handle_check_sp_push(state, cc, script, state.vSp);
 
 			if(arg2 < 1) break; //do nothing
 
@@ -1275,7 +1282,7 @@ static void compile_single_command(CompilationState& state, x86::Compiler& cc, c
 				break;
 			}
 
-			handle_check_sp_push(state, cc, script, pc, state.vSp);
+			handle_check_sp_push(state, cc, script, state.vSp);
 
 			if(arg2 < 1) break; //do nothing
 
@@ -1765,9 +1772,9 @@ static void compile_single_command(CompilationState& state, x86::Compiler& cc, c
 			int val = arg2;
 			x86::Gp val2 = get_z_register(state, cc, arg1);
 
-			if (script->zasm[pc + 1].command == GOTOCMP || script->zasm[pc + 1].command == SETCMP)
+			if (script->zasm[state.pc + 1].command == GOTOCMP || script->zasm[state.pc + 1].command == SETCMP)
 			{
-				if (script->zasm[pc + 1].arg2 & CMP_BOOL)
+				if (script->zasm[state.pc + 1].arg2 & CMP_BOOL)
 				{
 					val = val ? 1 : 0;
 					cast_bool(cc, val2);
@@ -1782,9 +1789,9 @@ static void compile_single_command(CompilationState& state, x86::Compiler& cc, c
 			int val = arg1;
 			x86::Gp val2 = get_z_register(state, cc, arg2);
 
-			if (script->zasm[pc + 1].command == GOTOCMP || script->zasm[pc + 1].command == SETCMP)
+			if (script->zasm[state.pc + 1].command == GOTOCMP || script->zasm[state.pc + 1].command == SETCMP)
 			{
-				if (script->zasm[pc + 1].arg2 & CMP_BOOL)
+				if (script->zasm[state.pc + 1].arg2 & CMP_BOOL)
 				{
 					val = val ? 1 : 0;
 					cast_bool(cc, val2);
@@ -1803,9 +1810,9 @@ static void compile_single_command(CompilationState& state, x86::Compiler& cc, c
 			x86::Gp val = get_z_register(state, cc, arg2);
 			x86::Gp val2 = get_z_register(state, cc, arg1);
 
-			if (script->zasm[pc + 1].command == GOTOCMP || script->zasm[pc + 1].command == SETCMP)
+			if (script->zasm[state.pc + 1].command == GOTOCMP || script->zasm[state.pc + 1].command == SETCMP)
 			{
-				if (script->zasm[pc + 1].arg2 & CMP_BOOL)
+				if (script->zasm[state.pc + 1].arg2 & CMP_BOOL)
 				{
 					cast_bool(cc, val);
 					cast_bool(cc, val2);
@@ -2009,6 +2016,8 @@ static std::optional<JittedFunction> compile_function(zasm_script* script, Jitte
 
 	for (pc_t i = start_pc; i <= final_pc; i++)
 	{
+		state.pc = i;
+
 		const auto& op = script->zasm[i];
 		int command = op.command;
 
@@ -2170,7 +2179,7 @@ static std::optional<JittedFunction> compile_function(zasm_script* script, Jitte
 		{
 			// This returns only if actually waiting (some wait commands may be deemed invalid and
 			// ignored, so waiting is conditional).
-			compile_command_interpreter(state, cc, script, i, 1, true);
+			compile_command_interpreter(state, cc, script, 1, true);
 			continue;
 		}
 
@@ -2202,12 +2211,12 @@ static std::optional<JittedFunction> compile_function(zasm_script* script, Jitte
 				}
 			}
 
-			compile_command_interpreter(state, cc, script, i, uncompiled_command_count);
+			compile_command_interpreter(state, cc, script, uncompiled_command_count);
 			i += uncompiled_command_count - 1;
 			continue;
 		}
 
-		compile_single_command(state, cc, op, i, script);
+		compile_single_command(state, cc, op, script);
 	}
 
 	if (DEBUG_JIT_PRINT_ASM)

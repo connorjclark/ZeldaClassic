@@ -674,6 +674,7 @@ target_link_libraries(zcgui PUBLIC allegro_with_legacy zcbase)
 target_include_directories(zcgui PRIVATE src)
 
 add_library(zasm STATIC
+	src/zasm/debug_data.cpp
 	src/zasm/serialize.cpp
 	src/zasm/table.cpp
 )

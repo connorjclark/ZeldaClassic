@@ -211,6 +211,8 @@ namespace ZScript
 		int parsing_user_class;
 		bool sidefx_only;
 		Function* in_func;
+		int current_file = -1;
+		int current_line = 0;
 		//Current scope
 		ZScript::Scope* scope;
 		ZScript::Scope* lexical_options_scope;

@@ -4,9 +4,13 @@
 #include "base/zdefs.h"
 #include "items.h"
 #include "new_subscr.h"
+#include "zasm/debug_data.h"
 
 struct miscQdata;
 struct MsgStr;
+
+extern std::vector<std::shared_ptr<zasm_script>> zasm_scripts;
+extern DebugData zasm_debug_data;
 
 bool write_deprecated_section_cversion(word section_version, PACKFILE* f);
 bool read_deprecated_section_cversion(PACKFILE* f);

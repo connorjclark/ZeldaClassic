@@ -10,6 +10,7 @@
 #include "zc/script_debug.h"
 #include "zc/zasm_optimize.h"
 #include "zc/zasm_pipeline.h"
+#include "zc/zasm_utils.h"
 #include "zc/zelda.h"
 #include "zconfig.h"
 #include <fmt/format.h>

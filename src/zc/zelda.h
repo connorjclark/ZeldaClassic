@@ -9,6 +9,7 @@
 #include "base/zdefs.h"
 #include "base/initdata.h"
 #include "base/zc_array.h"
+#include "zasm/debug_data.h"
 #include "zc/control_scheme.h"
 #include "zc/zc_sys.h"
 #include "sfx.h"

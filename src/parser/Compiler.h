@@ -3,10 +3,12 @@
 
 #include "CompilerUtils.h"
 #include "Types.h"
+#include "base/ints.h"
 #include "parser/CompileError.h"
 #include "parserDefs.h"
 #include "base/headers.h"
 #include <fmt/format.h>
+#include "zasm/debug_data.h"
 #include "zq/ffasm.h"
 #include <nlohmann/json.hpp>
 
@@ -48,7 +50,7 @@ namespace ZScript
 	class Opcode
 	{
 	public:
-		Opcode() : label(-1) {}
+		Opcode() : file(-1), line(-1), label(-1) {}
 		virtual ~Opcode() {}
 		virtual std::string toString() const = 0;
 		int getLabel() const
@@ -58,6 +60,11 @@ namespace ZScript
 		void setLabel(int l)
 		{
 			label = l;
+		}
+		void setLocation(int file, int line)
+		{
+			this->file = file;
+			this->line = line;
 		}
 		string const& getComment() const
 		{
@@ -84,7 +91,7 @@ namespace ZScript
 		{
 			Opcode::mergeComment(comment, str, before);
 		}
-		string printLine(bool showlabel = false, bool showcomment = true)
+		string printLine(bool showlabel = false, bool showcomment = true, std::string fname = "", int pc = 0)
 		{
 			string labelstr = " ";
 			if(showlabel && label > -1)
@@ -92,7 +99,11 @@ namespace ZScript
             string commentstr;
 			if(showcomment && comment.size())
 				commentstr = fmt::format("; {}",comment);
-			return fmt::format("{}{}{}\n",labelstr,toString(),commentstr);
+
+			string s = fmt::format("{}{}{}",labelstr,toString(),commentstr);
+			if (showcomment && line > 0)
+				s += std::string(std::max(0, 80 - (int)s.size()), ' ') + fmt::format(" | {} {}:{}", pc, fname, line);
+			return s + "\n";
 		}
 		Opcode * makeClone(bool copylabel = true, bool copycomment = true)
 		{
@@ -101,11 +112,16 @@ namespace ZScript
 				dup->setLabel(label);
 			if(copycomment)
 				dup->setComment(comment);
+			dup->file = file;
+			dup->line = line;
 			return dup;
 		}
 		virtual void execute(ArgumentVisitor&, void*) {}
 	protected:
 		virtual Opcode *clone() const = 0;
+	public:
+		int file;
+		int line;
 	private:
 		int label;
 		string comment;
@@ -162,6 +178,14 @@ namespace ZScript
 		return result;
 	}
 
+	struct ZasmCompilerResult
+	{
+		std::vector<std::shared_ptr<ZScript::Opcode>> zasm;
+		std::map<std::string, disassembled_script_data> theScripts;
+		std::map<std::string, ZScript::ParserScriptType::Id> scriptTypes;
+		DebugData debugData;
+	};
+
 	class ScriptAssembler
 	{
 	public:
@@ -184,8 +208,7 @@ namespace ZScript
 		std::vector<std::unique_ptr<Argument>> argument_trash_bin;
 
 		void assemble_init();
-		void assemble_script(Script* scr, vector<shared_ptr<Opcode>> runCode,
-			int numparams, string const& runsig);
+		void assemble_script(Script* scr, Function* run_fn, string const& runsig);
 		void assemble_scripts();
 		void gather_labels();
 		void link_functions();
@@ -195,18 +218,16 @@ namespace ZScript
 		void output_code();
 		void finalize_labels();
 	};
-	
+
 	class ScriptsData
 	{
 	public:
 		void fillFromAssembler(ScriptAssembler& assembler);
 
 		bool success;
+		ZasmCompilerResult zasmCompilerResult;
 		// Just the errors/warnings for the main input script.
 		std::vector<Diagnostic> diagnostics;
-		vector<shared_ptr<Opcode>> zasm;
-		std::map<std::string, disassembled_script_data> theScripts;
-		std::map<std::string, ParserScriptType> scriptTypes;
 		json metadata;
 		std::string docs;
 	};

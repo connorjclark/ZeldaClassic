@@ -1649,7 +1649,8 @@ Function* BasicScope::addFunction(
 
 	Function* fun = new Function(
 			returnType, name, paramTypes, paramNames, ScriptParser::getUniqueFuncID(), flags, 0, prototype, defRet);
-	fun->setFlags(node->getFlags());
+	if (node)
+		fun->setFlags(node->getFlags());
 	fun->node = node;
 	if(!subscope)
 		subscope = this;
@@ -1658,8 +1659,8 @@ Function* BasicScope::addFunction(
 	if(node)
 	{
 		fun->numOptionalParams = node->optparams.size();
+		initFunctionBinding(fun, handler);
 	}
-	initFunctionBinding(fun, handler);
 
 	functionsByName_[name].push_back(fun);
 	functionsBySignature_[signature] = fun;

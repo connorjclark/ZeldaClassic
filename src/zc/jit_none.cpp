@@ -1,4 +1,5 @@
 #include "zc/jit.h"
+#include "zasm/pc.h"
 
 void jit_startup_impl()
 {

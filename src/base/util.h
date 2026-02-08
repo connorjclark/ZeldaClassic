@@ -123,6 +123,7 @@ namespace util
 	bool is_subpath_of(const fs::path& base, const fs::path& sub);
 	std::string get_filename(const fs::path& path);
 	void open_web_link(std::string url);
+	std::array<uint8_t, 16> md5_hash_bytes(const std::string& data);
 
 	template <typename T, std::size_t R, std::size_t C>
 	inline void copy_2d_array(T source[R][C] , T dest[R][C])

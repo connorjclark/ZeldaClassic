@@ -5,22 +5,17 @@
 #include "base/general.h"
 #include "base/mapscr.h"
 #include "base/misctypes.h"
-#include "base/zc_array.h"
 #include "base/zdefs.h"
 #include "base/initdata.h"
 #include "parser/parserDefs.h"
-#include <memory>
 #include <utility>
 #include <string>
-#include <list>
 #include <deque>
-#include <bitset>
-#include "zasm/defines.h"
+#include "zasm/pc.h"
 #include "zc/scripting/array_manager.h"
 #include "zc/scripting/context_strings.h"
 #include "zc/jit.h"
 #include "zc/zelda.h"
-#include "zc/replay.h"
 #include "zc/hero.h"
 
 extern std::string current_zasm_context;
@@ -427,9 +422,9 @@ std::vector<script_array*> get_script_arrays();
 script_array* find_or_create_internal_script_array(script_array::internal_array_id internal_id);
 script_array* checkArray(uint32_t id, bool skipError = false);
 
-int32_t run_script_jit_sequence(JittedScriptInstance* j_instance, int32_t pc, uint32_t sp, int32_t count);
-int32_t run_script_jit_one(JittedScriptInstance* j_instance, int32_t pc, uint32_t sp);
-int32_t run_script_jit_until_call_or_return(JittedScriptInstance* j_instance, int32_t pc, uint32_t sp);
+int32_t run_script_jit_sequence(JittedScriptInstance* j_instance, pc_t pc, uint32_t sp, int32_t count);
+int32_t run_script_jit_one(JittedScriptInstance* j_instance, pc_t pc, uint32_t sp);
+int32_t run_script_jit_until_call_or_return(JittedScriptInstance* j_instance, pc_t pc, uint32_t sp);
 int32_t run_script_int(JittedScriptInstance* j_instance = nullptr);
 
 void clearConsole();
@@ -628,6 +623,13 @@ combo_trigger* get_first_combo_trigger();
 std::tuple<byte,int8_t,byte,word> from_subref(dword ref);
 dword get_subref(int sub, byte ty, byte pg = 0, word ind = 0);
 
+struct StackTrace
+{
+	std::vector<std::string> frames;
+
+	std::string to_string() const;
+};
+
 class FFScript
 {
 	
@@ -761,6 +763,8 @@ void do_varg_min();
 void do_varg_choose();
 void do_varg_makearray(ScriptType type, const uint32_t UID, script_object_type object_type);
 void do_breakpoint();
+void handle_trace(const std::string& s, bool is_error = false);
+std::optional<StackTrace> create_stack_trace();
 void do_trace(bool v);
 void do_tracel(bool v);
 void do_tracenl();
@@ -769,7 +773,7 @@ void do_tracetobase();
 void ZScriptConsole(bool open);
 template <typename ...Params>
 void ZScriptConsole(int32_t attributes,const char *format, Params&&... params);
-void TraceScriptIDs(bool force_show_context = false);
+void PrintTracePrefix(bool force_show_context = false, bool is_error = false);
 /*
 int32_t getQuestHeaderInfo(int32_t type)
 {

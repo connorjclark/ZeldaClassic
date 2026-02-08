@@ -2,9 +2,8 @@
 #define ZC_JIT_H_
 
 #include "base/compiler.h"
-#include "base/worker_pool.h"
 #include "base/zdefs.h"
-#include "zc/zasm_utils.h"
+#include "zasm/pc.h"
 
 #define JIT_NONE 0
 #define JIT_X64 1

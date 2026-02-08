@@ -64,6 +64,8 @@ namespace ZScript
 		std::vector<Function*> getUserClassConstructors() const;
 		std::vector<Function*> getUserClassDestructors() const;
 
+		std::vector<std::string>& getFiles();
+
 		// Return a list of all errors in the script declaration.
 		std::vector<CompileError const*> getErrors() const;
 		// Does this script have a declaration error?
@@ -74,7 +76,8 @@ namespace ZScript
 		std::map<ASTScript*, Script*> scriptsByNode_;
 		std::map<std::string, UserClass*> classesByName_;
 		std::map<ASTClass*, UserClass*> classesByNode_;
-		
+		std::vector<std::string> files_;
+
 		TypeStore typeStore_;
 		RootScope* rootScope_;
 		ASTFile& root_;
@@ -485,6 +488,8 @@ namespace ZScript
 			return paramTypes.size();
 		}
 		int32_t getLabel() const;
+		int32_t getPrologueEndLabel() const;
+		void setPrologueEndLabel(int label);
 		int32_t getAltLabel() const;
 		void setFlag(int32_t flag, bool state = true)
 		{
@@ -635,6 +640,8 @@ namespace ZScript
 		
 		std::vector<std::shared_ptr<Function>>& get_applied_funcs() {return applied_funcs;}
 		std::vector<std::shared_ptr<Function>> const& get_applied_funcs() const {return applied_funcs;}
+
+		mutable std::optional<int32_t> prologue_end_label;
 		
 	private:
 		CONSTEXPR_CBACK_TY constexpr_callback;
@@ -664,7 +671,8 @@ namespace ZScript
 
 	bool is_test();
 
-	int getSourceCodeNumLines(const LocationData& loc);
+	int getSourceCodeNumLines(const std::string& fname);
+	const std::string& getSourceCodeContents(const std::string& fname);
 	std::string getSourceCodeSnippet(const LocationData& loc);
 	std::string getErrorContext(const LocationData& loc);
 }

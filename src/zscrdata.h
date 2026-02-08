@@ -1,16 +1,18 @@
 #ifndef ZSCR_DATA_H_
 #define ZSCR_DATA_H_
 
+#include "base/util.h"
 #include "base/zdefs.h"
+#include "zasm/debug_data.h"
 #include "zconsole/ConsoleLogger.h"
 #include "parser/Compiler.h"
 #include <sstream>
 
-using ZScript::disassembled_script_data;
-
 #ifndef IS_PARSER
 #include "zq/zquest.h"
 #endif //!IS_PARSER
+
+using ZScript::disassembled_script_data;
 
 #define ZC_CONSOLE_INFO_CODE -9998
 #define ZC_CONSOLE_ERROR_CODE -9997
@@ -22,31 +24,6 @@ using ZScript::disassembled_script_data;
 using std::map;
 using std::string;
 using std::vector;
-
-namespace ZScript
-{
-	enum ScriptTypeID
-	{
-		scrTypeIdInvalid = ZScript::ParserScriptType::idInvalid,
-		scrTypeIdStart,
-		scrTypeIdGlobal = scrTypeIdStart,
-		scrTypeIdFfc,
-		scrTypeIdItem,
-		scrTypeIdNPC,
-		scrTypeIdEWeapon,
-		scrTypeIdLWeapon,
-		scrTypeIdPlayer,
-		scrTypeIdScreen,
-		scrTypeIdDMap,
-		scrTypeIdItemSprite,
-		scrTypeIdUntyped,
-		scrTypeIdComboData,
-		scrTypeIdSusbcrData,
-		scrTypeIdGeneric,
-		
-		scrTypeIdEnd
-	};
-}
 
 void write_str(std::string const& str, FILE* f)
 {
@@ -154,13 +131,13 @@ void read_meta(zasm_meta& meta, FILE* f)
 		read_b((byte&)meta.initd_type[q], f);
 }
 
-void read_compile_data(vector<shared_ptr<ZScript::Opcode>>& zasm, map<string, ZScript::ScriptTypeID>& stypes, map<string, disassembled_script_data>& scripts)
+void read_compile_data(ZScript::ZasmCompilerResult& zasmCompilerResult)
 {
-	stypes.clear();
-	scripts.clear();
+	zasmCompilerResult = {};
+
 	size_t stypes_sz, scripts_sz;
 	size_t dummy;
-	ZScript::ScriptTypeID _id;
+	ZScript::ParserScriptType::Id _id;
 	char buf[512] = {0};
 	char* buf2 = nullptr;
 	size_t buf2sz = 0;
@@ -181,8 +158,8 @@ void read_compile_data(vector<shared_ptr<ZScript::Opcode>>& zasm, map<string, ZS
 		fread(&dummy, sizeof(size_t), 1, tempfile);
 		dummy = fread(buf, sizeof(char), dummy, tempfile);
 		buf[dummy] = 0;
-		fread(&_id, sizeof(ZScript::ScriptTypeID), 1, tempfile);
-		stypes[buf] = _id;
+		fread(&_id, sizeof(ZScript::ParserScriptType), 1, tempfile);
+		zasmCompilerResult.scriptTypes[buf] = _id;
 	}
 	
 	fread(&scripts_sz, sizeof(size_t), 1, tempfile);
@@ -202,11 +179,15 @@ void read_compile_data(vector<shared_ptr<ZScript::Opcode>>& zasm, map<string, ZS
 		fread(&(dsd.pc), sizeof(int32_t), 1, tempfile);
 		fread(&(dsd.end_pc), sizeof(int32_t), 1, tempfile);
 		
-		scripts[buf] = dsd;
+		zasmCompilerResult.theScripts[buf] = dsd;
 	}
+
+	std::vector<byte> encodedDebugData;
+	size_t encoded_debug_data_sz;
 	
 	size_t zasm_sz;
 	fread(&zasm_sz, sizeof(size_t), 1, tempfile);
+	zasmCompilerResult.zasm.reserve(zasm_sz);
 	for(size_t ind2 = 0; ind2 < zasm_sz; ++ind2)
 	{
 		//read opcode into buf2
@@ -250,8 +231,16 @@ void read_compile_data(vector<shared_ptr<ZScript::Opcode>>& zasm, map<string, ZS
 		std::shared_ptr<ZScript::Opcode> oc = std::make_shared<ZScript::ArbitraryOpcode>(buf2);
 		oc->setLabel(lbl);
 		oc->setComment(buf3);
-		zasm.push_back(oc);
+		zasmCompilerResult.zasm.push_back(oc);
 	}
+
+	fread(&encoded_debug_data_sz, sizeof(size_t), 1, tempfile);
+	encodedDebugData.resize(encoded_debug_data_sz);
+	fread(encodedDebugData.data(), sizeof(byte), encoded_debug_data_sz, tempfile);
+	if (auto debugData = DebugData::decode(encodedDebugData))
+		zasmCompilerResult.debugData = std::move(*debugData);
+	else
+		goto read_compile_error;
 
 read_compile_error:
 	fclose(tempfile);
@@ -259,9 +248,9 @@ read_compile_error:
 	if (buf2) free(buf2);
 }
 
-void write_compile_data(vector<shared_ptr<ZScript::Opcode>>& zasm, map<string, ZScript::ScriptTypeID>& stypes, map<string, disassembled_script_data>& scripts)
+void write_compile_data(const ZScript::ZasmCompilerResult& zasmCompilerResult)
 {
-	size_t dummy = stypes.size();
+	size_t dummy = zasmCompilerResult.scriptTypes.size();
 	FILE *tempfile = fopen("tmp2","wb");
 			
 	if(!tempfile)
@@ -271,22 +260,22 @@ void write_compile_data(vector<shared_ptr<ZScript::Opcode>>& zasm, map<string, Z
 	}
 	
 	fwrite(&dummy, sizeof(size_t), 1, tempfile);
-	for(auto it = stypes.begin(); it != stypes.end(); ++it)
+	for(auto it = zasmCompilerResult.scriptTypes.begin(); it != zasmCompilerResult.scriptTypes.end(); ++it)
 	{
 		string const& str = it->first;
-		ZScript::ScriptTypeID v = it->second;
+		ZScript::ParserScriptType v = it->second;
 		dummy = str.size();
 		fwrite(&dummy, sizeof(size_t), 1, tempfile);
 		fwrite((void*)str.c_str(), sizeof(char), dummy, tempfile);
-		fwrite(&v, sizeof(ZScript::ScriptTypeID), 1, tempfile);
+		fwrite(&v, sizeof(ZScript::ParserScriptType), 1, tempfile);
 	}
 	
-	dummy = scripts.size();
+	dummy = zasmCompilerResult.theScripts.size();
 	fwrite(&dummy, sizeof(size_t), 1, tempfile);
-	for(auto it = scripts.begin(); it != scripts.end(); ++it)
+	for(auto it = zasmCompilerResult.theScripts.begin(); it != zasmCompilerResult.theScripts.end(); ++it)
 	{
 		string const& str = it->first;
-		disassembled_script_data& v = it->second;
+		const disassembled_script_data& v = it->second;
 		dummy = str.size();
 		fwrite(&dummy, sizeof(size_t), 1, tempfile);
 		fwrite((void*)str.c_str(), sizeof(char), dummy, tempfile);
@@ -299,9 +288,9 @@ void write_compile_data(vector<shared_ptr<ZScript::Opcode>>& zasm, map<string, Z
 		fwrite(&(v.end_pc), sizeof(int32_t), 1, tempfile);
 	}
 	
-	dummy = zasm.size();
+	dummy = zasmCompilerResult.zasm.size();
 	fwrite(&dummy, sizeof(size_t), 1, tempfile);
-	for(auto it = zasm.begin(); it != zasm.end(); ++it)
+	for(auto it = zasmCompilerResult.zasm.begin(); it != zasmCompilerResult.zasm.end(); ++it)
 	{
 		string opstr = (*it)->toString();
 		string const& commentstr = (*it)->getComment();
@@ -317,30 +306,39 @@ void write_compile_data(vector<shared_ptr<ZScript::Opcode>>& zasm, map<string, Z
 		
 		fwrite(&lbl, sizeof(int32_t), 1, tempfile);
 	}
-	
+
+	std::vector<byte> debugDataEncoded = zasmCompilerResult.debugData.encode();
+	dummy = debugDataEncoded.size();
+	fwrite(&dummy, sizeof(size_t), 1, tempfile);
+	fwrite((void*)debugDataEncoded.data(), sizeof(byte), dummy, tempfile);
+
 	fclose(tempfile);
 }
 
-void write_script(vector<shared_ptr<ZScript::Opcode>> const& zasm, string& dest,
-	bool commented, map<string,disassembled_script_data>* scr_meta_map)
+void write_script(ZScript::ZasmCompilerResult& zasmCompilerResult, string& dest, bool commented, bool write_meta = true)
 {
+	auto& debugData = zasmCompilerResult.debugData;
+
 	std::ostringstream output;
 	string str;
 	map<uint,string> meta_map;
-	if(scr_meta_map)
+
+	if (write_meta)
 	{
-		for(auto& pair : *scr_meta_map)
+		for(auto& pair : zasmCompilerResult.theScripts)
 			meta_map[pair.second.pc] = pair.second.meta.get_meta();
 	}
-	for(uint q = 0; q < zasm.size(); ++q)
+
+	for(uint q = 0; q < zasmCompilerResult.zasm.size(); ++q)
 	{
 		auto it = meta_map.find(q);
 		if(it != meta_map.end())
 			output << it->second;
-		ZScript::Opcode* line = zasm[q].get();
-		str = line->printLine(false, commented);
+		ZScript::Opcode* line = zasmCompilerResult.zasm[q].get();
+		str = line->printLine(false, commented, line->file >= 0 ? debugData.source_files[line->file].path : "", q);
 		output << str;
 	}
+
 	dest += output.str();
 }
 
@@ -387,21 +385,6 @@ void ReadConsole(char buf[], int code)
 	}
 }
 #endif //!IS_PARSER
-
-#ifdef IS_PARSER
-#include "parser/Compiler.h"
-void write_compile_data(vector<shared_ptr<ZScript::Opcode>>& zasm, map<string, ZScript::ParserScriptType>& stypes, map<string, disassembled_script_data>& scripts)
-{
-	map<string, ZScript::ScriptTypeID> sid_types;
-	for(auto it = stypes.begin(); it != stypes.end(); ++it)
-	{
-		sid_types[it->first] = (ZScript::ScriptTypeID)(it->second.getId());
-	}
-	write_compile_data(zasm, sid_types, scripts);
-}
-
-#endif //IS_PARSER
-
 
 ScriptType get_script_type(string const& name)
 {

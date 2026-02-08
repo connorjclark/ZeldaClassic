@@ -30,10 +30,10 @@ ffc script Maths
     void doMaths(bool firstTime, int i)
     {
         maybePrint(firstTime, "maths for: %d\n", i);
-        maybePrint(firstTime, "10 / i = %d", 10 / i);
-        maybePrint(firstTime, "10 %% i = %d", 10 % i);
-        maybePrint(firstTime, "i / 10 = %d", i / 10);
-        maybePrint(firstTime, "i %% 10 = %d", i % 10);
+        maybePrint(firstTime, "10 / i = %d\n", 10 / i);
+        maybePrint(firstTime, "10 %% i = %d\n", 10 % i);
+        maybePrint(firstTime, "i / 10 = %d\n", i / 10);
+        maybePrint(firstTime, "i %% 10 = %d\n", i % 10);
 
 		maybePrint(firstTime, "i + i = %d\n", i + i);
         maybePrint(firstTime, "i - i = %d\n", i - i);
