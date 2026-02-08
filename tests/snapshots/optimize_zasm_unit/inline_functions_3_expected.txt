@@ -45,10 +45,10 @@ Function run_none-0
    28: TRACER          D4
    29: NOP
    30: QUIT
-   31: NOP
-   32: NOP
+   31: POP             D3
+   32: SINR            D2               D3
    33: NOP
-   34: NOP
+   34: RETURNFUNC
 
 
 Function Function #1
@@ -68,10 +68,13 @@ Function Function #2
 
 Function Function #3
    44: NOP                                          [Block 0 -> ]
-   45: NOP
+   45: SETR            D2               LINKX
    46: NOP
-   47: NOP
-   48: NOP
-   49: NOP
+   47: RETURNFUNC
+
+
+Function Function #4
+   48: POP             D2                           [Block 0 -> ]
+   49: ADDR            D2               D2
    50: NOP
-   51: NOP
+   51: RETURNFUNC

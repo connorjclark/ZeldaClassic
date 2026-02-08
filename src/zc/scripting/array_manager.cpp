@@ -355,6 +355,18 @@ void ArrayManager::set(int32_t indx, int32_t val, script_object_type type)
 	}
 }
 
+int32_t ArrayManager::normalize_index(int32_t indx) const
+{
+	if (_invalid)
+		return indx;
+
+	int32_t sz = size();
+	if (sz >= 0 && negAccess && indx < 0)
+		return indx + sz;
+
+	return indx;
+}
+
 int32_t ArrayManager::size() const
 {
 	if(_invalid) return -1;
@@ -370,6 +382,38 @@ int32_t ArrayManager::size() const
 			return -1;
 		return sz;
 	}
+}
+
+std::vector<int32_t> ArrayManager::data() const
+{
+	if (_invalid) return {};
+
+	if (aptr)
+		return aptr->getData();
+
+	if (ZScriptVersion::gc_arrays())
+		return zasm_array_get_all(internal_array_id.zasm_var, internal_array_id.ref);
+
+	int32_t sz = legacy_sz_int_arr(legacy_internal_id);
+	if (sz >= 0)
+	{
+		std::vector<int32_t> data;
+		for (int i = 0; i < sz; i++)
+			data.push_back(legacy_get_int_arr(legacy_internal_id, i));
+		return data;
+	}
+
+	return {};
+}
+
+const script_array* ArrayManager::script_array() const
+{
+	if (_invalid) return nullptr;
+
+	if (script_array_object)
+		return script_array_object;
+
+	return nullptr;
 }
 
 bool ArrayManager::resize(size_t newsize)

@@ -1832,4 +1832,5 @@ class screendata {
 	internal int GetTileWarpType(int warp_id);
 }
 
+// @zasm_var REFSCREEN
 internal const screendata Screen;

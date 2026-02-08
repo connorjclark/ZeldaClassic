@@ -109,18 +109,27 @@ static void * a5_keyboard_thread_proc(ALLEGRO_THREAD * thread, void * data)
             {
                 case ALLEGRO_EVENT_KEY_DOWN:
                 {
+                    // local edit - prevent the zscript debugger window from triggering keyboard events.
+                    if (event.keyboard.display != all_get_display()) break;
+
                     update_key_shifts(&event);
                     _handle_key_press(-1, a5_keyboard_keycode_map[event.keyboard.keycode]);
                     break;
                 }
                 case ALLEGRO_EVENT_KEY_UP:
                 {
+                    // local edit - prevent the zscript debugger window from triggering keyboard events.
+                    if (event.keyboard.display != all_get_display()) break;
+
                     update_key_shifts(&event);
                     _handle_key_release(a5_keyboard_keycode_map[event.keyboard.keycode]);
                     break;
                 }
                 case ALLEGRO_EVENT_KEY_CHAR:
                 {
+                    // local edit - prevent the zscript debugger window from triggering keyboard events.
+                    if (event.keyboard.display != all_get_display()) break;
+
                     update_key_shifts(&event);
                     if(event.keyboard.unichar >= 0)
                     {

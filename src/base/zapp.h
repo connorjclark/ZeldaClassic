@@ -18,6 +18,9 @@ enum App {
 
 void common_main_setup(App id, int argc, char **argv);
 int32_t zapp_check_switch(const char *s, std::vector<const char*> arg_names = {});
+int zapp_get_argc();
+char** zapp_get_argv();
+void zapp_replace_args(int argc, char **argv);
 int32_t zapp_get_arg_int(int index);
 std::string zapp_get_arg_string(int index);
 std::string zapp_get_exe_folder_path();

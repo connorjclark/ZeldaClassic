@@ -78,11 +78,14 @@ Function Function #2
 
 
 Function Function #3
-   62: NOP                                          [Block 0 -> ]
-   63: NOP
+   62: POP             D2                           [Block 0 -> ]
+   63: ABS             D2
    64: NOP
-   65: NOP
-   66: NOP
-   67: NOP
+   65: RETURNFUNC
+
+
+Function Function #4
+   66: POP             D2                           [Block 0 -> ]
+   67: ARRAYSIZE       D2
    68: NOP
-   69: NOP
+   69: RETURNFUNC

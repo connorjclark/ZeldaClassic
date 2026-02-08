@@ -251,6 +251,7 @@ const char* scripting_get_zasm_register_context_string(int reg)
 		case REGION_SCREEN_HEIGHT: return "Region->ScreenHeight";
 		case REGION_SCREEN_WIDTH: return "Region->ScreenWidth";
 		case REGION_WIDTH: return "Region->Width";
+		case REFSCREEN: return "Screen";
 		case SCREENDATAOCEANSFX: return "Screen->AmbientSFX";
 		case SCREENDATABOSSSFX: return "Screen->BossSFX";
 		case SCREENDATACSENSITIVE: return "Screen->CSensitive";

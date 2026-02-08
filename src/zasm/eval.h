@@ -1,7 +1,9 @@
 #ifndef ZASM_EVAL_H_
 #define ZASM_EVAL_H_
 
+#include "base/expected.h"
 #include "zasm/debug_data.h"
+#include <optional>
 #include <string>
 #include <vector>
 #include <memory>
@@ -10,12 +12,10 @@
 struct DebugValue
 {
 	int32_t raw_value;    // The bits in memory
-	uint32_t type_id;
+	const DebugType* type;
 	bool is_lvalue;       // Can we assign to this?
 
-	bool isFixed() const { return type_id == TYPE_INT; }
-	bool isLong() const { return type_id == TYPE_LONG;}
-	bool isBool() const { return type_id == TYPE_BOOL;}
+	auto operator<=>(const DebugValue&) const = default;
 };
 
 // Math Constants
@@ -27,9 +27,9 @@ enum ExprType {
 	E_BINARY,
 	E_UNARY,
 	E_CALL,
-	E_NEW,
 	E_MEMBER,
-	E_INDEX
+	E_INDEX,
+	E_STRING
 };
 
 struct ExprNode {
@@ -78,17 +78,17 @@ struct FuncCallNode : ExprNode {
 		: name(n), args(a), object_context(nullptr) { type = E_CALL; }
 };
 
-struct NewNode : ExprNode {
-	std::string class_name;
-	NewNode(std::string cn) : class_name(cn) { type = E_NEW; }
-};
-
 struct IndexNode : ExprNode {
 	std::shared_ptr<ExprNode> base;
 	std::shared_ptr<ExprNode> index;
 
 	IndexNode(std::shared_ptr<ExprNode> b, std::shared_ptr<ExprNode> i)
 		: base(b), index(i) { type = E_INDEX; }
+};
+
+struct StringLiteralNode : ExprNode {
+    std::string value;
+    StringLiteralNode(std::string v) : value(std::move(v)) { type = E_STRING; }
 };
 
 class ExpressionParser
@@ -112,31 +112,28 @@ class ExpressionParser
 	std::shared_ptr<ExprNode> parseFactor();
 	std::shared_ptr<ExprNode> parseUnary();
 	std::shared_ptr<ExprNode> parsePrimary();
+	std::shared_ptr<ExprNode> parseExpressionImpl();
 
 public:
 	ExpressionParser(std::string s);
-	std::shared_ptr<ExprNode> parseExpression();
+	expected<std::shared_ptr<ExprNode>, std::string> parseExpression();
 };
 
 class VMInterface {
 public:
     virtual ~VMInterface() = default;
 
-    // Core Memory Access
-    virtual int32_t readStack(int32_t offset_from_fp) = 0; // fp = Frame Pointer
+    virtual int32_t readStack(int32_t offset) = 0;
     virtual int32_t readGlobal(int32_t global_index) = 0;
-    virtual int32_t readRegister(int32_t reg_id) = 0;
-    virtual int32_t readObjectMember(int32_t object_ptr, int32_t member_offset) = 0;
-
-    // Execution Control
-    // Runs code starting at 'pc' until it hits a 'RET' opcode or error
-    virtual int32_t executeSandboxed(pc_t start_pc, const std::vector<int32_t>& args) = 0;
-    
-    // Memory Management
-    virtual int32_t allocateObject(int32_t class_idx) = 0;
-
-    // Helper: Find 'this' pointer for the current frame
-    virtual int32_t getCurrentThisPointer() = 0;
+    virtual int32_t readRegister(int32_t zasm_var) = 0;
+    virtual std::optional<DebugValue> readObjectMember(DebugValue object, const DebugSymbol* sym) = 0;
+	virtual std::optional<std::string> readString(int32_t string_ptr) = 0;
+	virtual std::optional<std::vector<DebugValue>> readArray(DebugValue array) = 0;
+	virtual std::optional<DebugValue> readArrayElement(DebugValue array, int index) = 0;
+    virtual expected<int32_t, std::string> executeSandboxed(pc_t start_pc, int this_zasm_var, int this_raw_value, const std::vector<int32_t>& args) = 0;
+	virtual DebugValue createArray(std::vector<int32_t> args, const DebugType* array_type) = 0;
+	virtual DebugValue createString(const std::string& str) = 0;
+    virtual int32_t getThisPointer() = 0;
 };
 
 class ExpressionEvaluator
@@ -145,17 +142,15 @@ class ExpressionEvaluator
 	const DebugScope* currentScope;
 	VMInterface& vm;
 
-	DebugValue readValue(const DebugSymbol* sym);
 	DebugValue evalBinaryOp(const std::string& op, DebugValue l, DebugValue r);
-	const DebugScope* getClassScope(int32_t typeIdx);
-
-	const DebugScope* resolveOverload(const std::string& name, const std::vector<int32_t>& args, const DebugScope* scope);
-	int32_t getClassIDFromScope(const DebugScope* scope);
-	int32_t getTypeIndexForClass(const DebugScope* scope);
+	const DebugScope* getClassScope(const DebugType* type);
+	const DebugScope* resolveOverload(const std::string& name, const std::vector<const DebugType*>& args, const DebugScope* scope);
 
 public:
 	ExpressionEvaluator(const DebugData& dd, const DebugScope* scope, VMInterface& v);
 	DebugValue evaluate(std::shared_ptr<ExprNode> node);
+	DebugValue readSymbol(const DebugSymbol* sym);
+	std::string printValue(DebugValue value);
 };
 
 #endif

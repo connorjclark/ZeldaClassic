@@ -1,5 +1,6 @@
 #include "zc/render.h"
 #include "base/render.h"
+#include "zc/debugger/debugger.h"
 #include "zc/zelda.h"
 #include "zc/maps.h"
 #include "sprite.h"
@@ -335,7 +336,9 @@ void render_zc()
 		lines_left.push_back(replay_get_buttons_string().c_str());
 	else if (replay_is_recording() && MenuOpen)
 		lines_left.push_back(fmt::format("Recording, frame {}", replay_get_frame()));
-	if (Paused)
+	if (auto debugger = zscript_debugger_get_if_open(); debugger && debugger->state == Debugger::State::Paused)
+		lines_right.push_back("PAUSED (DEBUGGER)");
+	else if (Paused)
 		lines_right.push_back("PAUSED");
 	if (Saving && use_save_indicator)
 		lines_right.push_back("SAVING ...");

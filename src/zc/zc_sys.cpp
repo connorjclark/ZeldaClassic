@@ -23,6 +23,7 @@
 #include "base/version.h"
 #include "base/zc_alleg.h"
 #include "gamedata.h"
+#include "zc/debugger/debugger.h"
 #include "zc/frame_timings.h"
 #include "zc/replay_upload.h"
 #include "zc/zasm_pipeline.h"
@@ -180,6 +181,8 @@ void zc_exit(int code)
 	zscript_coloured_console.kill();
 	zasm_pipeline_shutdown();
 	frame_timings_end();
+	if (auto debugger = zscript_debugger_get_if_open())
+		debugger->Save();
 	quit_game();
 
 	Z_message("ZQuest Classic website: https://zquestclassic.com\n");
@@ -5695,6 +5698,26 @@ static NewMenu cheat_menu
 	{ "&Goto Location...", onGoTo },
 };
 
+static void onOpenDebugger()
+{
+	if (jit_is_enabled())
+	{
+		InfoDialog("Not supported", "The ZScript debugger currently does not support JIT. Disable JIT and reload zplayer to use the debugger.").show();
+		return;
+	}
+
+	zscript_debugger_open();
+}
+
+enum
+{
+	MENUID_DEBUG_OPEN,
+};
+static NewMenu debug_menu
+{
+	{ "&Open debugger...", onOpenDebugger, MENUID_DEBUG_OPEN },
+};
+
 #if DEVLEVEL > 0
 int32_t devLogging();
 int32_t devDebug();
@@ -5759,6 +5782,7 @@ TopMenu the_player_menu
 	{ "&Cheat", &cheat_menu, MENUID_PLAYER_CHEAT, true },
 	{ "&Replay", &replay_menu },
 	{ "&ZC", &misc_menu },
+	{ "&Debug", &debug_menu },
 	#if DEVLEVEL > 0
 	{ "&Dev", &dev_menu },
 	#endif

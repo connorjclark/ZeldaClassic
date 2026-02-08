@@ -216,6 +216,16 @@ char datapwd[8]   = "longtan";
 #pragma warning(default: 4309)
 #endif
 
+void (*zc_log_cb)(const char*);
+
+static void log_console(int32_t attributes, const char* str)
+{
+	safe_al_trace(str);
+	zscript_coloured_console.safeprint(attributes, str);
+	if (zc_log_cb)
+		zc_log_cb(str);
+}
+
 [[noreturn]] void Z_error_fatal(const char *format,...)
 {
     char buf[256];
@@ -225,9 +235,7 @@ char datapwd[8]   = "longtan";
     vsnprintf(buf, 256, format, ap);
     va_end(ap);
 
-    zscript_coloured_console.cprintf((CConsoleLoggerEx::COLOR_RED | CConsoleLoggerEx::COLOR_INTENSITY | 
-		CConsoleLoggerEx::COLOR_BACKGROUND_BLACK), "%s", buf);
-	al_trace("%s",buf);
+	log_console(CConsoleLoggerEx::COLOR_RED | CConsoleLoggerEx::COLOR_INTENSITY | CConsoleLoggerEx::COLOR_BACKGROUND_BLACK, buf);
 	zapp_reporting_add_breadcrumb("error_fatal", buf);
 #ifndef __EMSCRIPTEN__
     if (!zscript_coloured_console.valid() && !is_headless())
@@ -247,10 +255,8 @@ void Z_error(const char *format,...)
     vsnprintf(buf, 256, format, ap);
     va_end(ap);
 
-    zscript_coloured_console.cprintf((CConsoleLoggerEx::COLOR_RED | CConsoleLoggerEx::COLOR_INTENSITY | 
-		CConsoleLoggerEx::COLOR_BACKGROUND_BLACK), "%s", buf);
+    log_console((CConsoleLoggerEx::COLOR_RED | CConsoleLoggerEx::COLOR_INTENSITY | CConsoleLoggerEx::COLOR_BACKGROUND_BLACK), buf);
 	zapp_reporting_add_breadcrumb("error", buf);
-	al_trace("%s",buf);
 }
 
 void Z_message(const char *format,...)
@@ -262,9 +268,7 @@ void Z_message(const char *format,...)
     vsnprintf(buf, 2048, format, ap);
     va_end(ap);
 
-    al_trace("%s",buf);
-    zscript_coloured_console.cprintf((CConsoleLoggerEx::COLOR_RED | CConsoleLoggerEx::COLOR_BLUE | CConsoleLoggerEx::COLOR_INTENSITY | 
-		CConsoleLoggerEx::COLOR_BACKGROUND_BLACK), "%s", buf);
+    log_console(CConsoleLoggerEx::COLOR_RED | CConsoleLoggerEx::COLOR_BLUE | CConsoleLoggerEx::COLOR_INTENSITY | CConsoleLoggerEx::COLOR_BACKGROUND_BLACK, buf);
 }
 
 void Z_title(const char *format,...)
@@ -274,12 +278,9 @@ void Z_title(const char *format,...)
     va_start(ap, format);
     vsnprintf(buf, 256, format, ap);
     va_end(ap);
-    
-    al_trace("%s\n",buf);
-	
-    if(zscript_coloured_console.valid())
-		zscript_coloured_console.cprintf((CConsoleLoggerEx::COLOR_RED | CConsoleLoggerEx::COLOR_BLUE | CConsoleLoggerEx::COLOR_INTENSITY | 
-			CConsoleLoggerEx::COLOR_BACKGROUND_BLACK), "%s\n", buf);
+
+	log_console((CConsoleLoggerEx::COLOR_RED | CConsoleLoggerEx::COLOR_BLUE | CConsoleLoggerEx::COLOR_INTENSITY | 
+		CConsoleLoggerEx::COLOR_BACKGROUND_BLACK), buf);
 }
 
 static std::function<bool()> should_zprint_cb = []() { return true; };
@@ -298,10 +299,9 @@ void zprint(const char * const format,...)
 		va_start(ap, format);
 		vsnprintf(buf, 2048, format, ap);
 		va_end(ap);
-		al_trace("%s",buf);
 		
-		zscript_coloured_console.cprintf((CConsoleLoggerEx::COLOR_RED | CConsoleLoggerEx::COLOR_BLUE | CConsoleLoggerEx::COLOR_INTENSITY | 
-			CConsoleLoggerEx::COLOR_BACKGROUND_BLACK),"%s",buf);
+		log_console((CConsoleLoggerEx::COLOR_RED | CConsoleLoggerEx::COLOR_BLUE | CConsoleLoggerEx::COLOR_INTENSITY | 
+			CConsoleLoggerEx::COLOR_BACKGROUND_BLACK),buf);
 	}
 }
 
@@ -313,10 +313,9 @@ void zprint2(const char * const format,...)
 	va_start(ap, format);
 	vsnprintf(buf, 8192, format, ap);
 	va_end(ap);
-	safe_al_trace(buf);
-	
-	zscript_coloured_console.cprintf((CConsoleLoggerEx::COLOR_RED | CConsoleLoggerEx::COLOR_BLUE | CConsoleLoggerEx::COLOR_INTENSITY | 
-		CConsoleLoggerEx::COLOR_BACKGROUND_BLACK),"%s",buf);
+
+	log_console((CConsoleLoggerEx::COLOR_RED | CConsoleLoggerEx::COLOR_BLUE | CConsoleLoggerEx::COLOR_INTENSITY | 
+		CConsoleLoggerEx::COLOR_BACKGROUND_BLACK),buf);
 }
 
 int32_t anim_3_4(int32_t clk, int32_t speed)

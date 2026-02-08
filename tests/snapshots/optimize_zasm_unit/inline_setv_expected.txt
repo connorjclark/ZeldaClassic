@@ -28,12 +28,18 @@ Function run_none-0
    12: NOP
    13: NOP
    14: QUIT
-   15: NOP
-   16: NOP
-   17: NOP
-   18: NOP
-   19: NOP
-   20: NOP
-   21: NOP
-   22: NOP
-   23: NOP
+   15: LOAD            D3               0
+   16: TRACER          D3
+   17: RETURNFUNC
+
+
+Function Function #1
+   18: SETR            D4               SP2         [Block 0 -> ]
+   19: LOAD            D2               0
+   20: POP             D5
+   21: RETURNFUNC
+
+
+Function Function #2
+   22: NOP                                          [Block 0 -> ]
+   23: RETURNFUNC

@@ -5,6 +5,7 @@
 #include "base/check.h"
 #include "base/zc_array.h"
 #include "base/general.h"
+#include "zasm/pc.h"
 #include <map>
 #include <optional>
 #include <vector>
@@ -120,6 +121,7 @@ struct user_object : public user_abstract_obj
 	std::vector<script_object_type> var_types;
 	scr_func_exec destruct;
 	zasm_script* script;
+	pc_t ctor_pc;
 
 #ifdef IS_PLAYER
 	void get_retained_ids(std::vector<uint32_t>& ids);

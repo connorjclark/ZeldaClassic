@@ -2126,7 +2126,6 @@ static bool optimize_inline_functions(OptContext& ctx)
 		ffscript inline_instr;
 		int internal_reg_to_type[8]; // 0 - stack index, 1 - z-register/number
 		int internal_reg_to_value[8];
-		bool all_uses_inlined = true;
 	};
 
 	std::map<pc_t, InlineFunctionData> functions_to_inline;
@@ -2277,7 +2276,6 @@ static bool optimize_inline_functions(OptContext& ctx)
 		{
 			// Unexpected.
 			ASSERT(false);
-			data.all_uses_inlined = false;
 			continue;
 		}
 
@@ -2286,13 +2284,11 @@ static bool optimize_inline_functions(OptContext& ctx)
 		{
 			// Class functions will "SETR CLASS_THISKEY" just before the call. Currently ignoring
 			// those.
-			data.all_uses_inlined = false;
 			continue;
 		}
 
 		if (bisect_tool_should_skip())
 		{
-			data.all_uses_inlined = false;
 			continue;
 		}
 
@@ -2374,7 +2370,6 @@ static bool optimize_inline_functions(OptContext& ctx)
 		size_t hole_length = hole_final_pc - hole_start_pc + 1;
 		if (inlined_zasm.size() > hole_length)
 		{
-			data.all_uses_inlined = false;
 			store_stack_pcs.pop_back();
 			continue;
 		}
@@ -2409,12 +2404,6 @@ static bool optimize_inline_functions(OptContext& ctx)
 
 		if (command_is_wait(inline_instr.command))
 			ctx.cfg_stale = true;
-	}
-
-	for (const auto& [fn_id, data] : functions_to_inline)
-	{
-		if (data.all_uses_inlined)
-			remove(ctx, data.fn.start_pc, data.fn.final_pc);
 	}
 
 	return true;

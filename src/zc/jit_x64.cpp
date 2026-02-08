@@ -4,6 +4,7 @@
 #include "base/qrs.h"
 #include "base/util.h"
 #include "base/zdefs.h"
+#include "zasm/defines.h"
 #include "zasm/pc.h"
 #include "zasm/table.h"
 #include "zc/jit.h"
@@ -2560,6 +2561,10 @@ static bool exec_script(JittedExecutionContext* ctx)
 
 	if (exec_result == EXEC_RESULT_CALL)
 	{
+		int ret_pc = ctx->pc + 1;
+		ctx->pc = ctx->call_pc;
+		ctx->call_pc = -1;
+
 		if (j_instance->ri->retsp >= MAX_CALL_FRAMES)
 		{
 			ctx->ret_code = RUNSCRIPT_JIT_CALL_LIMIT;
@@ -2569,9 +2574,7 @@ static bool exec_script(JittedExecutionContext* ctx)
 		}
 
 		void retstack_push(int32_t val);
-		retstack_push(ctx->pc + 1);
-		ctx->pc = ctx->call_pc;
-		ctx->call_pc = -1;
+		retstack_push(ret_pc);
 		return true;
 	}
 	else if (exec_result == EXEC_RESULT_RETURN)

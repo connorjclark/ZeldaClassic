@@ -63,6 +63,8 @@ struct MaybeLegacyEncodedResult
 MaybeLegacyEncodedResult try_open_maybe_legacy_encoded_file(const char *filename, const char *encoding_header_1, const char *encoding_header_2, const char *payload_header_1, const char *payload_header_2);
 void clear_quest_tmpfile();
 
+extern void (*zc_log_cb)(const char*);
+
 [[noreturn]] void Z_error_fatal(const char *format,...);
 void Z_error(const char *format,...);
 void Z_title(const char *format,...);
