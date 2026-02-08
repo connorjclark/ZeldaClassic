@@ -44,6 +44,24 @@ class TestZScript(ZCTestCase):
     def setUp(self):
         self.maxDiff = None
 
+    def test_zscript(self):
+        # TODO: set this via CLI
+        include_paths = [
+            str(test_scripts_dir),
+            str(root_dir / 'resources/include'),
+            str(root_dir / 'resources/headers'),
+            str(test_scripts_dir / 'playground'),
+        ]
+        resources_folder = run_target.get_build_folder()
+        if resources_folder.name == 'bin':
+            resources_folder = resources_folder / '../share/zquestclassic'
+        (resources_folder / 'includepaths.txt').write_text(';'.join(include_paths))
+
+        run_target.check_run(
+            'zscript',
+            ['-test-zc', str(root_dir / 'tests')],
+        )
+
     def test_zscript_vscode_extension(self):
         if 'emscripten' in str(run_target.get_build_folder()):
             return
@@ -68,6 +86,11 @@ class TestZScript(ZCTestCase):
         )
 
     def compile_script(self, script_path):
+        # Run the compiler '-metadata' for every script for coverage, but only keep
+        # the full results in the stdout for this one script.
+        elide_metadata = script_path.name != 'metadata.zs'
+        elide_scopes = script_path.name != 'scopes.zs'
+
         # Change include paths to use resources/ directly, instead of possibly-stale stuff inside a build folder.
         include_paths = [
             str(test_scripts_dir),
@@ -90,17 +113,16 @@ class TestZScript(ZCTestCase):
             '-json',
             '-metadata',
         ]
+        env = {**os.environ, 'TEST_ZSCRIPT': '1', 'ZC_DISABLE_DEBUG': '1'}
+        if elide_scopes:
+            args.append('-no-emit-inlined-functions')
         p = run_target.run(
             'zscript',
             args,
-            env={**os.environ, 'TEST_ZSCRIPT': '1', 'ZC_DISABLE_DEBUG': '1'},
+            env=env,
         )
         stderr = p.stderr.replace(str(script_path), script_path.name).strip()
         stdout = p.stdout.replace(str(script_path), script_path.name)
-
-        # Run the compiler '-metadata' for every script for coverage, but only keep
-        # the full results in the stdout for this one script.
-        elide_metadata = script_path.name != 'metadata.zs'
 
         def recursive_len(l):
             if not l:
@@ -131,11 +153,15 @@ class TestZScript(ZCTestCase):
 
         zasm = zasm_path.read_text()
 
-        # Remove the metadata (ex: `#ZASM_VERSION`) from ZASM.
+        # Remove the scopes and metadata (ex: `#ZASM_VERSION`) from ZASM.
         # This metadata is unrelated to the -metadata switch.
+        zasm, debug_data = zasm.split('\nScopes:', 2)
         zasm = '\n'.join(
             [l.strip() for l in zasm.splitlines() if not l.startswith('#')]
         ).strip()
+
+        if not elide_scopes:
+            stdout += debug_data
 
         return f'stderr:\n\n{stderr}\n\nstdout:\n\n{stdout}\n\nzasm:\n\n{zasm}\n'
 

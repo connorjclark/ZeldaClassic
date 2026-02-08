@@ -20,7 +20,7 @@ namespace ZScript
 		using RecursiveVisitor::visit;
 		void visit(AST& node, void* param = NULL);
 
-		void initInternalVar(ASTDataDeclList* var);
+		void initInternalVar(ASTDataDeclList* node);
 
 		////////////////
 		// Cases

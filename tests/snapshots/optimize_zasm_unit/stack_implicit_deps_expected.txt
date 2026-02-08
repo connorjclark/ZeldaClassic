@@ -1,4 +1,4 @@
-Function #0 (run_none-0)
+Function run_none-0
     0: SETV            D2               0           [Block 0 -> ]
     1: SETR            CLASS_THISKEY2   CLASS_THISKEY
     2: ZCLASS_CONSTRUCT CLASS_THISKEY    { 1 }

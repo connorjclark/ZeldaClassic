@@ -7,7 +7,7 @@ rewrite 6: 2 -> 1 commands
 rewrite 9: 2 -> 1 commands
 9: TRACEV          3               
 10: NOP            
-Function #0 (run_none-0)
+Function run_none-0
     0: PUSHV           0                            [Block 0 -> ]
     1: NOP
     2: PUSHR           SP2

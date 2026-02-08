@@ -339,6 +339,14 @@ void write_script(ZScript::ZasmCompilerResult& zasmCompilerResult, string& dest,
 		output << str;
 	}
 
+	if (write_meta)
+	{
+		output << "\n\n";
+		output << zasmCompilerResult.debugData.internalToStringForDebugging();
+	}
+
+	output << "\n";
+
 	dest += output.str();
 }
 

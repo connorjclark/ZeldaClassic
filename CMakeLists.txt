@@ -586,7 +586,7 @@ if(WANT_ZC_TESTS)
 		src/test_runner/test_runner.cpp
 		src/base/scc_test.cpp
 	)
-	target_link_libraries(base_test_runner PRIVATE zcbase)
+	target_link_libraries(base_test_runner PRIVATE zcbase zasm)
 
 	if(DEFINED ENV{CI})
 		list(APPEND ZC_INSTALL_TARGETS base_test_runner)

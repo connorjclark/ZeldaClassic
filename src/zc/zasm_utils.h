@@ -1,6 +1,7 @@
 #ifndef ZASM_UTILS_H_
 #define ZASM_UTILS_H_
 
+#include "base/qst.h"
 #include "base/zdefs.h"
 #include "zasm/pc.h"
 #include <map>
@@ -47,6 +48,13 @@ struct ZasmFunction
 			return empty;
 		else
 			return _name;
+	}
+
+	std::string signature() const
+	{
+		if (zasm_debug_data.exists())
+			return zasm_debug_data.getFunctionSignature(zasm_debug_data.resolveFunctionScope(start_pc));
+		return name();
 	}
 };
 

@@ -478,7 +478,7 @@ namespace ZScript
 		owning_vector<ASTSetOption> options;
 		owning_vector<ASTStmt> statements;
 		
-		Scope* getScope() {return scope;}
+		Scope* getScope() const {return scope;}
 		void setScope(Scope* scp) {scope = scp;}
 	private:
 		Scope* scope;
@@ -500,7 +500,7 @@ namespace ZScript
 		bool isInverted() const {return inverted;}
 		bool isDecl() const {return _isDecl;}
 		
-		Scope* getScope() {return scope;}
+		Scope* getScope() const {return scope;}
 		void setScope(Scope* scp) {scope = scp;}
 
 		owning_ptr<ASTExpr> condition;
@@ -615,7 +615,7 @@ namespace ZScript
 		bool ends_loop, ends_else;
 		
 		bool hasElse() const {return elseBlock;}
-		Scope* getScope() {return scope;}
+		Scope* getScope() const {return scope;}
 		void setScope(Scope* scp) {scope = scp;}
 	private:
 		Scope* scope;
@@ -642,7 +642,7 @@ namespace ZScript
 		bool ends_loop, ends_else;
 		
 		bool hasElse() const {return elseBlock;}
-		Scope* getScope() {return scope;}
+		Scope* getScope() const {return scope;}
 		void setScope(Scope* scp) {scope = scp;}
 	private:
 		Scope* scope;
@@ -670,7 +670,7 @@ namespace ZScript
 		bool ends_loop, ends_else;
 		
 		bool hasElse() const {return elseBlock;}
-		Scope* getScope() {return scope;}
+		Scope* getScope() const {return scope;}
 		void setScope(Scope* scp) {scope = scp;}
 		
 		static const uint OVERFLOW_ALLOW = 0;
@@ -1000,6 +1000,7 @@ namespace ZScript
 		bool getFlag(int32_t flag) const {return (flags & flag) != 0;}
 		void setFlag(int32_t flag, bool state = true);
 		int32_t getFlags() const {return flags;}
+		bool isBinding() const {return getFlag(FUNCFLAG_INTERNAL);}
 		bool isRun() const;
 
 		const std::string& getName() const;
@@ -1137,6 +1138,7 @@ namespace ZScript
 		void setFlag(uint flg, bool state = true) {SETFLAG(flags,flg,state);}
 		static const uint FL_FORCE_VAR = 0x01;
 		static const uint FL_SKIP_EMPTY_INIT = 0x02;
+		static const uint FL_HIDDEN = 0x04;
 
 		Scope* getScope() const;
 

@@ -17,6 +17,101 @@ struct SourceFile
 	std::string contents;
 };
 
+enum DebugScopeTag : uint8_t
+{
+	TAG_UNKNOWN,
+	TAG_ROOT,
+	TAG_FILE,
+	TAG_NAMESPACE,
+	TAG_SCRIPT,
+	TAG_FUNCTION,
+	TAG_CLASS,
+	TAG_ENUM,
+	TAG_BLOCK,
+};
+
+enum DebugScopeFlags : uint8_t
+{
+	SCOPE_FLAG_NONE = 0,
+	SCOPE_FLAG_HIDDEN = 1,
+	SCOPE_FLAG_INTERNAL = 2,
+	SCOPE_FLAG_DEPRECATED = 4,
+};
+
+struct DebugScope
+{
+	DebugScopeTag tag;
+	DebugScopeFlags flags;
+	int parent_index = -1;
+	int inheritance_index = -1;
+	uint32_t type_id;
+	pc_t start_pc;
+	pc_t end_pc;
+	std::string name;
+	std::vector<int> imports;
+};
+
+enum DebugSymbolStorage : uint8_t
+{
+	CONSTANT,
+	LOC_STACK,
+	LOC_GLOBAL,
+	LOC_REGISTER,
+	LOC_CLASS,
+};
+
+enum DebugSymbolFlags : uint8_t
+{
+	SYM_FLAG_NONE = 0,
+	SYM_FLAG_HIDDEN = 1,
+	SYM_FLAG_VARARGS = 2,
+};
+
+struct DebugSymbol
+{
+	int32_t scope_index; // Which scope owns this variable?
+	int32_t offset;      // Based on storage. e.g., stack offset, or global index, or class field, ...
+	uint32_t type_id;
+	DebugSymbolStorage storage;
+	DebugSymbolFlags flags;
+	std::string name;
+};
+
+const int DEBUG_TYPE_TAG_TABLE_START = 32;
+
+enum DebugTypeTag : uint8_t
+{
+	// 0-31 Reserved for Primitives (Implicit, not stored in types table).
+	TYPE_VOID,
+	// Note: only internal functions use TYPE_TEMPLATE_UNBOUNDED.
+	// For user template functions, each function is emitted with the resolved types with no
+	// indication it was a templated function.
+	// I attempted to create a proper scoped template type, but our implementation of template types
+	// made that difficult.
+	// See: https://pastebin.com/shiWMdDu
+	TYPE_TEMPLATE_UNBOUNDED,
+	TYPE_UNTYPED,
+	TYPE_BOOL,
+	TYPE_INT,
+	TYPE_LONG,
+	TYPE_CHAR32,
+	TYPE_RGB,
+
+	// 32+ Stored in types table.
+	TYPE_CONST    = 32, // Modifies another type.
+	TYPE_ARRAY    = 33, // Array of another type.
+	TYPE_CLASS    = 34, // Points to a TAG_CLASS scope.
+	TYPE_ENUM     = 35, // Points to a TAG_ENUM scope.
+	TYPE_BITFLAGS = 36, // Points to a TAG_ENUM scope.
+};
+
+struct DebugType
+{
+	DebugTypeTag tag;
+	// Either a type id or a scope index - depends on tag.
+	int32_t extra;
+};
+
 struct DebugData
 {
 	static const int VERSION = 1;
@@ -29,17 +124,47 @@ struct DebugData
 
 	std::vector<SourceFile> source_files;
 	std::vector<byte> debug_lines_encoded;
+	std::vector<DebugScope> scopes;
+	std::vector<DebugSymbol> symbols;
+	std::vector<DebugType> types;
 
 	void appendLineInfoSetFile(int file);
 	void appendLineInfoSimpleStep(byte d_pc);
 	void appendLineInfoExtendedStep(int d_pc, int d_line);
 	void appendLineInfoPrologueEnd();
 
+	bool exists() const;
+
 	std::pair<const char*, int> resolveLocation(pc_t pc) const;
+	const DebugScope* resolveScope(pc_t pc) const;
+	const DebugScope* resolveFunctionScope(pc_t pc) const;
+	const DebugScope* resolveFileScope(std::string fname) const;
+	const DebugType* getType(uint32_t type_id) const;
+	std::string getTypeName(uint32_t type_id) const;
+	std::string getFullScopeName(const DebugScope* scope) const;
+	std::string getFunctionSignature(const DebugScope* scope) const;
+	std::string getDebugSymbolName(const DebugSymbol* symbol) const;
+	std::vector<const DebugSymbol*> getChildSymbols(const DebugScope* scope) const;
+	std::vector<const DebugScope*> getChildScopes(const DebugScope* scope) const;
+
+	// Returns the DebugSymbol (variable/function) if found, else nullptr.
+    const DebugSymbol* resolveSymbol(const std::string& identifier, const DebugScope* current_scope) const;
+    // Returns the DebugScope (class/namespace) if found, else nullptr.
+    const DebugScope* resolveScope(const std::string& identifier, const DebugScope* current_scope) const;
+	std::vector<const DebugScope*> resolveFunctions(const std::string& identifier, const DebugScope* current_scope) const;
 
 	std::vector<byte> encode() const;
+	std::string internalToStringForDebugging() const;
 
 private:
+	struct ResolveResult
+	{
+        const DebugSymbol* sym = nullptr;
+        int32_t scope_idx = -1;
+    };
+
+    ResolveResult resolveEntity(const std::string& identifier, const DebugScope* current_scope) const;
+
 	struct Checkpoint
 	{
 		pc_t pc;
@@ -59,6 +184,18 @@ private:
 	void buildCheckpoints() const;
 
 	mutable std::array<CacheEntry, 1024> resolve_location_cache;
+
+	mutable std::vector<int32_t> sorted_scopes;
+	mutable bool scopes_sorted = false;
+	void buildScopesSorted() const;
+
+	void buildSymbolCache() const;
+	mutable std::vector<std::vector<const DebugSymbol*>> scope_symbol_cache;
+	mutable bool scope_symbol_cache_built;
+
+	void buildScopeChildrenCache() const;
+	mutable std::vector<std::vector<int32_t>> scope_children_cache;
+	mutable bool scope_children_cache_built;
 };
 
 #endif

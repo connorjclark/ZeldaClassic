@@ -34,15 +34,15 @@ rewrite 18: GOTOCMP         20               ==
 rewrite 17: 2 -> 2 commands
 17: COMPAREV        D3               0      
 18: GOTOCMP         20               ==     
-Function #0 (run_none-0)
-    0: CALLFUNC        5                            [Block 0 -> ][Call Function #1]
-    1: CALLFUNC        14                           [Call Function #2]
-    2: CALLFUNC        22                           [Call Function #3]
+Function run_none-0
+    0: CALLFUNC        5                            [Block 0 -> ][Function #1]
+    1: CALLFUNC        14                           [Function #2]
+    2: CALLFUNC        22                           [Function #3]
     3: NOP
     4: QUIT
 
 
-Function #1
+Function Function #1
     5: NOP                                          [Block 0 -> ]
     6: NOP
     7: NOP
@@ -54,7 +54,7 @@ Function #1
    13: RETURNFUNC
 
 
-Function #2
+Function Function #2
    14: SETV            D0               1337        [Block 0 -> 1, 2]
    15: NOP
    16: NOP
@@ -65,7 +65,7 @@ Function #2
    21: RETURNFUNC
 
 
-Function #3
+Function Function #3
    22: NOP                                          [Block 0 -> ]
    23: SETV            D1               1337
    24: NOP

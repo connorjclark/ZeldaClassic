@@ -763,7 +763,7 @@ void do_varg_min();
 void do_varg_choose();
 void do_varg_makearray(ScriptType type, const uint32_t UID, script_object_type object_type);
 void do_breakpoint();
-void handle_trace(const std::string& s, bool is_error = false);
+void handle_trace(const std::string& s, bool is_error = false, bool no_prefix = false);
 std::optional<StackTrace> create_stack_trace();
 void do_trace(bool v);
 void do_tracel(bool v);
