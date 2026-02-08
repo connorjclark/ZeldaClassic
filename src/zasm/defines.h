@@ -3384,8 +3384,6 @@ enum ASM_DEFINE
 
 //} End internal arrays
 
-#endif
-
 // Aliases for common registers
 
 /*
@@ -3407,3 +3405,5 @@ enum ASM_DEFINE
 #define rNUL                     D(5)
 #define rSFTEMP                  D(6)
 #define rWHAT_NO_7               D(7)
+
+#endif

@@ -2,7 +2,7 @@
 #define ZC_JIT_WASM_H_
 
 #include "base/zdefs.h"
-#include "zc/zasm_utils.h"
+#include "zasm/pc.h"
 #include <cstdint>
 
 struct JittedScript

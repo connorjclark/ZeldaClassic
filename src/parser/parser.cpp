@@ -517,7 +517,7 @@ int32_t main(int32_t argc, char **argv)
 	{
 		if(!res)
 		{
-			write_compile_data(result->zasm, result->scriptTypes, result->theScripts);
+			write_compile_data(result->zasmCompilerResult);
 		}
 		int32_t errorcode = ZC_CONSOLE_TERM_CODE;
 		cph->write(&errorcode, sizeof(int32_t));
@@ -545,7 +545,7 @@ int32_t main(int32_t argc, char **argv)
 		if(FILE* outfile = fopen(zasm_out.c_str(), zasm_out_append ? "a" : "w"))
 		{
 			string str;
-			write_script(result->zasm, str, zasm_commented, &result->theScripts);
+			write_script(result->zasmCompilerResult, str, zasm_commented);
 			fwrite(str.c_str(), sizeof(char), str.size(), outfile);
 			fclose(outfile);
 		}
@@ -580,7 +580,7 @@ extern "C" int compile_script(const char* script_path)
 	{
 		string str;
 		if (result)
-			write_script(result->zasm, str, zasm_commented, &result->theScripts);
+			write_script(result->zasmCompilerResult, str, zasm_commented);
 		fwrite(str.c_str(), sizeof(char), str.size(), outfile);
 		fclose(outfile);
 	}

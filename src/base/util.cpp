@@ -1,6 +1,7 @@
 #include "base/util.h"
 #include "allegro/debug.h"
 #include "base/general.h"
+#include "base/md5.h"
 #include "base/process_management.h"
 #include "base/zdefs.h"
 #include <cstdlib>
@@ -1026,6 +1027,16 @@ namespace util
 #else
 		launch_process("xdg-open", {url});
 #endif
+	}
+
+	std::array<uint8_t, 16> md5_hash_bytes(const std::string& data)
+	{
+		cvs_MD5Context ctx;
+		cvs_MD5Init(&ctx);
+		cvs_MD5Update(&ctx, (const uint8_t*)data.data(), data.size());
+		std::array<uint8_t, 16> md5sum;
+		cvs_MD5Final(md5sum.data(), &ctx);
+		return md5sum;
 	}
 
 	uint8_t nibble(uint8_t byte, bool high)

@@ -2,6 +2,7 @@
 #include <deque>
 #include <limits>
 #include <memory>
+#include <optional>
 #include <string>
 #include <sstream>
 #include <math.h>
@@ -13,7 +14,6 @@
 #include <sys/stat.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <fstream>
 #include <fmt/format.h>
 #include <fmt/ranges.h>
 //
@@ -26,14 +26,13 @@
 #include "base/qrs.h"
 #include "base/dmap.h"
 #include "base/msgstr.h"
-#include "base/packfile.h"
 #include "base/misctypes.h"
 #include "base/initdata.h"
-#include "base/scc.h"
 #include "base/version.h"
 #include "new_subscr.h"
+#include "zasm/debug_data.h"
+#include "zasm/pc.h"
 #include "zc/maps.h"
-#include "zasm/serialize.h"
 #include "zasm/table.h"
 #include "zc/replay.h"
 #include "zc/scripting/array_manager.h"
@@ -43,8 +42,6 @@
 #include "zc/scripting/sram.h"
 #include "zc/scripting/string_utils.h"
 #include "zc/scripting/types.h"
-#include "zc/zasm_optimize.h"
-#include "zc/zasm_utils.h"
 #include "zc/zc_ffc.h"
 #include "zc/zc_sys.h"
 #include "zc/jit.h"
@@ -126,12 +123,15 @@ void scripting_log_error_with_context(std::string text)
 			current_zasm_context = fmt::format("{}", fmt::join(context, ", "));
 		else
 		{
-			Z_scripterrlog("%s\n", text.c_str());
+			bool is_error = true;
+			FFCore.handle_trace(text + "\n", is_error);
 			return;
 		}
 	}
 
-	Z_scripterrlog("%s | %s\n", current_zasm_context.c_str(), text.c_str());
+	bool is_error = true;
+	FFCore.handle_trace(fmt::format("{} | {}\n", current_zasm_context.c_str(), text.c_str()), is_error);
+
 	current_zasm_context = "";
 	current_zasm_extra_context = "";
 }
@@ -2090,6 +2090,7 @@ void ArrayH::getString(const int32_t ptr, string &str, dword num_chars, dword of
 	
 	str.clear();
 	size_t sz = am.size();
+	str.reserve(sz);
 	for(word i = offset; BC::checkUserArrayIndex(i, sz) == _NoError && am.get(i) != '\0' && num_chars != 0; i++)
 	{
 		int32_t c = am.get(i) / 10000;
@@ -24184,7 +24185,7 @@ int32_t run_script(ScriptType type, word script, int32_t i)
 }
 
 // Run [count] number of commands (unless something errors).
-int32_t run_script_jit_sequence(JittedScriptInstance* j_instance, int32_t pc, uint32_t sp, int32_t count)
+int32_t run_script_jit_sequence(JittedScriptInstance* j_instance, pc_t pc, uint32_t sp, int32_t count)
 {
 	ri->pc = pc;
 	ri->sp = sp;
@@ -24199,7 +24200,7 @@ int32_t run_script_jit_sequence(JittedScriptInstance* j_instance, int32_t pc, ui
 }
 
 // Run a single command.
-int32_t run_script_jit_one(JittedScriptInstance* j_instance, int32_t pc, uint32_t sp)
+int32_t run_script_jit_one(JittedScriptInstance* j_instance, pc_t pc, uint32_t sp)
 {
 	ri->pc = pc;
 	ri->sp = sp;
@@ -24214,7 +24215,7 @@ int32_t run_script_jit_one(JittedScriptInstance* j_instance, int32_t pc, uint32_
 }
 
 // Runs the script until the next function call, return, wait frame, or error.
-int32_t run_script_jit_until_call_or_return(JittedScriptInstance* j_instance, int32_t pc, uint32_t sp)
+int32_t run_script_jit_until_call_or_return(JittedScriptInstance* j_instance, pc_t pc, uint32_t sp)
 {
 	ri->pc = pc;
 	ri->sp = sp;
@@ -30524,79 +30525,172 @@ void FFScript::ZScriptConsole(bool open)
 ///----------------------------------------------------------------------------------------------------//
 //Tracing
 
+static std::string get_script_location(int pc)
+{
+	auto [fname, line] = zasm_debug_data.resolveLocation(pc);
+	if (line > 0)
+	{
+		// Just print the filename, not the entire path.
+		std::string fname_str = fname;
+		size_t pos = fname_str.find_last_of("/\\") + 1;
+		return fmt::format("{}:{}", fname_str.substr(pos), line);
+		// return fmt::format("{}:{} (pc: {})", fname_str.substr(pos), line, pc); // Useful for debugging.
+	}
+	else if (devpwd())
+	{
+		// It's often useful to know which zasm instruction stuff happened at for development,
+		// but that's never useful for typical users.
+		return fmt::format("{}.zasm:{}", curscript->zasm_script->name, pc);
+	}
+
+	return "";
+}
+
+void traceStr(string const& str)
+{
+	FFCore.handle_trace(str + "\n");
+}
+
+void FFScript::handle_trace(const std::string& s, bool is_error)
+{
+	bool user_visible_trace = true;
+	if (is_error)
+		user_visible_trace = get_qr(qr_SCRIPTERRLOG) || DEVLEVEL > 0; // TODO: consider removing this, always logging errors.
+	bool do_replay_comment = replay_is_active() && replay_get_meta_bool("script_trace");
+	if (!do_replay_comment && !user_visible_trace)
+		return;
+
+	std::optional<StackTrace> stack_trace;
+	std::string stack_trace_string;
+
+	if (!s.empty() && s.back() == '\n')
+		stack_trace = create_stack_trace();
+	if (stack_trace)
+		stack_trace_string = stack_trace->to_string() + "\n";
+
+	if (user_visible_trace)
+	{
+		bool force_context = is_error;
+		PrintTracePrefix(force_context, is_error);
+		safe_al_trace(s);
+		if (!stack_trace_string.empty())
+			safe_al_trace(stack_trace_string);
+	}
+
+	if (do_replay_comment)
+	{
+		replay_step_comment(fmt::format("{}: {}", is_error ? "Error" : "Trace", s));
+		if (stack_trace)
+		{
+			for (auto& frame : stack_trace->frames)
+				replay_step_comment(frame);
+		}
+	}
+
+	if (console_enabled && user_visible_trace)
+	{
+		int colors = is_error ?
+			(CConsoleLoggerEx::COLOR_RED | CConsoleLoggerEx::COLOR_INTENSITY | CConsoleLoggerEx::COLOR_BACKGROUND_BLACK) :
+			(CConsoleLoggerEx::COLOR_GREEN | CConsoleLoggerEx::COLOR_INTENSITY | CConsoleLoggerEx::COLOR_BACKGROUND_BLACK);
+		zscript_coloured_console.safeprint(colors, s.c_str());
+
+		if (!stack_trace_string.empty())
+		{
+			colors = CConsoleLoggerEx::COLOR_WHITE | CConsoleLoggerEx::COLOR_BACKGROUND_BLACK;
+			zscript_coloured_console.safeprint(colors, stack_trace_string.c_str());
+		}
+	}
+}
+
+std::string StackTrace::to_string() const
+{
+	return fmt::format("{}", fmt::join(frames, "\n"));
+}
+
+// TODO: add function names. ex: at somefn (main.zs:12)
+std::optional<StackTrace> FFScript::create_stack_trace()
+{
+	if (zasm_debug_data.debug_lines_encoded.empty() && !devpwd())
+		return std::nullopt;
+
+	StackTrace result{};
+	std::vector<pc_t> frames;
+	std::vector<std::string> frame_strings;
+
+	frames.push_back(ri->pc);
+
+	for (int i = ri->retsp - 1; i >= 0; i--)
+	{
+		pc_t pc = (*ret_stack)[i];
+		frames.push_back(pc - 1);
+	}
+
+	result.frames.reserve(frames.size());
+
+	pc_t last_pc = -1;
+	int repeated_count = 0;
+	for (int i = 0; i < frames.size(); i++)
+	{
+		pc_t pc = frames[i];
+		if (last_pc == pc)
+			repeated_count++;
+		else
+			repeated_count = 1;
+
+		std::string location = get_script_location(pc);
+		result.frames.push_back(fmt::format("  at {}", location));
+
+		// Elide repeated frames.
+		if (repeated_count == 2)
+		{
+			int j = i + 1;
+			int lookahead_count = 0;
+			while (j < frames.size() && frames[j] == last_pc)
+			{
+				j++;
+				lookahead_count++;
+			}
+
+			if (lookahead_count > 0)
+			{
+				std::string location = get_script_location(pc);
+				result.frames.push_back(fmt::format("  ... (x{})", lookahead_count));
+				i = j - 1;
+			}
+
+			repeated_count = 0;
+		}
+
+		last_pc = pc;
+	}
+
+	return result;
+}
+
 void FFScript::do_trace(bool v)
 {
-	bool should_replay_trace = replay_is_active() && replay_get_meta_bool("script_trace");
-	// For now, only prevent tracing to allegro log for Web version. Some quests may expect players to
-	// look in the logs for spoiler/secret stuff.
-#ifdef __EMSCRIPTEN__
-	bool should_trace = console_enabled || should_replay_trace;
-	if (!should_trace) return;
-#endif
-
 	int32_t temp = SH::get_arg(sarg1, v);
 	
 	char tmp[100];
 	sprintf(tmp, (temp < 0 ? "%06d" : "%05d"), temp);
 	string s2(tmp);
 	s2 = s2.substr(0, s2.size() - 4) + "." + s2.substr(s2.size() - 4, 4) + "\n";
-	TraceScriptIDs();
-	al_trace("%s", s2.c_str());
-	if (should_replay_trace)
-		replay_step_comment("trace: " + s2);
-	
-	if ( console_enabled ) 
-	{
-		zscript_coloured_console.safeprint((CConsoleLoggerEx::COLOR_WHITE | 
-			CConsoleLoggerEx::COLOR_BACKGROUND_BLACK),s2.c_str());
-	}
+	handle_trace(s2);
 }
 void FFScript::do_tracel(bool v)
 {
 	int32_t temp = SH::get_arg(sarg1, v);
-	
+
 	char tmp[32];
 	sprintf(tmp, "%d\n", temp);
-	TraceScriptIDs();
-	al_trace("%s", tmp);
-	if (replay_is_active() && replay_get_meta_bool("script_trace"))
-		replay_step_comment(fmt::format("trace: {}", temp));
-	
-	if ( console_enabled ) 
-	{
-		zscript_coloured_console.safeprint((CConsoleLoggerEx::COLOR_WHITE | 
-			CConsoleLoggerEx::COLOR_BACKGROUND_BLACK),tmp);
-	}
+	handle_trace(tmp);
 }
 
 void FFScript::do_tracebool(const bool v)
 {
 	int32_t temp = SH::get_arg(sarg1, v);
-	TraceScriptIDs();
-	char const* str = temp ? "true\n" : "false\n";
-	al_trace("%s", str);
-	if (replay_is_active() && replay_get_meta_bool("script_trace"))
-		replay_step_comment(fmt::format("trace: {}", (bool)temp));
-	
-	if ( console_enabled ) 
-	{
-		zscript_coloured_console.safeprint((CConsoleLoggerEx::COLOR_WHITE | 
-			CConsoleLoggerEx::COLOR_BACKGROUND_BLACK),str);
-	}
-}
 
-void traceStr(string const& str)
-{
-	FFCore.TraceScriptIDs();
-	safe_al_trace(str);
-	if (replay_is_active() && replay_get_meta_bool("script_trace"))
-		replay_step_comment("trace: " + str);
-	
-	if ( console_enabled ) 
-	{
-		zscript_coloured_console.safeprint((CConsoleLoggerEx::COLOR_WHITE | 
-			CConsoleLoggerEx::COLOR_BACKGROUND_BLACK),str.c_str());
-	}
+	handle_trace(temp ? "true\n" : "false\n");
 }
 
 void FFScript::do_tracestring()
@@ -30604,7 +30698,6 @@ void FFScript::do_tracestring()
 	int32_t arrayptr = get_register(sarg1);
 	string str;
 	ArrayH::getString(arrayptr, str, 512);
-	str += "\0"; //In the event that the user passed an array w/o NULL, don't crash.
 	traceStr(str);
 }
 
@@ -30635,7 +30728,6 @@ void FFScript::do_printf(const bool v, const bool varg)
 	{
 		string formatstr;
 		ArrayH::getString(format_arrayptr, formatstr, MAX_ZC_ARRAY_SIZE);
-		
 		traceStr(zs_sprintf(formatstr.c_str(), num_args, varg ? zspr_varg_getter : zspr_stack_getter));
 	}
 	if(varg)
@@ -30653,7 +30745,6 @@ void FFScript::do_printfarr()
 		auto num_args = arg_am.size();
 		string formatstr;
 		ArrayH::getString(format_arrayptr, formatstr, MAX_ZC_ARRAY_SIZE);
-		
 		traceStr(zs_sprintf(formatstr.c_str(), num_args,
 			[&](int32_t,int32_t next_arg)
 			{
@@ -30770,38 +30861,31 @@ void FFScript::do_tracenl()
 	}
 }
 
-
-void FFScript::TraceScriptIDs(bool force_show_context)
+void FFScript::PrintTracePrefix(bool force_show_context, bool is_error)
 {
+	std::vector<std::string> parts;
+
 	if(DEVTIMESTAMP)
 	{
-		CConsoleLoggerEx console = zscript_coloured_console;
-		bool cond = console_enabled;
-		
 		char buf[256] = {0};
 		//Calculate timestamp
 		struct tm * tm_struct;
 		time_t sysRTC;
 		time (&sysRTC);
 		tm_struct = localtime (&sysRTC);
-		
+
 		sprintf(buf, "[%d:%d:%d] ", tm_struct->tm_hour, tm_struct->tm_min, tm_struct->tm_sec);
-		//
-		
-		al_trace("%s", buf);
-		if ( cond ) {console.safeprint((CConsoleLoggerEx::COLOR_GREEN | CConsoleLoggerEx::COLOR_INTENSITY | 
-			CConsoleLoggerEx::COLOR_BACKGROUND_BLACK),buf); }
+
+		parts.push_back(buf);
 	}
 
 	bool show_context = force_show_context || (get_qr(qr_TRACESCRIPTIDS) || DEVLOGGING);
 	if (show_context)
 	{
-		CConsoleLoggerEx console = zscript_coloured_console;
-		bool cond = console_enabled;
 		char buf[256] = {0};
 		if(script_funcrun)
 		{
-			sprintf(buf, "Destructor(%d,%s): ", ri->thiskey, destructstr?destructstr->c_str():"UNKNOWN");
+			sprintf(buf, "Destructor(%d,%s)", ri->thiskey, destructstr?destructstr->c_str():"UNKNOWN");
 		}
 		else switch(curScriptType)
 		{
@@ -30810,28 +30894,28 @@ void FFScript::TraceScriptIDs(bool force_show_context)
 				switch(curScriptNum)
 				{
 					case GLOBAL_SCRIPT_INIT:
-						sprintf(buf, "Global Init(%s): ", globalmap[curScriptNum].scriptname.c_str());
+						sprintf(buf, "Global Init(%s)", globalmap[curScriptNum].scriptname.c_str());
 						break;
 					case GLOBAL_SCRIPT_GAME:
-						sprintf(buf, "Global Active(%s): ", globalmap[curScriptNum].scriptname.c_str());
+						sprintf(buf, "Global Active(%s)", globalmap[curScriptNum].scriptname.c_str());
 						break;
 					case GLOBAL_SCRIPT_END:
-						sprintf(buf, "Global Exit(%s): ", globalmap[curScriptNum].scriptname.c_str());
+						sprintf(buf, "Global Exit(%s)", globalmap[curScriptNum].scriptname.c_str());
 						break;
 					case GLOBAL_SCRIPT_ONSAVELOAD:
-						sprintf(buf, "Global SaveLoad(%s): ", globalmap[curScriptNum].scriptname.c_str());
+						sprintf(buf, "Global SaveLoad(%s)", globalmap[curScriptNum].scriptname.c_str());
 						break;
 					case GLOBAL_SCRIPT_ONLAUNCH:
-						sprintf(buf, "Global Launch(%s): ", globalmap[curScriptNum].scriptname.c_str());
+						sprintf(buf, "Global Launch(%s)", globalmap[curScriptNum].scriptname.c_str());
 						break;
 					case GLOBAL_SCRIPT_ONCONTGAME:
-						sprintf(buf, "Global ContGame(%s): ", globalmap[curScriptNum].scriptname.c_str());
+						sprintf(buf, "Global ContGame(%s)", globalmap[curScriptNum].scriptname.c_str());
 						break;
 					case GLOBAL_SCRIPT_F6:
-						sprintf(buf, "Global F6Menu(%s): ", globalmap[curScriptNum].scriptname.c_str());
+						sprintf(buf, "Global F6Menu(%s)", globalmap[curScriptNum].scriptname.c_str());
 						break;
 					case GLOBAL_SCRIPT_ONSAVE:
-						sprintf(buf, "Global Save(%s): ", globalmap[curScriptNum].scriptname.c_str());
+						sprintf(buf, "Global Save(%s)", globalmap[curScriptNum].scriptname.c_str());
 						break;
 				}
 				break;
@@ -30842,83 +30926,93 @@ void FFScript::TraceScriptIDs(bool force_show_context)
 				switch(curScriptNum)
 				{
 					case SCRIPT_HERO_INIT:
-						sprintf(buf, "Hero Init(%s): ", playermap[curScriptNum-1].scriptname.c_str());
+						sprintf(buf, "Hero Init(%s)", playermap[curScriptNum-1].scriptname.c_str());
 						break;
 					case SCRIPT_HERO_ACTIVE:
-						sprintf(buf, "Hero Active(%s): ", playermap[curScriptNum-1].scriptname.c_str());
+						sprintf(buf, "Hero Active(%s)", playermap[curScriptNum-1].scriptname.c_str());
 						break;
 					case SCRIPT_HERO_DEATH:
-						sprintf(buf, "Hero Death(%s): ", playermap[curScriptNum-1].scriptname.c_str());
+						sprintf(buf, "Hero Death(%s)", playermap[curScriptNum-1].scriptname.c_str());
 						break;
 					case SCRIPT_HERO_WIN:
-						sprintf(buf, "Hero Win(%s): ", playermap[curScriptNum-1].scriptname.c_str());
+						sprintf(buf, "Hero Win(%s)", playermap[curScriptNum-1].scriptname.c_str());
 						break;
 				}
 				break;
 			}
 			
 			case ScriptType::Lwpn:
-				sprintf(buf, "LWeapon(%u, %s): ", curScriptNum,lwpnmap[curScriptNum-1].scriptname.c_str());
+				sprintf(buf, "LWeapon(%u, %s)", curScriptNum,lwpnmap[curScriptNum-1].scriptname.c_str());
 				break;
 			
 			case ScriptType::Ewpn:
-				sprintf(buf, "EWeapon(%u, %s): ", curScriptNum,ewpnmap[curScriptNum-1].scriptname.c_str());
+				sprintf(buf, "EWeapon(%u, %s)", curScriptNum,ewpnmap[curScriptNum-1].scriptname.c_str());
 				break;
 			
 			case ScriptType::NPC:
-				sprintf(buf, "NPC(%u, %s): ", curScriptNum,npcmap[curScriptNum-1].scriptname.c_str());
+				sprintf(buf, "NPC(%u, %s)", curScriptNum,npcmap[curScriptNum-1].scriptname.c_str());
 				break;
 				
 			case ScriptType::FFC:
-				sprintf(buf, "FFC(%u, %s): ", curScriptNum,ffcmap[curScriptNum-1].scriptname.c_str());
+				sprintf(buf, "FFC(%u, %s)", curScriptNum,ffcmap[curScriptNum-1].scriptname.c_str());
 				break;
 				
 			case ScriptType::Item:
-				sprintf(buf, "Item(%u, %s): ", curScriptNum,itemmap[curScriptNum-1].scriptname.c_str());
+				sprintf(buf, "Item(%u, %s)", curScriptNum,itemmap[curScriptNum-1].scriptname.c_str());
 				break;
 			
 			case ScriptType::OnMap:
-				sprintf(buf, "DMapMap(%u, %s): ", curScriptNum,dmapmap[curScriptNum-1].scriptname.c_str());
+				sprintf(buf, "DMapMap(%u, %s)", curScriptNum,dmapmap[curScriptNum-1].scriptname.c_str());
 				break;
 			case ScriptType::ScriptedActiveSubscreen:
-				sprintf(buf, "DMapASub(%u, %s): ", curScriptNum,dmapmap[curScriptNum-1].scriptname.c_str());
+				sprintf(buf, "DMapASub(%u, %s)", curScriptNum,dmapmap[curScriptNum-1].scriptname.c_str());
 				break;
 			case ScriptType::ScriptedPassiveSubscreen:
-				sprintf(buf, "DMapPSub(%u, %s): ", curScriptNum,dmapmap[curScriptNum-1].scriptname.c_str());
+				sprintf(buf, "DMapPSub(%u, %s)", curScriptNum,dmapmap[curScriptNum-1].scriptname.c_str());
 				break;
 			case ScriptType::DMap:
-				sprintf(buf, "DMap(%u, %s): ", curScriptNum,dmapmap[curScriptNum-1].scriptname.c_str());
+				sprintf(buf, "DMap(%u, %s)", curScriptNum,dmapmap[curScriptNum-1].scriptname.c_str());
 				break;
 			
 			case ScriptType::ItemSprite:
-				sprintf(buf, "ItemSprite(%u, %s): ", curScriptNum,itemspritemap[curScriptNum-1].scriptname.c_str());
+				sprintf(buf, "ItemSprite(%u, %s)", curScriptNum,itemspritemap[curScriptNum-1].scriptname.c_str());
 				break;
 			
 			case ScriptType::Screen:
-				sprintf(buf, "Screen(%u, %s): ", curScriptNum,screenmap[curScriptNum-1].scriptname.c_str());
+				sprintf(buf, "Screen(%u, %s)", curScriptNum,screenmap[curScriptNum-1].scriptname.c_str());
 				break;
 			
 			case ScriptType::Combo:
-				sprintf(buf, "Combo(%u, %s): ", curScriptNum,comboscriptmap[curScriptNum-1].scriptname.c_str());
+				sprintf(buf, "Combo(%u, %s)", curScriptNum,comboscriptmap[curScriptNum-1].scriptname.c_str());
 				break;
 				
 			case ScriptType::Generic:
-				sprintf(buf, "Generic(%u, %s): ", curScriptNum,genericmap[curScriptNum-1].scriptname.c_str());
+				sprintf(buf, "Generic(%u, %s)", curScriptNum,genericmap[curScriptNum-1].scriptname.c_str());
 				break;
 				
 			case ScriptType::GenericFrozen:
-				sprintf(buf, "GenericFRZ(%u, %s): ", curScriptNum,genericmap[curScriptNum-1].scriptname.c_str());
+				sprintf(buf, "GenericFRZ(%u, %s)", curScriptNum,genericmap[curScriptNum-1].scriptname.c_str());
 				break;
 				
 			case ScriptType::EngineSubscreen:
-				sprintf(buf, "Subscreen(%u, %s): ", curScriptNum,subscreenmap[curScriptNum-1].scriptname.c_str());
+				sprintf(buf, "Subscreen(%u, %s)", curScriptNum,subscreenmap[curScriptNum-1].scriptname.c_str());
 				break;
 		}
-		
-		al_trace("%s", buf);
-		if ( cond )
-			console.safeprint((CConsoleLoggerEx::COLOR_GREEN|CConsoleLoggerEx::COLOR_INTENSITY|
-				CConsoleLoggerEx::COLOR_BACKGROUND_BLACK),buf);
+
+		parts.push_back(buf);
+	}
+
+	std::string prefix = fmt::format("{}: ", fmt::join(parts, " "));
+
+	al_trace("%s", prefix.c_str());
+
+	CConsoleLoggerEx console = zscript_coloured_console;
+	if (console_enabled)
+	{
+		int colors = is_error ?
+			(CConsoleLoggerEx::COLOR_RED | CConsoleLoggerEx::COLOR_INTENSITY | CConsoleLoggerEx::COLOR_BACKGROUND_BLACK) :
+			(CConsoleLoggerEx::COLOR_GREEN | CConsoleLoggerEx::COLOR_INTENSITY | CConsoleLoggerEx::COLOR_BACKGROUND_BLACK);
+		zscript_coloured_console.safeprint(colors, prefix.c_str());
 	}
 }
 

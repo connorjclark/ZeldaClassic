@@ -21,6 +21,7 @@
 #include "base/autocombo.h"
 #include "base/gui.h"
 #include "base/msgstr.h"
+#include "zasm/debug_data.h"
 #include "zc/zelda.h"
 #include "zq/zq_class.h"
 #include "zq/render.h"
@@ -10409,11 +10410,9 @@ int32_t writetiles(PACKFILE *f, word version, word build, int32_t start_tile, in
     int32_t tiles_used;
     dword section_id=ID_TILES;
     dword section_version=V_TILES;
-	al_trace("Counting tiles used\n");
     tiles_used = count_tiles(newtilebuf)-start_tile;
     tiles_used = zc_min(tiles_used, max_tiles);
     tiles_used = zc_min(tiles_used, NEWMAXTILES);
-	al_trace("writetiles counted %dtiles used.\n",tiles_used); 
     dword section_size = 0;
     
     //section id
@@ -11923,7 +11922,9 @@ int32_t writeffscript(PACKFILE *f, zquestheader *Header)
 	dword zasmmeta_version = METADATA_V;
     byte numscripts        = 0;
     numscripts = numscripts; //to avoid unused variables warnings
-    
+
+	std::vector<byte> debugDataEncoded = zasm_debug_data.encode();
+
     //section id
     if(!p_mputl(section_id,f))
     {
@@ -12598,7 +12599,10 @@ int32_t writeffscript(PACKFILE *f, zquestheader *Header)
                 }
             }
         }
-        
+
+		if(!p_putlvec(debugDataEncoded, f))
+			new_return(2051);
+
         if(writecycle==0)
         {
             section_size=writesize;
@@ -12619,7 +12623,6 @@ int32_t writeffscript(PACKFILE *f, zquestheader *Header)
 
 int32_t write_quest_zasm(PACKFILE *f)
 {
-	extern std::vector<std::shared_ptr<zasm_script>> zasm_scripts;
 	if (zasm_scripts.empty())
 	{
 		if(!p_iputl(0,f))

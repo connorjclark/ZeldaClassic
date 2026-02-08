@@ -9,6 +9,7 @@
 #include "zc/script_debug.h"
 #include "zc/zasm_optimize.h"
 #include "zc/zasm_pipeline.h"
+#include "zc/zasm_utils.h"
 #include "zc/zc_sys.h"
 #include "zc/zelda.h"
 
