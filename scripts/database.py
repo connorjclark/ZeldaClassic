@@ -33,6 +33,7 @@ class Quest:
     name: str
     releases: list[Release]
     default_path: Path
+    rating_score: int | None
 
 
 def _should_ignore_key(key: str) -> bool:
@@ -125,6 +126,9 @@ class Database:
             id = entry['id']
             name = entry['name']
             default_path = self.path / entry['defaultPath']
+            score = None
+            if entry.get('rating'):
+                score = entry['rating']['score']
             self.quests.append(
                 Quest(
                     data=entry,
@@ -132,6 +136,7 @@ class Database:
                     name=name,
                     default_path=default_path,
                     releases=releases,
+                    rating_score=score,
                 )
             )
 
