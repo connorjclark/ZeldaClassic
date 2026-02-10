@@ -134,6 +134,8 @@ struct Debugger
 	std::vector<Variable> watch_variables;
 	bool variables_dirty = false;
 	std::map<const SourceFile*, std::vector<bool>> source_line_can_have_breakpoint_map;
+	std::map<std::pair<std::string, int>, int> variable_name_to_imgui_id;
+	int next_imgui_id = 0;
 
 	State state = State::Playing;
 	State target_state = State::Playing;

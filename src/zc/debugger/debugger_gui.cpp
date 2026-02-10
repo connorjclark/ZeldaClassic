@@ -531,7 +531,14 @@ void RenderDebugVariable(Debugger* debugger, Variable& var, std::vector<Variable
 	ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_SpanFullWidth | ImGuiTreeNodeFlags_OpenOnArrow;
 	bool row_hovered = false;
 
-	ImGui::PushID((void*)&var);
+	int id = 0;
+	auto key = std::make_pair(var.name, parents.size());
+	if (auto it = debugger->variable_name_to_imgui_id.find(key); it != debugger->variable_name_to_imgui_id.end())
+		id = it->second;
+	else
+		id = debugger->variable_name_to_imgui_id[key] = debugger->next_imgui_id++;
+
+	ImGui::PushID(id);
 
 	if (!var.is_expandable)
 	{
@@ -1241,6 +1248,7 @@ void DrawConsole(Debugger* debugger)
 			debugger->history_pos = -1;
 			ImGui::SetKeyboardFocusHere(-1);
 			debugger->console_scroll_to_bottom = true;
+			debugger->UpdateVariables();
 		}
 	}
 	ImGui::PopItemWidth();

@@ -12682,7 +12682,7 @@ Pass 1: Parsing
 Pass 2: Preprocessing
 Pass 3: Registration
 Pass 4: Analyzing Code
-magnetswitch.z Line 14 - Error T021: Function SwitchState(ffc, ffc) has not been declared.
+magnetswitch.z Line 14 - Error T021: Function SwitchState(ffc, const ffc) has not been declared.
 
 12    while(true){
 13        ffc n = Screen->LoadFFC(ffcid);
@@ -12730,7 +12730,7 @@ script.zs Line 453 - Warning S108: Arrays should be explicitly typed - change `i
                ^~~~~~~~~~
 
 
-script.zs Line 949 - Error T021: Function SwitchState(ffc, ffc) has not been declared.
+script.zs Line 949 - Error T021: Function SwitchState(ffc, const ffc) has not been declared.
 
 947                ffc n = Screen->LoadFFC(ffcid);
 948    
@@ -12898,7 +12898,7 @@ MonarchAscendant.zs Line 39 - Error T047: Type AnimHandler has not been declared
           ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
-MonarchAscendant.zs Line 41 - Error T021: Function SetFakeShadow(npc, int, int, int, int) has not been declared.
+MonarchAscendant.zs Line 41 - Error T021: Function SetFakeShadow(const npc, int, int, int, int) has not been declared.
 
 39    AnimHandler aptr = new AnimHandler(this);
 40    
@@ -12962,7 +12962,7 @@ MonarchAscendant.zs Line 49 - Error S009: Variable aptr has not been declared.
               ^~~~
 
 
-MonarchAscendant.zs Line 51 - Error T021: Function SetAnimSpriteHitbox(npc, int, int, int, int, int, int) has not been declared.
+MonarchAscendant.zs Line 51 - Error T021: Function SetAnimSpriteHitbox(const npc, int, int, int, int, int, int) has not been declared.
 
 49    AddAnim(aptr, LANDINGRIGHT, 10, 1, 16, ADF_NOLOOP);
 50    
@@ -12970,7 +12970,7 @@ MonarchAscendant.zs Line 51 - Error T021: Function SetAnimSpriteHitbox(npc, int,
       ^~~~~~~~~~~~~~~~~~~
 
 
-MonarchAscendant.zs Line 52 - Error T021: Function SetAnimMovementHitbox(npc, int, int, int, int) has not been declared.
+MonarchAscendant.zs Line 52 - Error T021: Function SetAnimMovementHitbox(const npc, int, int, int, int) has not been declared.
 
 50    
 51    SetAnimSpriteHitbox(this, 2, 2, 4, 4, 6, 6);
@@ -12978,7 +12978,7 @@ MonarchAscendant.zs Line 52 - Error T021: Function SetAnimMovementHitbox(npc, in
       ^~~~~~~~~~~~~~~~~~~~~
 
 
-MonarchAscendant.zs Line 67 - Error T021: Function PlayAnim(npc, const Animations) has not been declared.
+MonarchAscendant.zs Line 67 - Error T021: Function PlayAnim(const npc, const Animations) has not been declared.
 
 65    this->X = 112;
 66    this->Y = 16;
@@ -12986,7 +12986,7 @@ MonarchAscendant.zs Line 67 - Error T021: Function PlayAnim(npc, const Animation
       ^~~~~~~~
 
 
-MonarchAscendant.zs Line 69 - Error T021: Function PlayAnim(npc, const Animations) has not been declared.
+MonarchAscendant.zs Line 69 - Error T021: Function PlayAnim(const npc, const Animations) has not been declared.
 
 67    PlayAnim(this, STANDING);
 68    MA_Waitframe(this, vars, 32);
@@ -12994,7 +12994,7 @@ MonarchAscendant.zs Line 69 - Error T021: Function PlayAnim(npc, const Animation
       ^~~~~~~~
 
 
-MonarchAscendant.zs Line 107 - Error T021: Function PlayAnim(npc, const Animations, bool) has not been declared.
+MonarchAscendant.zs Line 107 - Error T021: Function PlayAnim(const npc, const Animations, bool) has not been declared.
 
 105        MA_Waitframe(this, vars);
 106    }
@@ -13002,7 +13002,7 @@ MonarchAscendant.zs Line 107 - Error T021: Function PlayAnim(npc, const Animatio
        ^~~~~~~~
 
 
-MonarchAscendant.zs Line 119 - Error T021: Function PlayAnim(npc, const Animations, bool) has not been declared.
+MonarchAscendant.zs Line 119 - Error T021: Function PlayAnim(const npc, const Animations, bool) has not been declared.
 
 117    }
 118    MA_Waitframe(this, vars, 16);
@@ -13010,7 +13010,7 @@ MonarchAscendant.zs Line 119 - Error T021: Function PlayAnim(npc, const Animatio
        ^~~~~~~~
 
 
-MonarchAscendant.zs Line 136 - Error T021: Function PlayAnim(npc, const Animations) has not been declared.
+MonarchAscendant.zs Line 136 - Error T021: Function PlayAnim(const npc, const Animations) has not been declared.
 
 134        MA_SuperAttack(this, vars, spawnID, spawnDelay);
 135    MA_Dive(this, vars, Link->X-8, Link->Y-16);
@@ -13018,7 +13018,7 @@ MonarchAscendant.zs Line 136 - Error T021: Function PlayAnim(npc, const Animatio
        ^~~~~~~~
 
 
-MonarchAscendant.zs Line 142 - Error T021: Function PlayAnim(npc, const Animations) has not been declared.
+MonarchAscendant.zs Line 142 - Error T021: Function PlayAnim(const npc, const Animations) has not been declared.
 
 140        MA_Waitframe(this, vars, 4);
 141    }
@@ -13026,7 +13026,7 @@ MonarchAscendant.zs Line 142 - Error T021: Function PlayAnim(npc, const Animatio
        ^~~~~~~~
 
 
-MonarchAscendant.zs Line 146 - Error T021: Function PlayAnim(npc, const Animations) has not been declared.
+MonarchAscendant.zs Line 146 - Error T021: Function PlayAnim(const npc, const Animations) has not been declared.
 
 144    for(int i=0; i<300&&vars[V_PHASE2FLAG]!=1; ++i){
 145        if(i>0&&(i%120==0||Rand(180)==0)){
@@ -13034,7 +13034,7 @@ MonarchAscendant.zs Line 146 - Error T021: Function PlayAnim(npc, const Animatio
                ^~~~~~~~
 
 
-MonarchAscendant.zs Line 165 - Error T021: Function PlayAnim(npc, const Animations) has not been declared.
+MonarchAscendant.zs Line 165 - Error T021: Function PlayAnim(const npc, const Animations) has not been declared.
 
 163    vars[V_LAZYCHASE] = 1;
 164    MA_Dive(this, vars, Link->X-8, 48);
@@ -13042,7 +13042,7 @@ MonarchAscendant.zs Line 165 - Error T021: Function PlayAnim(npc, const Animatio
        ^~~~~~~~
 
 
-MonarchAscendant.zs Line 172 - Error T021: Function PlayAnim(npc, const Animations) has not been declared.
+MonarchAscendant.zs Line 172 - Error T021: Function PlayAnim(const npc, const Animations) has not been declared.
 
 170        MA_Waitframe(this, vars, 8);
 171    }
@@ -13146,7 +13146,7 @@ MonarchAscendant.zs Line 539 - Error S009: Variable aptr has not been declared.
                ^~~~
 
 
-MonarchAscendant.zs Line 542 - Error T021: Function Waitframe(npc) has not been declared.
+MonarchAscendant.zs Line 542 - Error T021: Function Waitframe(const npc) has not been declared.
 
 540        
 541    while(this->InitD[0]==0){
@@ -13162,7 +13162,7 @@ MonarchAscendant.zs Line 567 - Error S009: Variable AM_IGNOREALLOFFSCREEN has no
                             ^~~~~~~~~~~~~~~~~~~~~
 
 
-MonarchAscendant.zs Line 568 - Error T021: Function Waitframe(npc) has not been declared.
+MonarchAscendant.zs Line 568 - Error T021: Function Waitframe(const npc) has not been declared.
 
 566    }
 567    MoveXY(this, vX, vY, AM_IGNOREALLOFFSCREEN);
@@ -13914,7 +13914,7 @@ ChainChomp.zs Line 115 - Error S009: Variable til has not been declared.
                                                                              ^~~
 
 
-ChainChomp.zs Line 14 - Error T021: Function Waitspawn(npc) has not been declared.
+ChainChomp.zs Line 14 - Error T021: Function Waitspawn(const npc) has not been declared.
 
 12    int maxDist = (numLinks-1) * 8;
 13    

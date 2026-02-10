@@ -29,7 +29,8 @@ enum ExprType {
 	E_CALL,
 	E_MEMBER,
 	E_INDEX,
-	E_STRING
+	E_STRING,
+	E_ASSIGN,
 };
 
 struct ExprNode {
@@ -91,6 +92,14 @@ struct StringLiteralNode : ExprNode {
     StringLiteralNode(std::string v) : value(std::move(v)) { type = E_STRING; }
 };
 
+struct AssignmentNode : ExprNode {
+	std::shared_ptr<ExprNode> target;
+	std::shared_ptr<ExprNode> value;
+
+	AssignmentNode(std::shared_ptr<ExprNode> t, std::shared_ptr<ExprNode> v)
+		: target(t), value(v) { type = E_ASSIGN; }
+};
+
 class ExpressionParser
 {
 	std::string input;
@@ -101,6 +110,7 @@ class ExpressionParser
 	void skipWhitespace();
 	bool match(char c);
 
+	std::shared_ptr<ExprNode> parseAssignment();
 	std::shared_ptr<ExprNode> parseLogicalOr();
 	std::shared_ptr<ExprNode> parseLogicalAnd();
 	std::shared_ptr<ExprNode> parseBitOr();
@@ -130,6 +140,13 @@ public:
 	virtual std::optional<std::string> readString(int32_t string_ptr) = 0;
 	virtual std::optional<std::vector<DebugValue>> readArray(DebugValue array) = 0;
 	virtual std::optional<DebugValue> readArrayElement(DebugValue array, int index) = 0;
+	virtual void writeGlobal(int32_t offset, int32_t value) = 0;
+	virtual void writeStack(int32_t offset, int32_t value) = 0;
+	virtual void writeRegister(int32_t offset, int32_t value) = 0;
+	virtual bool writeObjectMember(DebugValue object, const DebugSymbol* sym, DebugValue value) = 0;
+	virtual bool writeArrayElement(DebugValue array, int32_t index, DebugValue value) = 0;
+	virtual void decreaseObjectReference(DebugValue value, const DebugSymbol* sym) = 0;
+	virtual void increaseObjectReference(DebugValue value, const DebugSymbol* sym) = 0;
     virtual expected<int32_t, std::string> executeSandboxed(pc_t start_pc, int this_zasm_var, int this_raw_value, const std::vector<int32_t>& args) = 0;
 	virtual DebugValue createArray(std::vector<int32_t> args, const DebugType* array_type) = 0;
 	virtual DebugValue createString(const std::string& str) = 0;
@@ -150,6 +167,7 @@ public:
 	ExpressionEvaluator(const DebugData& dd, const DebugScope* scope, VMInterface& v);
 	DebugValue evaluate(std::shared_ptr<ExprNode> node);
 	DebugValue readSymbol(const DebugSymbol* sym);
+	void assignTo(std::shared_ptr<ExprNode> target, DebugValue val);
 	std::string printValue(DebugValue value);
 };
 

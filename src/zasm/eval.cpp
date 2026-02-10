@@ -43,7 +43,7 @@ bool ExpressionParser::match(char c)
 expected<std::shared_ptr<ExprNode>, std::string> ExpressionParser::parseExpression()
 {
 	try {
-		return parseLogicalOr();
+		return parseAssignment();
 	} catch (const std::exception& e) {
 		return make_unexpected(e.what());
 	}
@@ -52,10 +52,26 @@ expected<std::shared_ptr<ExprNode>, std::string> ExpressionParser::parseExpressi
 std::shared_ptr<ExprNode> ExpressionParser::parseExpressionImpl()
 {
 	try {
-		return parseLogicalOr();
+		return parseAssignment();
 	} catch (const std::exception& e) {
 		return nullptr;
 	}
+}
+
+std::shared_ptr<ExprNode> ExpressionParser::parseAssignment()
+{
+	auto left = parseLogicalOr();
+	skipWhitespace();
+
+	// Check for '=' (but not '==').
+	if (peek() == '=' && (pos + 1 >= input.size() || input[pos + 1] != '='))
+	{
+		get(); // Consume '='
+		auto right = parseAssignment();
+		left = std::make_shared<AssignmentNode>(left, right);
+	}
+
+	return left;
 }
 
 std::shared_ptr<ExprNode> ExpressionParser::parseLogicalOr()
@@ -677,6 +693,14 @@ DebugValue ExpressionEvaluator::evaluate(std::shared_ptr<ExprNode> node)
 			auto sNode = static_cast<StringLiteralNode*>(node.get());
 			return vm.createString(sNode->value);
 		}
+
+		case E_ASSIGN:
+		{
+			auto assign = static_cast<AssignmentNode*>(node.get());
+			DebugValue val = evaluate(assign->value);
+			assignTo(assign->target, val);
+			return val;
+		}
 	}
 
 	return {0, 0, false};
@@ -708,6 +732,86 @@ DebugValue ExpressionEvaluator::readSymbol(const DebugSymbol* sym)
 		v.raw_value = vm.readRegister(sym->offset);
 
 	return v;
+}
+
+void ExpressionEvaluator::assignTo(std::shared_ptr<ExprNode> target, DebugValue val)
+{
+	if (target->type == E_VAR)
+	{
+		auto varNode = static_cast<VarNode*>(target.get());
+		const DebugSymbol* sym = debugData.resolveSymbol(varNode->identifier, currentScope);
+
+		if (!sym) throw std::runtime_error("Cannot assign to unknown variable: " + varNode->identifier);
+
+		if (sym->storage == CONSTANT)
+			throw std::runtime_error("Cannot assign to constant: " + varNode->identifier);
+		if (debugData.getType(sym->type_id)->tag == TYPE_CONST)
+			throw std::runtime_error("Cannot assign to const variable: " + varNode->identifier);
+
+		const DebugType* type = debugData.getType(sym->type_id);
+		bool holds_reference = type->isArray(debugData) || type->isClass(debugData);
+		if (holds_reference)
+		{
+			DebugValue previous_value = readSymbol(sym);
+			vm.decreaseObjectReference(previous_value, sym);
+		}
+
+		if (sym->storage == LOC_GLOBAL)
+			vm.writeGlobal(sym->offset, val.raw_value);
+		else if (sym->storage == LOC_STACK)
+			vm.writeStack(sym->offset, val.raw_value);
+		else if (sym->storage == LOC_REGISTER)
+			vm.writeRegister(sym->offset, val.raw_value);
+		else if (sym->storage == LOC_CLASS)
+		{
+			int32_t thisPtr = vm.getThisPointer();
+			if (thisPtr == 0) throw std::runtime_error("'this' is null");
+
+			DebugValue thisVal{thisPtr, nullptr}; // Type doesn't matter for the raw pointer
+			if (!vm.writeObjectMember(thisVal, sym, val))
+				throw std::runtime_error("Failed to write to member variable");
+		}
+		else
+			throw std::runtime_error("Variable is not writable (Storage type " + std::to_string(sym->storage) + ")");
+
+		if (holds_reference)
+		{
+			DebugValue previous_value = readSymbol(sym);
+			vm.increaseObjectReference(val, sym);
+		}
+	}
+	else if (target->type == E_MEMBER)
+	{
+		auto memNode = static_cast<MemberAccessNode*>(target.get());
+
+		DebugValue objVal = evaluate(memNode->object);
+
+		const DebugScope* cls = getClassScope(objVal.type);
+		if (!cls) throw std::runtime_error("Assignment to member of non-class type");
+
+		const DebugSymbol* sym = debugData.resolveSymbol(memNode->member_name, cls);
+		if (!sym) throw std::runtime_error("Member not found: " + memNode->member_name);
+
+		if (!vm.writeObjectMember(objVal, sym, val))
+			throw std::runtime_error("Failed to write to member: " + memNode->member_name);
+	}
+	else if (target->type == E_INDEX)
+	{
+		auto idxNode = static_cast<IndexNode*>(target.get());
+		DebugValue arrVal = evaluate(idxNode->base);
+
+		const DebugType* baseType = arrVal.type->asNonConst(debugData);
+		if (baseType->tag != TYPE_ARRAY)
+			throw std::runtime_error("Assignment to index of non-array type");
+
+		DebugValue indexVal = evaluate(idxNode->index);
+		if (!vm.writeArrayElement(arrVal, indexVal.raw_value / FIXED_ONE, val))
+			throw std::runtime_error("Array assignment failed (Index out of bounds?)");
+	}
+	else
+	{
+		throw std::runtime_error("Expression is not an l-value (cannot be assigned to)");
+	}
 }
 
 DebugValue ExpressionEvaluator::evalBinaryOp(const std::string& op, DebugValue l, DebugValue r)

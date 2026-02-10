@@ -21,6 +21,13 @@ struct VM : VMInterface
 	std::optional<std::vector<DebugValue>> readArray(DebugValue array) override;
 	std::optional<DebugValue> readArrayElement(DebugValue array, int index) override;
 	std::optional<std::string> readString(int32_t string_ptr) override;
+	void writeGlobal(int32_t offset, int32_t value) override;
+	void writeStack(int32_t offset, int32_t value) override;
+	void writeRegister(int32_t offset, int32_t value) override;
+	bool writeObjectMember(DebugValue object, const DebugSymbol* sym, DebugValue value) override;
+	bool writeArrayElement(DebugValue array, int32_t index, DebugValue value) override;
+	void decreaseObjectReference(DebugValue value, const DebugSymbol* sym) override;
+	void increaseObjectReference(DebugValue value, const DebugSymbol* sym) override;
 	expected<int32_t, std::string> executeSandboxed(pc_t start_pc, int this_zasm_var, int this_raw_value, const std::vector<int32_t>& args) override;
 	DebugValue createArray(std::vector<int32_t> args, const DebugType* array_type) override;
 	DebugValue createString(const std::string& str) override;
