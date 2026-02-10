@@ -4,6 +4,7 @@
 #include "base/zdefs.h"
 #include "user_object.h"
 #include "zasm/debug_data.h"
+#include "zasm/defines.h"
 #include "zasm/pc.h"
 #include "zasm/table.h"
 #include "zc/ffscript.h"
@@ -63,6 +64,23 @@ const DebugType* getDebugTypeOfUntypedArrayElement(script_object_type engine_typ
 	return &BasicTypes[TYPE_UNTYPED];
 }
 
+const script_object_type getEngineTypeForDebugType(const DebugType* type)
+{
+	if (type->isArray(zasm_debug_data))
+		return script_object_type::array;
+
+	std::string name = zasm_debug_data.getTypeName(type->asNonConst(zasm_debug_data));
+	if (name == "bitmap") return script_object_type::bitmap;
+	if (name == "directory") return script_object_type::dir;
+	if (name == "file") return script_object_type::file;
+	if (name == "paldata") return script_object_type::paldata;
+	if (name == "randgen") return script_object_type::rng;
+	if (name == "stack") return script_object_type::stack;
+	if (name == "websocket") return script_object_type::websocket;
+
+	return script_object_type::none;
+}
+
 } // end namespace
 
 int32_t VM::readStack(int32_t offset)
@@ -90,6 +108,9 @@ int32_t VM::readGlobal(int32_t idx)
 
 int32_t VM::readRegister(int32_t id)
 {
+	if (id == CLASS_THISKEY)
+		return getThisPointer();
+
 	script_is_within_debugger_vm = true;
 	int result = get_register(id);
 	script_is_within_debugger_vm = false;
@@ -224,6 +245,109 @@ std::optional<std::string> VM::readString(int32_t string_ptr)
 	ArrayH::getString(string_ptr, str);
 	script_is_within_debugger_vm = false;
 	return str;
+}
+
+void VM::writeGlobal(int32_t offset, int32_t value)
+{
+	game->global_d[offset] = value;
+}
+
+void VM::writeStack(int32_t offset, int32_t value)
+{
+	auto ri = &current_data->ref;
+	int index = ri->debugger_stack_frames.size() - current_frame_index - 1;
+	if (index < 0 || index >= ri->debugger_stack_frames.size())
+	{
+		DCHECK(false);
+		return;
+	}
+
+	int sframe = ri->debugger_stack_frames.at(index).stack_frame_base;
+	uint32_t sp = sframe + offset;
+	if (sp >= MAX_STACK_SIZE)
+		return;
+
+	current_data->stack[sp] = value;
+}
+
+void VM::writeRegister(int32_t offset, int32_t value)
+{
+	script_is_within_debugger_vm = true;
+	set_register(offset, value);
+	script_is_within_debugger_vm = false;
+}
+
+bool VM::writeObjectMember(DebugValue object, const DebugSymbol* sym, DebugValue value)
+{
+	if (sym->storage == LOC_REGISTER)
+	{
+		auto type = zasm_debug_data.getType(sym->type_id)->asNonConst(zasm_debug_data);
+		auto scope = zasm_debug_data.scopes[type->extra];
+		if (type->isArray(zasm_debug_data))
+			return false;
+
+		auto refvar = get_register_ref_dependency(sym->offset);
+		if (refvar.has_value())
+		{
+			int prev_val = get_register(refvar.value());
+			set_register(refvar.value(), object.raw_value);
+			set_register(sym->offset, value.raw_value);
+			set_register(refvar.value(), prev_val);
+		}
+		else
+		{
+			set_register(sym->offset, value.raw_value);
+		}
+
+		return true;
+	}
+	else if (sym->storage == LOC_CLASS)
+	{
+		if (auto obj = get_script_object(object.raw_value))
+		{
+			if (auto user_obj = dynamic_cast<user_object*>(obj))
+			{
+				if (sym->offset < user_obj->data.size())
+				{
+					user_obj->data[sym->offset] = value.raw_value;
+					return true;
+				}
+			}
+		}
+	}
+
+	return false;
+}
+
+bool VM::writeArrayElement(DebugValue array, int32_t index, DebugValue value)
+{
+	ArrayManager am(array.raw_value);
+	if (am.invalid()) return false;
+	if (am.size() <= index) return false;
+
+	if (index < 0)
+	{
+		index = am.normalize_index(index);
+		if (index < 0) return false;
+	}
+
+	script_is_within_debugger_vm = true;
+	am.set(index, value.raw_value, getEngineTypeForDebugType(value.type));
+	script_is_within_debugger_vm = false;
+
+	return true;
+}
+
+// TODO: this only mostly works. Need to actually handle special cases like assigning a variable in
+// an untyped array, or to an object member field.
+void VM::decreaseObjectReference(DebugValue value, const DebugSymbol* sym)
+{
+	script_object_ref_dec(value.raw_value);
+}
+
+void VM::increaseObjectReference(DebugValue value, const DebugSymbol* sym)
+{
+	script_object_ref_inc(value.raw_value);
 }
 
 expected<int32_t, std::string> VM::executeSandboxed(pc_t start_pc, int this_zasm_var, int this_raw_value, const std::vector<int32_t>& args)

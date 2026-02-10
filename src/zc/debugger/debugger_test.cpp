@@ -371,11 +371,15 @@ static TestTask run_scopes_replay_coroutine()
 	verify_expression(debugger, "v1", "1.0000");
 	verify_expression(debugger, "v2", "2.0000");
 
+	verify_expression(debugger, "var1 = 1337", "1337.0000");
+	verify_expression(debugger, "var1", "1337.0000");
+	verify_expression_invalid(debugger, "this = NULL", "Cannot assign to const variable: this");
+
 	// Select second-top frame, then evaluate.
 	debugger->SetSelectedStackFrameIndex(1);
-	verify_expression(debugger, "this", "CL {A_var = 1.0000, this_ptr = CL {}}");
+	verify_expression(debugger, "this", "CL {A_var = 11.0000, arr = {0.0000, 1.0000, 2.0000}, arr_untyped = {0, 10000, ...}, this_ptr = ...}");
 	verify_expression(debugger, "A_var", "11.0000");
-	verify_expression(debugger, "d->var1", "1.0000");
+	verify_expression(debugger, "d->var1", "1337.0000");
 
 	debugger->RemoveBreakpoints();
 	add_breakpoint(debugger, "scopes.zs", "// end of CL ctor");
@@ -480,6 +484,35 @@ static TestTask run_scopes_replay_coroutine()
 	verify_expression(debugger, "arr6[0]->arr_untyped[1]", "10000");
 	verify_expression(debugger, "arr6[0]->arr_untyped[2]", "CL {A_var = 11.0000, arr = {0.0000, 1.0000, 2.0000}, arr_untyped = {0, 10000, ...}, this_ptr = ...}");
 
+	verify_expression(debugger, "arr1[1] = 100", "100.0000");
+	verify_expression(debugger, "arr1", "{1.0000, 100.0000}");
+	verify_expression(debugger, "arr1[0] = arr1[1] = 101", "101.0000");
+	verify_expression(debugger, "arr1", "{101.0000, 101.0000}");
+	verify_expression(debugger, "arr3[1] = 100", "100.0000");
+	verify_expression(debugger, "arr3[1]", "100.0000");
+	verify_expression(debugger, "Hero->Steps[1]", "100.0000");
+	verify_expression(debugger, "arr2", "{1.0000, 2.0000}");
+
+	verify_expression(debugger, "RefCount(arr1)", "1L");
+	verify_expression(debugger, "RefCount(arr2)", "1L");
+	verify_expression(debugger, "arr2 = arr1", "{101.0000, 101.0000}");
+	verify_expression(debugger, "arr2", "{101.0000, 101.0000}");
+	verify_expression(debugger, "RefCount(arr1)", "2L");
+
+	verify_expression_invalid(debugger, "arr7 = arr2", "Cannot assign to const variable: arr7");
+
+	verify_expression(debugger, "arr5[0]->A_var = 123", "123.0000");
+	verify_expression(debugger, "arr5[0]->A_var", "123.0000");
+	verify_expression(debugger, "arr5[0]->arr = arr2", "{101.0000, 101.0000}");
+	verify_expression(debugger, "arr5[0]->arr", "{101.0000, 101.0000}");
+
+	verify_expression(debugger, "arr2 = NULL", "0");
+	verify_expression(debugger, "RefCount(arr1)", "1L");
+	verify_expression(debugger, "arr6[0] = arr1", "{101.0000, 101.0000}");
+	verify_expression(debugger, "RefCount(arr1)", "2L");
+	verify_expression(debugger, "arr6[0] = NULL", "0");
+	verify_expression(debugger, "RefCount(arr1)", "1L");
+
 	debugger->RemoveBreakpoints();
 	add_breakpoint(debugger, "scopes.zs", "// end of DebugInternalObjects");
 	co_await PlayAndWaitForPause(debugger);
@@ -500,6 +533,14 @@ static TestTask run_scopes_replay_coroutine()
 	verify_expression(debugger, "n->X", "10.0000");
 	verify_expression(debugger, "b", "bitmap {Height = 32.0000, Width = 32.0000}");
 	verify_expression(debugger, "b->Width", "32.0000");
+
+	verify_expression(debugger, "Hero->Step = 100", "100.0000");
+	verify_expression(debugger, "Hero->Step", "100.0000");
+	verify_expression(debugger, "f->X = 12.0000", "12.0000");
+	verify_expression(debugger, "f->X", "12.0000");
+	verify_expression(debugger, "GLOBAL_VAR", "1.0000");
+	verify_expression(debugger, "GLOBAL_VAR = GLOBAL_VAR + 2", "3.0000");
+	verify_expression(debugger, "GLOBAL_VAR", "3.0000");
 
 	// User-defined functions.
 	verify_expression_invalid(debugger, "DebugAdd()", "No matching function: DebugAdd"); // not enough parameters
@@ -613,6 +654,7 @@ static TestTask run_scopes_replay_coroutine()
 	verify_variable(debugger, "this", "genericdata"); // not hidden
 	verify_expression(debugger, "this", "genericdata {Data = {}, DataSize = 0.0000, EventListen = {false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false}, ExitState = {false, false, false, false, false}, InitD = {0, 0, 0, 0, 0, 0, 0, 0}, ReloadState = {false, false, false, false, false}, Running = true}");
 	verify_expression(debugger, "this->Running", "true");
+	verify_expression_invalid(debugger, "this = NULL", "Cannot assign to const variable: this");
 
 	debugger->breakpoints.clear();
 	debugger->SetState(Debugger::State::Playing);

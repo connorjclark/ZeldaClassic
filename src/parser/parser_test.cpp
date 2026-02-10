@@ -394,6 +394,36 @@ TestResults test_parser(bool verbose)
 			return "";
 		}
 
+		void writeGlobal(int32_t offset, int32_t value) override
+		{
+		}
+
+		void writeStack(int32_t offset, int32_t value) override
+		{
+		}
+
+		void writeRegister(int32_t offset, int32_t value) override
+		{
+		}
+
+		bool writeObjectMember(DebugValue object, const DebugSymbol* sym, DebugValue value) override
+		{
+			return false;
+		}
+
+		bool writeArrayElement(DebugValue array, int32_t index, DebugValue value) override
+		{
+			return false;
+		}
+
+		void decreaseObjectReference(DebugValue value, const DebugSymbol* sym) override
+		{
+		}
+
+		void increaseObjectReference(DebugValue value, const DebugSymbol* sym) override
+		{
+		}
+
 		expected<int32_t, std::string> executeSandboxed(pc_t start_pc, int this_zasm_var, int this_raw_value, const std::vector<int32_t>& args) override
 		{
 			if (start_pc == debug_add_int_start_pc)

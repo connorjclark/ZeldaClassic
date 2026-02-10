@@ -78,7 +78,7 @@ void SemanticAnalyzer::analyzeFunctionInternals(Function& function)
 		auto klass = program.getClass(typeName);
 		if (klass)
 		{
-			auto t = klass->getType();
+			auto t = klass->getType()->getConstType();
 			function.thisVar =
 				BuiltinVariable::create(*scope, *t, "this");
 		}
