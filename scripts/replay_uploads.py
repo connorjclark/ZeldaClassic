@@ -39,6 +39,7 @@
 # TODO: consider running in CI (see the "For example" above)
 
 import argparse
+import csv
 import json
 import os
 import shlex
@@ -88,9 +89,15 @@ parser.add_argument(
     help='Update the checked-in file for which replays are update-able',
 )
 parser.add_argument('--debug', help='Debug why the given replay cannot be updated')
+parser.add_argument(
+    '--coverage',
+    action='store_true',
+    help='Save CSV of replay coverage across all database quests, using uploaded replays and test replays',
+)
 args = parser.parse_args()
 
 bucket = None
+db = database.Database()
 
 
 def connect_bucket():
@@ -109,7 +116,6 @@ def connect_bucket():
 def prepare_and_get_replay_keys():
     connect_bucket()
 
-    db = database.Database()
     get_qst_keys_by_hash = db.get_qst_keys_by_hash()
     all_keys = list(_.key for _ in bucket.objects.all())
     # Note: currently no plans to actual upload updated replays back to bucket.
@@ -214,6 +220,11 @@ def run_replays_process_with_version(zc_version, args):
     return run_replays_process([*args, '--build_folder', build_folder])
 
 
+def get_known_good_replays():
+    known_good_path = Path(script_dir / 'replay_uploads_known_good_replays.json')
+    return json.loads(known_good_path.read_text())
+
+
 def run_replays():
     if args.update:
         mode = 'update'
@@ -228,8 +239,7 @@ def run_replays():
     ]
     original_keys = [key for key in original_keys if key not in exclude_keys]
     if args.only_known_good:
-        known_good_path = Path(script_dir / 'replay_uploads_known_good_replays.json')
-        known_good = json.loads(known_good_path.read_text())
+        known_good = get_known_good_replays()
         original_keys = [k for k in original_keys if k in known_good]
     updated_keys = [get_updated_key(key) for key in original_keys]
     # Note: shouldn't actually download anything b/c updated replays are all local.
@@ -263,6 +273,143 @@ def run_replays():
             print()
     else:
         print('All replays passed')
+
+
+# https://docs.google.com/spreadsheets/d/1BD0wsO2fDpvZDMgI9-wwgcLKNqCc7j8e8ZLJlfNdTz8/edit?gid=0#gid=0&fvid=2018909849
+def make_coverage_csv():
+    known_good = get_known_good_replays()
+    original_keys = prepare_and_get_replay_keys()
+
+    replays_by_qst_hash = {}
+    for key in original_keys:
+        path = download_replay(key)
+        meta = replay_helpers.read_replay_meta(path)
+
+        qst_hash = meta['qst_hash']
+        if qst_hash not in replays_by_qst_hash:
+            replays_by_qst_hash[qst_hash] = []
+        replays_by_qst_hash[qst_hash].append(path)
+
+    quests = db.quests
+    quests.sort(
+        key=lambda x: x.rating_score if x.rating_score != None else -1, reverse=True
+    )
+
+    test_replay_datas = []
+    for path in (root_dir / 'tests/replays').rglob('*.zplay'):
+        if 'playground' in str(path):
+            continue
+        if 'z3' in str(path):
+            continue
+        if 'misc' in str(path):
+            continue
+
+        meta = replay_helpers.read_replay_meta(path)
+        qst_hash = meta.get('qst_hash')
+        title = meta.get('qst_title')
+
+        if 'nargads_trail_crystal_crusades' in str(path):
+            title = "Nargad's Trail: Crystal Crusades"
+        if 'demosp' in str(path):
+            title = 'Demo Quest SP'
+        if 'new2013' in str(path):
+            title = 'New Quest 2013'
+
+        d = next(
+            (
+                d
+                for d in test_replay_datas
+                if (title and d['title'] == title)
+                or (qst_hash and d['hash'] == qst_hash)
+            ),
+            None,
+        )
+        if not d:
+            d = {'title': title, 'hash': qst_hash, 'paths': []}
+            test_replay_datas.append(d)
+        d['paths'].append(path)
+
+    rows = []
+    for quest in quests:
+        replay_paths = []
+        hashes = []
+
+        for rls in quest.releases:
+            if not rls.resource_hashes:
+                continue
+
+            for i, r in enumerate(rls.resources):
+                if r.lower().endswith('.qst'):
+                    h = rls.resource_hashes[i]
+                    paths = replays_by_qst_hash.get(h, [])
+                    replay_paths.extend(paths)
+                    hashes.append(h)
+
+        replay_paths = set(replay_paths)
+
+        frames = 0
+        frames_good = 0
+        for path in replay_paths:
+            meta = replay_helpers.read_replay_meta(path)
+            frames += meta['frames']
+            if str(path.relative_to(replays_dir)) in known_good:
+                frames_good += meta['frames']
+
+        test_replay_data = next(
+            (
+                d
+                for d in test_replay_datas
+                if d['title'] == quest.name or d['hash'] in hashes
+            ),
+            None,
+        )
+        if test_replay_data:
+            for path in test_replay_data['paths']:
+                meta = replay_helpers.read_replay_meta(path)
+                frames += meta['frames']
+                frames_good += meta['frames']
+            test_replay_datas.remove(test_replay_data)
+
+        version = quest.data.get('zcVersion', '')
+        if version.startswith('1.92'):
+            version = '1.92'
+        elif version.startswith('2.50'):
+            version = '2.50'
+
+        url = quest.data.get('projectUrl', '')
+        frames_minutes = '{0:.1f}'.format(frames / 60 / 60)
+        frames_good_minutes = '{0:.1f}'.format(frames_good / 60 / 60)
+        rows.append(
+            [
+                quest.name,
+                url,
+                version,
+                len(replay_paths),
+                frames_minutes,
+                frames_good_minutes,
+            ]
+        )
+
+    if test_replay_datas:
+        print('warning: unused test replays')
+        for d in test_replay_datas:
+            print(d)
+
+    path = root_dir / '.tmp/replay_coverage.csv'
+    with open(path, 'w', newline='') as csvfile:
+        w = csv.writer(csvfile, quoting=csv.QUOTE_MINIMAL)
+        w.writerow(
+            [
+                'Quest',
+                'URL',
+                'ZC Version',
+                '# Replays',
+                'Minutes (total)',
+                'Minutes (good)',
+            ]
+        )
+        w.writerows(rows)
+        print(f'saved: {path}')
 
 
 def print_info():
@@ -423,7 +570,9 @@ def debug_replay(replay_path: Path):
     tmp_trimmed_path.unlink()
 
 
-if args.update or args.assertmode:
+if args.coverage:
+    make_coverage_csv()
+elif args.update or args.assertmode:
     run_replays()
 elif args.debug:
     debug_replay(Path(args.debug))
