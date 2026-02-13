@@ -27,7 +27,7 @@ stdout:
 zasm:
 
 QUIT; void run() Body
-PUSHARGSV 0 0.0002; void run() Body Start
+PUSHV 0; void run() Body Start
 SETR D4 SP2
 STOREV 123 0
 ALLOCATEMEMV D2 17 0; InlineFunc[void printf(char32[], ...untyped[])] Params Start
@@ -37,5 +37,5 @@ LOAD D2 0
 PUSHVARGR D2; InlineFunc[void printf(char32[], ...untyped[])] Params End
 PRINTFVARG; InlineFunc[void printf(char32[], ...untyped[])] Body Start
 POP D5; InlineFunc[void printf(char32[], ...untyped[])] Body End
-POPARGS D5 0.0002
+POP D5
 QUIT; void run() Body End

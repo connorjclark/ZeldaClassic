@@ -78,6 +78,9 @@ class TestZScript(ZCTestCase):
         # the full results in the stdout for this one script.
         elide_metadata = script_path.name != 'metadata.zs'
         elide_scopes = script_path.name != 'scopes.zs'
+        elide_source_lines = (
+            script_path.name != 'metadata.zs' and script_path.name != 'scopes.zs'
+        )
 
         # Change include paths to use resources/ directly, instead of possibly-stale stuff inside a build folder.
         include_paths = [
@@ -148,10 +151,20 @@ class TestZScript(ZCTestCase):
             [l.strip() for l in zasm.splitlines() if not l.startswith('#')]
         ).strip()
 
-        if not elide_scopes:
-            stdout += debug_data
+        if elide_source_lines:
+            lines = zasm.splitlines()
+            lines = [l[: l.rindex('|')].strip() if '|' in l else l for l in lines]
+            zasm = '\n'.join(lines)
+        else:
+            zasm = zasm.replace('../', '')
 
-        return f'stderr:\n\n{stderr}\n\nstdout:\n\n{stdout}\n\nzasm:\n\n{zasm}\n'
+        result = f'stderr:\n\n{stderr}\n\nstdout:\n\n{stdout}\n\nzasm:\n\n{zasm}\n'
+
+        if not elide_scopes:
+            debug_data = debug_data.replace('../', '')
+            result += f'\ndebug data:\n\n{debug_data}\n'
+
+        return result
 
     def test_zscript_compiler_expected_zasm(self):
         script_paths = list(test_scripts_dir.rglob('*.zs'))

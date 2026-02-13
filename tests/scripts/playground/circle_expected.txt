@@ -42,14 +42,16 @@ COMPAREV D2 0
 GOTOCMP 17 ==; Test 'if'
 LOAD D2 0.0007; if() #8 Body Start
 STORE D2 0.0004; if() #8 Body End
+NOP
 LOAD D2 0.0005; if() #9 Test
 COMPAREV D2 0
 SETCMP D2 I<
 COMPAREV D2 0
-GOTOCMP 25 ==; Test 'if'
+GOTOCMP 26 ==; Test 'if'
 SETV D3 360; InlineFunc[int Rand(int)] Params AND if() #9 Body Start
 RNDR D2 D3; InlineFunc[int Rand(int)] Body
 STORE D2 0.0005; if() #9 Body End
+NOP
 LOAD D2 0.0002
 PUSHR D2
 POP REFSPRITE
@@ -70,24 +72,26 @@ LOAD D2 0.0005; if() #1 Test
 COMPAREV D2 -360
 SETCMP D2 I<
 COMPAREV D2 0
-GOTOCMP 50 ==; Test 'if'
+GOTOCMP 52 ==; Test 'if'
 LOAD D2 0.0005; if() #1 Body Start
 ADDV D2 360
 STORE D2 0.0005
-GOTO 58; if() #1 Body End
+GOTO 61; if() #1 Body End
 LOAD D2 0.0005; if() #10 Test AND if() #1 Else Start
 COMPAREV D2 360
 SETCMP D2 I>
 COMPAREV D2 0
-GOTOCMP 58 ==; Test 'if'
+GOTOCMP 60 ==; Test 'if'
 LOAD D2 0.0005; if() #10 Body Start
 SUBV D2 360
 STORE D2 0.0005; if() #10 Body End
-LOAD D2 0.0003; if() #1 Else End AND if() #2 Test
+NOP; if() #1 Else End
+NOP
+LOAD D2 0.0003; if() #2 Test
 COMPAREV D2 0
 SETCMP D2 I==
 COMPAREV D2 0
-GOTOCMP 102 ==; Test 'if'
+GOTOCMP 106 ==; Test 'if'
 LOAD D2 0.0001; if() #2 Body Start
 PUSHR D2
 LOAD D2 0.0007
@@ -126,7 +130,7 @@ PUSHR D3
 POP D2
 POP REFSPRITE
 SETR SPRITE_Y D2
-GOTO 185; if() #2 Body End
+GOTO 189; if() #2 Body End
 LOAD D2 0.0001; if() #2 Else Start
 PUSHR D2
 LOAD D2 0.0007
@@ -210,5 +214,6 @@ PUSHR D3
 POP D2
 POP REFSPRITE
 SETR SPRITE_Y D2; if() #2 Else End
+NOP
 WAITFRAME; InlineFunc[void Waitframe()] Body AND while(true) #1 Body [Opt:AlwaysOn] End
-GOTO 35; while() #1 End AND [Opt:NeverRet] AND void run(int, int, int, int, int) Body End
+GOTO 37; while() #1 End AND [Opt:NeverRet] AND void run(int, int, int, int, int) Body End

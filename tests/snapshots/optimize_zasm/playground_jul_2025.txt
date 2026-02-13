@@ -1,6 +1,6 @@
 Finished optimizing scripts:
 	[goto_next_instruction] saved 0 instr (0.0%)
-	[inline_functions] saved 43 instr (0.2%)
+	[inline_functions] saved 27 instr (0.1%)
 	[unreachable_blocks] saved 46 instr (0.2%)
 	[conseq_additive] saved 0 instr (0.0%)
 	[load_store] saved 0 instr (0.0%)
@@ -12,4 +12,4 @@ Finished optimizing scripts:
 	[propagate_values] saved 380 instr (1.3%)
 	[unreachable_blocks_2] saved 56 instr (0.2%)
 	[dead_code] saved 601 instr (2.1%)
-	[total] saved 3420 instr (12.0%)
+	[total] saved 3404 instr (12.0%)

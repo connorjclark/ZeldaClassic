@@ -79,6 +79,7 @@ PUSHR D2; InlineFunc[void printf(char32[], ...untyped[])] Params End
 PRINTFVARG; InlineFunc[void printf(char32[], ...untyped[])] Body Start
 POP D5; InlineFunc[void printf(char32[], ...untyped[])] Body End
 GAMEEXIT; InlineFunc[void Game::Exit()] Body AND if() #9 Body End
+NOP
 LOAD D2 0.0001; InlineFunc[genericdata Game::LoadGenericData(int)] Params
 LOADGENERICDATA D2; InlineFunc[genericdata Game::LoadGenericData(int)] Body Start
 SETR D2 REFGENERICDATA; InlineFunc[genericdata Game::LoadGenericData(int)] Body End
@@ -98,17 +99,17 @@ PUSHR D2
 POP REFGENERICDATA
 SETR D2 GENDATARUNNING
 COMPAREV D2 0
-GOTOCMP 52 ==; Test 'while'
+GOTOCMP 53 ==; Test 'while'
 WAITFRAME; InlineFunc[void Waitframe()] Body AND while() #1 Body
-GOTO 44; while() #1 End
-CALLFUNC 0.0271; UsrFunc[void End()] Call AND [Opt:NeverRet]
+GOTO 45; while() #1 End
+CALLFUNC 0.0295; UsrFunc[void End()] Call AND [Opt:NeverRet]
 REF_REMOVE 0.0002; [Opt:NeverRet] AND void run() Body End
 PUSHR REFGENERICDATA; void run() Body Start
 PUSHARGSV 0 0.0004
 SETR D4 SP2
 PUSHR D4
 PUSHV 0; UsrFunc[void Init(int)] Params
-CALLFUNC 0.0278; UsrFunc[void Init(int)] Call
+CALLFUNC 0.0273; UsrFunc[void Init(int)] Call
 POP D4
 PUSHV 16; InlineFunc[bitmap Game::CreateBitmap(int, int)] Params Start
 SETV D1 16; InlineFunc[bitmap Game::CreateBitmap(int, int)] Params End
@@ -128,7 +129,7 @@ POP D2
 COMPAREV D2 60
 SETCMP D2 I<
 COMPAREV D2 0
-GOTOCMP 130 ==; Test 'while'
+GOTOCMP 131 ==; Test 'while'
 LOAD D2 0.0003; InlineFunc[void bitmap::Clear(int)] Params Start AND while() #2 Body Start
 PUSHR D2
 PUSHV 0; InlineFunc[void bitmap::Clear(int)] Params End
@@ -178,7 +179,7 @@ PUSHV 1; InlineFunc[void bitmap::Blit(int, untyped, int, int, int, int, int, int
 BMPBLIT; InlineFunc[void bitmap::Blit(int, untyped, int, int, int, int, int, int, int, int, int, int, int, int, int, bool)] Body Start
 POPARGS D5 0.0017; InlineFunc[void bitmap::Blit(int, untyped, int, int, int, int, int, int, int, int, int, int, int, int, int, bool)] Body End
 WAITFRAME; InlineFunc[void Waitframe()] Body AND while() #2 Body End
-GOTO 71; while() #2 End
+GOTO 72; while() #2 End
 SETV D2 0
 STORE D2 0.0001
 LOAD D2 0.0001; while() #3 Test
@@ -189,7 +190,7 @@ POP D2
 COMPAREV D2 60
 SETCMP D2 I<
 COMPAREV D2 0
-GOTOCMP 192 ==; Test 'while'
+GOTOCMP 193 ==; Test 'while'
 LOAD D2 0.0003; InlineFunc[void bitmap::Clear(int)] Params Start AND while() #3 Body Start
 PUSHR D2
 PUSHV 0; InlineFunc[void bitmap::Clear(int)] Params End
@@ -240,7 +241,7 @@ PUSHV 1; InlineFunc[void bitmap::Blit(int, untyped, int, int, int, int, int, int
 BMPBLIT; InlineFunc[void bitmap::Blit(int, untyped, int, int, int, int, int, int, int, int, int, int, int, int, int, bool)] Body Start
 POPARGS D5 0.0017; InlineFunc[void bitmap::Blit(int, untyped, int, int, int, int, int, int, int, int, int, int, int, int, int, bool)] Body End
 WAITFRAME; InlineFunc[void Waitframe()] Body AND while() #3 Body End
-GOTO 132; while() #3 End
+GOTO 133; while() #3 End
 SETV D2 0
 STORE D2 0.0001
 LOAD D2 0.0001; while() #4 Test
@@ -251,7 +252,7 @@ POP D2
 COMPAREV D2 60
 SETCMP D2 I<
 COMPAREV D2 0
-GOTOCMP 211 ==; Test 'while'
+GOTOCMP 212 ==; Test 'while'
 LOAD D2 0.0002; InlineFunc[void bitmap::ClearToColor(int, int)] Params Start AND while() #4 Body Start
 PUSHR D2
 PUSHV 1
@@ -259,7 +260,7 @@ PUSHV 5; InlineFunc[void bitmap::ClearToColor(int, int)] Params End
 BITMAPCLEARTOCOLOR; InlineFunc[void bitmap::ClearToColor(int, int)] Body Start
 POPARGS D5 0.0003; InlineFunc[void bitmap::ClearToColor(int, int)] Body End
 WAITFRAME; InlineFunc[void Waitframe()] Body AND while() #4 Body End
-GOTO 194; while() #4 End
+GOTO 195; while() #4 End
 SETV D2 0
 STORE D2 0.0001
 LOAD D2 0.0001; while() #5 Test
@@ -270,7 +271,7 @@ POP D2
 COMPAREV D2 60
 SETCMP D2 I<
 COMPAREV D2 0
-GOTOCMP 267 ==; Test 'while'
+GOTOCMP 268 ==; Test 'while'
 STOREV 1 0; while() #5 Body Start
 LOAD D2 0.0002; InlineFunc[void bitmap::ClearToColor(int, int)] Params Start
 PUSHR D2
@@ -315,18 +316,12 @@ PUSHV 1; InlineFunc[void bitmap::Blit(int, untyped, int, int, int, int, int, int
 BMPBLIT; InlineFunc[void bitmap::Blit(int, untyped, int, int, int, int, int, int, int, int, int, int, int, int, int, bool)] Body Start
 POPARGS D5 0.0017; InlineFunc[void bitmap::Blit(int, untyped, int, int, int, int, int, int, int, int, int, int, int, int, int, bool)] Body End
 WAITFRAME; InlineFunc[void Waitframe()] Body AND while() #5 Body End
-GOTO 213; while() #5 End
+GOTO 214; while() #5 End
+NOP
 REF_REMOVE 0.0003
 REF_REMOVE 0.0002
 POPARGS D5 0.0005
 QUIT; void run() Body End
-SETR D4 SP2; Func[void End()] Body Start
-ALLOCATEMEMV D2 13 0; InlineFunc[void printf(char32[], ...untyped[])] Params Start
-WRITEPODSTRING D2 "[Test] done\n"
-PUSHR D2; InlineFunc[void printf(char32[], ...untyped[])] Params End
-PRINTFVARG; InlineFunc[void printf(char32[], ...untyped[])] Body Start
-POP D5; InlineFunc[void printf(char32[], ...untyped[])] Body End
-GAMEEXIT; InlineFunc[void Game::Exit()] Body AND [Opt:NeverRet] AND Func[void End()] Body End
 SETR D4 SP2; Func[void Init(int)] Body Start
 ALLOCATEMEMV D2 35 0; InlineFunc[void printf(char32[], ...untyped[])] Params Start
 WRITEPODSTRING D2 "[Test] started: dmap %d screen %d\n"
@@ -340,11 +335,19 @@ LOAD D2 0; if() #8 Test
 COMPAREV D2 0
 SETCMP D2 I!=
 COMPAREV D2 0
-GOTOCMP 297 ==; Test 'if'
+GOTOCMP 292 ==; Test 'if'
 PUSHV 5; InlineFunc[void hero::Warp(int, int)] Params Start AND if() #8 Body Start
 LOAD D2 0; InlineFunc[void hero::Warp(int, int)] Params End
 POP D3; InlineFunc[void hero::Warp(int, int)] Body Start
 WARPR D3 D2; InlineFunc[void hero::Warp(int, int)] Body End
 WAITFRAME; InlineFunc[void Waitframe()] Body AND if() #8 Body End
+NOP
 POP D5
 RETURNFUNC; Func[void Init(int)] Body End
+SETR D4 SP2; Func[void End()] Body Start
+ALLOCATEMEMV D2 13 0; InlineFunc[void printf(char32[], ...untyped[])] Params Start
+WRITEPODSTRING D2 "[Test] done\n"
+PUSHR D2; InlineFunc[void printf(char32[], ...untyped[])] Params End
+PRINTFVARG; InlineFunc[void printf(char32[], ...untyped[])] Body Start
+POP D5; InlineFunc[void printf(char32[], ...untyped[])] Body End
+GAMEEXIT; InlineFunc[void Game::Exit()] Body AND [Opt:NeverRet] AND Func[void End()] Body End

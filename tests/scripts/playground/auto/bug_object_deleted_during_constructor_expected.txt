@@ -55,6 +55,7 @@ PUSHR D2; InlineFunc[void printf(char32[], ...untyped[])] Params End
 PRINTFVARG; InlineFunc[void printf(char32[], ...untyped[])] Body Start
 POP D5; InlineFunc[void printf(char32[], ...untyped[])] Body End
 GAMEEXIT; InlineFunc[void Game::Exit()] Body AND if() #9 Body End
+NOP
 LOAD D2 0.0001; InlineFunc[genericdata Game::LoadGenericData(int)] Params
 LOADGENERICDATA D2; InlineFunc[genericdata Game::LoadGenericData(int)] Body Start
 SETR D2 REFGENERICDATA; InlineFunc[genericdata Game::LoadGenericData(int)] Body End
@@ -74,21 +75,21 @@ PUSHR D2
 POP REFGENERICDATA
 SETR D2 GENDATARUNNING
 COMPAREV D2 0
-GOTOCMP 52 ==; Test 'while'
+GOTOCMP 53 ==; Test 'while'
 WAITFRAME; InlineFunc[void Waitframe()] Body AND while() #1 Body
-GOTO 44; while() #1 End
-CALLFUNC 0.0121; UsrFunc[void End()] Call AND [Opt:NeverRet]
+GOTO 45; while() #1 End
+CALLFUNC 0.0187; UsrFunc[void End()] Call AND [Opt:NeverRet]
 REF_REMOVE 0.0002; [Opt:NeverRet] AND void run() Body End
 PUSHR REFGENERICDATA; void run() Body Start
 PUSHV 0
 SETR D4 SP2
 PUSHR D4
 PUSHV 0; UsrFunc[void Init(int)] Params
-CALLFUNC 0.0128; UsrFunc[void Init(int)] Call
+CALLFUNC 0.0165; UsrFunc[void Init(int)] Call
 POP D4
 PUSHR CLASS_THISKEY
 PUSHR D4
-CALLFUNC 0.0149; ClassFunc[foo foo::foo()] Constructor Call
+CALLFUNC 0.0112; ClassFunc[foo foo::foo()] Constructor Call
 POP D4
 POP CLASS_THISKEY
 STORE_OBJECT D2 0
@@ -100,11 +101,11 @@ PUSHV 3
 ALLOCATEMEMV D2 11 0
 WRITEPODSTRING D2 "after ctor"
 PUSHR D2; UsrFunc[void AssertEqual(int, int, char32[])] Params End
-CALLFUNC 0.0174; UsrFunc[void AssertEqual(int, int, char32[])] Call
+CALLFUNC 0.0194; UsrFunc[void AssertEqual(int, int, char32[])] Call
 PEEK D4
 PUSHR CLASS_THISKEY; UsrFunc[void AssertEqual(int, int, char32[])] Params Start
 PUSHR D4
-CALLFUNC 0.0149; ClassFunc[foo foo::foo()] Constructor Call
+CALLFUNC 0.0112; ClassFunc[foo foo::foo()] Constructor Call
 POP D4
 POP CLASS_THISKEY
 ZCLASS_READ D2 0
@@ -113,17 +114,17 @@ PUSHV 3
 ALLOCATEMEMV D2 8 0
 WRITEPODSTRING D2 "unnamed"
 PUSHR D2; UsrFunc[void AssertEqual(int, int, char32[])] Params End
-CALLFUNC 0.0174; UsrFunc[void AssertEqual(int, int, char32[])] Call
+CALLFUNC 0.0194; UsrFunc[void AssertEqual(int, int, char32[])] Call
 PEEK D4
 PUSHR CLASS_THISKEY; UsrFunc[void AssertEqual(int, int, char32[])] Params Start
 PUSHR D4
 PUSHR CLASS_THISKEY; ClassFunc[foo foo::waitAndClobber()] Params Start
 PUSHR D4
-CALLFUNC 0.0149; ClassFunc[foo foo::foo()] Constructor Call
+CALLFUNC 0.0112; ClassFunc[foo foo::foo()] Constructor Call
 POP D4
 POP CLASS_THISKEY
 SETR CLASS_THISKEY D2; ClassFunc[foo foo::waitAndClobber()] Params End
-CALLFUNC 0.0200; ClassFunc[foo foo::waitAndClobber()] Call
+CALLFUNC 0.0137; ClassFunc[foo foo::waitAndClobber()] Call
 POP D4
 POP CLASS_THISKEY
 ZCLASS_READ D2 0
@@ -132,10 +133,53 @@ PUSHV 3
 ALLOCATEMEMV D2 21 0
 WRITEPODSTRING D2 "after waitAndClobber"
 PUSHR D2; UsrFunc[void AssertEqual(int, int, char32[])] Params End
-CALLFUNC 0.0174; UsrFunc[void AssertEqual(int, int, char32[])] Call
+CALLFUNC 0.0194; UsrFunc[void AssertEqual(int, int, char32[])] Call
 POP D4
-CALLFUNC 0.0121; UsrFunc[void End()] Call AND [Opt:NeverRet]
+CALLFUNC 0.0187; UsrFunc[void End()] Call AND [Opt:NeverRet]
 REF_REMOVE 0; [Opt:NeverRet] AND void run() Body End
+SETV D2 0; Func[foo foo::foo()] Body Start
+SETR CLASS_THISKEY2 CLASS_THISKEY
+ZCLASS_CONSTRUCT CLASS_THISKEY {0.0001}
+REF_INC -0.0001
+SETR D4 SP2
+PUSHR CLASS_THISKEY2
+SETV D2 3
+ZCLASS_WRITE CLASS_THISKEY 0
+PUSHR D4
+PUSHR CLASS_THISKEY; UsrFunc[void clobber(foo)] Params
+CALLFUNC 0.0155; UsrFunc[void clobber(foo)] Call
+PEEK D4
+ZCLASS_READ CLASS_THISKEY 0; UsrFunc[void AssertEqual(int, int, char32[])] Params Start
+PUSHR D2
+PUSHV 3
+ALLOCATEMEMV D2 8 0
+WRITEPODSTRING D2 "in ctor"
+PUSHR D2; UsrFunc[void AssertEqual(int, int, char32[])] Params End
+CALLFUNC 0.0194; UsrFunc[void AssertEqual(int, int, char32[])] Call
+POP D4
+REF_AUTORELEASE CLASS_THISKEY
+REF_DEC -0.0001
+SETR D2 CLASS_THISKEY
+POP CLASS_THISKEY
+RETURNFUNC; Func[foo foo::foo()] Body End
+REF_INC -0.0001; Func[foo foo::waitAndClobber()] Body Start
+SETR D4 SP2
+SETV D2 3
+ZCLASS_WRITE CLASS_THISKEY 0
+WAITFRAME; InlineFunc[void Waitframe()] Body
+PUSHR D4
+ZCLASS_READ CLASS_THISKEY 0; UsrFunc[void AssertEqual(int, int, char32[])] Params Start
+PUSHR D2
+PUSHV 3
+ALLOCATEMEMV D2 18 0
+WRITEPODSTRING D2 "in waitAndClobber"
+PUSHR D2; UsrFunc[void AssertEqual(int, int, char32[])] Params End
+CALLFUNC 0.0194; UsrFunc[void AssertEqual(int, int, char32[])] Call
+POP D4
+SETR D2 CLASS_THISKEY; return Start
+REF_AUTORELEASE D2
+REF_DEC -0.0001; return End
+RETURNFUNC; Func[foo foo::waitAndClobber()] Body End
 SETR D4 SP2; Func[void clobber(foo)] Body Start
 MARK_TYPE_STACK 0.0008 0
 REF_INC 0
@@ -146,13 +190,6 @@ TRACE3; InlineFunc[void Trace(char32[])] Body End
 REF_REMOVE 0
 POP D5
 RETURNFUNC; Func[void clobber(foo)] Body End
-SETR D4 SP2; Func[void End()] Body Start
-ALLOCATEMEMV D2 13 0; InlineFunc[void printf(char32[], ...untyped[])] Params Start
-WRITEPODSTRING D2 "[Test] done\n"
-PUSHR D2; InlineFunc[void printf(char32[], ...untyped[])] Params End
-PRINTFVARG; InlineFunc[void printf(char32[], ...untyped[])] Body Start
-POP D5; InlineFunc[void printf(char32[], ...untyped[])] Body End
-GAMEEXIT; InlineFunc[void Game::Exit()] Body AND [Opt:NeverRet] AND Func[void End()] Body End
 SETR D4 SP2; Func[void Init(int)] Body Start
 ALLOCATEMEMV D2 35 0; InlineFunc[void printf(char32[], ...untyped[])] Params Start
 WRITEPODSTRING D2 "[Test] started: dmap %d screen %d\n"
@@ -166,39 +203,22 @@ LOAD D2 0; if() #8 Test
 COMPAREV D2 0
 SETCMP D2 I!=
 COMPAREV D2 0
-GOTOCMP 147 ==; Test 'if'
+GOTOCMP 184 ==; Test 'if'
 PUSHV 5; InlineFunc[void hero::Warp(int, int)] Params Start AND if() #8 Body Start
 LOAD D2 0; InlineFunc[void hero::Warp(int, int)] Params End
 POP D3; InlineFunc[void hero::Warp(int, int)] Body Start
 WARPR D3 D2; InlineFunc[void hero::Warp(int, int)] Body End
 WAITFRAME; InlineFunc[void Waitframe()] Body AND if() #8 Body End
+NOP
 POP D5
 RETURNFUNC; Func[void Init(int)] Body End
-SETV D2 0; Func[foo foo::foo()] Body Start
-SETR CLASS_THISKEY2 CLASS_THISKEY
-ZCLASS_CONSTRUCT CLASS_THISKEY {0.0001}
-REF_INC -0.0001
-SETR D4 SP2
-PUSHR CLASS_THISKEY2
-SETV D2 3
-ZCLASS_WRITE CLASS_THISKEY 0
-PUSHR D4
-PUSHR CLASS_THISKEY; UsrFunc[void clobber(foo)] Params
-CALLFUNC 0.0111; UsrFunc[void clobber(foo)] Call
-PEEK D4
-ZCLASS_READ CLASS_THISKEY 0; UsrFunc[void AssertEqual(int, int, char32[])] Params Start
-PUSHR D2
-PUSHV 3
-ALLOCATEMEMV D2 8 0
-WRITEPODSTRING D2 "in ctor"
-PUSHR D2; UsrFunc[void AssertEqual(int, int, char32[])] Params End
-CALLFUNC 0.0174; UsrFunc[void AssertEqual(int, int, char32[])] Call
-POP D4
-REF_AUTORELEASE CLASS_THISKEY
-REF_DEC -0.0001
-SETR D2 CLASS_THISKEY
-POP CLASS_THISKEY
-RETURNFUNC; Func[foo foo::foo()] Body End
+SETR D4 SP2; Func[void End()] Body Start
+ALLOCATEMEMV D2 13 0; InlineFunc[void printf(char32[], ...untyped[])] Params Start
+WRITEPODSTRING D2 "[Test] done\n"
+PUSHR D2; InlineFunc[void printf(char32[], ...untyped[])] Params End
+PRINTFVARG; InlineFunc[void printf(char32[], ...untyped[])] Body Start
+POP D5; InlineFunc[void printf(char32[], ...untyped[])] Body End
+GAMEEXIT; InlineFunc[void Game::Exit()] Body AND [Opt:NeverRet] AND Func[void End()] Body End
 SETR D4 SP2; Func[void AssertEqual(int, int, char32[])] Body Start
 MARK_TYPE_STACK 0.0009 0
 REF_INC 0
@@ -209,7 +229,7 @@ POP D3
 COMPARER D3 D2
 SETCMP D2 I!=
 COMPAREV D2 0
-GOTOCMP 197 ==; Test 'if'
+GOTOCMP 217 ==; Test 'if'
 ALLOCATEMEMV D2 53 0; InlineFunc[void printf(char32[], ...untyped[])] Params Start AND if() #10 Body Start
 WRITEPODSTRING D2 "[Test] failed assertion: expected %d but got %d. %s\n"
 PUSHR D2
@@ -222,24 +242,7 @@ PUSHVARGR D2; InlineFunc[void printf(char32[], ...untyped[])] Params End
 PRINTFVARG; InlineFunc[void printf(char32[], ...untyped[])] Body Start
 POP D5; InlineFunc[void printf(char32[], ...untyped[])] Body End
 GAMEEXIT; InlineFunc[void Game::Exit()] Body AND if() #10 Body End
+NOP
 REF_REMOVE 0
 POPARGS D5 0.0003
 RETURNFUNC; Func[void AssertEqual(int, int, char32[])] Body End
-REF_INC -0.0001; Func[foo foo::waitAndClobber()] Body Start
-SETR D4 SP2
-SETV D2 3
-ZCLASS_WRITE CLASS_THISKEY 0
-WAITFRAME; InlineFunc[void Waitframe()] Body
-PUSHR D4
-ZCLASS_READ CLASS_THISKEY 0; UsrFunc[void AssertEqual(int, int, char32[])] Params Start
-PUSHR D2
-PUSHV 3
-ALLOCATEMEMV D2 18 0
-WRITEPODSTRING D2 "in waitAndClobber"
-PUSHR D2; UsrFunc[void AssertEqual(int, int, char32[])] Params End
-CALLFUNC 0.0174; UsrFunc[void AssertEqual(int, int, char32[])] Call
-POP D4
-SETR D2 CLASS_THISKEY; return Start
-REF_AUTORELEASE D2
-REF_DEC -0.0001; return End
-RETURNFUNC; Func[foo foo::waitAndClobber()] Body End
