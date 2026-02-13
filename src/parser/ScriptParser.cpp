@@ -1078,6 +1078,8 @@ void ScriptAssembler::assemble()
 
 void ScriptAssembler::assemble_init()
 {
+	allFunctions.clear();
+
 	// Do the global inits
 	// If there's a global script called "Init", append it to ~Init:
 	Script* userInit = program.getScript("Init");
@@ -1104,7 +1106,7 @@ void ScriptAssembler::assemble_init()
 			vec.push_back(&script);
 		}
 	}
-	vector<shared_ptr<Opcode>> ginit_mergefuncs;
+
 	for(auto it = initScripts.begin(); it != initScripts.end(); ++it)
 	{
 		auto& vec = it->second;
@@ -1112,50 +1114,22 @@ void ScriptAssembler::assemble_init()
 		{
 			Script& script = **it;
 			Function* run = script.getRun();
-			vector<shared_ptr<Opcode>> const& runCode = run->getCode();
 
 			setLocation2(program, run->node);
 
 			//Function call the run function
 			//push the stack frame pointer
 			addOpcode2(ginit, new OPushRegister(new VarArgument(SFRAME)));
-			
-			int32_t funcaddr = ScriptParser::getUniqueLabelID();
-			addOpcode2(ginit, new OCallFunc(new LabelArgument(funcaddr, true)));
-			
+			addOpcode2(ginit, new OCallFunc(new LabelArgument(run->getLabel(), true)));
 			addOpcode2(ginit,new OPopRegister(new VarArgument(SFRAME)));
-			
-			//Add the function to the end of the script, as a special copy
-			bool didlabel = false;
-			size_t index = 0;
-			for(auto it = runCode.begin(); it != runCode.end(); ++it, ++index)
-			{
-				Opcode* op = it->get();
-				if(dynamic_cast<OQuit*>(op))
-				{
-					op = new OReturnFunc(); //Replace 'Quit();' with 'return;'
-				}
-				else
-					op = op->makeClone(true);
-				if(!didlabel)
-				{
-					op->setLabel(funcaddr);
-					didlabel = true;
-				}
-				addOpcode2(ginit_mergefuncs, op);
-			}
-			Opcode* last = ginit_mergefuncs.back().get();
-			if(OReturnFunc* opcode = dynamic_cast<OReturnFunc*>(last))
-				; //function ends in a return already
-			else
-				addOpcode2(ginit_mergefuncs, new OReturnFunc());
 
 			setLocation2(program, nullptr);
+			allFunctions.push_back(run);
 		}
 	}
 
 	// Generate a map of labels to functions.
-	allFunctions = getFunctions(program);
+	appendElements(allFunctions, getFunctions(program));
 	appendElements(allFunctions, program.getUserClassConstructors());
 	appendElements(allFunctions, program.getUserClassDestructors());
 	for (size_t i = 0; i < allFunctions.size(); i++)
@@ -1177,7 +1151,6 @@ void ScriptAssembler::assemble_init()
 	gather_scope_labels();
 
 	addOpcode2(ginit, new OQuit());
-	ginit.insert(ginit.end(), ginit_mergefuncs.begin(), ginit_mergefuncs.end());
 	optimize_code(ginit);
 
 	Script* init = program.getScript("~Init");
