@@ -29,4 +29,5 @@ zasm:
 QUIT; void run() Body
 PUSHR REFNPC; void run() Body Start
 SETR D4 SP2
+NOP
 GOTO 4; while() #1 End AND [Opt:NeverRet] AND void run() Body End

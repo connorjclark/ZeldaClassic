@@ -31,6 +31,7 @@ PUSHR D0; void run(int) Params
 PUSHR REFFFC; void run(int) Body Start
 PUSHARGSV 0 0.0002
 SETR D4 SP2
+NOP
 SETV D2 0; while(true) #2 Body [Opt:AlwaysOn] Start
 PUSHR D2
 POP D0

@@ -91,6 +91,7 @@ POP REFSPRITE
 PUSHVARGR SPRITE_Y; InlineFunc[void printf(char32[], ...untyped[])] Params End
 PRINTFVARG; InlineFunc[void printf(char32[], ...untyped[])] Body Start
 POP D5; InlineFunc[void printf(char32[], ...untyped[])] Body End AND if() #439 Body End
+NOP
 LOAD D2 0.0005
 PUSHR D2
 POP REFSPRITE
@@ -110,9 +111,9 @@ ANDV32 D2 0.0002
 COMPAREV D2 0
 SETCMP D2 I==
 COMPAREV D2 0
-GOTOCMP 88 ==
+GOTOCMP 89 ==
 SETV D2 0.0003
-GOTO 89
+GOTO 90
 SETV D2 0
 PUSHR D2
 POP D2
@@ -157,7 +158,7 @@ POP D3
 COMPARER D3 D2
 SETCMP D2 I<
 COMPAREV D2 0
-GOTOCMP 177 ==; for() #150 TestFail?
+GOTOCMP 179 ==; for() #150 TestFail?
 LOAD D2 0.0004; InlineFunc[ffc screendata::LoadFFC(int)] Params AND for() #150 Body Start
 LOAD_FFC D2; InlineFunc[ffc screendata::LoadFFC(int)] Body
 STORE D2 0.0003
@@ -166,7 +167,8 @@ PUSHR D2
 POP REFFFC
 SETR D2 DATA
 COMPAREV D2 0
-GOTOCMP 173 ==; Test 'unless' AND continue 1; AND unless() #437 Body
+GOTOCMP 175 ==; Test 'unless' AND continue 1; AND unless() #437 Body
+NOP
 STOREV 5 0.0002
 LOAD D2 0.0003
 PUSHR D2
@@ -201,9 +203,10 @@ POPARGS D5 0.0011; InlineFunc[void screendata::Circle(int, int, int, int, int, i
 LOAD D2 0.0004; for() #150 LoopIncrement
 ADDV D2 1
 STORE D2 0.0004
-GOTO 125; for() #150 End
+GOTO 126; for() #150 End
+NOP
 WAITFRAME; InlineFunc[void Waitframe()] Body AND while(true) #2 Body [Opt:AlwaysOn] End
-GOTO 123; while() #2 End AND [Opt:NeverRet] AND void run() Body End
+GOTO 124; while() #2 End AND [Opt:NeverRet] AND void run() Body End
 PUSHR REFDMAPDATA; void run() Body Start
 PUSHARGSV 0 0.0005
 SETR D4 SP2
@@ -220,7 +223,7 @@ POP D3
 COMPARER D3 D2
 SETCMP D2 I<
 COMPAREV D2 0
-GOTOCMP 236 ==; for() #151 TestFail?
+GOTOCMP 240 ==; for() #151 TestFail?
 LOAD D2 0.0004; InlineFunc[ffc screendata::LoadFFC(int)] Params AND for() #151 Body Start
 LOAD_FFC D2; InlineFunc[ffc screendata::LoadFFC(int)] Body
 STORE D2 0.0003
@@ -229,7 +232,8 @@ PUSHR D2
 POP REFFFC
 SETR D2 DATA
 COMPAREV D2 0
-GOTOCMP 232 ==; Test 'unless' AND continue 1; AND unless() #438 Body
+GOTOCMP 236 ==; Test 'unless' AND continue 1; AND unless() #438 Body
+NOP
 STOREV 3 0.0002
 LOAD D2 0.0003
 PUSHR D2
@@ -260,6 +264,7 @@ POPARGS D5 0.0011; InlineFunc[void screendata::Circle(int, int, int, int, int, i
 LOAD D2 0.0004; for() #151 LoopIncrement
 ADDV D2 1
 STORE D2 0.0004
-GOTO 188; for() #151 End
+GOTO 191; for() #151 End
+NOP
 WAITFRAME; InlineFunc[void Waitframe()] Body AND while(true) #3 Body [Opt:AlwaysOn] End
-GOTO 186; while() #3 End AND [Opt:NeverRet] AND void run() Body End
+GOTO 189; while() #3 End AND [Opt:NeverRet] AND void run() Body End
