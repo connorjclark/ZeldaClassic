@@ -4,7 +4,6 @@ set(LAUNCHER_GUI_SOURCES
 ################################
 # Add or remove files here
 ################################
-src/tab_ctl.cpp
 src/drawing.cpp
 
 src/launcher/launcher_dialog.cpp

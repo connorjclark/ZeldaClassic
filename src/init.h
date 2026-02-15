@@ -1,7 +1,7 @@
 #ifndef INIT_H_
 #define INIT_H_
 
-#include "tab_ctl.h"
+#include "gui/tab_ctl.h"
 #include "base/zc_alleg.h"
 #include <string>
 #include "base/initdata.h"

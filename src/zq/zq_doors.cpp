@@ -5,6 +5,7 @@
 #include "base/gui.h"
 #include "base/zc_alleg.h"
 #include "base/zdefs.h"
+#include "dialog/externs.h"
 #include "gui/jwin.h"
 #include "base/zsys.h"
 #include "base/misctypes.h"

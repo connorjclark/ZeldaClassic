@@ -2,7 +2,7 @@
 #define ZC_SCRIPTING_DIRECTORY_H_
 
 #include "base/jwinfsel.h"
-#include "user_object.h"
+#include "../../user_object.h"
 
 #include <optional>
 #include <string>

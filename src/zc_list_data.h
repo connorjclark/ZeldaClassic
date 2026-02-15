@@ -1,10 +1,13 @@
 #ifndef ZC_LIST_DATA_H_
 #define ZC_LIST_DATA_H_
 
+#include "base/containers.h"
 #include "base/general.h"
 #include "gui/list_data.h"
 
-extern const string builtin_midi_names[ZC_MIDI_COUNT];
+#include <string>
+
+extern const std::string builtin_midi_names[ZC_MIDI_COUNT];
 
 namespace GUI::ZCListData
 {

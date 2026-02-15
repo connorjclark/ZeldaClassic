@@ -1,4 +1,5 @@
 #include "gui/scrolling_pane.h"
+#include "base/zdefs.h"
 #include "gui/dialog_runner.h"
 #include "base/zc_alleg.h"
 #include "gui/jwin.h"

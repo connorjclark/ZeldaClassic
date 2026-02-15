@@ -1,6 +1,7 @@
 // See 'zc/control_scheme.cpp' for design comments
 #include "control_schemes.h"
 #include <gui/builder.h>
+#include "dialog/externs.h"
 #include "gui/jwin.h"
 #include "base/zsys.h"
 #include "zinfo.h"

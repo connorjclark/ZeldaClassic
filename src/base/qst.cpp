@@ -23,6 +23,7 @@
 #include <vector>
 #include <assert.h>
 #include <fmt/format.h>
+#include "dialog/externs.h"
 #include "zcsfx.h"
 
 #include "fmt/core.h"

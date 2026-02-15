@@ -3,6 +3,7 @@
 #include "base/zapp.h"
 #include "base/zdefs.h"
 #include "zinfo.h"
+#include "dialog/externs.h"
 #include "gui/jwin.h"
 #include "base/fonts.h"
 #include "base/packfile.h"

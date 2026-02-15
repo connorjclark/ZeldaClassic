@@ -1,3 +1,4 @@
+#include "dialog/externs.h"
 #include "undercombo_dlg.h"
 #include "common.h"
 #include <gui/builder.h>
