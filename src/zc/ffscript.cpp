@@ -32,6 +32,7 @@
 #include "new_subscr.h"
 #include "zasm/debug_data.h"
 #include "zasm/pc.h"
+#include "zc/debugger/debugger.h"
 #include "zc/maps.h"
 #include "zasm/table.h"
 #include "zc/replay.h"
@@ -104,6 +105,12 @@ std::string current_zasm_context;
 
 void scripting_log_error_with_context(std::string text)
 {
+	if (script_is_within_debugger_vm)
+		return;
+
+	if (auto debugger = zscript_debugger_get_if_open(); debugger && debugger->break_on_error)
+		debugger->SetState(Debugger::State::Paused);
+
 	if (current_zasm_context.empty())
 	{
 		std::vector<const char*> context;
@@ -1365,6 +1372,9 @@ static void set_current_script_engine_data(ScriptEngineData& data, ScriptType ty
 	stack = &data.stack;
 	ret_stack = &data.ret_stack;
 
+	data.script_type = type;
+	data.script_num = script;
+
 	// By default, make `Screen->` refer to the top-left screen.
 	// Will be set to something more specific for relevant script types.
 	ri->screenref = cur_screen;
@@ -1662,7 +1672,23 @@ static void set_current_script_engine_data(ScriptEngineData& data, ScriptType ty
 	}
 	
 	if (got_initialized)
+	{
 		ri->pc = curscript->pc;
+
+		if (!script_is_within_debugger_vm && curscript->valid())
+		{
+			// Note: the below works, but is more expensive than just setting the correct stack size when writing to D4.
+			// int stack_size = zasm_debug_data.getFunctionAdditionalStackSize(zasm_debug_data.resolveFunctionScope(ri->pc));
+			int stack_size = 0;
+			ri->debugger_stack_frames.push_back(DebuggerStackFrame{
+				.stack_frame_base = (uint16_t)(ri->sp - stack_size),
+				.this_ptr = ri->thiskey,
+			});
+
+			if (auto debugger = zscript_debugger_get_if_open(); debugger && debugger->break_on_new_script)
+				debugger->SetState(Debugger::State::Paused);
+		}
+	}
 }
 
 ffcdata* ResolveFFCWithID(ffc_id_t id)
@@ -2605,6 +2631,11 @@ mapscr* checkMapDataScr(int32_t ref)
 screendata* checkScreen(int32_t ref)
 {
 	return (screendata*)get_scr_maybe(cur_map, ref);
+}
+
+user_bitmap* checkBitmap(int32_t ref)
+{
+	return user_bitmaps.check(ref);
 }
 
 bottletype* checkBottleData(int32_t ref, bool skipError)
@@ -7003,7 +7034,8 @@ int32_t get_register(int32_t arg)
 			}
 			else
 			{
-				scripting_log_error_with_context("Can only be called by combodata scripts, but you tried to use it from script type {}, name: {}", ScriptTypeToString(curScriptType), curscript->name());
+				if (!script_is_within_debugger_vm)
+					scripting_log_error_with_context("Can only be called by combodata scripts, but you tried to use it from script type {}, name: {}", ScriptTypeToString(curScriptType), curscript->name());
 				ret = -10000;
 			}
 			break;
@@ -7018,7 +7050,8 @@ int32_t get_register(int32_t arg)
 			}
 			else
 			{
-				scripting_log_error_with_context("Can only be called by combodata scripts, but you tried to use it from script type {}, name: {}", ScriptTypeToString(curScriptType), curscript->name());
+				if (!script_is_within_debugger_vm)
+					scripting_log_error_with_context("Can only be called by combodata scripts, but you tried to use it from script type {}, name: {}", ScriptTypeToString(curScriptType), curscript->name());
 				ret = -10000;
 			}
 			break;
@@ -7032,7 +7065,8 @@ int32_t get_register(int32_t arg)
 			}
 			else
 			{
-				scripting_log_error_with_context("Can only be called by combodata scripts, but you tried to use it from script type {}, name: {}", ScriptTypeToString(curScriptType), curscript->name());
+				if (!script_is_within_debugger_vm)
+					scripting_log_error_with_context("Can only be called by combodata scripts, but you tried to use it from script type {}, name: {}", ScriptTypeToString(curScriptType), curscript->name());
 				ret = -10000;
 			}
 			break;
@@ -7046,7 +7080,8 @@ int32_t get_register(int32_t arg)
 			}
 			else
 			{
-				scripting_log_error_with_context("Can only be called by combodata scripts, but you tried to use it from script type {}, name: {}", ScriptTypeToString(curScriptType), curscript->name());
+				if (!script_is_within_debugger_vm)
+					scripting_log_error_with_context("Can only be called by combodata scripts, but you tried to use it from script type {}, name: {}", ScriptTypeToString(curScriptType), curscript->name());
 				ret = -10000;
 			}
 			break;
@@ -17676,12 +17711,28 @@ void retstack_push(int32_t val)
 		ri->overflow = true;
 		return;
 	}
+
 	(*ret_stack)[ri->retsp++] = val;
+
+	if (!script_is_within_debugger_vm)
+	{
+		// Note: the below works, but is more expensive than just setting the correct stack size when writing to D4.
+		// int stack_size = zasm_debug_data.getFunctionAdditionalStackSize(zasm_debug_data.resolveFunctionScope(ri->pc));
+		int stack_size = 0;
+		ri->debugger_stack_frames.push_back(DebuggerStackFrame{
+			.stack_frame_base = (uint16_t)(ri->sp - stack_size),
+			.this_ptr = ri->thiskey,
+		});
+	}
 }
+
 optional<int32_t> retstack_pop()
 {
 	if(!ri->retsp)
 		return nullopt; //return from root, so, QUIT
+
+	if (!script_is_within_debugger_vm)
+		ri->debugger_stack_frames.pop_back();
 	return (*ret_stack)[--ri->retsp];
 }
 
@@ -17739,6 +17790,14 @@ bool is_guarded_script_register(int reg)
 
 void do_set(int reg, int value)
 {
+	if (reg == D(4))
+	{
+		if (!script_is_within_debugger_vm)
+			ri->debugger_stack_frames.back().stack_frame_base = value;
+		set_register(reg, value);
+		return;
+	}
+
 	if (!is_guarded_script_register(reg))
 	{
 		set_register(reg, value);
@@ -23838,6 +23897,26 @@ sprite* get_own_sprite(ScriptType type)
 	return nullptr;
 }
 
+sprite* get_own_sprite(refInfo* ri, ScriptType type)
+{
+	switch(type)
+	{
+		case ScriptType::None:
+			return ResolveBaseSprite(ri->spriteref);
+		case ScriptType::Lwpn:
+			return checkLWpn(ri->lwpnref);
+		case ScriptType::Ewpn:
+			return checkEWpn(ri->ewpnref);
+		case ScriptType::ItemSprite:
+			return checkItem(ri->itemref);
+		case ScriptType::NPC:
+			return checkNPC(ri->npcref);
+		case ScriptType::FFC:
+			return ResolveFFC(ri->ffcref);
+	}
+	return nullptr;
+}
+
 portal* loadportal(savedportal& p);
 
 ///----------------------------------------------------------------------------------------------------//
@@ -24229,6 +24308,8 @@ int32_t run_script_jit_until_call_or_return(JittedScriptInstance* j_instance, pc
 	return j_instance->should_wait ? RUNSCRIPT_STOPPED : RUNSCRIPT_OK;
 }
 
+bool script_is_within_debugger_vm;
+
 // When j_instance is null, that means the interperter is fully in charge.
 // Otherwise, the JIT may still call this function for the many commands that are not compiled, or
 // during the period before a function is "hot" enough to have been compiled.
@@ -24287,8 +24368,12 @@ int32_t run_script_int(JittedScriptInstance* j_instance)
 	word scommand = zasm[ri->pc].command;
 	bool hit_invalid_zasm = false;
 	bool no_dealloc = false;
+	bool has_debugger = !script_is_within_debugger_vm && zscript_debugger_is_open();
 	while(scommand != 0xFFFF)
 	{
+		if (has_debugger)
+			zscript_debugger_exec(ri->pc);
+
 		const auto& op = zasm[ri->pc];
 		scommand = op.command;
 		sarg1 = op.arg1;
@@ -24430,6 +24515,11 @@ int32_t run_script_int(JittedScriptInstance* j_instance)
 		}
 		if(waiting && scommand != NOP)
 		{
+			if (script_is_within_debugger_vm)
+			{
+				ri->waitframes = 1;
+				return RUNSCRIPT_ERROR;
+			}
 			if (is_jitted)
 				j_instance->should_wait = true;
 			break;
@@ -24444,7 +24534,10 @@ int32_t run_script_int(JittedScriptInstance* j_instance)
 			if(Quit)
 				scommand=0xFFFF;
 		}
-		
+
+		if (script_is_within_debugger_vm && commands_run > 10000000)
+			return RUNSCRIPT_INFINITE_LOOP;
+
 		switch(scommand)
 		{
 			//always first
@@ -24616,14 +24709,16 @@ int32_t run_script_int(JittedScriptInstance* j_instance)
 			
 			case CALLFUNC:
 			{
-				retstack_push(ri->pc+1);
+				int ret_pc = ri->pc+1;
+				ri->pc = sarg1;
+				retstack_push(ret_pc);
 				if(sarg1 < 0 )
 				{
 					goto_err("CALLFUNC");
 					scommand = 0xFFFF;
 					break;
 				}
-				ri->pc = sarg1;
+
 				increment = false;
 
 				// When is_jitted is true, CALLFUNC can only be processed here when j_instance->sequence_mode is false.
@@ -24649,6 +24744,9 @@ int32_t run_script_int(JittedScriptInstance* j_instance)
 				{
 					scommand = 0xFFFF;
 				}
+
+				if (script_is_within_debugger_vm && ri->retsp == 0)
+					return RUNSCRIPT_OK;
 
 				// When is_jitted is true, RETURNFUNC can only be processed here when j_instance->sequence_mode is false.
 				// And when it is called, it marks the end of run_script_int.
@@ -28019,7 +28117,7 @@ int32_t run_script_int(JittedScriptInstance* j_instance)
 			earlyretval = -1;
 			return earlyretval;
 		}
-		
+
 		// If running a JIT compiled script, we're only here to do a few commands.
 		commands_run += 1;
 		if (is_jitted && commands_run == j_instance->uncompiled_command_count)
@@ -28894,6 +28992,7 @@ void FFScript::init(bool for_continue)
 	else clear_script_engine_data();
 	script_debug_handles.clear();
 	runtime_script_debug_handle = nullptr;
+	show_zasm_stack_traces = zc_get_config("ZSCRIPT", "show_zasm_stack_traces", false);
 }
 
 void FFScript::shutdown()
@@ -30525,28 +30624,33 @@ void FFScript::ZScriptConsole(bool open)
 ///----------------------------------------------------------------------------------------------------//
 //Tracing
 
-static std::string get_script_location(int pc)
+std::optional<StackFrame> FFScript::get_script_stack_frame(int pc)
 {
-	auto [fname, line] = zasm_debug_data.resolveLocation(pc);
+	auto [source_file, line] = zasm_debug_data.resolveLocationSourceFile(pc);
 	if (line > 0)
 	{
 		const DebugScope* scope = zasm_debug_data.resolveFunctionScope(pc);
 		std::string fn_name = scope ? zasm_debug_data.getFullScopeName(scope) : "?";
 
-		// Just print the filename, not the entire path.
-		std::string fname_str = fname;
-		size_t pos = fname_str.find_last_of("/\\") + 1;
-		return fmt::format("{} ({}:{})", fn_name, fname_str.substr(pos), line);
-		// return fmt::format("{} ({}:{}) pc: {}", fn_name, fname_str.substr(pos), line, pc); // Useful for debugging.
+		StackFrame frame{};
+		frame.source_file = source_file;
+		frame.line = line;
+		frame.pc = pc;
+		frame.function_name = fn_name;
+		return frame;
 	}
-	else if (devpwd())
+	else if (show_zasm_stack_traces)
 	{
 		// It's often useful to know which zasm instruction stuff happened at for development,
 		// but that's never useful for typical users.
-		return fmt::format("{}.zasm:{}", curscript->zasm_script->name, pc);
+		StackFrame frame{};
+		frame.line = pc;
+		frame.pc = pc;
+		frame.extra = curscript->zasm_script->name + ".zasm";
+		return frame;
 	}
 
-	return "";
+	return std::nullopt;
 }
 
 void FFScript::handle_trace(const std::string& s, bool is_error, bool no_prefix)
@@ -30562,7 +30666,7 @@ void FFScript::handle_trace(const std::string& s, bool is_error, bool no_prefix)
 	std::string stack_trace_string;
 
 	if (!s.empty() && s.back() == '\n')
-		stack_trace = create_stack_trace();
+		stack_trace = create_stack_trace(ri);
 	if (stack_trace)
 		stack_trace_string = stack_trace->to_string() + "\n";
 
@@ -30584,8 +30688,8 @@ void FFScript::handle_trace(const std::string& s, bool is_error, bool no_prefix)
 			replay_step_comment(fmt::format("{}: {}", is_error ? "Error" : "Trace", s));
 		if (stack_trace)
 		{
-			for (auto& frame : stack_trace->frames)
-				replay_step_comment(frame);
+			for (const auto& frame : stack_trace->frames)
+				replay_step_comment(frame.to_string());
 		}
 	}
 
@@ -30602,21 +30706,51 @@ void FFScript::handle_trace(const std::string& s, bool is_error, bool no_prefix)
 			zscript_coloured_console.safeprint(colors, stack_trace_string.c_str());
 		}
 	}
+
+	if (auto debugger = zscript_debugger_get_if_open())
+	{
+		if (stack_trace)
+			debugger->AddConsoleMessageWithStackTrace(std::move(s), std::move(stack_trace.value()));
+		else
+			debugger->AddConsoleMessage(std::move(s));
+	}
+}
+
+std::string StackFrame::to_string() const
+{
+	if (source_file)
+		return fmt::format("  at {}:{}", source_file->path, line);
+	else
+		return fmt::format("  at {}", extra);
+}
+
+std::string StackFrame::to_short_string() const
+{
+	if (source_file)
+	{
+		size_t pos = source_file->path.find_last_of("/\\") + 1;
+		return fmt::format("{}:{}", source_file->path.substr(pos), line);
+	}
+
+	return extra;
 }
 
 std::string StackTrace::to_string() const
 {
-	return fmt::format("{}", fmt::join(frames, "\n"));
+	std::vector<std::string> parts;
+	for (auto& frame : frames)
+		parts.push_back(frame.to_string());
+
+	return fmt::format("{}", fmt::join(parts, "\n"));
 }
 
-std::optional<StackTrace> FFScript::create_stack_trace()
+std::optional<StackTrace> FFScript::create_stack_trace(const refInfo* ri)
 {
 	if (zasm_debug_data.debug_lines_encoded.empty() && !devpwd())
 		return std::nullopt;
 
 	StackTrace result{};
 	std::vector<pc_t> frames;
-	std::vector<std::string> frame_strings;
 
 	frames.push_back(ri->pc);
 
@@ -30638,8 +30772,8 @@ std::optional<StackTrace> FFScript::create_stack_trace()
 		else
 			repeated_count = 1;
 
-		std::string location = get_script_location(pc);
-		result.frames.push_back(fmt::format("  at {}", location));
+		if (auto frame = get_script_stack_frame(pc))
+			result.frames.push_back(*frame);
 
 		// Elide repeated frames.
 		if (repeated_count == 2)
@@ -30654,8 +30788,7 @@ std::optional<StackTrace> FFScript::create_stack_trace()
 
 			if (lookahead_count > 0)
 			{
-				std::string location = get_script_location(pc);
-				result.frames.push_back(fmt::format("  ... (x{})", lookahead_count));
+				result.frames.push_back(StackFrame{.extra = fmt::format("  ... (x{})", lookahead_count)});
 				i = j - 1;
 			}
 
@@ -30664,6 +30797,9 @@ std::optional<StackTrace> FFScript::create_stack_trace()
 
 		last_pc = pc;
 	}
+
+	if (result.frames.empty())
+		return std::nullopt;
 
 	return result;
 }
@@ -30856,6 +30992,215 @@ void FFScript::do_tracenl()
 	handle_trace("\n", false, true);
 }
 
+std::string FFScript::GetScriptName(ScriptType script_type, int script_num)
+{
+	switch(script_type)
+	{
+		case ScriptType::Global:
+		{
+			switch(script_num)
+			{
+				case GLOBAL_SCRIPT_INIT:
+					return globalmap[script_num].scriptname;
+				case GLOBAL_SCRIPT_GAME:
+					return globalmap[script_num].scriptname;
+				case GLOBAL_SCRIPT_END:
+					return globalmap[script_num].scriptname;
+				case GLOBAL_SCRIPT_ONSAVELOAD:
+					return globalmap[script_num].scriptname;
+				case GLOBAL_SCRIPT_ONLAUNCH:
+					return globalmap[script_num].scriptname;
+				case GLOBAL_SCRIPT_ONCONTGAME:
+					return globalmap[script_num].scriptname;
+				case GLOBAL_SCRIPT_F6:
+					return globalmap[script_num].scriptname;
+				case GLOBAL_SCRIPT_ONSAVE:
+					return globalmap[script_num].scriptname;
+			}
+			break;
+		}
+		
+		case ScriptType::Hero:
+		{
+			switch(script_num)
+			{
+				case SCRIPT_HERO_INIT:
+					return playermap[script_num-1].scriptname;
+				case SCRIPT_HERO_ACTIVE:
+					return playermap[script_num-1].scriptname;
+				case SCRIPT_HERO_DEATH:
+					return playermap[script_num-1].scriptname;
+				case SCRIPT_HERO_WIN:
+					return playermap[script_num-1].scriptname;
+			}
+			break;
+		}
+
+		case ScriptType::Lwpn:
+			return lwpnmap[script_num-1].scriptname;
+
+		case ScriptType::Ewpn:
+			return ewpnmap[script_num-1].scriptname;
+
+		case ScriptType::NPC:
+			return npcmap[script_num-1].scriptname;
+
+		case ScriptType::FFC:
+			return ffcmap[script_num-1].scriptname;
+
+		case ScriptType::Item:
+			return itemmap[script_num-1].scriptname;
+
+		case ScriptType::OnMap:
+			return dmapmap[script_num-1].scriptname;
+		case ScriptType::ScriptedActiveSubscreen:
+			return dmapmap[script_num-1].scriptname;
+		case ScriptType::ScriptedPassiveSubscreen:
+			return dmapmap[script_num-1].scriptname;
+		case ScriptType::DMap:
+			return dmapmap[script_num-1].scriptname;
+		
+		case ScriptType::ItemSprite:
+			return itemspritemap[script_num-1].scriptname;
+		
+		case ScriptType::Screen:
+			return screenmap[script_num-1].scriptname;
+		
+		case ScriptType::Combo:
+			return comboscriptmap[script_num-1].scriptname;
+			
+		case ScriptType::Generic:
+			return genericmap[script_num-1].scriptname;
+			
+		case ScriptType::GenericFrozen:
+			return genericmap[script_num-1].scriptname;
+			
+		case ScriptType::EngineSubscreen:
+			return subscreenmap[script_num-1].scriptname;
+	}
+
+	return "";
+}
+
+std::string FFScript::GetScriptDataName(ScriptType script_type, int script_num)
+{
+	char buf[256] = {0};
+
+	switch(script_type)
+	{
+		case ScriptType::Global:
+		{
+			switch(script_num)
+			{
+				case GLOBAL_SCRIPT_INIT:
+					sprintf(buf, "Global Init(%s)", globalmap[script_num].scriptname.c_str());
+					break;
+				case GLOBAL_SCRIPT_GAME:
+					sprintf(buf, "Global Active(%s)", globalmap[script_num].scriptname.c_str());
+					break;
+				case GLOBAL_SCRIPT_END:
+					sprintf(buf, "Global Exit(%s)", globalmap[script_num].scriptname.c_str());
+					break;
+				case GLOBAL_SCRIPT_ONSAVELOAD:
+					sprintf(buf, "Global SaveLoad(%s)", globalmap[script_num].scriptname.c_str());
+					break;
+				case GLOBAL_SCRIPT_ONLAUNCH:
+					sprintf(buf, "Global Launch(%s)", globalmap[script_num].scriptname.c_str());
+					break;
+				case GLOBAL_SCRIPT_ONCONTGAME:
+					sprintf(buf, "Global ContGame(%s)", globalmap[script_num].scriptname.c_str());
+					break;
+				case GLOBAL_SCRIPT_F6:
+					sprintf(buf, "Global F6Menu(%s)", globalmap[script_num].scriptname.c_str());
+					break;
+				case GLOBAL_SCRIPT_ONSAVE:
+					sprintf(buf, "Global Save(%s)", globalmap[script_num].scriptname.c_str());
+					break;
+			}
+			break;
+		}
+		
+		case ScriptType::Hero:
+		{
+			switch(script_num)
+			{
+				case SCRIPT_HERO_INIT:
+					sprintf(buf, "Hero Init(%s)", playermap[script_num-1].scriptname.c_str());
+					break;
+				case SCRIPT_HERO_ACTIVE:
+					sprintf(buf, "Hero Active(%s)", playermap[script_num-1].scriptname.c_str());
+					break;
+				case SCRIPT_HERO_DEATH:
+					sprintf(buf, "Hero Death(%s)", playermap[script_num-1].scriptname.c_str());
+					break;
+				case SCRIPT_HERO_WIN:
+					sprintf(buf, "Hero Win(%s)", playermap[script_num-1].scriptname.c_str());
+					break;
+			}
+			break;
+		}
+		
+		case ScriptType::Lwpn:
+			sprintf(buf, "LWeapon(%u, %s)", script_num,lwpnmap[script_num-1].scriptname.c_str());
+			break;
+		
+		case ScriptType::Ewpn:
+			sprintf(buf, "EWeapon(%u, %s)", script_num,ewpnmap[script_num-1].scriptname.c_str());
+			break;
+		
+		case ScriptType::NPC:
+			sprintf(buf, "NPC(%u, %s)", script_num,npcmap[script_num-1].scriptname.c_str());
+			break;
+			
+		case ScriptType::FFC:
+			sprintf(buf, "FFC(%u, %s)", script_num,ffcmap[script_num-1].scriptname.c_str());
+			break;
+			
+		case ScriptType::Item:
+			sprintf(buf, "Item(%u, %s)", script_num,itemmap[script_num-1].scriptname.c_str());
+			break;
+		
+		case ScriptType::OnMap:
+			sprintf(buf, "DMapMap(%u, %s)", script_num,dmapmap[script_num-1].scriptname.c_str());
+			break;
+		case ScriptType::ScriptedActiveSubscreen:
+			sprintf(buf, "DMapASub(%u, %s)", script_num,dmapmap[script_num-1].scriptname.c_str());
+			break;
+		case ScriptType::ScriptedPassiveSubscreen:
+			sprintf(buf, "DMapPSub(%u, %s)", script_num,dmapmap[script_num-1].scriptname.c_str());
+			break;
+		case ScriptType::DMap:
+			sprintf(buf, "DMap(%u, %s)", script_num,dmapmap[script_num-1].scriptname.c_str());
+			break;
+		
+		case ScriptType::ItemSprite:
+			sprintf(buf, "ItemSprite(%u, %s)", script_num,itemspritemap[script_num-1].scriptname.c_str());
+			break;
+		
+		case ScriptType::Screen:
+			sprintf(buf, "Screen(%u, %s)", script_num,screenmap[script_num-1].scriptname.c_str());
+			break;
+		
+		case ScriptType::Combo:
+			sprintf(buf, "Combo(%u, %s)", script_num,comboscriptmap[script_num-1].scriptname.c_str());
+			break;
+			
+		case ScriptType::Generic:
+			sprintf(buf, "Generic(%u, %s)", script_num,genericmap[script_num-1].scriptname.c_str());
+			break;
+			
+		case ScriptType::GenericFrozen:
+			sprintf(buf, "GenericFRZ(%u, %s)", script_num,genericmap[script_num-1].scriptname.c_str());
+			break;
+			
+		case ScriptType::EngineSubscreen:
+			sprintf(buf, "Subscreen(%u, %s)", script_num,subscreenmap[script_num-1].scriptname.c_str());
+			break;
+	}
+
+	return buf;
+}
+
 void FFScript::PrintTracePrefix(bool force_show_context, bool is_error)
 {
 	std::vector<std::string> parts;
@@ -30877,124 +31222,16 @@ void FFScript::PrintTracePrefix(bool force_show_context, bool is_error)
 	bool show_context = force_show_context || (get_qr(qr_TRACESCRIPTIDS) || DEVLOGGING);
 	if (show_context)
 	{
-		char buf[256] = {0};
 		if(script_funcrun)
 		{
+			char buf[256] = {0};
 			sprintf(buf, "Destructor(%d,%s)", ri->thiskey, destructstr?destructstr->c_str():"UNKNOWN");
+			parts.push_back(buf);
 		}
-		else switch(curScriptType)
+		else
 		{
-			case ScriptType::Global:
-			{
-				switch(curScriptNum)
-				{
-					case GLOBAL_SCRIPT_INIT:
-						sprintf(buf, "Global Init(%s)", globalmap[curScriptNum].scriptname.c_str());
-						break;
-					case GLOBAL_SCRIPT_GAME:
-						sprintf(buf, "Global Active(%s)", globalmap[curScriptNum].scriptname.c_str());
-						break;
-					case GLOBAL_SCRIPT_END:
-						sprintf(buf, "Global Exit(%s)", globalmap[curScriptNum].scriptname.c_str());
-						break;
-					case GLOBAL_SCRIPT_ONSAVELOAD:
-						sprintf(buf, "Global SaveLoad(%s)", globalmap[curScriptNum].scriptname.c_str());
-						break;
-					case GLOBAL_SCRIPT_ONLAUNCH:
-						sprintf(buf, "Global Launch(%s)", globalmap[curScriptNum].scriptname.c_str());
-						break;
-					case GLOBAL_SCRIPT_ONCONTGAME:
-						sprintf(buf, "Global ContGame(%s)", globalmap[curScriptNum].scriptname.c_str());
-						break;
-					case GLOBAL_SCRIPT_F6:
-						sprintf(buf, "Global F6Menu(%s)", globalmap[curScriptNum].scriptname.c_str());
-						break;
-					case GLOBAL_SCRIPT_ONSAVE:
-						sprintf(buf, "Global Save(%s)", globalmap[curScriptNum].scriptname.c_str());
-						break;
-				}
-				break;
-			}
-			
-			case ScriptType::Hero:
-			{
-				switch(curScriptNum)
-				{
-					case SCRIPT_HERO_INIT:
-						sprintf(buf, "Hero Init(%s)", playermap[curScriptNum-1].scriptname.c_str());
-						break;
-					case SCRIPT_HERO_ACTIVE:
-						sprintf(buf, "Hero Active(%s)", playermap[curScriptNum-1].scriptname.c_str());
-						break;
-					case SCRIPT_HERO_DEATH:
-						sprintf(buf, "Hero Death(%s)", playermap[curScriptNum-1].scriptname.c_str());
-						break;
-					case SCRIPT_HERO_WIN:
-						sprintf(buf, "Hero Win(%s)", playermap[curScriptNum-1].scriptname.c_str());
-						break;
-				}
-				break;
-			}
-			
-			case ScriptType::Lwpn:
-				sprintf(buf, "LWeapon(%u, %s)", curScriptNum,lwpnmap[curScriptNum-1].scriptname.c_str());
-				break;
-			
-			case ScriptType::Ewpn:
-				sprintf(buf, "EWeapon(%u, %s)", curScriptNum,ewpnmap[curScriptNum-1].scriptname.c_str());
-				break;
-			
-			case ScriptType::NPC:
-				sprintf(buf, "NPC(%u, %s)", curScriptNum,npcmap[curScriptNum-1].scriptname.c_str());
-				break;
-				
-			case ScriptType::FFC:
-				sprintf(buf, "FFC(%u, %s)", curScriptNum,ffcmap[curScriptNum-1].scriptname.c_str());
-				break;
-				
-			case ScriptType::Item:
-				sprintf(buf, "Item(%u, %s)", curScriptNum,itemmap[curScriptNum-1].scriptname.c_str());
-				break;
-			
-			case ScriptType::OnMap:
-				sprintf(buf, "DMapMap(%u, %s)", curScriptNum,dmapmap[curScriptNum-1].scriptname.c_str());
-				break;
-			case ScriptType::ScriptedActiveSubscreen:
-				sprintf(buf, "DMapASub(%u, %s)", curScriptNum,dmapmap[curScriptNum-1].scriptname.c_str());
-				break;
-			case ScriptType::ScriptedPassiveSubscreen:
-				sprintf(buf, "DMapPSub(%u, %s)", curScriptNum,dmapmap[curScriptNum-1].scriptname.c_str());
-				break;
-			case ScriptType::DMap:
-				sprintf(buf, "DMap(%u, %s)", curScriptNum,dmapmap[curScriptNum-1].scriptname.c_str());
-				break;
-			
-			case ScriptType::ItemSprite:
-				sprintf(buf, "ItemSprite(%u, %s)", curScriptNum,itemspritemap[curScriptNum-1].scriptname.c_str());
-				break;
-			
-			case ScriptType::Screen:
-				sprintf(buf, "Screen(%u, %s)", curScriptNum,screenmap[curScriptNum-1].scriptname.c_str());
-				break;
-			
-			case ScriptType::Combo:
-				sprintf(buf, "Combo(%u, %s)", curScriptNum,comboscriptmap[curScriptNum-1].scriptname.c_str());
-				break;
-				
-			case ScriptType::Generic:
-				sprintf(buf, "Generic(%u, %s)", curScriptNum,genericmap[curScriptNum-1].scriptname.c_str());
-				break;
-				
-			case ScriptType::GenericFrozen:
-				sprintf(buf, "GenericFRZ(%u, %s)", curScriptNum,genericmap[curScriptNum-1].scriptname.c_str());
-				break;
-				
-			case ScriptType::EngineSubscreen:
-				sprintf(buf, "Subscreen(%u, %s)", curScriptNum,subscreenmap[curScriptNum-1].scriptname.c_str());
-				break;
+			parts.push_back(GetScriptDataName(curScriptType, curScriptNum));
 		}
-
-		parts.push_back(buf);
 	}
 
 	std::string prefix = fmt::format("{}: ", fmt::join(parts, " "));

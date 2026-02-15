@@ -59,15 +59,24 @@ static void * a5_mouse_thread_proc(ALLEGRO_THREAD * thread, void * data)
                 // local edit
                 case ALLEGRO_EVENT_MOUSE_ENTER_DISPLAY:
                 {
+                    // local edit - prevent the zscript debugger window from triggering mouse events.
+                    if (event.mouse.display != all_get_display()) break;
+
                     _mouse_on = -1;
                 }
                 case ALLEGRO_EVENT_MOUSE_LEAVE_DISPLAY:
                 {
+                    // local edit - prevent the zscript debugger window from triggering mouse events.
+                    if (event.mouse.display != all_get_display()) break;
+
                     _mouse_on = 0;
                     break;
                 }
                 case ALLEGRO_EVENT_MOUSE_AXES:
                 {
+                    // local edit - prevent the zscript debugger window from triggering mouse events.
+                    if (event.mouse.display != all_get_display()) break;
+
                     _mouse_x = event.mouse.x;
                     _mouse_y = event.mouse.y;
                     _mouse_z = event.mouse.z;
@@ -81,11 +90,17 @@ static void * a5_mouse_thread_proc(ALLEGRO_THREAD * thread, void * data)
                 }
                 case ALLEGRO_EVENT_MOUSE_BUTTON_DOWN:
                 {
+                    // local edit - prevent the zscript debugger window from triggering mouse events.
+                    if (event.mouse.display != all_get_display()) break;
+
                     _mouse_b |= 1 << (event.mouse.button - 1);
                     break;
                 }
                 case ALLEGRO_EVENT_MOUSE_BUTTON_UP:
                 {
+                    // local edit - prevent the zscript debugger window from triggering mouse events.
+                    if (event.mouse.display != all_get_display()) break;
+
                     _mouse_b &= ~(1 << (event.mouse.button - 1));
                     break;
                 }
@@ -96,6 +111,9 @@ static void * a5_mouse_thread_proc(ALLEGRO_THREAD * thread, void * data)
                 case ALLEGRO_EVENT_TOUCH_MOVE:
                 case ALLEGRO_EVENT_TOUCH_END:
                 {
+                    // local edit - prevent the zscript debugger window from triggering mouse events.
+                    if (event.touch.display != all_get_display()) break;
+
                     if (event.touch.primary)
                     {
                         _mouse_x = event.touch.x;

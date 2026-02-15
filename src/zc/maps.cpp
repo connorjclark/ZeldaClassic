@@ -3,6 +3,7 @@
 #include "base/util.h"
 #include "base/zdefs.h"
 #include "base/general.h"
+#include "zc/debugger/debugger.h"
 #include <cstring>
 #include <assert.h>
 #include <math.h>

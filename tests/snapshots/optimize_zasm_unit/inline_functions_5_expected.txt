@@ -30,7 +30,10 @@ Function Function #1
 
 
 Function Function #2
-   19: NOP                                          [Block 0 -> ]
-   20: NOP
-   21: NOP
-   22: NOP
+   19: TRACEV          2                            [Block 0 -> ]
+   20: RETURNFUNC
+
+
+Function Function #3
+   21: TRACEV          3                            [Block 0 -> ]
+   22: RETURNFUNC

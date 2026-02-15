@@ -28,7 +28,7 @@ class TestZPlayer(unittest.TestCase):
     def test_zplayer(self):
         run_target.check_run(
             'zplayer',
-            ['-test-zc'],
+            ['-test-zc', str(root_dir / 'tests')],
         )
 
     def test_base_test_runner(self):

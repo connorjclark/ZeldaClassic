@@ -10,12 +10,14 @@
 #include "parser/owning_vector.h"
 #include "parser/parserDefs.h"
 #include "zasm/debug_data.h"
+#include "zasm/defines.h"
 #include "zsyssimple.h"
 #include "ByteCode.h"
 #include "CompileError.h"
 #include "CompileOption.h"
 #include "LibrarySymbols.h"
 #include "y.tab.hpp"
+#include <algorithm>
 #include <filesystem>
 #include <assert.h>
 #include <cstdlib>
@@ -2264,7 +2266,6 @@ void ScriptAssembler::fill_debug_data()
 	int32_t prev_file = 0;
 	int32_t prev_line = 1;
 	int32_t prev_pc = 0;
-	std::set<int> seen_files;
 
 	std::set<int> prologue_end_labels;
 	for (auto& fn : allFunctions)
@@ -2293,7 +2294,6 @@ void ScriptAssembler::fill_debug_data()
 			debug_data.appendLineInfoSetFile(op->file);
 			prev_file = op->file;
 			file_changed = true;
-			seen_files.insert(op->file);
 		}
 
 		// Skip if line hasn't changed (and we didn't just switch files).
@@ -2315,8 +2315,6 @@ void ScriptAssembler::fill_debug_data()
 		prev_pc = pc;
 	}
 
-	seen_files.insert(rval.back()->file);
-
 	auto cur_path = fs::current_path();
 	const auto& files = program.getFiles();
 	for (int i = 0; i < files.size(); i++)
@@ -2325,7 +2323,7 @@ void ScriptAssembler::fill_debug_data()
 		const std::string& contents = getSourceCodeContents(file);
 		debug_data.source_files.push_back({
 			.path = normalize_file_path(file, cur_path),
-			.contents = seen_files.contains(i) ? contents : "",
+			.contents = contents,
 		});
 	}
 
@@ -2666,6 +2664,8 @@ bool ScriptAssembler::fill_debug_scope_locals(Scope* scope, int32_t scopeIdx, Sc
 		DebugSymbol symbol{};
 		symbol.scope_index = scopeIdx;
 		symbol.name = datum->getName().value_or("?");
+		if (datum->getNode())
+			symbol.declaration_line = datum->getNode()->location.first_line;
 
 		if (auto pos = lookupStackPosition(*scope, *datum))
 		{
@@ -2735,6 +2735,7 @@ bool ScriptAssembler::fill_debug_scope_locals(Scope* scope, int32_t scopeIdx, Sc
 			DebugSymbol symbol{};
 			symbol.scope_index = scopeIdx;
 			symbol.name = var->getName().value_or("?");
+			symbol.declaration_line = var->getNode()->location.first_line;
 
 			if (var->is_internal)
 			{
@@ -2787,6 +2788,7 @@ void ScriptAssembler::process_enum_definition(const DataTypeCustom* customType, 
 		symbol.name = decl->getName();
 		symbol.storage = CONSTANT;
 		symbol.offset = decl->manager->getCompileTimeValue().value_or(0);
+		symbol.declaration_line = decl->manager->getNode()->location.first_line;
 
 		ctx.debug_data.symbols.push_back(symbol);
 		ctx.symbol_types.push_back(decl->resolvedType);

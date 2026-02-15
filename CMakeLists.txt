@@ -29,6 +29,7 @@ set(WANT_VENDORED_ZLIB TRUE CACHE BOOL "Build the vendored library at third_part
 set(WANT_VENDORED_LIBPNG TRUE CACHE BOOL "Build the vendored library at third_party/libpng")
 set(WANT_VENDORED_DUMB TRUE CACHE BOOL "Build the vendored library at third_party/dumb")
 set(WANT_VENDORED_LIBJPEG_TURBO TRUE CACHE BOOL "Build the vendored library at third_party/libjpeg_turbo")
+set(WANT_VENDORED_IMGUI TRUE CACHE BOOL "Build the vendored library at third_party/imgui")
 set(JIT_BACKEND "default" CACHE STRING "One of: default, x64, wasm, none")
 set(ZC_VERSION "" CACHE STRING "Version string")
 set(ZC_OFFICIAL "" CACHE BOOL "Official build")
@@ -224,7 +225,7 @@ set(MINIMP3_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include/minimp3)
 FetchContent_Declare(
   allegro5
   GIT_REPOSITORY https://github.com/connorjclark/allegro5.git
-  GIT_TAG        3d5eda1aa2be689a057b99d1050c425ec40ea57e
+  GIT_TAG        2f0c673a5cd5035d6f972c0e9728b338d3b6dfbb
   EXCLUDE_FROM_ALL
 )
 if(EMSCRIPTEN)
@@ -820,6 +821,8 @@ elseif(LINUX)
 elseif(APPLE)
 	target_link_libraries(zplayer PRIVATE zalleg zconsolelogger zcbase zcgui zcsound websocket ${IMAGELIBS} ${ZELDALIBSEXTRA})
 endif()
+
+target_link_libraries(zplayer PRIVATE imgui)
 
 if(JIT_BACKEND STREQUAL "default")
 	if(EMSCRIPTEN)

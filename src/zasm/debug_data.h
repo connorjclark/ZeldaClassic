@@ -13,7 +13,6 @@
 struct SourceFile
 {
 	std::string path;
-	// Empty if no ops come from this file (according to debug_lines_encoded).
 	std::string contents;
 };
 
@@ -72,6 +71,7 @@ struct DebugSymbol
 	int32_t scope_index; // Which scope owns this variable?
 	int32_t offset;      // Based on storage. e.g., stack offset, or global index, or class field, ...
 	uint32_t type_id;
+	uint32_t declaration_line;
 	DebugSymbolStorage storage;
 	DebugSymbolFlags flags;
 	std::string name;
@@ -105,11 +105,35 @@ enum DebugTypeTag : uint8_t
 	TYPE_BITFLAGS = 36, // Points to a TAG_ENUM scope.
 };
 
+struct DebugData;
+
 struct DebugType
 {
 	DebugTypeTag tag;
 	// Either a type id or a scope index - depends on tag.
 	int32_t extra;
+
+	const DebugType* asNonConst(const DebugData& debug_data) const;
+
+	bool isVoid(const DebugData& debug_data) const;
+	bool isUntyped(const DebugData& debug_data) const;
+	bool isFixed(const DebugData& debug_data) const;
+	bool isLong(const DebugData& debug_data) const;
+	bool isBool(const DebugData& debug_data) const;
+	bool isEnum(const DebugData& debug_data) const;
+	bool isString(const DebugData& debug_data) const;
+	bool isArray(const DebugData& debug_data) const;
+	bool isClass(const DebugData& debug_data) const;
+};
+
+extern DebugType BasicTypes[8];
+
+struct DebugLine
+{
+	pc_t pc;
+	int32_t file_index;
+	int32_t line_number;
+	bool is_prologue_end;
 };
 
 struct DebugData
@@ -136,16 +160,29 @@ struct DebugData
 	bool exists() const;
 
 	int getScopeIndex(const DebugScope* scope) const;
+	uint32_t getTypeID(const DebugType* type) const;
+	int getSourceFileIndex(const SourceFile* source_file) const;
+	const SourceFile* getSourceFile(std::string path) const;
+	const std::vector<DebugLine>& getLineTable() const;
 
 	std::pair<const char*, int> resolveLocation(pc_t pc) const;
+	std::pair<const SourceFile*, int> resolveLocationSourceFile(pc_t pc) const;
+	std::vector<pc_t> resolveAllPcsFromSourceLocation(const SourceFile* source_file, int32_t line) const;
 	const DebugScope* resolveScope(pc_t pc) const;
 	const DebugScope* resolveFunctionScope(pc_t pc) const;
+	const DebugScope* resolveClassScope(pc_t pc) const;
 	const DebugScope* resolveFileScope(std::string fname) const;
+	pc_t findFunctionPrologueEnd(const DebugScope* scope) const;
 	const DebugType* getType(uint32_t type_id) const;
-	const DebugType* getTypeUnwrapConst(uint32_t type_id) const;
+	const DebugType* getType(const DebugScope* scope) const;
+	const DebugType* getTypeForScope(const DebugScope* scope) const;
+	std::string getTypeName(const DebugType* type) const;
 	std::string getTypeName(uint32_t type_id) const;
+	std::pair<const SourceFile*, int> getSymbolLocation(const DebugSymbol* scope) const;
+	std::string getFullSymbolName(const DebugSymbol* symbol) const;
 	std::string getFullScopeName(const DebugScope* scope) const;
 	std::string getFunctionSignature(const DebugScope* scope) const;
+	uint32_t getFunctionAdditionalStackSize(const DebugScope* scope) const;
 	std::string getDebugSymbolName(const DebugSymbol* symbol) const;
 	std::vector<const DebugSymbol*> getChildSymbols(const DebugScope* scope) const;
 	std::vector<const DebugScope*> getChildScopes(const DebugScope* scope) const;
@@ -156,7 +193,7 @@ struct DebugData
     const DebugScope* resolveScope(const std::string& identifier, const DebugScope* current_scope) const;
 	std::vector<const DebugScope*> resolveFunctions(const std::string& identifier, const DebugScope* current_scope) const;
 
-	bool canCoerceTypes(int type_index_1, int type_index_2) const;
+	bool canCoerceTypes(const DebugType* type_1, const DebugType* type_2) const;
 
 	std::vector<byte> encode() const;
 	std::string internalToStringForDebugging() const;
@@ -170,23 +207,15 @@ private:
 
     ResolveResult resolveEntity(const std::string& identifier, const DebugScope* current_scope) const;
 
-	struct Checkpoint
-	{
-		pc_t pc;
-		size_t cursor; // Byte offset in debug_lines_encoded
-		int32_t line;
-		int32_t file_index;
-	};
-
 	struct CacheEntry
 	{
 		pc_t pc = -1; // -1 indicates empty
-		std::pair<const char*, int> result;
+		std::pair<const SourceFile*, int> result;
 	};
 
-	mutable std::vector<Checkpoint> checkpoints;
-	mutable bool checkpoints_built = false;
-	void buildCheckpoints() const;
+	mutable std::vector<DebugLine> line_table_cache;
+	mutable bool line_table_built = false;
+	void buildLineTable() const;
 
 	mutable std::array<CacheEntry, 1024> resolve_location_cache;
 

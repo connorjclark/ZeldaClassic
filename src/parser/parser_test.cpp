@@ -9,6 +9,7 @@
 #include "zasm/eval.h"
 #include <functional>
 #include <memory>
+#include <optional>
 #include <set>
 #include <stdexcept>
 
@@ -92,7 +93,8 @@ static std::string resolveSymbolTypeName(const DebugData& debugData, std::string
 		throw std::runtime_error(
 			fmt::format("could not find symbol: {} (scope: {})", identifier, debugData.getFullScopeName(current_scope)));
 
-	return debugData.getTypeName(symbol->type_id);
+	auto* type = debugData.getType(symbol->type_id);
+	return debugData.getTypeName(type);
 }
 
 static std::vector<const DebugSymbol*> getAllSymbolsWithin(const DebugData& debugData, const DebugScope* current_scope)
@@ -346,6 +348,7 @@ TestResults test_parser(bool verbose)
 		pc_t debug_add_int_start_pc;
 		pc_t debug_add_int_int_start_pc;
 		pc_t debug_add_int_long_start_pc;
+		pc_t cl_ctor_start_pc;
 
 		std::map<int32_t, int32_t> stack;
 		std::map<int32_t, int32_t> globals;
@@ -370,13 +373,28 @@ TestResults test_parser(bool verbose)
 			return registers[id];
 		}
 
-		int32_t readObjectMember(int32_t ptr, int32_t offset) override
+		std::optional<DebugValue> readObjectMember(DebugValue object, const DebugSymbol* sym) override
 		{
-			if (heap.find(ptr) == heap.end()) throw std::runtime_error("Segfault: Invalid object pointer");
-			return heap[ptr][offset];
+			if (heap.find(object.raw_value) == heap.end()) throw std::runtime_error("Segfault: Invalid object pointer");
+			return DebugValue{heap[object.raw_value][sym->offset], nullptr};
 		}
 
-		int32_t executeSandboxed(pc_t start_pc, const std::vector<int32_t>& args) override
+		std::optional<std::vector<DebugValue>> readArray(DebugValue array) override
+		{
+			return std::nullopt;
+		}
+
+		std::optional<DebugValue> readArrayElement(DebugValue array, int index) override
+		{
+			return std::nullopt;
+		}
+
+		std::optional<std::string> readString(int32_t object_ptr) override
+		{
+			return "";
+		}
+
+		expected<int32_t, std::string> executeSandboxed(pc_t start_pc, int this_zasm_var, int this_raw_value, const std::vector<int32_t>& args) override
 		{
 			if (start_pc == debug_add_int_start_pc)
 			{
@@ -396,15 +414,25 @@ TestResults test_parser(bool verbose)
 				return args[0] + args[1] + 100;
 			}
 
+			if (start_pc == cl_ctor_start_pc)
+			{
+				return next_heap_addr++;
+			}
+
 			return 0;
 		}
 
-		int32_t allocateObject(int32_t class_idx) override
+		DebugValue createArray(std::vector<int32_t> args, const DebugType* array_type) override
 		{
-			return next_heap_addr++;
+			return {};
 		}
 
-		int32_t getCurrentThisPointer() override {
+		DebugValue createString(const std::string& str) override
+		{
+			return {};
+		}
+
+		int32_t getThisPointer() override {
 			return current_this_ptr;
 		}
 
@@ -420,9 +448,9 @@ TestResults test_parser(bool verbose)
 
 		auto eval = [&](const std::string& expr) -> DebugValue {
 			ExpressionParser parser(expr);
-			auto ast = parser.parseExpression();
+			auto node = parser.parseExpression().value();
 			ExpressionEvaluator eval(debugData, root_scope, vm);
-			return eval.evaluate(ast);
+			return eval.evaluate(node);
 		};
 
 		// Basic Logical AND (&&)
@@ -435,11 +463,11 @@ TestResults test_parser(bool verbose)
 
 			DebugValue v = eval("1L && 1L");
 			assertEqual(v.raw_value, FIXED_ONE);
-			assertTrue(v.isBool());
+			assertTrue(v.type->isBool(debugData));
 
 			v = eval("1 && 1L");
 			assertEqual(v.raw_value, FIXED_ONE);
-			assertTrue(v.isBool());
+			assertTrue(v.type->isBool(debugData));
 		}
 
 		// Basic Logical OR (||)
@@ -476,7 +504,7 @@ TestResults test_parser(bool verbose)
 			// Comparison should NOT promote before comparing.
 			DebugValue v = eval("1 == 1L");
 			assertEqual(v.raw_value, 0);
-			assertTrue(v.isBool());
+			assertTrue(v.type->isBool(debugData));
 
 			// 0.5 < 1L
 			assertEqual(eval("(1/2) < 1L").raw_value, 0);
@@ -556,9 +584,9 @@ TestResults test_parser(bool verbose)
 			if (!scope) scope = &debugData.scopes[0];
 
 			ExpressionParser parser(expr);
-			auto ast = parser.parseExpression();
+			auto node = parser.parseExpression().value();
 			ExpressionEvaluator eval(debugData, scope, vm);
-			return eval.evaluate(ast);
+			return eval.evaluate(node);
 		};
 
 		// Math.
@@ -566,17 +594,17 @@ TestResults test_parser(bool verbose)
 			// Fixed point literals (aka "int").
 			auto val = eval("1 + 2");
 			assertEqual(val.raw_value, 3 * FIXED_ONE);
-			assertTrue(val.isFixed());
+			assertTrue(val.type->isFixed(debugData));
 
 			// Long literals (1L = 1).
 			val = eval("1L + 2L");
 			assertEqual(val.raw_value, 3);
-			assertTrue(val.isLong());
+			assertTrue(val.type->isLong(debugData));
 
 			// Mixed math (Fixed + Long = Fixed).
 			val = eval("1 + 1L");
 			assertEqual(val.raw_value, 10001);
-			assertTrue(val.isFixed());
+			assertTrue(val.type->isFixed(debugData));
 
 			// Division.
 			val = eval("10 / 2");
@@ -605,11 +633,11 @@ TestResults test_parser(bool verbose)
 		{
 			auto val = eval("BITDX_TRANS | BITDX_PIVOT");
 			assertEqual(val.raw_value, 3 * FIXED_ONE);
-			assertEqual(val.type_id, resolveSymbol(debugData, "BITDX_TRANS", root_scope)->type_id);
+			assertEqual(debugData.getTypeID(val.type), resolveSymbol(debugData, "BITDX_TRANS", root_scope)->type_id);
 
 			val = eval("(BITDX_TRANS | BITDX_PIVOT) ^ BITDX_TRANS");
 			assertEqual(val.raw_value, 2 * FIXED_ONE);
-			assertEqual(val.type_id, resolveSymbol(debugData, "BITDX_TRANS", root_scope)->type_id);
+			assertEqual(debugData.getTypeID(val.type), resolveSymbol(debugData, "BITDX_TRANS", root_scope)->type_id);
 
 			// Illegal op (should throw).
 			assertThrows(eval("BITDX_TRANS + 1"));
@@ -650,11 +678,12 @@ TestResults test_parser(bool verbose)
 			assertThrows(eval("cl->A_var", root_scope));
 
 			// new object.
+			vm.cl_ctor_start_pc = debugData.resolveFunctions("A::CL::CL", root_scope).at(0)->start_pc;
 			val = eval("new A::CL()");
 			assertNotEqual(val.raw_value, 0);
 			// Get type index of CL from the ctor.
-			uint32_t cl_type_index = resolveScope(debugData, "A::CL::CL", root_scope)->type_id;
-			assertEqual(val.type_id, cl_type_index);
+			uint32_t cl_type_id = resolveScope(debugData, "A::CL::CL", root_scope)->type_id;
+			assertEqual(debugData.getTypeID(val.type), cl_type_id);
 		}
 
 		// Functions.

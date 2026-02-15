@@ -59,7 +59,7 @@ cd vcpkg
 ./bootstrap-vcpkg.bat
 
 # install libraries
-./vcpkg.exe install --triplet x64-windows libogg libvorbis curl openssl
+./vcpkg.exe install --triplet x64-windows libogg libvorbis curl openssl freetype
 ```
 
 You then need to configure your CMake build with the `vcpkg` toolchain (replace the path with where you installed it!):
@@ -149,7 +149,7 @@ sudo apt install python3-pip ninja-build libgtk-3-dev libasound2-dev libssl-dev 
 
 ```sh
 sudo apt update
-sudo apt install build-essential gcc-multilib g++-multilib libx11-dev libglu1-mesa-dev freeglut3-dev mesa-common-dev libxcursor1 libasound2-dev libgtk-3-dev flex bison libpulse-dev
+sudo apt install build-essential gcc-multilib g++-multilib libx11-dev libglu1-mesa-dev freeglut3-dev mesa-common-dev libxcursor1 libasound2-dev libgtk-3-dev flex bison libpulse-dev libfreetype6-dev
 ```
 
 Then before running, you need some additional packages installed:

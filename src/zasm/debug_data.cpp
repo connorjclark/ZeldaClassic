@@ -2,17 +2,18 @@
 // considerations. I started on branch: type-store
 
 #include "zasm/debug_data.h"
+#include "base/check.h"
 #include "base/ints.h"
 #include "zasm/pc.h"
 #include "zasm/table.h"
 
 #include <algorithm>
-#include <array>
 #include <cstdint>
 #include <fmt/ranges.h>
 #include <functional>
 #include <map>
 #include <optional>
+#include <set>
 #include <sstream>
 #include <string>
 #include <string_view>
@@ -88,6 +89,59 @@ std::vector<std::string_view> split_identifier(std::string_view str)
 
 } // end namespace
 
+const DebugType* DebugType::asNonConst(const DebugData& debug_data) const
+{
+	if (tag == TYPE_CONST) return debug_data.getType(extra);
+	return this;
+}
+
+bool DebugType::isVoid(const DebugData& debug_data) const
+{
+	return asNonConst(debug_data)->tag == TYPE_VOID;
+}
+
+bool DebugType::isUntyped(const DebugData& debug_data) const
+{
+	return asNonConst(debug_data)->tag == TYPE_UNTYPED;
+}
+
+bool DebugType::isFixed(const DebugData& debug_data) const
+{
+	return asNonConst(debug_data)->tag == TYPE_INT;
+}
+
+bool DebugType::isLong(const DebugData& debug_data) const
+{
+	return asNonConst(debug_data)->tag == TYPE_LONG;
+}
+
+bool DebugType::isBool(const DebugData& debug_data) const
+{
+	return asNonConst(debug_data)->tag == TYPE_BOOL;
+}
+
+bool DebugType::isEnum(const DebugData& debug_data) const
+{
+	auto tag = asNonConst(debug_data)->tag;
+	return tag == TYPE_ENUM || tag == TYPE_BITFLAGS;
+}
+
+bool DebugType::isString(const DebugData& debug_data) const
+{
+	auto type = asNonConst(debug_data);
+	return type->tag == TYPE_ARRAY && type->extra == TYPE_CHAR32;
+}
+
+bool DebugType::isArray(const DebugData& debug_data) const
+{
+	return asNonConst(debug_data)->tag == TYPE_ARRAY;
+}
+
+bool DebugType::isClass(const DebugData& debug_data) const
+{
+	return asNonConst(debug_data)->tag == TYPE_CLASS;
+}
+
 void DebugData::appendLineInfoSetFile(int file)
 {
 	debug_lines_encoded.push_back(DEBUG_LINE_OP_SET_FILE);
@@ -121,42 +175,146 @@ int DebugData::getScopeIndex(const DebugScope* scope) const
 	return (int32_t)(scope - &scopes[0]);
 }
 
+uint32_t DebugData::getTypeID(const DebugType* type) const
+{
+	switch (type->tag)
+	{
+		case TYPE_VOID:
+		case TYPE_UNTYPED:
+		case TYPE_TEMPLATE_UNBOUNDED:
+		case TYPE_BOOL:
+		case TYPE_INT:
+		case TYPE_LONG:
+		case TYPE_CHAR32:
+		case TYPE_RGB:
+			return type->tag;
+	}
+
+	return (int32_t)(type - &types[0]) + DEBUG_TYPE_TAG_TABLE_START;
+}
+
+int DebugData::getSourceFileIndex(const SourceFile* source_file) const
+{
+	return (int32_t)(source_file - &source_files[0]);
+}
+
+const SourceFile* DebugData::getSourceFile(std::string path) const
+{
+	for (auto& file : source_files)
+	{
+		if (file.path == path)
+			return &file;
+	}
+
+	return nullptr;
+}
+
+const std::vector<DebugLine>& DebugData::getLineTable() const
+{
+	buildLineTable();
+
+	return line_table_cache;
+}
+
 std::pair<const char*, int> DebugData::resolveLocation(pc_t pc) const
 {
 	if (debug_lines_encoded.empty()) return {};
 
-	size_t cache_index = pc & 1023; 
-	if (resolve_location_cache[cache_index].pc == pc)
-		return resolve_location_cache[cache_index].result;
+	const auto& [source_file, line] = resolveLocationSourceFile(pc);
+	return {source_file->path.data(), line};
+}
 
-	if (!checkpoints_built)
-		buildCheckpoints();
+std::pair<const SourceFile*, int> DebugData::resolveLocationSourceFile(pc_t pc) const
+{
+	if (debug_lines_encoded.empty()) return {};
+
+	buildLineTable();
+
+    // Find first element with pc > target.
+    auto it = std::upper_bound(line_table_cache.begin(), line_table_cache.end(), pc, 
+        [](pc_t val, const DebugLine& entry) {
+            return val < entry.pc;
+        });
+
+    // If we are at the start, or list is empty
+    if (it == line_table_cache.begin()) return {nullptr, 0};
+
+    // The entry strictly before upper_bound is the one covering the target pc.
+    const auto& entry = *(--it);
+
+    if (entry.file_index >= 0 && entry.file_index < source_files.size())
+        return { &source_files[entry.file_index], entry.line_number };
+
+    return {nullptr, 0};
+}
+
+// This mostly returns 1 pc, but for templated functions it will return 1 per instance of the
+// function (unless a specific instance optimized out the line).
+std::vector<pc_t> DebugData::resolveAllPcsFromSourceLocation(const SourceFile* source_file, int32_t line) const
+{
+	buildLineTable();
+
+	std::vector<pc_t> candidates;
+
+	int32_t target_file_idx = -1;
+	for (size_t i = 0; i < source_files.size(); i++)
+	{
+		if (&source_files[i] == source_file)
+		{
+			target_file_idx = (int32_t)i;
+			break;
+		}
+	}
+
+	if (target_file_idx == -1) return candidates;
+
+	int32_t min_diff = INT32_MAX;
+
+	for (const auto& entry : line_table_cache)
+	{
+		if (entry.file_index != target_file_idx) continue;
+		if (entry.line_number < line) continue;
+
+		int32_t diff = entry.line_number - line;
+		if (diff < min_diff)
+		{
+			min_diff = diff;
+			candidates.clear();
+			candidates.push_back(entry.pc);
+		}
+		else if (diff == min_diff)
+		{
+			candidates.push_back(entry.pc);
+		}
+	}
+
+	std::set<const DebugScope*> scopes;
+	std::vector<pc_t> results;
+	for (pc_t pc : candidates)
+	{
+		const DebugScope* scope = resolveFunctionScope(pc);
+		if (scopes.contains(scope))
+			continue;
+
+		scopes.insert(scope);
+		results.push_back(pc);
+	}
+
+	return results;
+}
+
+void DebugData::buildLineTable() const
+{
+	if (line_table_built) return;
+
+	line_table_cache.clear();
+	line_table_cache.reserve(debug_lines_encoded.size() / 2);
 
 	size_t cursor = 0;
 	int32_t current_line = 1;
 	int32_t current_file = 0;
 	pc_t current_pc = 0;
 	bool next_is_prologue_end = false;
-
-	// Find the checkpoint with the highest pc <= target pc.
-	// upper_bound returns the first element > target.
-	auto it = std::upper_bound(checkpoints.begin(), checkpoints.end(), pc,
-		[](size_t val, const Checkpoint& cp) { return val < cp.pc; });
-
-	if (it != checkpoints.begin())
-	{
-		const Checkpoint& cp = *(--it); // Move back to the one <= pc
-		current_pc = cp.pc;
-		cursor = cp.cursor;
-		current_line = cp.line;
-		current_file = cp.file_index;
-	}
-
-	// Default return value (if loop doesn't match or buffer ends).
-	std::pair<const char*, int> result = {
-		(source_files.empty() ? "?" : source_files[current_file].path.data()),
-		current_line
-	};
 
 	while (cursor < debug_lines_encoded.size())
 	{
@@ -165,12 +323,17 @@ std::pair<const char*, int> DebugData::resolveLocation(pc_t pc) const
 		if (cmd == DEBUG_LINE_OP_SET_FILE)
 		{
 			current_file = read_uvlq_from_buffer(debug_lines_encoded, cursor);
+			continue; 
+		}
+
+		if (cmd == DEBUG_LINE_OP_PROLOGUE_END)
+		{
+			next_is_prologue_end = true;
 			continue;
 		}
 
 		size_t d_pc;
 		int32_t d_line;
-
 		if (cmd == DEBUG_LINE_OP_EXTENDED_STEP)
 		{
 			d_pc = read_uvlq_from_buffer(debug_lines_encoded, cursor);
@@ -182,29 +345,22 @@ std::pair<const char*, int> DebugData::resolveLocation(pc_t pc) const
 			d_line = 1;
 		}
 
-		// Does the target pc fall within the range defined by this instruction?
-		// Range: [current_pc, current_pc + d_pc)
-		if (current_pc + d_pc > pc)
+		if (d_pc > 0 || next_is_prologue_end)
 		{
-			if (current_file < source_files.size())
-				result = {source_files[current_file].path.data(), current_line};
-			else
-				result = {"?", current_line};
-			break;
+			DebugLine entry{};
+			entry.pc = current_pc;
+			entry.file_index = current_file;
+			entry.line_number = current_line;
+			entry.is_prologue_end = next_is_prologue_end;
+			line_table_cache.push_back(entry);
+			next_is_prologue_end = false;
 		}
 
 		current_pc += d_pc;
 		current_line += d_line;
-		
-		// Update default result in case we exit loop (e.g. end of stream)
-		if (current_file < source_files.size())
-			result = {source_files[current_file].path.data(), current_line};
 	}
 
-	resolve_location_cache[cache_index].pc = pc;
-	resolve_location_cache[cache_index].result = result;
-
-	return result;
+	line_table_built = true;
 }
 
 void DebugData::buildScopesSorted() const
@@ -278,6 +434,23 @@ const DebugScope* DebugData::resolveFunctionScope(pc_t pc) const
 	return scope;
 }
 
+const DebugScope* DebugData::resolveClassScope(pc_t pc) const
+{
+	auto* scope = resolveScope(pc);
+	if (!scope)
+		return nullptr;
+
+	while (scope->tag != TAG_CLASS)
+	{
+		if (scope->parent_index == -1)
+			return nullptr;
+
+		scope = &scopes[scope->parent_index];
+	}
+
+	return scope;
+}
+
 const DebugScope* DebugData::resolveFileScope(std::string fname) const
 {
 	for (const auto& s : scopes)
@@ -289,7 +462,29 @@ const DebugScope* DebugData::resolveFileScope(std::string fname) const
 	return nullptr;
 }
 
-static DebugType BasicTypes[] = {
+pc_t DebugData::findFunctionPrologueEnd(const DebugScope* scope) const
+{
+	DCHECK(scope && scope->tag == TAG_FUNCTION);
+	buildLineTable();
+
+	auto it = std::lower_bound(line_table_cache.begin(), line_table_cache.end(), scope->start_pc,
+		[](const DebugLine& entry, pc_t val) {
+			return entry.pc < val;
+		});
+
+	for (; it != line_table_cache.end(); ++it)
+	{
+		if (it->pc >= scope->end_pc)
+			break;
+
+		if (it->is_prologue_end)
+			return it->pc;
+	}
+
+	return scope->start_pc;
+}
+
+DebugType BasicTypes[] = {
 	DebugType{TYPE_VOID, TYPE_VOID},
 	DebugType{TYPE_TEMPLATE_UNBOUNDED, TYPE_TEMPLATE_UNBOUNDED},
 	DebugType{TYPE_UNTYPED, TYPE_UNTYPED},
@@ -310,17 +505,42 @@ const DebugType* DebugData::getType(uint32_t type_id) const
 	return &types[table_idx];
 }
 
-const DebugType* DebugData::getTypeUnwrapConst(uint32_t type_id) const
+const DebugType* DebugData::getType(const DebugScope* scope) const
 {
-	const DebugType* type = getType(type_id);
-	if (type->tag == TYPE_CONST)
-		type = getType(type->extra);
-	return type;
+	int scope_index = getScopeIndex(scope);
+
+	for (auto& type : types)
+	{
+		if (!(type.tag == TYPE_CLASS || type.tag == TYPE_ENUM || type.tag == TYPE_BITFLAGS))
+			continue;
+
+		if (type.extra == scope_index)
+			return &type;
+	}
+
+	return nullptr;
 }
 
-std::string DebugData::getTypeName(uint32_t type_id) const
+const DebugType* DebugData::getTypeForScope(const DebugScope* scope) const
 {
-	switch (type_id)
+	int scope_index = getScopeIndex(scope);
+
+	for (int i = 0; i < types.size(); i++)
+	{
+		auto& type = types[i];
+		if ((type.tag == TYPE_CLASS || type.tag == TYPE_ENUM || type.tag == TYPE_BITFLAGS) && type.extra == scope_index)
+			return &type;
+	}
+
+	return 0;
+}
+
+std::string DebugData::getTypeName(const DebugType* type) const
+{
+	if (!type)
+		return "unknown";
+
+	switch (type->tag)
 	{
 		case TYPE_VOID: return "void";
 		case TYPE_UNTYPED: return "untyped";
@@ -330,28 +550,57 @@ std::string DebugData::getTypeName(uint32_t type_id) const
 		case TYPE_LONG: return "long";
 		case TYPE_CHAR32: return "char32";
 		case TYPE_RGB: return "rgb";
-	}
-
-	uint32_t table_idx = type_id - DEBUG_TYPE_TAG_TABLE_START;
-	if (table_idx >= types.size()) return "unknown";
-
-	const DebugType& t = types[table_idx];
-
-	switch (t.tag)
-	{
-		case TYPE_CONST:
-			return "const " + getTypeName(t.extra);
-		case TYPE_ARRAY:
-			return getTypeName(t.extra) + "[]";
+		case TYPE_CONST: return "const " + getTypeName(getType(type->extra));
+		case TYPE_ARRAY: return getTypeName(getType(type->extra)) + "[]";
 		case TYPE_BITFLAGS:
 		case TYPE_CLASS:
 		case TYPE_ENUM:
-			return scopes[t.extra].name;
-		default:
-			return getTypeName(t.extra);
+			return scopes[type->extra].name;
+	}
+}
+
+std::string DebugData::getTypeName(uint32_t type_id) const
+{
+	return getTypeName(getType(type_id));
+}
+
+std::pair<const SourceFile*, int> DebugData::getSymbolLocation(const DebugSymbol* symbol) const
+{
+	if (!symbol->declaration_line)
+		return {nullptr, 0};
+
+	const DebugScope* scope = &scopes[symbol->scope_index];
+	while (scope && scope->tag != TAG_FILE && scope->parent_index != -1)
+		scope = &scopes[scope->parent_index];
+
+	for (const auto& source_file : source_files)
+	{
+		if (source_file.path == scope->name)
+			return {&source_file, symbol->declaration_line};
 	}
 
-	return "unknown";
+	return {nullptr, 0};
+}
+
+std::string DebugData::getFullSymbolName(const DebugSymbol* symbol) const
+{
+	std::vector<std::string> parts = {symbol->name};
+
+	const DebugScope* cur = &scopes[symbol->scope_index];
+	while (cur)
+	{
+		if (cur->tag == TAG_FUNCTION || cur->tag == TAG_CLASS || cur->tag == TAG_SCRIPT || cur->tag == TAG_NAMESPACE)
+			parts.push_back(cur->name.empty() ? "?" : cur->name);
+
+		if (cur->parent_index != -1)
+			cur = &scopes[cur->parent_index];
+		else
+			cur = nullptr;
+	}
+
+	std::reverse(parts.begin(), parts.end());
+
+	return fmt::format("{}", fmt::join(parts, "::"));
 }
 
 std::string DebugData::getFullScopeName(const DebugScope* scope) const
@@ -398,6 +647,39 @@ std::string DebugData::getFunctionSignature(const DebugScope* scope) const
 
 	std::string type_name = getTypeName(scope->type_id);
 	return fmt::format("{} {}({})", type_name, name, fmt::join(params, ", "));
+}
+
+// Returns how much more the function will grow the stack in its prologue.
+// Most functions have their parameters put onto the stack by the caller. Any other local data it
+// needs is allocated at the start of the function.
+uint32_t DebugData::getFunctionAdditionalStackSize(const DebugScope* scope) const
+{
+	uint32_t size = 0;
+
+	// Run functions are special: they push their own parameters onto the stack.
+	bool is_run = scope->name == "run" && scope->parent_index != -1 && scopes[scope->parent_index].tag == TAG_SCRIPT;
+	if (!is_run)
+	{
+		buildScopeChildrenCache();
+		int32_t s_idx = getScopeIndex(scope);
+		auto& child_indices = scope_children_cache[s_idx];
+
+		if (child_indices.empty())
+			return 0;
+
+		scope = &scopes[child_indices[0]];
+	}
+
+	// The largest stack offset (+1) is the additional stack size. No need to search all child
+	// scopes - the top-most one will contain the highest stack offsets.
+	auto symbols = getChildSymbols(scope);
+	for (auto& symbol : symbols)
+	{
+		if (symbol->storage == LOC_STACK && symbol->offset + 1 > size)
+			size = symbol->offset + 1;
+	}
+
+	return size;
 }
 
 std::string DebugData::getDebugSymbolName(const DebugSymbol* symbol) const
@@ -740,57 +1022,57 @@ std::vector<const DebugScope*> DebugData::resolveFunctions(const std::string& id
 	}
 }
 
-bool DebugData::canCoerceTypes(int type_index_1, int type_index_2) const
+bool DebugData::canCoerceTypes(const DebugType* type_1, const DebugType* type_2) const
 {
-	if (type_index_1 == type_index_2) return true;
+	if (type_1 == type_2) return true;
 
-	const DebugType* t1 = getType(type_index_1);
-	const DebugType* t2 = getType(type_index_2);
+	const DebugType* t1 = type_1->asNonConst(*this);
+	const DebugType* t2 = type_2->asNonConst(*this);
 
-	// Handle const (strip and recurse).
-	if (t1->tag == TYPE_CONST) return canCoerceTypes(t1->extra, type_index_2);
-	if (t2->tag == TYPE_CONST) return canCoerceTypes(type_index_1, t2->extra);
+	// If the function expects 'untyped', it accepts anything (int, float, array, etc).
+	if (t2->tag == TYPE_UNTYPED)
+		return true;
+
+	if (t1->tag == TYPE_UNTYPED)
+		return true;
+
+	// Array covariance.
+	if (t1->tag == TYPE_ARRAY && t2->tag == TYPE_ARRAY)
+	{
+		// Recursively check if the element type of T1 can convert to the element type of T2.
+		// e.g. int[] -> untyped[]  requires  int -> untyped.
+		const DebugType* elem_t1 = getType(t1->extra);
+		const DebugType* elem_t2 = getType(t2->extra);
+		
+		return canCoerceTypes(elem_t1, elem_t2);
+	}
 
 	// Numeric promotions.
 	bool t1_is_numeric = t1->tag == TYPE_INT || t1->tag == TYPE_LONG || t1->tag == TYPE_BOOL;
 	bool t2_is_numeric = t2->tag == TYPE_INT || t2->tag == TYPE_LONG || t2->tag == TYPE_BOOL;
 
-	// ZScript is very loose: Int <-> Long <-> Bool are all implicitly convertible in function calls.
 	if (t1_is_numeric && t2_is_numeric)
 		return true;
 
-	// Enum -> Integer
-	// Enums/Bitflags can be passed to functions expecting Integers
+	// Enum -> numeric.
 	if ((t1->tag == TYPE_ENUM || t1->tag == TYPE_BITFLAGS) && t2_is_numeric)
 		return true;
 
-	// Note: Integer -> Enum is usually NOT allowed implicitly, so we don't check the reverse.
-
-	// Class Inheritance (Derived -> Base)
+	// Class inheritance.
 	if (t1->tag == TYPE_CLASS && t2->tag == TYPE_CLASS)
 	{
-		// t1 (Source) must be a subclass of t2 (Target)
+		int32_t s1_idx = t1->extra; 
+		int32_t s2_idx = t2->extra; 
 
-		int32_t s1_idx = t1->extra; // Points to Scope (e.g., Orc)
-		int32_t s2_idx = t2->extra; // Points to Scope (e.g., Enemy)
-
-		// Walk up inheritance chain.
 		int safety = 0;
 		while (s1_idx != -1 && safety++ < 100)
 		{
 			if (s1_idx == s2_idx) return true;
-
 			if (s1_idx >= scopes.size()) break;
-
 			s1_idx = scopes[s1_idx].inheritance_index;
 		}
-
 		return false;
 	}
-
-	// untyped -> any other type.
-	if (t1->tag == TYPE_UNTYPED)
-		return true;
 
 	return false;
 }
@@ -894,6 +1176,7 @@ std::optional<DebugData> DebugData::decode(const std::vector<byte>& buffer)
 		symbol.type_id = read_uvlq_from_buffer(buffer, cursor);
 		symbol.flags = (DebugSymbolFlags)read_uvlq_from_buffer(buffer, cursor);
 		symbol.storage = (DebugSymbolStorage)read_uvlq_from_buffer(buffer, cursor);
+		symbol.declaration_line = read_uvlq_from_buffer(buffer, cursor);
 
 		uint32_t name_len = read_uvlq_from_buffer(buffer, cursor);
 		if (cursor + name_len > buffer.size()) return std::nullopt;
@@ -980,70 +1263,13 @@ std::vector<byte> DebugData::encode() const
 		write_unsigned_vlq(buffer, symbol.type_id);
 		write_unsigned_vlq(buffer, symbol.flags);
 		write_unsigned_vlq(buffer, symbol.storage);
+		write_unsigned_vlq(buffer, symbol.declaration_line);
 
 		write_unsigned_vlq(buffer, symbol.name.size());
 		buffer.insert(buffer.end(), symbol.name.begin(), symbol.name.end());
 	}
 
 	return buffer;
-}
-
-// Builds a skip-list snapshot of the debug lines by caching every Nth position, requiring
-// resolveLocation to process only a small slice of the encoded data stream.
-void DebugData::buildCheckpoints() const
-{
-	const int N = 100;
-
-	// Reserve estimation: assuming avg 2 bytes per instruction.
-	checkpoints.clear();
-	checkpoints.reserve(debug_lines_encoded.size() / N / 2);
-
-	size_t cursor = 0;
-	int32_t current_line = 1;
-	int32_t current_file = 0;
-	pc_t current_pc = 0;
-	size_t next_checkpoint_pc = 0;
-
-	// Always add the zero checkpoint.
-	checkpoints.push_back({0, 0, 1, 0});
-	next_checkpoint_pc += N;
-
-	while (cursor < debug_lines_encoded.size())
-	{
-		// Store checkpoint.
-		if (current_pc >= next_checkpoint_pc)
-		{
-			checkpoints.push_back({current_pc, cursor, current_line, current_file});
-			next_checkpoint_pc += N;
-		}
-
-		byte cmd = debug_lines_encoded[cursor++];
-
-		if (cmd == DEBUG_LINE_OP_SET_FILE)
-		{
-			current_file = read_uvlq_from_buffer(debug_lines_encoded, cursor);
-			continue;
-		}
-
-		size_t d_pc;
-		int32_t d_line;
-
-		if (cmd == DEBUG_LINE_OP_EXTENDED_STEP)
-		{
-			d_pc = read_uvlq_from_buffer(debug_lines_encoded, cursor);
-			d_line = read_svlq_from_buffer(debug_lines_encoded, cursor);
-		}
-		else
-		{
-			d_pc = cmd;
-			d_line = 1;
-		}
-
-		current_pc += d_pc;
-		current_line += d_line;
-	}
-
-	checkpoints_built = true;
 }
 
 std::string DebugData::internalToStringForDebugging() const

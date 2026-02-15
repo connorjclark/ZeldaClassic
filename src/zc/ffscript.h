@@ -11,6 +11,7 @@
 #include <utility>
 #include <string>
 #include <deque>
+#include "zasm/debug_data.h"
 #include "zasm/pc.h"
 #include "zc/scripting/array_manager.h"
 #include "zc/scripting/context_strings.h"
@@ -422,6 +423,8 @@ std::vector<script_array*> get_script_arrays();
 script_array* find_or_create_internal_script_array(script_array::internal_array_id internal_id);
 script_array* checkArray(uint32_t id, bool skipError = false);
 
+extern bool script_is_within_debugger_vm;
+
 int32_t run_script_jit_sequence(JittedScriptInstance* j_instance, pc_t pc, uint32_t sp, int32_t count);
 int32_t run_script_jit_one(JittedScriptInstance* j_instance, pc_t pc, uint32_t sp);
 int32_t run_script_jit_until_call_or_return(JittedScriptInstance* j_instance, pc_t pc, uint32_t sp);
@@ -604,6 +607,7 @@ itemdata* checkItemData(int32_t ref);
 mapdata* checkMapData(int32_t ref);
 mapscr* checkMapDataScr(int32_t ref);
 screendata* checkScreen(int32_t ref);
+user_bitmap* checkBitmap(int32_t ref);
 user_paldata* checkPalData(int32_t ref, bool skipError = false);
 weapon* checkWpn(int32_t uid);
 weapon* checkLWpn(int32_t uid);
@@ -623,9 +627,21 @@ combo_trigger* get_first_combo_trigger();
 std::tuple<byte,int8_t,byte,word> from_subref(dword ref);
 dword get_subref(int sub, byte ty, byte pg = 0, word ind = 0);
 
+struct StackFrame
+{
+	const SourceFile* source_file;
+	int line;
+	pc_t pc;
+	std::string function_name;
+	std::string extra;
+
+	std::string to_string() const;
+	std::string to_short_string() const;
+};
+
 struct StackTrace
 {
-	std::vector<std::string> frames;
+	std::vector<StackFrame> frames;
 
 	std::string to_string() const;
 };
@@ -763,8 +779,9 @@ void do_varg_min();
 void do_varg_choose();
 void do_varg_makearray(ScriptType type, const uint32_t UID, script_object_type object_type);
 void do_breakpoint();
+std::optional<StackFrame> get_script_stack_frame(int pc);
 void handle_trace(const std::string& s, bool is_error = false, bool no_prefix = false);
-std::optional<StackTrace> create_stack_trace();
+std::optional<StackTrace> create_stack_trace(const refInfo* ri);
 void do_trace(bool v);
 void do_tracel(bool v);
 void do_tracenl();
@@ -773,6 +790,8 @@ void do_tracetobase();
 void ZScriptConsole(bool open);
 template <typename ...Params>
 void ZScriptConsole(int32_t attributes,const char *format, Params&&... params);
+std::string GetScriptName(ScriptType script_type, int script_num);
+std::string GetScriptDataName(ScriptType script_type, int script_num);
 void PrintTracePrefix(bool force_show_context = false, bool is_error = false);
 /*
 int32_t getQuestHeaderInfo(int32_t type)
@@ -906,6 +925,8 @@ byte nostepforward;
 byte temp_no_stepforward; 
 
 byte subscreen_scroll_speed;
+
+bool show_zasm_stack_traces;
 
 void setSubscreenScrollSpeed(byte n);
 int32_t getSubscreenScrollSpeed();
@@ -1068,6 +1089,7 @@ int32_t run_script(ScriptType type, word script, int32_t i = -1); //Global scrip
 int32_t ffscript_engine(const bool preload);
 
 sprite* get_own_sprite(ScriptType type);
+sprite* get_own_sprite(refInfo* ri, ScriptType type);
 
 void deallocateArray(const int32_t ptrval);
 void clearScriptHelperData();
@@ -1435,6 +1457,8 @@ struct ScriptEngineData {
 	refInfo ref;
 	int32_t stack[MAX_STACK_SIZE];
 	int32_t ret_stack[MAX_CALL_FRAMES];
+	ScriptType script_type;
+	int script_num;
 	std::shared_ptr<JittedScriptInstance> j_instance;
 	// This is used as a boolean for all but ScriptType::Item.
 	byte doscript = true;
@@ -1446,6 +1470,7 @@ struct ScriptEngineData {
 		ref.Clear();
 		j_instance = {};
 		initialized = false;
+		script_num = 0;
 	}
 
 	void reset()
@@ -1456,6 +1481,7 @@ struct ScriptEngineData {
 		doscript = true;
 		waitdraw = false;
 		initialized = false;
+		script_num = 0;
 	}
 };
 

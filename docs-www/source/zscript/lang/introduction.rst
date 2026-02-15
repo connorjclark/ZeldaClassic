@@ -63,3 +63,10 @@ To set this up:
 
 Now ZScript files (``.zh``, ``.zs``, or ``.z``) will have syntax highlighting, error reporting, and various other productivity
 features like documentation tooltips and Go-To-Definition lookups (try hovering or right-clicking on variable/function names).
+
+Debugger
+--------
+
+.. versionadded:: 3.0
+
+You can use the :ref:`the debugger<debugger>` to debug scripts you write.

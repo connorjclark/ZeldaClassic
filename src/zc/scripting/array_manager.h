@@ -16,7 +16,10 @@ public:
 	
 	int32_t get(int32_t indx) const;
 	void set(int32_t indx, int32_t val, script_object_type is_object = script_object_type::none);
+	int32_t normalize_index(int32_t indx) const;
 	int32_t size() const;
+	std::vector<int32_t> data() const;
+	const struct script_array* script_array() const;
 	
 	bool resize(size_t newsize);
 	bool resize_min(size_t minsz);
@@ -34,7 +37,7 @@ public:
 	bool negAccess;
 private:
 	ZScriptArray* aptr;
-	script_array* script_array_object;
+	struct script_array* script_array_object;
 	int32_t legacy_internal_id;
 	script_array::internal_array_id internal_array_id;
 	bool _invalid;

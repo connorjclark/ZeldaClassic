@@ -234,6 +234,24 @@ int32_t zapp_check_switch(const char *s, std::vector<const char*> arg_names)
     return index;
 }
 
+// TODO: remove.
+int zapp_get_argc()
+{
+	return argc;
+}
+
+// TODO: remove.
+char** zapp_get_argv()
+{
+	return argv;
+}
+
+void zapp_replace_args(int argc_, char **argv_)
+{
+	argc = argc_;
+	argv = argv_;
+}
+
 int32_t zapp_get_arg_int(int index)
 {
 	return std::stoll(argv[index]);

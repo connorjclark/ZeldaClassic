@@ -41,6 +41,10 @@ src/zc/scripting/context_strings.cpp
 src/zc/scripting/script_object.cpp
 src/zc/scripting/sram.cpp
 src/zc/scripting/string_utils.cpp
+src/zc/debugger/debugger.cpp
+src/zc/debugger/debugger_gui.cpp
+src/zc/debugger/vm.cpp
+third_party/ImGuiColorTextEdit/src/TextEditor.cpp
 
 src/zc/scripting/types/audio.cpp
 src/zc/scripting/types/bottledata.cpp
@@ -84,6 +88,7 @@ src/zc/zasm_utils.cpp
 src/zc/wasm_compiler.cpp
 
 src/test_runner/test_runner.cpp
+src/zc/debugger/debugger_test.cpp
 src/zc/saves_test.cpp
 src/zc/zasm_optimize_test.cpp
 

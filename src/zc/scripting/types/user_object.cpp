@@ -100,6 +100,10 @@ static void do_constructclass(ScriptType type, word script, int32_t i)
 		set_register(sarg1, obj->id);
 		ri->thiskey = obj->id;
 		obj->prep(destr_pc,type,script,i);
+		obj->ctor_pc = ri->pc;
+
+		if (!script_is_within_debugger_vm)
+			ri->debugger_stack_frames.back().this_ptr = obj->id;
 	}
 	else set_register(sarg1, 0);
 }

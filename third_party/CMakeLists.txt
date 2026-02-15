@@ -308,6 +308,44 @@ if(WANT_VENDORED_LIBJPEG_TURBO)
 	set(SUPPORT_JPEG 1 CACHE INTERNAL "Force jpeg support in Allegro")
 endif()
 
+if(WANT_VENDORED_IMGUI)
+	add_library(imgui STATIC
+		imgui/src/imgui.cpp
+		imgui/src/imgui_draw.cpp
+		imgui/src/imgui_widgets.cpp
+		imgui/src/imgui_tables.cpp
+		imgui/src/backends/imgui_impl_allegro5.cpp
+	)
+	target_include_directories(imgui PUBLIC
+		$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/imgui/src>
+		$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/imgui/src/backends>
+		$<INSTALL_INTERFACE:include/imgui>
+	)
+	target_link_libraries(imgui PRIVATE allegro_headers)
+	set_target_properties(imgui PROPERTIES POSITION_INDEPENDENT_CODE ON)
+
+	set(IMGUI_FOUND TRUE PARENT_SCOPE)
+	set(IMGUI_LIBRARIES imgui PARENT_SCOPE)
+	set(IMGUI_LIBRARY imgui PARENT_SCOPE)
+	set(IMGUI_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/imgui/src" PARENT_SCOPE)
+	set(IMGUI_INCLUDE_DIRS "${JPEG_INCLUDE_DIR}" PARENT_SCOPE)
+
+	# find_package(Freetype)
+	# if(Freetype_FOUND)
+	# 	target_link_libraries(imgui PRIVATE Freetype::Freetype)
+	# 	target_compile_definitions(imgui PRIVATE IMGUI_ENABLE_FREETYPE)
+	# 	target_sources(imgui PRIVATE imgui/src/misc/freetype/imgui_freetype.cpp)
+	# 	message(STATUS "Freetype found and enabled for ImGui.")
+	# else()
+	# 	message(WARNING "Freetype not found - disabling improved text rendering for debugger")
+	# 	if(NOT EMSCRIPTEN AND (DEFINED ENV{CI} OR ZC_OFFICIAL))
+	# 		message(FATAL_ERROR "Freetype not found")
+	# 	endif()
+	# endif()
+else()
+	find_package(imgui REQUIRED)
+endif()
+
 # Remove once generally available in all compilers for c++ 20.
 add_library(fmt STATIC
 	fmt/src/format.cc

@@ -1295,7 +1295,8 @@ static ArrayRegistrar SETGAMEOVERELEMENT_registrar(SETGAMEOVERELEMENT, []{
 	static ScriptingArray_GlobalComputed<int> impl(
 		[](int){ return SAVESC_LAST; },
 		[](int, int index) -> int {
-			scripting_log_error_with_context("This array is write-only");
+			if (!script_is_within_debugger_vm)
+				scripting_log_error_with_context("This array is write-only");
 			return 0;
 		},
 		[](int, int index, int value){
@@ -1312,7 +1313,8 @@ static ArrayRegistrar SETGAMEOVERSTRING_registrar(SETGAMEOVERSTRING, []{
 	static ScriptingArray_GlobalComputed<int> impl(
 		[](int){ return SAVESC_LAST; },
 		[](int, int index) -> int {
-			scripting_log_error_with_context("This array is write-only");
+			if (!script_is_within_debugger_vm)
+				scripting_log_error_with_context("This array is write-only");
 			return 0;
 		},
 		[](int, int index, int value){

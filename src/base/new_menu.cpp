@@ -9,6 +9,14 @@ extern int32_t zq_screen_w, zq_screen_h;
 void ttip_uninstall_all();
 
 static bool quit_all_menu = false;
+static bool really_quit_all_menu = false;
+
+void close_all_menu()
+{
+	really_quit_all_menu = true; // Maybe not needed. I didn't test. Just wanted to make a minimal change.
+	quit_all_menu = true;
+}
+
 static FONT* default_menu_font()
 {
 	return get_custom_font(CFONT_GUI);
@@ -355,6 +363,7 @@ MenuRet GuiMenu::pop(uint x, uint y, GuiMenu* parent)
 	update_hw_screen();
 	
 	quit_all_menu = false;
+	really_quit_all_menu = false;
 	
 	ttip_uninstall_all();
 	
@@ -917,6 +926,8 @@ MenuRet NewMenu::run_loop()
 			mb = gui_mouse_b();
 			state.sel_ind = msel = hovered_ind();
 		}
+		if (really_quit_all_menu)
+			return ret;
 		update_hw_screen();
 	}
 	while(true);
