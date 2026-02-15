@@ -15,7 +15,7 @@
 #include "zc/replay.h"
 #include "base/mapscr.h"
 #include "base/misctypes.h"
-#include "zscriptversion.h"
+#include "zc/zscriptversion.h"
 
 extern int32_t directItemA;
 extern int32_t directItemB;

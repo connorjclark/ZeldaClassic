@@ -5,7 +5,7 @@
 #include "user_object.h"
 #include "zc/ffscript.h"
 #include "zc/scripting/types/user_object.h"
-#include "zscriptversion.h"
+#include "zc/zscriptversion.h"
 
 #include <ranges>
 #include <utility>

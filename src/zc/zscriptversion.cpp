@@ -1,8 +1,8 @@
-#include "zscriptversion.h"
-#include "zc/zelda.h"
+#include "zc/zscriptversion.h"
 #include "zc/hero.h"
+#include <cstdint>
 
-int32_t    ZScriptVersion::CurrentVersion = V_FFSCRIPT; //Set to current version by default
+int32_t ZScriptVersion::CurrentVersion = V_FFSCRIPT; //Set to current version by default
 
 void ZScriptVersion::ScrollingScript(int32_t scrolldir, int32_t cx, int32_t sx, int32_t sy, bool end_frames, bool waitdraw)
 {

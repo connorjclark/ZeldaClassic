@@ -5,7 +5,7 @@
 #include "zc/ffscript.h"
 #include "zc/scripting/arrays.h"
 #include "zc/scripting/script_object.h"
-#include "zscriptversion.h"
+#include "zc/zscriptversion.h"
 #include <algorithm>
 #include <memory>
 
@@ -343,6 +343,7 @@ bool scr_func_exec::validate(const zasm_script* zasm_script)
 	}
 }
 
+#ifdef IS_PLAYER
 void user_object::get_retained_ids(std::vector<uint32_t>& ids)
 {
 	for (int i = 0; i < owned_vars; i++)
@@ -373,6 +374,7 @@ void user_object::get_retained_ids(std::vector<uint32_t>& ids)
 		}
 	}
 }
+#endif
 
 void user_object::restore_references()
 {

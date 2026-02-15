@@ -1,7 +1,7 @@
 #include "zc/ffscript.h"
 #include "zc/guys.h"
 #include "zc/scripting/arrays.h"
-#include "zscriptversion.h"
+#include "zc/zscriptversion.h"
 
 // Screen arrays.
 

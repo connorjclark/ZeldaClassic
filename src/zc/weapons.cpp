@@ -21,7 +21,7 @@
 #include "base/misctypes.h"
 #include "base/initdata.h"
 #include "iter.h"
-#include "zscriptversion.h"
+#include "zc/zscriptversion.h"
 
 #ifndef IS_EDITOR
 #include "zc/render.h"

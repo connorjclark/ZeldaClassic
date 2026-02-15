@@ -21,7 +21,7 @@
 #include "zinfo.h"
 #include "base/misctypes.h"
 #include "music_playback.h"
-#include "zscriptversion.h"
+#include "zc/zscriptversion.h"
 
 extern sprite_list  guys, items, Ewpns, Lwpns, chainlinks, decorations;
 

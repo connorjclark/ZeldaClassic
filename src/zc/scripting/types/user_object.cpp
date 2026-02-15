@@ -5,7 +5,7 @@
 #include "zasm/defines.h"
 #include "zc/ffscript.h"
 #include "zc/scripting/script_object.h"
-#include "zscriptversion.h"
+#include "zc/zscriptversion.h"
 #include <optional>
 
 extern refInfo *ri;

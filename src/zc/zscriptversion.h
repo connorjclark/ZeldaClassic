@@ -6,8 +6,8 @@
 #ifndef ZSCRIPTVER_H_
 #define ZSCRIPTVER_H_
 
-#include "base/zdefs.h"
 #include "zc/ffscript.h"
+#include <cstdint>
 
 extern FFScript FFCore;
 

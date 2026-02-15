@@ -33,7 +33,7 @@
 #include "zc/render.h"
 #include "dialog/info.h"
 #include "zinfo.h"
-#include "zscriptversion.h"
+#include "zc/zscriptversion.h"
 #include <fmt/format.h>
 
 #ifdef __EMSCRIPTEN__

@@ -35,7 +35,7 @@
 #include "zasm/table.h"
 #include "zasm/serialize.h"
 #include "zconfig.h"
-#include "zscriptversion.h"
+#include "zc/zscriptversion.h"
 #include <algorithm>
 #include <chrono>
 #include <cstdint>

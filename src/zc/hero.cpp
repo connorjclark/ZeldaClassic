@@ -41,7 +41,7 @@
 #include "advanced_music.h"
 
 extern refInfo playerScriptData;
-#include "zscriptversion.h"
+#include "zc/zscriptversion.h"
 #include "particles.h"
 #include <fmt/format.h>
 #include "zc/render.h"

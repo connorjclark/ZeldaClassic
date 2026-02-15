@@ -8,7 +8,7 @@
 #include <fmt/format.h>
 #include "base/misctypes.h"
 #include "zc/zelda.h"
-#include "zscriptversion.h"
+#include "zc/zscriptversion.h"
 
 void mark_save_dirty();
 bounded_vec<word, itemdata> itemsbuf = {MAXITEMS};
