@@ -101,7 +101,7 @@
 #include "play_midi.h"
 #include "sound/zcmusic.h"
 
-#include "midi.h"
+#include "sound/midi.h"
 #include "sprite.h"
 #include "fontsdat.h"
 #include "base/jwinfsel.h"

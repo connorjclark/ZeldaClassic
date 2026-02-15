@@ -723,6 +723,7 @@ if(MSVC AND (MSVC_VERSION GREATER 1600))
 	set(ZCSOUNDLIBSEXTRA legacy_stdio_definitions)
 endif()
 set(ZCSOUNDSOURCES
+	src/sound/midi.cpp
 	src/sound/zcmusic.cpp
 	src/sound/zcmixer.cpp
 )

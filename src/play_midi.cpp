@@ -1,5 +1,5 @@
 #include "play_midi.h"
-#include "midi.h"
+#include "sound/midi.h"
 #include "advanced_music.h"
 
 #ifdef __EMSCRIPTEN__

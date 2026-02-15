@@ -4,7 +4,7 @@
 #include <gui/window.h>
 #include <gui/label.h>
 #include <gui/button.h>
-#include <functional>
+#include <memory>
 
 class ZCMidiDlg: public GUI::Dialog<ZCMidiDlg>
 {
@@ -30,4 +30,3 @@ private:
 	
 	void refresh_status();
 };
-
