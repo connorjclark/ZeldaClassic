@@ -774,6 +774,7 @@ Function* Function::apply_templ_func(vector<DataType const*> const& bound_ts)
 	}
 	Scope *outside, *external;
 	Function* templ = new Function(*this);
+	templ->id = ScriptParser::getUniqueFuncID();
 	bool skip = isTemplateSkip();
 	if(skip)
 	{
