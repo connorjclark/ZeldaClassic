@@ -1,5 +1,5 @@
 #include "base/zc_alleg.h"
-#include "tab_ctl.h"
+#include "gui/tab_ctl.h"
 #include "gui/jwin.h"
 
 void update_hw_screen();

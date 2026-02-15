@@ -2,6 +2,7 @@
 #include <gui/builder.h>
 #include <base/gui.h>
 #include "base/files.h"
+#include "dialog/externs.h"
 #include "gui/jwin.h"
 #include "zq/zquest.h"
 #include "zc_list_data.h"

@@ -1,7 +1,8 @@
 #ifndef TAB_INTERN_H_
 #define TAB_INTERN_H_
 
-#include "base/zc_alleg.h"
+#include "allegro/gui.h"
+#include <cstdint>
 
 
 #ifdef __cplusplus

@@ -9,7 +9,6 @@ src/zc/decorations.cpp
 src/zc/ending.cpp
 src/zc/matrix.cpp
 src/pal.cpp
-src/tab_ctl.cpp
 src/zc/title.cpp
 src/hero_tiles.cpp
 

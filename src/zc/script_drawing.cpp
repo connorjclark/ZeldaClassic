@@ -1,11 +1,5 @@
-//! ritate_sprite_trans doesn't seem to be supported by or allegro header !?
-
-//glibc 2.28 and later require this: -Z
 #include <optional>
 #include <utility>
-#ifdef __GNUG__
-	#define ALLEGRO_NO_FIX_ALIASES
-#endif
 
 #include "base/qrs.h"
 #include "base/dmap.h"

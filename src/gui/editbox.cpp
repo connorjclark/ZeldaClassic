@@ -1,5 +1,7 @@
 #include <cstring>
+#include "base/gui.h"
 #include "base/zc_alleg.h"
+#include "dialog/externs.h"
 #include "gui/jwin.h"
 #include "base/fonts.h"
 #include <stdio.h>

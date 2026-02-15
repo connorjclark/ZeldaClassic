@@ -1,4 +1,5 @@
-#include "zc_options.h"
+#include "dialog/zc_options.h"
+#include "dialog/externs.h"
 #include <gui/builder.h>
 #include "gui/jwin.h"
 #include "base/fonts.h"

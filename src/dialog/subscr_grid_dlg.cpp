@@ -1,4 +1,5 @@
 #include "common.h"
+#include "dialog/externs.h"
 #include <gui/builder.h>
 #include "subscr_grid_dlg.h"
 #include "base/initdata.h"

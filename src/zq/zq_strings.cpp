@@ -1,4 +1,5 @@
 #include "zq/zq_strings.h"
+#include "dialog/externs.h"
 #include "gui/editbox.h"
 #include "gui/EditboxNew.h"
 #include "base/gui.h"

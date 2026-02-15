@@ -1,7 +1,5 @@
 #include "base/files.h"
-#ifdef __GNUG__
-	#define ALLEGRO_NO_FIX_ALIASES
-#endif
+#include "base/gui.h"
 
 #include <cstring>
 #include <filesystem>

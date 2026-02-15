@@ -661,6 +661,7 @@ add_library(zcgui STATIC
 	src/gui/scrolling_pane.cpp
 	src/gui/size.cpp
 	src/gui/switcher.cpp
+	src/gui/tab_ctl.cpp
 	src/gui/tabpanel.cpp
 	src/gui/tabref.cpp
 	src/gui/text_field.cpp

@@ -1,11 +1,10 @@
 #ifndef JWIN_H_
 #define JWIN_H_
 
-#include "base/zdefs.h"
+#include "base/ints.h"
 #include "base/zc_alleg.h"
-#include "tab_ctl.h"
-#include "base/gui.h"
-#include "dialog/externs.h"
+#include "gui/tab_ctl.h"
+#include <optional>
 
 struct ListData
 {
@@ -287,7 +286,7 @@ int32_t d_jwinbutton_proc(int32_t msg, DIALOG *d, int32_t c);
 //Misc bitmap drawing
 void draw_x(BITMAP* dest, int x1, int y1, int x2, int y2, int color);
 void draw_check(BITMAP* dest, int x1, int y1, int x2, int y2, int c);
-void draw_checkerboard(BITMAP* dest, int basex, int basey, int sz, optional<int> cb_sz = nullopt, int x = 0, int y = 0);
+void draw_checkerboard(BITMAP* dest, int basex, int basey, int sz, std::optional<int> cb_sz = std::nullopt, int x = 0, int y = 0);
 void draw_static(BITMAP* dest, int x, int y, int w, int h);
 
 int32_t d_vsync_proc(int32_t msg,DIALOG *,int32_t c);

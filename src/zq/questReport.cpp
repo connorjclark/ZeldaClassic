@@ -8,6 +8,7 @@
 #include "base/general.h"
 #include "base/qrs.h"
 #include "base/dmap.h"
+#include "dialog/externs.h"
 #include "gui/editbox.h"
 #include "gui/EditboxNew.h"
 #include "base/gui.h"
