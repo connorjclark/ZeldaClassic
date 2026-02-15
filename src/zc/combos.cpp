@@ -18,7 +18,7 @@
 #include "base/mapscr.h"
 #include "base/misctypes.h"
 #include "iter.h"
-#include "zscriptversion.h"
+#include "zc/zscriptversion.h"
 #include "advanced_music.h"
 
 void playLevelMusic();

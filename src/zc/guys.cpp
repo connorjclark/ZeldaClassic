@@ -20,7 +20,7 @@
 #include "zc/ffscript.h"
 #include "gamedata.h"
 #include "defdata.h"
-#include "zscriptversion.h"
+#include "zc/zscriptversion.h"
 #include "particles.h"
 #include "base/zc_math.h"
 #include "slopes.h"

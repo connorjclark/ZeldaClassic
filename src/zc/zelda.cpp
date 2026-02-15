@@ -37,7 +37,7 @@
 #include "zc/zasm_utils.h"
 #include "zc/zc_subscr.h"
 #include "zconfig.h"
-#include "zscriptversion.h"
+#include "zc/zscriptversion.h"
 #include "sound/zcmusic.h"
 #include "base/zdefs.h"
 #include "zc/zelda.h"

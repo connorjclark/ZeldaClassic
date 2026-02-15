@@ -78,7 +78,7 @@
 #include "base/zsys.h"
 #include "base/misctypes.h"
 #include "zc/title.h"
-#include "zscriptversion.h"
+#include "zc/zscriptversion.h"
 
 #include "pal.h"
 #include "base/zdefs.h"

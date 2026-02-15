@@ -4,7 +4,7 @@
 #include "base/zdefs.h"
 #include "zc/maps.h"
 #include "items.h"
-#include "zscriptversion.h"
+#include "zc/zscriptversion.h"
 #include <stdio.h>
 #include "base/misctypes.h"
 

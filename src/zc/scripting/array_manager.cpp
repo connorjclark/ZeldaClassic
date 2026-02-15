@@ -4,7 +4,7 @@
 #include "zc/ffscript.h"
 #include "zc/scripting/arrays.h"
 #include "zc/scripting/script_object.h"
-#include "zscriptversion.h"
+#include "zc/zscriptversion.h"
 #include <cstdint>
 
 extern bool can_neg_array;

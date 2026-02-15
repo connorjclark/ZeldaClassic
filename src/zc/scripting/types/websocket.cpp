@@ -5,7 +5,7 @@
 #include "zc/scripting/arrays.h"
 #include "zc/scripting/script_object.h"
 #include "zc/websocket_pool.h"
-#include "zscriptversion.h"
+#include "zc/zscriptversion.h"
 #include <optional>
 
 extern refInfo *ri;
