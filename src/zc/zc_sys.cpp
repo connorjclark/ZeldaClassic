@@ -48,7 +48,7 @@
 #include "gui/jwin_a5.h"
 #include "base/jwinfsel.h"
 #include "base/gui.h"
-#include "midi.h"
+#include "sound/midi.h"
 #include "subscr.h"
 #include "zc/maps.h"
 #include "sprite.h"

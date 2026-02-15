@@ -1,9 +1,19 @@
 #ifndef MIDI_H_
 #define MIDI_H_
 
-#include "base/zdefs.h"
+#include "allegro/midi.h"
+#include "base/ints.h"
+#include <cstdint>
 
-int32_t save_midi(const char *filename, MIDI *midi);
+#if defined ZCM_DLL
+#define ZCM_EXTERN extern __declspec(dllexport)
+#elif defined ZCM_DLL_IMPORT
+#define ZCM_EXTERN extern __declspec(dllimport)
+#else
+#define ZCM_EXTERN extern
+#endif
+
+ZCM_EXTERN int32_t save_midi(const char *filename, MIDI *midi);
 
 /* ---  All this code just to calculate the length of a MIDI song.  --- */
 
@@ -41,17 +51,18 @@ typedef struct mtrkevent
     byte byte2;                                               // byte 2 or note on velocity
 } mtrkevent;
 
-dword getval(byte *buf,int32_t nbytes);
-dword parse_var_len(byte **data);
+ZCM_EXTERN dword getval(byte *buf,int32_t nbytes);
+ZCM_EXTERN dword parse_var_len(byte **data);
 // returns length of the <MTrk event>
-dword parse_mtrk(byte **data, midi_info *mi);
-bool eot(midi_info *mi);
-int32_t beats(dword dt,int32_t divs);
-double tempo(byte *buf);
-double _runtime(int32_t beats,double tempo);
-double runtime(int32_t beats,midi_info *mi);
-void get_midi_info(MIDI *midi, midi_info *mi);
-char *timestr(double sec);
-bool decode_text_event(char *s,byte type,byte *buf);
-void get_midi_text(MIDI *midi, midi_info *mi, char *text);
+ZCM_EXTERN dword parse_mtrk(byte **data, midi_info *mi);
+ZCM_EXTERN bool eot(midi_info *mi);
+ZCM_EXTERN int32_t beats(dword dt,int32_t divs);
+ZCM_EXTERN double tempo(byte *buf);
+ZCM_EXTERN double _runtime(int32_t beats,double tempo);
+ZCM_EXTERN double runtime(int32_t beats,midi_info *mi);
+ZCM_EXTERN void get_midi_info(MIDI *midi, midi_info *mi);
+ZCM_EXTERN char *timestr(double sec);
+ZCM_EXTERN bool decode_text_event(char *s,byte type,byte *buf);
+ZCM_EXTERN void get_midi_text(MIDI *midi, midi_info *mi, char *text);
+
 #endif

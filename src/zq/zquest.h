@@ -4,7 +4,7 @@
 #include <string>
 #include <vector>
 #include "base/initdata.h"
-#include "midi.h"
+#include "sound/midi.h"
 #include "gui/jwin.h"
 #include <base/new_menu.h>
 #include "base/jwinfsel.h"

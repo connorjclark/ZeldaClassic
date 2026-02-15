@@ -1,7 +1,9 @@
+#include "sound/midi.h"
+
+#include "base/zsys.h"
+
 #include <cstring>
 #include <stdio.h>
-#include "midi.h"
-#include "base/zsys.h"
 
 /* save_midi:
   *  Saves a standard MIDI file, returning 0 on success,
