@@ -68,7 +68,7 @@ public:
 	bool handleMessage(const GUI::DialogMessage<message>& msg);
 
 private:
-	ItemEditorDialog(itemdata const& ref, char const* str, int32_t index);
+	ItemEditorDialog(itemdata const& ref, int32_t index);
 	ItemEditorDialog(int32_t index);
 	void loadItemClass();
 	void refreshScripts();
@@ -97,7 +97,6 @@ private:
 	std::shared_ptr<GUI::Button> wizardButton;
 	std::shared_ptr<GUI::TileFrame> animFrame;
 	std::shared_ptr<GUI::Switcher> animSwitcher;
-	std::string itemname;
 	int32_t index;
 	itemdata local_itemref;
 	GUI::ListData list_items, list_counters, list_sprites,

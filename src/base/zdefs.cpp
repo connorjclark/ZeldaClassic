@@ -1,4 +1,5 @@
 #include "base/zdefs.h"
+#include "items.h"
 #include "base/version.h"
 #include "gui/jwin_a5.h"
 #include "base/zapp.h"
@@ -11,6 +12,7 @@
 #include "base/qst.h"
 #include "base/md5.h"
 #include <fstream>
+#include "gamedata.h"
 
 using std::string;
 using std::ostringstream;
@@ -1673,3 +1675,14 @@ void zctune::reset()
 		destroy_midi(data);
 	*this = zctune();
 }
+
+void wpndata::load_item(itemdata const& itm)
+{
+	tile = itm.tile;
+	misc = itm.misc_flags;
+	csets = itm.csets;
+	frames = itm.frames;
+	speed = itm.speed;
+	type = itm.delay;
+}
+

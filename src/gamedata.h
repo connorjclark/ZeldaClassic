@@ -6,10 +6,9 @@
 #include "base/zc_array.h"
 #include "base/containers.h"
 #include "user_object.h"
+#include "items.h"
 
 #define DIDCHEAT_BIT 0x80
-#define NUM_GSWITCHES 256
-#define MAX_MI (MAXDMAPS*MAPSCRSNORMAL)
 
 #define MAX_SAVED_PORTALS 10000
 struct savedportal
@@ -69,8 +68,8 @@ struct gamedata
 
 	gamedata_header header;
 	byte _cheat;
-	bool item[MAXITEMS];
-	byte items_off[MAXITEMS];
+	bitstring items_owned;
+	bitstring items_off;
 	word _maxcounter[MAX_COUNTERS];
 	word _counter[MAX_COUNTERS];
 	int16_t _dcounter[MAX_COUNTERS];
@@ -86,7 +85,7 @@ struct gamedata
 	bounded_vec<dword,byte> bmaps {MAX_MI, 0}; // the dungeon progress maps
 	bounded_vec<dword,uint32_t> maps {MAXSCRSNORMAL, 0}; // info on map changes, items taken, etc.
 	bounded_vec<dword,byte> guys {MAXSCRSNORMAL, 0}; // guy counts (enemy kill progress)
-	bool item_messages_played[MAXITEMS]; //Each field is set when an item pickup message plays the first time per session
+	bitstring item_messages_played;
 	bounded_map<dword,bounded_vec<byte,int32_t>> screen_d {MAX_MI, {8, 0}}; // script-controlled screen variables
 	int32_t global_d[MAX_SCRIPT_REGISTERS]; // script-controlled global variables
 	script_object_type global_d_types[MAX_SCRIPT_REGISTERS];
@@ -372,8 +371,9 @@ public:
 	void set_item_no_flush(int32_t id, bool value);
 	inline bool get_item(int32_t id) const
 	{
-		if ( ((unsigned)id) >= MAXITEMS ) return false;
-			return item[id];
+		if (invalid_item_id(id))
+			return false;
+		return items_owned.get(id);
 	}
 	
 	byte get_bottle_slot(dword slot)
@@ -403,6 +403,8 @@ public:
 	
 	void normalize()
 	{
+		items_owned.normalize();
+		items_off.normalize();
 		lvlitems.normalize();
 		lvlkeys.normalize();
 		lvlswitches.normalize();
@@ -410,6 +412,7 @@ public:
 		bmaps.normalize();
 		maps.normalize();
 		guys.normalize();
+		item_messages_played.normalize();
 		screen_d.normalize();
 		gen_doscript.normalize();
 		gen_exitState.normalize();

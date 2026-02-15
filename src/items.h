@@ -8,6 +8,8 @@
 #include "sfx.h"
 #include "sprite.h"
 
+struct gamedata;
+
 namespace flags {
 // TODO: these generically named flags need to be renamed / documented.
 enum item_flags : uint32_t
@@ -49,7 +51,8 @@ enum item_flags : uint32_t
 
 class item;
 struct itemdata;
-extern char *item_string[MAXITEMS];
+extern bounded_vec<word, itemdata> itemsbuf;
+extern const itemdata nil_item;
 
 extern int32_t fairy_cnt;
 bool addfairy(zfix x, zfix y, int32_t misc3, int32_t id);
@@ -118,8 +121,11 @@ private:
 
 // easy way to draw an item
 void putitem(BITMAP *dest,int32_t x,int32_t y,int32_t item_id);
-void putitem2(BITMAP *dest,int32_t x,int32_t y,int32_t item_id, int32_t &aclk, int32_t &aframe, int32_t flash);
 void putitem3(BITMAP *dest,int32_t x,int32_t y,int32_t item_id, int32_t clk);
+
+void draw_lens_hint_item(BITMAP *dest, int32_t x, int32_t y, int32_t item_id, int32_t flash);
+void reset_lens_hint_items();
+
 void dummyitem_animate(item* dummy, int32_t clk);
 
 enum
@@ -152,24 +158,23 @@ enum
 struct itemdata
 {
     int32_t tile;
-    byte misc_flags;                                                // 0000vhtf (vh:flipping, t:two hands, f:flash)
-    byte csets;                                               // ffffcccc (f:flash cset, c:cset)
-    byte frames;                                              // animation frame count
-    byte speed;                                               // animation speed
-    byte delay;                                               // extra delay factor (-1) for first frame
-    int32_t ltm;                                                 // Hero Tile Modifier
-    int32_t type;												// What family the item is in
-    byte level;										// What type in this family the item is
-    int32_t power;	// Damage, height, etc. //changed from byte to int32_t in V_ITEMS 31
+    byte misc_flags;           // 0000vhtf (vh:flipping, t:two hands, f:flash)
+    byte csets;                // ffffcccc (f:flash cset, c:cset)
+    byte frames;               // animation frame count
+    byte speed;                // animation speed
+    byte delay;                // extra delay factor (-1) for first frame
+    int32_t ltm;               // Hero Tile Modifier
+    int32_t type = itype_misc; // What family the item is in
+    byte level = 1;            // What type in this family the item is
+    int32_t power;             // Damage, height, etc. //changed from byte to int32_t in V_ITEMS 31
     item_flags flags;
-    word script;												// Which script the item is using
-    char count;
+    word script;
+    char count = crNONE;       // which counter is gained on picking up the item
     word amount;
     int16_t setmax;
     word max;
     word playsound = WAV_SCALE;
     word collect_script;
-//  byte exp[10];                                             // not used
     int32_t initiald[INITIAL_D];
     byte wpn;
     byte wpn2;
@@ -192,7 +197,7 @@ struct itemdata
     int32_t misc8;
     int32_t misc9;
     int32_t misc10;
-	int16_t cost_amount[2]; // Magic usage!
+	int16_t cost_amount[2]; // Counter usage
     word usesound, usesound2;
     
     //To implement next;
@@ -225,7 +230,8 @@ struct itemdata
     int32_t sprite_initiald[INITIAL_D];
     word sprite_script;
 	
-	char display_name[256];
+	std::string name;
+	std::string display_name;
 	
 	word pickup_litems;
 	int16_t pickup_litem_level = -1;
@@ -274,20 +280,19 @@ struct itemdata
 	//
 	void clear();
 	void advpaste(itemdata const& other, bitstring const& pasteflags);
+	bool operator==(itemdata const& other) const = default;
 };
 
 //some methods for dealing with items
-int32_t getItemFamily(itemdata *items, int32_t item);
-void removeItemsOfFamily(gamedata *g, itemdata *items, int32_t family);
-void removeItemsOfFamily(zinitdata *i, itemdata *items, int32_t family);
-void removeLowerLevelItemsOfFamily(gamedata *g, itemdata *items, int32_t family, int32_t level);
-int32_t getHighestLevelOfFamily(zinitdata *source, itemdata *items, int32_t family);
-int32_t getHighestLevelOfFamily(gamedata *source, itemdata *items, int32_t family, bool checkenabled = false);
-int32_t getHighestLevelEvenUnowned(itemdata *items, int32_t family);
-int32_t getItemID(itemdata *items, int32_t family, int32_t level);
-int32_t getCanonicalItemID(itemdata *items, int32_t family);
-int32_t getItemIDPower(itemdata *items, int32_t family, int32_t power);
-void addOldStyleFamily(zinitdata *dest, itemdata *items, int32_t family, char levels);
+void removeItemsOfFamily(int32_t family);
+void removeLowerLevelItemsOfFamily(int32_t family, int32_t level);
+int32_t getHighestLevelOfFamily(zinitdata *source, int32_t family);
+int32_t getHighestLevelOfFamily(gamedata *source, int32_t family);
+int32_t getHighestLevelEvenUnowned(int32_t family);
+int32_t getItemID(int32_t family, int32_t level);
+int32_t getCanonicalItemID(int32_t family);
+int32_t getItemIDPower(int32_t family, int32_t power);
+void addOldStyleFamily(zinitdata *dest, int32_t family, char levels);
 
 std::string bottle_name(size_t type);
 std::string bottle_slot_name(size_t slot, std::string const& emptystr);
@@ -298,4 +303,36 @@ struct cooldown_data
 	int cooldown_ring_id = -1;
 };
 cooldown_data calc_item_cooldown(int item_id);
+
+struct ButtonItemData
+{
+	int id = -1;
+	bool bow_arrow = false;
+	
+	ButtonItemData(int id = -1, bool bow_arrow = false) :
+		id(id), bow_arrow(bow_arrow)
+	{}
+	
+	int get_family() const;
+	
+	bool operator==(ButtonItemData const& other) const = default;
+};
+
+itemdata const& get_item_data(int id);
+
+void run_first_script_of_type(int itype);
+
+void delete_quest_items(std::function<bool(itemdata const&)> proc);
+void delete_quest_items(size_t idx);
+void swap_quest_items(size_t idx1, size_t idx2);
+
+inline constexpr bool valid_item_id(int iid)
+{
+	return unsigned(iid) < MAXITEMS;
+}
+inline constexpr bool invalid_item_id(int iid)
+{
+	return !valid_item_id(iid);
+}
+
 #endif

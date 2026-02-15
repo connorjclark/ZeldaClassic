@@ -22,10 +22,9 @@
 #include "base/util.h"
 #include "base/fonts.h"
 #include "zc/replay.h"
+#include "items.h"
 #include <map>
 
-class sprite;
-struct itemdata;
 struct MsgStr;
 
 int32_t isFullScreen();
@@ -57,8 +56,6 @@ enum
     fade_none, fade_flicker, fade_invisible, fade_flash_die,
     fade_blue_poof
 };
-
-void port250QuestRules();
 
 bool get_debug();
 void set_debug(bool d);
@@ -197,7 +194,6 @@ extern ZCMIXER* zcmixer;
 extern int32_t colordepth;
 extern int32_t db;
 extern int32_t detail_int[10];                                  //temporary holder for things you want to detail
-extern int32_t lens_hint_item[MAXITEMS][2];                     //aclk, aframe
 extern int32_t lens_hint_weapon[MAXWPNS][5];                    //aclk, aframe, dir, x, y
 extern int32_t strike_hint_counter;
 extern int32_t strike_hint_timer;
@@ -218,7 +214,6 @@ extern bool lightbeam_present;
 extern BITMAP *zcmouse[NUM_ZCMOUSE];
 extern PALETTE  pal_gui;
 extern byte     *colordata;
-extern itemdata *itemsbuf;
 extern wpndata  *wpnsbuf;
 extern comboclass *combo_class_buf;
 extern guydata  *guysbuf;
@@ -303,7 +298,8 @@ extern direction scrolling_dir;
 extern int32_t currscr_for_passive_subscr;
 extern dword light_wave_clk;
 extern int32_t newscr_clk,cur_dmap,fadeclk,listpos;
-extern int32_t lastentrance,lastentrance_dmap, prices[3],loadside, Bwpn, Awpn, Xwpn, Ywpn;
+extern int32_t lastentrance,lastentrance_dmap, prices[3],loadside;
+extern ButtonItemData Bwpn, Awpn, Xwpn, Ywpn;
 extern int32_t digi_volume,midi_volume,sfx_volume,emusic_volume,currmidi,whistleclk,pan_style;
 extern int32_t Quit;
 extern uint32_t GameFlags;

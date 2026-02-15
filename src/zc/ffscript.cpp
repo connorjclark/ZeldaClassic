@@ -1469,7 +1469,7 @@ static void set_current_script_engine_data(ScriptEngineData& data, ScriptType ty
 			if (!data.initialized)
 			{
 				got_initialized = true;
-				memcpy(ri->d, ( collect ) ? itemsbuf[new_i].initiald : itemsbuf[i].initiald, 8 * sizeof(int32_t));
+				memcpy(ri->d, itemsbuf[new_i].initiald, 8 * sizeof(int32_t));
 				data.initialized = true;
 			}			
 			ri->itemdataref = ( collect ) ? new_i : i; //'this' pointer
@@ -1987,20 +1987,36 @@ void FFScript::initZScriptHeroScripts()
 	scriptEngineDatas[{ScriptType::Hero, 0}] = ScriptEngineData();
 }
 
+
 void FFScript::initZScriptItemScripts()
 {
-	for ( int32_t q = 0; q < 256; q++ )
+	for (int32_t q = 0; q < MAXITEMS; ++q)
 	{
-		auto& data = get_script_engine_data(ScriptType::Item, q);
-		data.reset();
-		data.doscript = (itemsbuf[q].flags&item_passive_script) && game->item[q];
-	}
-
-	for ( int32_t q = -256; q < 0; q++ )
-	{
-		auto& data = get_script_engine_data(ScriptType::Item, q);
-		data.reset();
-		data.doscript = 0;
+		int c = q ? -q : COLLECT_SCRIPT_ITEM_ZERO;
+		
+		// Clear all the allocated memory for item scripts
+		clear_script_engine_data(ScriptType::Item, q);
+		clear_script_engine_data(ScriptType::Item, c);
+		
+		// only re-allocate memory for items this quest uses
+		// IDATASCRIPT and IDATAPSCRIPT setters handle initializing these later,
+		//     if scripts make previously unused items now used.
+		if (q < itemsbuf.capacity())
+		{
+			auto const& itm = itemsbuf[q];
+			if (itm.script)
+			{
+				auto& data = get_script_engine_data(ScriptType::Item, q);
+				data.reset();
+				data.doscript = ((itemsbuf[q].flags&item_passive_script) && game->get_item(q)) ? 1 : 0;
+			}
+			if (itm.collect_script)
+			{
+				auto& cdata = get_script_engine_data(ScriptType::Item, c);
+				cdata.reset();
+				cdata.doscript = 0;
+			}
+		}
 	}
 }
 
@@ -2559,7 +2575,7 @@ item* checkItem(int32_t ref)
 
 itemdata* checkItemData(int32_t ref)
 {
-	if (ref >= 0 && ref < MAXITEMS)
+	if (valid_item_id(ref))
 		return &itemsbuf[ref];
 
 	scripting_log_error_with_context("Invalid {} using UID = {}", "itemdata", ref);
@@ -2771,7 +2787,7 @@ static void bad_subwidg_type(bool func, byte type)
 
 int32_t item_flag(item_flags flag)
 {
-	if(unsigned(GET_REF(itemdataref)) >= MAXITEMS)
+	if(invalid_item_id(GET_REF(itemdataref)))
 	{
 		scripting_log_error_with_context("Invalid itemdata access: {}", GET_REF(itemdataref));
 		return 0;
@@ -2780,7 +2796,7 @@ int32_t item_flag(item_flags flag)
 }
 void item_flag(item_flags flag, bool val)
 {
-	if(unsigned(GET_REF(itemdataref)) >= MAXITEMS)
+	if(invalid_item_id(GET_REF(itemdataref)))
 	{
 		scripting_log_error_with_context("Invalid itemdata access: {}", GET_REF(itemdataref));
 		return;
@@ -3183,7 +3199,7 @@ int32_t get_register(int32_t arg)
 			break;
 			
 		case LINKEQUIP:
-			ret = ((Awpn&0xFF)|((Bwpn&0xFF)<<8))*10000;
+			ret = ((Awpn.id&0xFF)|((Bwpn.id&0xFF)<<8))*10000;
 			break;
 			
 		case LINKINVIS:
@@ -3354,23 +3370,19 @@ int32_t get_register(int32_t arg)
 			
 			
 		case LINKITEMB:
-			//Hero->setBButtonItem(vbound((value/10000),0,(MAXITEMS-1)));
-			ret = Bwpn*10000;
+			ret = Bwpn.id * 10000;
 			break;
 		
 		case LINKITEMA:
-			//Hero->setBButtonItem(vbound((value/10000),0,(MAXITEMS-1)));
-			ret = Awpn *10000;
+			ret = Awpn.id * 10000;
 			break;
 		
 		case LINKITEMX:
-			//Hero->setBButtonItem(vbound((value/10000),0,(MAXITEMS-1)));
-			ret = Xwpn *10000;
+			ret = Xwpn.id * 10000;
 			break;
 		
 		case LINKITEMY:
-			//Hero->setBButtonItem(vbound((value/10000),0,(MAXITEMS-1)));
-			ret = Ywpn *10000;
+			ret = Ywpn.id * 10000;
 			break;
 		
 		case LINKTILEMOD:
@@ -3724,7 +3736,7 @@ int32_t get_register(int32_t arg)
 		
 		
 		case IDATAUSEWPN:
-			if(unsigned(GET_REF(itemdataref)) >= MAXITEMS)
+			if(invalid_item_id(GET_REF(itemdataref)))
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", GET_REF(itemdataref));
 				ret = -10000;
@@ -3733,7 +3745,7 @@ int32_t get_register(int32_t arg)
 			ret=(itemsbuf[GET_REF(itemdataref)].weap_data.imitate_weapon)*10000;
 			break;
 		case IDATAUSEDEF:
-			if(unsigned(GET_REF(itemdataref)) >= MAXITEMS)
+			if(invalid_item_id(GET_REF(itemdataref)))
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", GET_REF(itemdataref));
 				ret = -10000;
@@ -3742,7 +3754,7 @@ int32_t get_register(int32_t arg)
 			ret=(itemsbuf[GET_REF(itemdataref)].weap_data.default_defense)*10000;
 			break;
 		case IDATAWRANGE:
-			if(unsigned(GET_REF(itemdataref)) >= MAXITEMS)
+			if(invalid_item_id(GET_REF(itemdataref)))
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", GET_REF(itemdataref));
 				ret = -10000;
@@ -3751,7 +3763,7 @@ int32_t get_register(int32_t arg)
 			ret=(itemsbuf[GET_REF(itemdataref)].weaprange)*10000;
 			break;
 		case IDATAMAGICTIMER:
-			if(unsigned(GET_REF(itemdataref)) >= MAXITEMS)
+			if(invalid_item_id(GET_REF(itemdataref)))
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", GET_REF(itemdataref));
 				ret = -10000;
@@ -3760,7 +3772,7 @@ int32_t get_register(int32_t arg)
 			ret=(itemsbuf[GET_REF(itemdataref)].magiccosttimer[0])*10000;
 			break;
 		case IDATAMAGICTIMER2:
-			if(unsigned(GET_REF(itemdataref)) >= MAXITEMS)
+			if(invalid_item_id(GET_REF(itemdataref)))
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", GET_REF(itemdataref));
 				ret = -10000;
@@ -3770,7 +3782,7 @@ int32_t get_register(int32_t arg)
 			break;
 		
 		case IDATADURATION:
-			if(unsigned(GET_REF(itemdataref)) >= MAXITEMS)
+			if(invalid_item_id(GET_REF(itemdataref)))
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", GET_REF(itemdataref));
 				ret = -10000;
@@ -3780,7 +3792,7 @@ int32_t get_register(int32_t arg)
 			break;
 		
 		case IDATADUPLICATES:
-			if(unsigned(GET_REF(itemdataref)) >= MAXITEMS)
+			if(invalid_item_id(GET_REF(itemdataref)))
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", GET_REF(itemdataref));
 				ret = -10000;
@@ -3789,7 +3801,7 @@ int32_t get_register(int32_t arg)
 			ret=(itemsbuf[GET_REF(itemdataref)].duplicates)*10000;
 			break;
 		case IDATADRAWLAYER:
-			if(unsigned(GET_REF(itemdataref)) >= MAXITEMS)
+			if(invalid_item_id(GET_REF(itemdataref)))
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", GET_REF(itemdataref));
 				ret = -10000;
@@ -3798,7 +3810,7 @@ int32_t get_register(int32_t arg)
 			ret=(itemsbuf[GET_REF(itemdataref)].drawlayer)*10000;
 			break;
 		case IDATACOLLECTFLAGS:
-			if(unsigned(GET_REF(itemdataref)) >= MAXITEMS)
+			if(invalid_item_id(GET_REF(itemdataref)))
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", GET_REF(itemdataref));
 				ret = 0;
@@ -3807,7 +3819,7 @@ int32_t get_register(int32_t arg)
 			ret=(itemsbuf[GET_REF(itemdataref)].collectflags)*10000;
 			break;
 		case IDATAWEAPONSCRIPT:
-			if(unsigned(GET_REF(itemdataref)) >= MAXITEMS)
+			if(invalid_item_id(GET_REF(itemdataref)))
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", GET_REF(itemdataref));
 				ret = -10000;
@@ -3816,7 +3828,7 @@ int32_t get_register(int32_t arg)
 			ret=(itemsbuf[GET_REF(itemdataref)].weap_data.script)*10000;
 			break;
 		case IDATAWEAPHXOFS:
-			if(unsigned(GET_REF(itemdataref)) >= MAXITEMS)
+			if(invalid_item_id(GET_REF(itemdataref)))
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", GET_REF(itemdataref));
 				ret = -10000;
@@ -3825,7 +3837,7 @@ int32_t get_register(int32_t arg)
 			ret=(itemsbuf[GET_REF(itemdataref)].weap_data.hxofs)*10000;
 			break;
 		case IDATAWEAPHYOFS:
-			if(unsigned(GET_REF(itemdataref)) >= MAXITEMS)
+			if(invalid_item_id(GET_REF(itemdataref)))
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", GET_REF(itemdataref));
 				ret = -10000;
@@ -3834,7 +3846,7 @@ int32_t get_register(int32_t arg)
 			ret=(itemsbuf[GET_REF(itemdataref)].weap_data.hyofs)*10000;
 			break;
 		case IDATAWEAPHXSZ:
-			if(unsigned(GET_REF(itemdataref)) >= MAXITEMS)
+			if(invalid_item_id(GET_REF(itemdataref)))
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", GET_REF(itemdataref));
 				ret = -10000;
@@ -3843,7 +3855,7 @@ int32_t get_register(int32_t arg)
 			ret=(itemsbuf[GET_REF(itemdataref)].weap_data.hxsz)*10000;
 			break;
 		case IDATAWEAPHYSZ:
-			if(unsigned(GET_REF(itemdataref)) >= MAXITEMS)
+			if(invalid_item_id(GET_REF(itemdataref)))
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", GET_REF(itemdataref));
 				ret = -10000;
@@ -3852,7 +3864,7 @@ int32_t get_register(int32_t arg)
 			ret=(itemsbuf[GET_REF(itemdataref)].weap_data.hysz)*10000;
 			break;
 		case IDATAWEAPHZSZ:
-			if(unsigned(GET_REF(itemdataref)) >= MAXITEMS)
+			if(invalid_item_id(GET_REF(itemdataref)))
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", GET_REF(itemdataref));
 				ret = -10000;
@@ -3861,7 +3873,7 @@ int32_t get_register(int32_t arg)
 			ret=(itemsbuf[GET_REF(itemdataref)].weap_data.hzsz)*10000;
 			break;
 		case IDATAWEAPXOFS:
-			if(unsigned(GET_REF(itemdataref)) >= MAXITEMS)
+			if(invalid_item_id(GET_REF(itemdataref)))
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", GET_REF(itemdataref));
 				ret = -10000;
@@ -3870,7 +3882,7 @@ int32_t get_register(int32_t arg)
 			ret=(itemsbuf[GET_REF(itemdataref)].weap_data.xofs)*10000;
 			break;
 		case IDATAWEAPYOFS:
-			if(unsigned(GET_REF(itemdataref)) >= MAXITEMS)
+			if(invalid_item_id(GET_REF(itemdataref)))
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", GET_REF(itemdataref));
 				ret = -10000;
@@ -3879,7 +3891,7 @@ int32_t get_register(int32_t arg)
 			ret=(itemsbuf[GET_REF(itemdataref)].weap_data.yofs)*10000;
 			break;
 		case IDATAHXOFS:
-			if(unsigned(GET_REF(itemdataref)) >= MAXITEMS)
+			if(invalid_item_id(GET_REF(itemdataref)))
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", GET_REF(itemdataref));
 				ret = -10000;
@@ -3888,7 +3900,7 @@ int32_t get_register(int32_t arg)
 			ret=(itemsbuf[GET_REF(itemdataref)].hxofs)*10000;
 			break;
 		case IDATAHYOFS:
-			if(unsigned(GET_REF(itemdataref)) >= MAXITEMS)
+			if(invalid_item_id(GET_REF(itemdataref)))
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", GET_REF(itemdataref));
 				ret = -10000;
@@ -3897,7 +3909,7 @@ int32_t get_register(int32_t arg)
 			ret=(itemsbuf[GET_REF(itemdataref)].hyofs)*10000;
 			break;
 		case IDATAHXSZ:
-			if(unsigned(GET_REF(itemdataref)) >= MAXITEMS)
+			if(invalid_item_id(GET_REF(itemdataref)))
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", GET_REF(itemdataref));
 				ret = -10000;
@@ -3906,7 +3918,7 @@ int32_t get_register(int32_t arg)
 			ret=(itemsbuf[GET_REF(itemdataref)].hxsz)*10000;
 			break;
 		case IDATAHYSZ:
-			if(unsigned(GET_REF(itemdataref)) >= MAXITEMS)
+			if(invalid_item_id(GET_REF(itemdataref)))
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", GET_REF(itemdataref));
 				ret = -10000;
@@ -3915,7 +3927,7 @@ int32_t get_register(int32_t arg)
 			ret=(itemsbuf[GET_REF(itemdataref)].hysz)*10000;
 			break;
 		case IDATAHZSZ:
-			if(unsigned(GET_REF(itemdataref)) >= MAXITEMS)
+			if(invalid_item_id(GET_REF(itemdataref)))
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", GET_REF(itemdataref));
 				ret = -10000;
@@ -3924,7 +3936,7 @@ int32_t get_register(int32_t arg)
 			ret=(itemsbuf[GET_REF(itemdataref)].hzsz)*10000;
 			break;
 		case IDATADXOFS:
-			if(unsigned(GET_REF(itemdataref)) >= MAXITEMS)
+			if(invalid_item_id(GET_REF(itemdataref)))
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", GET_REF(itemdataref));
 				ret = -10000;
@@ -3933,7 +3945,7 @@ int32_t get_register(int32_t arg)
 			ret=(itemsbuf[GET_REF(itemdataref)].xofs)*10000;
 			break;
 		case IDATADYOFS:
-			if(unsigned(GET_REF(itemdataref)) >= MAXITEMS)
+			if(invalid_item_id(GET_REF(itemdataref)))
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", GET_REF(itemdataref));
 				ret = -10000;
@@ -3942,7 +3954,7 @@ int32_t get_register(int32_t arg)
 			ret=(itemsbuf[GET_REF(itemdataref)].yofs)*10000;
 			break;
 		case IDATATILEW:
-			if(unsigned(GET_REF(itemdataref)) >= MAXITEMS)
+			if(invalid_item_id(GET_REF(itemdataref)))
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", GET_REF(itemdataref));
 				ret = -10000;
@@ -3951,7 +3963,7 @@ int32_t get_register(int32_t arg)
 			ret=(itemsbuf[GET_REF(itemdataref)].tilew)*10000;
 			break;
 		case IDATATILEH:
-			if(unsigned(GET_REF(itemdataref)) >= MAXITEMS)
+			if(invalid_item_id(GET_REF(itemdataref)))
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", GET_REF(itemdataref));
 				ret = -10000;
@@ -3960,7 +3972,7 @@ int32_t get_register(int32_t arg)
 			ret=(itemsbuf[GET_REF(itemdataref)].tileh)*10000;
 			break;
 		case IDATAPICKUP:
-			if(unsigned(GET_REF(itemdataref)) >= MAXITEMS)
+			if(invalid_item_id(GET_REF(itemdataref)))
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", GET_REF(itemdataref));
 				ret = -10000;
@@ -3969,7 +3981,7 @@ int32_t get_register(int32_t arg)
 			ret=(itemsbuf[GET_REF(itemdataref)].pickup)*10000;
 			break;
 		case IDATAOVERRIDEFL:
-			if(unsigned(GET_REF(itemdataref)) >= MAXITEMS)
+			if(invalid_item_id(GET_REF(itemdataref)))
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", GET_REF(itemdataref));
 				ret = 0;
@@ -3979,7 +3991,7 @@ int32_t get_register(int32_t arg)
 			break;
 
 		case IDATATILEWWEAP:
-			if(unsigned(GET_REF(itemdataref)) >= MAXITEMS)
+			if(invalid_item_id(GET_REF(itemdataref)))
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", GET_REF(itemdataref));
 				ret = -10000;
@@ -3988,7 +4000,7 @@ int32_t get_register(int32_t arg)
 			ret=(itemsbuf[GET_REF(itemdataref)].weap_data.tilew)*10000;
 			break;
 		case IDATATILEHWEAP:
-			if(unsigned(GET_REF(itemdataref)) >= MAXITEMS)
+			if(invalid_item_id(GET_REF(itemdataref)))
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", GET_REF(itemdataref));
 				ret = -10000;
@@ -3997,7 +4009,7 @@ int32_t get_register(int32_t arg)
 			ret=(itemsbuf[GET_REF(itemdataref)].weap_data.tileh)*10000;
 			break;
 		case IDATAOVERRIDEFLWEAP:
-			if(unsigned(GET_REF(itemdataref)) >= MAXITEMS)
+			if(invalid_item_id(GET_REF(itemdataref)))
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", GET_REF(itemdataref));
 				ret = 0;
@@ -4007,7 +4019,7 @@ int32_t get_register(int32_t arg)
 			break;
 		
 		case IDATATYPE:
-			if(unsigned(GET_REF(itemdataref)) >= MAXITEMS)
+			if(invalid_item_id(GET_REF(itemdataref)))
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", GET_REF(itemdataref));
 				ret = -10000;
@@ -4017,7 +4029,7 @@ int32_t get_register(int32_t arg)
 			break;
 			
 		case IDATALEVEL:
-			if(unsigned(GET_REF(itemdataref)) >= MAXITEMS)
+			if(invalid_item_id(GET_REF(itemdataref)))
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", GET_REF(itemdataref));
 				ret = -10000;
@@ -4032,7 +4044,7 @@ int32_t get_register(int32_t arg)
 			
 		case IDATAAMOUNT:
 		{
-			if(unsigned(GET_REF(itemdataref)) >= MAXITEMS)
+			if(invalid_item_id(GET_REF(itemdataref)))
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", GET_REF(itemdataref));
 				ret = -10000;
@@ -4044,7 +4056,7 @@ int32_t get_register(int32_t arg)
 		}
 		case IDATAGRADUAL:
 		{
-			if(unsigned(GET_REF(itemdataref)) >= MAXITEMS)
+			if(invalid_item_id(GET_REF(itemdataref)))
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", GET_REF(itemdataref));
 				ret = -10000;
@@ -4069,7 +4081,7 @@ int32_t get_register(int32_t arg)
 			ret = item_flag(item_flip_jinx);
 			break;
 		case IDATAUSEBURNSPR:
-			if(unsigned(GET_REF(itemdataref)) >= MAXITEMS)
+			if(invalid_item_id(GET_REF(itemdataref)))
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", GET_REF(itemdataref));
 				ret = 0;
@@ -4078,7 +4090,7 @@ int32_t get_register(int32_t arg)
 			break;
 			
 		case IDATASETMAX:
-			if(unsigned(GET_REF(itemdataref)) >= MAXITEMS)
+			if(invalid_item_id(GET_REF(itemdataref)))
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", GET_REF(itemdataref));
 				ret = -10000;
@@ -4088,7 +4100,7 @@ int32_t get_register(int32_t arg)
 			break;
 			
 		case IDATAMAX:
-			if(unsigned(GET_REF(itemdataref)) >= MAXITEMS)
+			if(invalid_item_id(GET_REF(itemdataref)))
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", GET_REF(itemdataref));
 				ret = -10000;
@@ -4098,7 +4110,7 @@ int32_t get_register(int32_t arg)
 			break;
 			
 		case IDATACOUNTER:
-			if(unsigned(GET_REF(itemdataref)) >= MAXITEMS)
+			if(invalid_item_id(GET_REF(itemdataref)))
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", GET_REF(itemdataref));
 				ret = -10000;
@@ -4108,7 +4120,7 @@ int32_t get_register(int32_t arg)
 			break;
 			
 		case IDATAPSOUND:
-			if(unsigned(GET_REF(itemdataref)) >= MAXITEMS)
+			if(invalid_item_id(GET_REF(itemdataref)))
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", GET_REF(itemdataref));
 				ret = -10000;
@@ -4117,7 +4129,7 @@ int32_t get_register(int32_t arg)
 			ret=(itemsbuf[GET_REF(itemdataref)].playsound)*10000;
 			break;
 		case IDATAUSESOUND:
-			if(unsigned(GET_REF(itemdataref)) >= MAXITEMS)
+			if(invalid_item_id(GET_REF(itemdataref)))
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", GET_REF(itemdataref));
 				ret = -10000;
@@ -4127,7 +4139,7 @@ int32_t get_register(int32_t arg)
 			break;
 			
 		case IDATAUSESOUND2:
-			if(unsigned(GET_REF(itemdataref)) >= MAXITEMS)
+			if(invalid_item_id(GET_REF(itemdataref)))
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", GET_REF(itemdataref));
 				ret = -10000;
@@ -4137,7 +4149,7 @@ int32_t get_register(int32_t arg)
 			break;
 			
 		case IDATAPOWER:
-			if(unsigned(GET_REF(itemdataref)) >= MAXITEMS)
+			if(invalid_item_id(GET_REF(itemdataref)))
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", GET_REF(itemdataref));
 				ret = -10000;
@@ -4148,7 +4160,7 @@ int32_t get_register(int32_t arg)
 		
 		//Get the ID of an item.
 		case IDATAID:
-			if(unsigned(GET_REF(itemdataref)) >= MAXITEMS)
+			if(invalid_item_id(GET_REF(itemdataref)))
 			{
 				ret = -10000;
 				break;
@@ -4158,7 +4170,7 @@ int32_t get_register(int32_t arg)
 		
 		//Get the script assigned to an item (active)
 		case IDATASCRIPT:
-			if(unsigned(GET_REF(itemdataref)) >= MAXITEMS)
+			if(invalid_item_id(GET_REF(itemdataref)))
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", GET_REF(itemdataref));
 				ret = -10000;
@@ -4167,7 +4179,7 @@ int32_t get_register(int32_t arg)
 			ret=(itemsbuf[GET_REF(itemdataref)].script)*10000;
 			break;
 		case IDATASPRSCRIPT:
-			if(unsigned(GET_REF(itemdataref)) >= MAXITEMS)
+			if(invalid_item_id(GET_REF(itemdataref)))
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", GET_REF(itemdataref));
 				ret = -10000;
@@ -4177,7 +4189,7 @@ int32_t get_register(int32_t arg)
 			break;
 		//Hero TIle modifier
 		case IDATALTM:
-			if(unsigned(GET_REF(itemdataref)) >= MAXITEMS)
+			if(invalid_item_id(GET_REF(itemdataref)))
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", GET_REF(itemdataref));
 				ret = 0;
@@ -4187,7 +4199,7 @@ int32_t get_register(int32_t arg)
 			break;
 		//Pickup script
 		case IDATAPSCRIPT:
-			if(unsigned(GET_REF(itemdataref)) >= MAXITEMS)
+			if(invalid_item_id(GET_REF(itemdataref)))
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", GET_REF(itemdataref));
 				ret = -10000;
@@ -4197,7 +4209,7 @@ int32_t get_register(int32_t arg)
 			break;
 		//Pickup string
 		case IDATAPSTRING:
-			if(unsigned(GET_REF(itemdataref)) >= MAXITEMS)
+			if(invalid_item_id(GET_REF(itemdataref)))
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", GET_REF(itemdataref));
 				ret = -10000;
@@ -4206,7 +4218,7 @@ int32_t get_register(int32_t arg)
 			ret=(itemsbuf[GET_REF(itemdataref)].pstring)*10000;
 			break;
 		case IDATAPFLAGS:
-			if(unsigned(GET_REF(itemdataref)) >= MAXITEMS)
+			if(invalid_item_id(GET_REF(itemdataref)))
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", GET_REF(itemdataref));
 				ret = 0;
@@ -4215,7 +4227,7 @@ int32_t get_register(int32_t arg)
 			ret = (itemsbuf[GET_REF(itemdataref)].pickup_string_flags)*10000;
 			break;
 		case IDATAPICKUPLITEMS:
-			if(unsigned(GET_REF(itemdataref)) >= MAXITEMS)
+			if(invalid_item_id(GET_REF(itemdataref)))
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", GET_REF(itemdataref));
 				ret = 0;
@@ -4224,7 +4236,7 @@ int32_t get_register(int32_t arg)
 			ret = (itemsbuf[GET_REF(itemdataref)].pickup_litems)*10000;
 			break;
 		case IDATAPICKUPLITEMLEVEL:
-			if(unsigned(GET_REF(itemdataref)) >= MAXITEMS)
+			if(invalid_item_id(GET_REF(itemdataref)))
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", GET_REF(itemdataref));
 				ret = 0;
@@ -4234,7 +4246,7 @@ int32_t get_register(int32_t arg)
 			break;
 		//Magic cost
 		case IDATAMAGCOST:
-			if(unsigned(GET_REF(itemdataref)) >= MAXITEMS)
+			if(invalid_item_id(GET_REF(itemdataref)))
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", GET_REF(itemdataref));
 				ret = -10000;
@@ -4243,7 +4255,7 @@ int32_t get_register(int32_t arg)
 			ret=(itemsbuf[GET_REF(itemdataref)].cost_amount[0])*10000;
 			break;
 		case IDATACOST2:
-			if(unsigned(GET_REF(itemdataref)) >= MAXITEMS)
+			if(invalid_item_id(GET_REF(itemdataref)))
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", GET_REF(itemdataref));
 				ret = -10000;
@@ -4252,7 +4264,7 @@ int32_t get_register(int32_t arg)
 			ret=(itemsbuf[GET_REF(itemdataref)].cost_amount[1])*10000;
 			break;
 		case IDATACOOLDOWN:
-			if(unsigned(GET_REF(itemdataref)) >= MAXITEMS)
+			if(invalid_item_id(GET_REF(itemdataref)))
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", GET_REF(itemdataref));
 				ret = -10000;
@@ -4262,7 +4274,7 @@ int32_t get_register(int32_t arg)
 			break;
 		//cost counter ref
 		case IDATACOSTCOUNTER:
-			if(unsigned(GET_REF(itemdataref)) >= MAXITEMS)
+			if(invalid_item_id(GET_REF(itemdataref)))
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", GET_REF(itemdataref));
 				ret = -10000;
@@ -4271,7 +4283,7 @@ int32_t get_register(int32_t arg)
 			ret=(itemsbuf[GET_REF(itemdataref)].cost_counter[0])*10000;
 			break;
 		case IDATACOSTCOUNTER2:
-			if(unsigned(GET_REF(itemdataref)) >= MAXITEMS)
+			if(invalid_item_id(GET_REF(itemdataref)))
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", GET_REF(itemdataref));
 				ret = -10000;
@@ -4281,7 +4293,7 @@ int32_t get_register(int32_t arg)
 			break;
 		//Min Hearts to Pick Up
 		case IDATAMINHEARTS:
-			if(unsigned(GET_REF(itemdataref)) >= MAXITEMS)
+			if(invalid_item_id(GET_REF(itemdataref)))
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", GET_REF(itemdataref));
 				ret = -10000;
@@ -4291,7 +4303,7 @@ int32_t get_register(int32_t arg)
 			break;
 		//Tile used by the item
 		case IDATATILE:
-			if(unsigned(GET_REF(itemdataref)) >= MAXITEMS)
+			if(invalid_item_id(GET_REF(itemdataref)))
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", GET_REF(itemdataref));
 				ret = -10000;
@@ -4301,7 +4313,7 @@ int32_t get_register(int32_t arg)
 			break;
 		//itemdata->Flash
 		case IDATAMISC:
-			if(unsigned(GET_REF(itemdataref)) >= MAXITEMS)
+			if(invalid_item_id(GET_REF(itemdataref)))
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", GET_REF(itemdataref));
 				ret = -10000;
@@ -4311,7 +4323,7 @@ int32_t get_register(int32_t arg)
 			break;
 		//->CSet
 		case IDATACSET:
-			if(unsigned(GET_REF(itemdataref)) >= MAXITEMS)
+			if(invalid_item_id(GET_REF(itemdataref)))
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", GET_REF(itemdataref));
 				ret = -10000;
@@ -4327,7 +4339,7 @@ int32_t get_register(int32_t arg)
 			// 	ret = itemsbuf[ri->idata].csets*10000;
 			break;
 		case IDATAFLASHCSET:
-			if(unsigned(GET_REF(itemdataref)) >= MAXITEMS)
+			if(invalid_item_id(GET_REF(itemdataref)))
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", GET_REF(itemdataref));
 				ret = -10000;
@@ -4337,7 +4349,7 @@ int32_t get_register(int32_t arg)
 			break;
 		//->A.Frames
 		case IDATAFRAMES:
-			if(unsigned(GET_REF(itemdataref)) >= MAXITEMS)
+			if(invalid_item_id(GET_REF(itemdataref)))
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", GET_REF(itemdataref));
 				ret = -10000;
@@ -4352,7 +4364,7 @@ int32_t get_register(int32_t arg)
 		*/ 
 		//->A.Speed
 		case IDATAASPEED:
-			if(unsigned(GET_REF(itemdataref)) >= MAXITEMS)
+			if(invalid_item_id(GET_REF(itemdataref)))
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", GET_REF(itemdataref));
 				ret = -10000;
@@ -4362,7 +4374,7 @@ int32_t get_register(int32_t arg)
 			break;
 		//->Delay
 		case IDATADELAY:
-			if(unsigned(GET_REF(itemdataref)) >= MAXITEMS)
+			if(invalid_item_id(GET_REF(itemdataref)))
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", GET_REF(itemdataref));
 				ret = -10000;
@@ -9062,7 +9074,7 @@ int32_t get_register(int32_t arg)
 		{
 			if(SubscrWidget* widg = checkSubWidg(GET_REF(subscreenwidgref)))
 			{
-				ret = 10000*widg->getDisplayItem();
+				ret = 10000*widg->getDisplayItem().id;
 			}
 			break;
 		}
@@ -9070,7 +9082,7 @@ int32_t get_register(int32_t arg)
 		{
 			if(SubscrWidget* widg = checkSubWidg(GET_REF(subscreenwidgref)))
 			{
-				ret = 10000*widg->getItemVal();
+				ret = 10000*widg->getItemVal().id;
 			}
 			break;
 		}
@@ -10637,16 +10649,18 @@ void set_register(int32_t arg, int32_t value)
 			seta = vbound(seta,-1,255);
 			setb = vbound(setb,-1,255);
 				
-			Awpn = seta;
+			Awpn = {seta};
 			game->awpn = 255;
 			game->forced_awpn = seta;
-			game->items_off[seta] = 0;
+			if (seta > -1)
+				game->items_off.set(seta, false);
 			directItemA = seta;
 			
-			Bwpn = setb;
+			Bwpn = {setb};
 			game->bwpn = 255;
 			game->forced_bwpn = setb;
-			game->items_off[setb] = 0;
+			if (setb > -1)
+				game->items_off.set(setb, false);
 			directItemB = setb;
 			break;
 		}
@@ -10657,7 +10671,7 @@ void set_register(int32_t arg, int32_t value)
 			//value = third arg
 			//int32_t item, int32_t slot, int32_t force
 			int32_t itm = GET_D(rINDEX)/10000;
-			itm = vbound(itm, -1, 255);
+			itm = vbound(itm, -1, MAXITEMS-1);
 			
 			int32_t slot = GET_D(rINDEX2)/10000;
 			int32_t force = GET_D(rEXP1)/10000;
@@ -10677,32 +10691,36 @@ void set_register(int32_t arg, int32_t value)
 				switch(slot)
 				{
 					case 0: //b
-						Bwpn = itm;
-						game->items_off[itm] = 0;
+						Bwpn = {itm};
+						if (itm > -1)
+							game->items_off.set(itm, false);
 						game->bwpn = 255;
 						game->forced_bwpn = itm;
 						directItemB = itm;
 						break;
 					
 					case 1: //a
-						Awpn = itm;
-						game->items_off[itm] = 0;
+						Awpn = {itm};
+						if (itm > -1)
+							game->items_off.set(itm, false);
 						game->awpn = 255;
 						game->forced_awpn = itm;
 						directItemA = itm;
 						break;
 					
 					case 2: //x
-						Xwpn = itm;
-						game->items_off[itm] = 0;
+						Xwpn = {itm};
+						if (itm > -1)
+							game->items_off.set(itm, false);
 						game->xwpn = 255;
 						game->forced_xwpn = itm;
 						directItemX = itm;
 						break;
 					
 					case 3: //y
-						Ywpn = itm;
-						game->items_off[itm] = 0;
+						Ywpn = {itm};
+						if (itm > -1)
+							game->items_off.set(itm, false);
 						game->ywpn = 255;
 						game->forced_ywpn = itm;
 						directItemX = itm;
@@ -10711,37 +10729,41 @@ void set_register(int32_t arg, int32_t value)
 			}
 			else if ( force == 1 )
 			{
-				if (game->item[itm])
+				if (game->get_item(itm))
 				{
 					switch(slot)
 					{
 						case 0: //b
-							Bwpn = itm;
-							game->items_off[itm] = 0;
+							Bwpn = {itm};
+							if (itm > -1)
+								game->items_off.set(itm, false);
 							game->bwpn = 255;
 							game->forced_bwpn = itm;
 							directItemB = itm;
 							break;
 						
 						case 1: //a
-							Awpn = itm;
-							game->items_off[itm] = 0;
+							Awpn = {itm};
+							if (itm > -1)
+								game->items_off.set(itm, false);
 							game->awpn = 255;
 							game->forced_awpn = itm;
 							directItemA = itm;
 							break;
 						
 						case 2: //x
-							Xwpn = itm;
-							game->items_off[itm] = 0;
+							Xwpn = {itm};
+							if (itm > -1)
+								game->items_off.set(itm, false);
 							game->xwpn = 255;
 							game->forced_xwpn = itm;
 							directItemX = itm;
 							break;
 						
 						case 3: //y
-							Ywpn = itm;
-							game->items_off[itm] = 0;
+							Ywpn = {itm};
+							if (itm > -1)
+								game->items_off.set(itm, false);
 							game->ywpn = 255;
 							game->forced_ywpn = itm;
 							directItemY = itm;
@@ -10754,8 +10776,9 @@ void set_register(int32_t arg, int32_t value)
 				switch(slot)
 				{
 					case 0: //b
-						Bwpn = itm;
-						game->items_off[itm] = 0;
+						Bwpn = {itm};
+						if (itm > -1)
+							game->items_off.set(itm, false);
 						game->bwpn = 255;
 						game->forced_bwpn = itm;
 						directItemB = itm;
@@ -10764,8 +10787,9 @@ void set_register(int32_t arg, int32_t value)
 					case 1: //a
 						if (get_qr(qr_SELECTAWPN))
 						{
-							Awpn = itm;
-							game->items_off[itm] = 0;
+							Awpn = {itm};
+							if (itm > -1)
+								game->items_off.set(itm, false);
 							game->awpn = 255;
 							game->forced_awpn = itm;
 							directItemA = itm;
@@ -10773,16 +10797,18 @@ void set_register(int32_t arg, int32_t value)
 						break;
 					
 					case 2:  //x
-						Xwpn = itm;
-						game->items_off[itm] = 0;
+						Xwpn = {itm};
+						if (itm > -1)
+							game->items_off.set(itm, false);
 						game->xwpn = 255;
 						game->forced_xwpn = itm;
 						directItemX = itm;
 						break;
 					
 					case 3: //y
-						Ywpn = itm;
-						game->items_off[itm] = 0;
+						Ywpn = {itm};
+						if (itm > -1)
+							game->items_off.set(itm, false);
 						game->ywpn = 255;
 						game->forced_ywpn = itm;
 						directItemY = itm;
@@ -10791,13 +10817,14 @@ void set_register(int32_t arg, int32_t value)
 			}
 			else if ( force == 3 ) //Flag ITM_REQUIRE_INVENTORY + ITM_REQUIRE_SLOT_A_RULE
 			{
-				if ( game->item[itm] )
+				if ( game->get_item(itm) )
 				{
 					switch(slot)
 					{
 						case 0: //b
-							Bwpn = itm;
-							game->items_off[itm] = 0;
+							Bwpn = {itm};
+							if (itm > -1)
+								game->items_off.set(itm, false);
 							game->bwpn = 255;
 							game->forced_bwpn = itm;
 							directItemB = itm;
@@ -10806,8 +10833,9 @@ void set_register(int32_t arg, int32_t value)
 						case 1: //a
 							if (get_qr(qr_SELECTAWPN))
 							{
-								Awpn = itm;
-								game->items_off[itm] = 0;
+								Awpn = {itm};
+								if (itm > -1)
+									game->items_off.set(itm, false);
 								game->awpn = 255;
 								game->forced_awpn = itm;
 								directItemA = itm;
@@ -10815,16 +10843,18 @@ void set_register(int32_t arg, int32_t value)
 							break;
 						
 						case 2: //x
-							Xwpn = itm;
-							game->items_off[itm] = 0;
+							Xwpn = {itm};
+							if (itm > -1)
+								game->items_off.set(itm, false);
 							game->xwpn = 255;
 							game->forced_xwpn = itm;
 							directItemX = itm;
 							break;
 						
 						case 3: //y
-							Ywpn = itm;
-							game->items_off[itm] = 0;
+							Ywpn = {itm};
+							if (itm > -1)
+								game->items_off.set(itm, false);
 							game->ywpn = 255;
 							game->forced_ywpn = itm;
 							directItemY = itm;
@@ -10954,102 +10984,85 @@ void set_register(int32_t arg, int32_t value)
 		
 		case LINKITEMB:
 		{
-			if ( value/10000 < -1 ) 
+			auto val = value / 10000;
+			if (val != -1 && invalid_item_id(val))
 			{
-				al_trace("Tried to write an invalid item ID to Hero->ItemB: %d\n",value/10000);
-				break;
-			}		
-			if ( value/10000 > MAXITEMS-1 ) 
-			{
-				al_trace("Tried to write an invalid item ID to Hero->ItemB: %d\n",value/10000);
+				al_trace("Tried to write an invalid item ID to Hero->ItemB: %d\n",val);
 				break;
 			}
-			//Hero->setBButtonItem(vbound((value/10000),0,(MAXITEMS-1)));
-			
-			if (Bwpn != (value/10000))
+			if (Bwpn.id != (val))
 			{
-				Bwpn = value/10000;
+				Bwpn = {val};
 				if(new_subscreen_active)
 					new_subscreen_active->get_page_pos(Bwpn, game->bwpn);
-				game->forced_bwpn = value/10000;
-				game->items_off[value/10000] = 0;
+				if (val > -1)
+					game->items_off.set(val, false);
+				game->forced_bwpn = val;
 			}
-			directItemB = value/10000;
+			directItemB = val;
 			break;
 		}
 		
 		
 		case LINKITEMA:
 		{
-			if ( value/10000 < -1 ) 
+			auto val = value / 10000;
+			if (val != -1 && invalid_item_id(val))
 			{
-				Z_scripterrlog("Tried to write an invalid item ID to Hero->ItemA: %d\n",value/10000);
+				Z_scripterrlog("Tried to write an invalid item ID to Hero->ItemA: %d\n",val);
 				break;
-			}		
-			if ( value/10000 > MAXITEMS-1 ) 
+			}
+			if (Awpn.id != (val))
 			{
-				Z_scripterrlog("Tried to write an invalid item ID to Hero->ItemA: %d\n",value/10000);
-				break;
-			}		
-			//Hero->setBButtonItem(vbound((value/10000),0,(MAXITEMS-1)));
-			if (Awpn != (value/10000))
-			{
-				Awpn = value/10000;
+				Awpn = {val};
 				if(new_subscreen_active)
 					new_subscreen_active->get_page_pos(Awpn, game->awpn);
-				game->items_off[value/10000] = 0;
-				game->forced_awpn = value/10000;
+				if (val > -1)
+					game->items_off.set(val, false);
+				game->forced_awpn = val;
 			}
-			directItemA = value/10000;
+			directItemA = val;
 			break;
 		}
 		
 		case LINKITEMX:
 		{
-			if ( value/10000 < -1 ) 
+			auto val = value / 10000;
+			if (val != -1 && invalid_item_id(val))
 			{
-				Z_scripterrlog("Tried to write an invalid item ID to Hero->ItemX: %d\n",value/10000);
+				Z_scripterrlog("Tried to write an invalid item ID to Hero->ItemX: %d\n",val);
 				break;
-			}		
-			if ( value/10000 > MAXITEMS-1 ) 
+			}
+			if (Xwpn.id != (val))
 			{
-				Z_scripterrlog("Tried to write an invalid item ID to Hero->ItemX: %d\n",value/10000);
-				break;
-			}		
-			//Hero->setBButtonItem(vbound((value/10000),0,(MAXITEMS-1)));
-			if (Xwpn != (value/10000))
-			{
-				Xwpn = value/10000;
+				Xwpn = {val};
 				if(new_subscreen_active)
 					new_subscreen_active->get_page_pos(Xwpn, game->xwpn);
-				game->items_off[value/10000] = 0;
-				game->forced_xwpn = value/10000;
+				if (val > -1)
+					game->items_off.set(val, false);
+				game->forced_xwpn = val;
 			}
-			directItemX = value/10000;
+			directItemX = val;
 			break;
 		}
 		case LINKITEMY:
 		{
-			if ( value/10000 < -1 ) 
+			auto val = value / 10000;
+			if (val != -1 && invalid_item_id(val))
 			{
-				Z_scripterrlog("Tried to write an invalid item ID to Hero->ItemY: %d\n",value/10000);
+				Z_scripterrlog("Tried to write an invalid item ID to Hero->ItemY: %d\n",val);
 				break;
-			}		
-			if ( value/10000 > MAXITEMS-1 ) 
+			}
+			if (Ywpn.id != (val))
 			{
-				Z_scripterrlog("Tried to write an invalid item ID to Hero->ItemY: %d\n",value/10000);
-				break;
-			}		
-			//Hero->setBButtonItem(vbound((value/10000),0,(MAXITEMS-1)));
-			if (Ywpn != (value/10000))
-			{
-				Ywpn = value/10000;
+				Ywpn = {val};
 				if(new_subscreen_active)
 					new_subscreen_active->get_page_pos(Ywpn, game->ywpn);
-				game->items_off[value/10000] = 0;
-				game->forced_ywpn = value/10000;
+				if (val > -1)
+					game->items_off.set(val, false);
+				game->forced_ywpn = val;
 			}
-			directItemY = value/10000;
+			directItemY = val;
 			break;
 		}
 
@@ -11493,7 +11506,7 @@ void set_register(int32_t arg, int32_t value)
 		//not mine, but let;s guard some of them all the same -Z
 		//item class
 		case IDATATYPE:
-			if(unsigned(GET_REF(itemdataref)) >= MAXITEMS)
+			if(invalid_item_id(GET_REF(itemdataref)))
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", GET_REF(itemdataref));
 				break;
@@ -11503,7 +11516,7 @@ void set_register(int32_t arg, int32_t value)
 			break;
 		
 		case IDATAUSEWPN:
-			if(unsigned(GET_REF(itemdataref)) >= MAXITEMS)
+			if(invalid_item_id(GET_REF(itemdataref)))
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", GET_REF(itemdataref));
 				break;
@@ -11511,7 +11524,7 @@ void set_register(int32_t arg, int32_t value)
 			(itemsbuf[GET_REF(itemdataref)].weap_data.imitate_weapon)=vbound(value/10000, 0, 255);
 			break;
 		case IDATAUSEDEF:
-			if(unsigned(GET_REF(itemdataref)) >= MAXITEMS)
+			if(invalid_item_id(GET_REF(itemdataref)))
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", GET_REF(itemdataref));
 				break;
@@ -11519,7 +11532,7 @@ void set_register(int32_t arg, int32_t value)
 			(itemsbuf[GET_REF(itemdataref)].weap_data.default_defense)=vbound(value/10000, 0, 255);
 			break;
 		case IDATAWRANGE:
-			if(unsigned(GET_REF(itemdataref)) >= MAXITEMS)
+			if(invalid_item_id(GET_REF(itemdataref)))
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", GET_REF(itemdataref));
 				break;
@@ -11527,7 +11540,7 @@ void set_register(int32_t arg, int32_t value)
 			(itemsbuf[GET_REF(itemdataref)].weaprange)=vbound(value/10000, 0, 255);
 			break;
 		case IDATAMAGICTIMER:
-			if(unsigned(GET_REF(itemdataref)) >= MAXITEMS)
+			if(invalid_item_id(GET_REF(itemdataref)))
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", GET_REF(itemdataref));
 				break;
@@ -11535,7 +11548,7 @@ void set_register(int32_t arg, int32_t value)
 			(itemsbuf[GET_REF(itemdataref)].magiccosttimer[0])=vbound(value/10000, 0, 214747);
 			break;
 		case IDATAMAGICTIMER2:
-			if(unsigned(GET_REF(itemdataref)) >= MAXITEMS)
+			if(invalid_item_id(GET_REF(itemdataref)))
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", GET_REF(itemdataref));
 				break;
@@ -11543,7 +11556,7 @@ void set_register(int32_t arg, int32_t value)
 			(itemsbuf[GET_REF(itemdataref)].magiccosttimer[1])=vbound(value/10000, 0, 214747);
 			break;
 		case IDATADURATION:
-			if(unsigned(GET_REF(itemdataref)) >= MAXITEMS)
+			if(invalid_item_id(GET_REF(itemdataref)))
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", GET_REF(itemdataref));
 				break;
@@ -11552,7 +11565,7 @@ void set_register(int32_t arg, int32_t value)
 			break;
 		 
 		case IDATADUPLICATES:
-			if(unsigned(GET_REF(itemdataref)) >= MAXITEMS)
+			if(invalid_item_id(GET_REF(itemdataref)))
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", GET_REF(itemdataref));
 				break;
@@ -11560,7 +11573,7 @@ void set_register(int32_t arg, int32_t value)
 			(itemsbuf[GET_REF(itemdataref)].duplicates)=vbound(value/10000, 0, 255);
 			break;
 		case IDATADRAWLAYER:
-			if(unsigned(GET_REF(itemdataref)) >= MAXITEMS)
+			if(invalid_item_id(GET_REF(itemdataref)))
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", GET_REF(itemdataref));
 				break;
@@ -11568,7 +11581,7 @@ void set_register(int32_t arg, int32_t value)
 			(itemsbuf[GET_REF(itemdataref)].drawlayer)=vbound(value/10000, 0, 7);
 			break;
 		case IDATACOLLECTFLAGS:
-			if(unsigned(GET_REF(itemdataref)) >= MAXITEMS)
+			if(invalid_item_id(GET_REF(itemdataref)))
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", GET_REF(itemdataref));
 				break;
@@ -11577,7 +11590,7 @@ void set_register(int32_t arg, int32_t value)
 			(itemsbuf[GET_REF(itemdataref)].collectflags)=vbound(value/10000, 0, 214747);
 			break;
 		case IDATAWEAPONSCRIPT:
-			if(unsigned(GET_REF(itemdataref)) >= MAXITEMS)
+			if(invalid_item_id(GET_REF(itemdataref)))
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", GET_REF(itemdataref));
 				break;
@@ -11585,7 +11598,7 @@ void set_register(int32_t arg, int32_t value)
 			(itemsbuf[GET_REF(itemdataref)].weap_data.script)=vbound(value/10000, 0, 255);
 			break;
 		case IDATAWEAPHXOFS:
-			if(unsigned(GET_REF(itemdataref)) >= MAXITEMS)
+			if(invalid_item_id(GET_REF(itemdataref)))
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", GET_REF(itemdataref));
 				break;
@@ -11593,7 +11606,7 @@ void set_register(int32_t arg, int32_t value)
 			(itemsbuf[GET_REF(itemdataref)].weap_data.hxofs)=(value/10000);
 			break;
 		case IDATAWEAPHYOFS:
-			if(unsigned(GET_REF(itemdataref)) >= MAXITEMS)
+			if(invalid_item_id(GET_REF(itemdataref)))
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", GET_REF(itemdataref));
 				break;
@@ -11601,7 +11614,7 @@ void set_register(int32_t arg, int32_t value)
 			(itemsbuf[GET_REF(itemdataref)].weap_data.hyofs)=(value/10000);
 			break;
 		case IDATAWEAPHXSZ:
-			if(unsigned(GET_REF(itemdataref)) >= MAXITEMS)
+			if(invalid_item_id(GET_REF(itemdataref)))
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", GET_REF(itemdataref));
 				break;
@@ -11609,7 +11622,7 @@ void set_register(int32_t arg, int32_t value)
 			(itemsbuf[GET_REF(itemdataref)].weap_data.hxsz)=(value/10000);
 			break;
 		case IDATAWEAPHYSZ:
-			if(unsigned(GET_REF(itemdataref)) >= MAXITEMS)
+			if(invalid_item_id(GET_REF(itemdataref)))
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", GET_REF(itemdataref));
 				break;
@@ -11617,7 +11630,7 @@ void set_register(int32_t arg, int32_t value)
 			(itemsbuf[GET_REF(itemdataref)].weap_data.hysz)=(value/10000);
 			break;
 		case IDATAWEAPHZSZ:
-			if(unsigned(GET_REF(itemdataref)) >= MAXITEMS)
+			if(invalid_item_id(GET_REF(itemdataref)))
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", GET_REF(itemdataref));
 				break;
@@ -11625,7 +11638,7 @@ void set_register(int32_t arg, int32_t value)
 			(itemsbuf[GET_REF(itemdataref)].weap_data.hzsz)=(value/10000);
 			break;
 		case IDATAWEAPXOFS:
-			if(unsigned(GET_REF(itemdataref)) >= MAXITEMS)
+			if(invalid_item_id(GET_REF(itemdataref)))
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", GET_REF(itemdataref));
 				break;
@@ -11633,7 +11646,7 @@ void set_register(int32_t arg, int32_t value)
 			(itemsbuf[GET_REF(itemdataref)].weap_data.xofs)=(value/10000);
 			break;
 		case IDATAWEAPYOFS:
-			if(unsigned(GET_REF(itemdataref)) >= MAXITEMS)
+			if(invalid_item_id(GET_REF(itemdataref)))
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", GET_REF(itemdataref));
 				break;
@@ -11643,7 +11656,7 @@ void set_register(int32_t arg, int32_t value)
 
 		
 		case IDATAHXOFS:
-			if(unsigned(GET_REF(itemdataref)) >= MAXITEMS)
+			if(invalid_item_id(GET_REF(itemdataref)))
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", GET_REF(itemdataref));
 				break;
@@ -11651,7 +11664,7 @@ void set_register(int32_t arg, int32_t value)
 			(itemsbuf[GET_REF(itemdataref)].hxofs)=(value/10000);
 			break;
 		case IDATAHYOFS:
-			if(unsigned(GET_REF(itemdataref)) >= MAXITEMS)
+			if(invalid_item_id(GET_REF(itemdataref)))
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", GET_REF(itemdataref));
 				break;
@@ -11659,7 +11672,7 @@ void set_register(int32_t arg, int32_t value)
 			(itemsbuf[GET_REF(itemdataref)].hyofs)=(value/10000);
 			break;
 		case IDATAHXSZ:
-			if(unsigned(GET_REF(itemdataref)) >= MAXITEMS)
+			if(invalid_item_id(GET_REF(itemdataref)))
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", GET_REF(itemdataref));
 				break;
@@ -11667,7 +11680,7 @@ void set_register(int32_t arg, int32_t value)
 			(itemsbuf[GET_REF(itemdataref)].hxsz)=(value/10000);
 			break;
 		case IDATAHYSZ:
-			if(unsigned(GET_REF(itemdataref)) >= MAXITEMS)
+			if(invalid_item_id(GET_REF(itemdataref)))
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", GET_REF(itemdataref));
 				break;
@@ -11675,7 +11688,7 @@ void set_register(int32_t arg, int32_t value)
 			(itemsbuf[GET_REF(itemdataref)].hysz)=(value/10000);
 			break;
 		case IDATAHZSZ:
-			if(unsigned(GET_REF(itemdataref)) >= MAXITEMS)
+			if(invalid_item_id(GET_REF(itemdataref)))
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", GET_REF(itemdataref));
 				break;
@@ -11683,7 +11696,7 @@ void set_register(int32_t arg, int32_t value)
 			(itemsbuf[GET_REF(itemdataref)].hzsz)=(value/10000);
 			break;
 		case IDATADXOFS:
-			if(unsigned(GET_REF(itemdataref)) >= MAXITEMS)
+			if(invalid_item_id(GET_REF(itemdataref)))
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", GET_REF(itemdataref));
 				break;
@@ -11691,7 +11704,7 @@ void set_register(int32_t arg, int32_t value)
 			(itemsbuf[GET_REF(itemdataref)].xofs)=(value/10000);
 			break;
 		case IDATADYOFS:
-			if(unsigned(GET_REF(itemdataref)) >= MAXITEMS)
+			if(invalid_item_id(GET_REF(itemdataref)))
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", GET_REF(itemdataref));
 				break;
@@ -11699,7 +11712,7 @@ void set_register(int32_t arg, int32_t value)
 			(itemsbuf[GET_REF(itemdataref)].yofs)=(value/10000);
 			break;
 		case IDATATILEW:
-			if(unsigned(GET_REF(itemdataref)) >= MAXITEMS)
+			if(invalid_item_id(GET_REF(itemdataref)))
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", GET_REF(itemdataref));
 				break;
@@ -11707,7 +11720,7 @@ void set_register(int32_t arg, int32_t value)
 			(itemsbuf[GET_REF(itemdataref)].tilew)=(value/10000);
 			break;
 		case IDATATILEH:
-			if(unsigned(GET_REF(itemdataref)) >= MAXITEMS)
+			if(invalid_item_id(GET_REF(itemdataref)))
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", GET_REF(itemdataref));
 				break;
@@ -11715,7 +11728,7 @@ void set_register(int32_t arg, int32_t value)
 			(itemsbuf[GET_REF(itemdataref)].tileh)=(value/10000);
 			break;
 		case IDATAPICKUP:
-			if(unsigned(GET_REF(itemdataref)) >= MAXITEMS)
+			if(invalid_item_id(GET_REF(itemdataref)))
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", GET_REF(itemdataref));
 				break;
@@ -11723,7 +11736,7 @@ void set_register(int32_t arg, int32_t value)
 			(itemsbuf[GET_REF(itemdataref)].pickup)=(value/10000);
 			break;
 		case IDATAOVERRIDEFL:
-			if(unsigned(GET_REF(itemdataref)) >= MAXITEMS)
+			if(invalid_item_id(GET_REF(itemdataref)))
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", GET_REF(itemdataref));
 				break;
@@ -11732,7 +11745,7 @@ void set_register(int32_t arg, int32_t value)
 			break;
 
 		case IDATATILEWWEAP:
-			if(unsigned(GET_REF(itemdataref)) >= MAXITEMS)
+			if(invalid_item_id(GET_REF(itemdataref)))
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", GET_REF(itemdataref));
 				break;
@@ -11740,7 +11753,7 @@ void set_register(int32_t arg, int32_t value)
 			(itemsbuf[GET_REF(itemdataref)].weap_data.tilew)=(value/10000);
 			break;
 		case IDATATILEHWEAP:
-			if(unsigned(GET_REF(itemdataref)) >= MAXITEMS)
+			if(invalid_item_id(GET_REF(itemdataref)))
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", GET_REF(itemdataref));
 				break;
@@ -11748,7 +11761,7 @@ void set_register(int32_t arg, int32_t value)
 			(itemsbuf[GET_REF(itemdataref)].weap_data.tileh)=(value/10000);
 			break;
 		case IDATAOVERRIDEFLWEAP:
-			if(unsigned(GET_REF(itemdataref)) >= MAXITEMS)
+			if(invalid_item_id(GET_REF(itemdataref)))
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", GET_REF(itemdataref));
 				break;
@@ -11757,7 +11770,7 @@ void set_register(int32_t arg, int32_t value)
 			break;
 		
 		case IDATALEVEL:
-			if(unsigned(GET_REF(itemdataref)) >= MAXITEMS)
+			if(invalid_item_id(GET_REF(itemdataref)))
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", GET_REF(itemdataref));
 				break;
@@ -11770,19 +11783,20 @@ void set_register(int32_t arg, int32_t value)
 			break;
 		case IDATAAMOUNT:
 		{
-			if(unsigned(GET_REF(itemdataref)) >= MAXITEMS)
+			if(invalid_item_id(GET_REF(itemdataref)))
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", GET_REF(itemdataref));
 				break;
 			}
 			int32_t v = vbound(value/10000, -9999, 16383);
-			itemsbuf[GET_REF(itemdataref)].amount &= 0x8000;
-			itemsbuf[GET_REF(itemdataref)].amount |= (abs(v)&0x3FFF)|(v<0?0x4000:0);
+			auto& itm = itemsbuf[GET_REF(itemdataref)];
+			itm.amount &= 0x8000;
+			itm.amount |= (abs(v)&0x3FFF)|(v<0?0x4000:0);
 			break;
 		}
 		case IDATAGRADUAL:
 		{
-			if(unsigned(GET_REF(itemdataref)) >= MAXITEMS)
+			if(invalid_item_id(GET_REF(itemdataref)))
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", GET_REF(itemdataref));
 				break;
@@ -11806,14 +11820,14 @@ void set_register(int32_t arg, int32_t value)
 			item_flag(item_flip_jinx, value);
 			break;
 		case IDATAUSEBURNSPR:
-			if(unsigned(GET_REF(itemdataref)) >= MAXITEMS)
+			if(invalid_item_id(GET_REF(itemdataref)))
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", GET_REF(itemdataref));
 			}
 			else SETFLAG(itemsbuf[GET_REF(itemdataref)].weap_data.wflags, WFLAG_UPDATE_IGNITE_SPRITE, value);
 			break;
 		case IDATASETMAX:
-			if(unsigned(GET_REF(itemdataref)) >= MAXITEMS)
+			if(invalid_item_id(GET_REF(itemdataref)))
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", GET_REF(itemdataref));
 				break;
@@ -11822,7 +11836,7 @@ void set_register(int32_t arg, int32_t value)
 			break;
 			
 		case IDATAMAX:
-			if(unsigned(GET_REF(itemdataref)) >= MAXITEMS)
+			if(invalid_item_id(GET_REF(itemdataref)))
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", GET_REF(itemdataref));
 				break;
@@ -11831,7 +11845,7 @@ void set_register(int32_t arg, int32_t value)
 			break;
 			
 		case IDATAPOWER:
-			if(unsigned(GET_REF(itemdataref)) >= MAXITEMS)
+			if(invalid_item_id(GET_REF(itemdataref)))
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", GET_REF(itemdataref));
 				break;
@@ -11840,7 +11854,7 @@ void set_register(int32_t arg, int32_t value)
 			break;
 			
 		case IDATACOUNTER:
-			if(unsigned(GET_REF(itemdataref)) >= MAXITEMS)
+			if(invalid_item_id(GET_REF(itemdataref)))
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", GET_REF(itemdataref));
 				break;
@@ -11849,7 +11863,7 @@ void set_register(int32_t arg, int32_t value)
 			break;
 			
 		case IDATAPSOUND:
-			if(unsigned(GET_REF(itemdataref)) >= MAXITEMS)
+			if(invalid_item_id(GET_REF(itemdataref)))
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", GET_REF(itemdataref));
 				break;
@@ -11858,7 +11872,7 @@ void set_register(int32_t arg, int32_t value)
 			break;
 			
 		case IDATAUSESOUND:
-			if(unsigned(GET_REF(itemdataref)) >= MAXITEMS)
+			if(invalid_item_id(GET_REF(itemdataref)))
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", GET_REF(itemdataref));
 				break;
@@ -11867,7 +11881,7 @@ void set_register(int32_t arg, int32_t value)
 			break;
 			
 		case IDATAUSESOUND2:
-			if(unsigned(GET_REF(itemdataref)) >= MAXITEMS)
+			if(invalid_item_id(GET_REF(itemdataref)))
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", GET_REF(itemdataref));
 				break;
@@ -11916,54 +11930,74 @@ void set_register(int32_t arg, int32_t value)
 			break;
 		//Set the action script
 		case IDATASCRIPT:
-			if(unsigned(GET_REF(itemdataref)) >= MAXITEMS)
+		{
+			auto id = GET_REF(itemdataref);
+			if(invalid_item_id(id))
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", GET_REF(itemdataref));
+				scripting_log_error_with_context("Invalid itemdata access: {}", id);
 				break;
 			}
-			FFScript::deallocateAllScriptOwned(ScriptType::Item, ri->itemdataref);
-			itemsbuf[GET_REF(itemdataref)].script=vbound(value/10000,0,255);
+			FFScript::deallocateAllScriptOwned(ScriptType::Item, id);
+			auto& itm = itemsbuf[id];
+			itm.script = vbound(value/10000, 0, NUMSCRIPTITEM);
+			if (itm.script && !script_engine_data_exists(ScriptType::Item, id))
+			{
+				auto& data = get_script_engine_data(ScriptType::Item, id);
+				data.reset();
+				data.doscript = ((itm.flags & item_passive_script) && game->get_item(id)) ? 1 : 0;
+			}
 			break;
+		}
 		case IDATASPRSCRIPT:
-			if(unsigned(GET_REF(itemdataref)) >= MAXITEMS)
+			if(invalid_item_id(GET_REF(itemdataref)))
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", GET_REF(itemdataref));
 				break;
 			}
-			itemsbuf[GET_REF(itemdataref)].sprite_script=vbound(value/10000,0,255);
+			itemsbuf[GET_REF(itemdataref)].sprite_script=vbound(value/10000,0,NUMSCRIPTSITEMSPRITE);
 			break;
 
 		//Hero tile modifier. 
 		case IDATALTM:
 		{
-			if(unsigned(GET_REF(itemdataref)) >= MAXITEMS)
+			if(invalid_item_id(GET_REF(itemdataref)))
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", GET_REF(itemdataref));
 				break;
 			}
 			auto new_value = value/10000;
-			if (new_value != itemsbuf[GET_REF(itemdataref)].ltm)
+			auto& itm = itemsbuf[GET_REF(itemdataref)];
+			if (new_value != itm.ltm)
 				cache_tile_mod_clear();
-			itemsbuf[GET_REF(itemdataref)].ltm = new_value;
+			itm.ltm = new_value;
 			break;
 		}
 		//Pickup script
 		case IDATAPSCRIPT:
 		{
-			if(unsigned(GET_REF(itemdataref)) >= MAXITEMS)
+			auto id = GET_REF(itemdataref);
+			if(invalid_item_id(id))
 			{
-				scripting_log_error_with_context("Invalid itemdata access: {}", GET_REF(itemdataref));
+				scripting_log_error_with_context("Invalid itemdata access: {}", id);
 				break;
 			}
 			//Need to get collect script ref, not standard idata ref!
-			const int32_t new_ref = ri->itemdataref!=0 ? -(GET_REF(itemdataref)) : COLLECT_SCRIPT_ITEM_ZERO;
-			FFScript::deallocateAllScriptOwned(ScriptType::Item,new_ref);
-			itemsbuf[GET_REF(itemdataref)].collect_script=vbound(value/10000, 0, 255);
+			const int32_t new_ref = id != 0 ? -id : COLLECT_SCRIPT_ITEM_ZERO;
+			FFScript::deallocateAllScriptOwned(ScriptType::Item, new_ref);
+			
+			auto& itm = itemsbuf[id];
+			itm.collect_script = vbound(value/10000, 0, NUMSCRIPTITEM);
+			if (itm.collect_script && !script_engine_data_exists(ScriptType::Item, new_ref))
+			{
+				auto& data = get_script_engine_data(ScriptType::Item, new_ref);
+				data.reset();
+				data.doscript = 0;
+			}
 			break;
 		}
 		//pickup string
 		case IDATAPSTRING:
-			if(unsigned(GET_REF(itemdataref)) >= MAXITEMS)
+			if(invalid_item_id(GET_REF(itemdataref)))
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", GET_REF(itemdataref));
 				break;
@@ -11971,7 +12005,7 @@ void set_register(int32_t arg, int32_t value)
 			itemsbuf[GET_REF(itemdataref)].pstring=vbound(value/10000, 1, 255);
 			break;
 		case IDATAPFLAGS:
-			if(unsigned(GET_REF(itemdataref)) >= MAXITEMS)
+			if(invalid_item_id(GET_REF(itemdataref)))
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", GET_REF(itemdataref));
 				break;
@@ -11979,7 +12013,7 @@ void set_register(int32_t arg, int32_t value)
 			itemsbuf[GET_REF(itemdataref)].pickup_string_flags=vbound(value/10000, 0, 214748);
 			break;
 		case IDATAPICKUPLITEMS:
-			if(unsigned(GET_REF(itemdataref)) >= MAXITEMS)
+			if(invalid_item_id(GET_REF(itemdataref)))
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", GET_REF(itemdataref));
 				break;
@@ -11987,7 +12021,7 @@ void set_register(int32_t arg, int32_t value)
 			itemsbuf[GET_REF(itemdataref)].pickup_litems = vbound(value/10000, 0, 214748) & LI_ALL;
 			break;
 		case IDATAPICKUPLITEMLEVEL:
-			if(unsigned(GET_REF(itemdataref)) >= MAXITEMS)
+			if(invalid_item_id(GET_REF(itemdataref)))
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", GET_REF(itemdataref));
 				break;
@@ -11996,7 +12030,7 @@ void set_register(int32_t arg, int32_t value)
 			break;
 		//magic cost
 		case IDATAMAGCOST:
-			if(unsigned(GET_REF(itemdataref)) >= MAXITEMS)
+			if(invalid_item_id(GET_REF(itemdataref)))
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", GET_REF(itemdataref));
 				break;
@@ -12004,7 +12038,7 @@ void set_register(int32_t arg, int32_t value)
 			itemsbuf[GET_REF(itemdataref)].cost_amount[0]=vbound(value/10000,32767,-32768);
 			break;
 		case IDATACOST2:
-			if(unsigned(GET_REF(itemdataref)) >= MAXITEMS)
+			if(invalid_item_id(GET_REF(itemdataref)))
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", GET_REF(itemdataref));
 				break;
@@ -12012,7 +12046,7 @@ void set_register(int32_t arg, int32_t value)
 			itemsbuf[GET_REF(itemdataref)].cost_amount[1]=vbound(value/10000,32767,-32768);
 			break;
 		case IDATACOOLDOWN:
-			if(unsigned(GET_REF(itemdataref)) >= MAXITEMS)
+			if(invalid_item_id(GET_REF(itemdataref)))
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", GET_REF(itemdataref));
 				break;
@@ -12021,7 +12055,7 @@ void set_register(int32_t arg, int32_t value)
 			break;
 		//cost counter ref
 		case IDATACOSTCOUNTER:
-			if(unsigned(GET_REF(itemdataref)) >= MAXITEMS)
+			if(invalid_item_id(GET_REF(itemdataref)))
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", GET_REF(itemdataref));
 				break;
@@ -12029,7 +12063,7 @@ void set_register(int32_t arg, int32_t value)
 			itemsbuf[GET_REF(itemdataref)].cost_counter[0]=(vbound(value/10000,-1,32));
 			break;
 		case IDATACOSTCOUNTER2:
-			if(unsigned(GET_REF(itemdataref)) >= MAXITEMS)
+			if(invalid_item_id(GET_REF(itemdataref)))
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", GET_REF(itemdataref));
 				break;
@@ -12038,7 +12072,7 @@ void set_register(int32_t arg, int32_t value)
 			break;
 		//min hearts to pick up
 		case IDATAMINHEARTS:
-			if(unsigned(GET_REF(itemdataref)) >= MAXITEMS)
+			if(invalid_item_id(GET_REF(itemdataref)))
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", GET_REF(itemdataref));
 				break;
@@ -12047,7 +12081,7 @@ void set_register(int32_t arg, int32_t value)
 			break;
 		//item tile
 		case IDATATILE:
-			if(unsigned(GET_REF(itemdataref)) >= MAXITEMS)
+			if(invalid_item_id(GET_REF(itemdataref)))
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", GET_REF(itemdataref));
 				break;
@@ -12056,7 +12090,7 @@ void set_register(int32_t arg, int32_t value)
 			break;
 		//flash
 		case IDATAMISC:
-			if(unsigned(GET_REF(itemdataref)) >= MAXITEMS)
+			if(invalid_item_id(GET_REF(itemdataref)))
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", GET_REF(itemdataref));
 				break;
@@ -12065,7 +12099,7 @@ void set_register(int32_t arg, int32_t value)
 			break;
 		//cset
 		case IDATACSET:
-			if(unsigned(GET_REF(itemdataref)) >= MAXITEMS)
+			if(invalid_item_id(GET_REF(itemdataref)))
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", GET_REF(itemdataref));
 				break;
@@ -12081,7 +12115,7 @@ void set_register(int32_t arg, int32_t value)
 			break;
 		
 		case IDATAFLASHCSET:
-			if(unsigned(GET_REF(itemdataref)) >= MAXITEMS)
+			if(invalid_item_id(GET_REF(itemdataref)))
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", GET_REF(itemdataref));
 				break;
@@ -12096,7 +12130,7 @@ void set_register(int32_t arg, int32_t value)
 		*/
 		//A.Frames
 		case IDATAFRAMES:
-			if(unsigned(GET_REF(itemdataref)) >= MAXITEMS)
+			if(invalid_item_id(GET_REF(itemdataref)))
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", GET_REF(itemdataref));
 				break;
@@ -12105,7 +12139,7 @@ void set_register(int32_t arg, int32_t value)
 			break;
 		//A.speed
 		case IDATAASPEED:
-			if(unsigned(GET_REF(itemdataref)) >= MAXITEMS)
+			if(invalid_item_id(GET_REF(itemdataref)))
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", GET_REF(itemdataref));
 				break;
@@ -12114,7 +12148,7 @@ void set_register(int32_t arg, int32_t value)
 			break;
 		//Anim delay
 		case IDATADELAY:
-			if(unsigned(GET_REF(itemdataref)) >= MAXITEMS)
+			if(invalid_item_id(GET_REF(itemdataref)))
 			{
 				scripting_log_error_with_context("Invalid itemdata access: {}", GET_REF(itemdataref));
 				break;
@@ -13435,7 +13469,7 @@ void set_register(int32_t arg, int32_t value)
 		case SCREENDATAROOM: 		SET_SCREENDATA_VAR_BYTE(room, "RoomType");	break;		//b
 		case SCREENDATAITEM:
 		{
-			auto v = vbound((value / 10000),-1,255);
+			auto v = vbound((value / 10000),-1,MAXITEMS-1);
 			auto scr = get_scr(GET_REF(screenref));
 			if(v > -1)
 				scr->item = v;
@@ -13878,7 +13912,7 @@ void set_register(int32_t arg, int32_t value)
 		{
 			if (mapscr *m = ResolveMapdataScr(GET_REF(mapdataref)))
 			{
-				auto v = vbound((value / 10000),-1,255);
+				auto v = vbound((value / 10000),-1,MAXITEMS-1);
 				if(v > -1)
 					m->item = v;
 				m->hasitem = v > -1;
@@ -14652,7 +14686,7 @@ void set_register(int32_t arg, int32_t value)
 			if (!checkComboRef()) break;
 
 			if(auto* trig = get_first_combo_trigger())
-				trig->triggeritem = vbound(value/10000,0,255);
+				trig->triggeritem = vbound(value/10000, 0, MAXITEMS-1);
 			break;
 		}
 		case COMBODTRIGGERTIMER:
@@ -14776,7 +14810,7 @@ void set_register(int32_t arg, int32_t value)
 			if (!checkComboRef()) break;
 
 			if(auto* trig = get_first_combo_trigger())
-				trig->spawnitem = vbound(value/10000, -255, 255);
+				trig->spawnitem = vbound(value/10000, -(MAXITEMDROPSETS-1), MAXITEMS-1);
 			break;
 		}
 		case COMBODTRIGCSETCHANGE:
@@ -15023,7 +15057,7 @@ void set_register(int32_t arg, int32_t value)
 		{
 			if (!checkComboRef()) break;
 
-			combobuf[GET_REF(combodataref)].lift_parent_item = vbound(value/10000, 0, 255);
+			combobuf[GET_REF(combodataref)].lift_parent_item = vbound(value/10000, 0, MAXITEMS-1);
 			break;
 		}
 		case COMBODTRIGGERLSTATE:
@@ -15326,7 +15360,7 @@ void set_register(int32_t arg, int32_t value)
 		{
 			if(auto* trig = get_combo_trigger(GET_REF(combotriggerref)))
 			{
-				trig->spawnitem = vbound(value/10000, -255, 255);
+				trig->spawnitem = vbound(value/10000, -(MAXITEMDROPSETS-1), MAXITEMS-1);
 			}
 			break;
 		}
@@ -21181,25 +21215,23 @@ void user_paldata::mix(user_paldata *pal_start, user_paldata *pal_end, double pe
 void item_display_name(const bool setter)
 {
 	int32_t ID = GET_REF(itemdataref);
-	if(unsigned(ID) >= MAXITEMS)
+	if(invalid_item_id(ID))
 		return;
 	int32_t arrayptr = get_register(sarg1);
 	if(setter)
 	{
-		std::string str;
-		ArrayH::getString(arrayptr, str, 255);
-		strcpy(itemsbuf[ID].display_name, str.c_str());
+		ArrayH::getString(arrayptr, itemsbuf[ID].display_name, 255);
 	}
 	else
 	{
-		if(ArrayH::setArray(arrayptr, string(itemsbuf[ID].display_name)) == SH::_Overflow)
+		if(ArrayH::setArray(arrayptr, itemsbuf[ID].display_name) == SH::_Overflow)
 			Z_scripterrlog("Array supplied to 'itemdata->GetDisplayName()' not large enough\n");
 	}
 }
 void item_shown_name()
 {
 	int32_t ID = GET_REF(itemdataref);
-	if(unsigned(ID) >= MAXITEMS)
+	if(invalid_item_id(ID))
 		return;
 	int32_t arrayptr = get_register(sarg1);
 	if(ArrayH::setArray(arrayptr, itemsbuf[ID].get_name()) == SH::_Overflow)
@@ -21650,12 +21682,12 @@ void do_createitem(const bool v)
 		sprite* item = items.spr(items.Count() - 1);
 		item->screen_spawned = ri->screenref;
 		ri->itemref = item->getUID();
-		Z_eventlog("Script created item \"%s\" with UID = %u\n", item_string[ID], ri->itemref);
+		Z_eventlog("Script created item \"%s\" with UID = %u\n", itemsbuf[ID].name.c_str(), ri->itemref);
 	}
 	else
 	{
 		ri->itemref = 0;
-		Z_scripterrlog("Couldn't create item \"%s\", screen item limit reached\n", item_string[ID]);
+		Z_scripterrlog("Couldn't create item \"%s\", screen item limit reached\n", itemsbuf[ID].name.c_str());
 	}
 }
 
@@ -23591,13 +23623,14 @@ void do_toshort()
 void do_getitemname()
 {
 	int32_t arrayptr = get_register(sarg1);
-	if(unsigned(GET_REF(itemdataref)) >= MAXITEMS)
+	auto itmid = GET_REF(itemdataref);
+	if(invalid_item_id(itmid))
 	{
-		scripting_log_error_with_context("Invalid itemdata access: {}", GET_REF(itemdataref));
+		scripting_log_error_with_context("Invalid itemdata access: {}", itmid);
 		return;
 	}
 	
-	if(ArrayH::setArray(arrayptr, item_string[GET_REF(itemdataref)]) == SH::_Overflow)
+	if(ArrayH::setArray(arrayptr, itemsbuf[itmid].name) == SH::_Overflow)
 		Z_scripterrlog("Array supplied to 'itemdata->GetName' not large enough\n");
 }
 
@@ -23983,7 +24016,9 @@ static void script_exit_cleanup(bool no_dealloc)
 			auto& data = get_script_engine_data(type, i);
 			if ( !collect )
 			{
-				if ( (itemsbuf[i].flags&item_passive_script) && game->item[i] ) itemsbuf[i].script = 0; //Quit perpetual scripts, too.
+				auto& itm = itemsbuf[i];
+				if ((itm.flags & item_passive_script) && game->get_item(i))
+					itm.script = 0; //Quit perpetual scripts, too.
 			}
 			data.doscript = 0;
 			data.clear_ref();
@@ -27121,7 +27156,8 @@ int32_t run_script_int(JittedScriptInstance* j_instance)
 			case RUNITEMSCRIPT:
 			{
 				int32_t itemid = GET_REF(itemdataref);
-				if(unsigned(itemid) > MAXITEMS) break;
+				if(unsigned(itemid) > itemsbuf.capacity()) break;
+				auto const& itm = itemsbuf[itemid];
 				int32_t mode = get_register(sarg1) / 10000;
 				auto& data = get_script_engine_data(ScriptType::Item, itemid);
 				switch(mode)
@@ -27133,13 +27169,12 @@ int32_t run_script_int(JittedScriptInstance* j_instance)
 					}
 					case 1:
 					{
-						if ( itemsbuf[itemid].script != 0 ) //&& !data.doscript )
+						if ( itm.script != 0 )
 						{
 							if ( !data.doscript ) 
 							{
 								data.clear_ref();
 								data.doscript = 1;
-								//ZScriptVersion::RunScript(ScriptType::Item, itemsbuf[itemid].script, itemid);
 							}
 							else
 							{
@@ -27151,31 +27186,13 @@ int32_t run_script_int(JittedScriptInstance* j_instance)
 					case 2:
 					default:
 					{
-						if ( itemsbuf[itemid].script != 0 ) //&& !data.doscript )
+						if (itm.script != 0)
 						{
-							if (data.doscript != 2 )data.doscript = 2;
+							if (data.doscript != 2)
+								data.doscript = 2;
 						}
 						break;
 					}
-					/*
-					case 0:
-					{
-						data.doscript = 0;
-						break;
-					}
-					default:
-					{
-					
-						if ( itemsbuf[itemid].script != 0 ) //&& !data.doscript )
-						{
-							//itemScriptData[itemid].Clear();
-							//for ( int32_t q = 0; q < 1024; q++ ) item_stack[itemid][q] = 0;
-							//ZScriptVersion::RunScript(ScriptType::Item, itemsbuf[itemid].script, itemid & 0xFFF);
-							data.doscript = 2;
-						}
-						break;
-					}
-					*/
 				}
 				break;
 			}
@@ -28783,11 +28800,13 @@ void FFScript::FFChangeSubscreenText()
 
 void FFScript::SetItemMessagePlayed(int32_t itm)
 {
-	game->item_messages_played[itm] = 1;
+	if (invalid_item_id(itm)) return;
+	game->item_messages_played.set(itm, true);
 }
 bool FFScript::GetItemMessagePlayed(int32_t itm)
 {
-	return ((game->item_messages_played[itm] ) ? true : false);
+	if (invalid_item_id(itm)) return false;
+	return game->item_messages_played.get(itm);
 }
 
 int32_t FFScript::getQRBit(int32_t rule)
@@ -29522,23 +29541,23 @@ void FFScript::runOnSaveEngine()
 bool FFScript::itemScriptEngine()
 {
 	if ( FFCore.system_suspend[susptITEMSCRIPTENGINE] ) return false;
-	for ( int32_t q = 0; q < MAXITEMS; q++ )
+	for (int32_t q = 0; q < itemsbuf.capacity(); ++q)
 	{
-		
-		if ( itemsbuf[q].script <= 0 || itemsbuf[q].script > NUMSCRIPTITEM ) continue; // > NUMSCRIPTITEM as someone could force an invaid script slot!
+		auto const& itm = itemsbuf[q];
+		if ( itm.script <= 0 || itm.script > NUMSCRIPTITEM ) continue; // > NUMSCRIPTITEM as someone could force an invaid script slot!
 		
 		auto& data = get_script_engine_data(ScriptType::Item, q);
 		if ( data.doscript < 1 ) continue;
 		
 		//Passive items
-		if (((itemsbuf[q].flags&item_passive_script)))
+		if (((itm.flags&item_passive_script)))
 		{
-			if(game->item[q] && (get_qr(qr_ITEMSCRIPTSKEEPRUNNING)))
+			if(game->get_item(q) && (get_qr(qr_ITEMSCRIPTSKEEPRUNNING)))
 			{
 				if(get_qr(qr_PASSIVE_ITEM_SCRIPT_ONLY_HIGHEST)
-					&& current_item(itemsbuf[q].type) > itemsbuf[q].level)
+					&& current_item(itm.type) > itm.level)
 					data.doscript = 0;
-				else ZScriptVersion::RunScript(ScriptType::Item, itemsbuf[q].script, q&0xFFF);
+				else ZScriptVersion::RunScript(ScriptType::Item, itm.script, q);
 				if(!data.doscript)  //Item script ended. Clear the data, if any remains.
 				{
 					data.clear_ref();
@@ -29572,7 +29591,7 @@ bool FFScript::itemScriptEngine()
 			}
 			else if (data.doscript == 2) //Second frame and later, if scripts continue to run.
 			{
-				ZScriptVersion::RunScript(ScriptType::Item, itemsbuf[q].script, q&0xFFF);
+				ZScriptVersion::RunScript(ScriptType::Item, itm.script, q);
 			}
 			else if (data.doscript == 3) //Run via itemdata->RunScript
 			{
@@ -29582,7 +29601,7 @@ bool FFScript::itemScriptEngine()
 				}
 				else 
 				{
-					ZScriptVersion::RunScript(ScriptType::Item, itemsbuf[q].script, q & 0xFFF);
+					ZScriptVersion::RunScript(ScriptType::Item, itm.script, q);
 					data.doscript = 0;
 				}
 			}
@@ -29604,9 +29623,10 @@ bool FFScript::itemScriptEngine()
 bool FFScript::itemScriptEngineOnWaitdraw()
 {
 	if ( FFCore.system_suspend[susptITEMSCRIPTENGINE] ) return false;
-	for ( int32_t q = 0; q < MAXITEMS; q++ )
+	for (int32_t q = 0; q < itemsbuf.capacity(); ++q)
 	{
-		if ( itemsbuf[q].script <= 0 || itemsbuf[q].script > NUMSCRIPTITEM ) continue; // > NUMSCRIPTITEM as someone could force an invaid script slot!
+		auto const& itm = itemsbuf[q];
+		if ( itm.script <= 0 || itm.script > NUMSCRIPTITEM ) continue; // > NUMSCRIPTITEM as someone could force an invaid script slot!
 		
 		auto& data = get_script_engine_data(ScriptType::Item, q);
 
@@ -29624,14 +29644,14 @@ bool FFScript::itemScriptEngineOnWaitdraw()
 			  This allows passive item scripts to function. 
 		*/
 		//Passive items
-		if ((itemsbuf[q].flags&item_passive_script))
+		if ((itm.flags&item_passive_script))
 		{
-			if(game->item[q] && (get_qr(qr_ITEMSCRIPTSKEEPRUNNING)))
+			if(game->get_item(q) && (get_qr(qr_ITEMSCRIPTSKEEPRUNNING)))
 			{
 				if(get_qr(qr_PASSIVE_ITEM_SCRIPT_ONLY_HIGHEST)
-					&& current_item(itemsbuf[q].type) > itemsbuf[q].level)
+					&& current_item(itm.type) > itm.level)
 					data.doscript = 0;
-				else ZScriptVersion::RunScript(ScriptType::Item, itemsbuf[q].script, q&0xFFF);
+				else ZScriptVersion::RunScript(ScriptType::Item, itm.script, q);
 				if(!data.doscript)  //Item script ended. Clear the data, if any remains.
 				{
 					data.clear_ref();
@@ -29653,7 +29673,7 @@ bool FFScript::itemScriptEngineOnWaitdraw()
 			}
 			else if (data.doscript == 2) //Second frame and later, if scripts continue to run.
 			{
-				ZScriptVersion::RunScript(ScriptType::Item, itemsbuf[q].script, q&0xFFF);
+				ZScriptVersion::RunScript(ScriptType::Item, itm.script, q);
 			}
 			else if (data.doscript == 3) //Run via itemdata->RunScript
 			{
@@ -29663,7 +29683,7 @@ bool FFScript::itemScriptEngineOnWaitdraw()
 				}
 				else 
 				{
-					ZScriptVersion::RunScript(ScriptType::Item, itemsbuf[q].script, q & 0xFFF);
+					ZScriptVersion::RunScript(ScriptType::Item, itm.script, q);
 					data.doscript = 0;
 				}
 			}
@@ -29940,11 +29960,11 @@ void FFScript::do_getitembyname()
 	int32_t arrayptr = get_register(sarg1);
 	string the_string;
 	int32_t num = -1;
-	ArrayH::getString(arrayptr, the_string, 256); //What is the max length of a script identifier?
+	ArrayH::getString(arrayptr, the_string, 512);
 	
-	for(int32_t q = 0; q < MAXITEMS; q++)
+	for (int32_t q = 0; q < itemsbuf.capacity(); ++q)
 	{
-		if(!(strcmp(the_string.c_str(), item_string[q])))
+		if (the_string == itemsbuf[q].name)
 		{
 			num = q;
 			break;

@@ -41,7 +41,6 @@
 #include "metadata/metadata.h"
 #include "base/about.h"
 #include "base/zc_alleg.h"
-#include "gamedata.h"
 #include "base/random.h"
 #include "base/util.h"
 #include "base/render.h"
@@ -147,26 +146,26 @@ enum {ENC_METHOD_192B104=0, ENC_METHOD_192B105, ENC_METHOD_192B185, ENC_METHOD_2
 #define V_HEADER           9
 #define V_RULES           17
 #define V_STRINGS         12
-#define V_MISC            19
+#define V_MISC            20
 #define V_TILES            3 //2 is a int32_t, max 214500 tiles (ZScript upper limit)
-#define V_COMBOS          64
+#define V_COMBOS          65
 #define V_CSETS            6 //palette data
-#define V_MAPS            38
-#define V_DMAPS           25
+#define V_MAPS            39
+#define V_DMAPS           26
 #define V_DOORS            1
-#define V_ITEMS           66
+#define V_ITEMS           67
 #define V_WEAPONS          8
 #define V_COLORS           4 //Misc Colours
 #define V_ICONS            10 //Game Icons
 #define V_GRAPHICSPACK     1
-#define V_INITDATA        46
+#define V_INITDATA        47
 #define V_GUYS            55
 #define V_MIDIS            5
 #define V_CHEATS           1
-#define V_SAVEGAME        48
+#define V_SAVEGAME        49
 #define V_COMBOALIASES     5
 #define V_HEROSPRITES      16
-#define V_SUBSCREEN        17
+#define V_SUBSCREEN        18
 #define V_ITEMDROPSETS     2
 #define V_FFSCRIPT         28
 #define V_SFX              9
@@ -1112,6 +1111,7 @@ enum
 	wmovepatternPATTERN_B, wmovepatternPATTERN_C, wmovepatternPATTERN_D, wmovepatternPATTERN_E, wmovepatternPATTERN_F
 };
 
+struct itemdata;
 struct wpndata
 {
 	int32_t tile;
@@ -1130,6 +1130,7 @@ struct wpndata
 	{
 		return csets & 0xF;
 	}
+	void load_item(itemdata const& itm);
 };
 
 #define WF_AUTOFLASH  0x01

@@ -105,8 +105,8 @@ void put_triforce()
 {
 	if(get_qr(qr_HOLDITEMANIMATION))
 	{
-		putitem2(framebuf,120,113-(get_qr(qr_NOITEMOFFSET)),iTriforce,lens_hint_item[iTriforce][0],lens_hint_item[iTriforce][1], 0);
-		putitem2(framebuf,136,113-(get_qr(qr_NOITEMOFFSET)),iTriforce,lens_hint_item[iTriforce][0],lens_hint_item[iTriforce][1], 0);
+		draw_lens_hint_item(framebuf,120,113-(get_qr(qr_NOITEMOFFSET)),iTriforce, 0);
+		draw_lens_hint_item(framebuf,136,113-(get_qr(qr_NOITEMOFFSET)),iTriforce, 0);
 	}
 	else
 	{
@@ -663,8 +663,8 @@ void ending_scripted()
 	blit(framebuf,scrollbuf_old,0,0,0,0,framebuf->w,framebuf->h);
 	endingpal();
     
-        removeItemsOfFamily(game, itemsbuf, itype_ring);
-        int32_t maxring = getHighestLevelOfFamily(&zinit,itemsbuf,itype_ring);
+        removeItemsOfFamily(itype_ring);
+        int32_t maxring = getHighestLevelOfFamily(&zinit,itype_ring);
         
         if(maxring != -1)
         {

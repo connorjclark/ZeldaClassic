@@ -8,8 +8,11 @@
 #include <fmt/format.h>
 #include "base/misctypes.h"
 #include "zc/zelda.h"
+#include "zscriptversion.h"
 
-char *item_string[MAXITEMS];
+void mark_save_dirty();
+bounded_vec<word, itemdata> itemsbuf = {MAXITEMS};
+const itemdata nil_item = itemdata();
 
 int32_t fairy_cnt=0;
 
@@ -19,7 +22,8 @@ item::~item()
 		return;
 
 #ifndef IS_EDITOR
-	if(itemsbuf[id].type==itype_fairy && itemsbuf[id].misc3>0 && misc>0 && (!get_qr(qr_OLD_FAIRY_LIMIT) || replay_version_check(28)))
+	auto const& itm = get_item_data(id);
+	if(itm.type == itype_fairy && itm.misc3 > 0 && misc > 0 && (!get_qr(qr_OLD_FAIRY_LIMIT) || replay_version_check(28)))
 		killfairynew(*this);
 	FFCore.destroySprite(this);
 #endif
@@ -28,6 +32,24 @@ item::~item()
 bool item::animate(int32_t)
 {
 	update_current_screen();
+	
+	itemdata const& base_item = get_item_data(id);
+	itemdata const* disp_item = &base_item;
+	if (base_item.type == itype_progressive_itm)
+	{
+		int32_t id2 = get_progressive_item(id);
+		if(invalid_item_id(id2))
+			id2 = id;
+		else if (id2 != id)
+			disp_item = &itemsbuf[id2];
+		
+		if(id2 != linked_parent) //Update item
+		{
+			linked_parent = id2;
+			load_gfx(*disp_item);
+		}
+	}
+	
 	if(switch_hooked)
 	{
 		solid_update(false);
@@ -153,7 +175,7 @@ bool item::animate(int32_t)
 			}
 		}
 		if (!subscreenItem) handle_termv();
-		if (!subscreenItem && !force_grab && !is_dragged && z <= 0 && fakez <= 0 && !(pickup & ipDUMMY) && !(pickup & ipCHECK) && itemsbuf[id].type != itype_fairy)
+		if (!subscreenItem && !force_grab && !is_dragged && z <= 0 && fakez <= 0 && !(pickup & ipDUMMY) && !(pickup & ipCHECK) && base_item.type != itype_fairy)
 		{
 			if (!isSideViewGravity())
 				if (moveflags & move_can_pitfall)
@@ -178,23 +200,6 @@ bool item::animate(int32_t)
 		clk=0x7000;
 	}
 	
-	itemdata const* itm = &itemsbuf[id];
-	if(itm->type == itype_progressive_itm)
-	{
-		int32_t id2 = get_progressive_item(id);
-		if(unsigned(id2) >= MAXITEMS)
-			id2 = -1;
-		if(id2 != linked_parent) //Update item
-		{
-			linked_parent = id2;
-			if(id2 < 0)
-				load_gfx(*itm);
-			else load_gfx(itemsbuf[id2]);
-		}
-		if(id2 > -1)
-			itm = &itemsbuf[id2];
-	}
-	
 	if(flash)
 	{
 		cs = o_cset;
@@ -209,7 +214,7 @@ bool item::animate(int32_t)
 		}
 	}
 	
-	if(do_animation && ((get_qr(qr_0AFRAME_ITEMS_IGNORE_AFRAME_CHANGES) ? (anim) : (frames>0)) || itm->type==itype_bottle))
+	if(do_animation && ((get_qr(qr_0AFRAME_ITEMS_IGNORE_AFRAME_CHANGES) ? (anim) : (frames>0)) || disp_item->type==itype_bottle))
 	{
 		int32_t spd = o_speed;
 		
@@ -240,9 +245,9 @@ bool item::animate(int32_t)
 			tile = o_tile + aframe;
 #ifndef IS_EDITOR
 		//Bottles offset based on their slot's fill
-		if(itm->type == itype_bottle)
+		if(disp_item->type == itype_bottle)
 		{
-			int32_t slot = itm->misc1;
+			int32_t slot = disp_item->misc1;
 			size_t btype = game->get_bottle_slot(slot);
 			int32_t offset = (frames ? frames : 1) * btype;
 			if(extend > 2)
@@ -258,10 +263,8 @@ bool item::animate(int32_t)
 	}
 	
 #ifndef IS_EDITOR
-	if(itemsbuf[id].type == itype_fairy && itemsbuf[id].misc3)
-	{
+	if(base_item.type == itype_fairy && base_item.misc3)
 		movefairynew(x,y,*this);
-	}
 #endif
 	
 	if ((z > 0 || fakez > 0) && get_qr(qr_ITEMSHADOWS) && !get_qr(qr_CLASSIC_DRAWING_ORDER))
@@ -296,7 +299,7 @@ void item::draw(BITMAP *dest)
 #ifdef IS_PLAYER
 		if (clk2 % (game->get_item_flicker_speed() * 2) >= game->get_item_flicker_speed())
 		{
-			if (clk2 <= game->get_item_spawn_flicker() && itemsbuf[id].type != itype_fairy)
+			if (clk2 <= game->get_item_spawn_flicker() && get_item_data(id).type != itype_fairy)
 				return; // flicker for items spawning in
 			if ((pickup & ipTIMER) && clk2 >= (game->get_item_timeout_dur() - game->get_item_timeout_flicker()))
 				return; // flicker for timeout items before vanishing
@@ -344,13 +347,13 @@ item::item(zfix X,zfix Y,zfix Z,int32_t i,int32_t p,int32_t c, bool isDummy) : s
 	force_grab=false;
 	noSound=false;
 	noHoldSound=false;
-	itemdata const& itm = itemsbuf[id];
 	from_dropset = -1;
 	pickupexstate = -1;
 	
-	if(id<0 || id>MAXITEMS) //>, not >= for dummy items such as the HC Piece display in the subscreen
+	if (invalid_item_id(id))
 		return;
-		 
+	itemdata const& itm = itemsbuf[id];
+	
 	o_tile = itm.tile;
 	tile = itm.tile;
 	cs = itm.csets&15;
@@ -452,17 +455,19 @@ void putitem(BITMAP *dest,int32_t x,int32_t y,int32_t item_id)
 	temp.yofs=0;
 	temp.hide_hitbox = true;
 	
-	if ( itemsbuf[item_id].overrideFLAGS > 0 ) {
-		temp.extend = 3; 
-		if ( itemsbuf[item_id].overrideFLAGS&OVERRIDE_TILE_WIDTH ) { temp.txsz = itemsbuf[item_id].tilew;}
-		if ( itemsbuf[item_id].overrideFLAGS&OVERRIDE_TILE_HEIGHT ){temp.tysz = itemsbuf[item_id].tileh;}
-		if ( itemsbuf[item_id].overrideFLAGS&OVERRIDE_HIT_WIDTH ) { temp.hit_width = itemsbuf[item_id].hxsz;}
-		if ( itemsbuf[item_id].overrideFLAGS&OVERRIDE_HIT_HEIGHT ) {temp.hit_height = itemsbuf[item_id].hysz;}
-		if ( itemsbuf[item_id].overrideFLAGS&OVERRIDE_HIT_Z_HEIGHT ) { temp.hzsz = itemsbuf[item_id].hzsz;}
-		if ( itemsbuf[item_id].overrideFLAGS&OVERRIDE_HIT_X_OFFSET ) { temp.hxofs = itemsbuf[item_id].hxofs;}
-		if ( itemsbuf[item_id].overrideFLAGS&OVERRIDE_HIT_Y_OFFSET ) {temp.hyofs = itemsbuf[item_id].hyofs;}
-		if ( itemsbuf[item_id].overrideFLAGS&OVERRIDE_DRAW_X_OFFSET ) {temp.xofs = itemsbuf[item_id].xofs;}
-		if ( itemsbuf[item_id].overrideFLAGS&OVERRIDE_DRAW_Y_OFFSET ) { temp.yofs = itemsbuf[item_id].yofs; }
+	auto const& itm = get_item_data(item_id);
+	if ( itm.overrideFLAGS > 0 )
+	{
+		temp.extend = 3;
+		if (itm.overrideFLAGS & OVERRIDE_TILE_WIDTH)    temp.txsz = itm.tilew;
+		if (itm.overrideFLAGS & OVERRIDE_TILE_HEIGHT)   temp.tysz = itm.tileh;
+		if (itm.overrideFLAGS & OVERRIDE_HIT_WIDTH)     temp.hit_width = itm.hxsz;
+		if (itm.overrideFLAGS & OVERRIDE_HIT_HEIGHT)    temp.hit_height = itm.hysz;
+		if (itm.overrideFLAGS & OVERRIDE_HIT_Z_HEIGHT)  temp.hzsz = itm.hzsz;
+		if (itm.overrideFLAGS & OVERRIDE_HIT_X_OFFSET)  temp.hxofs = itm.hxofs;
+		if (itm.overrideFLAGS & OVERRIDE_HIT_Y_OFFSET)  temp.hyofs = itm.hyofs;
+		if (itm.overrideFLAGS & OVERRIDE_DRAW_X_OFFSET) temp.xofs = itm.xofs;
+		if (itm.overrideFLAGS & OVERRIDE_DRAW_Y_OFFSET) temp.yofs = itm.yofs;
 	}
 
 	temp.animate(0);
@@ -549,7 +554,7 @@ static void _check_itembundle_recursive(int32_t itmid, prog_item_data& data)
 #ifdef IS_EDITOR
 	return;
 #else
-	if(unsigned(itmid) >= MAXITEMS)
+	if(invalid_item_id(itmid))
 	{
 		assert(false); // This should have been validated before the call
 		return;
@@ -570,7 +575,7 @@ static void _check_itembundle_recursive(int32_t itmid, prog_item_data& data)
 		itm.misc6, itm.misc7, itm.misc8, itm.misc9, itm.misc10};
 	for(auto id : arr)
 	{
-		if(unsigned(id) >= MAXITEMS)
+		if(invalid_item_id(id))
 			continue;
 		itemdata const& targItem = itemsbuf[id];
 		if(targItem.type == itype_itmbundle)
@@ -606,7 +611,7 @@ static void _get_progressive_item(int32_t itmid, prog_item_data& data)
 #ifdef IS_EDITOR
 	return;
 #else
-	if(unsigned(itmid) >= MAXITEMS)
+	if(invalid_item_id(itmid))
 	{
 		assert(false); // This should have been validated before the call
 		return;
@@ -622,7 +627,7 @@ static void _get_progressive_item(int32_t itmid, prog_item_data& data)
 		itm.misc6, itm.misc7, itm.misc8, itm.misc9, itm.misc10};
 	for(auto id : arr)
 	{
-		if(unsigned(id) >= MAXITEMS)
+		if(invalid_item_id(id))
 			continue;
 		data.last_id = id;
 		
@@ -637,7 +642,7 @@ static void _get_progressive_item(int32_t itmid, prog_item_data& data)
 		if(targItem.type == itype_heartpiece)
 		{
 			int32_t hcid = heart_container_id();
-			if(hcid < 0) continue;
+			if(invalid_item_id(hcid)) continue;
 			itemdata const& hcitem = itemsbuf[hcid];
 			if(hcitem.setmax > 0)
 				if(game->get_maxcounter(hcitem.count) >= hcitem.max)
@@ -684,7 +689,7 @@ static void _get_progressive_item(int32_t itmid, prog_item_data& data)
 // Gets the target item of the specified progressive item, while also checking for safety from infinite loops
 int32_t get_progressive_item(int32_t itmid, bool lastOwned)
 {
-	if(unsigned(itmid) >= MAXITEMS)
+	if(invalid_item_id(itmid))
 		return -1; // skip everything
 	std::set<int32_t> visited;
 	prog_item_data data(visited);
@@ -700,7 +705,7 @@ int32_t get_progressive_item(int32_t itmid, bool lastOwned)
 // Checks if the bundle is 'safe', i.e. has no infinite loops
 bool itembundle_safe(int32_t itmid, bool skipError)
 {
-	if(unsigned(itmid) >= MAXITEMS)
+	if(invalid_item_id(itmid))
 		return false; // skip everything
 	std::set<int32_t> visited;
 	prog_item_data data(visited);
@@ -714,35 +719,59 @@ bool itembundle_safe(int32_t itmid, bool skipError)
 	return true;
 }
 
-void putitem2(BITMAP *dest,int32_t x,int32_t y,int32_t item_id, int32_t &aclk, int32_t &aframe, int32_t flash)
+struct LensHintItemData
 {
+	int aclk;
+	int aframe;
+	bool empty() const
+	{
+		return !(aclk || aframe);
+	}
+	bool operator==(LensHintItemData const& other) const = default;
+};
+
+bounded_map<int, LensHintItemData> lens_hint_item {MAXITEMS, {}};
+void draw_lens_hint_item(BITMAP *dest,int32_t x,int32_t y,int32_t item_id, int32_t flash)
+{
+	LensHintItemData data = lens_hint_item[item_id];
 	item temp((zfix)x,(zfix)y,(zfix)0,item_id,0,0,true);
 	temp.yofs=0;
-	temp.aclk=aclk;
-	temp.aframe=aframe;
+	temp.aclk = data.aclk;
+	temp.aframe = data.aframe;
 	temp.hide_hitbox = true;
 	
 	if(flash)
 	{
 		temp.flash=(flash != 0);
 	}
-	if ( itemsbuf[item_id].overrideFLAGS > 0 ) {
+	auto const& itm = get_item_data(item_id);
+	if ( itm.overrideFLAGS > 0 )
+	{
 		temp.extend = 3;
-		if ( itemsbuf[item_id].overrideFLAGS&OVERRIDE_TILE_WIDTH ) { temp.txsz = itemsbuf[item_id].tilew;}
-		if ( itemsbuf[item_id].overrideFLAGS&OVERRIDE_TILE_HEIGHT ){temp.tysz = itemsbuf[item_id].tileh;}
-		if ( itemsbuf[item_id].overrideFLAGS&OVERRIDE_HIT_WIDTH ) { temp.hit_width = itemsbuf[item_id].hxsz;}
-		if ( itemsbuf[item_id].overrideFLAGS&OVERRIDE_HIT_HEIGHT ) {temp.hit_height = itemsbuf[item_id].hysz;}
-		if ( itemsbuf[item_id].overrideFLAGS&OVERRIDE_HIT_Z_HEIGHT ) { temp.hzsz = itemsbuf[item_id].hzsz;}
-		if ( itemsbuf[item_id].overrideFLAGS&OVERRIDE_HIT_X_OFFSET ) { temp.hxofs = itemsbuf[item_id].hxofs;}
-		if ( itemsbuf[item_id].overrideFLAGS&OVERRIDE_HIT_Y_OFFSET ) {temp.hyofs = itemsbuf[item_id].hyofs;}
-		if ( itemsbuf[item_id].overrideFLAGS&OVERRIDE_DRAW_X_OFFSET ) {temp.xofs = itemsbuf[item_id].xofs;}
-		if ( itemsbuf[item_id].overrideFLAGS&OVERRIDE_DRAW_Y_OFFSET ) { temp.yofs = itemsbuf[item_id].yofs; }
-	}	    
+		if (itm.overrideFLAGS & OVERRIDE_TILE_WIDTH)    temp.txsz = itm.tilew;
+		if (itm.overrideFLAGS & OVERRIDE_TILE_HEIGHT)   temp.tysz = itm.tileh;
+		if (itm.overrideFLAGS & OVERRIDE_HIT_WIDTH)     temp.hit_width = itm.hxsz;
+		if (itm.overrideFLAGS & OVERRIDE_HIT_HEIGHT)    temp.hit_height = itm.hysz;
+		if (itm.overrideFLAGS & OVERRIDE_HIT_Z_HEIGHT)  temp.hzsz = itm.hzsz;
+		if (itm.overrideFLAGS & OVERRIDE_HIT_X_OFFSET)  temp.hxofs = itm.hxofs;
+		if (itm.overrideFLAGS & OVERRIDE_HIT_Y_OFFSET)  temp.hyofs = itm.hyofs;
+		if (itm.overrideFLAGS & OVERRIDE_DRAW_X_OFFSET) temp.xofs = itm.xofs;
+		if (itm.overrideFLAGS & OVERRIDE_DRAW_Y_OFFSET) temp.yofs = itm.yofs;
+	}
 	
 	temp.animate(0);
 	temp.draw(dest);
-	aclk=temp.aclk;
-	aframe=temp.aframe;
+	data.aclk = temp.aclk;
+	data.aframe = temp.aframe;
+	
+	if (data.empty())
+		lens_hint_item.erase(item_id);
+	else
+		lens_hint_item[item_id] = data;
+}
+void reset_lens_hint_items()
+{
+	lens_hint_item.clear();
 }
 
 void dummyitem_animate(item* dummy, int32_t clk)
@@ -760,19 +789,20 @@ void dummyitem_animate(item* dummy, int32_t clk)
 	dummy->aclk=dummy->aframe ? (clk-del*spd)%spd : clk;
 	
 	auto item_id = dummy->id;
-	if ( itemsbuf[item_id].overrideFLAGS > 0 )
+	auto const& itm = get_item_data(item_id);
+	if ( itm.overrideFLAGS > 0 )
 	{
 		dummy->extend = 3;
-		if ( itemsbuf[item_id].overrideFLAGS&OVERRIDE_TILE_WIDTH ) {dummy->txsz = itemsbuf[item_id].tilew;}
-		if ( itemsbuf[item_id].overrideFLAGS&OVERRIDE_TILE_HEIGHT ) {dummy->tysz = itemsbuf[item_id].tileh;}
-		if ( itemsbuf[item_id].overrideFLAGS&OVERRIDE_HIT_WIDTH ) {dummy->hit_width = itemsbuf[item_id].hxsz;}
-		if ( itemsbuf[item_id].overrideFLAGS&OVERRIDE_HIT_HEIGHT ) {dummy->hit_height = itemsbuf[item_id].hysz;}
-		if ( itemsbuf[item_id].overrideFLAGS&OVERRIDE_HIT_Z_HEIGHT ) {dummy->hzsz = itemsbuf[item_id].hzsz;}
-		if ( itemsbuf[item_id].overrideFLAGS&OVERRIDE_HIT_X_OFFSET ) {dummy->hxofs = itemsbuf[item_id].hxofs;}
-		if ( itemsbuf[item_id].overrideFLAGS&OVERRIDE_HIT_Y_OFFSET ) {dummy->hyofs = itemsbuf[item_id].hyofs;}
-		if ( itemsbuf[item_id].overrideFLAGS&OVERRIDE_DRAW_X_OFFSET ) {dummy->xofs = itemsbuf[item_id].xofs;}
-		if ( itemsbuf[item_id].overrideFLAGS&OVERRIDE_DRAW_Y_OFFSET ) {dummy->yofs = itemsbuf[item_id].yofs;}
-	}	    
+		if (itm.overrideFLAGS & OVERRIDE_TILE_WIDTH)    dummy->txsz = itm.tilew;
+		if (itm.overrideFLAGS & OVERRIDE_TILE_HEIGHT)   dummy->tysz = itm.tileh;
+		if (itm.overrideFLAGS & OVERRIDE_HIT_WIDTH)     dummy->hit_width = itm.hxsz;
+		if (itm.overrideFLAGS & OVERRIDE_HIT_HEIGHT)    dummy->hit_height = itm.hysz;
+		if (itm.overrideFLAGS & OVERRIDE_HIT_Z_HEIGHT)  dummy->hzsz = itm.hzsz;
+		if (itm.overrideFLAGS & OVERRIDE_HIT_X_OFFSET)  dummy->hxofs = itm.hxofs;
+		if (itm.overrideFLAGS & OVERRIDE_HIT_Y_OFFSET)  dummy->hyofs = itm.hyofs;
+		if (itm.overrideFLAGS & OVERRIDE_DRAW_X_OFFSET) dummy->xofs = itm.xofs;
+		if (itm.overrideFLAGS & OVERRIDE_DRAW_Y_OFFSET) dummy->yofs = itm.yofs;
+	}
 	
 	dummy->animate(0);
 }
@@ -798,109 +828,65 @@ void putitem3(BITMAP *dest,int32_t x,int32_t y,int32_t item_id, int32_t clk)
 	temp.draw(dest);
 }
 
-//some methods for dealing with items
-int32_t getItemFamily(itemdata* items, int32_t item)
+void removeItemsOfFamily(int32_t family)
 {
-	if(item < 0) return -1;
-	return items[item&0xFF].type;
-}
-
-void removeItemsOfFamily(gamedata *g, itemdata *items, int32_t family)
-{
-	for(int32_t i=0; i<MAXITEMS; i++)
+	for(size_t q = 0; q < itemsbuf.capacity(); ++q)
 	{
-		if(items[i].type == family)
+		auto const& itm = itemsbuf[q];
+		if(itm.type == family)
 		{
-			g->set_item_no_flush(i,false);
-			if ( game->forced_bwpn == i ) 
-			{
+			game->set_item_no_flush(q, false);
+			
+			if (game->forced_bwpn == q)
 				game->forced_bwpn = -1;
-			} //not else if! -Z
-			if ( game->forced_awpn == i ) 
-			{
+			if (game->forced_awpn == q)
 				game->forced_awpn = -1;
-			}
-			if ( game->forced_xwpn == i ) 
-			{
+			if (game->forced_xwpn == q)
 				game->forced_xwpn = -1;
-			}
-			if ( game->forced_ywpn == i ) 
-			{
+			if (game->forced_ywpn == q)
 				game->forced_ywpn = -1;
-			}
 		}
 	}
 	flushItemCache();
 }
 
-void removeLowerLevelItemsOfFamily(gamedata *g, itemdata *items, int32_t family, int32_t level)
+void removeLowerLevelItemsOfFamily(int32_t family, int32_t level)
 {
-	for(int32_t i=0; i<MAXITEMS; i++)
+	for(size_t q = 0; q < itemsbuf.capacity(); ++q)
 	{
-		if(items[i].type == family && items[i].level < level)
+		auto const& itm = itemsbuf[q];
+		if(itm.type == family && itm.level < level)
 		{
-			g->set_item_no_flush(i, false);
-			if ( game->forced_bwpn == i ) 
-			{
+			game->set_item_no_flush(q, false);
+			
+			if (game->forced_bwpn == q)
 				game->forced_bwpn = -1;
-			} //not else if! -Z
-			if ( game->forced_awpn == i ) 
-			{
+			if (game->forced_awpn == q)
 				game->forced_awpn = -1;
-			}
-			if ( game->forced_xwpn == i ) 
-			{
+			if (game->forced_xwpn == q)
 				game->forced_xwpn = -1;
-			}
-			if ( game->forced_ywpn == i ) 
-			{
+			if (game->forced_ywpn == q)
 				game->forced_ywpn = -1;
-			}
 		}
 	}
 	flushItemCache();
 }
 
-void removeItemsOfFamily(zinitdata *z, itemdata *items, int32_t family)
-{
-	for(int32_t i=0; i<MAXITEMS; i++)
-	{
-		if(items[i].type == family)
-		{
-			z->set_item(i,false);
-			if ( game->forced_bwpn == i ) 
-			{
-				game->forced_bwpn = -1;
-			} //not else if! -Z
-			if ( game->forced_awpn == i ) 
-			{
-				game->forced_awpn = -1;
-			}
-			if ( game->forced_xwpn == i ) 
-			{
-				game->forced_xwpn = -1;
-			}
-			if ( game->forced_ywpn == i ) 
-			{
-				game->forced_ywpn = -1;
-			}
-		}
-	}
-}
-
-int32_t getHighestLevelOfFamily(zinitdata *source, itemdata *items, int32_t family)
+int32_t getHighestLevelOfFamily(zinitdata *source, int32_t family)
 {
 	int32_t result = -1;
 	int32_t highestlevel = -1;
 	
-	for(int32_t i=0; i<MAXITEMS; i++)
+	size_t sz = zc_min(itemsbuf.capacity(), source->items.length());
+	for(size_t q = 0; q < sz; ++q)
 	{
-		if(items[i].type == family && source->get_item(i))
+		auto const& itm = itemsbuf[q];
+		if(itm.type == family && source->get_item(q))
 		{
-			if(items[i].level >= highestlevel)
+			if(itm.level >= highestlevel)
 			{
-				highestlevel = items[i].level;
-				result=i;
+				highestlevel = itm.level;
+				result = q;
 			}
 		}
 	}
@@ -908,19 +894,21 @@ int32_t getHighestLevelOfFamily(zinitdata *source, itemdata *items, int32_t fami
 	return result;
 }
 
-int32_t getHighestLevelOfFamily(gamedata *source, itemdata *items, int32_t family, bool checkenabled)
+int32_t getHighestLevelOfFamily(gamedata *source, int32_t family)
 {
 	int32_t result = -1;
 	int32_t highestlevel = -1;
 	
-	for(int32_t i=0; i<MAXITEMS; i++)
+	size_t sz = zc_min(itemsbuf.capacity(), source->items_owned.length());
+	for(size_t q = 0; q < sz; ++q)
 	{
-		if(items[i].type == family && source->get_item(i) && (checkenabled?(!(source->items_off[i])):1))
+		auto const& itm = itemsbuf[q];
+		if(itm.type == family && source->get_item(q))
 		{
-			if(items[i].level >= highestlevel)
+			if(itm.level >= highestlevel)
 			{
-				highestlevel = items[i].level;
-				result=i;
+				highestlevel = itm.level;
+				result = q;
 			}
 		}
 	}
@@ -928,19 +916,20 @@ int32_t getHighestLevelOfFamily(gamedata *source, itemdata *items, int32_t famil
 	return result;
 }
 
-int32_t getHighestLevelEvenUnowned(itemdata *items, int32_t family)
+int32_t getHighestLevelEvenUnowned(int32_t family)
 {
 	int32_t result = -1;
 	int32_t highestlevel = -1;
 	
-	for(int32_t i=0; i<MAXITEMS; i++)
+	for(size_t q = 0; q < itemsbuf.capacity(); ++q)
 	{
-		if(items[i].type == family)
+		auto const& itm = itemsbuf[q];
+		if(itm.type == family)
 		{
-			if(items[i].level >= highestlevel)
+			if(itm.level >= highestlevel)
 			{
-				highestlevel = items[i].level;
-				result=i;
+				highestlevel = itm.level;
+				result = q;
 			}
 		}
 	}
@@ -948,58 +937,62 @@ int32_t getHighestLevelEvenUnowned(itemdata *items, int32_t family)
 	return result;
 }
 
-int32_t getItemID(itemdata *items, int32_t family, int32_t level)
+int32_t getItemID(int32_t family, int32_t level)
 {
-	if(level<0) return getCanonicalItemID(items, family);
+	if(level < 0)
+		return getCanonicalItemID(family);
 	
-	for(int32_t i=0; i<MAXITEMS; i++)
+	for(size_t q = 0; q < itemsbuf.capacity(); ++q)
 	{
-		if(items[i].type == family && items[i].level == level)
-			return i;
+		auto const& itm = itemsbuf[q];
+		if(itm.type == family && itm.level == level)
+			return q;
 	}
 	
 	return -1;
 }
 
-int32_t getItemIDPower(itemdata *items, int32_t family, int32_t power)
+int32_t getItemIDPower(int32_t family, int32_t power)
 {
-	for(int32_t i=0; i<MAXITEMS; i++)
+	for(size_t q = 0; q < itemsbuf.capacity(); ++q)
 	{
-		if(items[i].type == family && items[i].power == power)
-			return i;
+		auto const& itm = itemsbuf[q];
+		if(itm.type == family && itm.power == power)
+			return q;
 	}
 	
 	return -1;
 }
 
 /* Retrieves the canonical item of a given item family, the item with least non-0 level */
-int32_t getCanonicalItemID(itemdata *items, int32_t family)
+int32_t getCanonicalItemID(int32_t family)
 {
 	int32_t lowestid = -1;
 	int32_t lowestlevel = -1;
 	
-	for(int32_t i=0; i<MAXITEMS; i++)
+	for(size_t q = 0; q < itemsbuf.capacity(); ++q)
 	{
-		if(items[i].type == family && (items[i].level < lowestlevel || lowestlevel == -1))
+		auto const& itm = itemsbuf[q];
+		if(itm.type == family && (itm.level < lowestlevel || lowestlevel < 0))
 		{
-			lowestlevel = items[i].level;
-			lowestid = i;
+			lowestlevel = itm.level;
+			lowestid = q;
 		}
 	}
 	
 	return lowestid;
 }
 
-void addOldStyleFamily(zinitdata *dest, itemdata *items, int32_t family, char levels)
+void addOldStyleFamily(zinitdata *dest, int32_t family, char levels)
 {
 	for(int32_t i=0; i<8; i++)
 	{
 		if(levels & (1<<i))
 		{
-			int32_t id = getItemID(items, family, i+1);
+			int32_t id = getItemID(family, i+1);
 			
 			if(id != -1)
-				dest->set_item(id,true);
+				dest->set_item(id, true);
 		}
 	}
 }
@@ -1066,11 +1059,11 @@ ALLEGRO_COLOR item::hitboxColor(byte opacity) const
 
 std::string itemdata::get_name(bool init, bool plain) const
 {
-	std::string name;
+	std::string ret;
 	if(display_name[0])
 	{
-		name = display_name;
-		size_t repl_pos = name.find("%s");
+		ret = display_name;
+		size_t repl_pos = ret.find("%s");
 		if(repl_pos != std::string::npos)
 		{
 			std::string arg;
@@ -1093,24 +1086,15 @@ std::string itemdata::get_name(bool init, bool plain) const
 					}
 					break;
 			}
-			name.replace(repl_pos,2,arg);
+			ret.replace(repl_pos,2,arg);
 			//Anything with 2 args?
-			//repl_pos = name.find("%s");
-			replstr(name,"%s",""); //Clear any spare '%s'
+			//repl_pos = ret.find("%s");
+			replstr(ret,"%s",""); //Clear any spare '%s'
 		}
 	}
 	else
 	{
-		int id = -1;
-		for(int q = 0; q < MAXITEMS; ++q)
-		{
-			if((itemsbuf+q) == this)
-			{
-				id = q;
-				break;
-			}
-		}
-		name = id > -1 ? item_string[id] : "";
+		ret = name;
 		if(!plain)
 		{
 			std::string overname;
@@ -1119,8 +1103,17 @@ std::string itemdata::get_name(bool init, bool plain) const
 				case itype_arrow:
 				{
 					auto bowid = current_item_id(itype_bow,false);
-					if(bowid>-1 && checkmagiccost(id))
-						overname = itemsbuf[bowid].get_name() + " & " + name;
+					int id = -1;
+					for (int q = 0; q < itemsbuf.capacity(); ++q)
+					{
+						if(&itemsbuf[q] == this)
+						{
+							id = q;
+							break;
+						}
+					}
+					if(valid_item_id(bowid) && checkmagiccost(id))
+						overname = get_item_data(bowid).get_name() + " & " + name;
 					break;
 				}
 				case itype_bottle:
@@ -1133,7 +1126,7 @@ std::string itemdata::get_name(bool init, bool plain) const
 				return overname;
 		}
 	}
-	return name;
+	return ret;
 }
 
 void itemdata::clear()
@@ -1142,8 +1135,10 @@ void itemdata::clear()
 }
 void itemdata::advpaste(itemdata const& other, bitstring const& pasteflags)
 {
+	if(pasteflags.get(ITM_ADVP_NAME))
+		name = other.name;
 	if(pasteflags.get(ITM_ADVP_DISP_NAME))
-		strcpy(display_name, other.display_name);
+		display_name = other.display_name;
 	if(pasteflags.get(ITM_ADVP_ITMCLASS))
 		type = other.type;
 	if(pasteflags.get(ITM_ADVP_EQUIPMENTITM))
@@ -1299,7 +1294,7 @@ void itemdata::advpaste(itemdata const& other, bitstring const& pasteflags)
 static void apply_cooldown_ring(cooldown_data& data)
 {
 	auto cooldown_ring_id = current_item_id(itype_cooldown_ring, true);
-	if (unsigned(cooldown_ring_id) >= MAXITEMS)
+	if (invalid_item_id(cooldown_ring_id))
 		return;
 	if (!checkmagiccost(cooldown_ring_id) || !checkbunny(cooldown_ring_id))
 		return;
@@ -1328,11 +1323,11 @@ static void apply_cooldown_ring(cooldown_data& data)
 }
 cooldown_data calc_item_cooldown(int item_id)
 {
-	if (unsigned(item_id) >= MAXITEMS)
+	if (invalid_item_id(item_id))
 		return {};
 	cooldown_data data;
 	
-	data.max_cooldown = data.base_cooldown = itemsbuf[item_id].cooldown;
+	data.max_cooldown = data.base_cooldown = get_item_data(item_id).cooldown;
 	apply_cooldown_ring(data);
 	
 #ifdef IS_PLAYER
@@ -1341,5 +1336,118 @@ cooldown_data calc_item_cooldown(int item_id)
 	data.cooldown = data.max_cooldown - (subscr_item_clk % (data.max_cooldown+1));
 #endif
 	return data;
+}
+
+int ButtonItemData::get_family() const
+{
+	if (invalid_item_id(id))
+		return -1;
+	return get_item_data(id).type;
+}
+
+// returns an `itemdata` from `itemsbuf`
+// If an invalid ID is given, a reference to a blank `itemdata` is given instead.
+itemdata const& get_item_data(int id)
+{
+	if (invalid_item_id(id))
+		return nil_item;
+	return itemsbuf.get(id);
+}
+
+
+void run_first_script_of_type(int itype)
+{
+#ifdef IS_PLAYER
+	for (int32_t q = 0; q < itemsbuf.capacity(); ++q)
+	{
+		auto const& itm = itemsbuf[q];
+		if (itm.type == itype)
+		{
+			if (itm.script && !(FFCore.doscript(ScriptType::Item, q) && get_qr(qr_ITEMSCRIPTSKEEPRUNNING)) ) 
+			{
+				FFCore.reset_script_engine_data(ScriptType::Item, q);
+				ZScriptVersion::RunScript(ScriptType::Item, itm.script, q);
+				FFCore.deallocateAllScriptOwned(ScriptType::Item, q);
+			}
+			break;
+		}
+	}
+#endif
+}
+
+
+// For deleting / moving quest items, updating references to affected items
+static void update_quest_items(std::map<size_t, size_t> changes)
+{
+	// TODO: This will take a lot of work, and won't help any hardcoded item IDs.
+	// For now just going to warn that Items won't be updated;
+	// can come back to this later when more Item hardcodes have been removed.
+	// -Em
+	
+	for (auto it = changes.begin(); it != changes.end();) // trim non-changes
+	{
+		if (it->first == it->second)
+			it = changes.erase(it);
+		else ++it;
+	}
+	if (changes.empty())
+		return;
+	
+	mark_save_dirty();
+}
+void delete_quest_items(std::function<bool(itemdata const&)> proc)
+{
+	size_t del_count = 0;
+	std::map<size_t, size_t> changes;
+	auto& cont = itemsbuf.mut_inner();
+	size_t sz = cont.size();
+	auto it = cont.begin();
+	for (size_t q = 0; q < sz; ++q)
+	{
+		if (proc(*it))
+		{
+			it = cont.erase(it);
+			changes[q] = -1;
+			++del_count;
+		}
+		else
+		{
+			++it;
+			if (del_count)
+				changes[q] = q - del_count;
+		}
+	}
+	update_quest_items(changes);
+}
+void delete_quest_items(size_t idx)
+{
+	if (unsigned(idx) >= itemsbuf.capacity()) return;
+	std::map<size_t, size_t> changes;
+	auto& cont = itemsbuf.mut_inner();
+	size_t sz = cont.size();
+	auto it = cont.begin();
+	for (size_t q = 0; q < sz; ++q)
+	{
+		if (q == idx)
+		{
+			it = cont.erase(it);
+			changes[q] = -1;
+		}
+		else
+		{
+			++it;
+			if (q > idx)
+				changes[q] = q - 1;
+		}
+	}
+	update_quest_items(changes);
+}
+void swap_quest_items(size_t idx1, size_t idx2)
+{
+	if (invalid_item_id(idx1) ||
+		invalid_item_id(idx2) ||
+		idx1 == idx2) return;
+	zc_swap_mv(itemsbuf[idx1], itemsbuf[idx2]);
+	update_quest_items({{idx1, idx2},{idx2, idx1}});
 }
 

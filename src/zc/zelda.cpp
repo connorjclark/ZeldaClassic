@@ -141,7 +141,6 @@ ZCMIXER *zcmixer = NULL;
 int32_t colordepth;
 int32_t db=0;
 int32_t detail_int[10];                                         //temporary holder for things you want to detail
-int32_t lens_hint_item[MAXITEMS][2]= {{0,0},{0,0}};                            //aclk, aframe
 int32_t lens_hint_weapon[MAXWPNS][5] = {{0,0},{0,0}};                           //aclk, aframe, dir, x, y
 int32_t strike_hint_counter=0;
 int32_t strike_hint_timer=0;
@@ -223,8 +222,6 @@ BITMAP* framebuf_no_passive_subscreen;
 BITMAP     *zcmouse[NUM_ZCMOUSE];
 PALETTE    pal_gui;
 byte       *colordata, *trashbuf;
-//byte       *tilebuf;
-itemdata   *itemsbuf;
 wpndata    *wpnsbuf;
 comboclass *combo_class_buf;
 guydata    *guysbuf;
@@ -290,7 +287,8 @@ int32_t cur_screen=0;
 int32_t currscr_for_passive_subscr;
 direction scrolling_dir;
 int32_t newscr_clk=0,cur_dmap=0,fadeclk=-1,listpos=0;
-int32_t lastentrance=0,lastentrance_dmap=0,prices[3]= {0},loadside = 0, Bwpn = -1, Awpn = -1, Xwpn = -1, Ywpn = -1;
+int32_t lastentrance=0,lastentrance_dmap=0,prices[3]= {0},loadside = 0;
+ButtonItemData Bwpn, Awpn, Xwpn, Ywpn;
 int32_t digi_volume = 0,midi_volume = 0,sfx_volume = 0,emusic_volume = 0,currmidi = -1,whistleclk = 0,pan_style = 0;
 int32_t Quit=0;
 uint32_t GameFlags=0;
@@ -899,7 +897,6 @@ bool bad_version(int32_t version)
 }
 
 extern char *weapon_string[];
-extern char *item_string[];
 extern char *guy_string[];
 
 bool get_debug()
@@ -1560,11 +1557,7 @@ std::string create_replay_path_for_save(const gamedata_header& header)
 void init_dmap()
 {
     // readjust disabled items; could also do dmap-specific scripts here
-    for(int32_t i=0; i<MAXITEMS; i++)
-    {
-        game->items_off[i] &= (~1); // disable last bit - this one is set by dmap
-        game->items_off[i] |= DMaps[cur_dmap].disableditems[i]; // and reset if required
-    }
+	game->items_off = DMaps[cur_dmap].disabled_items;
     
     flushItemCache();
     // also update subscreens
@@ -1653,7 +1646,7 @@ void init_game_vars(bool is_cont_game = false)
 	script_hero_cset = -1;
 	region_is_lit=darkroom=naturaldark=false;
 	sle_x=sle_y=0;
-	Bwpn=Awpn=Xwpn=Ywpn=-1;
+	Bwpn = Awpn = Xwpn = Ywpn = {};
 	FFCore.kb_typing_mode = false;
 	activated_timed_warp=false;
 	light_wave_clk = 0;
@@ -1669,11 +1662,7 @@ void init_game_vars(bool is_cont_game = false)
 	show_subscreen_life=true;
 	msgscr=nullptr;
 	maps_init_game_vars();
-	for(int32_t x = 0; x < MAXITEMS; x++)
-	{
-		lens_hint_item[x][0]=0;
-		lens_hint_item[x][1]=0;
-	}
+	reset_lens_hint_items();
 	for(int32_t x = 0; x < MAXWPNS; x++)
 	{
 		lens_hint_weapon[x][0]=0;
@@ -1906,8 +1895,7 @@ int32_t init_game()
 		// Seems like the `game` field should be in a known, zero'd out state, but on the original
 		// playthrough it isn't. I guess it's related to whatever happened to be in saves[currgame] which
 		// was copied above.
-		for (int i = 0; i < MAXITEMS; i++)
-			game->item[i] = false;
+		game->items_owned.clear();
 
 		if (!use_testingst_start)
 			game->set_continue_dmap(zinit.start_dmap);
@@ -2116,7 +2104,7 @@ int32_t init_game()
 				{
 					if (!get_qr(qr_SELECTAWPN))
 					{
-						Awpn = selectSword();
+						Awpn = {selectSword()};
 						bpos = pg.movepos_legacy(SEL_VERIFY_RIGHT, usesaved ? game->bwpn : 0xFF);
 						if (use_x)
 							xpos = pg.movepos_legacy(SEL_VERIFY_RIGHT, usesaved ? game->xwpn : 0xFF, bpos);
@@ -2134,22 +2122,22 @@ int32_t init_game()
 							ypos = pg.movepos_legacy(SEL_VERIFY_RIGHT, usesaved ? game->ywpn : 0xFF, apos, bpos, xpos);
 
 						Awpn = pg.get_item_pos(apos >> 8);
-						directItemA = NEG_OR_MASK(Awpn, 0xFF);
+						directItemA = Awpn.id;
 					}
 
 					game->awpn = apos;
 
 					game->bwpn = bpos;
 					Bwpn = pg.get_item_pos(bpos >> 8);
-					directItemB = NEG_OR_MASK(Bwpn, 0xFF);
+					directItemB = Bwpn.id;
 
 					game->xwpn = xpos;
 					Xwpn = pg.get_item_pos(xpos >> 8);
-					directItemX = NEG_OR_MASK(Xwpn, 0xFF);
+					directItemX = Xwpn.id;
 
 					game->ywpn = ypos;
 					Ywpn = pg.get_item_pos(ypos >> 8);
-					directItemY = NEG_OR_MASK(Ywpn, 0xFF);
+					directItemY = Ywpn.id;
 
 					animate_subscr_buttonitems();
 
@@ -2159,7 +2147,7 @@ int32_t init_game()
 				{
 					if (!get_qr(qr_SELECTAWPN))
 					{
-						Awpn = selectSword();
+						Awpn = {selectSword()};
 						apos = 0xFF;
 						bpos = pg.movepos_legacy(SEL_VERIFY_RIGHT, usesaved ? game->bwpn : 0xFF);
 						directItemA = -1;
@@ -2176,13 +2164,13 @@ int32_t init_game()
 						}
 
 						Awpn = pg.get_item_pos(apos >> 8);
-						directItemA = NEG_OR_MASK(Awpn, 0xFF);
+						directItemA = Awpn.id;
 					}
 
 					game->awpn = apos;
 					game->bwpn = bpos;
 					Bwpn = pg.get_item_pos(bpos >> 8);
-					directItemB = NEG_OR_MASK(Bwpn, 0xFF);
+					directItemB = Bwpn.id;
 					animate_subscr_buttonitems();
 
 					refresh_subscr_buttonitems();
@@ -2193,19 +2181,19 @@ int32_t init_game()
 				if(get_qr(qr_SELECTAWPN))
 				{
 					Awpn = new_subscreen_active->get_item_pos(game->awpn);
-					directItemA = NEG_OR_MASK(Awpn, 0xFF);
+					directItemA = Awpn.id;
 				}
 				else
 				{
-					selectSword();
+					Awpn = {selectSword()};
 					directItemA = -1;
 				}
 				Bwpn = new_subscreen_active->get_item_pos(game->bwpn);
-				directItemB = NEG_OR_MASK(Bwpn, 0xFF);
+				directItemB = Bwpn.id;
 				Xwpn = new_subscreen_active->get_item_pos(game->xwpn);
-				directItemX = NEG_OR_MASK(Xwpn, 0xFF);
+				directItemX = Xwpn.id;
 				Ywpn = new_subscreen_active->get_item_pos(game->ywpn);
-				directItemY = NEG_OR_MASK(Ywpn, 0xFF);
+				directItemY = Ywpn.id;
 			}
 		}
 	}
@@ -2629,8 +2617,9 @@ void do_magic_casting()
     }
 
     // TODO(crash): check that .add succeeds.
+	auto const& magic_item = get_item_data(magicitem);
     
-    switch(itemsbuf[magicitem].type)
+    switch(magic_item.type)
     {
     case itype_divinefire:
     {
@@ -2679,19 +2668,19 @@ void do_magic_casting()
             }
             
             if(get_qr(qr_MORESOUNDS))
-                sfx(itemsbuf[magicitem].usesound,pan(int32_t(Hero.getX())));
+                sfx(magic_item.usesound,pan(int32_t(Hero.getX())));
                 
-            int32_t flamemax=itemsbuf[magicitem].misc1;
+            int32_t flamemax=magic_item.misc1;
             
             for(int32_t flamecounter=((-1)*(flamemax/2))+1; flamecounter<=((flamemax/2)+1); flamecounter++)
             {
 		    //divine fire level fix to go here
-                //Lwpns.add(new weapon((zfix)HeroX(),(zfix)HeroY(),(zfix)HeroZ(),wFire,3,itemsbuf[magicitem].power*game->get_hero_dmgmult(),
-                Lwpns.add(new weapon((zfix)HeroX(),(zfix)HeroY(),(zfix)HeroZ(),wFire,itemsbuf[magicitem].level,itemsbuf[magicitem].power*game->get_hero_dmgmult(),
+                //Lwpns.add(new weapon((zfix)HeroX(),(zfix)HeroY(),(zfix)HeroZ(),wFire,3,magic_item.power*game->get_hero_dmgmult(),
+                Lwpns.add(new weapon((zfix)HeroX(),(zfix)HeroY(),(zfix)HeroZ(),wFire,magic_item.level,magic_item.power*game->get_hero_dmgmult(),
                                      isSideViewGravity() ? (flamecounter<flamemax ? left : right) : 0, magicitem, Hero.getUID(), false, 0, 0, 0));
                 weapon *w = (weapon*)(Lwpns.spr(Lwpns.Count()-1));
 		w->fakez = HeroFakeZ();
-                w->step=(itemsbuf[magicitem].misc2/100.0);
+                w->step=(magic_item.misc2/100.0);
                 w->angular=true;
                 w->angle=(flamecounter*PI/(flamemax/2.0));
             }
@@ -2752,7 +2741,7 @@ void do_magic_casting()
         if(magiccastclk==96)
         {
             if(get_qr(qr_MORESOUNDS))
-                sfx(itemsbuf[magicitem].usesound,pan(int32_t(Hero.getX())));
+                sfx(magic_item.usesound,pan(int32_t(Hero.getX())));
                 
             if ( Hero.getDontDraw() < 2 ) { Hero.setDontDraw(1); }
             
@@ -2762,14 +2751,14 @@ void do_magic_casting()
                 {
                     if(herotilebuf[i*16+j])
                     {
-                        if(itemsbuf[magicitem].misc1==1)  // Twilight
+                        if(magic_item.misc1==1)  // Twilight
                         {
                             particles.add(new pTwilight(Hero.getX()+j, Hero.getY()-Hero.getZ()+i, 6, 0, 0, (zc_oldrand()%8)+i*4));
                             int32_t k=particles.Count()-1;
                             particle *p = (particles.at(k));
                             p->step=3;
                         }
-                        else if(itemsbuf[magicitem].misc1==2)  // Sands of Hours
+                        else if(magic_item.misc1==2)  // Sands of Hours
                         {
                             particles.add(new pTwilight(Hero.getX()+j, Hero.getY()-Hero.getZ()+i, 6, 1, 2, (zc_oldrand()%16)+i*2));
                             int32_t k=particles.Count()-1;
@@ -2800,7 +2789,7 @@ void do_magic_casting()
         
         if((magiccastclk++)>=226)
         {
-			if(itemsbuf[magicitem].flags & item_flag1) //Act as F6->Continue
+			if(magic_item.flags & item_flag1) //Act as F6->Continue
 			{
 				Quit = qCONT;
 				skipcont = 1;
@@ -2884,17 +2873,18 @@ void do_magic_casting()
                 Hero.tile+=Hero.getTileModifier();
             }
             
-            Hero.setDivineProtectionShieldClk(itemsbuf[magicitem].misc1);
+            Hero.setDivineProtectionShieldClk(magic_item.misc1);
             
             if(get_qr(qr_MORESOUNDS))
             {
-                if(div_prot_item != -1)
+                if (valid_item_id(div_prot_item))
                 {
-                    stop_sfx(itemsbuf[div_prot_item].usesound+1);
-                    stop_sfx(itemsbuf[div_prot_item].usesound);
+					auto const& itm = itemsbuf[div_prot_item];
+                    stop_sfx(itm.usesound+1);
+                    stop_sfx(itm.usesound);
                 }
                 
-                cont_sfx(itemsbuf[magicitem].usesound);
+                cont_sfx(magic_item.usesound);
             }
             
             castnext=false;
@@ -2945,6 +2935,7 @@ void update_hookshot()
     {
 		weapon* hookweap = (weapon*)Lwpns.spr(Lwpns.idFirst(wHookshot));
         int32_t parentitem = hookweap->parentitem;
+		auto const& prnt_itm = get_item_data(parentitem);
         hs_x=hookweap->x;
         hs_y=hookweap->y;
         hs_z=hookweap->z;
@@ -2954,7 +2945,7 @@ void update_hookshot()
         //extending
         if(hookweap->misc==0)
         {
-            int32_t maxchainlinks=itemsbuf[parentitem].misc2;
+            int32_t maxchainlinks = prnt_itm.misc2;
             
             if(chainlinks.Count()<maxchainlinks)           //extending chain
             {
@@ -3539,53 +3530,57 @@ void game_loop()
 			if(!freezemsg && current_item(itype_heartring))
 			{
 				int32_t itemid = current_item_id(itype_heartring);
-				int32_t fskip = itemsbuf[itemid].misc2;
+				auto const& itm = get_item_data(itemid);
+				int32_t fskip = itm.misc2;
 				
 				if(fskip == 0 || frame % fskip == 0)
-					game->set_life(zc_min(game->get_life() + itemsbuf[itemid].misc1, game->get_maxlife()));
+					game->set_life(zc_min(game->get_life() + itm.misc1, game->get_maxlife()));
 			}
 			if(!freezemsg && current_item(itype_magicring))
 			{
 				int32_t itemid = current_item_id(itype_magicring);
-				int32_t fskip = itemsbuf[itemid].misc2;
+				auto const& itm = get_item_data(itemid);
+				int32_t fskip = itm.misc2;
 				
 				if(fskip == 0 || frame % fskip == 0)
 				{
-					game->set_magic(zc_min(game->get_magic() + itemsbuf[itemid].misc1, game->get_maxmagic()));
+					game->set_magic(zc_min(game->get_magic() + itm.misc1, game->get_maxmagic()));
 				}
 			}
 			if(!freezemsg && current_item(itype_wallet))
 			{
 				int32_t itemid = current_item_id(itype_wallet);
-				int32_t fskip = itemsbuf[itemid].misc2;
+				auto const& itm = get_item_data(itemid);
+				int32_t fskip = itm.misc2;
 				
 				if(fskip == 0 || frame % fskip == 0)
 				{
-					game->set_rupies(zc_min(game->get_rupies() + itemsbuf[itemid].misc1, game->get_maxcounter(1)));
+					game->set_rupies(zc_min(game->get_rupies() + itm.misc1, game->get_maxcounter(1)));
 				}
 			}
 			if(!freezemsg && current_item(itype_bombbag))
 			{
 				int32_t itemid = current_item_id(itype_bombbag);
+				auto const& itm = get_item_data(itemid);
 				
-				if(itemsbuf[itemid].misc1)
+				if (itm.misc1)
 				{
-					int32_t fskip = itemsbuf[itemid].misc2;
+					int32_t fskip = itm.misc2;
 					
 					if(fskip == 0 || frame % fskip == 0)
 					{
-						game->set_bombs(zc_min(game->get_bombs() + itemsbuf[itemid].misc1, game->get_maxbombs()));
+						game->set_bombs(zc_min(game->get_bombs() + itm.misc1, game->get_maxbombs()));
 					}
 					
-					if((itemsbuf[itemid].flags & item_flag1) && zinit.bomb_ratio)
+					if((itm.flags & item_flag1) && zinit.bomb_ratio)
 					{
 						int32_t ratio = zinit.bomb_ratio;
 						
-						fskip = itemsbuf[itemid].misc2 * ratio;
+						fskip = itm.misc2 * ratio;
 						
 						if(fskip == 0 || frame % fskip == 0)
 						{
-							game->set_sbombs(zc_min(game->get_sbombs() + zc_max(itemsbuf[itemid].misc1 / ratio, 1), game->get_maxbombs() / ratio));
+							game->set_sbombs(zc_min(game->get_sbombs() + zc_max(itm.misc1 / ratio, 1), game->get_maxbombs() / ratio));
 						}
 					}
 				}
@@ -3593,11 +3588,12 @@ void game_loop()
 			if(!freezemsg && current_item(itype_quiver) && game->get_arrows() != game->get_maxarrows())
 			{
 				int32_t itemid = current_item_id(itype_quiver);
-				int32_t fskip = itemsbuf[itemid].misc2;
+				auto const& itm = get_item_data(itemid);
+				int32_t fskip = itm.misc2;
 				
-				if(fskip == 0 || frame % fskip == 0)
+				if (fskip == 0 || frame % fskip == 0)
 				{
-					game->set_arrows(zc_min(game->get_arrows() + itemsbuf[itemid].misc1, game->get_maxarrows()));
+					game->set_arrows(zc_min(game->get_arrows() + itm.misc1, game->get_maxarrows()));
 				}
 			}
 
@@ -3942,11 +3938,6 @@ static void allocate_crap()
 	for(int32_t i=0; i<MAXWPNS; i++)
 	{
 		weapon_string[i] = new char[64];
-	}
-	
-	for(int32_t i=0; i<MAXITEMS; i++)
-	{
-		item_string[i] = new char[64];
 	}
 	
 	for(int32_t i=0; i<eMAXGUYS; i++)
@@ -4982,11 +4973,6 @@ void quit_game()
 		delete [] weapon_string[i];
 	}
 	
-	for(int32_t i=0; i<MAXITEMS; i++)
-	{
-		delete [] item_string[i];
-	}
-	
 	for(int32_t i=0; i<eMAXGUYS; i++)
 	{
 		delete [] guy_string[i];
@@ -5134,8 +5120,8 @@ bool checkCost(int32_t ctr, int32_t amnt)
 		}
 		case crSBOMBS:
 		{
-			if(current_item_power(itype_bombbag)
-				&& itemsbuf[current_item_id(itype_bombbag)].flags & item_flag1)
+			auto const& itm = get_item_data(current_item_id(itype_bombbag));
+			if(itm.power && (itm.flags & item_flag1))
 				return true;
 			break;
 		}
@@ -5144,10 +5130,8 @@ bool checkCost(int32_t ctr, int32_t amnt)
 }
 bool checkmagiccost(int32_t itemid, bool checkTime)
 {
-	if(itemid < 0)
-	{
+	if (invalid_item_id(itemid))
 		return false;
-	}
 	itemdata const& id = itemsbuf[itemid];
 	bool ret = true;
 	if(!checkTime || !id.magiccosttimer[0] || !(frame%id.magiccosttimer[0]))
@@ -5202,9 +5186,12 @@ void payCost(int32_t ctr, int32_t amnt, int32_t tmr, bool ignoreTimer)
 		}
 		case crSBOMBS:
 		{
-			if(cost && current_item_power(itype_bombbag)
-				&& itemsbuf[current_item_id(itype_bombbag)].flags & item_flag1)
-				return;
+			if (cost)
+			{
+				itemdata const& itm = get_item_data(current_item_id(itype_bombbag));
+				if (itm.power && (itm.flags & item_flag1))
+					return;
+			}
 			break;
 		}
 	}
@@ -5212,10 +5199,8 @@ void payCost(int32_t ctr, int32_t amnt, int32_t tmr, bool ignoreTimer)
 }
 void paymagiccost(int32_t itemid, bool ignoreTimer, bool onlyTimer)
 {
-	if(itemid < 0)
-	{
+	if (invalid_item_id(itemid))
 		return;
-	}
 	itemdata const& id = itemsbuf[itemid];
 	if(!(id.flags&item_validate_only) && (!onlyTimer || id.magiccosttimer[0]))
 		payCost(id.cost_counter[0], id.cost_amount[0], id.magiccosttimer[0], ignoreTimer);

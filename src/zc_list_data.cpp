@@ -12,7 +12,6 @@
 #include <fmt/format.h>
 
 extern char *weapon_string[];
-extern char *item_string[];
 extern const char* old_guy_string[OLDMAXGUYS];
 extern char *guy_string[eMAXGUYS];
 extern item_drop_object item_drop_sets[MAXITEMDROPSETS];
@@ -241,16 +240,14 @@ GUI::ListData GUI::ZCListData::efamilies(bool numbered)
 
 GUI::ListData GUI::ZCListData::items(bool numbered, bool none)
 {
-	map<std::string, int32_t> ids;
+	map<std::string, word> ids;
 	std::set<std::string> names;
 	
-	for(int32_t q=0; q < MAXITEMS; ++q)
+	for(word q = 0; q < itemsbuf.capacity(); ++q)
 	{
-		char const* itname = item_string[q];
-		std::string name;
+		std::string name = itemsbuf[q].name;
 		if(numbered)
-			name = fmt::format("{} ({:03})", itname, q);
-		else name = itname;
+			name = fmt::format("{} ({:03})", name, q);
 		
 		ids[name] = q;
 		names.insert(name);
@@ -853,21 +850,16 @@ GUI::ListData GUI::ZCListData::subscreens(byte type, bool numbered, bool incl_no
 	return ls;
 }
 
-GUI::ListData GUI::ZCListData::disableditems(byte* disabledarray)
+GUI::ListData GUI::ZCListData::disabled_items(bitstring const& disabledarray)
 {
 	GUI::ListData ls;
-	for (int q = 0; q < MAXITEMS; ++q)
+	for (word q = 0; q < itemsbuf.capacity(); ++q)
 	{
-		if (disabledarray[q] & 1)
-		{
-			char const* itname = item_string[q];
-			ls.add(itname, q);
-		}
+		if (disabledarray.get(q))
+			ls.add(itemsbuf[q].name, q);
 	}
 	if (ls.size() == 0)
-	{
 		ls.add("", -1);
-	}
 	ls.alphabetize();
 	return ls;
 }

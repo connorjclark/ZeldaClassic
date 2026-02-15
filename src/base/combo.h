@@ -72,7 +72,7 @@ struct combo_trigger
 	bitstring trigger_flags;
 	int32_t triggerlevel;
 	byte triggerbtn;
-	byte triggeritem;
+	word triggeritem;
 	word trigtimer;
 	word trigsfx;
 	int32_t trigchange;
@@ -81,7 +81,7 @@ struct combo_trigger
 	int32_t trigctramnt;
 	byte triglbeam;
 	int8_t trigcschange;
-	int16_t spawnitem;
+	int32_t spawnitem;
 	int16_t spawnenemy;
 	int8_t exstate = -1, exdoor_dir = -1, exdoor_ind;
 	int32_t spawnip;
@@ -159,7 +159,7 @@ struct newcombo
 	byte liftbreaksfx;
 	byte lifthei = 8;
 	byte lifttime = 16;
-	byte lift_parent_item;
+	word lift_parent_item;
 	// TODO: reduce size.
 	weapon_data lift_weap_data {weapon_data::def_lifting_data};
 	weapon_data misc_weap_data {weapon_data::def_data};

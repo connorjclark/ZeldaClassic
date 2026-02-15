@@ -50,7 +50,7 @@ EditDMapDialog::EditDMapDialog(int32_t slot) :
 	list_mapsub(GUI::ZCListData::subscreens(sstMAP, true, true)),
 	list_strings(GUI::ZCListData::strings()),
 	list_lpals(GUI::ZCListData::lpals()),
-	list_disableditems(GUI::ZCListData::disableditems(local_dmap.disableditems)),
+	list_disabled_items(GUI::ZCListData::disabled_items(local_dmap.disabled_items)),
 	list_items(GUI::ZCListData::items(false, false)),
 	list_dmapscript(GUI::ZCListData::dmap_script()),
 	list_music(GUI::ZCListData::music_names(true, false))
@@ -631,21 +631,21 @@ std::shared_ptr<GUI::Widget> EditDMapDialog::view()
 				TabRef(name = "Disable", Column(
 					Rows<5>(
 						disabled_list = List(minheight = 300_px, colSpan = 2,
-							data = list_disableditems, isABC = true,
+							data = list_disabled_items, isABC = true,
 							selectedIndex = 0),
 						Column(
 							Button(text = "->",
 								onPressFunc = [&]()
 								{
 									int32_t val = disabled_list->getSelectedValue();
-									if (val >= 0)
+									if (valid_item_id(val))
 									{
-										local_dmap.disableditems[val] &= ~1;
-										list_disableditems = GUI::ZCListData::disableditems(local_dmap.disableditems);
-										disabled_list->setListData(list_disableditems);
-										if (disabled_list->getSelectedIndex() >= list_disableditems.size())
+										local_dmap.disabled_items.set(val, false);
+										list_disabled_items = GUI::ZCListData::disabled_items(local_dmap.disabled_items);
+										disabled_list->setListData(list_disabled_items);
+										if (disabled_list->getSelectedIndex() >= list_disabled_items.size())
 										{
-											disabled_list->setSelectedIndex(list_disableditems.size()-1, false);
+											disabled_list->setSelectedIndex(list_disabled_items.size()-1, false);
 										}
 									}
 								}),
@@ -653,10 +653,10 @@ std::shared_ptr<GUI::Widget> EditDMapDialog::view()
 								onPressFunc = [&]()
 								{
 									int32_t val = item_list->getSelectedValue();
-									if (val >= 0)
+									if (valid_item_id(val))
 									{
-										local_dmap.disableditems[val] |= 1;
-										list_disableditems = GUI::ZCListData::disableditems(local_dmap.disableditems);
+										local_dmap.disabled_items.set(val, true);
+										list_disabled_items = GUI::ZCListData::disabled_items(local_dmap.disabled_items);
 									}
 								})
 						),

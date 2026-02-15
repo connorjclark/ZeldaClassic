@@ -988,28 +988,35 @@ void gamedata::set_item_flicker_speed(byte val)
 
 void gamedata::set_item(int32_t id, bool value)
 {
-    set_item_no_flush(id, value);
-    flushItemCache();
+	if (invalid_item_id(id)) return;
+	set_item_no_flush(id, value);
+	flushItemCache();
 }
 
 void gamedata::set_item_no_flush(int32_t id, bool value)
 {
-    if(value != item[id])
-        Z_eventlog("%s item %i: %s\n", value ? "Gained" : "Removed", id, item_string[id]);
-        
-    item[id]=value;
+	if (invalid_item_id(id)) return;
+	if(value != items_owned.get(id))
+	{
+		Z_eventlog("%s item %i: %s\n", value ? "Gained" : "Removed", id, get_item_data(id).name.c_str());
+		items_owned.set(id, value);
+	}
 }
 
 void gamedata::check_bottle_slots(std::set<dword>& slots) const
 {
 	slots.clear();
-	for(size_t q = 0; q < MAXITEMS; ++q)
+	for(size_t q = 0; q < itemsbuf.capacity(); ++q)
 	{
-		if(get_item(q) && itemsbuf[q].type == itype_bottle)
+		if (get_item(q))
 		{
-			size_t bind = itemsbuf[q].misc1;
-			if(bind < NUM_BOTTLE_SLOTS)
-				slots.insert(bind);
+			auto& itm = get_item_data(q);
+			if (itm.type == itype_bottle)
+			{
+				size_t bind = itm.misc1;
+				if(bind < NUM_BOTTLE_SLOTS)
+					slots.insert(bind);
+			}
 		}
 	}
 }

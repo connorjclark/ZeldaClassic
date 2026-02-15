@@ -161,7 +161,7 @@ TestResults test_saves(bool verbose)
 	SAVE_TEST_FIELD(get_quest());
 	SAVE_TEST_FIELD(get_deaths());
 	SAVE_TEST_FIELD(_cheat);
-	SAVE_TEST_ARRAY(item);
+	SAVE_TEST_BITSTRING(items_owned);
 	SAVE_TEST_ARRAY(version);
 	SAVE_TEST_FIELD(get_hasplayed());
 	SAVE_TEST_FIELD(get_time());
@@ -189,7 +189,7 @@ TestResults test_saves(bool verbose)
 	SAVE_TEST_FIELD(xwpn);
 	SAVE_TEST_FIELD(ywpn);
 	SAVE_TEST_VECTOR(lvlswitches);
-	SAVE_TEST_ARRAY(item_messages_played);
+	SAVE_TEST_BITSTRING(item_messages_played);
 	SAVE_TEST_ARRAY(bottleSlots);
 
 	game->saved_mirror_portal.clearUID();

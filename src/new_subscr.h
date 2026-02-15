@@ -5,6 +5,7 @@
 #include "base/zc_alleg.h"
 #include "base/general.h"
 #include "tiles.h"
+#include "items.h"
 #include <string>
 #include <vector>
 
@@ -345,7 +346,8 @@ struct SubscrWidget
 	std::string label;
 	
 	//Conditionals
-	std::set<byte> req_owned_items, req_unowned_items, req_dmap_floors, req_screens;
+	std::set<word> req_owned_items, req_unowned_items;
+	std::set<byte> req_dmap_floors, req_screens;
 	std::set<word> req_dmap_levels, req_dmaps, req_maps;
 	
 	word req_scrstate_map = 0;
@@ -395,8 +397,8 @@ struct SubscrWidget
 	virtual word getW() const; //Returns width in pixels
 	virtual word getH() const; //Returns height in pixels
 	virtual byte getType() const;
-	virtual int32_t getItemVal() const;
-	virtual int32_t getDisplayItem() const;
+	virtual ButtonItemData getItemVal() const;
+	virtual ButtonItemData getDisplayItem() const;
 	virtual void draw(BITMAP* dest, int32_t xofs, int32_t yofs, SubscrPage& page) const;
 	virtual bool visible(byte pos, bool showtime) const;
 	virtual SubscrWidget* clone() const;
@@ -812,8 +814,8 @@ struct SW_ItemSlot : public SubscrWidget
 	virtual word getW() const override; //Returns width in pixels
 	virtual word getH() const override; //Returns height in pixels
 	virtual byte getType() const override;
-	virtual int32_t getItemVal() const override;
-	virtual int32_t getDisplayItem() const override;
+	virtual ButtonItemData getItemVal() const override;
+	virtual ButtonItemData getDisplayItem() const override;
 	virtual void draw(BITMAP* dest, int32_t xofs, int32_t yofs, SubscrPage& page) const override;
 	virtual SubscrWidget* clone() const override;
 	virtual bool copy_prop(SubscrWidget const* src, bool all = false) override;
@@ -969,7 +971,7 @@ struct SW_GaugePiece : public SubscrWidget
 	int8_t hspace, vspace;
 	int16_t grid_xoff, grid_yoff;
 	word anim_val;
-	int16_t inf_item = -1;
+	int32_t inf_item = -1;
 	
 	SW_GaugePiece() = default;
 	virtual ~SW_GaugePiece() = default;
@@ -1180,9 +1182,9 @@ struct SubscrPage
 	void move_legacy(int dir, bool equip_only=true, bool item_only=true);
 	SubscrWidget* get_widg_pos(byte pos, bool item_only) const;
 	SubscrWidget* get_sel_widg() const;
-	int32_t get_item_pos(byte pos, bool item_only = true);
-	int32_t get_sel_item(bool display = false);
-	int32_t get_pos_of_item(int32_t itemid);
+	ButtonItemData get_item_pos(byte pos, bool item_only = true);
+	ButtonItemData get_sel_item(bool display = false);
+	int32_t get_pos_of_item(ButtonItemData const& target) const;
 	int32_t find_label_index(std::string const& lbl) const;
 	int32_t widget_index(SubscrWidget* widg) const;
 	
@@ -1248,8 +1250,8 @@ struct ZCSubscreen
 	
 	SubscrPage& cur_page();
 	SubscrPage* get_page(byte ind);
-	bool get_page_pos(int32_t itmid, word& pgpos);
-	int32_t get_item_pos(word pgpos);
+	bool get_page_pos(ButtonItemData const& target, word& pgpos) const;
+	ButtonItemData get_item_pos(word pgpos);
 	void delete_page(byte ind);
 	bool add_page(byte ind);
 	void swap_pages(byte ind1, byte ind2);

@@ -17,7 +17,6 @@
 extern int32_t CSet;
 extern int32_t numericalFlags;
 extern script_data *comboscripts[NUMSCRIPTSCOMBODATA];
-extern itemdata *itemsbuf;
 
 char *ordinal(int32_t num);
 using std::string;
@@ -3325,7 +3324,7 @@ std::shared_ptr<GUI::Widget> ComboWizardDialog::view()
 			auto radmode1 = 0;
 			auto spitem_def = contains_item;
 			auto normitem_def = 0;
-			if(uint(contains_item) < MAXITEMS)
+			if(valid_item_id(contains_item))
 			{
 				radmode1 = 1;
 				spitem_def = -1;
@@ -3393,8 +3392,7 @@ std::shared_ptr<GUI::Widget> ComboWizardDialog::view()
 			lists[1] = parent.list_items.copy().filter(
 				[](GUI::ListItem& itm)
 				{
-					if(unsigned(itm.value) >= MAXITEMS) return false;
-					return (itemsbuf[itm.value].flags & item_gamedata) != 0;
+					return (get_item_data(itm.value).flags & item_gamedata) != 0;
 				});
 			windowRow->add(Column(
 				Row(
@@ -3851,8 +3849,7 @@ std::shared_ptr<GUI::Widget> ComboWizardDialog::view()
 			lists[1] = parent.list_items.copy().filter(
 				[](GUI::ListItem& itm)
 				{
-					if(unsigned(itm.value) >= MAXITEMS) return false;
-					return (itemsbuf[itm.value].flags & item_gamedata) != 0;
+					return (get_item_data(itm.value).flags & item_gamedata) != 0;
 				});
 			windowRow->add(Column(
 				Row(

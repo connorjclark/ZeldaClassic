@@ -1585,9 +1585,9 @@ void black_fade(int32_t fadeamnt)
 
 //----------------------------------------------------------------
 
-bool item_disabled(int32_t item)				 //is this item disabled?
+bool item_disabled(int32_t id)				 //is this item disabled?
 {
-	return (unsigned(item) < MAXITEMS && game->items_off[item] != 0);
+	return (valid_item_id(id) && game->items_off.get(id));
 }
 
 bool can_use_item(int32_t item_type, int32_t item)				  //can Hero use this item?
@@ -1607,7 +1607,7 @@ bool has_item(int32_t item_type, int32_t it)						//does Hero possess this item?
 		case itype_bomb:
 		case itype_sbomb:
 		{
-			int32_t itemid = getItemID(itemsbuf, item_type, it);
+			int32_t itemid = getItemID(item_type, it);
 			
 			if(itemid == -1)
 				return false;
@@ -1617,10 +1617,12 @@ bool has_item(int32_t item_type, int32_t it)						//does Hero possess this item?
 		
 		case itype_clock:
 		{
-			int32_t itemid = getItemID(itemsbuf, item_type, it);
+			int32_t itemid = getItemID(item_type, it);
 			
-			if(itemid != -1 && (itemsbuf[itemid].flags & item_flag1)) //Active clock
-				return (game->get_item(itemid));
+			if(valid_item_id(itemid))
+				if (get_item_data(itemid).flags & item_flag1) //Active clock
+					return (game->get_item(itemid));
+			
 			return Hero.getClock()?1:0;
 		}
 			
@@ -1756,7 +1758,7 @@ bool has_item(int32_t item_type, int32_t it)						//does Hero possess this item?
 		}
 		
 		default:
-			int32_t itemid = getItemID(itemsbuf, item_type, it);
+			int32_t itemid = getItemID(item_type, it);
 			
 			if(itemid == -1)
 				return false;
@@ -1773,8 +1775,12 @@ int current_item(int item_type, bool checkmagic, bool jinx_check, bool check_bun
 		{
 			int maxid = current_item_id(item_type, checkmagic, jinx_check, check_bunny);
 			
-			if(maxid != -1 && (itemsbuf[maxid].flags & item_flag1)) //Active clock
-				return itemsbuf[maxid].level;
+			if(valid_item_id(maxid))
+			{
+				auto const& itm = itemsbuf[maxid];
+				if (itm.flags & item_flag1) //Active clock
+					return itm.level;
+			}
 			
 			return has_item(itype_clock,1) ? 1 : 0;
 		}
@@ -1839,10 +1845,10 @@ int current_item(int item_type, bool checkmagic, bool jinx_check, bool check_bun
 		default:
 			int maxid = current_item_id(item_type, checkmagic, jinx_check, check_bunny);
 			
-			if(maxid == -1)
+			if(invalid_item_id(maxid))
 				return 0;
 				
-			return itemsbuf[maxid].level;
+			return get_item_data(maxid).level;
 	}
 }
 
@@ -1902,22 +1908,27 @@ int _c_item_id_internal(int itemtype, bool checkmagic, bool jinx_check, bool che
 	int result = -1;
 	int highestlevel = -1;
 	
-	for(int i=0; i<MAXITEMS; i++)
+	size_t sz = MAXITEMS;
+	if (itemtype != 0)
+		sz = itemsbuf.capacity();
+	sz = zc_min(sz, game->items_owned.length());
+	for(size_t i=0; i<sz; i++)
 	{
-		if(game->get_item(i) && itemsbuf[i].type==itemtype && !item_disabled(i))
+		auto const& itm = itemsbuf[i];
+		if(game->get_item(i) && itm.type==itemtype && !item_disabled(i))
 		{
 			if(checkmagic && itemtype != itype_magicring)
 				if(!checkmagiccost(i))
 					continue;
 			if(jinx_check && (usesSwordJinx(i) ? HeroSwordClk() : HeroItemClk()))
-				if(!(itemsbuf[i].flags & item_jinx_immune))
+				if(!(itm.flags & item_jinx_immune))
 					continue;
 			if(check_bunny && !checkbunny(i))
 				continue;
 			
-			if(itemsbuf[i].level >= highestlevel)
+			if(itm.level >= highestlevel)
 			{
-				highestlevel = itemsbuf[i].level;
+				highestlevel = itm.level;
 				result=i;
 			}
 		}
@@ -1947,9 +1958,9 @@ int current_item_id(int itype, bool checkmagic, bool jinx_check, bool check_bunn
 	if(game->OverrideItems[itype] > -2)
 	{
 		auto ovid = game->OverrideItems[itype];
-		if(ovid < 0 || ovid >= MAXITEMS)
+		if(invalid_item_id(ovid))
 			return -1;
-		if(itemsbuf[ovid].type == itype)
+		if(get_item_data(ovid).type == itype)
 		{
 			if(itype == itype_magicring)
 				checkmagic = false;
@@ -1985,18 +1996,14 @@ int current_item_id(int itype, bool checkmagic, bool jinx_check, bool check_bunn
 int current_item_power(int itemtype, bool checkmagic, bool jinx_check, bool check_bunny)
 {
 	int result = current_item_id(itemtype, checkmagic, jinx_check, check_bunny);
-	return (result<0) ? 0 : itemsbuf[result].power;
+	return invalid_item_id(result) ? 0 : get_item_data(result).power;
 }
 
 int32_t heart_container_id()
 {
-	for(int32_t i=0; i<MAXITEMS; i++)
-	{
-		if(itemsbuf[i].type == itype_heartcontainer)
-		{
+	for(int32_t i=0; i<itemsbuf.capacity(); i++)
+		if(get_item_data(i).type == itype_heartcontainer)
 			return i;
-		}
-	}
 	return -1;
 }
 
@@ -2033,15 +2040,15 @@ int32_t item_tile_mod()
 	if(check_bombcost || game->get_bombs())
 	{
 		int32_t itemid = current_item_id(itype_bomb,check_bombcost);
-		if(itemid > -1 && checkbunny(itemid))
-			tile+=itemsbuf[itemid].ltm;
+		if (valid_item_id(itemid) && checkbunny(itemid))
+			tile+=get_item_data(itemid).ltm;
 	}
 	
 	if(check_bombcost || game->get_sbombs())
 	{
 		int32_t itemid = current_item_id(itype_sbomb,check_bombcost);
-		if(itemid > -1 && checkbunny(itemid))
-			tile+=itemsbuf[itemid].ltm;
+		if (valid_item_id(itemid) && checkbunny(itemid))
+			tile+=get_item_data(itemid).ltm;
 	}
 	
 	if(current_item(itype_clock))
@@ -2049,9 +2056,9 @@ int32_t item_tile_mod()
 		int32_t itemid =
 			get_qr(qr_HARDCODED_LITEM_LTMS)
 				? iClock
-				: getHighestLevelEvenUnowned(itemsbuf, itype_clock);
-		if(itemid > -1 && checkbunny(itemid))
-			tile+=itemsbuf[itemid].ltm;
+				: getHighestLevelEvenUnowned(itype_clock);
+		if (valid_item_id(itemid) && checkbunny(itemid))
+			tile+=get_item_data(itemid).ltm;
 	}
 	
 	if(current_item(itype_key))
@@ -2059,9 +2066,9 @@ int32_t item_tile_mod()
 		int32_t itemid =
 			get_qr(qr_HARDCODED_LITEM_LTMS)
 				? iKey
-				: getHighestLevelEvenUnowned(itemsbuf, itype_key);
-		if(itemid > -1 && checkbunny(itemid))
-			tile+=itemsbuf[itemid].ltm;
+				: getHighestLevelEvenUnowned(itype_key);
+		if (valid_item_id(itemid) && checkbunny(itemid))
+			tile+=get_item_data(itemid).ltm;
 	}
 	
 	if(current_item(itype_lkey))
@@ -2069,9 +2076,9 @@ int32_t item_tile_mod()
 		int32_t itemid =
 			get_qr(qr_HARDCODED_LITEM_LTMS)
 				? iLevelKey
-				: getHighestLevelEvenUnowned(itemsbuf, itype_lkey);
-		if(itemid > -1 && checkbunny(itemid))
-			tile+=itemsbuf[itemid].ltm;
+				: getHighestLevelEvenUnowned(itype_lkey);
+		if (valid_item_id(itemid) && checkbunny(itemid))
+			tile+=get_item_data(itemid).ltm;
 	}
 	
 	if(current_item(itype_map))
@@ -2079,9 +2086,9 @@ int32_t item_tile_mod()
 		int32_t itemid =
 			get_qr(qr_HARDCODED_LITEM_LTMS)
 				? iMap
-				: getHighestLevelEvenUnowned(itemsbuf, itype_map);
-		if(itemid > -1 && checkbunny(itemid))
-			tile+=itemsbuf[itemid].ltm;
+				: getHighestLevelEvenUnowned(itype_map);
+		if (valid_item_id(itemid) && checkbunny(itemid))
+			tile+=get_item_data(itemid).ltm;
 	}
 	
 	if(current_item(itype_compass))
@@ -2089,9 +2096,9 @@ int32_t item_tile_mod()
 		int32_t itemid =
 			get_qr(qr_HARDCODED_LITEM_LTMS)
 				? iCompass
-				: getHighestLevelEvenUnowned(itemsbuf, itype_compass);
-		if(itemid > -1 && checkbunny(itemid))
-			tile+=itemsbuf[itemid].ltm;
+				: getHighestLevelEvenUnowned(itype_compass);
+		if (valid_item_id(itemid) && checkbunny(itemid))
+			tile+=get_item_data(itemid).ltm;
 	}
 	
 	if(current_item(itype_bosskey))
@@ -2099,9 +2106,9 @@ int32_t item_tile_mod()
 		int32_t itemid =
 			get_qr(qr_HARDCODED_LITEM_LTMS)
 				? iBossKey
-				: getHighestLevelEvenUnowned(itemsbuf, itype_bosskey);
-		if(itemid > -1 && checkbunny(itemid))
-			tile+=itemsbuf[itemid].ltm;
+				: getHighestLevelEvenUnowned(itype_bosskey);
+		if (valid_item_id(itemid) && checkbunny(itemid))
+			tile+=get_item_data(itemid).ltm;
 	}
 	
 	if(current_item(itype_magiccontainer))
@@ -2109,9 +2116,9 @@ int32_t item_tile_mod()
 		int32_t itemid =
 			get_qr(qr_HARDCODED_LITEM_LTMS)
 				? iMagicC
-				: getHighestLevelEvenUnowned(itemsbuf, itype_magiccontainer);
-		if(itemid > -1 && checkbunny(itemid))
-			tile+=itemsbuf[itemid].ltm;
+				: getHighestLevelEvenUnowned(itype_magiccontainer);
+		if (valid_item_id(itemid) && checkbunny(itemid))
+			tile+=get_item_data(itemid).ltm;
 	}
 	
 	if(current_item(itype_triforcepiece))
@@ -2119,9 +2126,9 @@ int32_t item_tile_mod()
 		int32_t itemid =
 			get_qr(qr_HARDCODED_LITEM_LTMS)
 				? iTriforce
-				: getHighestLevelEvenUnowned(itemsbuf, itype_triforcepiece);
-		if(itemid > -1 && checkbunny(itemid))
-			tile+=itemsbuf[itemid].ltm;
+				: getHighestLevelEvenUnowned(itype_triforcepiece);
+		if (valid_item_id(itemid) && checkbunny(itemid))
+			tile+=get_item_data(itemid).ltm;
 	}
 	
 	for(int32_t i=0; i<itype_max; i++)
@@ -2147,7 +2154,7 @@ int32_t item_tile_mod()
 		if(i == itype_shield)
 			itemid = getCurrentShield(false);
 		
-		if(itemid < 0 || !checkbunny(itemid))
+		if(invalid_item_id(itemid) || !checkbunny(itemid))
 			continue;
 		
 		itemdata const& itm = itemsbuf[itemid];
@@ -2187,12 +2194,14 @@ int32_t bunny_tile_mod()
 // TODO: move out of zc_sys.cpp, weird place for this code.
 void draw_lens_under(BITMAP *dest, bool layer)
 {
+	auto const& lens_item = get_item_data(Hero.getLastLensID());
 	//Lens flag 1: Replacement for qr_LENSHINTS; if set, lens will show hints. Does nothing if flag 2 is set.
 	//Lens flag 2: Disable "hints", prevent rendering of Secret Combos
 	//Lens flag 3: Don't show armos/chest/dive items
 	//Lens flag 4: Show Raft Paths
 	//Lens flag 5: Show Invisible Enemies
-	bool hints = (itemsbuf[Hero.getLastLensID()].flags & item_flag2) ? false : (layer && (itemsbuf[Hero.getLastLensID()].flags & item_flag1));
+	bool disable_hints = lens_item.flags & item_flag2;
+	bool hints = !disable_hints && (layer && (lens_item.flags & item_flag1));
 	
 	int32_t strike_hint_table[11]=
 	{
@@ -2239,7 +2248,7 @@ void draw_lens_under(BITMAP *dest, bool layer)
 				{
 					if(!hints)
 					{
-						if(!(itemsbuf[Hero.getLastLensID()].flags & item_flag2))putcombo(dest,x,y,scr->secretcombo[sSTRIKE],scr->secretcset[sSTRIKE]);
+						if (!disable_hints)putcombo(dest,x,y,scr->secretcombo[sSTRIKE],scr->secretcset[sSTRIKE]);
 					}
 					else
 					{
@@ -2453,7 +2462,7 @@ void draw_lens_under(BITMAP *dest, bool layer)
 						if(!hints && ((!(get_debug() && zc_getkey(KEY_N)) && (lensclk&16))
 									  || ((get_debug() && zc_getkey(KEY_N)) && (frame&16))))
 						{
-							if(!(itemsbuf[Hero.getLastLensID()].flags & item_flag2))putcombo(dest,x,y,scr->undercombo,scr->undercset);
+							if (!disable_hints)putcombo(dest,x,y,scr->undercombo,scr->undercset);
 						}
 						
 						if((!(get_debug() && zc_getkey(KEY_N)) && (lensclk&blink_rate))
@@ -2465,21 +2474,21 @@ void draw_lens_under(BITMAP *dest, bool layer)
 								{
 								case cPUSH_HEAVY:
 								case cPUSH_HW:
-									tempitem=getItemIDPower(itemsbuf,itype_bracelet,1);
+									tempitem=getItemIDPower(itype_bracelet,1);
 									tempitemx=x, tempitemy=y;
 									
 									if(tempitem>-1)
-										putitem2(dest,tempitemx,tempitemy,tempitem, lens_hint_item[tempitem][0], lens_hint_item[tempitem][1], 0);
+										draw_lens_hint_item(dest,tempitemx,tempitemy,tempitem, 0);
 										
 									break;
 									
 								case cPUSH_HEAVY2:
 								case cPUSH_HW2:
-									tempitem=getItemIDPower(itemsbuf,itype_bracelet,2);
+									tempitem=getItemIDPower(itype_bracelet,2);
 									tempitemx=x, tempitemy=y;
 									
 									if(tempitem>-1)
-										putitem2(dest,tempitemx,tempitemy,tempitem, lens_hint_item[tempitem][0], lens_hint_item[tempitem][1], 0);
+										draw_lens_hint_item(dest,tempitemx,tempitemy,tempitem, 0);
 										
 									break;
 								}
@@ -2491,7 +2500,7 @@ void draw_lens_under(BITMAP *dest, bool layer)
 					case mfWHISTLE:
 						if(hints)
 						{
-							tempitem=getItemID(itemsbuf,itype_whistle,1);
+							tempitem=getItemID(itype_whistle,1);
 							
 							if(tempitem<0) break;
 							
@@ -2502,7 +2511,7 @@ void draw_lens_under(BITMAP *dest, bool layer)
 								tempitemy=y;
 							}
 							
-							putitem2(dest,tempitemx,tempitemy,tempitem, lens_hint_item[tempitem][0], lens_hint_item[tempitem][1], 0);
+							draw_lens_hint_item(dest,tempitemx,tempitemy,tempitem, 0);
 						}
 						
 						break;
@@ -2513,7 +2522,7 @@ void draw_lens_under(BITMAP *dest, bool layer)
 					case mfALLFAIRY:
 						if(hints)
 						{
-							tempitem=getItemID(itemsbuf, itype_fairy,1);//iFairyMoving;
+							tempitem=getItemID(itype_fairy,1);//iFairyMoving;
 							
 							if(tempitem < 0) break;
 							
@@ -2524,7 +2533,7 @@ void draw_lens_under(BITMAP *dest, bool layer)
 								tempitemy=y;
 							}
 							
-							putitem2(dest,tempitemx,tempitemy,tempitem, lens_hint_item[tempitem][0], lens_hint_item[tempitem][1], 0);
+							draw_lens_hint_item(dest,tempitemx,tempitemy,tempitem, 0);
 						}
 						
 						break;
@@ -2532,11 +2541,11 @@ void draw_lens_under(BITMAP *dest, bool layer)
 					case mfANYFIRE:
 						if(!hints)
 						{
-							if(!(itemsbuf[Hero.getLastLensID()].flags & item_flag2))putcombo(dest,x,y,scr->secretcombo[sBCANDLE],scr->secretcset[sBCANDLE]);
+							if (!disable_hints)putcombo(dest,x,y,scr->secretcombo[sBCANDLE],scr->secretcset[sBCANDLE]);
 						}
 						else
 						{
-							tempitem=getItemID(itemsbuf,itype_candle,1);
+							tempitem=getItemID(itype_candle,1);
 							
 							if(tempitem<0) break;
 							
@@ -2547,7 +2556,7 @@ void draw_lens_under(BITMAP *dest, bool layer)
 								tempitemy=y;
 							}
 							
-							putitem2(dest,tempitemx,tempitemy,tempitem, lens_hint_item[tempitem][0], lens_hint_item[tempitem][1], 0);
+							draw_lens_hint_item(dest,tempitemx,tempitemy,tempitem, 0);
 						}
 						
 						break;
@@ -2555,11 +2564,11 @@ void draw_lens_under(BITMAP *dest, bool layer)
 					case mfSTRONGFIRE:
 						if(!hints)
 						{
-							if(!(itemsbuf[Hero.getLastLensID()].flags & item_flag2))putcombo(dest,x,y,scr->secretcombo[sRCANDLE],scr->secretcset[sRCANDLE]);
+							if (!disable_hints)putcombo(dest,x,y,scr->secretcombo[sRCANDLE],scr->secretcset[sRCANDLE]);
 						}
 						else
 						{
-							tempitem=getItemID(itemsbuf,itype_candle,2);
+							tempitem=getItemID(itype_candle,2);
 							
 							if(tempitem<0) break;
 							
@@ -2570,7 +2579,7 @@ void draw_lens_under(BITMAP *dest, bool layer)
 								tempitemy=y;
 							}
 							
-							putitem2(dest,tempitemx,tempitemy,tempitem, lens_hint_item[tempitem][0], lens_hint_item[tempitem][1], 0);
+							draw_lens_hint_item(dest,tempitemx,tempitemy,tempitem, 0);
 						}
 						
 						break;
@@ -2578,11 +2587,11 @@ void draw_lens_under(BITMAP *dest, bool layer)
 					case mfMAGICFIRE:
 						if(!hints)
 						{
-							if(!(itemsbuf[Hero.getLastLensID()].flags & item_flag2))putcombo(dest,x,y,scr->secretcombo[sWANDFIRE],scr->secretcset[sWANDFIRE]);
+							if (!disable_hints)putcombo(dest,x,y,scr->secretcombo[sWANDFIRE],scr->secretcset[sWANDFIRE]);
 						}
 						else
 						{
-							tempitem=getItemID(itemsbuf,itype_wand,1);
+							tempitem=getItemID(itype_wand,1);
 							
 							if(tempitem<0) break;
 							
@@ -2601,7 +2610,7 @@ void draw_lens_under(BITMAP *dest, bool layer)
 							}
 							
 							putweapon(dest,tempweaponx,tempweapony,tempweapon, 0, up, lens_hint_weapon[tempweapon][0], lens_hint_weapon[tempweapon][1],-1);
-							putitem2(dest,tempitemx,tempitemy,tempitem, lens_hint_item[tempitem][0], lens_hint_item[tempitem][1], 0);
+							draw_lens_hint_item(dest,tempitemx,tempitemy,tempitem, 0);
 						}
 						
 						break;
@@ -2609,11 +2618,11 @@ void draw_lens_under(BITMAP *dest, bool layer)
 					case mfDIVINEFIRE:
 						if(!hints)
 						{
-							if(!(itemsbuf[Hero.getLastLensID()].flags & item_flag2))putcombo(dest,x,y,scr->secretcombo[sDIVINEFIRE],scr->secretcset[sDIVINEFIRE]);
+							if (!disable_hints)putcombo(dest,x,y,scr->secretcombo[sDIVINEFIRE],scr->secretcset[sDIVINEFIRE]);
 						}
 						else
 						{
-							tempitem=getItemID(itemsbuf,itype_divinefire,1);
+							tempitem=getItemID(itype_divinefire,1);
 							
 							if(tempitem<0) break;
 							
@@ -2624,7 +2633,7 @@ void draw_lens_under(BITMAP *dest, bool layer)
 								tempitemy=y;
 							}
 							
-							putitem2(dest,tempitemx,tempitemy,tempitem, lens_hint_item[tempitem][0], lens_hint_item[tempitem][1], 0);
+							draw_lens_hint_item(dest,tempitemx,tempitemy,tempitem, 0);
 						}
 						
 						break;
@@ -2632,11 +2641,11 @@ void draw_lens_under(BITMAP *dest, bool layer)
 					case mfARROW:
 						if(!hints)
 						{
-							if(!(itemsbuf[Hero.getLastLensID()].flags & item_flag2))putcombo(dest,x,y,scr->secretcombo[sARROW],scr->secretcset[sARROW]);
+							if (!disable_hints)putcombo(dest,x,y,scr->secretcombo[sARROW],scr->secretcset[sARROW]);
 						}
 						else
 						{
-							tempitem=getItemID(itemsbuf,itype_arrow,1);
+							tempitem=getItemID(itype_arrow,1);
 							
 							if(tempitem<0) break;
 							
@@ -2647,7 +2656,7 @@ void draw_lens_under(BITMAP *dest, bool layer)
 								tempitemy=y;
 							}
 							
-							putitem2(dest,tempitemx,tempitemy,tempitem, lens_hint_item[tempitem][0], lens_hint_item[tempitem][1], 0);
+							draw_lens_hint_item(dest,tempitemx,tempitemy,tempitem, 0);
 						}
 						
 						break;
@@ -2655,11 +2664,11 @@ void draw_lens_under(BITMAP *dest, bool layer)
 					case mfSARROW:
 						if(!hints)
 						{
-							if(!(itemsbuf[Hero.getLastLensID()].flags & item_flag2))putcombo(dest,x,y,scr->secretcombo[sSARROW],scr->secretcset[sSARROW]);
+							if (!disable_hints)putcombo(dest,x,y,scr->secretcombo[sSARROW],scr->secretcset[sSARROW]);
 						}
 						else
 						{
-							tempitem=getItemID(itemsbuf,itype_arrow,2);
+							tempitem=getItemID(itype_arrow,2);
 							
 							if(tempitem<0) break;
 							
@@ -2670,7 +2679,7 @@ void draw_lens_under(BITMAP *dest, bool layer)
 								tempitemy=y;
 							}
 							
-							putitem2(dest,tempitemx,tempitemy,tempitem, lens_hint_item[tempitem][0], lens_hint_item[tempitem][1], 0);
+							draw_lens_hint_item(dest,tempitemx,tempitemy,tempitem, 0);
 						}
 						
 						break;
@@ -2678,11 +2687,11 @@ void draw_lens_under(BITMAP *dest, bool layer)
 					case mfGARROW:
 						if(!hints)
 						{
-							if(!(itemsbuf[Hero.getLastLensID()].flags & item_flag2))putcombo(dest,x,y,scr->secretcombo[sGARROW],scr->secretcset[sGARROW]);
+							if (!disable_hints)putcombo(dest,x,y,scr->secretcombo[sGARROW],scr->secretcset[sGARROW]);
 						}
 						else
 						{
-							tempitem=getItemID(itemsbuf,itype_arrow,3);
+							tempitem=getItemID(itype_arrow,3);
 							
 							if(tempitem<0) break;
 							
@@ -2693,7 +2702,7 @@ void draw_lens_under(BITMAP *dest, bool layer)
 								tempitemy=y;
 							}
 							
-							putitem2(dest,tempitemx,tempitemy,tempitem, lens_hint_item[tempitem][0], lens_hint_item[tempitem][1], 0);
+							draw_lens_hint_item(dest,tempitemx,tempitemy,tempitem, 0);
 						}
 						
 						break;
@@ -2701,11 +2710,11 @@ void draw_lens_under(BITMAP *dest, bool layer)
 					case mfBOMB:
 						if(!hints)
 						{
-							if(!(itemsbuf[Hero.getLastLensID()].flags & item_flag2))putcombo(dest,x,y,scr->secretcombo[sBOMB],scr->secretcset[sBOMB]);
+							if (!disable_hints)putcombo(dest,x,y,scr->secretcombo[sBOMB],scr->secretcset[sBOMB]);
 						}
 						else
 						{
-							//tempitem=getItemID(itemsbuf,itype_bomb,1);
+							//tempitem=getItemID(itype_bomb,1);
 							tempweapon = wLitBomb;
 							
 							//if (tempitem<0) break;
@@ -2724,11 +2733,11 @@ void draw_lens_under(BITMAP *dest, bool layer)
 					case mfSBOMB:
 						if(!hints)
 						{
-							if(!(itemsbuf[Hero.getLastLensID()].flags & item_flag2))putcombo(dest,x,y,scr->secretcombo[sSBOMB],scr->secretcset[sSBOMB]);
+							if (!disable_hints)putcombo(dest,x,y,scr->secretcombo[sSBOMB],scr->secretcset[sSBOMB]);
 						}
 						else
 						{
-							//tempitem=getItemID(itemsbuf,itype_sbomb,1);
+							//tempitem=getItemID(itype_sbomb,1);
 							//if (tempitem<0) break;
 							tempweapon = wLitSBomb;
 							
@@ -2747,7 +2756,7 @@ void draw_lens_under(BITMAP *dest, bool layer)
 					case mfARMOS_SECRET:
 						if(!hints)
 						{
-							if(!(itemsbuf[Hero.getLastLensID()].flags & item_flag2))
+							if (!disable_hints)
 								putcombo(dest,x,y,scr->secretcombo[sSTAIRS],scr->secretcset[sSTAIRS]);
 						}
 						break;
@@ -2755,12 +2764,12 @@ void draw_lens_under(BITMAP *dest, bool layer)
 					case mfBRANG:
 						if(!hints)
 						{
-							if(!(itemsbuf[Hero.getLastLensID()].flags & item_flag2))
+							if (!disable_hints)
 								putcombo(dest,x,y,scr->secretcombo[sBRANG],scr->secretcset[sBRANG]);
 						}
 						else
 						{
-							tempitem=getItemID(itemsbuf,itype_brang,1);
+							tempitem=getItemID(itype_brang,1);
 							
 							if(tempitem<0) break;
 							
@@ -2771,7 +2780,7 @@ void draw_lens_under(BITMAP *dest, bool layer)
 								tempitemy=y;
 							}
 							
-							putitem2(dest,tempitemx,tempitemy,tempitem, lens_hint_item[tempitem][0], lens_hint_item[tempitem][1], 0);
+							draw_lens_hint_item(dest,tempitemx,tempitemy,tempitem, 0);
 						}
 						
 						break;
@@ -2779,11 +2788,11 @@ void draw_lens_under(BITMAP *dest, bool layer)
 					case mfMBRANG:
 						if(!hints)
 				{
-							if(!(itemsbuf[Hero.getLastLensID()].flags & item_flag2))putcombo(dest,x,y,scr->secretcombo[sMBRANG],scr->secretcset[sMBRANG]);
+							if (!disable_hints)putcombo(dest,x,y,scr->secretcombo[sMBRANG],scr->secretcset[sMBRANG]);
 						}
 						else
 						{
-							tempitem=getItemID(itemsbuf,itype_brang,2);
+							tempitem=getItemID(itype_brang,2);
 							
 							if(tempitem<0) break;
 							
@@ -2794,7 +2803,7 @@ void draw_lens_under(BITMAP *dest, bool layer)
 								tempitemy=y;
 							}
 							
-							putitem2(dest,tempitemx,tempitemy,tempitem, lens_hint_item[tempitem][0], lens_hint_item[tempitem][1], 0);
+							draw_lens_hint_item(dest,tempitemx,tempitemy,tempitem, 0);
 						}
 						
 						break;
@@ -2802,11 +2811,11 @@ void draw_lens_under(BITMAP *dest, bool layer)
 					case mfFBRANG:
 						if(!hints)
 						{
-							if(!(itemsbuf[Hero.getLastLensID()].flags & item_flag2))putcombo(dest,x,y,scr->secretcombo[sFBRANG],scr->secretcset[sFBRANG]);
+							if (!disable_hints)putcombo(dest,x,y,scr->secretcombo[sFBRANG],scr->secretcset[sFBRANG]);
 						}
 						else
 						{
-							tempitem=getItemID(itemsbuf,itype_brang,3);
+							tempitem=getItemID(itype_brang,3);
 							
 							if(tempitem<0) break;
 							
@@ -2817,7 +2826,7 @@ void draw_lens_under(BITMAP *dest, bool layer)
 								tempitemy=y;
 							}
 							
-							putitem2(dest,tempitemx,tempitemy,tempitem, lens_hint_item[tempitem][0], lens_hint_item[tempitem][1], 0);
+							draw_lens_hint_item(dest,tempitemx,tempitemy,tempitem, 0);
 						}
 						
 						break;
@@ -2825,15 +2834,15 @@ void draw_lens_under(BITMAP *dest, bool layer)
 					case mfWANDMAGIC:
 						if(!hints)
 						{
-							if(!(itemsbuf[Hero.getLastLensID()].flags & item_flag2))putcombo(dest,x,y,scr->secretcombo[sWANDMAGIC],scr->secretcset[sWANDMAGIC]);
+							if (!disable_hints)putcombo(dest,x,y,scr->secretcombo[sWANDMAGIC],scr->secretcset[sWANDMAGIC]);
 						}
 						else
 						{
-							tempitem=getItemID(itemsbuf,itype_wand,1);
+							tempitem=getItemID(itype_wand,1);
 							
 							if(tempitem<0) break;
 							
-							tempweapon=itemsbuf[tempitem].wpn3;
+							tempweapon=get_item_data(tempitem).wpn3;
 							
 							if((!(get_debug() && zc_getkey(KEY_N)) && (lensclk&blink_rate))
 									|| ((get_debug() && zc_getkey(KEY_N)) && (frame&blink_rate)))
@@ -2854,7 +2863,7 @@ void draw_lens_under(BITMAP *dest, bool layer)
 							}
 							
 							putweapon(dest,tempweaponx,tempweapony+lens_hint_weapon[tempweapon][4],tempweapon, 0, up, lens_hint_weapon[tempweapon][0], lens_hint_weapon[tempweapon][1],-1);
-							putitem2(dest,tempitemx,tempitemy,tempitem, lens_hint_item[tempitem][0], lens_hint_item[tempitem][1], 0);
+							draw_lens_hint_item(dest,tempitemx,tempitemy,tempitem, 0);
 						}
 						
 						break;
@@ -2862,11 +2871,11 @@ void draw_lens_under(BITMAP *dest, bool layer)
 					case mfREFMAGIC:
 						if(!hints)
 						{
-							if(!(itemsbuf[Hero.getLastLensID()].flags & item_flag2))putcombo(dest,x,y,scr->secretcombo[sREFMAGIC],scr->secretcset[sREFMAGIC]);
+							if (!disable_hints)putcombo(dest,x,y,scr->secretcombo[sREFMAGIC],scr->secretcset[sREFMAGIC]);
 						}
 						else
 						{
-							tempitem=getItemID(itemsbuf,itype_shield,3);
+							tempitem=getItemID(itype_shield,3);
 							
 							if(tempitem<0) break;
 							
@@ -2903,7 +2912,7 @@ void draw_lens_under(BITMAP *dest, bool layer)
 								}
 							}
 							
-							putitem2(dest,tempitemx,tempitemy,tempitem, lens_hint_item[tempitem][0], lens_hint_item[tempitem][1], 0);
+							draw_lens_hint_item(dest,tempitemx,tempitemy,tempitem, 0);
 							putweapon(dest,tempweaponx,tempweapony+lens_hint_weapon[tempweapon][4],tempweapon, 0, lens_hint_weapon[ewMagic][2], lens_hint_weapon[tempweapon][0], lens_hint_weapon[tempweapon][1],-1);
 						}
 						
@@ -2912,11 +2921,11 @@ void draw_lens_under(BITMAP *dest, bool layer)
 					case mfREFFIREBALL:
 						if(!hints)
 						{
-							if(!(itemsbuf[Hero.getLastLensID()].flags & item_flag2))putcombo(dest,x,y,scr->secretcombo[sREFFIREBALL],scr->secretcset[sREFFIREBALL]);
+							if (!disable_hints)putcombo(dest,x,y,scr->secretcombo[sREFFIREBALL],scr->secretcset[sREFFIREBALL]);
 						}
 						else
 						{
-							tempitem=getItemID(itemsbuf,itype_shield,3);
+							tempitem=getItemID(itype_shield,3);
 							
 							if(tempitem<0) break;
 							
@@ -2947,7 +2956,7 @@ void draw_lens_under(BITMAP *dest, bool layer)
 								}
 							}
 							
-							putitem2(dest,tempitemx,tempitemy,tempitem, lens_hint_item[tempitem][0], lens_hint_item[tempitem][1], 0);
+							draw_lens_hint_item(dest,tempitemx,tempitemy,tempitem, 0);
 							putweapon(dest,tempweaponx+lens_hint_weapon[tempweapon][3],tempweapony+lens_hint_weapon[ewFireball][4],tempweapon, 0, up, lens_hint_weapon[tempweapon][0], lens_hint_weapon[tempweapon][1],-1);
 						}
 						
@@ -2956,11 +2965,11 @@ void draw_lens_under(BITMAP *dest, bool layer)
 					case mfSWORD:
 						if(!hints)
 						{
-							if(!(itemsbuf[Hero.getLastLensID()].flags & item_flag2))putcombo(dest,x,y,scr->secretcombo[sSWORD],scr->secretcset[sSWORD]);
+							if (!disable_hints)putcombo(dest,x,y,scr->secretcombo[sSWORD],scr->secretcset[sSWORD]);
 						}
 						else
 						{
-							tempitem=getItemID(itemsbuf,itype_sword,1);
+							tempitem=getItemID(itype_sword,1);
 							
 							if(tempitem<0) break;
 							
@@ -2971,7 +2980,7 @@ void draw_lens_under(BITMAP *dest, bool layer)
 								tempitemy=y;
 							}
 							
-							putitem2(dest,tempitemx,tempitemy,tempitem, lens_hint_item[tempitem][0], lens_hint_item[tempitem][1], 0);
+							draw_lens_hint_item(dest,tempitemx,tempitemy,tempitem, 0);
 						}
 						
 						break;
@@ -2979,11 +2988,11 @@ void draw_lens_under(BITMAP *dest, bool layer)
 					case mfWSWORD:
 						if(!hints)
 						{
-							if(!(itemsbuf[Hero.getLastLensID()].flags & item_flag2))putcombo(dest,x,y,scr->secretcombo[sWSWORD],scr->secretcset[sWSWORD]);
+							if (!disable_hints)putcombo(dest,x,y,scr->secretcombo[sWSWORD],scr->secretcset[sWSWORD]);
 						}
 						else
 						{
-							tempitem=getItemID(itemsbuf,itype_sword,2);
+							tempitem=getItemID(itype_sword,2);
 							
 							if(tempitem<0) break;
 							
@@ -2994,7 +3003,7 @@ void draw_lens_under(BITMAP *dest, bool layer)
 								tempitemy=y;
 							}
 							
-							putitem2(dest,tempitemx,tempitemy,tempitem, lens_hint_item[tempitem][0], lens_hint_item[tempitem][1], 0);
+							draw_lens_hint_item(dest,tempitemx,tempitemy,tempitem, 0);
 						}
 						
 						break;
@@ -3002,11 +3011,11 @@ void draw_lens_under(BITMAP *dest, bool layer)
 					case mfMSWORD:
 						if(!hints)
 						{
-							if(!(itemsbuf[Hero.getLastLensID()].flags & item_flag2))putcombo(dest,x,y,scr->secretcombo[sMSWORD],scr->secretcset[sMSWORD]);
+							if (!disable_hints)putcombo(dest,x,y,scr->secretcombo[sMSWORD],scr->secretcset[sMSWORD]);
 						}
 						else
 						{
-							tempitem=getItemID(itemsbuf,itype_sword,3);
+							tempitem=getItemID(itype_sword,3);
 							
 							if(tempitem<0) break;
 							
@@ -3017,7 +3026,7 @@ void draw_lens_under(BITMAP *dest, bool layer)
 								tempitemy=y;
 							}
 							
-							putitem2(dest,tempitemx,tempitemy,tempitem, lens_hint_item[tempitem][0], lens_hint_item[tempitem][1], 0);
+							draw_lens_hint_item(dest,tempitemx,tempitemy,tempitem, 0);
 						}
 						
 						break;
@@ -3025,11 +3034,11 @@ void draw_lens_under(BITMAP *dest, bool layer)
 					case mfXSWORD:
 						if(!hints)
 						{
-							if(!(itemsbuf[Hero.getLastLensID()].flags & item_flag2))putcombo(dest,x,y,scr->secretcombo[sXSWORD],scr->secretcset[sXSWORD]);
+							if (!disable_hints)putcombo(dest,x,y,scr->secretcombo[sXSWORD],scr->secretcset[sXSWORD]);
 						}
 						else
 						{
-							tempitem=getItemID(itemsbuf,itype_sword,4);
+							tempitem=getItemID(itype_sword,4);
 							
 							if(tempitem<0) break;
 							
@@ -3040,7 +3049,7 @@ void draw_lens_under(BITMAP *dest, bool layer)
 								tempitemy=y;
 							}
 							
-							putitem2(dest,tempitemx,tempitemy,tempitem, lens_hint_item[tempitem][0], lens_hint_item[tempitem][1], 0);
+							draw_lens_hint_item(dest,tempitemx,tempitemy,tempitem, 0);
 						}
 						
 						break;
@@ -3048,11 +3057,11 @@ void draw_lens_under(BITMAP *dest, bool layer)
 					case mfSWORDBEAM:
 						if(!hints)
 						{
-							if(!(itemsbuf[Hero.getLastLensID()].flags & item_flag2))putcombo(dest,x,y,scr->secretcombo[sSWORDBEAM],scr->secretcset[sSWORDBEAM]);
+							if (!disable_hints)putcombo(dest,x,y,scr->secretcombo[sSWORDBEAM],scr->secretcset[sSWORDBEAM]);
 						}
 						else
 						{
-							tempitem=getItemID(itemsbuf,itype_sword,1);
+							tempitem=getItemID(itype_sword,1);
 							
 							if(tempitem<0) break;
 							
@@ -3063,7 +3072,7 @@ void draw_lens_under(BITMAP *dest, bool layer)
 								tempitemy=y;
 							}
 							
-							putitem2(dest,tempitemx,tempitemy,tempitem, lens_hint_item[tempitem][0], lens_hint_item[tempitem][1], 1);
+							draw_lens_hint_item(dest,tempitemx,tempitemy,tempitem, 1);
 						}
 						
 						break;
@@ -3071,11 +3080,11 @@ void draw_lens_under(BITMAP *dest, bool layer)
 					case mfWSWORDBEAM:
 						if(!hints)
 						{
-							if(!(itemsbuf[Hero.getLastLensID()].flags & item_flag2))putcombo(dest,x,y,scr->secretcombo[sWSWORDBEAM],scr->secretcset[sWSWORDBEAM]);
+							if (!disable_hints)putcombo(dest,x,y,scr->secretcombo[sWSWORDBEAM],scr->secretcset[sWSWORDBEAM]);
 						}
 						else
 						{
-							tempitem=getItemID(itemsbuf,itype_sword,2);
+							tempitem=getItemID(itype_sword,2);
 							
 							if(tempitem<0) break;
 							
@@ -3086,7 +3095,7 @@ void draw_lens_under(BITMAP *dest, bool layer)
 								tempitemy=y;
 							}
 							
-							putitem2(dest,tempitemx,tempitemy,tempitem, lens_hint_item[tempitem][0], lens_hint_item[tempitem][1], 2);
+							draw_lens_hint_item(dest,tempitemx,tempitemy,tempitem, 2);
 						}
 						
 						break;
@@ -3094,11 +3103,11 @@ void draw_lens_under(BITMAP *dest, bool layer)
 					case mfMSWORDBEAM:
 						if(!hints)
 						{
-							if(!(itemsbuf[Hero.getLastLensID()].flags & item_flag2))putcombo(dest,x,y,scr->secretcombo[sMSWORDBEAM],scr->secretcset[sMSWORDBEAM]);
+							if (!disable_hints)putcombo(dest,x,y,scr->secretcombo[sMSWORDBEAM],scr->secretcset[sMSWORDBEAM]);
 						}
 						else
 						{
-							tempitem=getItemID(itemsbuf,itype_sword,3);
+							tempitem=getItemID(itype_sword,3);
 							
 							if(tempitem<0) break;
 							
@@ -3109,7 +3118,7 @@ void draw_lens_under(BITMAP *dest, bool layer)
 								tempitemy=y;
 							}
 							
-							putitem2(dest,tempitemx,tempitemy,tempitem, lens_hint_item[tempitem][0], lens_hint_item[tempitem][1], 3);
+							draw_lens_hint_item(dest,tempitemx,tempitemy,tempitem, 3);
 						}
 						
 						break;
@@ -3117,11 +3126,11 @@ void draw_lens_under(BITMAP *dest, bool layer)
 					case mfXSWORDBEAM:
 						if(!hints)
 						{
-							if(!(itemsbuf[Hero.getLastLensID()].flags & item_flag2))putcombo(dest,x,y,scr->secretcombo[sXSWORDBEAM],scr->secretcset[sXSWORDBEAM]);
+							if (!disable_hints)putcombo(dest,x,y,scr->secretcombo[sXSWORDBEAM],scr->secretcset[sXSWORDBEAM]);
 						}
 						else
 						{
-							tempitem=getItemID(itemsbuf,itype_sword,4);
+							tempitem=getItemID(itype_sword,4);
 							
 							if(tempitem<0) break;
 							
@@ -3132,7 +3141,7 @@ void draw_lens_under(BITMAP *dest, bool layer)
 								tempitemy=y;
 							}
 							
-							putitem2(dest,tempitemx,tempitemy,tempitem, lens_hint_item[tempitem][0], lens_hint_item[tempitem][1], 4);
+							draw_lens_hint_item(dest,tempitemx,tempitemy,tempitem, 4);
 						}
 						
 						break;
@@ -3140,11 +3149,11 @@ void draw_lens_under(BITMAP *dest, bool layer)
 					case mfHOOKSHOT:
 						if(!hints)
 						{
-							if(!(itemsbuf[Hero.getLastLensID()].flags & item_flag2))putcombo(dest,x,y,scr->secretcombo[sHOOKSHOT],scr->secretcset[sHOOKSHOT]);
+							if (!disable_hints)putcombo(dest,x,y,scr->secretcombo[sHOOKSHOT],scr->secretcset[sHOOKSHOT]);
 						}
 						else
 						{
-							tempitem=getItemID(itemsbuf,itype_hookshot,1);
+							tempitem=getItemID(itype_hookshot,1);
 							
 							if(tempitem<0) break;
 							
@@ -3155,7 +3164,7 @@ void draw_lens_under(BITMAP *dest, bool layer)
 								tempitemy=y;
 							}
 							
-							putitem2(dest,tempitemx,tempitemy,tempitem, lens_hint_item[tempitem][0], lens_hint_item[tempitem][1], 0);
+							draw_lens_hint_item(dest,tempitemx,tempitemy,tempitem, 0);
 						}
 						
 						break;
@@ -3163,11 +3172,11 @@ void draw_lens_under(BITMAP *dest, bool layer)
 					case mfWAND:
 						if(!hints)
 						{
-							if(!(itemsbuf[Hero.getLastLensID()].flags & item_flag2))putcombo(dest,x,y,scr->secretcombo[sWAND],scr->secretcset[sWAND]);
+							if (!disable_hints)putcombo(dest,x,y,scr->secretcombo[sWAND],scr->secretcset[sWAND]);
 						}
 						else
 						{
-							tempitem=getItemID(itemsbuf,itype_wand,1);
+							tempitem=getItemID(itype_wand,1);
 							
 							if(tempitem<0) break;
 							
@@ -3178,7 +3187,7 @@ void draw_lens_under(BITMAP *dest, bool layer)
 								tempitemy=y;
 							}
 							
-							putitem2(dest,tempitemx,tempitemy,tempitem, lens_hint_item[tempitem][0], lens_hint_item[tempitem][1], 0);
+							draw_lens_hint_item(dest,tempitemx,tempitemy,tempitem, 0);
 						}
 						
 						break;
@@ -3186,11 +3195,11 @@ void draw_lens_under(BITMAP *dest, bool layer)
 					case mfHAMMER:
 						if(!hints)
 						{
-							if(!(itemsbuf[Hero.getLastLensID()].flags & item_flag2))putcombo(dest,x,y,scr->secretcombo[sHAMMER],scr->secretcset[sHAMMER]);
+							if (!disable_hints)putcombo(dest,x,y,scr->secretcombo[sHAMMER],scr->secretcset[sHAMMER]);
 						}
 						else
 						{
-							tempitem=getItemID(itemsbuf,itype_hammer,1);
+							tempitem=getItemID(itype_hammer,1);
 							
 							if(tempitem<0) break;
 							
@@ -3201,7 +3210,7 @@ void draw_lens_under(BITMAP *dest, bool layer)
 								tempitemy=y;
 							}
 							
-							putitem2(dest,tempitemx,tempitemy,tempitem, lens_hint_item[tempitem][0], lens_hint_item[tempitem][1], 0);
+							draw_lens_hint_item(dest,tempitemx,tempitemy,tempitem, 0);
 						}
 						
 						break;
@@ -3210,9 +3219,9 @@ void draw_lens_under(BITMAP *dest, bool layer)
 					case mfDIVE_ITEM:
 					{
 						int flag = (cur_screen < 128 && get_qr(qr_ITEMPICKUPSETSBELOW)) ? mITEM : mSPECIALITEM;
-						if((!getmapflag(scr, flag) || (scr->flags9&fBELOWRETURN)) && !(itemsbuf[Hero.getLastLensID()].flags & item_flag3))
+						if((!getmapflag(scr, flag) || (scr->flags9&fBELOWRETURN)) && !(lens_item.flags & item_flag3))
 						{
-							putitem2(dest,x,y,scr->catchall, lens_hint_item[scr->catchall][0], lens_hint_item[scr->catchall][1], 0);
+							draw_lens_hint_item(dest,x,y,scr->catchall, 0);
 						}
 						break;
 					}
@@ -3234,19 +3243,19 @@ void draw_lens_under(BITMAP *dest, bool layer)
 					case 30:
 					case 31:
 						if(!hints)
-							if(!(itemsbuf[Hero.getLastLensID()].flags & item_flag2))
+							if (!disable_hints)
 								putcombo(dest,x,y,scr->secretcombo[checkflag-16+4],scr->secretcset[checkflag-16+4]);
 									 
 						break;
 					case mfSECRETSNEXT:
 						if(!hints)
-							if(!(itemsbuf[Hero.getLastLensID()].flags & item_flag2))
+							if (!disable_hints)
 								putcombo(dest,x,y,rpos_handle.data()+1,rpos_handle.cset());
 									 
 						break;
 					
 					case mfSTRIKE:
-						if(!(itemsbuf[Hero.getLastLensID()].flags & item_flag2))
+						if (!disable_hints)
 						{
 							goto special;
 						}
@@ -3258,7 +3267,7 @@ void draw_lens_under(BITMAP *dest, bool layer)
 					default: goto special;
 					
 					special:
-						if(layer && ((checkflag!=mfRAFT && checkflag!=mfRAFT_BRANCH&& checkflag!=mfRAFT_BOUNCE) ||(itemsbuf[Hero.getLastLensID()].flags & item_flag4)))
+						if(layer && ((checkflag!=mfRAFT && checkflag!=mfRAFT_BRANCH&& checkflag!=mfRAFT_BOUNCE) ||(lens_item.flags & item_flag4)))
 						{
 							if((!(get_debug() && zc_getkey(KEY_N)) && (lensclk&blink_rate)) || ((get_debug() && zc_getkey(KEY_N)) && (frame&blink_rate)))
 							{
@@ -3317,14 +3326,14 @@ void draw_lens_under(BITMAP *dest, bool layer)
 			{
 				if (!hints)
 				{
-					if (!(itemsbuf[Hero.getLastLensID()].flags & item_flag2))
+					if (!disable_hints)
 						putcombo(dest,scr->stairx+offx,scr->stairy+offy,scr->secretcombo[sSTAIRS],scr->secretcset[sSTAIRS]);
 				}
 				else
 				{
 					if(scr->flags&fWHISTLE)
 					{
-						tempitem=getItemID(itemsbuf,itype_whistle,1);
+						tempitem=getItemID(itype_whistle,1);
 						int32_t tempitemx=-16+offx;
 						int32_t tempitemy=-16+offy-playing_field_offset;
 						
@@ -3335,7 +3344,7 @@ void draw_lens_under(BITMAP *dest, bool layer)
 							tempitemy=scr->stairy+offy;
 						}
 						
-						putitem2(dest, tempitemx, tempitemy, tempitem, lens_hint_item[tempitem][0], lens_hint_item[tempitem][1], 0);
+						draw_lens_hint_item(dest, tempitemx, tempitemy, tempitem, 0);
 					}
 				}
 			}
@@ -3350,7 +3359,7 @@ void draw_lens_over(BITMAP *dest)
 
 	static BITMAP *lens_scr = create_bitmap_ex(8,2*w,2*h);
 	static int32_t last_width = -1;
-	int32_t width = itemsbuf[current_item_id(itype_lens,true)].misc1;
+	int32_t width = get_item_data(current_item_id(itype_lens,true)).misc1;
 	
 	// Only redraw the circle if the size has changed
 	if (width != last_width)
@@ -6386,12 +6395,12 @@ void Z_init_sound()
 // Stops SFX played by Hero's item of the given family
 void stop_item_sfx(int32_t family)
 {
-	int32_t id=current_item_id(family);
+	int32_t id = current_item_id(family);
 	
-	if(id<0)
+	if(invalid_item_id(id))
 		return;
 		
-	stop_sfx(itemsbuf[id].usesound);
+	stop_sfx(get_item_data(id).usesound);
 }
 
 // TODO: when far out of bounds, sounds should dampen. currently we only pan.

@@ -276,15 +276,20 @@ static int32_t read_saves(ReadMode read_mode, PACKFILE* f, std::vector<save_t>& 
 		if (section_version < 24) tempbyte = (tempbyte ? DIDCHEAT_BIT : 0);
 		game._cheat = tempbyte;
 		
-		char temp;
-		
-		for(int32_t j=0; j<MAXITEMS; j++)
+		if (section_version < 49)
 		{
-			if(!p_getc(&temp, f))
-				return 18;
+			game.items_owned.clear();
+			for(int32_t j=0; j<256; j++)
+			{
+				if(!p_getc(&tempbyte, f))
+					return 18;
 				
-			game.set_item_no_flush(j, (temp != 0));
+				if (tempbyte)
+					game.set_item_no_flush(j, true);
+			}
 		}
+		else if (!p_getbitstr(&game.items_owned, f))
+			return 18;
 		
 		size_t versz = section_version<31 ? 9 : 16;
 		if(!p_getstr(game.version,versz,f))
@@ -764,15 +769,25 @@ static int32_t read_saves(ReadMode read_mode, PACKFILE* f, std::vector<save_t>& 
 					return 62;
 		}
 		
-		if(section_version >= 21)
+		if(section_version >= 49)
 		{
-			for(int32_t j=0; j<MAXITEMS; ++j)
-				if(!p_getc(&(game.item_messages_played[j]),f))
+			if (!p_getbitstr(&game.item_messages_played, f))
+				return 63;
+		}
+		else if(section_version >= 21)
+		{
+			game.item_messages_played.clear();
+			for(int32_t j=0; j<256; ++j)
+			{
+				if(!p_getc(&tempbyte, f))
 					return 63;
+				if (tempbyte)
+					game.item_messages_played.set(j, true);
+			}
 		}
 		else 
 		{
-			std::fill(game.item_messages_played, game.item_messages_played+MAXITEMS, 0);
+			game.item_messages_played.clear();
 		}
 		if(section_version >= 22)
 		{
@@ -1247,9 +1262,8 @@ static int32_t write_save(PACKFILE* f, save_t* save)
 	if(!p_putc(game._cheat,f))
 		return 17;
 	
-	for(int32_t j=0; j<MAXITEMS; j++)
-		if(!p_putc(game.get_item(j) ? 1 : 0,f))
-			return 18;
+	if(!p_putbitstr(game.items_owned, f))
+		return 18;
 	
 	if(!pfwrite(game.version,16,f))
 		return 20;
@@ -1383,7 +1397,7 @@ static int32_t write_save(PACKFILE* f, save_t* save)
 		return 59;
 	if(!p_putbvec(game.lvlswitches,f))
 		return 60;
-	if(!pfwrite(game.item_messages_played,MAXITEMS*sizeof(bool),f))
+	if(!p_putbitstr(game.item_messages_played,f))
 		return 61;
 	if(!pfwrite(game.bottleSlots,NUM_BOTTLE_SLOTS*sizeof(byte),f))
 		return 62;
@@ -2081,12 +2095,10 @@ bool saves_load(std::string& err)
 static void update_icon(save_t* save)
 {
 	flushItemCache();
-	int32_t maxringid = getHighestLevelOfFamily(save->game, itemsbuf, itype_ring);
+	int32_t maxringid = getHighestLevelOfFamily(save->game, itype_ring);
 	int32_t ring = 0;
-	if (maxringid != -1)
-	{
-		ring = itemsbuf[maxringid].level;
-	}
+	if (valid_item_id(maxringid))
+		ring = get_item_data(maxringid).level;
 	if (ring > 0) --ring;
 	int32_t i = ring;
 

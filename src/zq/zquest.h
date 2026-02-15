@@ -18,6 +18,7 @@
 #include "base/cpool.h"
 #include "base/misctypes.h"
 #include "zq/zq_class.h"
+#include "items.h"
 
 #define  INTERNAL_VERSION  0xA721
 
@@ -129,7 +130,6 @@ extern BITMAP* asset_arrows_bmp;
 extern MIDI* asset_tunes_midi;
 extern PALETTE asset_pal;
 
-extern int32_t lens_hint_item[MAXITEMS][2];                     //aclk, aframe
 extern int32_t lens_hint_weapon[MAXWPNS][5];                    //aclk, aframe, dir, x, y
 extern RGB_MAP* zq_rgb_table;
 extern MIDI *song;
@@ -421,15 +421,6 @@ int32_t onUnderCombo();
 int32_t onCompileScript();
 int32_t onSlotPreview();
 
-
-typedef struct item_struct
-{
-    char *s;
-    int32_t i;
-} item_struct;
-
-extern item_struct bii[MAXITEMS+1];
-
 typedef struct weapon_struct
 {
     char *s;
@@ -441,9 +432,6 @@ extern weapon_struct biw[MAXWPNS];
 int32_t set_comboaradio(byte layermask);
 extern int32_t alias_origin;
 void draw_combo_alias_thumbnail(BITMAP *dest, combo_alias const* combo, int32_t x, int32_t y, int32_t size);
-
-void build_bii_list(bool usenone);
-const char *itemlist_num(int32_t index, int32_t *list_size);
 
 void build_biw_list();
 
@@ -604,7 +592,7 @@ int32_t get_bmaps(int32_t si);
 
 bool no_subscreen();
 
-extern int32_t Awpn, Bwpn, Xwpn, Ywpn;
+extern ButtonItemData Awpn, Bwpn, Xwpn, Ywpn;
 
 int32_t main(int32_t argc,char **argv);
 int32_t d_nbmenu_proc(int32_t msg,DIALOG *d,int32_t c);

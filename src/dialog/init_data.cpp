@@ -15,8 +15,6 @@ using std::map;
 using std::vector;
 
 void mark_save_dirty();
-extern itemdata *itemsbuf;
-extern char *item_string[];
 extern script_data *genericscripts[NUMSCRIPTSGENERIC];
 
 static bool life_in_hearts;
@@ -251,11 +249,8 @@ std::shared_ptr<GUI::Widget> InitDataDialog::BTN_05(int val)
 
 std::string item_name(int id)
 {
-	if(unsigned(id) < MAXITEMS)
-	{
+	if(valid_item_id(id))
 		return itemsbuf[id].get_name(true);
-		//return item_string[id];
-	}
 	return "";
 }
 
@@ -272,17 +267,18 @@ std::shared_ptr<GUI::Widget> InitDataDialog::view()
 	map<int32_t, map<int32_t, vector<int32_t> > > families;
 	icswitcher = Switcher(fitParent = true, hAlign = 0.0, vAlign = 0.0);
 	
-	for(int32_t q = 0; q < MAXITEMS; ++q)
+	for(int32_t q = 0; q < itemsbuf.capacity(); ++q)
 	{
-		int32_t family = itemsbuf[q].type;
+		auto& itm = get_item_data(q);
+		int32_t family = itm.type;
 		
-		if(family == 0x200 || family == itype_triforcepiece || !(itemsbuf[q].flags & item_gamedata))
+		if(family == 0x200 || family == itype_triforcepiece || !(itm.flags & item_gamedata))
 			continue;
 		
 		if(families.find(family) == families.end())
 			families[family] = map<int32_t, vector<int32_t> >();
 		
-		int32_t level = zc_max(1, itemsbuf[q].level);
+		int32_t level = zc_max(1, itm.level);
 		
 		if(families[family].find(level) == families[family].end())
 			families[family][level] = vector<int32_t>();
