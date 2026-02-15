@@ -216,17 +216,17 @@ void all_process_display_events()
     {
       case ALLEGRO_EVENT_DISPLAY_HALT_DRAWING:
       {
-        al_acknowledge_drawing_halt(_a5_display);
+        al_acknowledge_drawing_halt(event.display.source);
         break;
       }
       case ALLEGRO_EVENT_DISPLAY_RESUME_DRAWING:
       {
-        al_acknowledge_drawing_resume(_a5_display);
+        al_acknowledge_drawing_resume(event.display.source);
         break;
       }
       case ALLEGRO_EVENT_DISPLAY_CLOSE:
       {
-        if(_a5_close_button_proc)
+        if(_a5_close_button_proc && event.display.source == _a5_display)
         {
           _a5_close_button_proc();
         }
@@ -235,7 +235,7 @@ void all_process_display_events()
       // local edit
       case ALLEGRO_EVENT_DISPLAY_RESIZE:
       {
-        if(_a5_screen && _a5_disable_threaded_display)
+        if(_a5_screen && _a5_disable_threaded_display && event.display.source == _a5_display)
         {
           // all_lock_screen();
 
@@ -271,9 +271,9 @@ void all_process_display_events()
         // simplest way to refresh the display.
         // Could not actually repro the blurry bug on my machine - Connor.
         if (!_a5_display_fullscreen) {
-          int w = al_get_display_width(_a5_display);
-          int h = al_get_display_height(_a5_display);
-          al_resize_display(_a5_display, w, h);
+          int w = al_get_display_width(event.display.source);
+          int h = al_get_display_height(event.display.source);
+          al_resize_display(event.display.source, w, h);
         }
   #endif
         break;
@@ -282,7 +282,7 @@ void all_process_display_events()
       {
         _a5_display_switched_out = true;
         _switch_out();
-        al_clear_keyboard_state(_a5_display);
+        al_clear_keyboard_state(event.display.source);
         break;
       }
     }

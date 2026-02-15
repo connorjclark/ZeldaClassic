@@ -5,13 +5,24 @@
 #include "base/check.h"
 #include "base/zc_array.h"
 #include "base/general.h"
+#include "zasm/pc.h"
 #include <map>
+#include <memory>
 #include <optional>
 #include <vector>
 
 enum class ScriptType;
 struct zasm_script;
+struct ScriptEngineData;
 class sprite;
+
+struct NamedScriptEngineData
+{
+	std::string name;
+	std::unique_ptr<ScriptEngineData> data;
+};
+
+extern std::vector<NamedScriptEngineData*> active_object_dtor_script_datas;
 
 // Only script arrays and custom user objects can be restored right now.
 // All other object types are set to NULL.
@@ -120,6 +131,7 @@ struct user_object : public user_abstract_obj
 	std::vector<script_object_type> var_types;
 	scr_func_exec destruct;
 	zasm_script* script;
+	pc_t ctor_pc;
 
 #ifdef IS_PLAYER
 	void get_retained_ids(std::vector<uint32_t>& ids);

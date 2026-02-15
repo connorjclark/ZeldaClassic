@@ -29,6 +29,7 @@
 
 #include "zasm/debug_data.h"
 #include "zc/commands.h"
+#include "zc/debugger/debugger.h"
 #include "zc/frame_timings.h"
 #include "zc/replay_upload.h"
 #include "zc/zasm_optimize.h"
@@ -496,6 +497,13 @@ void update_hw_screen()
 			zc_set_palette(*hw_palette);
 			update_hw_pal = false;
 		}
+
+		zscript_debugger_update();
+
+		extern std::function<void()> test_update;
+		if (test_update)
+			test_update();
+
 		return;
 	}
 
@@ -528,6 +536,11 @@ void update_hw_screen()
 	}
 
 	render_zc();
+	zscript_debugger_update();
+
+	extern std::function<void()> test_update;
+	if (test_update)
+		test_update();
 }
 
 /*
@@ -953,6 +966,13 @@ void Z_scripterrlog(const char * const format,...)
 	va_start(ap, format);
 	vsnprintf(buf, 2048, format, ap);
 	va_end(ap);
+
+	if (script_is_within_debugger_vm)
+	{
+		if (auto debugger = zscript_debugger_get_if_open())
+			debugger->AddConsoleMessage(buf);
+		return;
+	}
 
 	FFCore.handle_trace(buf, true);
 }
@@ -1730,7 +1750,8 @@ int32_t init_game()
 
 	onload_gswitch_timers();
 	ResetSaveScreenSettings();
-	
+	zscript_debugger_clear();
+
 	int32_t ret = load_quest(game);
 	if(ret != qe_OK)
 	{
@@ -1739,6 +1760,8 @@ int32_t init_game()
 		GameLoaded = false;
 		return 1;
 	}
+
+	zscript_debugger_init();
 	update_quest_control_path(qstpath); // load quest-specific keybinds
 
 	flushItemCache();
@@ -4079,8 +4102,11 @@ int main(int argc, char **argv)
 	set_should_zprint_cb([]() {
 		return get_qr(qr_SCRIPTERRLOG) || DEVLEVEL > 0;
 	});
+	zc_log_cb = [](const char* str){
+		if (auto debugger = zscript_debugger_get_if_open())
+			debugger->AddConsoleMessage(str);
+	};
 
-	bool onlyInstance=true;
 	FFCore.clear_combo_scripts();
 
 	Z_title("ZC Launched: %s, %s","ZQuest Classic Player", getVersionString());
@@ -4092,6 +4118,18 @@ int main(int argc, char **argv)
 	load_control_schemes(); // initializes the control schemes
 
 	zplayer_handle_commands();
+
+	init_and_run_main_zplayer_loop();
+
+	zc_exit(0);
+	return 0;
+}
+END_OF_MAIN()
+
+void init_and_run_main_zplayer_loop()
+{
+	int argc = zapp_get_argc();
+	char** argv = zapp_get_argv();
 
 	// TODO: can't move to zplayer_handle_commands b/c doesn't support optional args yet.
 	int standalone_arg = zapp_check_switch("-standalone", {"qst"});
@@ -4109,10 +4147,10 @@ int main(int argc, char **argv)
 		}
 
 		// TODO make qstdir a fs::path and absoulute
-		standalone_quest = (fs::current_path() / fs::path(qstdir) / argv[standalone_arg + 1]).lexically_normal();
-		if (standalone_arg + 2 < argc && argv[standalone_arg + 2][0] != '-')
+		standalone_quest = (fs::current_path() / fs::path(qstdir) / zapp_get_arg_string(standalone_arg + 1)).lexically_normal();
+		if (standalone_arg + 2 < argc && zapp_get_arg_string(standalone_arg + 2)[0] != '-')
 		{
-			standalone_save_path = argv[standalone_arg + 2];
+			standalone_save_path = zapp_get_arg_string(standalone_arg + 2);
 		}
 		else
 		{
@@ -4206,7 +4244,7 @@ int main(int argc, char **argv)
 	{
 		printf("-q switch used, quitting program.\n");
 		zc_exit(0);
-		return 0;
+		return;
 	}
 	
 	// set video mode
@@ -4326,22 +4364,6 @@ int main(int argc, char **argv)
 	fix_dialogs();
 	gui_mouse_focus = FALSE;
 	position_mouse(resx-16,resy-16);
-	
-	if(!onlyInstance)
-	{
-		clear_to_color(screen,BLACK);
-		enter_sys_pal();
-		if (alert_confirm("Multiple Instances",
-			"Another instance of ZC is already running."
-			"\nRunning multiple instances may cause your"
-			" save file to be deleted. Continue anyway?"))
-		{
-			exit_sys_pal();
-			zc_exit(0);
-			return 0;
-		}
-		exit_sys_pal();
-	}
 	
 	// TODO: we are repeating this code (See few lines above) but different switch mode ...
 	if (!is_headless())
@@ -4879,6 +4901,10 @@ reload_for_replay_file:
 
 		if (current_session_is_replay && !replay_is_active() && Quit != qEXIT && Quit != qCONT)
 		{
+			// If in -test-zc, just bail now.
+			if (zapp_check_switch("-test-zc"))
+				return;
+
 			// Replay is over, so jump up to load the real saves.
 			Quit = 0;
 			use_testingst_start = false;
@@ -4886,11 +4912,7 @@ reload_for_replay_file:
 			goto reload_for_replay_file;
 		}
 	}
-	
-	zc_exit(0);
-	return 0;
 }
-END_OF_MAIN()
 
 void remove_installed_timers()
 {

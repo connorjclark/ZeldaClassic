@@ -23,6 +23,7 @@
 #include "base/version.h"
 #include "base/zc_alleg.h"
 #include "gamedata.h"
+#include "zc/debugger/debugger.h"
 #include "zc/frame_timings.h"
 #include "zc/replay_upload.h"
 #include "zc/zasm_pipeline.h"
@@ -180,6 +181,8 @@ void zc_exit(int code)
 	zscript_coloured_console.kill();
 	zasm_pipeline_shutdown();
 	frame_timings_end();
+	if (auto debugger = zscript_debugger_get_if_open())
+		debugger->Save();
 	quit_game();
 
 	Z_message("ZQuest Classic website: https://zquestclassic.com\n");
@@ -4210,7 +4213,7 @@ void checkQuitKeys()
 #ifndef ALLEGRO_MACOSX
 	if(key[KEY_F9])	f_Quit(qRESET);
 	
-	if(key[KEY_F10])   f_Quit(qEXIT);
+	if(key[KEY_F10] && !zscript_debugger_get_if_open())   f_Quit(qEXIT);
 #else
 	if(key[KEY_F7])	f_Quit(qRESET);
 	
@@ -5704,6 +5707,26 @@ static NewMenu cheat_menu
 	{ "&Goto Location...", onGoTo },
 };
 
+static void onOpenDebugger()
+{
+	if (jit_is_enabled())
+	{
+		InfoDialog("Not supported", "The ZScript debugger currently does not support JIT. Disable JIT and reload zplayer to use the debugger.").show();
+		return;
+	}
+
+	zscript_debugger_open();
+}
+
+enum
+{
+	MENUID_DEBUG_OPEN,
+};
+static NewMenu debug_menu
+{
+	{ "&Open debugger...", onOpenDebugger, MENUID_DEBUG_OPEN },
+};
+
 #if DEVLEVEL > 0
 int32_t devLogging();
 int32_t devDebug();
@@ -5768,6 +5791,9 @@ TopMenu the_player_menu
 	{ "&Cheat", &cheat_menu, MENUID_PLAYER_CHEAT, true },
 	{ "&Replay", &replay_menu },
 	{ "&ZC", &misc_menu },
+#ifndef __EMSCRIPTEN__
+	{ "&Debug", &debug_menu },
+#endif
 	#if DEVLEVEL > 0
 	{ "&Dev", &dev_menu },
 	#endif
@@ -6154,7 +6180,9 @@ void System()
 		poll_joystick();
 		if (menu_pressed(true))
 			running = false;
-		
+
+		auto debugger = zscript_debugger_get_if_open();
+
 		if(running && keypressed() && !CHECK_ALT) //System hotkeys
 		{
 			auto c = peekkey();
@@ -6175,14 +6203,16 @@ void System()
 					onShowFPS();
 					break;
 				case KEY_F6:
-					onTryQuitMenu();
+					if (!debugger)
+						onTryQuitMenu();
 					break;
 				#ifndef ALLEGRO_MACOSX
 				case KEY_F9:
 					onReset();
 					break;
 				case KEY_F10:
-					onExit();
+					if (!debugger)
+						onExit();
 					break;
 				#else
 				case KEY_F7:
@@ -6206,6 +6236,9 @@ void System()
 				readkey();
 		}
 		if(Quit || (GameFlags & GAMEFLAG_TRYQUIT))
+			break;
+		// If the system menu is open, and the debugger state is modified, we want to close the menus.
+		if (debugger && debugger->state != debugger->target_state)
 			break;
 	}
 	while(running);
@@ -6800,6 +6833,18 @@ bool zc_get_system_key(int32_t k)
 // True for the _first_ frame of a key press.
 bool zc_read_system_key(int32_t k)
 {
+	switch (k)
+	{
+		case KEY_F5:
+		case KEY_F6:
+		case KEY_F10:
+		case KEY_F11:
+		{
+			if (zscript_debugger_get_if_open())
+				return false;
+		}
+	}
+
 	return key_system_press[k];
 }
 

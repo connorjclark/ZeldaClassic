@@ -628,6 +628,7 @@ rst_toc(
     'Language',
     [
         'zscript/lang/introduction',
+        'zscript/lang/debugger',
         'zscript/lang/comments',
         'zscript/lang/literals',
         'zscript/lang/keywords',

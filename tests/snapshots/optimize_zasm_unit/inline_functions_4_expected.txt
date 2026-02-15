@@ -22,9 +22,15 @@ Function run_none-0
    11: POP             D4
    12: LOAD            LINKX            0
    13: QUIT
-   14: NOP
-   15: NOP
-   16: NOP
-   17: NOP
-   18: NOP
-   19: NOP
+   14: TRACEV          1
+   15: RETURNFUNC
+
+
+Function Function #1
+   16: TRACEV          2                            [Block 0 -> ]
+   17: RETURNFUNC
+
+
+Function Function #2
+   18: TRACEV          3                            [Block 0 -> ]
+   19: RETURNFUNC

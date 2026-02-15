@@ -21,9 +21,6 @@ TestResults test_saves(bool verbose)
 {
 	TestResults tr{};
 
-	int fake_errno = 0;
-	allegro_errno = &fake_errno;
-
 	// For some reason MSVC hangs on compiling gamedata==
 #ifndef _WIN32
 	// First make sure there are not accidentally equalities that are impossible,

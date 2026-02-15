@@ -7,6 +7,7 @@
 #include "zc/scripting/script_object.h"
 #include "zscriptversion.h"
 #include <algorithm>
+#include <memory>
 
 void push_ri();
 void pop_ri();
@@ -268,41 +269,47 @@ void scr_func_exec::clear()
 	name.clear();
 }
 
+std::vector<NamedScriptEngineData*> active_object_dtor_script_datas;
+
 void scr_func_exec::execute()
 {
-	static int32_t static_stack[MAX_STACK_SIZE];
-	static int32_t static_ret_stack[MAX_CALL_FRAMES];
 	script_data* sc_data = load_scrdata(type,script,i);
 	if(!pc || !sc_data || !sc_data->valid())
 		return;
-	
+
 	// Check that the line number points to the correct destructor
 	if(validate(sc_data->zasm_script.get()))
 	{
 		// Either it did, or it was auto-correctable
 		push_ri(); //Store the prior script state
 		// Setup the refInfo/stack/global vars for the destructor script state
-		refInfo newRI = refInfo();
+		NamedScriptEngineData script_data{};
+		script_data.name = "~" + name;
+		script_data.data = std::make_unique<ScriptEngineData>();
+		refInfo& newRI = script_data.data->ref;
 		ri = &newRI;
 		ri->pc = pc;
 		ri->thiskey = thiskey;
-		
+		ri->debugger_stack_frames.push_back({
+			.stack_frame_base = (uint16_t)(ri->sp),
+			.this_ptr = ri->thiskey,
+		});
+
 		curscript = sc_data;
-		stack = &static_stack;
-		ret_stack = &static_ret_stack;
+		stack = &script_data.data->stack;
+		ret_stack = &script_data.data->ret_stack;
 		curScriptType = type;
 		curScriptNum = script;
 		curScriptIndex = i;
-		memset(static_stack, 0, sizeof(int32_t)*MAX_STACK_SIZE);
-		memset(static_stack, 0, sizeof(int32_t)*MAX_CALL_FRAMES);
 		// Run  the destructor script
 		std::string* oldstr = destructstr;
 		destructstr = &name;
 		bool old_funcrun = script_funcrun;
 		script_funcrun = true;
 
-		// TODO: doesn't use JIT...
-		run_script_int();
+		active_object_dtor_script_datas.push_back(&script_data);
+		run_script_int(); // TODO: doesn't use JIT...
+		active_object_dtor_script_datas.pop_back();
 
 		script_funcrun = old_funcrun;
 		destructstr = oldstr;

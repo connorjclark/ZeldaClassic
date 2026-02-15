@@ -2,6 +2,7 @@
 #define ZDEFS_H_
 
 #include "base/general.h"
+#include <cstdint>
 #define DEVLEVEL 0
 #define COLLECT_SCRIPT_ITEM_ZERO -32767
 
@@ -1277,6 +1278,12 @@ enum class DrawOrigin
 	Last = Sprite,
 };
 
+struct DebuggerStackFrame
+{
+	uint16_t stack_frame_base;
+	dword this_ptr;
+};
+
 class refInfo
 {
 public:
@@ -1286,7 +1293,8 @@ public:
 	int32_t d[8]; //d registers
 	uint32_t sp = MAX_STACK_SIZE; //stack pointer for current script
 	uint32_t retsp; //stack pointer for the return stack
-	
+	std::vector<DebuggerStackFrame> debugger_stack_frames;
+
 	uint32_t ffcref;
 	int32_t itemdataref;
 	dword itemref, npcref, lwpnref, ewpnref;
@@ -2048,8 +2056,9 @@ extern void removeFromItemCache(int32_t itemclass);
 #define RUNSCRIPT_SELFDELETE	2
 #define RUNSCRIPT_STOPPED		3
 #define RUNSCRIPT_SELFREMOVE	4
-#define RUNSCRIPT_JIT_STACK_OVERFLOW 5
-#define RUNSCRIPT_JIT_CALL_LIMIT 6
+#define RUNSCRIPT_INFINITE_LOOP	5
+#define RUNSCRIPT_JIT_STACK_OVERFLOW 6
+#define RUNSCRIPT_JIT_CALL_LIMIT 7
 
 bool runscript_do_earlyret(int runscript_val);
 

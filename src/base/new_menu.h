@@ -10,6 +10,8 @@
 
 class GuiMenu;
 
+void close_all_menu();
+
 #define MENU_DRAWFLAG_HIGHLIGHT  0x01
 #define MENU_DRAWFLAG_SHIFTSUBTX 0x02
 #define MENU_DRAWFLAG_INVFRAME   0x04

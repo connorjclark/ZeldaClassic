@@ -58,6 +58,10 @@ enum
     fade_blue_poof
 };
 
+void init_and_run_main_zplayer_loop();
+
+void port250QuestRules();
+
 bool get_debug();
 void set_debug(bool d);
 

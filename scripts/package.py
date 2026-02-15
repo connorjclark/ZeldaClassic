@@ -286,6 +286,8 @@ def do_web_packaging():
             'modules/classic/default.qst',
             'modules/classic/title_gfx.dat',
             'modules/classic/zelda.nsf',
+            # TODO: Needed for debugger, but currently not supported in web build.
+            # 'ProggyVector-Regular.ttf',
             'sfx.dat',
             'zc.png',
             'zquest_web.cfg',

@@ -2,7 +2,7 @@
 
 ffc script Maths
 {
-    void run()
+    void run(int x)
     {
         bool firstTime = true;
         while (true)
@@ -23,7 +23,8 @@ ffc script Maths
     {
         if (doPrint)
         {
-            printf(str, value);
+            int v = value;
+            printf(str, v);
         }
     }
 
