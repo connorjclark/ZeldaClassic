@@ -1,5 +1,5 @@
 #include "play_midi.h"
-#include "sound/midi.h"
+#include "components/sound/midi.h"
 #include "advanced_music.h"
 
 #ifdef __EMSCRIPTEN__
@@ -56,9 +56,9 @@ int play_midi_em(MIDI *midi, int32_t loop)
     has_opened_audio = true;
   }
 
-  if (save_midi("/tmp/midi.mid", midi))
+  if (zalleg_save_midi("/tmp/midi.mid", midi))
   {
-    al_trace("save_midi error\n");
+    al_trace("zalleg_save_midi error\n");
     return 1;
   }
 

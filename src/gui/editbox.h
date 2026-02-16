@@ -1,7 +1,7 @@
 #ifndef EDITBOX_H_
 #define EDITBOX_H_
 
-#include "base/zc_alleg.h"
+#include "zalleg/zalleg.h"
 #include "base/headers.h"
 #include <functional>
 #include <string>

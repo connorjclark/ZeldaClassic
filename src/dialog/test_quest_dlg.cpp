@@ -1,5 +1,5 @@
-#include "base/dmap.h"
-#include "base/initdata.h"
+#include "core/dmap.h"
+#include "core/initdata.h"
 #include "dialog/info.h"
 #include "test_quest_dlg.h"
 #include "alertfunc.h"

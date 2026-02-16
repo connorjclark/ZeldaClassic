@@ -12,7 +12,7 @@
 #include <string_view>
 #include <map>
 #include <gui/switcher.h>
-#include "base/initdata.h"
+#include "core/initdata.h"
 
 void call_init_dlg(zinitdata& sourcezinit, bool zc);
 

@@ -5,11 +5,11 @@
 #include "gui/dialog_runner.h"
 #include "gui/size.h"
 #include "gui/jwin.h"
-#include "base/zsys.h"
+#include "zalleg/zsys.h"
 #include <cassert>
 #include <utility>
 #include "tiles.h"
-#include "base/qrs.h"
+#include "core/qrs.h"
 
 int32_t tile_anim_proc(int32_t msg,DIALOG *d,int32_t c)
 {

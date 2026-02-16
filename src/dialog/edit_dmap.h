@@ -20,7 +20,7 @@
 #include <functional>
 #include <string_view>
 #include <array>
-#include "base/dmap.h"
+#include "core/dmap.h"
 
 void call_editdmap_dialog(int32_t slot);
 void call_editdmap_dialog(size_t forceTab, int32_t slot);

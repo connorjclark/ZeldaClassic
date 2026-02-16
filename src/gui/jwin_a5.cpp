@@ -1,12 +1,12 @@
 #include <ctype.h>
 #include <cstring>
-#include "base/zc_alleg.h"
+#include "zalleg/zalleg.h"
 #include <allegro/internal/aintern.h>
 #include "gui/jwin_a5.h"
 #include "gui/editbox.h"
 #include <iostream>
 #include <sstream>
-#include "base/zsys.h"
+#include "zalleg/zsys.h"
 #include <stdio.h>
 #include "base/util.h"
 #include "pal.h"

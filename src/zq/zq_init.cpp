@@ -1,13 +1,13 @@
 #include <stdio.h>
 
-#include "base/gui.h"
+#include "zalleg/gui.h"
 #include "init.h"
-#include "base/zc_alleg.h"
-#include "base/zdefs.h"
-#include "base/initdata.h"
+#include "zalleg/zalleg.h"
+#include "core/zdefs.h"
+#include "core/initdata.h"
 #include "gui/jwin.h"
 #include "zq/zq_init.h"
-#include "base/zsys.h"
+#include "zalleg/zsys.h"
 #include "zq/zquest.h"
 
 extern int32_t dmap_list_size;

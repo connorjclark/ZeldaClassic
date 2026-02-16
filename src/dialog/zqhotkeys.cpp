@@ -2,7 +2,7 @@
 #include "info.h"
 #include <gui/builder.h>
 #include "gui/jwin.h"
-#include "base/zsys.h"
+#include "zalleg/zsys.h"
 #include "gui/use_size.h"
 #include <fmt/format.h>
 #include "zq/zq_hotkey.h"
@@ -53,13 +53,13 @@ std::shared_ptr<GUI::Widget> ZQHotkeyDialog::view()
 	}
 	
 	string lower_search = searchstring;
-	lowerstr(lower_search);
+	util::lowerstr(lower_search);
 	//start at 1, skipping ZQKEY_NULL_KEY
 	for(uint q = 1; q < ZQKEY_MAX; ++q)
 	{
 		string name = get_hotkey_name(q);
 		string lowername = name;
-		lowerstr(lowername);
+		util::lowerstr(lowername);
 		if(lowername.find(lower_search) == std::string::npos)
 		{
 			lbls[q][0].reset();

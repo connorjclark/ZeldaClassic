@@ -1,14 +1,14 @@
 #include "paledit.h"
-#include "base/files.h"
-#include "base/pal_tables.h"
+#include "zalleg/files.h"
+#include "zalleg/pal_tables.h"
 #include "info.h"
-#include "base/zsys.h"
+#include "zalleg/zsys.h"
 #include <gui/builder.h>
 #include "gui/jwin.h"
 #include "zq/zquest.h"
 #include "gui/use_size.h"
 #include "zq/zq_misc.h"
-#include "base/qrs.h"
+#include "core/qrs.h"
 
 extern int32_t cset_count, cset_first;
 extern RGB** gUndoPal;

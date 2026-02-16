@@ -1,11 +1,11 @@
 #include <stdio.h>
 
-#include "base/gui.h"
+#include "zalleg/gui.h"
 #include "init.h"
-#include "base/zc_alleg.h"
-#include "base/zdefs.h"
+#include "zalleg/zalleg.h"
+#include "core/zdefs.h"
 #include "gui/jwin.h"
-#include "base/zsys.h"
+#include "zalleg/zsys.h"
 #include "gamedata.h"
 #include "dialog/info.h"
 #include "zc/hero.h"

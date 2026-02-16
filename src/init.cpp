@@ -5,25 +5,25 @@
 
 #include <stdio.h>
 
-#include "base/zc_alleg.h"
+#include "zalleg/zalleg.h"
 #include "gui/jwin.h"
-#include "base/zdefs.h"
-#include "base/dmap.h"
-#include "base/zsys.h"
-#include "base/gui.h"
+#include "core/zdefs.h"
+#include "core/dmap.h"
+#include "zalleg/zsys.h"
+#include "zalleg/gui.h"
 #include "init.h"
 #include "items.h"
-#include "base/qrs.h"
+#include "core/qrs.h"
 #include "zc/zelda.h"
 #include "zinfo.h"
 #include <fmt/format.h>
 #include <fmt/ranges.h>
+#include "dialog/init_data.h"
 
 void getitem(int32_t id, bool nosound, bool doRunPassive);
 
 //InitData
 
-#include "dialog/init_data.h"
 int32_t doInit(zinitdata *local_zinit, bool isZC)
 {
 	call_init_dlg(*local_zinit, isZC);

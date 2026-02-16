@@ -4,12 +4,12 @@
 #include "allegro/gui.h"
 #include "allegro/inline/draw.inl"
 #include "allegro5/joystick.h"
-#include "base/files.h"
-#include "base/render.h"
-#include "base/zdefs.h"
+#include "zalleg/files.h"
+#include "zalleg/render.h"
+#include "core/zdefs.h"
 #include "zalleg/zalleg.h"
-#include "base/qrs.h"
-#include "base/dmap.h"
+#include "core/qrs.h"
+#include "core/dmap.h"
 #include <functional>
 #include <queue>
 #include <stdio.h>
@@ -21,7 +21,6 @@
 #include <ctype.h>
 #include <sstream>
 #include "base/version.h"
-#include "base/zc_alleg.h"
 #include "gamedata.h"
 #include "zc/debugger/debugger.h"
 #include "zc/frame_timings.h"
@@ -39,16 +38,16 @@
 #include "zc/zelda.h"
 #include "zc/saves.h"
 #include "tiles.h"
-#include "base/colors.h"
+#include "zalleg/colors.h"
 #include "pal.h"
-#include "base/zsys.h"
-#include "base/qst.h"
+#include "zalleg/zsys.h"
+#include "core/qst.h"
 #include "zc/zc_sys.h"
 #include "play_midi.h"
 #include "gui/jwin_a5.h"
-#include "base/jwinfsel.h"
-#include "base/gui.h"
-#include "sound/midi.h"
+#include "core/jwinfsel.h"
+#include "zalleg/gui.h"
+#include "components/sound/midi.h"
 #include "subscr.h"
 #include "zc/maps.h"
 #include "sprite.h"
@@ -56,7 +55,7 @@
 #include "zc/hero.h"
 #include "zc/title.h"
 #include "particles.h"
-#include "sound/zcmusic.h"
+#include "components/sound/zcmusic.h"
 #include "zc/ffscript.h"
 #include "dialog/info.h"
 #include "zc/combos.h"
@@ -65,10 +64,10 @@
 #include <fmt/format.h>
 #include "zconsole/ConsoleLogger.h"
 #include "zinfo.h"
-#include "base/misctypes.h"
+#include "core/misctypes.h"
 #include "music_playback.h"
-#include "base/new_menu.h"
-#include "base/files.h"
+#include "zalleg/new_menu.h"
+#include "zalleg/files.h"
 #include "iter.h"
 #include "dialog/externs.h"
 #include "advanced_music.h"
@@ -3630,12 +3629,12 @@ int32_t onNonGUISnapshot()
 		BITMAP *b = create_bitmap_ex(8, 256, viewport.visible_height(show_bottom_8px));
 		clear_to_color(b,0);
 		blit(framebuf,b,0,playing_field_offset/2,0,0,b->w,b->h);
-		alleg4_save_bitmap(b, SnapshotScale, buf, realpal ? temppal : RAMpal);
+		zalleg_alleg4_save_bitmap(b, SnapshotScale, buf, realpal ? temppal : RAMpal);
 		destroy_bitmap(b);
 	}
 	else
 	{
-		alleg4_save_bitmap(framebuf, SnapshotScale, buf, realpal?temppal:RAMpal);
+		zalleg_alleg4_save_bitmap(framebuf, SnapshotScale, buf, realpal?temppal:RAMpal);
 	}
 	
 	return D_O_K;

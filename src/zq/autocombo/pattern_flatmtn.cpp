@@ -1,5 +1,5 @@
 #include "zq/autocombo/pattern_flatmtn.h"
-#include <base/zsys.h>
+#include "zalleg/zsys.h"
 
 namespace AutoPattern
 {

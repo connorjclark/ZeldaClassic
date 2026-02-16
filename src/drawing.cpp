@@ -1,19 +1,16 @@
-#include "base/zdefs.h"
+#include "core/zdefs.h"
 #include "drawing.h"
-#include "base/util.h"
 #include "base/zc_math.h"
-#include "base/combo.h"
-#include "zc/replay.h"
+#include "core/combo.h"
+#include "zalleg/pal_tables.h"
 #include "zc/zelda.h"
 #include <allegro/internal/aintern.h>
 #include <cstdlib>
 
-using namespace util;
-
 #ifdef IS_PLAYER
 extern BITMAP *darkscr_bmp, *darkscr_bmp_trans;
 
-#include "base/initdata.h"
+#include "core/initdata.h"
 #include "gamedata.h"
 extern dword light_wave_clk;
 #define DITH_PERC (game ? game->get_dither_perc() : zinit.dither_percent)
@@ -26,7 +23,7 @@ extern dword light_wave_clk;
 //end IS_PLAYER
 #elif defined(IS_EDITOR)
 
-#include "base/initdata.h"
+#include "core/initdata.h"
 #include "gamedata.h"
 #define DITH_PERC (game ? game->get_dither_perc() : zinit.dither_percent)
 #define TRANS_PERC (game ? game->get_transdark_perc() : zinit.transdark_percent)

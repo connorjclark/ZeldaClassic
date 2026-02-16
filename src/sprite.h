@@ -1,13 +1,13 @@
 #ifndef SPRITE_H_
 #define SPRITE_H_
 
-#include "base/zc_alleg.h"
+#include "zalleg/zalleg.h"
 #include "base/headers.h"
-#include "base/zdefs.h"
+#include "core/zdefs.h"
 #include <set>
 #include <map>
 #include "solidobject.h"
-#include "base/cpos_info.h"
+#include "core/cpos_info.h"
 
 struct itemdata;
 struct newcombo;

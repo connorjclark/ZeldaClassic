@@ -1,16 +1,16 @@
-#include "base/files.h"
+#include "zalleg/files.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <cstring>
 #include <ctype.h>
 
 #include "dialog/externs.h"
-#include "zasm/table.h"
+#include "components/zasm/table.h"
 #include "zq/ffasm.h"
 
 #include "zq/zquest.h"
 #include "base/headers.h"
-#include "base/zsys.h"
+#include "zalleg/zsys.h"
 #include "base/util.h"
 
 #include <sstream>

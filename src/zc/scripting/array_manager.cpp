@@ -1,6 +1,6 @@
 #include "zc/scripting/array_manager.h"
 #include "base/general.h"
-#include "base/qrs.h"
+#include "core/qrs.h"
 #include "zc/ffscript.h"
 #include "zc/scripting/arrays.h"
 #include "zc/scripting/script_object.h"

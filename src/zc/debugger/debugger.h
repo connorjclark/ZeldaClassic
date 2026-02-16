@@ -3,8 +3,8 @@
 
 #include "imgui.h"
 #include "base/expected.h"
-#include "zasm/eval.h"
-#include "zasm/pc.h"
+#include "components/zasm/eval.h"
+#include "components/zasm/pc.h"
 #include "zc/debugger/vm.h"
 #include "zc/ffscript.h"
 #include "../third_party/ImGuiColorTextEdit/src/TextEditor.h"

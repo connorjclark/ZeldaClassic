@@ -2,7 +2,7 @@
 #define AUTOPATTERN_CAKEMTN_H_
 
 #include <functional>
-#include "base/autocombo.h"
+#include "core/autocombo.h"
 #include "zq/autocombo/autopattern_base.h"
 #include "zq/autocombo/pattern_fence.h"
 

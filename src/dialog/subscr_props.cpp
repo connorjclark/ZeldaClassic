@@ -10,7 +10,7 @@
 #include "zc_list_data.h"
 #include "gui/use_size.h"
 #include "gui/common.h"
-#include "base/misctypes.h"
+#include "core/misctypes.h"
 #include "subscr_transition.h"
 #include "subscr_macros.h"
 #include "items.h"

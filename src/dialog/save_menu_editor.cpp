@@ -3,7 +3,7 @@
 #include <gui/builder.h>
 #include "gui/jwin.h"
 #include "zq/zquest.h"
-#include "base/misctypes.h"
+#include "core/misctypes.h"
 #include "zc_list_data.h"
 
 void call_editsavemenu_dialog(int index)

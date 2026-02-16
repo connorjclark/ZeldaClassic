@@ -1,10 +1,10 @@
 #ifndef ZQ_MISC_H_
 #define ZQ_MISC_H_
 
-#include "base/mapscr.h"
-#include "base/zc_alleg.h"
-#include "base/zdefs.h"
-#include "base/fonts.h"
+#include "core/mapscr.h"
+#include "zalleg/zalleg.h"
+#include "core/zdefs.h"
+#include "core/fonts.h"
 #include "gui/jwin.h"
 #include "sfx.h"
 #include "zq/render_tooltip.h"

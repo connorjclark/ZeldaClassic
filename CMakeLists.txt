@@ -516,83 +516,92 @@ list(APPEND IMAGELIBS al5img)
 # Common libraries
 #############################################################
 
-set(zcbase_sources
+set(base_sources
 	src/base/about.cpp
-	src/base/autocombo.cpp
-	src/base/colors.cpp
-	src/base/combo.cpp
+	src/base/check.cpp
 	src/base/containers.cpp
-	src/base/cpool.cpp
-	src/base/cpos_info.cpp
-	src/base/dmap.cpp
-	src/base/files.cpp
-	src/base/fonts.cpp
 	src/base/general.cpp
-	src/base/gui.cpp
-	src/base/handles.cpp
-	src/base/hotkey.cpp
-	src/base/initdata.cpp
-	src/base/jwinfsel.cpp
-	src/base/mapscr.cpp
 	src/base/md5.cpp
-	src/base/misctypes.cpp
-	src/base/msgstr.cpp
-	src/base/new_menu.cpp
-	src/base/packfile.cpp
-	src/base/pal_tables.cpp
 	src/base/process_management.cpp
-	src/base/qrs.cpp
-	src/base/qst.cpp
 	src/base/random.cpp
-	src/base/render.cpp
-	src/base/scc.cpp
 	src/base/sin1.cpp
 	src/base/util.cpp
 	src/base/version.cpp
-	src/base/weapon_data.cpp
-	src/base/win32.cpp
-	src/base/worker_pool.cpp
 	src/base/zapp.cpp
-	src/base/zc_alleg.cpp
 	src/base/zc_math.cpp
-	src/base/zdefs.cpp
 	src/base/zfix.cpp
-	src/base/zsys.cpp
 )
 if (EMSCRIPTEN)
-	list(APPEND zcbase_sources src/base/emscripten_utils.cpp)
+	list(APPEND base_sources src/base/emscripten_utils.cpp)
 endif()
-add_library(zcbase STATIC ${zcbase_sources})
-target_link_libraries(zcbase PUBLIC allegro_with_legacy fmt)
-target_include_directories(zcbase PUBLIC src third_party/nonstd/include)
+add_library(base STATIC ${base_sources})
+target_link_libraries(base PUBLIC fmt)
+target_include_directories(base PUBLIC src third_party/nonstd/include)
 if(CURL_FOUND)
-	target_sources(zcbase PRIVATE src/base/http.cpp)
-	target_link_libraries(zcbase PUBLIC CURL::libcurl)
-	target_compile_definitions(zcbase PUBLIC HAS_CURL)
+	target_sources(base PRIVATE src/base/http.cpp)
+	target_link_libraries(base PUBLIC CURL::libcurl)
+	target_compile_definitions(base PUBLIC HAS_CURL)
 else()
 	message(WARNING "libcurl not found - disabling base/http.cpp")
 endif()
 if(NOT WIN32)
-	target_include_directories(zcbase PUBLIC include/pstream)
+	target_include_directories(base PUBLIC include/pstream)
 endif()
+
+add_library(zalleg STATIC
+	src/zalleg/colors.cpp
+	src/zalleg/files.cpp
+	src/zalleg/gui.cpp
+	src/zalleg/new_menu.cpp
+	src/zalleg/packfile.cpp
+	src/zalleg/pal_tables.cpp
+	src/zalleg/render.cpp
+	src/zalleg/zalleg.cpp
+	src/zalleg/zsys.cpp
+)
+target_link_libraries(zalleg PUBLIC base allegro_with_legacy ${IMAGELIBS})
 if (USE_NFD)
-	target_link_libraries(zcbase PUBLIC nfd)
-	target_compile_definitions(zcbase PUBLIC HAS_NFD)
+	target_link_libraries(zalleg PUBLIC nfd)
+	target_compile_definitions(zalleg PUBLIC HAS_NFD)
 	list(APPEND ZC_INSTALL_TARGETS nfd)
 endif()
+
+add_subdirectory(src/components)
 
 if(WANT_ZC_TESTS)
 	add_executable(base_test_runner
 		src/test_runner/base_test_runner.cpp
 		src/test_runner/test_runner.cpp
-		src/base/scc_test.cpp
+		src/components/scc/scc_test.cpp
 	)
-	target_link_libraries(base_test_runner PRIVATE zcbase zasm)
+	target_link_libraries(base_test_runner PRIVATE base scc)
 
 	if(DEFINED ENV{CI})
 		list(APPEND ZC_INSTALL_TARGETS base_test_runner)
 	endif()
 endif()
+
+set(core_sources
+	src/core/autocombo.cpp
+	src/core/combo.cpp
+	src/core/cpool.cpp
+	src/core/cpos_info.cpp
+	src/core/dmap.cpp
+	src/core/fonts.cpp
+	src/core/handles.cpp
+	src/core/hotkey.cpp
+	src/core/initdata.cpp
+	src/core/jwinfsel.cpp
+	src/core/mapscr.cpp
+	src/core/misctypes.cpp
+	src/core/msgstr.cpp
+	src/core/qrs.cpp
+	src/core/qst.cpp
+	src/core/weapon_data.cpp
+	src/core/zdefs.cpp
+)
+add_library(core STATIC ${core_sources})
+target_link_libraries(core PUBLIC zalleg scc zasm)
 
 # std::execution supplementation.
 # For std::execution::par, seq, and par_unseq.
@@ -626,13 +635,10 @@ if ("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang" OR "${CMAKE_CXX_COMPILER_ID}" STR
 endif()
 
 if(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
-	target_link_options(zcbase PRIVATE "/WHOLEARCHIVE")
+	target_link_options(base PRIVATE "/WHOLEARCHIVE")
 elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-	target_link_options(zcbase PRIVATE "-force_load")
+	target_link_options(base PRIVATE "-force_load")
 endif()
-
-add_library(zalleg STATIC src/zalleg/zalleg.cpp)
-target_link_libraries(zalleg PUBLIC allegro_with_legacy zcbase ${IMAGELIBS})
 
 add_library(zcgui STATIC
 	src/gui/buildutil.cpp
@@ -672,16 +678,8 @@ add_library(zcgui STATIC
 	src/gui/ditherprev.cpp
 	src/gui/separator.cpp
 )
-target_link_libraries(zcgui PUBLIC allegro_with_legacy zcbase)
+target_link_libraries(zcgui PUBLIC core)
 target_include_directories(zcgui PRIVATE src)
-
-add_library(zasm STATIC
-	src/zasm/debug_data.cpp
-	src/zasm/eval.cpp
-	src/zasm/serialize.cpp
-	src/zasm/table.cpp
-)
-target_link_libraries(zasm PUBLIC allegro_with_legacy zcbase fmt)
 
 #############################################################
 # ZConsole
@@ -694,43 +692,10 @@ if(WIN32)
 endif()
 
 add_library(zconsolelogger STATIC src/zconsole/ConsoleLogger.cpp)
-target_link_libraries(zconsolelogger PUBLIC allegro_with_legacy zcbase)
+target_link_libraries(zconsolelogger PUBLIC allegro_with_legacy base)
 target_include_directories(zconsolelogger PUBLIC src)
 
-target_link_libraries(zcbase PUBLIC zconsolelogger)
-
-#############################################################
-# Sound Library
-#############################################################
-
-FetchContent_Declare(
-	gme_external
-	GIT_REPOSITORY https://github.com/libgme/game-music-emu
-	GIT_TAG        05a2aa29e8eae29316804fdd28ceaa96c74a1531
-	EXCLUDE_FROM_ALL
-)
-set(GME_YM2612_EMU "Nuked" CACHE STRING "Which YM2612 emulator to use: \"Nuked\" (LGPLv2.1+), \"MAME\" (GPLv2+), or \"GENS\" (LGPLv2.1+)")
-FetchContent_MakeAvailable(gme_external)
-add_library(gme_headers INTERFACE)
-target_include_directories(gme_headers INTERFACE ${gme_external_SOURCE_DIR}/gme)
-target_link_libraries(gme_headers INTERFACE ${ZLIB_LIBRARIES})
-target_compile_definitions(gme_headers INTERFACE -DVGM_YM2612_NUKED)
-
-set(SOUNDLIBS gme gme_headers)
-list(APPEND ZC_INSTALL_TARGETS gme)
-
-if(MSVC AND (MSVC_VERSION GREATER 1600))
-	set(ZCSOUNDLIBSEXTRA legacy_stdio_definitions)
-endif()
-set(ZCSOUNDSOURCES
-	src/sound/midi.cpp
-	src/sound/zcmusic.cpp
-	src/sound/zcmixer.cpp
-)
-add_library(zcsound SHARED ${ZCSOUNDSOURCES})
-target_link_libraries(zcsound PUBLIC allegro_with_legacy zcbase ${SOUNDLIBS} ${ZCSOUNDLIBSEXTRA})
-
-target_compile_definitions(zcsound PRIVATE SOUND_LIBS_BUILT_FROM_SOURCE)
+target_link_libraries(base PUBLIC zconsolelogger)
 
 #############################################################
 # Networking
@@ -805,7 +770,7 @@ add_executable(zplayer ${ZELDA_CORE_SOURCES} ${ZELDA_GUI_SOURCES} ${ZELDA_SPRITE
 target_compile_definitions(zplayer PRIVATE IS_PLAYER)
 set_property(TARGET zplayer PROPERTY VS_DPI_AWARE "PerMonitor")
 target_include_directories(zplayer PRIVATE include/xxhash)
-target_link_libraries(zplayer PRIVATE allegro_with_legacy zasm nlohmann_json::nlohmann_json poolSTL_tbb)
+target_link_libraries(zplayer PRIVATE core zcsound zconsolelogger zcgui worker_pool websocket nlohmann_json::nlohmann_json poolSTL_tbb)
 if (NOT EMSCRIPTEN)
 	target_link_libraries(zplayer PRIVATE stduuid)
 	target_compile_definitions(zplayer PRIVATE HAS_UUID)
@@ -817,11 +782,7 @@ else()
 endif()
 
 if(WIN32)
-	target_link_libraries(zplayer PRIVATE zalleg zconsolelogger zcbase zcgui zcsound websocket winmm ${IMAGELIBS} ${ZELDALIBSEXTRA})
-elseif(LINUX)
-	target_link_libraries(zplayer PRIVATE zalleg zconsolelogger zcbase zcgui zcsound websocket ${IMAGELIBS} ${ZELDALIBSEXTRA})
-elseif(APPLE)
-	target_link_libraries(zplayer PRIVATE zalleg zconsolelogger zcbase zcgui zcsound websocket ${IMAGELIBS} ${ZELDALIBSEXTRA})
+	target_link_libraries(zplayer PRIVATE winmm)
 endif()
 
 target_link_libraries(zplayer PRIVATE imgui)
@@ -838,11 +799,12 @@ endif()
 
 if(JIT_BACKEND STREQUAL "none")
 	target_sources(zplayer PUBLIC src/zc/jit_none.cpp)
-	# This is defined on zcbase b/c currently qst.cpp relies on ffscript.h
-	target_compile_definitions(zcbase PUBLIC ZC_JIT_BACKEND=0)
+	# This is defined on base b/c currently qst.cpp relies on ffscript.h
+	# TODO: refactor qst.cpp / FFCore.
+	target_compile_definitions(base PUBLIC ZC_JIT_BACKEND=0)
 elseif(JIT_BACKEND STREQUAL "x64")
 	target_sources(zplayer PUBLIC src/zc/jit_x64.cpp)
-	target_compile_definitions(zcbase PUBLIC ZC_JIT_BACKEND=1)
+	target_compile_definitions(base PUBLIC ZC_JIT_BACKEND=1)
 
 	FetchContent_Declare(
 		asmjit
@@ -861,7 +823,7 @@ elseif(JIT_BACKEND STREQUAL "x64")
 	set_target_properties(asmjit PROPERTIES COMPILE_OPTIONS "${asm_compile_options}")
 elseif(JIT_BACKEND STREQUAL "wasm")
 	target_sources(zplayer PUBLIC src/zc/jit_wasm.cpp)
-	target_compile_definitions(zcbase PUBLIC ZC_JIT_BACKEND=2)
+	target_compile_definitions(base PUBLIC ZC_JIT_BACKEND=2)
 else()
 	message(FATAL_ERROR "Invalid value for JIT_BACKEND")
 endif()
@@ -916,7 +878,7 @@ endif()
 add_executable(zeditor ${ZQUEST_CORE_SOURCES} ${ZQUEST_GUI_SOURCES} ${ZQUEST_MISC_SOURCES} ${ZQUESTEXTRASOURCES} ${ZQUEST_MODULES})
 set_property(TARGET zeditor PROPERTY VS_DPI_AWARE "PerMonitor")
 
-target_link_libraries(zeditor PUBLIC zalleg zconsolelogger zcbase zcgui zcsound zasm ${IMAGELIBS} ${ZQUESTLIBSEXTRA} nlohmann_json::nlohmann_json)
+target_link_libraries(zeditor PUBLIC core zconsolelogger zcgui zcsound zasm nlohmann_json::nlohmann_json)
 target_include_directories(zeditor PRIVATE src)
 
 if(MSVC)
@@ -944,7 +906,8 @@ endif()
 if(${BISON_FOUND} AND ${FLEX_FOUND})
 	add_executable(zscript ${ZSCRIPT_CORE_SOURCES} ${PARSER_SOURCES} ${BISON_ZScriptParser_OUTPUTS} ${FLEX_ZScriptLexer_OUTPUTS} ${ZSCRIPT_MODULES})
 	target_include_directories(zscript PRIVATE src)
-	target_link_libraries(zscript PRIVATE fmt zcbase zconsolelogger zasm ${ZSCRIPTLIBSEXTRA} nlohmann_json::nlohmann_json)
+	# TODO: do not link allegro w/ zscript compiler.
+	target_link_libraries(zscript PRIVATE base allegro_with_legacy zconsolelogger zasm ${ZSCRIPTLIBSEXTRA} nlohmann_json::nlohmann_json)
 	target_compile_definitions(zscript PRIVATE IS_PARSER)
 endif()
 
@@ -961,7 +924,7 @@ endif()
 add_executable(zlauncher ${LAUNCHER_SOURCES} ${LAUNCHER_GUI_SOURCES} ${LAUNCHEREXTRASOURCES})
 target_compile_definitions(zlauncher PRIVATE IS_LAUNCHER)
 set_property(TARGET zlauncher PROPERTY VS_DPI_AWARE "PerMonitor")
-target_link_libraries(zlauncher PRIVATE zalleg zcbase zcgui zconsolelogger ${LAUNCHERLIBSEXTRA})
+target_link_libraries(zlauncher PRIVATE core zcgui zconsolelogger)
 
 #############################################################
 # Standalone
@@ -985,9 +948,9 @@ elseif(LINUX)
 	list(APPEND UPDATEREXTRASOURCES icons/zl_icon.c)
 endif()
 
-add_executable(zupdater src/zupdater/zupdater.cpp src/zconfig.cpp ${UPDATEREXTRASOURCES})
+add_executable(zupdater src/zupdater/zupdater.cpp ${UPDATEREXTRASOURCES})
 target_compile_definitions(zupdater PRIVATE ZUPDATER)
-target_link_libraries(zupdater PRIVATE allegro_dialog fmt zcbase)
+target_link_libraries(zupdater PRIVATE base allegro_with_legacy)
 target_include_directories(zupdater PRIVATE src)
 if(WIN32)
 	target_link_options(zupdater PRIVATE "/SUBSYSTEM:WINDOWS")
@@ -1033,7 +996,8 @@ endif()
 # Misc.
 #############################################################
 
-set(zc_targets zeditor zplayer zlauncher zalleg zcbase zcgui zcsound zscript zconsolelogger zupdater)
+set(zc_targets base zalleg core zeditor zplayer zlauncher zcgui zcsound zscript zconsolelogger zupdater)
+set(zc_apps zeditor zplayer zlauncher zscript zconsolelogger zupdater)
 set(zc_clang_errors
 	-Werror=array-bounds
 	-Werror=format
@@ -1113,7 +1077,7 @@ add_custom_command(
 	COMMENT "Generating src/base/version_header.h ..."
 )
 add_custom_target(generate_version_header DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/src/base/version_header.h)
-add_dependencies(zcbase generate_version_header)
+add_dependencies(base generate_version_header)
 
 if(RELEASE_PLATFORM)
 	foreach(target IN LISTS zc_targets)
@@ -1249,7 +1213,8 @@ if(CMAKE_GENERATOR MATCHES "Visual Studio")
 	set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 	set_target_properties(zplayer zeditor zscript zlauncher zupdater package_zc PROPERTIES FOLDER "")
 	set_target_properties(run_replay_tests_all run_replay_tests_basic run_replay_tests_all_1s run_replay_tests_all_10s run_replay_tests_all_100s PROPERTIES FOLDER "Replay Tests")
-	set_target_properties(zcbase zalleg zcgui zcsound PROPERTIES FOLDER "Our Libraries")
+	set_target_properties(base core zalleg zcgui PROPERTIES FOLDER "Our Libraries")
+	set_target_properties(scc worker_pool zcsound zasm zcsound PROPERTIES FOLDER "Components")
 	set_target_properties(gme PROPERTIES FOLDER Sound)
 	set_target_properties(allegro allegro_audio allegro_acodec allegro_image allegro_font allegro_memfile allegro_main allegro_primitives allegro_dialog allegro-legacy al5img algif alpng PROPERTIES FOLDER Allegro)
 	set_target_properties(zconsole zconsolelogger PROPERTIES FOLDER ZConsole)
@@ -1297,7 +1262,7 @@ if(WIN32 AND (DEFINED VCPKG_TOOLCHAIN_FILE OR DEFINED VCPKG_TARGET_TRIPLET))
 	get_filename_component(VCPKG_DEBUG_BIN_DIR "${CURL_DEBUG_DLL}" DIRECTORY)
 
 	# Add a manual copy command for the Asan config.
-	foreach(target ${zc_targets})
+	foreach(target ${zc_apps})
 		add_custom_command(TARGET ${target} POST_BUILD
 			COMMAND $<$<CONFIG:Asan>:${CMAKE_COMMAND}> -E copy_if_different
 				"${VCPKG_DEBUG_BIN_DIR}/libcurl-d.dll"

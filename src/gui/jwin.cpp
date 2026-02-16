@@ -1,14 +1,14 @@
 #include <ctype.h>
 #include <cstring>
 #include "base/zapp.h"
-#include "base/zc_alleg.h"
+#include "zalleg/zalleg.h"
 #include <allegro/internal/aintern.h>
 #include "gui/jwin.h"
-#include "base/zdefs.h"
+#include "core/zdefs.h"
 #include "gui/editbox.h"
 #include <iostream>
 #include <sstream>
-#include "base/zsys.h"
+#include "zalleg/zsys.h"
 #include <stdio.h>
 #include "base/util.h"
 #include "pal.h"
@@ -3346,7 +3346,7 @@ int32_t jwin_numedit_swap_byte_proc(int32_t msg, DIALOG *d, int32_t c)
 			v = atoi(str);
 			break;
 		case nswapHEX:
-			v = zc_xtoi(str);
+			v = util::zc_xtoi(str);
 			break;
 	}
 	byte b;
@@ -3449,7 +3449,7 @@ int32_t jwin_numedit_swap_sshort_proc(int32_t msg, DIALOG *d, int32_t c)
 			v = atoi(str);
 			break;
 		case nswapHEX:
-			v = zc_xtoi(str);
+			v = util::zc_xtoi(str);
 			break;
 	}
 	int16_t b;
@@ -3632,7 +3632,7 @@ int32_t jwin_numedit_swap_zsint_proc(int32_t msg, DIALOG *d, int32_t c)
 					tempstr[strlen(str)+q]='0';
 				ptr = strchr(tempstr, '.');
 				*ptr=0;++ptr;*(ptr+4)=0; //Nullchar at 2 positions to limit strings
-				v = zc_xtoi(tempstr);
+				v = util::zc_xtoi(tempstr);
 				v *= 10000;
 				if(tempstr[0] == '-')
 					v -= atoi(ptr);
@@ -3640,7 +3640,7 @@ int32_t jwin_numedit_swap_zsint_proc(int32_t msg, DIALOG *d, int32_t c)
 			}
 			else
 			{
-				v = zc_xtoi(str);
+				v = util::zc_xtoi(str);
 				v *= 10000;
 			}
 			break;
@@ -3892,7 +3892,7 @@ int32_t jwin_numedit_swap_zsint_nodec_proc(int32_t msg, DIALOG *d, int32_t c)
 			v *= 10000;
 			break;
         case nswapHEX:
-			v = zc_xtoi(str);
+			v = util::zc_xtoi(str);
 			v *= 10000;
 			break;
 	}
@@ -4100,7 +4100,7 @@ int32_t jwin_numedit_swap_zsint2_proc(int32_t msg, DIALOG *d, int32_t c)
 					tempstr[strlen(str)+q]='0';
 				ptr = strchr(tempstr, '.');
 				*ptr=0;++ptr;*(ptr+4)=0; //Nullchar at 2 positions to limit strings
-				v = zc_xtoi(tempstr);
+				v = util::zc_xtoi(tempstr);
 				v *= 10000;
 				if(tempstr[0] == '-')
 					v -= atoi(ptr);
@@ -4108,7 +4108,7 @@ int32_t jwin_numedit_swap_zsint2_proc(int32_t msg, DIALOG *d, int32_t c)
 			}
 			else
 			{
-				v = zc_xtoi(str);
+				v = util::zc_xtoi(str);
 				v *= 10000;
 			}
 			break;
@@ -4377,7 +4377,7 @@ int32_t jwin_numedit_noswap_zsint_proc(int32_t msg, DIALOG *d, int32_t c)
 					tempstr[strlen(str)+q]='0';
 				ptr = strchr(tempstr, '.');
 				*ptr=0;++ptr;*(ptr+4)=0; //Nullchar at 2 positions to limit strings
-				v = zc_xtoi(tempstr);
+				v = util::zc_xtoi(tempstr);
 				v *= 10000;
 				if(tempstr[0] == '-')
 					v -= atoi(ptr);
@@ -4385,7 +4385,7 @@ int32_t jwin_numedit_noswap_zsint_proc(int32_t msg, DIALOG *d, int32_t c)
 			}
 			else
 			{
-				v = zc_xtoi(str);
+				v = util::zc_xtoi(str);
 				v *= 10000;
 			}
 			break;

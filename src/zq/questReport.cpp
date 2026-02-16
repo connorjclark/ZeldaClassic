@@ -4,23 +4,23 @@
 #include <stdio.h>
 #include <string>
 
-#include "base/files.h"
+#include "zalleg/files.h"
 #include "base/general.h"
-#include "base/qrs.h"
-#include "base/dmap.h"
+#include "core/qrs.h"
+#include "core/dmap.h"
 #include "dialog/externs.h"
 #include "gui/editbox.h"
 #include "gui/EditboxNew.h"
-#include "base/gui.h"
+#include "zalleg/gui.h"
 #include "gui/jwin.h"
 #include "tiles.h"
-#include "base/zc_alleg.h"
-#include "base/zdefs.h"
-#include "base/zsys.h"
+#include "zalleg/zalleg.h"
+#include "core/zdefs.h"
+#include "zalleg/zsys.h"
 #include "zq/zq_class.h"
 #include "zq/zq_misc.h"
 #include "zq/zquest.h"
-#include "base/qst.h"
+#include "core/qst.h"
 #include "zc_list_data.h"
 
 extern int32_t bie_cnt;

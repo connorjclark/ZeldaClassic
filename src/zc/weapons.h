@@ -1,11 +1,11 @@
 #ifndef WEAPONS_H_
 #define WEAPONS_H_
 
-#include "base/combo.h"
-#include "base/handles.h"
-#include "base/zdefs.h"
+#include "core/combo.h"
+#include "core/handles.h"
+#include "core/zdefs.h"
 #include "base/zfix.h"
-#include "base/flags.h"
+#include "core/flags.h"
 #include "sprite.h"
 
 #include <set>

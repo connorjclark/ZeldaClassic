@@ -27,7 +27,7 @@ void do_loaddirectory()
 		return;
 	} else resolved_path = r.value();
 
-	if (checkPath(resolved_path.c_str(), true))
+	if (util::checkPath(resolved_path.c_str(), true))
 	{
 		ri->directoryref = user_dirs.get_free();
 		if(!ri->directoryref) return;

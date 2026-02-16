@@ -1,7 +1,7 @@
 #include "info.h"
 #include <gui/builder.h>
 #include <utility>
-#include "base/qrs.h"
+#include "core/qrs.h"
 #include <fmt/ranges.h>
 
 #ifdef IS_EDITOR

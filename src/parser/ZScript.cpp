@@ -8,7 +8,7 @@
 #include "Scope.h"
 #include "base/check.h"
 #include "base/zapp.h"
-#include "zasm/table.h"
+#include "components/zasm/table.h"
 #include <fmt/ranges.h>
 
 

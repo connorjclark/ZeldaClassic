@@ -4,29 +4,29 @@
 #include <ctype.h>
 #include <cstring>
 #include <memory>
-#include "base/files.h"
-#include "base/fonts.h"
-#include "base/render.h"
+#include "zalleg/files.h"
+#include "core/fonts.h"
+#include "zalleg/render.h"
 #include "base/zapp.h"
-#include "base/zc_alleg.h"
-#include "base/qrs.h"
-#include "base/packfile.h"
-#include "base/dmap.h"
-#include "base/misctypes.h"
+#include "zalleg/zalleg.h"
+#include "core/qrs.h"
+#include "zalleg/packfile.h"
+#include "core/dmap.h"
+#include "core/misctypes.h"
 
-#include "base/zdefs.h"
+#include "core/zdefs.h"
 #include "music_playback.h"
-#include "sound/zcmusic.h"
+#include "components/sound/zcmusic.h"
 #include "subscr.h"
 #include "zc/replay.h"
 #include "zc/replay_upload.h"
 #include "zc/zc_sys.h"
 #include "zc/zelda.h"
-#include "base/zsys.h"
-#include "base/qst.h"
+#include "zalleg/zsys.h"
+#include "core/qst.h"
 #include "tiles.h"
 #include "pal.h"
-#include "base/gui.h"
+#include "zalleg/gui.h"
 #include "zc/title.h"
 #include "zc/ffscript.h"
 #include "zc/saves.h"
@@ -38,11 +38,6 @@
 
 #ifdef __EMSCRIPTEN__
 #include "base/emscripten_utils.h"
-#endif
-
-#ifdef _MSC_VER
-#define strupr _strupr
-#define stricmp _stricmp
 #endif
 
 extern std::string loadlast;

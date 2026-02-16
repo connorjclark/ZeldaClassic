@@ -1,7 +1,7 @@
 #ifndef PARTICLES_H_
 #define PARTICLES_H_
 
-#include "base/zdefs.h"
+#include "core/zdefs.h"
 #include "base/zfix.h"
 #include <map>
 

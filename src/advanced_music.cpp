@@ -1,9 +1,9 @@
 #include "advanced_music.h"
 #include "music_playback.h"
 #include "play_midi.h"
-#include "sound/zcmixer.h"
-#include "base/qst.h"
-#include "base/dmap.h"
+#include "components/sound/zcmixer.h"
+#include "core/qst.h"
+#include "core/dmap.h"
 
 void mark_save_dirty();
 extern ZCMUSIC* zcmusic;

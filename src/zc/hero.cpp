@@ -1,9 +1,9 @@
 #include "base/general.h"
-#include "base/handles.h"
-#include "base/mapscr.h"
-#include "base/pal_tables.h"
+#include "core/handles.h"
+#include "core/mapscr.h"
+#include "zalleg/pal_tables.h"
 #include "base/util.h"
-#include "base/zdefs.h"
+#include "core/zdefs.h"
 #include "zc/maps.h"
 #include "zc/replay.h"
 #include "zc/replay_compat.h"
@@ -14,8 +14,8 @@
 #include <set>
 #include <stdio.h>
 
-#include "base/qrs.h"
-#include "base/dmap.h"
+#include "core/qrs.h"
+#include "core/dmap.h"
 #include "zc/hero.h"
 #include "zc/guys.h"
 #include "subscr.h"
@@ -35,7 +35,7 @@
 #include "slopes.h"
 #include "zc/zc_sys.h"
 #include "zinfo.h"
-#include "base/misctypes.h"
+#include "core/misctypes.h"
 #include "music_playback.h"
 #include "iter.h"
 #include "advanced_music.h"

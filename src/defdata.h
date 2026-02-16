@@ -1,7 +1,7 @@
 #ifndef DEFDATA_H_
 #define DEFDATA_H_
 
-#include "base/zdefs.h"
+#include "core/zdefs.h"
 #include "items.h"
 
 extern comboclass default_combo_classes[cMAX+1];

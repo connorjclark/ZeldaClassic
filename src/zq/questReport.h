@@ -1,7 +1,7 @@
 #ifndef QUESTREPORT_H_
 #define QUESTREPORT_H_
 
-#include "base/zc_alleg.h"
+#include "zalleg/zalleg.h"
 
 struct mapscr;
 

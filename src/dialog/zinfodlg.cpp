@@ -1,7 +1,7 @@
 #include "zinfodlg.h"
 #include <gui/builder.h>
-#include <base/gui.h>
-#include "base/files.h"
+#include "zalleg/gui.h"
+#include "zalleg/files.h"
 #include "dialog/externs.h"
 #include "gui/jwin.h"
 #include "zq/zquest.h"
@@ -749,7 +749,7 @@ bool load_zi(zinfo& tzi)
 	
 	if(!prompt_for_existing_file_compat("Load File","",extlist,filepath,true))
 		return false;
-	PACKFILE *inf=pack_fopen_password(temppath, F_READ, "");
+	PACKFILE *inf=zalleg_pack_fopen_password(temppath, F_READ, "");
 	if(!inf) return false;
 	bool fail = readzinfo(inf, tzi, header)!=0;
 	pack_fclose(inf);
@@ -767,7 +767,7 @@ bool save_zi(zinfo const& tzi)
             return false;
     }
     
-	PACKFILE *inf = pack_fopen_password(temppath, F_WRITE, "");
+	PACKFILE *inf = zalleg_pack_fopen_password(temppath, F_WRITE, "");
 	if(!inf) return false;
 	if(writezinfo(inf,tzi)!=0)
 	{

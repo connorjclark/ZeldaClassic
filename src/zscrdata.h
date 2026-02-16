@@ -2,8 +2,8 @@
 #define ZSCR_DATA_H_
 
 #include "base/util.h"
-#include "base/zdefs.h"
-#include "zasm/debug_data.h"
+#include "core/zdefs.h"
+#include "components/zasm/debug_data.h"
 #include "zconsole/ConsoleLogger.h"
 #include "parser/Compiler.h"
 #include <sstream>
@@ -544,12 +544,12 @@ bool zasm_meta::parse_meta(const char *buffer)
 	}
 	else if(cmd == "#SCRIPT_TYPE" || cmd == "#TYPE")
 	{
-		upperstr(val);
+		util::upperstr(val);
 		script_type = get_script_type(val);
 	}
 	else if(cmd == "#SCRIPT_NAME")
 	{
-		replchar(val, ' ', '_');
+		util::replchar(val, ' ', '_');
 		script_name = val;
 	}
 	else if(cmd == "#AUTHOR")
@@ -558,7 +558,7 @@ bool zasm_meta::parse_meta(const char *buffer)
 	}
 	else if(cmd == "#AUTO_GEN")
 	{
-		upperstr(val);
+		util::upperstr(val);
 		if(val=="TRUE")
 			flags |= ZMETA_AUTOGEN;
 		else if(val=="FALSE")
@@ -593,7 +593,7 @@ bool zasm_meta::parse_meta(const char *buffer)
 		byte ind = cmd.at(12) - '1';
 		if (ind < 8)
 		{
-			replchar(val, ' ', '_');
+			util::replchar(val, ' ', '_');
 			run_idens[ind] = val;
 		}
 		else return false;
@@ -603,7 +603,7 @@ bool zasm_meta::parse_meta(const char *buffer)
 		byte ind = cmd.at(12) - '1';
 		if (ind < 8)
 		{
-			replchar(val, ' ', '_');
+			util::replchar(val, ' ', '_');
 			run_types[ind] = ZScript::getTypeId(val);
 		}
 		else return false;

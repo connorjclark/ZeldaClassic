@@ -2,9 +2,9 @@
 #define INIT_H_
 
 #include "gui/tab_ctl.h"
-#include "base/zc_alleg.h"
+#include "zalleg/zalleg.h"
 #include <string>
-#include "base/initdata.h"
+#include "core/initdata.h"
 #include "gamedata.h"
 
 int32_t doInit(zinitdata *zinit, bool isZC);

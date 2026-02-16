@@ -2,12 +2,12 @@
 #include "gui/builder.h"
 #include "gui/key.h"
 #include "info.h"
-#include "base/zsys.h"
+#include "zalleg/zsys.h"
 #include "init.h"
 #include "hero_tiles.h"
 #include "tiles.h"
 #include "zc_list_data.h"
-#include "base/qrs.h"
+#include "core/qrs.h"
 #include <fmt/format.h>
 
 extern int32_t CSet; //is this needed with the hero sprites always using CSet 6

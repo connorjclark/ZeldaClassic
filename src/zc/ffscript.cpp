@@ -20,21 +20,21 @@
 
 #include "base/check.h"
 #include "base/expected.h"
-#include "base/handles.h"
+#include "core/handles.h"
 #include "base/general.h"
-#include "base/mapscr.h"
-#include "base/qrs.h"
-#include "base/dmap.h"
-#include "base/msgstr.h"
-#include "base/misctypes.h"
-#include "base/initdata.h"
+#include "core/mapscr.h"
+#include "core/qrs.h"
+#include "core/dmap.h"
+#include "core/msgstr.h"
+#include "core/misctypes.h"
+#include "core/initdata.h"
 #include "base/version.h"
 #include "new_subscr.h"
-#include "zasm/debug_data.h"
-#include "zasm/pc.h"
+#include "components/zasm/debug_data.h"
+#include "components/zasm/pc.h"
 #include "zc/debugger/debugger.h"
 #include "zc/maps.h"
-#include "zasm/table.h"
+#include "components/zasm/table.h"
 #include "zc/replay.h"
 #include "zc/scripting/array_manager.h"
 #include "zc/scripting/arrays.h"
@@ -47,7 +47,7 @@
 #include "zc/zc_sys.h"
 #include "zc/jit.h"
 #include "zc/script_debug.h"
-#include "base/zc_alleg.h"
+#include "zalleg/zalleg.h"
 #include "base/zc_math.h"
 #include "base/zc_array.h"
 #include "zc/ffscript.h"
@@ -59,7 +59,7 @@
 #include "zc/ending.h"
 #include "zc/combos.h"
 #include "drawing.h"
-#include "base/colors.h"
+#include "zalleg/colors.h"
 #include "pal.h"
 #include "zinfo.h"
 #include "subscr.h"
@@ -75,17 +75,17 @@
 #include "zc/guys.h"
 #include "gamedata.h"
 #include "zc/zc_init.h"
-#include "base/zsys.h"
-#include "base/misctypes.h"
+#include "zalleg/zsys.h"
+#include "core/misctypes.h"
 #include "zc/title.h"
 #include "zc/zscriptversion.h"
 
 #include "pal.h"
-#include "base/zdefs.h"
+#include "core/zdefs.h"
 #include "zc/rendertarget.h"
 
 #include "hero_tiles.h"
-#include "base/qst.h"
+#include "core/qst.h"
 
 using namespace util;
 
@@ -20027,7 +20027,7 @@ void FFScript::do_paldata_load_bitmap()
 		else
 		{
 			str = user_path;
-			regulate_path(str);
+			util::regulate_path(str);
 		}
 
 		if (str.empty())
@@ -22262,7 +22262,7 @@ static void do_drawing_command(int32_t script_command, bool is_screen_draw)
 			}
 			else
 			{
-				regulate_path(user_path);
+				util::regulate_path(user_path);
 			}
 			
 			script_drawing_commands[j].SetString(&user_path);
@@ -22285,7 +22285,7 @@ static void do_drawing_command(int32_t script_command, bool is_screen_draw)
 			}
 			else
 			{
-				regulate_path(user_path);
+				util::regulate_path(user_path);
 			}
 
 			script_drawing_commands[j].SetString(&user_path);
@@ -30142,7 +30142,7 @@ void FFScript::do_xtoi(const bool v)
 	int32_t arrayptr = (SH::get_arg(sarg2, v));
 	string str;
 	ArrayH::getString(arrayptr, str);
-	double val = zc_xtoi(const_cast<char*>(str.c_str()));
+	double val = util::zc_xtoi(const_cast<char*>(str.c_str()));
 	set_register(sarg1, (int32_t)(val) * 10000);
 }
 void FFScript::do_xtoi2() 
@@ -30150,7 +30150,7 @@ void FFScript::do_xtoi2()
 	int32_t arrayptr_a = GET_D(rINDEX);
 	string strA;
 	ArrayH::getString(arrayptr_a, strA);
-	set_register(sarg1, (zc_xtoi(strA.c_str()) * 10000));
+	set_register(sarg1, (util::zc_xtoi(strA.c_str()) * 10000));
 }
 
 // Calculates log2 of number.  

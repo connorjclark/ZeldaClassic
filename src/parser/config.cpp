@@ -7,7 +7,8 @@
 
 #include "base/util.h"
 #include "base/headers.h"
-#include "zconfig.h"
+
+bool zc_cfg_defaulted = false;
 
 static std::map<std::string, std::string> base_config;
 static std::map<std::string, std::string> user_config;

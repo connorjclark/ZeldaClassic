@@ -3,7 +3,7 @@
 #include "info.h"
 #include "tiles.h"
 #include "gui/builder.h"
-#include "base/misctypes.h"
+#include "core/misctypes.h"
 
 extern miscQdata QMisc;
 

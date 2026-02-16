@@ -2,7 +2,7 @@
 #include "gui/common.h"
 #include "gui/dialog_runner.h"
 #include "gui/jwin.h"
-#include "base/zdefs.h"
+#include "core/zdefs.h"
 #include <cassert>
 
 namespace GUI

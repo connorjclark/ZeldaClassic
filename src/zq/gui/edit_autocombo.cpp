@@ -1,6 +1,6 @@
 #include "zq/gui/edit_autocombo.h"
 
-#include "base/autocombo.h"
+#include "core/autocombo.h"
 #include "dialog/common.h"
 #include "dialog/info.h"
 #include "gui/builder.h"

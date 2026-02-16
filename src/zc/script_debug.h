@@ -1,5 +1,5 @@
 #include "base/compiler.h"
-#include "base/zdefs.h"
+#include "core/zdefs.h"
 #include <string>
 
 extern bool DEBUG_JIT_PRINT_ASM;

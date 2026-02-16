@@ -2,7 +2,7 @@
 #define AUTOPATTERN_RELATIONAL_H_
 
 #include <functional>
-#include "base/autocombo.h"
+#include "core/autocombo.h"
 #include "zq/autocombo/autopattern_base.h"
 
 namespace AutoPattern

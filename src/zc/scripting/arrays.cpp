@@ -81,7 +81,7 @@
 #include "zc/scripting/arrays.h"
 #include "base/check.h"
 #include "base/general.h"
-#include "zasm/table.h"
+#include "components/zasm/table.h"
 #include "zc/ffscript.h"
 #include "zc/scripting/script_object.h"
 

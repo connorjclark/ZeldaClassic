@@ -1,7 +1,7 @@
 #ifndef ZQ_RENDER_TREE_H_
 #define ZQ_RENDER_TREE_H_
 
-#include "base/render.h"
+#include "zalleg/render.h"
 
 RenderTreeItem* get_root_rti();
 void set_center_root_rti(bool center);

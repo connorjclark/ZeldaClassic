@@ -4,23 +4,23 @@
 #include <system_error>
 
 #include "allegro/gui.h"
-#include "base/files.h"
-#include "base/misctypes.h"
-#include "base/qrs.h"
-#include "base/dmap.h"
-#include "base/packfile.h"
-#include "base/gui.h"
+#include "zalleg/files.h"
+#include "core/misctypes.h"
+#include "core/qrs.h"
+#include "core/dmap.h"
+#include "zalleg/packfile.h"
+#include "zalleg/gui.h"
 #include "base/util.h"
 #include "zq/zq_files.h"
-#include "base/zdefs.h"
+#include "core/zdefs.h"
 #include "dialog/alertfunc.h"
 #include "dialog/tilesetwizard.h"
 #include "dialog/pickruleset.h"
 #include "dialog/pickruletemplate.h"
 #include "zq/zq_misc.h"
 #include "zq/zquest.h"
-#include "base/qst.h"
-#include "base/zsys.h"
+#include "core/qst.h"
+#include "zalleg/zsys.h"
 #include "zq/zq_class.h"
 #include "tiles.h"
 #include "zq/zq_tiles.h"
@@ -34,7 +34,6 @@
 
 #ifdef _MSC_VER
 #define getcwd _getcwd
-#define stricmp _stricmp
 #define strupr _strupr
 #endif
 
@@ -757,7 +756,7 @@ int32_t onImport_DMaps()
     if(!prompt_for_existing_file_compat("Import DMaps (.zdmap)","zdmap",NULL,datapath,false))
         return D_O_K;
     
-    PACKFILE *f=pack_fopen_password(temppath,F_READ, "");
+    PACKFILE *f=zalleg_pack_fopen_password(temppath,F_READ, "");
 	if(f)
 	{
 		if(!readsomedmaps(f))
@@ -814,7 +813,7 @@ int32_t onImport_Tilepack()
 		{  
 			char name[256];
 			extract_name(temppath,name,FILENAMEALL);
-			PACKFILE *f=pack_fopen_password(temppath,F_READ, "");
+			PACKFILE *f=zalleg_pack_fopen_password(temppath,F_READ, "");
 			if(f)
 			{
 				if (!readtilefile(f))
@@ -874,7 +873,7 @@ int32_t onImport_Comboaliaspack()
 		{  
 			char name[256];
 			extract_name(temppath,name,FILENAMEALL);
-			PACKFILE *f=pack_fopen_password(temppath,F_READ, "");
+			PACKFILE *f=zalleg_pack_fopen_password(temppath,F_READ, "");
 			if(f)
 			{
 				if (!readcomboaliasfile(f))
@@ -1024,7 +1023,7 @@ int32_t onExport_Combos()
     
     //writetilefile(f,first_tile_id,the_tile_count);
     
-	PACKFILE *f=pack_fopen_password(temppath,F_WRITE, "");
+	PACKFILE *f=zalleg_pack_fopen_password(temppath,F_WRITE, "");
 	if(f)
 	{
 		writecombofile(f,0,MAXCOMBOS);
@@ -1051,7 +1050,7 @@ int32_t onImport_Tiles()
     mark_save_dirty();
     char name[256];
     extract_name(temppath,name,FILENAMEALL);
-    PACKFILE *f=pack_fopen_password(temppath,F_READ, "");
+    PACKFILE *f=zalleg_pack_fopen_password(temppath,F_READ, "");
 	if(f)
 	{
 		if(!readtilefile_to_location(f,0,ret))
@@ -1076,7 +1075,7 @@ int32_t onExport_Tiles()
     
     //writetilefile(f,first_tile_id,the_tile_count);
     
-	PACKFILE *f=pack_fopen_password(temppath,F_WRITE, "");
+	PACKFILE *f=zalleg_pack_fopen_password(temppath,F_WRITE, "");
 	if(f)
 	{
 		writetilefile(f,0,NEWMAXTILES);

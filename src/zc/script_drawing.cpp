@@ -1,10 +1,10 @@
 #include <optional>
 #include <utility>
 
-#include "base/qrs.h"
-#include "base/dmap.h"
-#include "base/zdefs.h"
-#include "base/zc_alleg.h"
+#include "core/qrs.h"
+#include "core/dmap.h"
+#include "core/zdefs.h"
+#include "zalleg/zalleg.h"
 #include "zc/script_drawing.h"
 #include "zc/rendertarget.h"
 #include "zc/maps.h"
@@ -14,13 +14,13 @@
 #include "base/util.h"
 #include "subscr.h"
 #include "drawing.h"
-#include "base/mapscr.h"
-#include "base/misctypes.h"
-using namespace util;
-extern refInfo *ri;
-extern script_bitmaps scb;
+#include "core/mapscr.h"
+#include "core/misctypes.h"
 #include <stdio.h>
 #include <fstream>
+
+extern refInfo *ri;
+extern script_bitmaps scb;
 
 static int32_t secondary_draw_origin_xoff;
 static int32_t secondary_draw_origin_yoff;
@@ -5865,7 +5865,7 @@ void bmp_do_readr(BITMAP *bmp, int32_t i, int32_t *sdci, int32_t xoffset, int32_
     
     PALETTE tempPal;
     get_palette(tempPal);
-    if ( checkPath(str->c_str(), false) )
+    if ( util::checkPath(str->c_str(), false) )
     {
 	    usr_bitmap.u_bmp = load_bitmap(str->c_str(), tempPal);
 	    usr_bitmap.width = usr_bitmap.u_bmp->w;
@@ -5934,12 +5934,12 @@ void bmp_do_writer(BITMAP *bmp, int32_t i, int32_t *sdci, int32_t xoffset, int32
 	{
 		Z_scripterrlog("No extension, or invalid extension provided for writing bitmap file %s. Could not write the file.\nValid types are .png, .gif, .pcx, .tgx, and .bmp. Aborting.\n",str->c_str());
 	}
-	else if ( overwrite || (!checkPath(str->c_str(), false)) )
+	else if ( overwrite || (!util::checkPath(str->c_str(), false)) )
 	{
-		if(make_dirs_for_file(*str))
+		if(util::make_dirs_for_file(*str))
 		{
 			save_bitmap(str->c_str(), refbmp, RAMpal);
-			if(checkPath(str->c_str(), false))
+			if(util::checkPath(str->c_str(), false))
 			{
 				zprint("Wrote image file %s\n",str->c_str());
 			}

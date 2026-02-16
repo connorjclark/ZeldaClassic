@@ -1,13 +1,13 @@
 #include "screen_data.h"
 #include <gui/builder.h>
-#include "base/mapscr.h"
+#include "core/mapscr.h"
 #include "gui/jwin.h"
 #include "zq/zquest.h"
 #include "zq/zq_class.h"
 #include "zc_list_data.h"
 #include <fmt/format.h>
 #include <sstream>
-#include "base/initdata.h"
+#include "core/initdata.h"
 #include "numpick.h"
 #include "info.h"
 

@@ -1,7 +1,7 @@
 #include "gui/scrolling_pane.h"
-#include "base/zdefs.h"
+#include "core/zdefs.h"
 #include "gui/dialog_runner.h"
-#include "base/zc_alleg.h"
+#include "zalleg/zalleg.h"
 #include "gui/jwin.h"
 #include <algorithm>
 

@@ -2,10 +2,10 @@
 #define COMBOS_H_
 
 #include "base/compiler.h"
-#include "base/handles.h"
-#include "base/zdefs.h"
-#include "base/cpos_info.h"
-#include "base/combo.h"
+#include "core/handles.h"
+#include "core/zdefs.h"
+#include "core/cpos_info.h"
+#include "core/combo.h"
 
 #define minSECRET_TYPE 0
 #define maxSECRET_TYPE 43

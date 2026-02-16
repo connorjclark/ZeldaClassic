@@ -13,7 +13,7 @@
 #include <functional>
 #include <string_view>
 #include <array>
-#include "base/mapscr.h"
+#include "core/mapscr.h"
 #include "base/containers.h"
 
 void call_screendata_dialog();

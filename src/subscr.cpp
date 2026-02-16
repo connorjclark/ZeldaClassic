@@ -1,16 +1,16 @@
 #include "subscr.h"
-#include "base/qrs.h"
-#include "base/dmap.h"
-#include "base/pal_tables.h"
+#include "core/qrs.h"
+#include "core/dmap.h"
+#include "zalleg/pal_tables.h"
 #include "tiles.h"
-#include "base/zsys.h"
+#include "zalleg/zsys.h"
 #include "zc/ffscript.h"
 #include "zc/hero.h"
 #include "gamedata.h"
 #include "items.h"
 #include <stdio.h>
 #include <cstring>
-#include "base/misctypes.h"
+#include "core/misctypes.h"
 
 using namespace util;
 

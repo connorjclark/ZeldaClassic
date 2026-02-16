@@ -1,5 +1,10 @@
-#ifndef ZC_MATH_H_
-#define ZC_MATH_H_
+#ifndef BASE_ZC_MATH_H_
+#define BASE_ZC_MATH_H_
+
+#include <cstdint>
+
+#define PI 3.14159265358979323846
+#define PI2 (2*PI)
 
 namespace zc
 {

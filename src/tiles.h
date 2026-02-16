@@ -1,9 +1,9 @@
 #ifndef ZC_TILES_H_
 #define ZC_TILES_H_
 
-#include "base/zc_alleg.h"
-#include "base/zdefs.h"
-#include "base/combo.h"
+#include "zalleg/zalleg.h"
+#include "core/zdefs.h"
+#include "core/combo.h"
 #include <utility>
 
 #ifdef IS_PLAYER

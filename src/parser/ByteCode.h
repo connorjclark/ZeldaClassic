@@ -1,7 +1,7 @@
 #ifndef BYTECODE_H_
 #define BYTECODE_H_
 
-#include "zasm/defines.h"
+#include "components/zasm/defines.h"
 #include "parser/Opcode.h"
 
 /*

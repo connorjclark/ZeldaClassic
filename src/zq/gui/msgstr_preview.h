@@ -1,7 +1,7 @@
 #ifndef ZC_GUI_MSGSTR_PREVIEW_H_
 #define ZC_GUI_MSGSTR_PREVIEW_H_
 
-#include "base/msgstr.h"
+#include "core/msgstr.h"
 #include "gui/widget.h"
 #include "gui/dialog_ref.h"
 #include <string>

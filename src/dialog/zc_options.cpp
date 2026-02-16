@@ -2,7 +2,7 @@
 #include "dialog/externs.h"
 #include <gui/builder.h>
 #include "gui/jwin.h"
-#include "base/fonts.h"
+#include "core/fonts.h"
 #include "tiles.h"
 #include "zc_list_data.h"
 

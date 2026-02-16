@@ -1,7 +1,7 @@
 #ifndef ZC_CONSOLE_LOGGER_H_
 #define ZC_CONSOLE_LOGGER_H_
 
-#include "base/zdefs.h"
+#include "core/zdefs.h"
 #include "base/process_management.h"
 
 #ifndef __EMSCRIPTEN__
@@ -18,7 +18,6 @@
 #ifdef _WIN32
 //{
 #include <windows.h>
-#include "windows.h"
 #include <time.h>
 #include <stdio.h>
 #include "stdlib.h"

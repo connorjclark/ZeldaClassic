@@ -2,7 +2,7 @@
 
 #include "zc/scripting/context_strings.h"
 
-#include "zasm/defines.h"
+#include "components/zasm/defines.h"
 
 const char* scripting_get_zasm_register_context_string(int reg)
 {

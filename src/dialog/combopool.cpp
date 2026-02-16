@@ -1,5 +1,5 @@
 #include "combopool.h"
-#include "base/cpool.h"
+#include "core/cpool.h"
 #include "common.h"
 #include "info.h"
 #include <gui/builder.h>

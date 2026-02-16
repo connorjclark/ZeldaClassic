@@ -1,6 +1,7 @@
 #include "base/zapp.h"
+
+#include "base/about.h"
 #include "base/version.h"
-#include "base/zsys.h"
 #include "fmt/ranges.h"
 #include <filesystem>
 #include <optional>
@@ -11,18 +12,19 @@
 #include <algorithm>
 #define WIN32_LEAN_AND_MEAN
 #define VC_EXTRALEAN
-#include <Windows.h>
+#include <windows.h>
+#include <allegro5/allegro_windows.h>
 #else
 #include <unistd.h>
 #endif
 
-#ifdef ALLEGRO_MACOSX
-#include <mach-o/dyld.h>
-#include <sys/syslimits.h>
+#ifdef _MSC_VER
+    #define strcasecmp _stricmp
 #endif
 
-#ifdef ALLEGRO_SDL
-#include <SDL.h>
+#ifdef __APPLE__
+#include <mach-o/dyld.h>
+#include <sys/syslimits.h>
 #endif
 
 #ifdef HAS_SENTRY
@@ -65,7 +67,7 @@ static std::string get_exe_folder_path()
 	std::wstring ws(wc);
 	std::transform(ws.begin(), ws.end(), std::back_inserter(path), [](wchar_t c) { return (char)c; });
 	std::replace(path.begin(), path.end(), '\\', '/');
-#elif defined(ALLEGRO_MACOSX)
+#elif defined(__APPLE__)
 	char buf[PATH_MAX] = {0};
 	uint32_t length = PATH_MAX;
 	if (!_NSGetExecutablePath(buf, &length))
@@ -120,7 +122,7 @@ void common_main_setup(App id, int argc_, char **argv_)
 	bool disable_chdir = std::getenv("ZC_DISABLE_OSX_CHDIR") != nullptr || std::getenv("ZC_DISABLE_CHDIR") != nullptr;
 	if (!disable_chdir)
 	{
-#ifdef ALLEGRO_LINUX
+#ifdef __linux__
 		// Change to share/zquestclassic folder.
 		if (is_exe_in_bin_folder())
 		{
@@ -186,14 +188,22 @@ void common_main_setup(App id, int argc_, char **argv_)
 		abort();
 	}
 
-#ifdef ALLEGRO_SDL
-	SDL_LogSetAllPriority(SDL_LOG_PRIORITY_DEBUG);
-#endif
-
 	// The updater has to move some actively used files to a temporary location, but cannot delete them itself.
 	auto update_active_files = fs::path(".updater-active-files");
 	std::error_code ec;
 	fs::remove_all(update_active_files, ec);
+}
+
+// Note: prefer zapp_check_switch, zapp_get_arg_string, etc.
+// TODO: remove.
+int32_t used_switch(int32_t argc,char *argv[],const char *s)
+{
+	// assumes a switch won't be in argv[0]
+	for(int32_t i=1; i<argc; i++)
+		if(strcasecmp(argv[i],s)==0)
+			return i;
+			
+	return 0;
 }
 
 int32_t zapp_check_switch(const char *s, std::vector<const char*> arg_names)
@@ -202,7 +212,7 @@ int32_t zapp_check_switch(const char *s, std::vector<const char*> arg_names)
 
     for (int i = 1; i < argc; i++)
 	{
-        if (stricmp(argv[i], s) == 0)
+        if (strcasecmp(argv[i], s) == 0)
 		{
 			index = i;
 			break;
@@ -228,7 +238,10 @@ int32_t zapp_check_switch(const char *s, std::vector<const char*> arg_names)
 		}
 
 		if (bad_args)
-			Z_error_fatal("%s\n", fmt::format("expected switch {} to have {} args: {}", s, num_args, fmt::join(arg_names, ", ")).c_str());
+		{
+			printf("%s\n", fmt::format("expected switch {} to have {} args: {}", s, num_args, fmt::join(arg_names, ", ")).c_str());
+			exit(1);
+		}
 	}
 
     return index;
@@ -327,127 +340,6 @@ void set_headless_mode()
 bool is_headless()
 {
 	return headless;
-}
-
-void zapp_setup_icon()
-{
-	if (is_headless())
-		return;
-
-	// On Windows, the icon is embedded in the executable.
-	// For Mac app bundle, only the entry point app will have the logo. If an executable is opened directly, or launcher via the launcher,
-	// we must add the icon at runtime.
-#ifndef _WIN32
-	std::string icon_path;
-	// Allow for custom icon via `icon.png`.
-	if (exists("icon.png"))
-		icon_path = "icon.png";
-	else if (app_id == App::launcher)
-		icon_path = "assets/zc/ZC_Icon_Medium_Launcher.png";
-	else if (app_id == App::zelda)
-		icon_path = "assets/zc/ZC_Icon_Medium_Player.png";
-	else if (app_id == App::zquest)
-		icon_path = "assets/zc/ZC_Icon_Medium_Editor.png";
-	ALLEGRO_BITMAP* icon_bitmap = al_load_bitmap(icon_path.c_str());
-	if (icon_bitmap)
-	{
-		al_set_display_icon(all_get_display(), icon_bitmap);
-		al_destroy_bitmap(icon_bitmap);
-	}
-#endif
-}
-
-// If (saved_width, saved_height) is >0, ensures that fits in the primary monitor. If neither are true, fall
-// back to default.
-// Default will scale up (base_width, base_height) by an integer amount to fill up the primary monitor
-// as much as possible, up to 3x.
-std::pair<int, int> zc_get_default_display_size(int base_width, int base_height, int saved_width, int saved_height, int max_scale)
-{
-	ALLEGRO_MONITOR_INFO info;
-	al_get_monitor_info(0, &info);
-	int mw = info.x2 - info.x1;
-	int mh = info.y2 - info.y1;
-	if (saved_width > 0 && saved_height > 0 && saved_width <= mw && saved_height <= mh)
-	{
-		return {saved_width, saved_height};
-	}
-
-#ifdef ALLEGRO_MACOSX
-	// https://talk.automators.fm/t/getting-screen-dimensions-while-accounting-the-menu-bar-dock-and-multiple-displays/13639
-	mh -= 38;
-#endif
-#ifdef _WIN32
-	// Title bar.
-	mh -= 23;
-#endif
-	// Small buffer, so the default window is never as big as the monitor.
-	mw -= 50;
-	mh -= 50;
-
-	int s = std::min(mh / base_height, mw / base_width);
-	s = std::min(max_scale, s);
-	int w = base_width * s;
-	int h = base_height * s;
-	return {w, h};
-}
-
-extern bool DragAspect;
-extern double aspect_ratio;
-static void doAspectResize()
-{
-	if (!DragAspect || all_get_fullscreen_flag())
-		return;
-
-	static int prev_width = 0, prev_height = 0;
-	
-	if (prev_width == 0 || prev_height == 0)
-	{
-		prev_width = al_get_display_width(all_get_display());
-		prev_height = al_get_display_height(all_get_display());
-	}
-
-	if (prev_width != al_get_display_width(all_get_display()) || prev_height != al_get_display_height(all_get_display()))
-	{
-		bool width_first = true;
-		
-		if (abs(prev_width - al_get_display_width(all_get_display())) < abs(prev_height - al_get_display_height(all_get_display()))) width_first = false;
-		
-		if (width_first)
-		{
-			al_resize_display(all_get_display(), al_get_display_width(all_get_display()), al_get_display_width(all_get_display())*aspect_ratio);
-		}
-		else
-		{
-			al_resize_display(all_get_display(), al_get_display_height(all_get_display())/aspect_ratio, al_get_display_height(all_get_display()));
-		}
-	}
-
-	prev_width = al_get_display_width(all_get_display());
-	prev_height = al_get_display_height(all_get_display());
-}
-
-extern int window_min_width, window_min_height;
-void zc_do_minsize()
-{
-	if(all_get_fullscreen_flag()) return;
-	if(!(window_min_width || window_min_height)) return;
-	
-	int wid = al_get_display_width(all_get_display());
-	int hei = al_get_display_height(all_get_display());
-	if(wid < window_min_width || hei < window_min_height)
-	{
-		if(wid < window_min_width) wid = window_min_width;
-		if(hei < window_min_height) hei = window_min_height;
-		al_resize_display(all_get_display(),wid,hei);
-	}
-}
-
-void zc_process_display_events()
-{
-	all_process_display_events();
-	// TODO: should do this only in response to a resize event
-	doAspectResize();
-	zc_do_minsize();
 }
 
 void zapp_reporting_add_breadcrumb(const char* category, const char* message)

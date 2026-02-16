@@ -1,9 +1,9 @@
 #include "zc/replay.h"
-#include "base/qrs.h"
+#include "core/qrs.h"
 #include "base/version.h"
 #include "base/zapp.h"
 #include "zc/zc_sys.h"
-#include "base/zc_alleg.h"
+#include "zalleg/zalleg.h"
 #include "base/util.h"
 #include "zc/zelda.h"
 #include <array>

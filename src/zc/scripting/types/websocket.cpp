@@ -1,6 +1,6 @@
 #include "zc/scripting/types/websocket.h"
-#include "base/zdefs.h"
-#include "zasm/defines.h"
+#include "core/zdefs.h"
+#include "components/zasm/defines.h"
 #include "zc/ffscript.h"
 #include "zc/scripting/arrays.h"
 #include "zc/scripting/script_object.h"

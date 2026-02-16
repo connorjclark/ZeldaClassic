@@ -1,5 +1,5 @@
-#include "base/pal_tables.h"
-#include "base/zdefs.h"
+#include "zalleg/pal_tables.h"
+#include "core/zdefs.h"
 #include "colorname.h"
 #include <sstream>
 #include "zq/zquest.h"

@@ -1,17 +1,17 @@
 #include "itemwizard.h"
 #include "info.h"
 #include "alertfunc.h"
-#include "base/zsys.h"
+#include "zalleg/zsys.h"
 #include "tiles.h"
 #include "gui/builder.h"
 #include "zc_list_data.h"
 #include "items.h"
 #include "zc/weapons.h"
 #include "sfx.h"
-#include "base/qrs.h"
+#include "core/qrs.h"
 #include "zinfo.h"
-#include "base/combo.h"
-#include "base/misctypes.h"
+#include "core/combo.h"
+#include "core/misctypes.h"
 
 extern int32_t CSet;
 extern int32_t numericalFlags;

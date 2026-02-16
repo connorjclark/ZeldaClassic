@@ -4,7 +4,7 @@
 #include <gui/dialog.h>
 #include "gui/checkbox.h"
 #include "gui/label.h"
-#include "base/qrs.h"
+#include "core/qrs.h"
 #include <functional>
 #include <string_view>
 #include "zq/zq_files.h"

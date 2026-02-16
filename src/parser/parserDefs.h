@@ -1,14 +1,11 @@
 #ifndef PARSERDEFS_H_
 #define PARSERDEFS_H_
 
-#include "base/zdefs.h"
 #include "base/headers.h"
+
 using std::shared_ptr;
 #undef TEXT
 #undef VOID
-
-#include "base/util.h"
-using namespace util;
 
 //FUNCFLAG values, for `Function` and `ASTFuncDecl` objects.
 #define FUNCFLAG_INLINE             0x00000001 //Can be heavily optimized

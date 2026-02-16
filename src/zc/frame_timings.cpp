@@ -3,6 +3,7 @@
 #include "zc/frame_timings.h"
 #include "allegro/debug.h"
 #include "zc/replay.h"
+#include <algorithm>
 #include <chrono>
 #include <cstdint>
 #include <limits>

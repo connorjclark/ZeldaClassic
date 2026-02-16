@@ -2,8 +2,8 @@
 #define ZC_DEBUGGER_VM_H_
 
 #include "base/expected.h"
-#include "zasm/eval.h"
-#include "zasm/pc.h"
+#include "components/zasm/eval.h"
+#include "components/zasm/pc.h"
 #include "zc/ffscript.h"
 #include <optional>
 #include <string>

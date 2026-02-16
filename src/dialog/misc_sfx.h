@@ -6,7 +6,7 @@
 #include <gui/list_data.h>
 #include <functional>
 #include <string_view>
-#include "base/misctypes.h"
+#include "core/misctypes.h"
 
 class MiscSFXDialog: public GUI::Dialog<MiscSFXDialog>
 {

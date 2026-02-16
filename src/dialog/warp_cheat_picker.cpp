@@ -3,7 +3,7 @@
 #include <gui/builder.h>
 #include "zc_list_data.h"
 #include "zc/cheats.h"
-#include "base/dmap.h"
+#include "core/dmap.h"
 #include "info.h"
 
 extern int cheat_goto_dmap, cheat_goto_screen;

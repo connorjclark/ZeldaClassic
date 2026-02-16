@@ -1,7 +1,7 @@
 #ifndef FFASM_H_
 #define FFASM_H_
 
-#include "base/zdefs.h"
+#include "core/zdefs.h"
 #include <vector>
 #include <string>
 

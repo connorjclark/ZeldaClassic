@@ -1,6 +1,6 @@
 #include "zc/commands.h"
-#include "base/misctypes.h"
-#include "base/qst.h"
+#include "core/misctypes.h"
+#include "core/qst.h"
 #include "base/zapp.h"
 #include "test_runner/test_runner.h"
 #include "zc/jit.h"

@@ -1,8 +1,8 @@
 #ifndef ZC_JIT_X64_H_
 #define ZC_JIT_X64_H_
 
-#include "base/zdefs.h"
-#include "zasm/pc.h"
+#include "core/zdefs.h"
+#include "components/zasm/pc.h"
 #include "zc/zasm_utils.h"
 #include <cstdint>
 #include <deque>

@@ -4,7 +4,7 @@
 #include <gui/window.h>
 #include <functional>
 #include "base/headers.h"
-#include "base/mapscr.h"
+#include "core/mapscr.h"
 
 void call_undercombo_dlg(int map, int screen);
 

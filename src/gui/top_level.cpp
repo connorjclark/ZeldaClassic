@@ -2,7 +2,7 @@
 #include "gui/dialog.h"
 #include "gui/dialog_runner.h"
 #include "gui/jwin.h"
-#include "base/zc_alleg.h"
+#include "zalleg/zalleg.h"
 #include <utility>
 #include "dialog/externs.h"
 

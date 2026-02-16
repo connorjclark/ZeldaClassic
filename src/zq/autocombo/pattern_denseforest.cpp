@@ -1,6 +1,6 @@
 #include "zq/autocombo/autopattern_base.h"
 #include "zq/autocombo/pattern_denseforest.h"
-#include <base/zsys.h>
+#include "zalleg/zsys.h"
 
 namespace AutoPattern
 {

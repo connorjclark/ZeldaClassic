@@ -1,9 +1,9 @@
 #include <cstring>
 
-#include "base/qrs.h"
-#include "base/dmap.h"
+#include "core/qrs.h"
+#include "core/dmap.h"
 #include "base/util.h"
-#include "base/zdefs.h"
+#include "core/zdefs.h"
 #include "zc/maps.h"
 #include "zc/zelda.h"
 #include "subscr.h"
@@ -13,8 +13,8 @@
 #include "zc/guys.h"
 #include "zc/ffscript.h"
 #include "zc/replay.h"
-#include "base/mapscr.h"
-#include "base/misctypes.h"
+#include "core/mapscr.h"
+#include "core/misctypes.h"
 #include "zc/zscriptversion.h"
 
 extern int32_t directItemA;

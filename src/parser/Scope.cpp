@@ -1,6 +1,4 @@
-#include "base/check.h"
 #include "base/util.h"
-#include "base/zdefs.h"
 #include "parser/BuildVisitors.h"
 #include "parser/ByteCode.h"
 #include "parser/CompileOption.h"
@@ -14,8 +12,8 @@
 #include "LibrarySymbols.h"
 #include "Types.h"
 #include "ZScript.h"
-#include "zasm/table.h"
-#include "zasm/serialize.h"
+#include "components/zasm/table.h"
+#include "components/zasm/serialize.h"
 
 using namespace ZScript;
 using namespace util;
@@ -2218,7 +2216,6 @@ bool RootScope::checkImport(ASTImportDecl* node, CompileErrorHandler* errorHandl
 	if(node->wasChecked()) return true;
 	node->check();
 	string fname = node->getFilename();
-	//lowerstr(fname);
 	if (find<ASTImportDecl*>(importsByName_, fname).value_or(std::add_pointer<ASTImportDecl>::type()))
 	{
 		node->disable();

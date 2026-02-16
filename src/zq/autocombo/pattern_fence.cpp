@@ -1,5 +1,5 @@
 #include "zq/autocombo/pattern_fence.h"
-#include <base/zsys.h>
+#include "zalleg/zsys.h"
 
 namespace AutoPattern
 {

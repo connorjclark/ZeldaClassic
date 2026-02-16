@@ -2,7 +2,7 @@
 
 #include "base/general.h"
 #include "base/headers.h"
-#include "base/zc_alleg.h"
+#include "zalleg/zalleg.h"
 #include "zc/cheats.h"
 
 struct control_scheme;

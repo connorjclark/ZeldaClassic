@@ -9,8 +9,8 @@
 #include "parser/Types.h"
 #include "parser/owning_vector.h"
 #include "parser/parserDefs.h"
-#include "zasm/debug_data.h"
-#include "zasm/defines.h"
+#include "components/zasm/debug_data.h"
+#include "components/zasm/defines.h"
 #include "zsyssimple.h"
 #include "ByteCode.h"
 #include "CompileError.h"
@@ -290,7 +290,7 @@ string ScriptParser::prepareFilename(string const& filename)
 {
 	string retval = filename;
 
-	regulate_path(retval);
+	util::regulate_path(retval);
 	return retval;
 }
 
@@ -306,7 +306,7 @@ string& cleanInclude(string& includePath)
 		if(last == string::npos || last < lastnot)
 			includePath += "/";
 	}
-	regulate_path(includePath);
+	util::regulate_path(includePath);
 	return includePath;
 }
 

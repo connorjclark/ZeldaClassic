@@ -1,9 +1,9 @@
 #include "object_pages.h"
-#include "base/cpool.h"
-#include "base/autocombo.h"
-#include "base/combo.h"
+#include "core/cpool.h"
+#include "core/autocombo.h"
+#include "core/combo.h"
 #include "tiles.h"
-#include "base/gui.h"
+#include "zalleg/gui.h"
 #include "gui/jwin.h"
 #include "dialog/info.h"
 #include <fmt/format.h>

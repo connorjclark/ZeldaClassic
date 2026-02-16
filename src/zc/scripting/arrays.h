@@ -3,9 +3,9 @@
 
 // See arrays.cpp for how to define scripting arrays.
 
-#include "base/combo.h"
+#include "core/combo.h"
 #include "base/general.h"
-#include "base/qrs.h"
+#include "core/qrs.h"
 #include "new_subscr.h"
 #include "zc/ffscript.h"
 #include "zc/scripting/types/savemenu.h"

@@ -19,7 +19,7 @@
 #include "Scope.h"
 #include "CompileError.h"
 
-#include "zasm/table.h"
+#include "components/zasm/table.h"
 #include "zc/ffscript.h"
 
 using std::ostringstream;

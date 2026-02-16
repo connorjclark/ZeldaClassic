@@ -2,7 +2,7 @@
 #define ZC_GUI_MENU_H_
 
 #include "gui/widget.h"
-#include "base/new_menu.h"
+#include "zalleg/new_menu.h"
 #include <vector>
 
 namespace GUI

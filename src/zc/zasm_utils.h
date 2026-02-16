@@ -1,9 +1,9 @@
 #ifndef ZASM_UTILS_H_
 #define ZASM_UTILS_H_
 
-#include "base/qst.h"
-#include "base/zdefs.h"
-#include "zasm/pc.h"
+#include "core/qst.h"
+#include "core/zdefs.h"
+#include "components/zasm/pc.h"
 #include <map>
 #include <set>
 #include <stdint.h>

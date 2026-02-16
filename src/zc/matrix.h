@@ -1,7 +1,7 @@
 #ifndef MATRIX_H_
 #define MATRIX_H_
 
-#include "base/zc_alleg.h"
+#include "zalleg/zalleg.h"
 #include "zc/zc_sys.h"
 
 extern int32_t  input_idle();

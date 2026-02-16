@@ -4,14 +4,14 @@
 #include "allegro/file.h"
 #include "base/expected.h"
 #include "base/general.h"
-#include "base/packfile.h"
-#include "base/misctypes.h"
-#include "base/dmap.h"
-#include "base/qst.h"
+#include "zalleg/packfile.h"
+#include "core/misctypes.h"
+#include "core/dmap.h"
+#include "core/qst.h"
 #include "base/util.h"
 #include "base/zapp.h"
-#include "base/zdefs.h"
-#include "base/zsys.h"
+#include "core/zdefs.h"
+#include "zalleg/zsys.h"
 #include "dialog/info.h"
 #include "zc/zelda.h"
 #include "zc/ffscript.h"
@@ -19,6 +19,7 @@
 #include "pal.h"
 #include "tiles.h"
 #include "items.h"
+#include "zsyssimple.h"
 #include <cstddef>
 #include <cstdio>
 #include <system_error>
@@ -101,7 +102,7 @@ static bool move_to_folder(fs::path path, fs::path dir, std::string& err, std::s
 		return false;
 	}
 
-	auto dest = create_new_file_path(
+	auto dest = util::create_new_file_path(
 		dir,
 		stem.empty() ? path.stem().string() : stem,
 		path.extension().string(),
@@ -139,8 +140,8 @@ static fs::path create_path_for_new_save(gamedata_header* header)
 		title = get_filename(header->qstpath.c_str());
 
 	std::string filename_prefix = fmt::format("{}-{}-{}", timestamp, title, header->name);
-	sanitize(filename_prefix);
-	return create_new_file_path(get_save_folder_path(), filename_prefix, ".sav").string();
+	util::sanitize(filename_prefix);
+	return util::create_new_file_path(get_save_folder_path(), filename_prefix, ".sav").string();
 }
 
 static int32_t read_saves(ReadMode read_mode, PACKFILE* f, std::vector<save_t>& out_saves, int* out_count = nullptr)
@@ -507,7 +508,7 @@ static int32_t read_saves(ReadMode read_mode, PACKFILE* f, std::vector<save_t>& 
 			return 38;
 
 		// Convert path separators so save files work across platforms (hopefully)
-		regulate_path(game.header.qstpath);
+		util::regulate_path(game.header.qstpath);
 		
 		if(!pfread(game.header.icon,sizeof(game.header.icon),f))
 			return 40;
@@ -2185,7 +2186,7 @@ static bool do_save_games(std::string& err)
 	{
 		auto dir = get_save_folder_path() / "current_replay";
 		fs::create_directories(dir);
-		saves[currgame].path = create_new_file_path(dir, "zc", ".sav", true);
+		saves[currgame].path = util::create_new_file_path(dir, "zc", ".sav", true);
 		saves[currgame].write_to_disk = true;
 		if (!_write_save(&saves[currgame], err))
 			return false;

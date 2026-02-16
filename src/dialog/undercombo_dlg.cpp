@@ -3,7 +3,7 @@
 #include "common.h"
 #include <gui/builder.h>
 #include "zc_list_data.h"
-#include "base/combo.h"
+#include "core/combo.h"
 
 void mark_save_dirty();
 extern int32_t CSet;

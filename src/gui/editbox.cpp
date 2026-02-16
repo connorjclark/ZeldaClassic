@@ -1,12 +1,15 @@
-#include <cstring>
-#include "base/gui.h"
-#include "base/zc_alleg.h"
+#include "gui/editbox.h"
+#include "zalleg/gui.h"
+#include "zalleg/zalleg.h"
 #include "dialog/externs.h"
 #include "gui/jwin.h"
-#include "base/fonts.h"
-#include <stdio.h>
-
+#include "core/fonts.h"
 #include "gui/EditboxNew.h"
+#include "zconfig.h"
+
+#include <chrono>
+#include <cstring>
+#include <stdio.h>
 
 extern int32_t scheme[];
 /* d_editbox_proc:

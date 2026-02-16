@@ -1,5 +1,5 @@
-#ifndef EMSCRIPTEN_UTILS_H_
-#define EMSCRIPTEN_UTILS_H_
+#ifndef BASE_EMSCRIPTEN_UTILS_H_
+#define BASE_EMSCRIPTEN_UTILS_H_
 
 #include <emscripten/emscripten.h>
 #include <string>

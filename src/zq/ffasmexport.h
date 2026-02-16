@@ -2,7 +2,7 @@
 #define ZASM_EXPORT_H_
 
 #include "parser/Compiler.h"
-#include "base/zdefs.h"
+#include "core/zdefs.h"
 
 namespace ZScript
 {

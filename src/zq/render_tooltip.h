@@ -1,7 +1,7 @@
 #ifndef RENDER_TOOLTIP_H_
 #define RENDER_TOOLTIP_H_
 
-#include "base/zdefs.h"
+#include "core/zdefs.h"
 #include <string>
 
 extern int ttip_global_id;

@@ -1,9 +1,9 @@
 #include "music_playback.h"
-#include "sound/zcmusic.h"
-#include "sound/zcmixer.h"
+#include "components/sound/zcmusic.h"
+#include "components/sound/zcmixer.h"
 #include "base/general.h"
 #include "play_midi.h"
-#include "base/qrs.h"
+#include "core/qrs.h"
 #include "zc/zc_sys.h"
 #include "advanced_music.h"
 

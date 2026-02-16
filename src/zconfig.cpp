@@ -1,10 +1,10 @@
-#include "base/zc_alleg.h"
+#include "zalleg/zalleg.h"
 #include "zconfig.h"
-#include "base/zsys.h"
+#include "zalleg/zsys.h"
 #include <string>
 
 #if defined(IS_PLAYER) or defined(IS_EDITOR)
-#include "base/jwinfsel.h"
+#include "core/jwinfsel.h"
 #endif
 
 char const* get_config_file_name(App a)

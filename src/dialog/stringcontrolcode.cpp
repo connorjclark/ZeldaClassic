@@ -1,5 +1,5 @@
 #include "stringcontrolcode.h"
-#include "base/scc.h"
+#include "components/scc/scc.h"
 #include "common.h"
 #include "info.h"
 #include <gui/builder.h>
@@ -8,8 +8,8 @@
 #include "gui/use_size.h"
 #include "zq/zq_tiles.h"
 #include "zinfo.h"
-#include "base/misctypes.h"
-#include "base/initdata.h"
+#include "core/misctypes.h"
+#include "core/initdata.h"
 
 extern bool sorted_fontdd;
 

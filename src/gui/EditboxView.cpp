@@ -1,9 +1,9 @@
 #include <assert.h>
 
 #include "gui/EditboxNew.h"
-#include "base/zc_alleg.h"
+#include "zalleg/zalleg.h"
 #include "gui/jwin.h"
-#include "base/fonts.h"
+#include "core/fonts.h"
 #include <map>
 #include <stdio.h>
 #include <sstream>

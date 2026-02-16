@@ -1,7 +1,7 @@
 #ifndef ZQ_FILES_H_
 #define ZQ_FILES_H_
 
-#include "base/zc_alleg.h"
+#include "zalleg/zalleg.h"
 
 extern char qtbuf[31];
 

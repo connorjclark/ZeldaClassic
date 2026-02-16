@@ -1,6 +1,8 @@
+#include "parser/LibrarySymbols.h"
+
+#include "base/zc_math.h"
 #include "fmt/core.h"
 #include "parser/ByteCode.h"
-#include "parser/LibrarySymbols.h"
 #include "parser/CompileError.h"
 #include "parser/Types.h"
 #include "parser/parserDefs.h"

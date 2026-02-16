@@ -6,32 +6,32 @@
 #include <map>
 
 #include "base/general.h"
-#include "base/pal_tables.h"
+#include "zalleg/pal_tables.h"
 #include "base/version.h"
 #include "base/zapp.h"
-#include "base/zdefs.h"
+#include "core/zdefs.h"
 #include "dialog/info.h"
 #include "gui/jwin.h"
 #include "metadata/metadata.h"
 
-#include "base/qrs.h"
-#include "base/dmap.h"
-#include "base/packfile.h"
-#include "base/cpool.h"
-#include "base/autocombo.h"
-#include "base/gui.h"
-#include "base/msgstr.h"
-#include "zasm/debug_data.h"
+#include "core/qrs.h"
+#include "core/dmap.h"
+#include "zalleg/packfile.h"
+#include "core/cpool.h"
+#include "core/autocombo.h"
+#include "zalleg/gui.h"
+#include "core/msgstr.h"
+#include "components/zasm/debug_data.h"
 #include "zc/zelda.h"
 #include "zq/zq_class.h"
 #include "zq/render.h"
 #include "zq/render_map_view.h"
 #include "zq/zq_misc.h"
 #include "zq/zquest.h"
-#include "base/qst.h"
-#include "base/colors.h"
+#include "core/qst.h"
+#include "zalleg/colors.h"
 #include "tiles.h"
-#include "base/zsys.h"
+#include "zalleg/zsys.h"
 #include "sprite.h"
 #include "items.h"
 #include "zc/zc_sys.h"
@@ -47,7 +47,7 @@
 #include "drawing.h"
 #include "zinfo.h"
 #include "zq/render_minimap.h"
-#include "base/mapscr.h"
+#include "core/mapscr.h"
 #include "iter.h"
 #include <fmt/format.h>
 #include <filesystem>
@@ -849,7 +849,7 @@ const char *loaderror[] =
 
 int32_t zmap::load(const char *path)
 {
-	PACKFILE *f=pack_fopen_password(path,F_READ, "");
+	PACKFILE *f=zalleg_pack_fopen_password(path,F_READ, "");
 	
 	if(!f)
 		return 1;
@@ -918,7 +918,7 @@ file_error:
 
 int32_t zmap::save(const char *path)
 {
-	PACKFILE *f=pack_fopen_password(path,F_WRITE, "");
+	PACKFILE *f=zalleg_pack_fopen_password(path,F_WRITE, "");
 	
 	if(!f)
 		return 1;
@@ -5524,7 +5524,7 @@ void zmap::warpback()
 
 bool save_msgstrs(const char *path)
 {
-    PACKFILE *f = pack_fopen_password(path,F_WRITE, "");
+    PACKFILE *f = zalleg_pack_fopen_password(path,F_WRITE, "");
     
     if(!f)
     {
@@ -5543,7 +5543,7 @@ bool save_msgstrs(const char *path)
 
 bool save_strings_tsv(const char *path)
 {
-	PACKFILE *f = pack_fopen_password(path,F_WRITE, "");
+	PACKFILE *f = zalleg_pack_fopen_password(path,F_WRITE, "");
     
     if(!f)
     {
@@ -5562,7 +5562,7 @@ bool save_strings_tsv(const char *path)
 
 bool save_msgstrs_text(const char *path)
 {
-    PACKFILE *f = pack_fopen_password(path,F_WRITE, "");
+    PACKFILE *f = zalleg_pack_fopen_password(path,F_WRITE, "");
     
     if(!f)
     {
@@ -5585,7 +5585,7 @@ bool load_msgstrs(const char *path, int32_t startstring)
     startstring=startstring;
     
     dword section_id;
-    PACKFILE *f = pack_fopen_password(path,F_READ, "");
+    PACKFILE *f = zalleg_pack_fopen_password(path,F_READ, "");
     
     if(!f)
     {
@@ -5631,7 +5631,7 @@ bool load_strings_tsv(const char *path)
 
 bool save_pals(const char *path)
 {
-    PACKFILE *f = pack_fopen_password(path,F_WRITE, "");
+    PACKFILE *f = zalleg_pack_fopen_password(path,F_WRITE, "");
     
     if(!f)
     {
@@ -5651,7 +5651,7 @@ bool save_pals(const char *path)
 bool load_pals(const char *path, int32_t startcset)
 {
     dword section_id;
-    PACKFILE *f = pack_fopen_password(path,F_READ, "");
+    PACKFILE *f = zalleg_pack_fopen_password(path,F_READ, "");
     
     if(!f)
     {
@@ -5684,7 +5684,7 @@ bool load_pals(const char *path, int32_t startcset)
 int32_t writeguys(PACKFILE *f, zquestheader *Header);
 bool save_guys(const char *path)
 {
-    PACKFILE *f = pack_fopen_password(path,F_WRITE, "");
+    PACKFILE *f = zalleg_pack_fopen_password(path,F_WRITE, "");
     
     if(!f)
     {
@@ -5716,7 +5716,7 @@ bool save_guys(const char *path)
 bool load_guys(const char *path)
 {
     dword section_id;
-    PACKFILE *f = pack_fopen_password(path,F_READ, "");
+    PACKFILE *f = zalleg_pack_fopen_password(path,F_READ, "");
     
     if(!f)
     {
@@ -5750,7 +5750,7 @@ bool load_guys(const char *path)
 //int32_t writeguys(PACKFILE *f, zquestheader *Header);
 bool save_combo_alias(const char *path)
 {
-    PACKFILE *f = pack_fopen_password(path,F_WRITE, "");
+    PACKFILE *f = zalleg_pack_fopen_password(path,F_WRITE, "");
     
     if(!f)
     {
@@ -5774,7 +5774,7 @@ bool save_combo_alias(const char *path)
 bool load_combo_alias(const char *path)
 {
     dword section_id;
-    PACKFILE *f = pack_fopen_password(path,F_READ, "");
+    PACKFILE *f = zalleg_pack_fopen_password(path,F_READ, "");
     
     if(!f)
     {
@@ -5808,7 +5808,7 @@ bool load_zgp(const char *path)
 {
     dword section_id;
     word section_version;
-    PACKFILE *f=pack_fopen_password(path,F_READ,"");
+    PACKFILE *f=zalleg_pack_fopen_password(path,F_READ,"");
     
     if(!f)
         return false;
@@ -6025,7 +6025,7 @@ bool save_zgp(const char *path)
     reset_combo_animations2();
     
     //open the file
-    PACKFILE *f=pack_fopen_password(path,F_WRITE, "");
+    PACKFILE *f=zalleg_pack_fopen_password(path,F_WRITE, "");
     
     if(!f)
         return false;
@@ -6119,7 +6119,7 @@ bool save_zgp(const char *path)
 bool save_subscreen(const char *path, ZCSubscreen const& savefrom)
 {
     //open the file
-    PACKFILE *f=pack_fopen_password(path,F_WRITE, "");
+    PACKFILE *f=zalleg_pack_fopen_password(path,F_WRITE, "");
     
     if(!f)
         return false;
@@ -6158,7 +6158,7 @@ bool save_subscreen(const char *path, ZCSubscreen const& savefrom)
 bool load_subscreen(const char *path, ZCSubscreen& loadto)
 {
     //open the file
-    PACKFILE *f=pack_fopen_password(path,F_READ, "");
+    PACKFILE *f=zalleg_pack_fopen_password(path,F_READ, "");
     
     if(!f)
         return false;
@@ -14113,7 +14113,7 @@ static int32_t _save_unencoded_quest_int(const char *filename, bool compressed, 
 	box_eol();
 	
 	std::string tmp_filename = util::create_temp_file_path(filename);
-	PACKFILE *f = pack_fopen_password(tmp_filename.c_str(),compressed?F_WRITE_PACKED:F_WRITE, "");
+	PACKFILE *f = zalleg_pack_fopen_password(tmp_filename.c_str(),compressed?F_WRITE_PACKED:F_WRITE, "");
 	
 	if(!f)
 		return 1;
@@ -14129,7 +14129,7 @@ static int32_t _save_unencoded_quest_int(const char *filename, bool compressed, 
 	
 	if(header.external_zinfo)
 	{
-		PACKFILE *inf = pack_fopen_password(zinfofilename, F_WRITE, "");
+		PACKFILE *inf = zalleg_pack_fopen_password(zinfofilename, F_WRITE, "");
 		
 		box_out("Writing ZInfo...");
 		if(inf)
@@ -14367,7 +14367,7 @@ static int32_t _save_unencoded_quest_int(const char *filename, bool compressed, 
 		for(char const* ext : {"key","zpwd","zcheat"})
 		{
 			replace_extension(keyfilename, kfname, ext, 2047);
-			PACKFILE *fp = pack_fopen_password(keyfilename, F_WRITE, "");
+			PACKFILE *fp = zalleg_pack_fopen_password(keyfilename, F_WRITE, "");
 			char msg[80] = {0};
 			sprintf(msg, "ZQuest Auto-Generated Quest Password Key File.  DO NOT EDIT!");
 			msg[78]=13;

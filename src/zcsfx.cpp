@@ -2,11 +2,11 @@
 #include <allegro5/internal/aintern_audio.h>
 #include <allegro5/allegro_memfile.h>
 #include <zalleg/zalleg.h>
-#include "base/qst.h"
-#include "base/packfile.h"
+#include "core/qst.h"
+#include "zalleg/packfile.h"
 
 #ifdef IS_PLAYER
-#include "base/qrs.h"
+#include "core/qrs.h"
 #include "zc/ffscript.h"
 #endif
 

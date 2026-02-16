@@ -7,7 +7,7 @@
 #include <gui/window.h>
 #include <functional>
 #include <string_view>
-#include <base/misctypes.h>
+#include <core/misctypes.h>
 
 bool call_mapstyles_dialog ();
 

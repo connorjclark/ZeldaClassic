@@ -68,11 +68,11 @@ void do_fopen(const bool v, const char* f_mode)
 				break;
 			}
 		}
-		if(!create || make_dirs_for_file(resolved_path))
+		if(!create || util::make_dirs_for_file(resolved_path))
 		{
 			f->file = fopen(resolved_path.c_str(), f_mode);
 			fflush(f->file);
-			zc_chmod(resolved_path.c_str(), SCRIPT_FILE_MODE);
+			util::zc_chmod(resolved_path.c_str(), SCRIPT_FILE_MODE);
 			f->setPath(resolved_path.c_str());
 			//r+; read-write, will not create if does not exist, will not delete content if does exist.
 			//w+; read-write, will create if does not exist, will delete all content if does exist.

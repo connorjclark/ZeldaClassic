@@ -4,7 +4,7 @@
 #include "enemypattern.h"
 #include "gui/key.h"
 #include "info.h"
-#include "base/zsys.h"
+#include "zalleg/zsys.h"
 #include "gui/builder.h"
 #include "zc_list_data.h"
 #include "zq/zq_class.h"

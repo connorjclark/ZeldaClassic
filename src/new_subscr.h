@@ -2,7 +2,7 @@
 #define NEW_SUBSCR_H_
 
 #include "base/ints.h"
-#include "base/zc_alleg.h"
+#include "zalleg/zalleg.h"
 #include "base/general.h"
 #include "tiles.h"
 #include "items.h"

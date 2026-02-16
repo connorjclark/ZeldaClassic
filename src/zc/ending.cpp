@@ -1,11 +1,11 @@
 #include <cstring>
 #include <stdio.h>
 
-#include "base/qrs.h"
-#include "base/msgstr.h"
+#include "core/qrs.h"
+#include "core/msgstr.h"
 #include "zc/ending.h"
 #include "zc/zelda.h"
-#include "base/zsys.h"
+#include "zalleg/zsys.h"
 #include "play_midi.h"
 #include "sprite.h"
 #include "items.h"
@@ -19,7 +19,7 @@
 #include "zc/ffscript.h"
 #include "zc/saves.h"
 #include "zinfo.h"
-#include "base/misctypes.h"
+#include "core/misctypes.h"
 #include "music_playback.h"
 #include "zc/zscriptversion.h"
 

@@ -3,7 +3,12 @@
 #ifndef BASE_CHECK_H_
 #define BASE_CHECK_H_
 
-#include "allegro/debug.h"
+#include <cstdlib>
+
+typedef void (*CheckFailedHandler)(const char* file, int line, const char* func, const char* condition);
+
+void SetCheckFailedHandler(CheckFailedHandler handler);
+void HandleCheckError(const char* file, int line, const char* func, const char* condition);
 
 #undef likely
 #undef unlikely
@@ -17,7 +22,7 @@
 
 #ifndef CHECK
 # define CHECK(expr) if (!likely(expr)) {\
-	al_trace("CHECK failed at %s:%d %s: %s\n", __FILE__, __LINE__, __func__, "'" #expr "'");\
+	HandleCheckError(__FILE__, __LINE__, __func__, "'" #expr "'");\
 	abort();\
 }
 #endif

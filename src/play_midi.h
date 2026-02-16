@@ -9,7 +9,7 @@
 #ifndef PLAY_MIDI_H_
 #define PLAY_MIDI_H_
 
-#include "base/zc_alleg.h"
+#include "allegro/midi.h"
 
 int zc_play_midi(MIDI *midi, int loop);
 void zc_midi_pause();

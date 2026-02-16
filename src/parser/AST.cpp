@@ -2,21 +2,18 @@
 #include "CompilerUtils.h"
 #include "DataStructs.h"
 #include "Scope.h"
+#include "base/util.h"
+#include "parser/ParserHelper.h"
 
 #include <assert.h>
 #include <optional>
 #include <sstream>
-
-#include "base/util.h"
-#include "parser/ParserHelper.h"
-#include "zc/ffscript.h"
 
 using std::pair;
 using std::string;
 using std::ostringstream;
 using std::vector;
 using namespace ZScript;
-using namespace util;
 
 ////////////////////////////////////////////////////////////////
 // LocationData
@@ -197,7 +194,7 @@ void ASTFloat::execute(ASTVisitor& visitor, void* param)
 pair<string, string> ASTFloat::parseValue(Scope* scope) const
 {
 	string f = value;
-	removechar(f, '_'); // underscores are cosmetic for spacing, trim them first
+	util::removechar(f, '_'); // underscores are cosmetic for spacing, trim them first
 	string intpart;
 	string fpart;
 	bool is_long = false;
@@ -2937,8 +2934,8 @@ ASTIsIncluded::ASTIsIncluded(
 		string const& str, LocationData const& location)
 	: ASTLiteral(location)
 {
-	name = cropPath(str);
-	lowerstr(name);
+	name = util::cropPath(str);
+	util::lowerstr(name);
 }
 
 void ASTIsIncluded::execute(ASTVisitor& visitor, void* param)

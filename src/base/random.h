@@ -1,7 +1,6 @@
 #ifndef BASE_RANDOM_H_
 #define BASE_RANDOM_H_
 
-#include "base/zdefs.h"
 #include <random>
 
 #ifdef IS_PLAYER
@@ -31,4 +30,3 @@ void db_srand(char const* f, int l, int32_t seedval, zc_randgen* rng=NULL);
 #endif
 
 #endif
-

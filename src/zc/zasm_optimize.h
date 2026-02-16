@@ -1,7 +1,7 @@
 #ifndef ZASM_OPTIMIZE_H_
 #define ZASM_OPTIMIZE_H_
 
-#include "base/zdefs.h"
+#include "core/zdefs.h"
 
 #include <string>
 

@@ -2,16 +2,16 @@
 #include "comboeditor.h"
 #include "gui/key.h"
 #include "info.h"
-#include "base/zsys.h"
+#include "zalleg/zsys.h"
 #include "tiles.h"
 #include "gui/builder.h"
 #include "zc_list_data.h"
 #include "items.h"
-#include "base/qrs.h"
+#include "core/qrs.h"
 #include <fmt/format.h>
 #include <fmt/ranges.h>
 #include "zinfo.h"
-#include "base/combo.h"
+#include "core/combo.h"
 
 using std::string;
 using std::to_string;

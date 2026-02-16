@@ -2,8 +2,8 @@
 #define OPCODE_H_
 
 #include "Compiler.h"
-#include "zasm/defines.h"
-#include "zasm/serialize.h"
+#include "components/zasm/defines.h"
+#include "components/zasm/serialize.h"
 
 #include <list>
 #include <memory>

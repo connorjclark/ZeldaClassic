@@ -5,7 +5,7 @@
 #include "base/check.h"
 #include "base/zc_array.h"
 #include "base/general.h"
-#include "zasm/pc.h"
+#include "components/zasm/pc.h"
 #include <map>
 #include <memory>
 #include <optional>

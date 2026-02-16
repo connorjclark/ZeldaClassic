@@ -4,8 +4,8 @@
 #include <gui/builder.h>
 #include "zc_list_data.h"
 #include "zc/zelda.h"
-#include "sound/midi.h"
-#include "base/files.h"
+#include "components/sound/midi.h"
+#include "zalleg/files.h"
 #include <fmt/format.h>
 #include "info.h"
 
@@ -142,7 +142,7 @@ bool ZCMidiDlg::handleMessage(const GUI::DialogMessage<message>& msg)
 						" overwrite it?", *fname)))
 						return false;
 				}
-				if (save_midi(fname->c_str(), tunes[tune].data) != 0)
+				if (zalleg_save_midi(fname->c_str(), tunes[tune].data) != 0)
 					InfoDialog("Error", fmt::format("Error saving MIDI '{}'", *fname)).show();
 			}
 			return false;

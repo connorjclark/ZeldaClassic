@@ -1,6 +1,6 @@
 #include "allegro/gui.h"
-#include "base/files.h"
-#include "base/mapscr.h"
+#include "zalleg/files.h"
+#include "core/mapscr.h"
 #include "dialog/edit_region.h"
 
 #include <memory>
@@ -14,11 +14,13 @@
 #include <time.h>
 #include <vector>
 #include <filesystem>
-#include <base/new_menu.h>
+#include "zalleg/new_menu.h"
 
 #include "dialog/info_lister.h"
+#include "zalleg/pal_tables.h"
 #include "zq/commands.h"
 #include "zq/render_map_view.h"
+#include "zsyssimple.h"
 #ifdef __APPLE__
 // malloc.h is deprecated, but malloc also lives in stdlib
 #include <stdlib.h>
@@ -27,13 +29,13 @@
 #endif
 
 #include "zalleg/zalleg.h"
-#include "base/qrs.h"
-#include "base/dmap.h"
-#include "base/msgstr.h"
-#include "base/packfile.h"
-#include "base/cpool.h"
-#include "base/autocombo.h"
-#include "base/render.h"
+#include "core/qrs.h"
+#include "core/dmap.h"
+#include "core/msgstr.h"
+#include "zalleg/packfile.h"
+#include "core/cpool.h"
+#include "core/autocombo.h"
+#include "zalleg/render.h"
 #include "base/version.h"
 #include "zq/autocombo/autopattern_base.h"
 #include "zq/autocombo/pattern_basic.h"
@@ -50,9 +52,8 @@
 #include "zq/render_hotkeys.h"
 #include "zq/render_minimap.h"
 #include "zq/render_tooltip.h"
-#include "base/misctypes.h"
+#include "core/misctypes.h"
 #include "parser/Compiler.h"
-#include "base/zc_alleg.h"
 #include "particles.h"
 #include "dialog/combopool.h"
 #include "dialog/alertfunc.h"
@@ -77,7 +78,7 @@
 #include "dialog/mapstyles.h"
 #include "dialog/externs.h"
 
-#include "base/gui.h"
+#include "zalleg/gui.h"
 #include "gui/jwin_a5.h"
 #include "gui/jwin.h"
 #include "zc_list_data.h"
@@ -90,21 +91,21 @@
 #include "zq/render.h"
 
 // the following are used by both zelda.cc and zquest.cc
-#include "base/zdefs.h"
-#include "base/qrs.h"
+#include "core/zdefs.h"
+#include "core/qrs.h"
 #include "tiles.h"
-#include "base/colors.h"
-#include "base/qst.h"
-#include "base/zsys.h"
+#include "zalleg/colors.h"
+#include "core/qst.h"
+#include "zalleg/zsys.h"
 #include "base/zapp.h"
 #include "base/process_management.h"
 #include "play_midi.h"
-#include "sound/zcmusic.h"
+#include "components/sound/zcmusic.h"
 
-#include "sound/midi.h"
+#include "components/sound/midi.h"
 #include "sprite.h"
 #include "fontsdat.h"
-#include "base/jwinfsel.h"
+#include "core/jwinfsel.h"
 #include "zq/zq_class.h"
 #include "subscr.h"
 #include "zq/zq_subscr.h"
@@ -168,8 +169,6 @@ static const char *last_quest_name  = "macosx_last_quest";
 static const char *qtname_name      = "macosx_qtname%d";
 static const char *qtpath_name      = "macosx_qtpath%d";
 #endif
-
-#include "base/win32.h"
 
 #include "zq/zq_init.h"
 #include "zq/zq_doors.h"
@@ -673,7 +672,7 @@ extern int32_t prv_mode;
 int32_t prv_warp = 0;
 int32_t prv_twon = 0;
 
-int32_t Frameskip = 0, RequestedFPS = 60, zqUseWin32Proc = 1;
+int32_t Frameskip = 0, RequestedFPS = 60;
 int32_t zqColorDepth = 8;
 
 void set_last_timed_save(char const* buf)
@@ -1914,7 +1913,7 @@ void savesometiles(const char *prompt,int32_t initialval)
 		{  
 			char name[PATH_MAX];
 			extract_name(temppath,name,FILENAMEALL);
-			PACKFILE *f=pack_fopen_password(temppath,F_WRITE, "");
+			PACKFILE *f=zalleg_pack_fopen_password(temppath,F_WRITE, "");
 			if(f)
 			{
 				writetilefile(f,first_tile_id,the_tile_count);
@@ -1979,7 +1978,7 @@ void writesometiles_to(const char *prompt,int32_t initialval)
 			
 			char name[256];
 			extract_name(temppath,name,FILENAMEALL);
-			PACKFILE *f=pack_fopen_password(temppath,F_READ, "");
+			PACKFILE *f=zalleg_pack_fopen_password(temppath,F_READ, "");
 			if(f)
 			{
 				
@@ -2054,7 +2053,7 @@ void savesomecombos(const char *prompt,int32_t initialval)
 		{  
 			char name[PATH_MAX];
 			extract_name(temppath,name,FILENAMEALL);
-			PACKFILE *f=pack_fopen_password(temppath,F_WRITE, "");
+			PACKFILE *f=zalleg_pack_fopen_password(temppath,F_WRITE, "");
 			if(f)
 			{
 				writecombofile(f,first_tile_id,the_tile_count);
@@ -2126,7 +2125,7 @@ void writesomecombos(const char *prompt,int32_t initialval)
 		{  
 			char name[256];
 			extract_name(temppath,name,FILENAMEALL);
-			PACKFILE *f=pack_fopen_password(temppath,F_READ, "");
+			PACKFILE *f=zalleg_pack_fopen_password(temppath,F_READ, "");
 			if(f)
 			{
 				
@@ -2207,7 +2206,7 @@ void loadcombopack(const char *prompt,int32_t initialval)
 		{  
 			char name[256];
 			extract_name(temppath,name,FILENAMEALL);
-			PACKFILE *f=pack_fopen_password(temppath,F_READ, "");
+			PACKFILE *f=zalleg_pack_fopen_password(temppath,F_READ, "");
 			if(f)
 			{
 				//need dialogue here
@@ -2304,7 +2303,7 @@ void writesomecombos_to(const char *prompt,int32_t initialval)
 		{  
 			char name[256];
 			extract_name(temppath,name,FILENAMEALL);
-			PACKFILE *f=pack_fopen_password(temppath,F_READ, "");
+			PACKFILE *f=zalleg_pack_fopen_password(temppath,F_READ, "");
 			if(f)
 			{
 				
@@ -2390,7 +2389,7 @@ void savesomedmaps(const char *prompt,int32_t initialval)
 		
 		mark_save_dirty();
 	    
-		PACKFILE *f=pack_fopen_password(temppath,F_WRITE, "");
+		PACKFILE *f=zalleg_pack_fopen_password(temppath,F_WRITE, "");
 		if(f)
 		{
 			if(!writesomedmaps(f,first_dmap_id,last_dmap_id,MAXDMAPS))
@@ -2465,7 +2464,7 @@ void savesomecomboaliases(const char *prompt,int32_t initialval)
 		{  
 			char name[PATH_MAX];
 			extract_name(temppath,name,FILENAMEALL);
-			PACKFILE *f=pack_fopen_password(temppath,F_WRITE, "");
+			PACKFILE *f=zalleg_pack_fopen_password(temppath,F_WRITE, "");
 			if(f)
 			{
 				writecomboaliasfile(f,first_tile_id,the_tile_count);
@@ -2530,7 +2529,7 @@ void writesomecomboaliases_to(const char *prompt,int32_t initialval)
 		{  
 			char name[256];
 			extract_name(temppath,name,FILENAMEALL);
-			PACKFILE *f=pack_fopen_password(temppath,F_READ, "");
+			PACKFILE *f=zalleg_pack_fopen_password(temppath,F_READ, "");
 			if(f)
 			{
 				
@@ -2606,7 +2605,7 @@ void do_exportdoorset(const char *prompt,int32_t initialval)
 		{  
 			char name[256];
 			extract_name(temppath,name,FILENAMEALL);
-			PACKFILE *f=pack_fopen_password(temppath,F_WRITE, "");
+			PACKFILE *f=zalleg_pack_fopen_password(temppath,F_WRITE, "");
 			if(f)
 			{
 				writezdoorsets(f,first_doorset_id,the_doorset_count);
@@ -2680,7 +2679,7 @@ void do_importdoorset(const char *prompt,int32_t initialval)
 		{  
 			char name[256];
 			extract_name(temppath,name,FILENAMEALL);
-			PACKFILE *f=pack_fopen_password(temppath,F_READ, "");
+			PACKFILE *f=zalleg_pack_fopen_password(temppath,F_READ, "");
 			if(f)
 			{
 				int32_t ret = readzdoorsets(f,first_doorset_id,the_doorset_count, the_dest_id);
@@ -13987,7 +13986,7 @@ int32_t d_warpdestscrsel_proc(int32_t msg,DIALOG *d,int32_t c)
 	bool is_overworld = ((DMaps[*dmap_ptr].type&dmfTYPE)==dmOVERW);
 	int scrw = is_overworld ? 16 : 8, scrh = 9;
 	const int max = 0x87;
-	int bufval = zc_xtoi(buf);
+	int bufval = util::zc_xtoi(buf);
 	int val = vbound(bufval,0,max);
 	auto& dm = DMaps[*dmap_ptr];
 	auto val_offset = dm.xoff < 0 ? -dm.xoff : 0;
@@ -14489,7 +14488,7 @@ struct tw_data
 		twtype[ind] = tilewarp_dlg[4].d1;
 		twdmap[ind] = tilewarp_dlg[5].d1;
 		char* buf = (char*)tilewarp_dlg[6].dp;
-		twscr[ind] = vbound(zc_xtoi(buf),0x00,0x87);
+		twscr[ind] = vbound(util::zc_xtoi(buf),0x00,0x87);
 		wret[ind] = tilewarp_dlg[11].d1;
 		set_bit(&oflags, ind, tilewarp_dlg[12].flags & D_SELECTED);
 	}
@@ -14658,7 +14657,7 @@ struct sw_data
 		swtype[ind] = sidewarp_dlg[4].d1;
 		swdmap[ind] = sidewarp_dlg[5].d1;
 		char* buf = (char*)sidewarp_dlg[6].dp;
-		swscr[ind] = vbound(zc_xtoi(buf),0x00,0x87);
+		swscr[ind] = vbound(util::zc_xtoi(buf),0x00,0x87);
 		wret[ind] = sidewarp_dlg[11].d1;
 		set_bit(&oflags, ind, sidewarp_dlg[12].flags & D_SELECTED);
 	}
@@ -15463,7 +15462,7 @@ void EditWarpRingScr(int32_t ring,int32_t index)
 	{
 		mark_save_dirty();
 		QMisc.warp[ring].dmap[index] = warpring_warp_dlg[3].d1;
-		QMisc.warp[ring].scr[index] = zc_xtoi(buf);
+		QMisc.warp[ring].scr[index] = util::zc_xtoi(buf);
 	}
 	
 	if(ret==6)
@@ -17340,7 +17339,7 @@ int32_t jwin_zmeta_proc(int32_t msg, DIALOG *d, int32_t )
 					if(q > 0)
 						oss << ", ";
 					string type_name = ZScript::getDataTypeName(meta.run_types[q]);
-					lowerstr(type_name); //all lowercase for this output
+					util::lowerstr(type_name); //all lowercase for this output
 					if(oss.str().size() > unsigned(indentrun ? 41 : 50))
 					{
 						memset(buf, 0, sizeof(buf));
@@ -18061,8 +18060,8 @@ void smart_slot_named(map<string, disassembled_script_data> &scripts,
 				auto const& rval = scriptnames[rind];
 				if(rval == "<none>") continue;
 				string lc_rv = rval, lc_slot = slotnames[q];
-				lowerstr(lc_rv);
-				lowerstr(lc_slot);
+				util::lowerstr(lc_rv);
+				util::lowerstr(lc_slot);
 				if(lc_rv == lc_slot)
 				{ //Insensitive match
 					lval.updateName(rval);
@@ -19180,11 +19179,11 @@ int32_t onMiscColors()
         
         for(int32_t i=0; i<16; i++)
         {
-            *si = zc_xtoi(buf[i]);
+            *si = util::zc_xtoi(buf[i]);
             ++si;
         }
         
-        QMisc.colors.msgtext = zc_xtoi(buf[16]);
+        QMisc.colors.msgtext = util::zc_xtoi(buf[16]);
     }
     
     return D_O_K;
@@ -20063,11 +20062,6 @@ int32_t main(int32_t argc,char **argv)
 		all_set_resize_flag(false);
 	
 	load_hotkeys();
-	
-#ifdef _WIN32
-	zqUseWin32Proc				 = zc_get_config("zquest","zq_win_proc_fix",0);
-	
-#endif
 
 	if (!render_timer_start())
 	{
@@ -20144,7 +20138,7 @@ int32_t main(int32_t argc,char **argv)
 	zq_screen_h = LARGE_H;
 	window_width = zc_get_config("zquest","window_width",-1);
 	window_height = zc_get_config("zquest","window_height",-1);
-	auto [w, h] = zc_get_default_display_size(LARGE_W, LARGE_H, window_width, window_height);
+	auto [w, h] = zalleg_get_default_display_size(LARGE_W, LARGE_H, window_width, window_height);
 	int32_t videofail = is_headless() ? 0 : (set_gfx_mode(tempmode,w,h,zq_screen_w,zq_screen_h));
 
 	//extra block here is intentional
@@ -20382,19 +20376,7 @@ int32_t main(int32_t argc,char **argv)
 	disable_hotkey(ZQKEY_CHANGE_TRACK, true);
 	
 	fix_drawing_mode_menu();
-	
-	
-#ifdef _WIN32
-	
-	if(zqUseWin32Proc != FALSE)
-	{
-		al_trace("Config file warning: \"zq_win_proc_fix\" enabled switch found. This can cause crashes on some computers.\n");
-		win32data.zqSetDefaultThreadPriority(0);
-		win32data.zqSetCustomCallbackProc(al_get_win_window_handle(all_get_display()));
-	}
-	
-#endif
-	
+
 	time(&auto_save_time_start);
 	
 	FFCore.init();
@@ -20413,10 +20395,6 @@ int32_t main(int32_t argc,char **argv)
 	{
 		handle_sentry_tags();
 
-#ifdef _WIN32
-		if(zqUseWin32Proc != FALSE)
-			win32data.Update(Frameskip); //experimental win32 fixes
-#endif
 		check_autosave();
 		++alignment_arrow_timer;
 		
@@ -21711,12 +21689,6 @@ int32_t d_timer_proc(int32_t msg, DIALOG *d, int32_t c)
     switch(msg)
     {
     case MSG_IDLE:
-#ifdef _WIN32
-        if(zqUseWin32Proc != FALSE)
-            win32data.Update(Frameskip); //experimental win32 fixes
-            
-#endif
-            
         // This has been crashing on Windows, and it saves plenty without it
         //check_autosave();
         break;
@@ -22360,7 +22332,7 @@ void update_hw_screen()
 
 	framecnt++;
 
-	zc_process_display_events();
+	zalleg_process_display_events();
 	if (update_hw_pal)
 	{
 		zc_set_palette(RAMpal);

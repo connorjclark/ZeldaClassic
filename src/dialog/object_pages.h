@@ -1,7 +1,7 @@
 #ifndef ZC_DIALOG_OBJECTPAGES_H_
 #define ZC_DIALOG_OBJECTPAGES_H_
 
-#include "base/zc_alleg.h"
+#include "zalleg/zalleg.h"
 #include "base/ints.h"
 #include "dialog/externs.h"
 #include <functional>

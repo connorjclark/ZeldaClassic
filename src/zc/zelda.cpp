@@ -1,96 +1,98 @@
-#include <cstdlib>
-#include <memory>
-#include <filesystem>
-#include <stdio.h>
-#include <stdlib.h>
-#include <cstring>
-#include <ctype.h>
-#include <string>
-#include <map>
-#include <vector>
-#include <sstream>
+#include "zc/zelda.h"
 
 #include "allegro/file.h"
-#include "base/pal_tables.h"
-#include "subscr.h"
-#include "zalleg/zalleg.h"
-#include "base/qrs.h"
-#include "base/dmap.h"
-#include "base/cpool.h"
-#include "base/packfile.h"
-#include "base/msgstr.h"
-#include "base/render.h"
+#include "base/util.h"
 #include "base/version.h"
-#include "base/zc_alleg.h"
-#include "base/misctypes.h"
+#include "base/zapp.h"
+#include "base/zc_math.h"
+#include "components/sound/zcmusic.h"
+#include "components/zasm/debug_data.h"
 #include "control_scheme.h"
-
-#include <stdlib.h>
-
-#include "zasm/debug_data.h"
+#include "core/cpool.h"
+#include "core/dmap.h"
+#include "core/jwinfsel.h"
+#include "core/misctypes.h"
+#include "core/msgstr.h"
+#include "core/qrs.h"
+#include "core/qst.h"
+#include "core/qst.h"
+#include "core/zdefs.h"
+#include "dialog/info.h"
+#include "drawing.h"
+#include "fontsdat.h"
+#include "gamedata.h"
+#include "gui/jwin.h"
+#include "init.h"
+#include "iter.h"
+#include "music_playback.h"
+#include "pal.h"
+#include "particles.h"
+#include "play_midi.h"
+#include "subscr.h"
+#include "tiles.h"
+#include "zalleg/colors.h"
+#include "zalleg/packfile.h"
+#include "zalleg/pal_tables.h"
+#include "zalleg/render.h"
+#include "zalleg/zalleg.h"
+#include "zalleg/zsys.h"
+#include "zc/cheats.h"
+#include "zc/combos.h"
 #include "zc/commands.h"
 #include "zc/debugger/debugger.h"
+#include "zc/ffscript.h"
 #include "zc/frame_timings.h"
+#include "zc/jit.h"
+#include "zc/matrix.h"
+#include "zc/render.h"
+#include "zc/rendertarget.h"
 #include "zc/replay_upload.h"
+#include "zc/replay.h"
+#include "zc/saves.h"
+#include "zc/script_debug.h"
+#include "zc/scripting/script_object.h"
 #include "zc/zasm_optimize.h"
 #include "zc/zasm_pipeline.h"
 #include "zc/zasm_utils.h"
 #include "zc/zc_subscr.h"
-#include "zconfig.h"
 #include "zc/zscriptversion.h"
-#include "sound/zcmusic.h"
-#include "base/zdefs.h"
-#include "zc/zelda.h"
-#include "tiles.h"
-#include "base/colors.h"
-#include "pal.h"
-#include "base/zsys.h"
-#include "base/zapp.h"
-#include "play_midi.h"
-#include "base/qst.h"
-#include "zc/matrix.h"
-#include "gui/jwin.h"
-#include "base/jwinfsel.h"
-#include "fontsdat.h"
-#include "particles.h"
-#include "gamedata.h"
-#include "zc/ffscript.h"
-#include "zc/scripting/script_object.h"
-#include "zc/jit.h"
-#include "zc/script_debug.h"
-#include "zc/combos.h"
-#include "base/qst.h"
-#include "base/util.h"
-#include "drawing.h"
-#include "dialog/info.h"
-#include "zc/replay.h"
-#include "zc/cheats.h"
-#include "zc/saves.h"
-#include "base/zc_math.h"
+#include "zconfig.h"
+#include "zconsole/ConsoleLogger.h"
+#include "zinfo.h"
+
 #include <fmt/format.h>
 #include <fmt/std.h>
-#include "zc/render.h"
-#include "zinfo.h"
-#include "music_playback.h"
-#include "iter.h"
+
+#include <assert.h>
+#include <cstdlib>
+#include <cstring>
+#include <ctype.h>
+#include <filesystem>
+#include <map>
+#include <memory>
+#include <sstream>
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdlib.h>
+#include <string>
+#include <vector>
 
 #ifdef HAS_UUID
 #include <uuid.h>
 #endif
 
+#ifdef _MSC_VER
+#include <crtdbg.h>
+#define getcwd _getcwd
+#endif
+
+#ifdef __EMSCRIPTEN__
+#include "base/emscripten_utils.h"
+#endif
+
 using namespace util;
 
 extern bool epilepsyFlashReduction;
-#include "zconsole/ConsoleLogger.h"
-#ifndef _WIN32 //Unix
-	#include <fcntl.h>
-	#include <unistd.h>
-	#include <iostream>
-	#include <sstream>
-	int32_t pt = 0;
-	char* ptname = NULL;
-	std::ostringstream lxconsole_oss;
-#endif
 extern char runningItemScripts[256];
 
 int32_t DMapEditorLastMaptileUsed = 0;
@@ -110,21 +112,6 @@ extern CConsoleLoggerEx zscript_coloured_console;
 static zc_randgen drunk_rng;
 
 void mark_save_dirty(){}
-
-#include "init.h"
-#include <assert.h>
-#include "zc/rendertarget.h"
-#include "base/win32.h"
-
-#ifdef _MSC_VER
-#include <crtdbg.h>
-#define stricmp _stricmp
-#define getcwd _getcwd
-#endif
-
-#ifdef __EMSCRIPTEN__
-#include "base/emscripten_utils.h"
-#endif
 
 // MSVC fix
 #if _MSC_VER >= 1900
@@ -509,7 +496,7 @@ void update_hw_screen()
 
 	framecnt++;
 
-	zc_process_display_events();
+	zalleg_process_display_events();
 	resx = al_get_display_width(all_get_display());
 	resy = al_get_display_height(all_get_display());
 	if (update_hw_pal && hw_palette)
@@ -1892,7 +1879,7 @@ int32_t init_game()
 		else ++pos;
 		size_t dotpos = str.find_last_of(".");
 		sprintf(qst_files_path,"Files/%s",str.substr(pos, dotpos-pos).c_str());
-		regulate_path(qst_files_path);
+		util::regulate_path(qst_files_path);
 	}
 
 	identifyCFEnemies();
@@ -4281,7 +4268,7 @@ void init_and_run_main_zplayer_loop()
 	zq_screen_w = 640;
 	zq_screen_h = 480;
 
-	auto [w, h] = zc_get_default_display_size(zq_screen_w, zq_screen_h, resx, resy);
+	auto [w, h] = zalleg_get_default_display_size(zq_screen_w, zq_screen_h, resx, resy);
 	resx = w;
 	resy = h;
 	// TODO: consolidate "resx" and "resy" variables with window_width,height.
@@ -4581,20 +4568,6 @@ reload_for_replay_file:
 	DEBUG_JIT_EXIT_ON_COMPILE_FAIL = zc_get_config("ZSCRIPT", "jit_fatal_compile_errors", false) || used_switch(argc, argv, "-jit-fatal-compile-errors");
 	hangcount = zc_get_config("ZSCRIPT","ZASM_Hangcount",1000);
 	jit_set_enabled(is_feature_enabled("-jit", "ZSCRIPT", "jit", true));
-	
-#ifdef _WIN32
-	
-	if(use_win32_proc != FALSE)
-	{
-		Z_message("Config file warning: \"zc_win_proc_fix\" enabled switch found. This can cause crashes on some computers.\n");
-
-		if(win32data.zcSetCustomCallbackProc(al_get_win_window_handle(all_get_display())) != 0)
-		{
-			use_win32_proc = FALSE;
-		}
-	}
-	
-#endif
 
 #ifdef __EMSCRIPTEN__
 	em_mark_ready_status();
@@ -4723,13 +4696,6 @@ reload_for_replay_file:
 		
 		while(Quit<=0)
 		{
-#ifdef _WIN32
-			
-			if(use_win32_proc != FALSE)
-			{
-				win32data.Update(0);
-			}
-#endif
 			game_loop();
 			advanceframe(true);
 			FFCore.runF6Engine();

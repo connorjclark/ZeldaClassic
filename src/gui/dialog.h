@@ -5,8 +5,9 @@
 #include "dialog_message.h"
 #include "gui/dialog_runner.h"
 #include "gui/widget.h"
-#include <base/gui.h>
+#include "zalleg/gui.h"
 #include <dialog/common.h>
+#include "zalleg/render.h"
 #include <memory>
 
 namespace GUI

@@ -8,7 +8,7 @@
 #include "parserDefs.h"
 #include "base/headers.h"
 #include <fmt/format.h>
-#include "zasm/debug_data.h"
+#include "components/zasm/debug_data.h"
 #include "zq/ffasm.h"
 #include <nlohmann/json.hpp>
 

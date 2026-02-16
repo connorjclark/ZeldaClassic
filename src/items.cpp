@@ -1,12 +1,12 @@
 #include "items.h"
 #include "zc/guys.h"
 #include "zc/maps.h"
-#include "base/zdefs.h"
-#include "base/qrs.h"
-#include "base/combo.h"
+#include "core/zdefs.h"
+#include "core/qrs.h"
+#include "core/combo.h"
 #include "zc/ffscript.h"
 #include <fmt/format.h>
-#include "base/misctypes.h"
+#include "core/misctypes.h"
 #include "zc/zelda.h"
 #include "zc/zscriptversion.h"
 
@@ -1089,7 +1089,7 @@ std::string itemdata::get_name(bool init, bool plain) const
 			ret.replace(repl_pos,2,arg);
 			//Anything with 2 args?
 			//repl_pos = ret.find("%s");
-			replstr(ret,"%s",""); //Clear any spare '%s'
+			util::replstr(ret,"%s",""); //Clear any spare '%s'
 		}
 	}
 	else

@@ -1,14 +1,15 @@
-#include "base/zc_alleg.h"
+#include "zalleg/zalleg.h"
 #include <cstring>
 #include <emmintrin.h>
 #include <tmmintrin.h>
 
-#include "base/zdefs.h"
-#include "base/zsys.h"
-#include "base/qrs.h"
-#include "base/combo.h"
+#include "base/zc_math.h"
+#include "core/zdefs.h"
+#include "zalleg/zsys.h"
+#include "core/qrs.h"
+#include "core/combo.h"
 #include "tiles.h"
-#include "base/pal_tables.h"
+#include "zalleg/pal_tables.h"
 #include "zc/combos.h"
 #include "zc/maps.h"
 #include "items.h"

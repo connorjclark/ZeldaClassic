@@ -2,7 +2,7 @@
 #include "info.h"
 #include "gui/use_size.h"
 #include <gui/builder.h>
-#include "base/zsys.h"
+#include "zalleg/zsys.h"
 #include "zc_list_data.h"
 #include "zc/ffscript.h"
 #include "numpick.h"

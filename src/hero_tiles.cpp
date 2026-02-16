@@ -1,5 +1,5 @@
 #include "hero_tiles.h"
-#include "base/zdefs.h"
+#include "core/zdefs.h"
 
 extern wpndata    *wpnsbuf;
 int32_t hero_animation_speed = 1;

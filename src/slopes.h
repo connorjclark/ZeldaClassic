@@ -1,9 +1,9 @@
 #ifndef SLOPES_H_
 #define SLOPES_H_
 
-#include "base/handles.h"
+#include "core/handles.h"
 #include "base/ints.h"
-#include "base/zc_alleg.h"
+#include "zalleg/zalleg.h"
 #include "base/zfix.h"
 #include <map>
 

@@ -1,8 +1,8 @@
 #include "zq/render_minimap.h"
 
 #include "allegro5/bitmap_io.h"
-#include "base/render.h"
-#include "base/zdefs.h"
+#include "zalleg/render.h"
+#include "core/zdefs.h"
 #include "gui/jwin_a5.h"
 #include "zq/render.h"
 #include "zq/zq_class.h"

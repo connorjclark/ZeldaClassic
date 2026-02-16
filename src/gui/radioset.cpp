@@ -1,10 +1,10 @@
 #include "gui/radioset.h"
 #include "gui/radio.h"
 #include "gui/grid.h"
-#include "base/zc_alleg.h"
+#include "zalleg/zalleg.h"
 #include "gui/dialog_runner.h"
 #include "gui/jwin.h"
-#include "base/zsys.h"
+#include "zalleg/zsys.h"
 #include <utility>
 
 

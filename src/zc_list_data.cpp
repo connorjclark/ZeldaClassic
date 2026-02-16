@@ -1,14 +1,14 @@
 #include "zc_list_data.h"
-#include "base/dmap.h"
-#include "base/qst.h"
+#include "core/dmap.h"
+#include "core/qst.h"
 #include "subscr.h"
 #include "zc/zelda.h"
 #include "zq/zquest.h"
 #include "zq/zq_misc.h"
 #include "zinfo.h"
 #include "advanced_music.h"
-#include "base/misctypes.h"
-#include "base/autocombo.h"
+#include "core/misctypes.h"
+#include "core/autocombo.h"
 #include <fmt/format.h>
 
 extern char *weapon_string[];

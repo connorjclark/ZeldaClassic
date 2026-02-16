@@ -1,30 +1,30 @@
 #ifndef ZELDA_H_
 #define ZELDA_H_
 
+#include "base/compiler.h"
+#include "base/util.h"
+#include "base/zc_array.h"
+#include "base/zfix.h"
+#include "components/sound/zcmixer.h"
+#include "components/sound/zcmusic.h"
+#include "components/zasm/debug_data.h"
+#include "core/fonts.h"
+#include "core/initdata.h"
+#include "core/msgstr.h"
+#include "core/zdefs.h"
+#include "gamedata.h"
+#include "gui/jwin.h"
+#include "items.h"
+#include "sfx.h"
+#include "zalleg/zsys.h"
+#include "zc/control_scheme.h"
+#include "zc/replay.h"
+#include "zc/script_drawing.h"
+#include "zc/zc_sys.h"
+
+#include <map>
 #include <optional>
 #include <vector>
-#include <map>
-#include "base/compiler.h"
-#include "base/msgstr.h"
-#include "base/zdefs.h"
-#include "base/initdata.h"
-#include "base/zc_array.h"
-#include "zasm/debug_data.h"
-#include "zc/control_scheme.h"
-#include "zc/zc_sys.h"
-#include "sfx.h"
-#include "sound/zcmusic.h"
-#include "sound/zcmixer.h"
-#include "gui/jwin.h"
-#include "gamedata.h"
-#include "base/zsys.h"
-#include "zc/script_drawing.h"
-#include "base/zfix.h"
-#include "base/util.h"
-#include "base/fonts.h"
-#include "zc/replay.h"
-#include "items.h"
-#include <map>
 
 struct MsgStr;
 

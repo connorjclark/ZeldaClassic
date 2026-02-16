@@ -12,10 +12,13 @@
 #include "AST.h"
 #include "CompilerUtils.h"
 #include "parserDefs.h"
-XTableHelper XH;
 #include <cstdarg>
 #include <cstdio>
 
+// windows.h defines this, which breaks the macro expansion used in this file.
+#ifdef VOID
+#undef VOID
+#endif
 
 using namespace ZScript;
 using std::string;
@@ -24,6 +27,8 @@ using std::setfill;
 using std::setw;
 
 extern std::string input_script_filename;
+
+XTableHelper XH;
 
 ////////////////////////////////////////////////////////////////
 // CompileError::Impl interface

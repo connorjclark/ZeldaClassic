@@ -1,4 +1,4 @@
-#include "base/qrs.h"
+#include "core/qrs.h"
 #include "sprite.h"
 #include "zc/replay.h"
 #include "zc/zelda.h"
@@ -7,7 +7,7 @@
 #include "zc/ffscript.h"
 #include "zc/combos.h"
 #include "drawing.h"
-#include "base/mapscr.h"
+#include "core/mapscr.h"
 #include "iter.h"
 
 void sprite::handle_sprlighting()

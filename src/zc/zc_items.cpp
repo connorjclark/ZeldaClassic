@@ -1,12 +1,12 @@
-#include "base/qrs.h"
+#include "core/qrs.h"
 #include "zc/zelda.h"
 #include "zc/guys.h"
-#include "base/zdefs.h"
+#include "core/zdefs.h"
 #include "zc/maps.h"
 #include "items.h"
 #include "zc/zscriptversion.h"
 #include <stdio.h>
-#include "base/misctypes.h"
+#include "core/misctypes.h"
 
 extern sprite_list  guys;
 extern sprite_list  items;

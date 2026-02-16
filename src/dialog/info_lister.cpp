@@ -1,7 +1,7 @@
 #include "info_lister.h"
 #include <gui/builder.h>
-#include <base/new_menu.h>
-#include "base/files.h"
+#include "zalleg/new_menu.h"
+#include "zalleg/files.h"
 #include "itemeditor.h"
 #include "ffc_editor.h"
 #include "spritedata.h"
@@ -16,8 +16,8 @@
 #include "zq/zq_misc.h"
 #include "zq/zq_class.h"
 #include "zq/zq_custom.h"
-#include "base/qst.h"
-#include "base/dmap.h"
+#include "core/qst.h"
+#include "core/dmap.h"
 #include <fmt/format.h>
 #include <fmt/ranges.h>
 #include <utility>
@@ -508,7 +508,7 @@ void ItemListerDialog::save()
 	if(!prompt_for_new_file_compat(fmt::format("Save Item '{}' #{} (.zitem)",itemsbuf[selected_val].get_name(true),selected_val).c_str(),"zitem",NULL,datapath,false))
 		return;
 	
-	PACKFILE *f=pack_fopen_password(temppath,F_WRITE,"");
+	PACKFILE *f=zalleg_pack_fopen_password(temppath,F_WRITE,"");
 	if(!f) return;
 	if (!writeoneitem(f,selected_val))
 	{
@@ -524,7 +524,7 @@ bool ItemListerDialog::load()
 	if(!prompt_for_existing_file_compat(fmt::format("Load Item (replacing '{}' #{}) (.zitem)",itemsbuf[selected_val].get_name(true),selected_val).c_str(),"zitem",NULL,datapath,false))
 		return false;
 	
-	PACKFILE *f=pack_fopen_password(temppath,F_READ,"");
+	PACKFILE *f=zalleg_pack_fopen_password(temppath,F_READ,"");
 	if(!f) return false;
 	if (!readoneitem(f,selected_val))
 	{
@@ -647,7 +647,7 @@ void SpriteListerDialog::save()
 	if(!prompt_for_new_file_compat(fmt::format("Save Sprite '{}' #{} (.zwpnspr)",weapon_string[selected_val],selected_val).c_str(),"zwpnspr",NULL,datapath,false))
 		return;
 	
-	PACKFILE *f=pack_fopen_password(temppath,F_WRITE,"");
+	PACKFILE *f=zalleg_pack_fopen_password(temppath,F_WRITE,"");
 	if(!f) return;
 	if (!writeoneweapon(f,selected_val))
 	{
@@ -663,7 +663,7 @@ bool SpriteListerDialog::load()
 	if(!prompt_for_existing_file_compat(fmt::format("Load Sprite (replacing '{}' #{}) (.zwpnspr)",weapon_string[selected_val],selected_val).c_str(),"zwpnspr",NULL,datapath,false))
 		return false;
 	
-	PACKFILE *f=pack_fopen_password(temppath,F_READ,"");
+	PACKFILE *f=zalleg_pack_fopen_password(temppath,F_READ,"");
 	if(!f) return false;
 	if (!readoneweapon(f,selected_val))
 	{
@@ -830,7 +830,7 @@ void EnemyListerDialog::save()
 	if (!prompt_for_new_file_compat(fmt::format("Save NPC '{}' #{} (.znpc)", guy_string[selected_val], selected_val).c_str(), "znpc", NULL, datapath, false))
 		return;
 
-	PACKFILE* f = pack_fopen_password(temppath, F_WRITE, "");
+	PACKFILE* f = zalleg_pack_fopen_password(temppath, F_WRITE, "");
 	if (!f) return;
 	if (!writeonenpc(f, selected_val))
 	{
@@ -846,7 +846,7 @@ bool EnemyListerDialog::load()
 	if (!prompt_for_existing_file_compat(fmt::format("Load NPC (replacing '{}' #{}) (.znpc)", guy_string[selected_val], selected_val).c_str(), "znpc", NULL, datapath, false))
 		return false;
 
-	PACKFILE* f = pack_fopen_password(temppath, F_READ, "");
+	PACKFILE* f = zalleg_pack_fopen_password(temppath, F_READ, "");
 	if (!f) return false;
 	if (!readonenpc(f, selected_val))
 	{

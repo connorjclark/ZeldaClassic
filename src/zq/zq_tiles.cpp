@@ -2,17 +2,17 @@
 #include <cmath>
 
 #include "allegro/color.h"
-#include "base/files.h"
-#include "base/pal_tables.h"
-#include "base/qrs.h"
-#include "base/dmap.h"
-#include "base/cpool.h"
-#include "base/autocombo.h"
-#include "base/packfile.h"
-#include "base/gui.h"
-#include "base/combo.h"
-#include "base/msgstr.h"
-#include "base/zdefs.h"
+#include "zalleg/files.h"
+#include "zalleg/pal_tables.h"
+#include "core/qrs.h"
+#include "core/dmap.h"
+#include "core/cpool.h"
+#include "core/autocombo.h"
+#include "zalleg/packfile.h"
+#include "zalleg/gui.h"
+#include "core/combo.h"
+#include "core/msgstr.h"
+#include "core/zdefs.h"
 #include "new_subscr.h"
 #include "subscr.h"
 #include "zq/zq_tiles.h"
@@ -20,12 +20,12 @@
 #include "tiles.h"
 #include "zq/zq_misc.h"
 #include "zq/zq_class.h"
-#include "base/zsys.h"
-#include "base/colors.h"
-#include "base/qst.h"
+#include "zalleg/zsys.h"
+#include "zalleg/colors.h"
+#include "core/qst.h"
 #include "gui/jwin.h"
-#include <base/new_menu.h>
-#include "base/jwinfsel.h"
+#include "zalleg/new_menu.h"
+#include "core/jwinfsel.h"
 #include "hero_tiles.h"
 #include "zq/questReport.h"
 #include "dialog/info.h"
@@ -40,10 +40,6 @@
 #include "zq/moveinfo.h"
 using std::set;
 
-
-#ifdef _MSC_VER
-#define stricmp _stricmp
-#endif
 
 #define HIDE_USED (show_only_unused_tiles&1)
 #define HIDE_UNUSED (show_only_unused_tiles&2)
@@ -3985,7 +3981,7 @@ void load_imagebuf()
 	packfile_password("");
 		memset(imagepal, 0, sizeof(PALETTE));
 		original_imagebuf_bitmap = load_bitmap(imagepath,imagepal);
-		imagesize = file_size_ex_password(imagepath,"");
+		imagesize = zalleg_file_size_ex_password(imagepath,"");
 		tilecount=0;
 
 		RGB_MAP tmp_rgb_table;
@@ -4007,7 +4003,7 @@ void load_imagebuf()
 		
 	case ftBIN:
 	packfile_password("");
-		imagesize = file_size_ex_password(imagepath, "");
+		imagesize = zalleg_file_size_ex_password(imagepath, "");
 		tilecount=0;
 		
 		if(imagesize)
@@ -4026,8 +4022,8 @@ void load_imagebuf()
 		
 	case ftTIL:
 	packfile_password("");
-		imagesize = file_size_ex_password(imagepath,"");
-		f = pack_fopen_password(imagepath,F_READ,"");
+		imagesize = zalleg_file_size_ex_password(imagepath,"");
+		f = zalleg_pack_fopen_password(imagepath,F_READ,"");
 		
 		if(!f)
 		{
@@ -4054,8 +4050,8 @@ error:
 		
 	case ftZGP:
 	packfile_password("");
-		imagesize = file_size_ex_password(imagepath, "");
-		f=pack_fopen_password(imagepath,F_READ,"");
+		imagesize = zalleg_file_size_ex_password(imagepath, "");
+		f=zalleg_pack_fopen_password(imagepath,F_READ,"");
 		
 		if(!f)
 		{
@@ -4108,7 +4104,7 @@ error2:
 		compressed=true;
 	case ftQSU:
 		packfile_password("");
-		imagesize = file_size_ex_password(imagepath, encrypted ? datapwd : "");
+		imagesize = zalleg_file_size_ex_password(imagepath, encrypted ? datapwd : "");
 		newtilebuf=grabtilebuf;
 		byte skip_flags[4];
 		
@@ -9066,7 +9062,7 @@ int32_t select_tile(int32_t &tile,int32_t &flip,int32_t type,int32_t &cs,bool ed
 				{
 					if(!prompt_for_new_file_compat("Save ZTILE(.ztile)", "ztile", NULL,datapath,false))
 						break;   
-					PACKFILE *f=pack_fopen_password(temppath,F_WRITE, "");
+					PACKFILE *f=zalleg_pack_fopen_password(temppath,F_WRITE, "");
 					if(!f) break;
 					al_trace("Saving tile: %d\n", tile);
 					writetilefile(f,tile,1);
@@ -9077,7 +9073,7 @@ int32_t select_tile(int32_t &tile,int32_t &flip,int32_t type,int32_t &cs,bool ed
 				{
 					if(!prompt_for_existing_file_compat("Load ZTILE(.ztile)", "ztile", NULL,datapath,false))
 						break;   
-					PACKFILE *f=pack_fopen_password(temppath,F_READ, "");
+					PACKFILE *f=zalleg_pack_fopen_password(temppath,F_READ, "");
 					if(!f) break;
 					al_trace("Saving tile: %d\n", tile);
 					if (!readtilefile(f))

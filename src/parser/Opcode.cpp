@@ -1,6 +1,6 @@
 #include "Opcode.h"
-#include "zasm/serialize.h"
-#include "zasm/table.h"
+#include "components/zasm/serialize.h"
+#include "components/zasm/table.h"
 #include <cstdlib>
 
 using namespace ZScript;

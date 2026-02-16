@@ -1,8 +1,8 @@
 #include "base/compiler.h"
-#include "base/handles.h"
-#include "base/mapscr.h"
-#include "base/qrs.h"
-#include "base/zdefs.h"
+#include "core/handles.h"
+#include "core/mapscr.h"
+#include "core/qrs.h"
+#include "core/zdefs.h"
 #include "zc/maps.h"
 #include "zc/zelda.h"
 #include <functional>

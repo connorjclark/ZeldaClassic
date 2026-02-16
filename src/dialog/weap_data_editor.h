@@ -15,7 +15,7 @@
 #include <string_view>
 #include <map>
 #include "items.h"
-#include "base/flags.h"
+#include "core/flags.h"
 
 void call_weap_data_editor(weapon_data& weap, bool lweapon, bool togglable = false);
 

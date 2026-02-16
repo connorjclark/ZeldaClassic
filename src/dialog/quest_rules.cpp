@@ -7,12 +7,12 @@
 #include <gui/builder.h>
 #include "gui/jwin.h"
 #include "zq/zquest.h"
-#include "base/zsys.h"
-#include "base/gui.h"
+#include "zalleg/zsys.h"
+#include "zalleg/gui.h"
 #include "gui/use_size.h"
 #include "zq/zq_files.h"
-#include "base/qrs.h"
-#include "base/mapscr.h"
+#include "core/qrs.h"
+#include "core/mapscr.h"
 #include "zc_list_data.h"
 
 bool mapcount_will_affect_layers(word newmapcount);
@@ -1984,7 +1984,7 @@ std::shared_ptr<GUI::Widget> QRDialog::view()
 	if(searchmode)
 	{
 		string lower_search = searchstring;
-		lowerstr(lower_search);
+		util::lowerstr(lower_search);
 		
 		GUI::ListData tosearch = combinedQRList();
 		if(zs_search)
@@ -2008,13 +2008,13 @@ std::shared_ptr<GUI::Widget> QRDialog::view()
 						[&](GUI::ListItem& itm)
 						{
 							std::string tx = itm.text;
-							lowerstr(tx);
+							util::lowerstr(tx);
 							if(tx.find(lower_search) != std::string::npos)
 								return true;
 							if(info_search)
 							{
 								std::string inf = itm.info;
-								lowerstr(inf);
+								util::lowerstr(inf);
 								if(inf.find(lower_search) != std::string::npos)
 									return true;
 							}

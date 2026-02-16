@@ -1,8 +1,8 @@
 #pragma once
 
 #include "base/headers.h"
-#include "base/zc_alleg.h"
-#include "base/flags.h"
+#include "zalleg/zalleg.h"
+#include "core/flags.h"
 #include "sfx.h"
 #include <optional>
 

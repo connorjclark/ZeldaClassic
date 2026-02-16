@@ -4,7 +4,7 @@
 #include "info.h"
 #include "zq/zquest.h"
 #include "zc/ffscript.h"
-#include "base/qrs.h"
+#include "core/qrs.h"
 
 extern std::vector<std::string> ZQincludePaths;
 

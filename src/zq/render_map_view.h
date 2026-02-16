@@ -1,7 +1,7 @@
 #ifndef RENDER_MAP_VIEW_H_
 #define RENDER_MAP_VIEW_H_
 
-#include "base/render.h"
+#include "zalleg/render.h"
 
 class MapViewRTI : public RenderTreeItem
 {

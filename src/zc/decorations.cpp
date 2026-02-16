@@ -1,10 +1,10 @@
-#include "base/qrs.h"
+#include "core/qrs.h"
 #include "sprite.h"
 #include "zc/decorations.h"
 #include "hero_tiles.h"
 #include "zc/zelda.h"
 #include "zc/maps.h"
-#include "base/zsys.h"
+#include "zalleg/zsys.h"
 #include "zc/hero.h"
 
 decoration::decoration(zfix X,zfix Y,int32_t Id,int32_t Clk, int32_t wpnSpr) : sprite()

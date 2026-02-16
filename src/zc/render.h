@@ -1,7 +1,7 @@
 #ifndef ZC_RENDER_TREE_H_
 #define ZC_RENDER_TREE_H_
 
-#include "base/render.h"
+#include "zalleg/render.h"
 
 extern RenderTreeItem rti_root;
 extern LegacyBitmapRTI rti_game;

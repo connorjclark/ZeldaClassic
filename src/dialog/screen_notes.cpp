@@ -1,12 +1,12 @@
 #include "screen_notes.h"
 #include <gui/builder.h>
-#include <base/new_menu.h>
+#include "zalleg/new_menu.h"
 #include "zc_list_data.h"
-#include "base/mapscr.h"
+#include "core/mapscr.h"
 #include "zq/zquest.h"
 #include "zq/zq_class.h"
 #include "gui/editbox.h"
-#include "base/qst.h"
+#include "core/qst.h"
 #include <fmt/format.h>
 #include <utility>
 #include <sstream>
@@ -70,7 +70,7 @@ std::shared_ptr<GUI::Widget> BrowseNotesDialog::view()
 	using namespace GUI::Key;
 	
 	string lowfilter = filter;
-	lowerstr(lowfilter);
+	util::lowerstr(lowfilter);
 	lister.clear();
 	size_t indx = 0;
 	bool nofilter = filter.empty();
@@ -85,7 +85,7 @@ std::shared_ptr<GUI::Widget> BrowseNotesDialog::view()
 			if(!add)
 			{
 				string lowernotes = inf.notes();
-				lowerstr(lowernotes);
+				util::lowerstr(lowernotes);
 				add = lowernotes.find(lowfilter) != string::npos;
 			}
 			if(add)

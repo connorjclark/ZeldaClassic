@@ -1,15 +1,15 @@
-#include "base/pal_tables.h"
+#include "zalleg/pal_tables.h"
 #include "base/util.h"
-#include "base/zdefs.h"
-#include "base/zsys.h"
-#include "base/qrs.h"
+#include "core/zdefs.h"
+#include "zalleg/zsys.h"
+#include "core/qrs.h"
 #include "sprite.h"
 #include "tiles.h"
 #include "particles.h"
 #include "zc/ffscript.h" // TODO: move me.
 #include "base/zc_math.h"
 #include <fmt/format.h>
-#include "base/misctypes.h"
+#include "core/misctypes.h"
 #include "drawing.h"
 
 #ifdef IS_PLAYER

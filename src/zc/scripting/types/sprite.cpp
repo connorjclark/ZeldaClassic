@@ -1,9 +1,9 @@
 #include "zc/scripting/types/sprite.h"
 
 #include "base/general.h"
-#include "base/qrs.h"
-#include "base/zdefs.h"
-#include "zasm/defines.h"
+#include "core/qrs.h"
+#include "core/zdefs.h"
+#include "components/zasm/defines.h"
 #include "zc/ffscript.h"
 #include "zc/guys.h"
 #include "hero_tiles.h"

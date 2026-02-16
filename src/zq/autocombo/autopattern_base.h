@@ -2,8 +2,8 @@
 #define AUTOPATTERN_BASE_H_
 
 #include <functional>
-#include "base/autocombo.h"
-#include "base/combo.h"
+#include "core/autocombo.h"
+#include "core/combo.h"
 
 namespace AutoPattern
 {

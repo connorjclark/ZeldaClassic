@@ -1,7 +1,7 @@
 #ifndef RENDER_MINIMAP_H_
 #define RENDER_MINIMAP_H_
 
-#include "base/render.h"
+#include "zalleg/render.h"
 
 void mmap_mark_active();
 void mmap_mark_dirty();

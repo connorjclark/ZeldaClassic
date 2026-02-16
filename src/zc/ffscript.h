@@ -1,18 +1,18 @@
 #ifndef FFSCRIPT_H_
 #define FFSCRIPT_H_
 
-#include "base/dmap.h"
+#include "core/dmap.h"
 #include "base/general.h"
-#include "base/mapscr.h"
-#include "base/misctypes.h"
-#include "base/zdefs.h"
-#include "base/initdata.h"
+#include "core/mapscr.h"
+#include "core/misctypes.h"
+#include "core/zdefs.h"
+#include "core/initdata.h"
 #include "parser/parserDefs.h"
 #include <utility>
 #include <string>
 #include <deque>
-#include "zasm/debug_data.h"
-#include "zasm/pc.h"
+#include "components/zasm/debug_data.h"
+#include "components/zasm/pc.h"
 #include "zc/scripting/array_manager.h"
 #include "zc/scripting/context_strings.h"
 #include "zc/jit.h"

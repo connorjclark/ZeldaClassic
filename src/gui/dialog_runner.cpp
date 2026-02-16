@@ -1,6 +1,6 @@
 #include "gui/dialog_runner.h"
-#include "gui/common.h"
-#include "base/gui.h"
+#include "core/zdefs.h"
+#include "zalleg/gui.h"
 #include "gui/jwin.h"
 #include "gui/window.h"
 

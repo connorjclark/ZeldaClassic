@@ -1,6 +1,6 @@
 #include "weap_data_editor.h"
 #include "info.h"
-#include "base/zsys.h"
+#include "zalleg/zsys.h"
 #include <gui/builder.h>
 #include "zc_list_data.h"
 #include "zinfo.h"

@@ -1,7 +1,7 @@
 #ifndef ZC_DIALOG_SUBSCREENWIZARD_H_
 #define ZC_DIALOG_SUBSCREENWIZARD_H_
 
-#include "base/gui.h"
+#include "zalleg/gui.h"
 #include "gui/dialog.h"
 #include "gui/window.h"
 #include "gui/button.h"

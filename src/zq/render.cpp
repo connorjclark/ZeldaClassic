@@ -1,9 +1,9 @@
 #include "zq/render.h"
-#include "base/pal_tables.h"
+#include "zalleg/pal_tables.h"
 #include "zq/render_tooltip.h"
-#include "base/render.h"
+#include "zalleg/render.h"
 #include "zconfig.h"
-#include "base/gui.h"
+#include "zalleg/gui.h"
 #include "zq/zquest.h"
 
 extern int32_t prv_mode;

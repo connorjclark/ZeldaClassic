@@ -1,7 +1,7 @@
 #include "zq/commands.h"
-#include "base/dmap.h"
+#include "core/dmap.h"
 #include "base/general.h"
-#include "base/qst.h"
+#include "core/qst.h"
 #include "base/zapp.h"
 #include "dialog/compilezscript.h"
 #include "dialog/quest_rules.h"
@@ -18,13 +18,13 @@ extern bool is_zq_replay_test;
 static void do_unencrypt_qst_command(const char* input_filename, const char* output_filename)
 {
 	// If the file is already an unencrypted packfile, there's nothing to do.
-	PACKFILE* pf_check = pack_fopen_password(input_filename, F_READ_PACKED, "");
+	PACKFILE* pf_check = zalleg_pack_fopen_password(input_filename, F_READ_PACKED, "");
 	pack_fclose(pf_check);
 	if (pf_check) return;
 
 	int32_t error;
 	PACKFILE* pf = open_quest_file(&error, input_filename, false);
-	PACKFILE* pf2 = pack_fopen_password(output_filename, F_WRITE_PACKED, "");
+	PACKFILE* pf2 = zalleg_pack_fopen_password(output_filename, F_WRITE_PACKED, "");
 	int c;
 	while ((c = pack_getc(pf)) != EOF)
 	{
@@ -58,7 +58,7 @@ static void do_uncompress_qst_command(const char* input_filename, const char* ou
 
 	int32_t error;
 	PACKFILE* pf = open_quest_file(&error, input_filename, false);
-	PACKFILE* pf2 = pack_fopen_password(output_filename, F_WRITE, "");
+	PACKFILE* pf2 = zalleg_pack_fopen_password(output_filename, F_WRITE, "");
 	int c;
 	while ((c = pack_getc(pf)) != EOF)
 	{

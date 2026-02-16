@@ -1106,7 +1106,7 @@ Annotated_Script :
 						if(annot_type_check(ANNTY_STR, data))
 						{
 							int8_t v = -1;
-							upperstr(data.val);
+							util::upperstr(data.val);
 							if(data.val.size() == 2 && data.val[0] == 'L')
 							{
 								switch(data.val[1])

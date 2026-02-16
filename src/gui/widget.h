@@ -5,13 +5,13 @@
 #include "dialog_message.h"
 #include "gui/dialog_ref.h"
 #include "gui/size.h"
-#include "base/zc_alleg.h"
+#include "zalleg/zalleg.h"
 #include <any>
 #include <memory>
 #include <type_traits>
 #include <vector>
 #include <string>
-#include "base/fonts.h"
+#include "core/fonts.h"
 
 #define GUI_DEF_FONT get_custom_font(CFONT_DLG)
 #define GUI_DEF_FONT_A5 get_custom_font_a5(CFONT_DLG)

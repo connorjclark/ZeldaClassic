@@ -1,14 +1,15 @@
-#include "base/qrs.h"
-#include "base/packfile.h"
-#include "base/render.h"
+#include "core/qrs.h"
+#include "zalleg/packfile.h"
+#include "zalleg/pal_tables.h"
+#include "zalleg/render.h"
 #include "base/version.h"
 #include "base/zapp.h"
-#include "base/zc_alleg.h"
+#include "zalleg/zalleg.h"
 #include "zq/zq_misc.h"
 #include "zq/zquest.h"
-#include "base/colors.h"
-#include "base/qst.h"
-#include "base/zsys.h"
+#include "zalleg/colors.h"
+#include "core/qst.h"
+#include "zalleg/zsys.h"
 #include "zq/zq_class.h"
 #include "zq/package.h"
 #include "zq/render_minimap.h"
@@ -28,7 +29,6 @@
 
 #ifdef _MSC_VER
 #define strupr _strupr
-#define stricmp _stricmp
 #endif
 
 extern int32_t prv_mode;
@@ -219,7 +219,7 @@ void dump_pal()
 
 bool readfile(const char *path,void *buf,int32_t count)
 {
-    PACKFILE *f=pack_fopen_password(path,F_READ,"");
+    PACKFILE *f=zalleg_pack_fopen_password(path,F_READ,"");
 
     if(!f)
         return 0;
@@ -231,7 +231,7 @@ bool readfile(const char *path,void *buf,int32_t count)
 
 bool writefile(const char *path,void *buf,int32_t count)
 {
-    PACKFILE *f=pack_fopen_password(path,F_WRITE,"");
+    PACKFILE *f=zalleg_pack_fopen_password(path,F_WRITE,"");
 
     if(!f)
         return 0;
@@ -840,7 +840,7 @@ int32_t onMapscrSnapshot()
 	clear_to_color(panorama,vc(0));
 	Map.draw(panorama, 0, 0, useflags?Flags:0, -1, -1, -1);
 
-	alleg4_save_bitmap(panorama, SnapshotScale, getSnapName());
+	zalleg_alleg4_save_bitmap(panorama, SnapshotScale, getSnapName());
 
 	destroy_bitmap(panorama);
 	ShowMisalignments = misal; //Restore misalignments.

@@ -1,8 +1,8 @@
 #ifndef ZQ_CLASS_H_
 #define ZQ_CLASS_H_
 
-#include "base/zdefs.h"
-#include "base/mapscr.h"
+#include "core/zdefs.h"
+#include "core/mapscr.h"
 #include "base/containers.h"
 #include <stdio.h>
 #include <string_view>

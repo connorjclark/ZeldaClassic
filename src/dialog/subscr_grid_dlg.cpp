@@ -2,7 +2,7 @@
 #include "dialog/externs.h"
 #include <gui/builder.h>
 #include "subscr_grid_dlg.h"
-#include "base/initdata.h"
+#include "core/initdata.h"
 #include "subscr.h"
 
 void mark_save_dirty();

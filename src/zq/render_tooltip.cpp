@@ -1,6 +1,6 @@
 #include "zq/render_tooltip.h"
-#include "base/render.h"
-#include "base/zdefs.h"
+#include "zalleg/render.h"
+#include "core/zdefs.h"
 #include "zq/render.h"
 #include "zq/zquest.h"
 #include <algorithm>

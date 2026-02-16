@@ -4,7 +4,7 @@
 #include "zq/zquest.h"
 #include <gui/builder.h>
 #include <fmt/format.h>
-#include <base/qrs.h>
+#include <core/qrs.h>
 #include "zq/zq_misc.h"
 #include "zq/render.h"
 #include "zc_list_data.h"

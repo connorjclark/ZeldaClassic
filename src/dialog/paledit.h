@@ -6,9 +6,7 @@
 #include <gui/tabpanel.h>
 #include <gui/button.h>
 #include <zq/gui/palette_frame.h>
-#include <functional>
-#include <string_view>
-#include "base/colors.h"
+#include "zalleg/colors.h"
 
 bool call_paledit_dlg(char* namebuf, byte* cdata, PALETTE* pal, int32_t offset, int32_t index);
 

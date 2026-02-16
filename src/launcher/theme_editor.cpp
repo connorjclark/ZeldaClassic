@@ -1,8 +1,8 @@
 #include "launcher/theme_editor.h"
-#include "base/files.h"
+#include "zalleg/files.h"
 #include "dialog/common.h"
 #include "dialog/alert.h"
-#include "base/jwinfsel.h"
+#include "core/jwinfsel.h"
 #include "gui/jwin_a5.h"
 #include <gui/builder.h>
 #include "launcher/launcher.h"

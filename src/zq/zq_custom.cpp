@@ -3,18 +3,18 @@
 #include <stdio.h>
 #include <cstring>
 
-#include "base/files.h"
-#include "base/qrs.h"
-#include "base/packfile.h"
-#include "base/gui.h"
-#include "base/qst.h"
+#include "zalleg/files.h"
+#include "core/qrs.h"
+#include "zalleg/packfile.h"
+#include "zalleg/gui.h"
+#include "core/qst.h"
 #include "zq/zq_custom.h"
 #include "tiles.h"
 #include "zq/zq_tiles.h"
 #include "zq/zq_misc.h"
 #include "zq/zquest.h"
 #include "items.h"
-#include "base/zsys.h"
+#include "zalleg/zsys.h"
 #include "sfx.h"
 #include "init.h"
 #include "defdata.h"
@@ -33,11 +33,6 @@ extern int32_t ex;
 extern void reset_itembuf(itemdata *item, int32_t id);
 
 extern int32_t biw_cnt;
-
-
-#ifdef _MSC_VER
-#define stricmp _stricmp
-#endif
 
 void large_dialog(DIALOG *d)
 {

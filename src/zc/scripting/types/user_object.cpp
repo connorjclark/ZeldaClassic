@@ -1,8 +1,8 @@
 #include "zc/scripting/types/user_object.h"
 
 #include "base/general.h"
-#include "base/zdefs.h"
-#include "zasm/defines.h"
+#include "core/zdefs.h"
+#include "components/zasm/defines.h"
 #include "zc/ffscript.h"
 #include "zc/scripting/script_object.h"
 #include "zc/zscriptversion.h"

@@ -17,7 +17,7 @@
 #include <gui/button.h>
 #include <gui/window.h>
 #include <gui/list_data.h>
-#include "base/mapscr.h"
+#include "core/mapscr.h"
 
 void call_edit_map_settings(int32_t slot);
 

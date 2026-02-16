@@ -1,16 +1,17 @@
 #include <cstring>
 #include <stdio.h>
 
-#include "base/files.h"
-#include "base/gui.h"
-#include "base/zc_alleg.h"
-#include "base/zdefs.h"
-#include "base/qrs.h"
-#include "base/colors.h"
+#include "zalleg/files.h"
+#include "zalleg/gui.h"
+#include "zalleg/pal_tables.h"
+#include "zalleg/zalleg.h"
+#include "core/zdefs.h"
+#include "core/qrs.h"
+#include "zalleg/colors.h"
 #include "pal.h"
 #include "zq/zquest.h"
 #include "gui/jwin.h"
-#include "base/zsys.h"
+#include "zalleg/zsys.h"
 #include "zq/zq_tiles.h"
 #include "zq/zq_misc.h"
 #include "zq/zq_cset.h"
@@ -538,7 +539,7 @@ void onJumpText()
 
 void onInsertColor_Hex()
 {
-	int32_t col = zc_xtoi((char*)edit_cset_dlg[21].dp);
+	int32_t col = util::zc_xtoi((char*)edit_cset_dlg[21].dp);
 	auto r = (col&0xFF0000)>>16;
 	auto g = (col&0x00FF00)>>8;
 	auto b = (col&0x0000FF)>>0;
@@ -968,8 +969,8 @@ void edit_cycles(int32_t level)
         {
             palcycle c;
             c.first = (atoi(buf[i*5])&7)<<4;
-            c.first += zc_xtoi(buf[i*5+1])&15;
-            c.count =  zc_xtoi(buf[i*5+2])&15;
+            c.first += util::zc_xtoi(buf[i*5+1])&15;
+            c.count =  util::zc_xtoi(buf[i*5+2])&15;
             c.count += (atoi(buf[i*5+3])&15)<<4;
             c.speed =  atoi(buf[i*5+4]);
             QMisc.cycles[level][i] = c;

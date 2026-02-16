@@ -1,10 +1,9 @@
-#ifndef ZC_MATH_H_
-#define ZC_MATH_H_
-
-#include <math.h>
+#include "base/zc_math.h"
 #include "base/sin1.h"
 #include "zc/replay.h"
 #include <fmt/format.h>
+#include <cstdint>
+#include <math.h>
 
 namespace zc
 {
@@ -97,7 +96,7 @@ double Sin(double x)
 		// x needs to be converted from radians -> angles -> sin1 domain
 		x = x * (180/PI * 32768.0/360.0);
 		x = (long)x % 0x8000;
-		double r = sin1(x) * Q15;
+		double r = sin1((int16_t)x) * Q15;
 		// round to fewer decimal places, otherwise some "critical" values
 		// will be slightly off (ex: Cos(0) == 0.99996, instead of 1)
 		// initially did not reduce precision enough, which meant cos(PI/180) == 0.0002 instead of 0
@@ -122,7 +121,7 @@ double Cos(double x)
 	{
 		x = x * (180/PI * 32768.0/360.0);
 		x = (long)x % 0x8000;
-		double r = cos1(x) * Q15;
+		double r = cos1((int16_t)x) * Q15;
 		if (replay_version_check(21))
 			return std::round(r * 1000.0) / 1000.0;
 		if (replay_version_check(4))
@@ -144,7 +143,7 @@ double Tan(double x)
 	{
 		x = x * (180/PI * 32768.0/360.0);
 		x = (long)x % 0x8000;
-		double r = (sin1(x) * Q15) / (cos1(x) * Q15);
+		double r = (sin1((int16_t)x) * Q15) / (cos1((int16_t)x) * Q15);
 		if (replay_version_check(21))
 			return std::round(r * 1000.0) / 1000.0;
 		if (replay_version_check(4))
@@ -152,7 +151,7 @@ double Tan(double x)
 		return r;
 	}
 	else
-		return std::tan(x);
+		return std::tan((int16_t)x);
 }
 
 
@@ -161,5 +160,3 @@ double Tan(double x)
 
 
 } //namespace zc
-
-#endif

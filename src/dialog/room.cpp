@@ -2,7 +2,7 @@
 #include "common.h"
 #include "info.h"
 #include <gui/builder.h>
-#include "base/qrs.h"
+#include "core/qrs.h"
 void mark_save_dirty();
 extern guydata *guysbuf;
 

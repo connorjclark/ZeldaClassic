@@ -4,9 +4,9 @@
 // * Compile: LSHIFTR RSHIFTR
 
 #include "zc/jit.h"
-#include "base/worker_pool.h"
+#include "components/worker_pool/worker_pool.h"
 #include "base/zapp.h"
-#include "base/zdefs.h"
+#include "core/zdefs.h"
 #include "zc/script_debug.h"
 #include "zc/zasm_optimize.h"
 #include "zc/zasm_pipeline.h"

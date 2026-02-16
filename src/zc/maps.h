@@ -5,7 +5,7 @@
 #include <utility>
 #include "base/compiler.h"
 #include "base/general.h"
-#include "base/handles.h"
+#include "core/handles.h"
 #include "sprite.h"
 #include "zc/zelda.h"
 

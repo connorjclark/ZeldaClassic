@@ -4,9 +4,9 @@
 #include "test_runner/assert.h"
 #include "test_runner/test_runner.h"
 #include "parser/config.h"
-#include "base/zsys.h"
-#include "zasm/debug_data.h"
-#include "zasm/eval.h"
+#include "zalleg/zsys.h"
+#include "components/zasm/debug_data.h"
+#include "components/zasm/eval.h"
 #include <functional>
 #include <memory>
 #include <optional>

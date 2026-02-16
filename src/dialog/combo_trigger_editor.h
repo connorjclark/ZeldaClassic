@@ -16,7 +16,7 @@
 #include <functional>
 #include <string_view>
 #include <map>
-#include "base/combo.h"
+#include "core/combo.h"
 
 bool call_trigger_editor(ComboEditorDialog& dlg, size_t index);
 

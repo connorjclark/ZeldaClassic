@@ -1,7 +1,7 @@
 #include "edit_music.h"
 #include <gui/builder.h>
 #include "base/process_management.h"
-#include "base/files.h"
+#include "zalleg/files.h"
 #include "gui/jwin.h"
 #include "zq/zquest.h"
 #include "zq/zq_class.h"
@@ -11,7 +11,7 @@
 #include "info.h"
 #include "subscr.h"
 #include <fmt/format.h>
-#include <base/qrs.h>
+#include <core/qrs.h>
 #include "music_playback.h"
 
 extern int32_t midi_volume;

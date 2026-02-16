@@ -1,15 +1,15 @@
 #include "zc/render.h"
-#include "base/render.h"
+#include "zalleg/render.h"
 #include "zc/debugger/debugger.h"
 #include "zc/zelda.h"
 #include "zc/maps.h"
 #include "sprite.h"
 #include "zc/guys.h"
 #include "iter.h"
-#include "base/qst.h"
-#include "base/gui.h"
+#include "core/qst.h"
+#include "zalleg/gui.h"
 #include "base/zapp.h"
-#include "base/mapscr.h"
+#include "core/mapscr.h"
 #include <fmt/format.h>
 
 extern sprite_list guys;

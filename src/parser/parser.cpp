@@ -1,5 +1,3 @@
-// TODO: do not link allegro w/ zscript compiler.
-
 #include <filesystem>
 #include <iostream>
 #include <string>
@@ -11,18 +9,15 @@
 #include "parser/CompileError.h"
 #include "parser/CompileOption.h"
 #include "test_runner/test_runner.h"
-#include "zasm/table.h"
-#include "zasm/serialize.h"
+#include "components/zasm/table.h"
+#include "components/zasm/serialize.h"
 #include "zc/ffscript.h"
-#include "base/util.h"
 #include "parser/ZScript.h"
 #include "parser/config.h"
-#include "zconfig.h"
 #include "zconsole/ConsoleLogger.h"
 #include "zscrdata.h"
 #include "base/zapp.h"
-#include "base/qrs.h"
-#include "base/zsys.h"
+#include "core/qrs.h"
 #include <nlohmann/json.hpp>
 
 using namespace std::chrono_literals;
@@ -615,6 +610,14 @@ extern "C" int compile_script(const char* script_path)
 }
 
 // TODO: make this not needed to compile...
-bool DragAspect = false;
-double aspect_ratio = LARGE_H / double(LARGE_W);
-int window_min_width = 0, window_min_height = 0;
+void zprint2(const char * const format,...)
+{
+	char buf[8192];
+	
+	va_list ap;
+	va_start(ap, format);
+	vsnprintf(buf, 8192, format, ap);
+	va_end(ap);
+
+	printf("%s", buf);
+}

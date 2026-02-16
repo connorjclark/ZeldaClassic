@@ -1,4 +1,6 @@
 #include "gui/button.h"
+
+#include "base/zc_math.h"
 #include "gui/common.h"
 #include "gui/dialog.h"
 #include "gui/dialog_runner.h"

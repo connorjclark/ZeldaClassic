@@ -1,7 +1,7 @@
 #include "gui/size.h"
 #include "gui/common.h"
-#include "base/zc_alleg.h"
-#include "base/fonts.h"
+#include "zalleg/zalleg.h"
+#include "core/fonts.h"
 
 extern int dlgfontheight;
 namespace GUI

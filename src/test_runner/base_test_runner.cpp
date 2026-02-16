@@ -1,7 +1,7 @@
 // This runs just the tests defined in cpp files.
 // For all other tests, see the `tests` folder.
 
-#include "base/zc_alleg.h"
+#include "zalleg/zalleg.h"
 #include "test_runner/test_runner.h"
 #include <allegro5/allegro.h>
 
@@ -19,3 +19,16 @@ int32_t main(int32_t argc, char* argv[])
 	return success ? 1 : 0;
 }
 END_OF_MAIN()
+
+// TODO: make this not needed to compile...
+void zprint2(const char * const format,...)
+{
+	char buf[8192];
+	
+	va_list ap;
+	va_start(ap, format);
+	vsnprintf(buf, 8192, format, ap);
+	va_end(ap);
+
+	printf("%s", buf);
+}

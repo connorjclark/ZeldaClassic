@@ -1,14 +1,14 @@
-#include "base/qrs.h"
-#include "base/dmap.h"
-#include "base/gui.h"
+#include "core/qrs.h"
+#include "core/dmap.h"
+#include "zalleg/gui.h"
 #include "subscr.h"
 #include "zq/zq_subscr.h"
 #include "gui/jwin.h"
 #include "zq/zquest.h"
-#include "base/zsys.h"
+#include "zalleg/zsys.h"
 #include "zq/zq_misc.h"
 #include "tiles.h"
-#include "base/qst.h"
+#include "core/qst.h"
 #include "init.h"
 #include <assert.h>
 #include <fmt/format.h>
@@ -22,10 +22,6 @@
 #include <strings.h>
 #endif
 #include <cstring>
-
-#ifdef _MSC_VER
-#define stricmp _stricmp
-#endif
 
 extern void large_dialog(DIALOG *d);
 extern void large_dialog(DIALOG *d, float RESIZE_AMT);

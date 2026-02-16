@@ -1,7 +1,7 @@
 #ifndef ZC_HERO_TILES_H_
 #define ZC_HERO_TILES_H_
 
-#include "base/zdefs.h"
+#include "core/zdefs.h"
 
 enum
 {

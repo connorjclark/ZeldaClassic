@@ -1,10 +1,10 @@
-#include "base/zdefs.h"
-#include "base/zsys.h"
+#include "core/zdefs.h"
+#include "zalleg/zsys.h"
 #include "ffc.h"
 #include "tiles.h"
 #include "sprite.h"
-#include "base/qrs.h"
-#include "base/combo.h"
+#include "core/qrs.h"
+#include "core/combo.h"
 #include "zc/zc_ffc.h"
 
 extern sprite_list Lwpns;
@@ -13,7 +13,7 @@ extern sprite_list Lwpns;
 #include "zc/maps.h"
 #include "zc/hero.h"
 #include "zc/combos.h"
-#include "base/mapscr.h"
+#include "core/mapscr.h"
 #include "iter.h"
 
 extern int16_t lensclk;

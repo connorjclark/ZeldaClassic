@@ -1,12 +1,10 @@
 #include "CompileOption.h"
+#include "allegro/config.h"
+#include "core/qrs.h"
 #include "parser/config.h"
 #include <map>
-#include <vector>
 
-//We need access to quest_rules, for option defaults. -Em
-//#include "base/zdefs.h"
-#include "base/zsys.h"
-#include "base/qrs.h"
+extern bool zc_cfg_defaulted;
 
 using std::map;
 using std::string;

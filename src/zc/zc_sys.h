@@ -1,10 +1,10 @@
 #ifndef ZC_SYS_H_
 #define ZC_SYS_H_
 
-#include "base/zdefs.h"
-#include "base/jwinfsel.h"
-#include "base/zsys.h"
-#include "sound/zcmusic.h"
+#include "core/zdefs.h"
+#include "core/jwinfsel.h"
+#include "zalleg/zsys.h"
+#include "components/sound/zcmusic.h"
 #include "advanced_music.h"
 #include "zcsfx.h"
 

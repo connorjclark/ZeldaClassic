@@ -3,7 +3,7 @@
 #include <gui/builder.h>
 #include "zc_list_data.h"
 #include "zc/ffscript.h"
-#include "base/qrs.h"
+#include "core/qrs.h"
 
 extern char sfx_sect[];
 extern int32_t midi_volume, digi_volume, sfx_volume, emusic_volume, pan_style;

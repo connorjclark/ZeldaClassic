@@ -2,7 +2,7 @@
 #include "gui/key.h"
 #include "info.h"
 #include "gui/builder.h"
-#include "base/files.h"
+#include "zalleg/files.h"
 #include "sfx.h"
 #include "play_midi.h"
 #include "zq/zquest.h"

@@ -2,7 +2,7 @@
 #define ZC_INIT_H_
 
 #include <string>
-#include "base/initdata.h"
+#include "core/initdata.h"
 
 void zc_init_apply_cheat_delta();
 int32_t onCheatConsole();

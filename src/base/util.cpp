@@ -1,9 +1,8 @@
 #include "base/util.h"
-#include "allegro/debug.h"
 #include "base/general.h"
 #include "base/md5.h"
 #include "base/process_management.h"
-#include "base/zdefs.h"
+#include "core/zdefs.h"
 #include <cstdlib>
 #include <fstream>
 #include <sstream>
@@ -618,14 +617,6 @@ namespace util
 		}
 	}
 
-	void safe_al_trace(const char* str)
-	{
-		zc_trace_handler(str);
-	}
-	void safe_al_trace(std::string const& str)
-	{
-		zc_trace_handler(str.c_str());
-	}
 	bool zc_isalpha(int c)
 	{
 	    if(unsigned(c) > 255) return false;
@@ -1124,52 +1115,6 @@ char const* get_snap_str()
 void clear_clip_rect(BITMAP* bitmap)
 {
 	set_clip_rect(bitmap, 0, 0, bitmap->w-1, bitmap->h-1);
-}
-
-//Fun fact: Allegro used to be in control of allegro.log. This caused
-//problems, because it would hold on to a file handle. Even if we blank
-//the contents of the log, it will still write to the end, causing
-//lots of nulls.
-//No more!
-
-FILE * trace_file;
-
-int32_t zc_trace_handler(const char * msg)
-{
-#ifndef _WIN32
-	printf("%s", msg);
-#endif
-
-    if(trace_file == 0)
-    {
-        if (getenv("ALLEGRO_LEGACY_TRACE"))
-            trace_file = fopen(getenv("ALLEGRO_LEGACY_TRACE"), "a+");
-        else
-            trace_file = fopen("allegro.log", "a+");
-        
-        if(0==trace_file)
-        {
-            return 0; // blargh.
-        }
-    }
-    
-    fprintf(trace_file, "%s", msg);
-    fflush(trace_file);
-    return 1;
-}
-
-void zc_trace_clear()
-{
-    if(trace_file)
-    {
-        fclose(trace_file);
-    }
-    
-    if (getenv("ALLEGRO_LEGACY_TRACE"))
-        trace_file = fopen(getenv("ALLEGRO_LEGACY_TRACE"), "w");
-    else
-        trace_file = fopen("allegro.log", "w");
-    ASSERT(trace_file);
 }
 
 static std::string HINT_TY(std::vector<int> vals, dword ty)

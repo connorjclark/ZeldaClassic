@@ -1,6 +1,6 @@
 #include "zq/package.h"
 #include "base/util.h"
-#include "base/zc_alleg.h"
+#include "zalleg/zalleg.h"
 #include <allegro5/allegro.h>
 #include <fmt/format.h>
 #include <filesystem>

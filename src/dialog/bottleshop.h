@@ -8,7 +8,7 @@
 #include <gui/text_field.h>
 #include <gui/window.h>
 #include <functional>
-#include "base/misctypes.h"
+#include "core/misctypes.h"
 
 class BottleShopDialog: public GUI::Dialog<BottleShopDialog>
 {

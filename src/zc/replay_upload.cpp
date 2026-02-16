@@ -6,6 +6,7 @@
 #include "zconfig.h"
 #include "zsyssimple.h"
 #include <nlohmann/json.hpp>
+#include <fmt/format.h>
 #include <fstream>
 #include <map>
 #include <chrono>

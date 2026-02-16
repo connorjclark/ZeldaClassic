@@ -2,7 +2,7 @@
 #define SOLIDOBJECT_H_
 
 #include "base/zfix.h"
-#include "base/zc_alleg.h"
+#include "zalleg/zalleg.h"
 
 class solid_object;
 

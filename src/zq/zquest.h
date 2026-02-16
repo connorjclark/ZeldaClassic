@@ -3,20 +3,20 @@
 
 #include <string>
 #include <vector>
-#include "base/initdata.h"
-#include "sound/midi.h"
+#include "core/initdata.h"
+#include "components/sound/midi.h"
 #include "gui/jwin.h"
-#include <base/new_menu.h>
-#include "base/jwinfsel.h"
-#include "sound/zcmusic.h"
-#include "sound/zcmixer.h"
+#include "zalleg/new_menu.h"
+#include "core/jwinfsel.h"
+#include "components/sound/zcmusic.h"
+#include "components/sound/zcmixer.h"
 #include "sprite.h"
 #include "gamedata.h"
 #include "parser/parserDefs.h"
 #include "base/zfix.h"
-#include "base/fonts.h"
-#include "base/cpool.h"
-#include "base/misctypes.h"
+#include "core/fonts.h"
+#include "core/cpool.h"
+#include "core/misctypes.h"
 #include "zq/zq_class.h"
 #include "items.h"
 
@@ -152,7 +152,7 @@ extern int32_t  Flags,Flag,menutype;
 extern int32_t MouseScroll, SavePaths, CycleOn, NoScreenPreview,
 	DisableLPalShortcuts,DisableCompileConsole,skipLayerWarning,numericalFlags,DragCenterOfSquares, SmartFFCPlacement;
 extern uint8_t InvalidBG;
-extern int32_t Frameskip, RequestedFPS, zqColorDepth, zqUseWin32Proc;
+extern int32_t Frameskip, RequestedFPS, zqColorDepth;
 extern bool ShowFPS, SaveDragResize, DragAspect, SaveWinPos;
 extern double aspect_ratio;
 extern int window_min_width, window_min_height;

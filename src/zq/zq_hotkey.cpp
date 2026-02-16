@@ -1,5 +1,5 @@
-#include "base/zdefs.h"
-#include "base/hotkey.h"
+#include "core/zdefs.h"
+#include "core/hotkey.h"
 #include "zq/render_hotkeys.h"
 #include "zq/zq_files.h"
 #include "zq/zquest.h"

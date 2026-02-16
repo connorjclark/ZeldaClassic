@@ -106,8 +106,6 @@ namespace util
 	int32_t xtoi(char *hexstr);
 	int32_t zc_chmod(const char* path, mode_t mode);
 	bool checkPath(const char* path, const bool is_dir);
-	void safe_al_trace(const char* str);
-	void safe_al_trace(std::string const& str);
 	bool zc_isalpha(int c);
 	std::string escape_string(char const* str);
 	std::string escape_string(std::string const& str);
@@ -144,9 +142,6 @@ int32_t compare(int32_t a, int32_t b);
 char const* get_snap_str();
 
 void clear_clip_rect(BITMAP* bitmap);
-
-int32_t zc_trace_handler(const char *);
-void zc_trace_clear();
 
 std::string QRHINT(std::vector<int> qrs);
 std::string RULETMPL_HINT(std::vector<int> tmpls);

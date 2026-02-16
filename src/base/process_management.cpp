@@ -1,7 +1,7 @@
 #include "base/process_management.h"
 #include "base/util.h"
 #include "base/zapp.h"
-#include "base/zdefs.h"
+#include "core/zdefs.h"
 #include <fmt/format.h>
 #include <sstream>
 
@@ -468,7 +468,7 @@ process_killer launch_process(std::string file, const std::vector<std::string>& 
 #else
 	std::vector<char*> argv = create_argv_unix(file, args);
 	pid_t pid;
-#ifdef ALLEGRO_LINUX
+#ifdef __linux__
 	int s = posix_spawnp(&pid, file.c_str(), NULL, NULL, argv.data(), environ);
 #else
 	extern char** environ;
@@ -582,7 +582,7 @@ process_manager* launch_piped_process(std::string file, std::string pipename, co
 
 	std::vector<char*> argv = create_argv_unix(file, args);
 	pid_t child_pid;
-#ifdef ALLEGRO_LINUX
+#ifdef __linux__
 	s = posix_spawnp(&child_pid, file.c_str(), &file_actions, NULL, argv.data(), environ);
 #else
 	extern char** environ;

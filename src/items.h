@@ -1,9 +1,9 @@
 #ifndef ITEMS_H_
 #define ITEMS_H_
 
-#include "base/zdefs.h"
-#include "base/flags.h"
-#include "base/initdata.h"
+#include "core/zdefs.h"
+#include "core/flags.h"
+#include "core/initdata.h"
 #include "base/zfix.h"
 #include "sfx.h"
 #include "sprite.h"

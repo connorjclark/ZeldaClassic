@@ -1,11 +1,11 @@
 #include "zc/script_debug.h"
 #include "allegro5/file.h"
 #include "base/zapp.h"
-#include "base/zdefs.h"
+#include "core/zdefs.h"
 #include "zc/ffscript.h"
 #include "zc/replay.h"
-#include "zasm/table.h"
-#include "zasm/serialize.h"
+#include "components/zasm/table.h"
+#include "components/zasm/serialize.h"
 #include "zconsole/ConsoleLogger.h"
 #include <fmt/format.h>
 #include <fmt/ranges.h>

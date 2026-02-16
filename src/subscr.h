@@ -3,7 +3,7 @@
 
 #include "base/compiler.h"
 #include "new_subscr.h"
-#include "base/zc_alleg.h"
+#include "zalleg/zalleg.h"
 
 #define ssflagSHOWGRID  0x01
 #define ssflagSHOWINVIS 0x02

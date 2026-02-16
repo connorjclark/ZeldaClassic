@@ -1,5 +1,5 @@
 #include "gui/tabref.h"
-#include "base/zc_alleg.h"
+#include "zalleg/zalleg.h"
 #include <utility>
 
 namespace GUI

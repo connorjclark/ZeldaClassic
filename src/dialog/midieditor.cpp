@@ -3,7 +3,7 @@
 #include "gui/key.h"
 #include "info.h"
 #include "zq/zquest.h"
-#include "base/files.h"
+#include "zalleg/files.h"
 #include <fmt/format.h>
 #include "play_midi.h"
 

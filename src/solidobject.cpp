@@ -1,10 +1,10 @@
 #include "solidobject.h"
-#include "base/zdefs.h"
+#include "core/zdefs.h"
 #include "sprite.h"
 #include "zc/hero.h"
 #include "base/zc_math.h"
 #include "slopes.h"
-#include "base/mapscr.h"
+#include "core/mapscr.h"
 #include "iter.h"
 
 #ifdef IS_PLAYER

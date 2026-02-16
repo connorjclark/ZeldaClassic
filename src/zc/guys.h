@@ -3,7 +3,7 @@
 
 #include <list>
 #include <optional>
-#include "base/scc.h"
+#include "components/scc/scc.h"
 #include "sprite.h"
 #include "zc/weapons.h"
 #include "base/zfix.h"

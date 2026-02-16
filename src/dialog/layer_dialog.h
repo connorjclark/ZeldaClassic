@@ -5,7 +5,7 @@
 #include <gui/text_field.h>
 #include <functional>
 #include <string_view>
-#include "base/mapscr.h"
+#include "core/mapscr.h"
 
 void call_layer_dialog(int map, int screen);
 

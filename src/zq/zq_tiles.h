@@ -1,9 +1,9 @@
 #ifndef ZQ_TILES_H_
 #define ZQ_TILES_H_
 
-#include "base/zdefs.h"
+#include "core/zdefs.h"
 
-#include "base/zc_alleg.h"
+#include "zalleg/zalleg.h"
 
 struct newcombo;
 

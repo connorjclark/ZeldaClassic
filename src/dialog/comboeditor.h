@@ -16,7 +16,7 @@
 #include <functional>
 #include <string_view>
 #include <map>
-#include "base/combo.h"
+#include "core/combo.h"
 
 class ComboWizardDialog;
 bool call_combo_editor(int32_t index);

@@ -1,12 +1,12 @@
 #include <assert.h>
 
 #include "gui/EditboxNew.h"
-#include "base/zc_alleg.h"
+#include "zalleg/zalleg.h"
 #include "gui/jwin.h"
-#include "base/zdefs.h"
-#include "base/fonts.h"
+#include "core/zdefs.h"
+#include "core/fonts.h"
 #include "gui/editbox.h"
-#include "base/gui.h"
+#include "zalleg/gui.h"
 #include <stdio.h>
 
 extern int32_t zq_screen_w, zq_screen_h;

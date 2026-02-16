@@ -1,9 +1,9 @@
 #ifndef FFC_H_
 #define FFC_H_
 
-#include "base/zdefs.h"
-#include "base/cpos_info.h"
-#include "base/flags.h"
+#include "core/zdefs.h"
+#include "core/cpos_info.h"
+#include "core/flags.h"
 #include "base/zfix.h"
 #include "sprite.h"
 

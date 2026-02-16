@@ -1,4 +1,4 @@
-#include "base/zc_alleg.h"
+#include "zalleg/zalleg.h"
 #include "gui/tab_ctl.h"
 #include "gui/jwin.h"
 

@@ -1,6 +1,6 @@
 #include "base/ints.h"
-#include "base/fonts.h"
-#include "base/render.h"
+#include "core/fonts.h"
+#include "zalleg/render.h"
 #include "zc/matrix.h"
 #include "zc/render.h"
 FONT* get_zc_font(int index);

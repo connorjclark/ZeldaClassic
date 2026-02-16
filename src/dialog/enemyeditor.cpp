@@ -1,12 +1,12 @@
 #include "enemyeditor.h"
 #include "gui/key.h"
 #include "info.h"
-#include "base/zsys.h"
+#include "zalleg/zsys.h"
 #include "tiles.h"
 #include "gui/builder.h"
 #include "zc_list_data.h"
 #include "items.h"
-#include "base/qrs.h"
+#include "core/qrs.h"
 #include <fmt/format.h>
 #include <fmt/ranges.h>
 #include "zinfo.h"

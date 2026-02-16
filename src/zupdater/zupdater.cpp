@@ -2,7 +2,7 @@
 #include "base/process_management.h"
 #include "base/util.h"
 #include "base/version.h"
-#include "base/zc_alleg.h"
+#include "zalleg/zalleg.h"
 #include "base/zapp.h"
 #include "allegro5/allegro_native_dialog.h"
 #include <algorithm>
@@ -59,16 +59,6 @@ static std::string channel = getReleaseChannel();
 static std::string current_version = getVersionString();
 
 std::ofstream out("updater.log", std::ios::binary);
-
-static int32_t used_switch(int32_t argc,char *argv[],const char *s)
-{
-    // assumes a switch won't be in argv[0]
-    for(int32_t i=1; i<argc; i++)
-        if(stricmp(argv[i],s)==0)
-            return i;
-            
-    return 0;
-}
 
 [[noreturn]] static void fatal(std::string msg)
 {
@@ -431,6 +421,14 @@ int32_t main(int32_t argc, char* argv[])
 END_OF_MAIN()
 
 // TODO: make this not needed to compile...
-bool DragAspect = false;
-double aspect_ratio = 0;
-int window_min_width = 0, window_min_height = 0;
+void zprint2(const char * const format,...)
+{
+	char buf[8192];
+	
+	va_list ap;
+	va_start(ap, format);
+	vsnprintf(buf, 8192, format, ap);
+	va_end(ap);
+
+	printf("%s", buf);
+}

@@ -1,14 +1,14 @@
 #include <cstring>
 #include <vector>
 
-#include "base/files.h"
-#include "base/gui.h"
-#include "base/zc_alleg.h"
-#include "base/zdefs.h"
+#include "zalleg/files.h"
+#include "zalleg/gui.h"
+#include "zalleg/zalleg.h"
+#include "core/zdefs.h"
 #include "dialog/externs.h"
 #include "gui/jwin.h"
-#include "base/zsys.h"
-#include "base/misctypes.h"
+#include "zalleg/zsys.h"
+#include "core/misctypes.h"
 #include "zc/zc_sys.h"
 #include "zq/zq_misc.h"
 #include "tiles.h"
@@ -1328,7 +1328,7 @@ void doorlist_rclick_func(int32_t index, int32_t x, int32_t y)
 			{
 				if(!prompt_for_new_file_compat("Save Doorset(.zdoors)", "zdoors", NULL,datapath,false))
 					return;
-				PACKFILE *f=pack_fopen_password(temppath,F_WRITE, "");
+				PACKFILE *f=zalleg_pack_fopen_password(temppath,F_WRITE, "");
 				if(!f) return;
 				int32_t ret = writeonezdoorset(f,index);
 				pack_fclose(f);
@@ -1351,7 +1351,7 @@ void doorlist_rclick_func(int32_t index, int32_t x, int32_t y)
 					return;
 				char name[256] = {0};
 				extract_name(filepath,name,FILENAMEALL);
-				PACKFILE *f=pack_fopen_password(temppath,F_READ, "");
+				PACKFILE *f=zalleg_pack_fopen_password(temppath,F_READ, "");
 				if(!f) return;
 				int32_t ret = readonezdoorset(f,index);
 							
