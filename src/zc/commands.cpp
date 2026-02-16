@@ -84,8 +84,10 @@ void zplayer_handle_commands()
 		extern TestResults test_zasm_optimize(bool);
 		if (!run_tests(test_zasm_optimize, "test_zasm_optimize", verbose)) success = false;
 
+#ifndef __EMSCRIPTEN__
 		extern TestResults test_debugger(bool);
 		if (!run_tests(test_debugger, "test_debugger", verbose)) success = false;
+#endif
 
 		if (success)
 			printf("all tests passed\n");
