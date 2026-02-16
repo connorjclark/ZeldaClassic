@@ -44,7 +44,19 @@ class TestZScript(ZCTestCase):
     def setUp(self):
         self.maxDiff = None
 
-    def test_zplayer(self):
+    def test_zscript(self):
+        # TODO: set this via CLI
+        include_paths = [
+            str(test_scripts_dir),
+            str(root_dir / 'resources/include'),
+            str(root_dir / 'resources/headers'),
+            str(test_scripts_dir / 'playground'),
+        ]
+        resources_folder = run_target.get_build_folder()
+        if resources_folder.name == 'bin':
+            resources_folder = resources_folder / '../share/zquestclassic'
+        (resources_folder / 'includepaths.txt').write_text(';'.join(include_paths))
+
         run_target.check_run(
             'zscript',
             ['-test-zc', str(root_dir / 'tests')],
