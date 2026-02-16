@@ -30689,7 +30689,11 @@ void FFScript::handle_trace(const std::string& s, bool is_error, bool no_prefix)
 		if (stack_trace)
 		{
 			for (const auto& frame : stack_trace->frames)
-				replay_step_comment(frame.to_string());
+			{
+				std::string frame_normalized = frame.to_string();
+				util::replstr(frame_normalized, "../", "");
+				replay_step_comment(frame_normalized);
+			}
 		}
 	}
 
