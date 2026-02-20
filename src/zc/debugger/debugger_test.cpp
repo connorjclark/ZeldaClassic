@@ -234,7 +234,7 @@ static void verify_variable_not_present(Debugger* debugger, std::string name)
 
 static void verify_expression(Debugger* debugger, std::string expression, std::string expected_value)
 {
-	auto value = debugger->Evaluate(expression);
+	auto value = debugger->Evaluate(expression, false);
 	if (!value)
 		throw std::runtime_error(fmt::format("Assertion failed: `{}` is invalid. Error: {}", expression, value.error()));
 
@@ -246,7 +246,7 @@ static void verify_expression(Debugger* debugger, std::string expression, std::s
 
 static void verify_expression_invalid(Debugger* debugger, std::string expression, std::string expected_error)
 {
-	auto value = debugger->Evaluate(expression);
+	auto value = debugger->Evaluate(expression, false);
 	if (value)
 	{
 		bool newlines = false;

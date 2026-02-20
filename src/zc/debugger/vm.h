@@ -13,6 +13,7 @@ struct VM : VMInterface
 {
 	ScriptEngineData* current_data;
 	int current_frame_index;
+	bool suppress_errors_in_sandbox;
 
 	int32_t readStack(int32_t offset) override;
 	int32_t readGlobal(int32_t idx) override;

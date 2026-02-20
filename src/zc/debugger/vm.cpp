@@ -9,10 +9,28 @@
 #include "components/zasm/table.h"
 #include "zc/ffscript.h"
 #include "zc/scripting/script_object.h"
+#include "zc/zelda.h"
 #include <cstdint>
 #include <optional>
 
 namespace {
+
+struct InDebuggerScopeGuard
+{
+	bool prev_suppress_script_error_logging;
+
+	InDebuggerScopeGuard(bool suppress_errors_in_sandbox)
+	{
+		script_is_within_debugger_vm = true;
+		prev_suppress_script_error_logging = suppress_script_error_logging;
+		suppress_script_error_logging = suppress_errors_in_sandbox;
+	}
+	~InDebuggerScopeGuard()
+	{
+		script_is_within_debugger_vm = false;
+		suppress_script_error_logging = prev_suppress_script_error_logging;
+	}
+};
 
 const DebugType* getDebugTypeOfUntypedArrayElement(script_object_type engine_type, int raw_value, const DebugType* source_array_type)
 {
@@ -85,6 +103,9 @@ const script_object_type getEngineTypeForDebugType(const DebugType* type)
 
 int32_t VM::readStack(int32_t offset)
 {
+	if (!current_data)
+		return 0;
+
 	auto ri = &current_data->ref;
 	int index = ri->debugger_stack_frames.size() - current_frame_index - 1;
 	if (index < 0 || index >= ri->debugger_stack_frames.size())
@@ -108,17 +129,19 @@ int32_t VM::readGlobal(int32_t idx)
 
 int32_t VM::readRegister(int32_t id)
 {
+	InDebuggerScopeGuard scope_guard(suppress_errors_in_sandbox);
+
 	if (id == CLASS_THISKEY)
 		return getThisPointer();
 
-	script_is_within_debugger_vm = true;
 	int result = get_register(id);
-	script_is_within_debugger_vm = false;
 	return result;
 }
 
 std::optional<DebugValue> VM::readObjectMember(DebugValue object, const DebugSymbol* sym)
 {
+	InDebuggerScopeGuard scope_guard(suppress_errors_in_sandbox);
+
 	std::optional<int> raw_value;
 
 	if (sym->storage == LOC_REGISTER)
@@ -169,14 +192,13 @@ std::optional<DebugValue> VM::readObjectMember(DebugValue object, const DebugSym
 
 std::optional<std::vector<DebugValue>> VM::readArray(DebugValue array)
 {
+	InDebuggerScopeGuard scope_guard(suppress_errors_in_sandbox);
+
 	ArrayManager am(array.raw_value);
 	if (am.invalid()) return std::nullopt;
 
 	const DebugType* default_elem_type = zasm_debug_data.getType(array.type->extra);
-
-	script_is_within_debugger_vm = true;
 	std::vector<int32_t> data = am.data();
-	script_is_within_debugger_vm = false;
 
 	std::vector<DebugValue> result;
 	for (int i = 0; i < data.size(); i++)
@@ -203,6 +225,8 @@ std::optional<std::vector<DebugValue>> VM::readArray(DebugValue array)
 
 std::optional<DebugValue> VM::readArrayElement(DebugValue array, int index)
 {
+	InDebuggerScopeGuard scope_guard(suppress_errors_in_sandbox);
+
 	ArrayManager am(array.raw_value);
 	if (am.invalid()) return std::nullopt;
 	if (am.size() <= index) return std::nullopt;
@@ -213,9 +237,7 @@ std::optional<DebugValue> VM::readArrayElement(DebugValue array, int index)
 		if (index < 0) return std::nullopt;
 	}
 
-	script_is_within_debugger_vm = true;
 	int value = am.get(index);
-	script_is_within_debugger_vm = false;
 
 	// Elements within untyped arrays have dynamic typing.
 	const DebugType* default_elem_type = zasm_debug_data.getType(array.type->extra);
@@ -232,18 +254,14 @@ std::optional<DebugValue> VM::readArrayElement(DebugValue array, int index)
 
 std::optional<std::string> VM::readString(int32_t string_ptr)
 {
-	script_is_within_debugger_vm = true;
+	InDebuggerScopeGuard scope_guard(suppress_errors_in_sandbox);
 
 	ArrayManager am(string_ptr);
 	if (am.invalid())
-	{
-		script_is_within_debugger_vm = false;
 		return std::nullopt;
-	}
 
 	std::string str;
 	ArrayH::getString(string_ptr, str);
-	script_is_within_debugger_vm = false;
 	return str;
 }
 
@@ -254,6 +272,11 @@ void VM::writeGlobal(int32_t offset, int32_t value)
 
 void VM::writeStack(int32_t offset, int32_t value)
 {
+	InDebuggerScopeGuard scope_guard(suppress_errors_in_sandbox);
+
+	if (!current_data)
+		return;
+
 	auto ri = &current_data->ref;
 	int index = ri->debugger_stack_frames.size() - current_frame_index - 1;
 	if (index < 0 || index >= ri->debugger_stack_frames.size())
@@ -272,13 +295,15 @@ void VM::writeStack(int32_t offset, int32_t value)
 
 void VM::writeRegister(int32_t offset, int32_t value)
 {
-	script_is_within_debugger_vm = true;
+	InDebuggerScopeGuard scope_guard(suppress_errors_in_sandbox);
+
 	set_register(offset, value);
-	script_is_within_debugger_vm = false;
 }
 
 bool VM::writeObjectMember(DebugValue object, const DebugSymbol* sym, DebugValue value)
 {
+	InDebuggerScopeGuard scope_guard(suppress_errors_in_sandbox);
+
 	if (sym->storage == LOC_REGISTER)
 	{
 		auto type = zasm_debug_data.getType(sym->type_id)->asNonConst(zasm_debug_data);
@@ -321,6 +346,8 @@ bool VM::writeObjectMember(DebugValue object, const DebugSymbol* sym, DebugValue
 
 bool VM::writeArrayElement(DebugValue array, int32_t index, DebugValue value)
 {
+	InDebuggerScopeGuard scope_guard(suppress_errors_in_sandbox);
+
 	ArrayManager am(array.raw_value);
 	if (am.invalid()) return false;
 	if (am.size() <= index) return false;
@@ -331,9 +358,7 @@ bool VM::writeArrayElement(DebugValue array, int32_t index, DebugValue value)
 		if (index < 0) return false;
 	}
 
-	script_is_within_debugger_vm = true;
 	am.set(index, value.raw_value, getEngineTypeForDebugType(value.type));
-	script_is_within_debugger_vm = false;
 
 	return true;
 }
@@ -352,6 +377,8 @@ void VM::increaseObjectReference(DebugValue value, const DebugSymbol* sym)
 
 expected<int32_t, std::string> VM::executeSandboxed(pc_t start_pc, int this_zasm_var, int this_raw_value, const std::vector<int32_t>& args)
 {
+	InDebuggerScopeGuard scope_guard(suppress_errors_in_sandbox);
+
 	extern refInfo *ri;
 	extern int32_t(*stack)[MAX_STACK_SIZE];
 	extern int32_t(*ret_stack)[MAX_CALL_FRAMES];
@@ -364,9 +391,7 @@ expected<int32_t, std::string> VM::executeSandboxed(pc_t start_pc, int this_zasm
 	int32_t tmp_stack[MAX_STACK_SIZE] = {0};
 	int32_t tmp_ret_stack[MAX_CALL_FRAMES] = {0};
 
-	script_is_within_debugger_vm = true;
-
-	tmp_ri.screenref = current_data->ref.screenref;
+	tmp_ri.screenref = current_data ? current_data->ref.screenref : origin_scr->screen;
 
 	ri = &tmp_ri;
 	ri->pc = start_pc;
@@ -388,7 +413,6 @@ expected<int32_t, std::string> VM::executeSandboxed(pc_t start_pc, int this_zasm
 	ri = prev_ri;
 	stack = prev_stack;
 	ret_stack = prev_ret_stack;
-	script_is_within_debugger_vm = false;
 
 	if (!success)
 	{
@@ -437,6 +461,9 @@ DebugValue VM::createString(const std::string& str)
 
 int32_t VM::getThisPointer()
 {
+	if (!current_data)
+		return 0;
+
 	auto ri = &current_data->ref;
 	int index = ri->debugger_stack_frames.size() - current_frame_index - 1;
 	if (index < 0 || index >= ri->debugger_stack_frames.size())

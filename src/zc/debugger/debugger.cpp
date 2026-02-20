@@ -126,6 +126,7 @@ void Debugger::Clear()
 	selected_stack_frame_index = 0;
 	vm.current_data = nullptr;
 	vm.current_frame_index = 0;
+	vm.suppress_errors_in_sandbox = true;
 	current_stack_trace = std::nullopt;
 	selected_scope = nullptr;
 	breakpoints.clear();
@@ -145,6 +146,7 @@ void Debugger::Init()
 	selected_stack_frame_index = 0;
 	vm.current_data = nullptr;
 	vm.current_frame_index = 0;
+	vm.suppress_errors_in_sandbox = true;
 	current_stack_trace = std::nullopt;
 	selected_scope = nullptr;
 	RemoveBreakpoints();
@@ -698,7 +700,7 @@ void Debugger::UpdateVariables()
 			Variable var = CreateVariable(watch.value, watch.value_label);
 			watch_variables.push_back(var);
 		}
-		else if (auto v = Evaluate(watch.expression))
+		else if (auto v = Evaluate(watch.expression, true))
 		{
 			Variable var = CreateVariable(v.value(), watch.expression);
 			watch_variables.push_back(var);
@@ -781,7 +783,7 @@ void Debugger::FetchChildren(Variable& var)
 	}
 }
 
-expected<DebugValue, std::string> Debugger::Evaluate(std::string expression)
+expected<DebugValue, std::string> Debugger::Evaluate(std::string expression, bool suppress_engine_errors)
 {
 	extern refInfo *ri;
 
@@ -794,8 +796,12 @@ expected<DebugValue, std::string> Debugger::Evaluate(std::string expression)
 		return node.get_unexpected();
 
 	try {
-		return eval.evaluate(node.value());
+		vm.suppress_errors_in_sandbox = suppress_engine_errors;
+		auto result = eval.evaluate(node.value());
+		vm.suppress_errors_in_sandbox = true;
+		return result;
 	} catch (const std::exception& e) {
+		vm.suppress_errors_in_sandbox = true;
 		return make_unexpected(e.what());
 	}
 }

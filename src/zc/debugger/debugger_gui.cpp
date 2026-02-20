@@ -1240,7 +1240,7 @@ void DrawConsole(Debugger* debugger)
 		{
 			debugger->AddToConsoleExpressionHistory(cmd);
 			debugger->AddConsoleMessage("> " + cmd);
-			if (auto v = debugger->Evaluate(cmd))
+			if (auto v = debugger->Evaluate(cmd, false))
 				debugger->AddConsoleDebugValue(cmd, v.value());
 			else
 				debugger->AddConsoleMessage(v.error());
@@ -1521,7 +1521,7 @@ void Debugger::InitGui()
 		const Variable* var = FindVariable(word);
 		if (!var)
 		{
-			auto expr = Evaluate(word);
+			auto expr = Evaluate(word, true);
 			if (!expr) return;
 
 			DebugValue value = expr.value();

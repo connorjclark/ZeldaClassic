@@ -185,7 +185,7 @@ struct Debugger
 	// Variable inspection.
 	void UpdateVariables();
 	void FetchChildren(Variable& var);
-	expected<DebugValue, std::string> Evaluate(std::string expression);
+	expected<DebugValue, std::string> Evaluate(std::string expression, bool suppress_engine_errors);
 
 	// Stringify values.
 	std::string ValueToStringSummary(DebugValue value);

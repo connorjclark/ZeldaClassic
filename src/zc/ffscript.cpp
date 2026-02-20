@@ -105,7 +105,7 @@ std::string current_zasm_context;
 
 void scripting_log_error_with_context(std::string text)
 {
-	if (script_is_within_debugger_vm)
+	if (suppress_script_error_logging)
 		return;
 
 	if (auto debugger = zscript_debugger_get_if_open(); debugger && debugger->break_on_error)
@@ -7034,8 +7034,7 @@ int32_t get_register(int32_t arg)
 			}
 			else
 			{
-				if (!script_is_within_debugger_vm)
-					scripting_log_error_with_context("Can only be called by combodata scripts, but you tried to use it from script type {}, name: {}", ScriptTypeToString(curScriptType), curscript->name());
+				scripting_log_error_with_context("Can only be called by combodata scripts, but you tried to use it from script type {}, name: {}", ScriptTypeToString(curScriptType), curscript->name());
 				ret = -10000;
 			}
 			break;
@@ -7050,8 +7049,7 @@ int32_t get_register(int32_t arg)
 			}
 			else
 			{
-				if (!script_is_within_debugger_vm)
-					scripting_log_error_with_context("Can only be called by combodata scripts, but you tried to use it from script type {}, name: {}", ScriptTypeToString(curScriptType), curscript->name());
+				scripting_log_error_with_context("Can only be called by combodata scripts, but you tried to use it from script type {}, name: {}", ScriptTypeToString(curScriptType), curscript->name());
 				ret = -10000;
 			}
 			break;
@@ -7065,8 +7063,7 @@ int32_t get_register(int32_t arg)
 			}
 			else
 			{
-				if (!script_is_within_debugger_vm)
-					scripting_log_error_with_context("Can only be called by combodata scripts, but you tried to use it from script type {}, name: {}", ScriptTypeToString(curScriptType), curscript->name());
+				scripting_log_error_with_context("Can only be called by combodata scripts, but you tried to use it from script type {}, name: {}", ScriptTypeToString(curScriptType), curscript->name());
 				ret = -10000;
 			}
 			break;
@@ -7080,8 +7077,7 @@ int32_t get_register(int32_t arg)
 			}
 			else
 			{
-				if (!script_is_within_debugger_vm)
-					scripting_log_error_with_context("Can only be called by combodata scripts, but you tried to use it from script type {}, name: {}", ScriptTypeToString(curScriptType), curscript->name());
+				scripting_log_error_with_context("Can only be called by combodata scripts, but you tried to use it from script type {}, name: {}", ScriptTypeToString(curScriptType), curscript->name());
 				ret = -10000;
 			}
 			break;
@@ -24309,6 +24305,7 @@ int32_t run_script_jit_until_call_or_return(JittedScriptInstance* j_instance, pc
 }
 
 bool script_is_within_debugger_vm;
+bool suppress_script_error_logging;
 
 // When j_instance is null, that means the interperter is fully in charge.
 // Otherwise, the JIT may still call this function for the many commands that are not compiled, or
