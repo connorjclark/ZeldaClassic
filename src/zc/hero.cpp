@@ -29206,18 +29206,18 @@ void HeroClass::scrollscr(int32_t scrolldir, int32_t dest_screen, int32_t destdm
 	{
 		case up:
 			FFCore.ScrollingData[SCROLLDATA_NX] = 0;
-			FFCore.ScrollingData[SCROLLDATA_NY] = -176;
+			FFCore.ScrollingData[SCROLLDATA_NY] = -viewport.h;
 			break;
 		case down:
 			FFCore.ScrollingData[SCROLLDATA_NX] = 0;
-			FFCore.ScrollingData[SCROLLDATA_NY] = 176;
+			FFCore.ScrollingData[SCROLLDATA_NY] = viewport.h;
 			break;
 		case left:
-			FFCore.ScrollingData[SCROLLDATA_NX] = -256;
+			FFCore.ScrollingData[SCROLLDATA_NX] = -viewport.w;
 			FFCore.ScrollingData[SCROLLDATA_NY] = 0;
 			break;
 		case right:
-			FFCore.ScrollingData[SCROLLDATA_NX] = 256;
+			FFCore.ScrollingData[SCROLLDATA_NX] = viewport.w;
 			FFCore.ScrollingData[SCROLLDATA_NY] = 0;
 			break;
 	}
