@@ -36,8 +36,16 @@ static std::optional<std::pair<int, int>> get_draw_origin_offset(DrawOrigin draw
 	}
 	else if (draw_origin == DrawOrigin::RegionScrollingNew)
 	{
-		xoffset = xoff + FFCore.ScrollingData[SCROLLDATA_NRX];
-		yoffset = yoff + FFCore.ScrollingData[SCROLLDATA_NRY];
+		if (screenscrolling)
+		{
+			xoffset = xoff + FFCore.ScrollingData[SCROLLDATA_NRX];
+			yoffset = yoff + FFCore.ScrollingData[SCROLLDATA_NRY];
+		}
+		else
+		{
+			xoffset = xoff - viewport.x;
+			yoffset = yoff - viewport.y;
+		}
 	}
 	else if (draw_origin == DrawOrigin::PlayingField)
 	{
