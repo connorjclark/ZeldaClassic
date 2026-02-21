@@ -14,6 +14,8 @@ enum WipeEffect
 };
 
 // Determines how to interpret coordinates given to [Screen] draw functions.
+//
+// Examples: https://docs.zquestclassic.com/zscript/lang/examples/draw_origin
 enum DrawOrigin
 {
 	// When in a scrolling region (or scrolling to/from one), this is equal to [DRAW_ORIGIN_REGION].
@@ -1183,6 +1185,8 @@ class screendata {
 	// bitmaps), this value is ignored.
 	//
 	// Defaults to [DRAW_ORIGIN_DEFAULT].
+	//
+	// Examples: https://docs.zquestclassic.com/zscript/lang/examples/draw_origin
 	//
 	// @versionadded 2.55.9
 	// @zasm_var SCREEN_DRAW_ORIGIN

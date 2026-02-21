@@ -1,0 +1,51 @@
+stderr:
+
+Compiling 'region_waypoint.zs'
+Pass 1: Parsing
+Pass 2: Preprocessing
+Pass 3: Registration
+Pass 4: Analyzing Code
+Pass 5: Checking code paths
+Pass 6: Generating object code
+Pass 7: Assembling
+Success!
+Compile finished with exit code '0' (success)
+
+stdout:
+
+{
+  "success": true,
+  "diagnostics": [],
+  "metadata": {
+    "currentFileSymbols": 5,
+    "symbols": 11,
+    "identifiers": 15,
+    "elided": true
+  }
+}
+
+zasm:
+
+QUIT; void run() Body
+PUSHR REFGENERICDATA; void run() Body Start
+PUSHARGSV 0 0.0003
+SETR D4 SP2
+NOP
+SETV D2 0.0003; while(true) #1 Body [Opt:AlwaysOn] Start
+PUSHR D2
+POP D2
+SETR SCREEN_DRAW_ORIGIN D2
+PUSHV 7; InlineFunc[void screendata::DrawCombo(int, int, int, int, int, int, int, int, int, int, int, int, int, int, bool, int)] Params Start
+PUSHV 640
+PUSHV 440
+PUSHV 100
+PUSHARGSV 1 0.0002
+PUSHV 3
+PUSHARGSV -1 0.0002
+PUSHARGSV 0 0.0005
+PUSHV 1
+PUSHV 64; InlineFunc[void screendata::DrawCombo(int, int, int, int, int, int, int, int, int, int, int, int, int, int, bool, int)] Params End
+DRAWCOMBOR; InlineFunc[void screendata::DrawCombo(int, int, int, int, int, int, int, int, int, int, int, int, int, int, bool, int)] Body Start
+POPARGS D5 0.0016; InlineFunc[void screendata::DrawCombo(int, int, int, int, int, int, int, int, int, int, int, int, int, int, bool, int)] Body End
+WAITFRAME; InlineFunc[void Waitframe()] Body AND while(true) #1 Body [Opt:AlwaysOn] End
+GOTO 5; while() #1 End AND [Opt:NeverRet] AND void run() Body End

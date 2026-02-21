@@ -1,0 +1,71 @@
+stderr:
+
+Compiling 'locked_on_target.zs'
+Pass 1: Parsing
+Pass 2: Preprocessing
+Pass 3: Registration
+Pass 4: Analyzing Code
+Pass 5: Checking code paths
+Pass 6: Generating object code
+Pass 7: Assembling
+Debug: could not resolve symbol "fcc"
+Debug: could not resolve symbol "fcc"
+Success!
+Compile finished with exit code '0' (success)
+
+stdout:
+
+{
+  "success": true,
+  "diagnostics": [],
+  "metadata": {
+    "currentFileSymbols": 4,
+    "symbols": 14,
+    "identifiers": 22,
+    "elided": true
+  }
+}
+
+zasm:
+
+QUIT; void run() Body
+PUSHR REFGENERICDATA; void run() Body Start
+PUSHARGSV 0 0.0002
+SETR D4 SP2
+NOP
+SETV D2 0.0006; while(true) #1 Body [Opt:AlwaysOn] Start
+PUSHR D2
+POP D2
+SETR SCREEN_DRAW_ORIGIN D2
+SETV D2 0.0001
+PUSHR D2
+POP D2
+SETR SCREEN_DRAW_ORIGIN_TARGET D2
+SETR D2 SCREEN_DRAW_ORIGIN_TARGET
+PUSHR D2
+POP REFSPRITE
+SETR D2 SPRITE_TILE_W
+MULTV D2 16
+DIVV D2 2
+STORE D2 0.0001
+SETR D2 SCREEN_DRAW_ORIGIN_TARGET
+PUSHR D2
+POP REFSPRITE
+SETR D2 SPRITE_TILE_H
+MULTV D2 16
+DIVV D2 2
+STORE D2 0
+PUSHV 6; InlineFunc[void screendata::Circle(int, int, int, int, int, int, int, int, int, bool, int)] Params Start
+LOAD D2 0.0001
+PUSHR D2
+LOAD D2 0
+PUSHR D2
+PUSHV 12
+PUSHV 129
+PUSHV 1
+PUSHARGSV 0 0.0004
+PUSHV 128; InlineFunc[void screendata::Circle(int, int, int, int, int, int, int, int, int, bool, int)] Params End
+CIRCLER; InlineFunc[void screendata::Circle(int, int, int, int, int, int, int, int, int, bool, int)] Body Start
+POPARGS D5 0.0011; InlineFunc[void screendata::Circle(int, int, int, int, int, int, int, int, int, bool, int)] Body End
+WAITFRAME; InlineFunc[void Waitframe()] Body AND while(true) #1 Body [Opt:AlwaysOn] End
+GOTO 5; while() #1 End AND [Opt:NeverRet] AND void run() Body End

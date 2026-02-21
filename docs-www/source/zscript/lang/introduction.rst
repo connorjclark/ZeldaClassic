@@ -45,6 +45,11 @@ That's it! This script can now be assigned to any FFC in the editor.
 	where ``entry.zh`` is a text file that contains all the code for your quest. Then, you simply edit that file in any text editor,
 	and use ``ZScript > Compile Script > Compile`` to recompile.
 
+Examples
+--------
+
+View some curated :ref:`examples<zscript_examples>`.
+
 Visual Studio Code
 ------------------
 
