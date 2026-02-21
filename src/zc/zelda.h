@@ -302,7 +302,7 @@ extern direction scrolling_dir;
 // See dowarp.
 extern int32_t currscr_for_passive_subscr;
 extern dword light_wave_clk;
-extern int32_t newscr_clk,cur_dmap,fadeclk,listpos;
+extern int32_t newscr_clk,cur_dmap,fadeclk;
 extern int32_t lastentrance,lastentrance_dmap, prices[3],loadside;
 extern ButtonItemData Bwpn, Awpn, Xwpn, Ywpn;
 extern int32_t digi_volume,midi_volume,sfx_volume,emusic_volume,currmidi,whistleclk,pan_style;

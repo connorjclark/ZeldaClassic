@@ -43,6 +43,153 @@
 extern std::string loadlast;
 extern int32_t skipcont;
 
+enum class CursorTarget
+{
+	SaveSlot,
+	MenuAction
+};
+
+enum class TitleMenuActionType
+{
+	NewFile = 3,
+	CopyFile = 4,
+	DeleteFile = 5
+};
+
+enum class TitleMenuMode
+{
+	Normal = 0,
+	Copy = 2,
+	Delete = 3
+};
+
+struct TitleMenuState
+{
+	CursorTarget target = CursorTarget::SaveSlot;
+	int selected_save_index = 0;
+	TitleMenuActionType selected_action = TitleMenuActionType::NewFile;
+	TitleMenuMode mode = TitleMenuMode::Normal;
+
+	int get_page_start() const
+	{
+		return (selected_save_index / 3) * 3;
+	}
+
+	int get_ui_pos() const
+	{
+		if (mode != TitleMenuMode::Normal || target == CursorTarget::SaveSlot)
+			return selected_save_index - get_page_start();
+
+		return static_cast<int>(selected_action);
+	}
+
+	void move_up(int total_saves)
+	{
+		if (mode != TitleMenuMode::Normal)
+		{
+			int offset = selected_save_index - get_page_start();
+
+			if (offset > 0)
+				selected_save_index--;
+			else
+				selected_save_index = get_page_start() + 2;
+		}
+		else
+		{
+			if (target == CursorTarget::MenuAction)
+			{
+				if (selected_action == TitleMenuActionType::NewFile)
+				{
+					target = CursorTarget::SaveSlot;
+					selected_save_index = get_page_start() + 2;
+				}
+				else if (selected_action == TitleMenuActionType::CopyFile)
+					selected_action = TitleMenuActionType::NewFile;
+				else if (selected_action == TitleMenuActionType::DeleteFile)
+					selected_action = TitleMenuActionType::CopyFile;
+			}
+			else
+			{
+				int offset = selected_save_index - get_page_start();
+
+				if (offset > 0)
+					selected_save_index--;
+				else
+				{
+					target = CursorTarget::MenuAction;
+					selected_action = TitleMenuActionType::DeleteFile;
+				}
+			}
+		}
+
+		if (target == CursorTarget::SaveSlot && selected_save_index >= total_saves)
+			selected_save_index = total_saves > 0 ? total_saves - 1 : 0;
+	}
+
+	void move_down(int total_saves)
+	{
+		if (mode != TitleMenuMode::Normal)
+		{
+			int offset = selected_save_index - get_page_start();
+
+			if (offset < 2)
+				selected_save_index++;
+			else
+				selected_save_index = get_page_start();
+		}
+		else
+		{
+			if (target == CursorTarget::SaveSlot)
+			{
+				int offset = selected_save_index - get_page_start();
+
+				if (offset < 2 && selected_save_index + 1 < total_saves)
+					selected_save_index++;
+				else
+				{
+					target = CursorTarget::MenuAction;
+					selected_action = TitleMenuActionType::NewFile;
+				}
+			}
+			else
+			{
+				if (selected_action == TitleMenuActionType::NewFile)
+					selected_action = TitleMenuActionType::CopyFile;
+				else if (selected_action == TitleMenuActionType::CopyFile)
+					selected_action = TitleMenuActionType::DeleteFile;
+				else if (selected_action == TitleMenuActionType::DeleteFile)
+				{
+					target = CursorTarget::SaveSlot;
+					selected_save_index = get_page_start();
+				}
+			}
+		}
+
+		if (target == CursorTarget::SaveSlot && selected_save_index >= total_saves)
+			selected_save_index = total_saves > 0 ? total_saves - 1 : 0;
+	}
+
+	void page_left()
+	{
+		if (selected_save_index >= 3)
+			selected_save_index -= 3;
+	}
+
+	void page_right(int total_saves)
+	{
+		if (get_page_start() + 3 < total_saves)
+			selected_save_index += 3;
+	}
+
+	void validate_bounds(int total_saves)
+	{
+		if (total_saves == 0)
+			selected_save_index = 0;
+		else if (selected_save_index >= total_saves)
+			selected_save_index = total_saves - 1;
+	}
+};
+
 static void select_mode()
 {
 	textout_ex(scrollbuf,get_zc_font(font_zfont),"NEW FILE",48,152,1,0);
@@ -222,7 +369,7 @@ static void list_save(gamedata_header* header, int32_t save_num, int32_t ypos)
 	refreshpal = r;
 }
 
-static void list_saves()
+static void list_saves(int page_start)
 {
 	// Fourth Quest turns the menu red.
 	bool red = false;
@@ -231,7 +378,7 @@ static void list_saves()
 	int savecnt = saves_count();
 	for(int32_t i=0; i<3; i++)
 	{
-		int j = listpos+i;
+		int j = page_start + i;
 		if (j >= savecnt)
 			continue;
 
@@ -263,28 +410,29 @@ static void list_saves()
 	
 	for(int32_t i=0; i<3; i++)
 	{
-		int slot = listpos+i;
+		int slot = page_start + i;
 		if (!saves_is_slot_loaded(slot))
 			continue;
 
 		save_t* save;
 		if (auto r = saves_get_slot(slot); !r)
 			continue;
-		else save = r.value();
+		else 
+			save = r.value();
 
-		list_save(save->header, slot, i*24+56);
+		list_save(save->header, slot, i * 24 + 56);
 	}
 	
 	// Draw the arrows above the lifemeter!
 	if(savecnt>3)
 	{
-		if(listpos>=3)
-			textout_ex(framebuf,get_zc_font(font_zfont),(char *)left_arrow_str,96,60,3,0);
+		if (page_start >= 3)
+			textout_ex(framebuf, get_zc_font(font_zfont), (char *)left_arrow_str, 96, 60, 3, 0);
 			
-		if(listpos+3<savecnt)
-			textout_ex(framebuf,get_zc_font(font_zfont),(char *)right_arrow_str,176,60,3,0);
+		if (page_start + 3 < savecnt)
+			textout_ex(framebuf, get_zc_font(font_zfont), (char *)right_arrow_str, 176, 60, 3, 0);
 			
-		textprintf_ex(framebuf,get_zc_font(font_zfont),112,60,3,0,"%2d - %-2d",listpos+1,listpos+3);
+		textprintf_ex(framebuf, get_zc_font(font_zfont), 112, 60, 3, 0, "%2d - %-2d", page_start + 1, page_start + 3);
 	}
 }
 
@@ -297,7 +445,7 @@ static void draw_cursor(int32_t pos,int32_t mode)
 		overtile8(framebuf,0,40,(pos-3)*16+153,cs,0);
 }
 
-static bool register_name()
+static bool register_name(TitleMenuState& state)
 {
 	int s = saves_count();
 
@@ -310,11 +458,13 @@ static bool register_name()
 	new_game->set_continue_dmap(0);
 	new_game->set_continue_scrn(0xFF);
 
-	listpos=((saves_count())/3)*3;
+	// Navigate to the correct page for the new slot.
+	state.selected_save_index = s;
+	int page_start = state.get_page_start();
 
 //  clear_bitmap(framebuf);
 	rectfill(framebuf,32,56,223,151,0);
-	list_saves();
+	list_saves(page_start);
 	blit(framebuf,scrollbuf,0,0,0,0,framebuf->w,framebuf->h);
 	
 	int32_t pos=s%3;
@@ -724,13 +874,22 @@ static bool register_name()
 	{
 		delete new_game;
 		new_game = nullptr;
+
+		// Revert the menu back to standard selection mode.
+		state.target = CursorTarget::MenuAction;
+		state.selected_action = TitleMenuActionType::NewFile;
+		state.validate_bounds(saves_count());
+	}
+	else
+	{
+		// Select the successfully created save slot.
+		state.target = CursorTarget::SaveSlot;
+		state.selected_save_index = saves_count() - 1;
 	}
 
-	listpos=((saves_count()-1)/3)*3;
-	
 	SystemKeys=true;
 	selectscreen();
-	list_saves();
+	list_saves(state.get_page_start());
 	select_mode();
 	return done && new_game != nullptr;
 }
@@ -750,7 +909,6 @@ static bool copy_file(int32_t file)
 		return false;
 	}
 
-	listpos=((saves_count()-1)/3)*3;
 	sfx(WAV_SCALE);
 	select_mode();
 	return true;
@@ -770,10 +928,6 @@ static bool delete_save(int32_t file)
 			exit_sys_pal();
 			return false;
 		}
-
-		--savecnt;
-		if(listpos>savecnt-1)
-			listpos=zc_max(listpos-3,0);
 
 		sfx(WAV_OUCH);
 		select_mode();
@@ -1085,19 +1239,24 @@ static void select_game(bool skip = false)
 	if(standalone_mode || skip)
 		return;
 
-	int32_t pos = last_slot_pos;
-	int32_t mode = 0;
-	saves_unselect();
-	
-	//kill_sfx();
-	
-	//  text_mode(0);
-	selectscreen();
-	
-	if (saves_count() == 0)
-		pos=3;
+	TitleMenuState state;
 
-	saveslot = pos + listpos;
+	if (saves_count() == 0)
+	{
+		state.target = CursorTarget::MenuAction;
+		state.selected_action = TitleMenuActionType::NewFile;
+	}
+	else
+	{
+		state.target = CursorTarget::SaveSlot;
+		state.selected_save_index = last_slot_pos;
+		state.validate_bounds(saves_count());
+	}
+
+	saves_unselect();
+	selectscreen();
+
+	saveslot = state.target == CursorTarget::SaveSlot ? state.selected_save_index : -1;
 
 	bool done=false;
 	refreshpal=true;
@@ -1106,9 +1265,9 @@ static void select_game(bool skip = false)
 		if (keypressed())
 		{
 			int32_t k=readkey()>>8;
-			if (k == KEY_ESC && mode)
+			if (k == KEY_ESC && state.mode != TitleMenuMode::Normal)
 			{
-				mode = 0;
+				state.mode = TitleMenuMode::Normal;
 				select_mode();
 				while(key[KEY_ESC])
 				{
@@ -1118,7 +1277,7 @@ static void select_game(bool skip = false)
 				}
 			}
 		}
-		disabledKeys[KEY_ESC] = mode != 0;
+		disabledKeys[KEY_ESC] = state.mode != TitleMenuMode::Normal;
 
 		if (!sfxdat)
 		{
@@ -1126,16 +1285,16 @@ static void select_game(bool skip = false)
 			setupsfx(); // reload default sfx from sfxdat
 		}
 		blit(scrollbuf,framebuf,0,0,0,0,framebuf->w,framebuf->h);
-		list_saves();
-		draw_cursor(pos,mode);
+		list_saves(state.get_page_start());
+		draw_cursor(state.get_ui_pos(), static_cast<int32_t>(state.mode));
 		advanceframe(true);
 		load_control_state();
 
-		saveslot = pos + listpos;
+		saveslot = state.target == CursorTarget::SaveSlot ? state.selected_save_index : -1;
 
 		if(!load_qstpath.empty())
 		{
-			if (register_name())
+			if (register_name(state))
 			{
 				saveslot = saves_count()-1;
 				if (auto r = saves_select(saveslot); !r)
@@ -1158,52 +1317,54 @@ static void select_game(bool skip = false)
 			}
 		}
 		
-		if(getInput(btnS, INPUT_PRESS))
-			switch(pos)
+		if (getInput(btnS, INPUT_PRESS))
+		{
+			if (state.target == CursorTarget::MenuAction)
 			{
-			case 3:
-				if(!register_name())
+				if (state.selected_action == TitleMenuActionType::NewFile)
 				{
-					// canceled.
-					pos = 3;
+					if (!register_name(state))
+					{
+						state.target = CursorTarget::MenuAction;
+						state.selected_action = TitleMenuActionType::NewFile;
+					}
+					else
+					{
+						state.target = CursorTarget::SaveSlot;
+						state.selected_save_index = saves_count() - 1;
+					}
+
+					refreshpal = true;
 				}
-				else
+				else if (state.selected_action == TitleMenuActionType::CopyFile)
 				{
-					// new save slot was created, and has a qstpath set.
-					pos = (saves_count()-1)%3;
+					if (saves_count() > 0)
+					{
+						state.mode = TitleMenuMode::Copy;
+						state.target = CursorTarget::SaveSlot;
+						state.selected_save_index = state.get_page_start();
+						copy_mode();
+					}
+
+					refreshpal = true;
 				}
-				refreshpal=true;
-				break;
-				
-			case 4:
-			{
-				int savecnt = saves_count();
-				if (savecnt)
+				else if (state.selected_action == TitleMenuActionType::DeleteFile)
 				{
-					mode=2;
-					pos=0;
-					copy_mode();
+					if (saves_count() > 0)
+					{
+						state.mode = TitleMenuMode::Delete;
+						state.target = CursorTarget::SaveSlot;
+						state.selected_save_index = state.get_page_start();
+						delete_mode();
+					}
+
+					refreshpal = true;
 				}
-				
-				refreshpal=true;
 			}
-			break;
-				
-			case 5:
-				if(saves_count())
+			else if (state.target == CursorTarget::SaveSlot && saveslot < saves_count())
+			{
+				if (state.mode == TitleMenuMode::Normal)
 				{
-					mode=3;
-					pos=0;
-					delete_mode();
-				}
-				
-				refreshpal=true;
-				break;
-				
-			default:
-				if (saveslot < saves_count()) switch(mode)
-				{
-				case 0:
 					if (auto r = saves_select(saveslot); !r)
 					{
 						enter_sys_pal();
@@ -1213,78 +1374,76 @@ static void select_game(bool skip = false)
 					else
 					{
 						loadlast = saves_current_path();
+
 						if (r.value()->header->quest)
-							done=true;
+							done = true;
 					}
-					break;
-
-				case 2:
-					if(copy_file(saveslot))
+				}
+				else if (state.mode == TitleMenuMode::Copy)
+				{
+					if (copy_file(saveslot))
 					{
-						mode=0;
-						pos=(saves_count()-1)%3;
-						refreshpal=true;
+						state.mode = TitleMenuMode::Normal;
+						state.target = CursorTarget::SaveSlot;
+						state.selected_save_index = saves_count() - 1;
+						refreshpal = true;
 					}
-					
-					break;
-					
-				case 3:
-					if(delete_save(saveslot))
+				}
+				else if (state.mode == TitleMenuMode::Delete)
+				{
+					if (delete_save(saveslot))
 					{
-						mode=0;
-						refreshpal=true;
+						state.mode = TitleMenuMode::Normal;
+						state.validate_bounds(saves_count());
+						refreshpal = true;
 					}
 
-					pos = 5;
-					break;
+					state.target = CursorTarget::MenuAction;
+					state.selected_action = TitleMenuActionType::DeleteFile;
 				}
 			}
-			
+		}
+
 		if(getInput(btnUp, INPUT_PRESS))
 		{
-			--pos;
-			
-			if(pos<0)
-				pos=(mode)?2:5;
-				
+			state.move_up(saves_count());
 			sfx(WAV_CHIME);
 		}
-		
+
 		if(getInput(btnDown, INPUT_PRESS))
 		{
-			++pos;
-			
-			if(pos>((mode)?2:5))
-				pos=0;
-				
+			state.move_down(saves_count());
 			sfx(WAV_CHIME);
 		}
-		
-		if(getInput(btnLeft, INPUT_PRESS) && listpos>2)
+
+		if (getInput(btnLeft, INPUT_PRESS) && state.get_page_start() > 2)
 		{
-			listpos-=3;
+			state.page_left();
 			sfx(WAV_CHIME);
 			refreshpal=true;
 		}
-		
-		if(getInput(btnRight, INPUT_PRESS) && listpos+3<saves_count())
+
+		if (getInput(btnRight, INPUT_PRESS) && state.get_page_start() + 3 < saves_count())
 		{
-			listpos+=3;
+			state.page_right(saves_count());
 			sfx(WAV_CHIME);
 			refreshpal=true;
 		}
-		
-		if(getInput(btnB, INPUT_PRESS) && mode)
+
+		if (getInput(btnB, INPUT_PRESS) && state.mode != TitleMenuMode::Normal)
 		{
-			if(mode==2) pos=4;
-			
-			if(mode==3) pos=5;
-			
-			mode=0;
+			if (state.mode == TitleMenuMode::Copy)
+				state.selected_action = TitleMenuActionType::CopyFile;
+
+			if (state.mode == TitleMenuMode::Delete)
+				state.selected_action = TitleMenuActionType::DeleteFile;
+
+			state.mode = TitleMenuMode::Normal;
+			state.target = CursorTarget::MenuAction;
 			select_mode();
 		}
-		
-		if (getInput(btnA, INPUT_PRESS) && !mode && pos<3 && saveslot < saves_count())
+
+		if (getInput(btnA, INPUT_PRESS) && state.mode == TitleMenuMode::Normal && state.target == CursorTarget::SaveSlot && saveslot < saves_count())
 		{
 			if (auto r = saves_get_slot(saveslot); !r)
 			{
@@ -1295,11 +1454,13 @@ static void select_game(bool skip = false)
 			else
 			{
 				save_t* save = r.value();
+
 				if (game_details(save) && saves_select(save))
 				{
 					loadlast = saves_current_path();
+
 					if (save->header->quest)
-						done=true;
+						done = true;
 				}
 			}
 		}

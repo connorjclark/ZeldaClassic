@@ -2395,9 +2395,6 @@ bool saves_delete(int32_t index, std::string& err)
 	for (auto& save : saves)
 		save.index = index++;
 
-	if(listpos>saves_count()-1)
-		listpos=zc_max(listpos-3,0);
-
 	return true;
 }
 

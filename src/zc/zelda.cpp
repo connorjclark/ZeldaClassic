@@ -275,7 +275,7 @@ bool scrolling_using_new_region_coords;
 int32_t cur_screen=0;
 int32_t currscr_for_passive_subscr;
 direction scrolling_dir;
-int32_t newscr_clk=0,cur_dmap=0,fadeclk=-1,listpos=0;
+int32_t newscr_clk=0,cur_dmap=0,fadeclk=-1;
 int32_t lastentrance=0,lastentrance_dmap=0,prices[3]= {0},loadside = 0;
 ButtonItemData Bwpn, Awpn, Xwpn, Ywpn;
 int32_t digi_volume = 0,midi_volume = 0,sfx_volume = 0,emusic_volume = 0,currmidi = -1,whistleclk = 0,pan_style = 0;
