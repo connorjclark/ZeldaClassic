@@ -8026,15 +8026,8 @@ void change_autocombo_height(int32_t change)
 	else
 		return;
 
-	int32_t x = gui_mouse_x();
-	int32_t y = gui_mouse_y();
-	double startx = mapscreen_x + (showedges ? (16 * mapscreen_single_scale) : 0);
-	double starty = mapscreen_y + (showedges ? (16 * mapscreen_single_scale) : 0);
-	int32_t startxint = mapscreen_x + (showedges ? int32_t(16 * mapscreen_single_scale) : 0);
-	int32_t startyint = mapscreen_y + (showedges ? int32_t(16 * mapscreen_single_scale) : 0);
 	ComboPosition pos = get_mapscreen_mouse_combo_pos();
-
-	if (can_change && isinRect(x, y, startxint, startyint, int32_t(startx + (256 * mapscreen_single_scale) - 1), int32_t(starty + (176 * mapscreen_single_scale) - 1)))
+	if (can_change && Map.isValidPosition(pos))
 	{
 		Map.StartListCommand();
 		draw_autocombo_command(pos, 1, cauto_height + change);
@@ -8066,7 +8059,8 @@ void draw(bool justcset)
 		int num_combos_width = 16 * Map.getViewSize();
 		int num_combos_height = 11 * Map.getViewSize();
 
-        if(isinRect(x,y,startxint,startyint,int32_t(startx+(256*mapscreen_screenunit_scale)-1),int32_t(starty+(176*mapscreen_screenunit_scale)-1)))
+		ComboPosition combo_start = get_mapscreen_mouse_combo_pos();
+        if (Map.isValidPosition(combo_start))
         {
             int32_t cxstart=(x-startx)/(16*mapscreen_single_scale);
             int32_t cystart=(y-starty)/(16*mapscreen_single_scale);
@@ -8823,23 +8817,15 @@ void doflags()
 	int tFlag = Flag;
 	while(!(gui_mouse_b()&2) && !handle_close_btn_quit())
 	{
-		int x=gui_mouse_x();
-		int y=gui_mouse_y();
-		double startx=mapscreen_x+(showedges?(16*mapscreen_single_scale):0);
-		double starty=mapscreen_y+(showedges?(16*mapscreen_single_scale):0);
-		int startxint=mapscreen_x+(showedges?int(16*mapscreen_single_scale):0);
-		int startyint=mapscreen_y+(showedges?int(16*mapscreen_single_scale):0);
-		int cx=(x-startxint)/int(16*mapscreen_single_scale);
-		int cy=(y-startyint)/int(16*mapscreen_single_scale);
-		ComboPosition combo_pos = {cx, cy};
-		int c = combo_pos.truncate();
+		ComboPosition combo_pos = get_mapscreen_mouse_combo_pos();
 
 		if(!gui_mouse_b())
 			canedit=true;
         bool shift = key[KEY_LSHIFT] || key[KEY_RSHIFT];
 
-		if(canedit && gui_mouse_b()==1 && isinRect(x,y,startxint,startyint,int(startx+(256*mapscreen_screenunit_scale)-1),int(starty+(176*mapscreen_screenunit_scale)-1)))
+		if(canedit && gui_mouse_b()==1 && Map.isValidPosition(combo_pos))
 		{
+			int c = combo_pos.truncate();
 			mapscr* cur_scr = Map.Scr(combo_pos, CurrentLayer);
 			if (!cur_scr) continue;
 
