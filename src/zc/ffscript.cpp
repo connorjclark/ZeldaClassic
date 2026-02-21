@@ -30747,7 +30747,7 @@ std::string StackTrace::to_string() const
 
 std::optional<StackTrace> FFScript::create_stack_trace(const refInfo* ri)
 {
-	if (zasm_debug_data.debug_lines_encoded.empty() && !devpwd())
+	if (zasm_debug_data.debug_lines_encoded.empty() && !show_zasm_stack_traces)
 		return std::nullopt;
 
 	StackTrace result{};
