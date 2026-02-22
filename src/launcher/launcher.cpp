@@ -1,13 +1,11 @@
 #include "zalleg/zalleg.h"
 #include "core/zdefs.h"
 #include "launcher/launcher.h"
-#include "core/fonts.h"
 #include "zalleg/render.h"
 #include "launcher/launcher_dialog.h"
 #include "base/process_management.h"
 #include "base/zapp.h"
 #include "fontsdat.h"
-#include "zinfo.h"
 #include "zq/render_tooltip.h"
 #include "zsyssimple.h"
 
@@ -17,19 +15,13 @@ do{ \
 } \
 while(false)
 
-volatile int32_t lastfps = 0;
-volatile int32_t framecnt = 0;
 int32_t readsize = 0, writesize = 0;
 int32_t zq_screen_w=LARGE_W;
 int32_t zq_screen_h=LARGE_H;
 BITMAP *mouse_bmp;
 int32_t gui_colorset = 99;
 
-char rootpath[4096] = {0};
-
-
 void init_launcher_palette();
-void fps_callback();
 
 int32_t cursorColor(int32_t col)
 {
@@ -82,26 +74,6 @@ int32_t main(int32_t argc, char* argv[])
 		exit(success ? 0 : 1);
 	}
 
-	zc_srand(time(0));
-
-	if(install_timer() < 0
-		|| install_keyboard() < 0
-		|| install_mouse() < 0)
-	{
-		Z_error_fatal(allegro_error);
-		QUIT_LAUNCHER();
-	}
-	
-	LOCK_VARIABLE(lastfps);
-	
-	LOCK_VARIABLE(framecnt);
-	LOCK_FUNCTION(fps_callback);
-	
-	if(install_int_ex(fps_callback,SECS_TO_TIMER(1)))
-	{
-		Z_error_fatal("couldn't allocate timer\n");
-		QUIT_LAUNCHER();
-	}
 	if (!render_timer_start())
 	{
 		Z_error_fatal("couldn't allocate timer\n");
@@ -158,8 +130,6 @@ int32_t main(int32_t argc, char* argv[])
 	load_mouse();
 	//}
 	Z_message("OK\n");
-	
-	get_root_path(rootpath, 4096);
 	
 	set_close_button_callback((void (*)()) hit_close_button);
 	//
@@ -269,13 +239,6 @@ void init_launcher_palette()
 	zc_set_palette(RAMpal);
 	clear_to_color(screen,vc(0));
 }
-
-void fps_callback()
-{
-	lastfps=framecnt;
-	framecnt=0;
-}
-END_OF_FUNCTION(fps_callback)
 
 static RenderTreeItem rti_root("root");
 static LegacyBitmapRTI rti_screen("screen");

@@ -231,6 +231,8 @@ static void initfont(int fontind, FONT* f, char const* str)
 	a4fonts[fontind] = f;
 	msgfont_str[fontind] = str;
 }
+
+// TODO: a substantial amount of time during startup is spent here. Would be nice to lazily initialize most fonts.
 void initFonts()
 {
 	for(int q = 0; q < font_max; ++q)

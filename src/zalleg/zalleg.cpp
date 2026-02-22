@@ -232,25 +232,28 @@ void zalleg_setup_allegro(App id, int argc, char **argv)
 	{
 		Z_error_fatal("Failed to init allegro: %s\n%s\n", "install_mouse", allegro_error);
 	}
-	
-	if(install_joystick(JOY_TYPE_AUTODETECT) < 0)
+
+	if (id == App::zelda || id == App::zquest)
 	{
-		Z_error_fatal("Failed to init allegro: %s\n%s\n", "install_joystick", allegro_error);
+		if(install_joystick(JOY_TYPE_AUTODETECT) < 0)
+		{
+			Z_error_fatal("Failed to init allegro: %s\n%s\n", "install_joystick", allegro_error);
+		}
+
+		Z_message("SFX.Dat...");
+
+		char sfxdat_sig[52];
+		sprintf(sfxdat_sig,"SFX.Dat %s Build %d",VerStrFromHex(SFXDAT_VERSION), SFXDAT_BUILD);
+
+		if((sfxdata=load_datafile("sfx.dat"))==NULL)
+		{
+			Z_error_fatal("failed to load sfx.dat");
+		}
+		if(strncmp((char*)sfxdata[0].dat,sfxdat_sig,22) || sfxdata[Z35].type != DAT_ID('S', 'A', 'M', 'P'))
+			Z_error_fatal("\nIncompatible version of sfx.dat.\nPlease upgrade to %s Build %d",VerStrFromHex(SFXDAT_VERSION), SFXDAT_BUILD);
+
+		Z_message("OK\n");
 	}
-
-    Z_message("SFX.Dat...");
-
-    char sfxdat_sig[52];
-	sprintf(sfxdat_sig,"SFX.Dat %s Build %d",VerStrFromHex(SFXDAT_VERSION), SFXDAT_BUILD);
-
-	if((sfxdata=load_datafile("sfx.dat"))==NULL)
-	{
-		Z_error_fatal("failed to load sfx.dat");
-	}
-	if(strncmp((char*)sfxdata[0].dat,sfxdat_sig,22) || sfxdata[Z35].type != DAT_ID('S', 'A', 'M', 'P'))
-		Z_error_fatal("\nIncompatible version of sfx.dat.\nPlease upgrade to %s Build %d",VerStrFromHex(SFXDAT_VERSION), SFXDAT_BUILD);
-	
-	Z_message("OK\n");
 
 	Z_message("Initializing sound driver... ");
     bool sound = id == App::zelda || id == App::zquest;
