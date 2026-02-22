@@ -339,7 +339,7 @@ std::optional<int32_t> ZScript::getStackOffset(Datum const& datum)
 }
 int32_t Datum::getStackOffset(bool i10k) const
 {
-	return (i10k ? 10000 : 1) * *ZScript::getStackOffset(*this);
+	return (i10k ? 10000 : 1) * ZScript::getStackOffset(*this).value();
 }
 
 // ZScript::Variable

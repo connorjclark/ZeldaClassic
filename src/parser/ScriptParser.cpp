@@ -2613,7 +2613,7 @@ bool ScriptAssembler::fill_debug_scope_locals(Scope* scope, int32_t scopeIdx, Sc
 			return aBuiltin > bBuiltin;
 
 		// Then by stack offset (descending).
-		return a->getStackOffset(false) > b->getStackOffset(false);
+		return ZScript::getStackOffset(*a).value_or(INT_MAX) > ZScript::getStackOffset(*b).value_or(INT_MAX);
 	});
 
 	bool found_something = false;
