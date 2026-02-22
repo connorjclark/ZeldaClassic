@@ -5,9 +5,10 @@ Examples
 
 .. toctree::
    :maxdepth: 1
-   :class: toctree-grid
+   :class: toctree
 
    /zscript/lang/examples/draw_origin.rst
+   /zscript/lang/examples/websockets.rst
 
 More examples
 -------------
