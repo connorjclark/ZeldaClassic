@@ -2640,7 +2640,12 @@ bool ScriptAssembler::fill_debug_scope_locals(Scope* scope, int32_t scopeIdx, Sc
 		if (datum->getNode())
 			symbol.declaration_line = datum->getNode()->location.first_line;
 
-		if (auto pos = lookupStackPosition(*scope, *datum))
+		if (auto v = datum->getCompileTimeValue())
+		{
+			symbol.storage = CONSTANT;
+			symbol.offset = v.value();
+		}
+		else if (auto pos = lookupStackPosition(*scope, *datum))
 		{
 			symbol.storage = LOC_STACK;
 			symbol.offset = *pos;
@@ -2649,11 +2654,6 @@ bool ScriptAssembler::fill_debug_scope_locals(Scope* scope, int32_t scopeIdx, Sc
 		{
 			symbol.storage = LOC_GLOBAL;
 			symbol.offset = datum->getGlobalId().value();
-		}
-		else if (auto d = dynamic_cast<Constant*>(datum))
-		{
-			symbol.storage = CONSTANT;
-			symbol.offset = d->getCompileTimeValue().value_or(0);
 		}
 		else if (auto d = dynamic_cast<InternalVariable*>(datum))
 		{

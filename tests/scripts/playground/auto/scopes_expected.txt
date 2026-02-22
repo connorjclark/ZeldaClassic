@@ -12698,7 +12698,7 @@ debug data:
       - const Enum e @ Stack[0]
     [FUNCTION] has_constant <PC:1122-1126 IDX:1046>
       [BLOCK] <PC:1124-1124 IDX:1047>
-        - const int constant_int @ Stack[0]
+        - const int constant_int @ Constant[10000]
     [FUNCTION] long_fn <PC:1213-1217 IDX:1048>
       - long a @ Stack[0]
     [FUNCTION] loop_fn <PC:1222-1241 IDX:1049>
