@@ -165,6 +165,43 @@ struct maze_state_t {
 
 extern maze_state_t maze_state;
 
+struct CameraState {
+	enum class Stage {
+		Running,
+		Idle,
+		Returning,
+		Done,
+	};
+
+	Stage stage;
+	zfix x;
+	zfix y;
+	int idle_clock;
+	int timer;
+};
+
+enum class CameraEffectInterpolationMode {
+	EaseIn,
+	EaseOut,
+	EaseInOut,
+	Linear,
+};
+
+struct CameraEffect {
+	combined_handle_t handle;
+	zfix speed;
+	zfix start_x;
+	zfix start_y;
+	zfix dest_x;
+	zfix dest_y;
+	int duration;
+	CameraEffectInterpolationMode interpolation_mode;
+	int idle_time;
+	bool return_to_hero;
+	bool freeze_game;
+	CameraState state;
+};
+
 // Holds the last solved screen maze, only used within a scrolling region to remember
 // that a maze was solved.
 extern int scrolling_maze_last_solved_screen;
@@ -191,6 +228,8 @@ std::vector<mapscr*> take_temporary_scrs();
 void calculate_viewport(viewport_t& viewport, int dmap, int screen, int world_w, int world_h, int x, int y);
 sprite* get_viewport_sprite();
 void set_viewport_sprite(sprite* spr);
+void set_camera_effect(CameraEffect camera_effect);
+void clear_camera_effect();
 void update_viewport();
 viewport_t get_sprite_freeze_rect();
 mapscr* determine_hero_screen_from_coords();

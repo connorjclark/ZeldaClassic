@@ -4548,11 +4548,16 @@ std::shared_ptr<GUI::Widget> ComboWizardDialog::view()
 			zfix& effect_type = local_ref.c_attributes[8];
 			effect_type.doTrunc();
 			lists[0] = GUI::ListData({
-				{ "Player Walk", CUTEFF_PLAYER_WALK, "The player auto-walks to the destination (angularly) (when triggered via '->ComboType Effects')."
+				{
+					"Player Walk", CUTEFF_PLAYER_WALK, "The player auto-walks to the destination (angularly) (when triggered via '->ComboType Effects')."
 					"\nTriggers 'ComboType Causes->' when the player finishes the auto-walk (either because they reached their destination,"
 					" or because they reached the edge of the screen on their way to the destination, triggering just before scrolling occurs)"
 					"\nNOTE: The player will walk ignoring solidity and most combo types in a straight line to the destination."
-					"\nRequires 'Newer Hero Movement'." + QRHINT({qr_NEW_HERO_MOVEMENT2}) }
+					"\nRequires 'Newer Hero Movement'." + QRHINT({qr_NEW_HERO_MOVEMENT2})
+				},
+				{
+					"Camera", CUTEFF_CAMERA, "TODO"
+				}
 			});
 			std::shared_ptr<GUI::Grid> g;
 			switch(effect_type.getTrunc())
@@ -4609,6 +4614,10 @@ std::shared_ptr<GUI::Widget> ComboWizardDialog::view()
 							}),
 						INFOBTN("The speed the player will move at, in pixels per frame. If '0', the player will use their normal step speed.")
 					);
+					break;
+				}
+				case CUTEFF_CAMERA:
+				{
 					break;
 				}
 				default: // bad type, default and reload

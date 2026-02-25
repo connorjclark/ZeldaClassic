@@ -342,12 +342,51 @@ void do_cutscene_effect(const combined_handle_t& handle)
 {
 	auto& cmb = handle.combo();
 	if(cmb.type != cCUTSCENEEFFECT) return;
-	switch(cmb.c_attributes[8].getTrunc())
-	{
-		case CUTEFF_PLAYER_WALK:
-			Hero.start_auto_walk(handle);
-			break;
-	}
+
+	// TODO !
+	// switch(cmb.c_attributes[8].getTrunc())
+	// {
+	// 	case CUTEFF_PLAYER_WALK:
+	// 		Hero.start_auto_walk(handle);
+	// 		break;
+	// 	case CUTEFF_CAMERA:
+	// 	{
+	// 		auto [x, y] = handle.xy();
+	// 		set_camera_effect({.x = viewport.x, .y = viewport.y, .dest_x = x, .dest_y = y});
+	// 		break;
+	// 	}
+	// }
+
+	auto [dest_x, dest_y] = handle.xy();
+	int start_x = viewport.x + viewport.w / 2;
+	int start_y = viewport.y + viewport.h / 2;
+
+	zfix speed = 128_zf / 60;
+	zfix dx = dest_x - start_x;
+	zfix dy = dest_y - start_y;
+	zfix total_distance = sqrt(dx * dx + dy * dy);
+
+	zfix duration = 1_zf;
+	if (speed > 0_zf)
+		duration = total_distance / speed;
+
+	set_camera_effect({
+		.handle = handle,
+		.speed = speed,
+		.start_x = start_x,
+		.start_y = start_y,
+		.dest_x = dest_x,
+		.dest_y = dest_y,
+		.duration = duration,
+		.interpolation_mode = CameraEffectInterpolationMode::EaseInOut,
+		.idle_time = 60, // TODO ! configurable
+		.return_to_hero = true,
+		.state = {
+			.stage = CameraState::Stage::Running,
+			.x = start_x,
+			.y = start_y,
+		},
+	});
 }
 
 void do_cutscene_flags(newcombo const& cmb)
