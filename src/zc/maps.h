@@ -181,10 +181,14 @@ struct CameraState {
 };
 
 enum class CameraEffectInterpolationMode {
+	Linear,
 	EaseIn,
 	EaseOut,
 	EaseInOut,
-	Linear,
+	Smoothstep,
+	Smootherstep,
+	EaseOutCubic,
+	EaseOutBack,
 };
 
 struct CameraEffect {

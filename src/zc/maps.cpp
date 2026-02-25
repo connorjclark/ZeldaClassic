@@ -483,7 +483,7 @@ static void apply_camera_effect(CameraEffect& effect)
 	if (t > 1_zf)
 		t = 1_zf;
 
-	// Apply configured easing curve
+	// Apply configured easing curve.
 	zfix eased_t;
 	switch (effect.interpolation_mode)
 	{
@@ -499,6 +499,27 @@ static void apply_camera_effect(CameraEffect& effect)
 			else
 				eased_t = 1_zf - ((t * -2 + 2_zf) * (t * -2 + 2_zf)) / 2_zf;
 			break;
+		case CameraEffectInterpolationMode::Smoothstep:
+			eased_t = t * t * (3_zf - 2_zf * t);
+			break;
+		case CameraEffectInterpolationMode::Smootherstep:
+			eased_t = t * t * t * (t * (t * 6_zf - 15_zf) + 10_zf);
+			break;
+		case CameraEffectInterpolationMode::EaseOutCubic:
+		{
+			zfix inv = 1_zf - t;
+			eased_t = 1_zf - (inv * inv * inv);
+			break;
+		}
+		case CameraEffectInterpolationMode::EaseOutBack:
+		{
+			// c1 dictates how far past the target it overshoots. 
+			zfix c1 = 1.70158_zf;
+			zfix c3 = c1 + 1_zf;
+			zfix inv = t - 1_zf;
+			eased_t = 1_zf + c3 * (inv * inv * inv) + c1 * (inv * inv);
+			break;
+		}
 		case CameraEffectInterpolationMode::Linear:
 		default:
 			eased_t = t;
