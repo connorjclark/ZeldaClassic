@@ -8,6 +8,7 @@
 #include <cstring>
 #include <assert.h>
 #include <math.h>
+#include <optional>
 #include <vector>
 #include <deque>
 #include <string>
@@ -388,8 +389,185 @@ void set_viewport_sprite(sprite* spr)
 	viewport_sprite_uid = spr->uid;
 }
 
+static std::optional<CameraEffect> active_camera_effect;
+
+void set_camera_effect(CameraEffect camera_effect)
+{
+	active_camera_effect = camera_effect;
+}
+
+std::optional<CameraEffect> get_active_camera_effect()
+{
+	return active_camera_effect;
+}
+
+void clear_camera_effect()
+{
+	active_camera_effect = std::nullopt;
+}
+
+static void apply_camera_effect(CameraEffect& effect)
+{
+	auto& state = effect.state;
+
+	if (state.stage == CameraState::Stage::Done)
+		return;
+
+	auto begin_returning = [&]()
+	{
+		state.stage = CameraState::Stage::Returning;
+		state.num_frames_since_start = 0;
+		effect.start_x = state.x;
+		effect.start_y = state.y;
+
+		// Calculate where the target is right now.
+		auto temp_viewport = viewport;
+		sprite* spr = get_viewport_sprite();
+		int target_x = spr->x + spr->txsz*16/2;
+		int target_y = spr->y + spr->tysz*16/2;
+		calculate_viewport(temp_viewport, cur_dmap, cur_screen, world_w, world_h, target_x, target_y);
+
+		zfix return_dest_x = temp_viewport.x + temp_viewport.w/2;
+		zfix return_dest_y = temp_viewport.y + temp_viewport.h/2;
+
+		// Calculate distance and duration for the return trip.
+		zfix dx = return_dest_x - effect.start_x;
+		zfix dy = return_dest_y - effect.start_y;
+		zfix dist = sqrt(dx * dx + dy * dy);
+
+		int duration_in_frames = dist / effect.speed;
+		if (duration_in_frames <= 0)
+			duration_in_frames = 1;
+
+		active_camera_effect->duration_in_frames = duration_in_frames;
+	};
+
+	auto finish_effect = [&]()
+	{
+		state.stage = CameraState::Stage::Done;
+		do_trigger_ctype_causes(effect.handle);
+		clear_camera_effect();
+	};
+
+	if (state.stage == CameraState::Stage::Idle)
+	{
+		state.idle_clock -= 1;
+		if (state.idle_clock <= 0)
+		{
+			if (effect.return_to_hero)
+				begin_returning();
+			else
+				finish_effect();
+		}
+		return;
+	}
+
+	zfix dest_x;
+	zfix dest_y;
+	if (state.stage == CameraState::Stage::Running)
+	{
+		dest_x = effect.dest_x;
+		dest_y = effect.dest_y;
+	}
+	else if (state.stage == CameraState::Stage::Returning)
+	{
+		auto temp_viewport = viewport;
+		sprite* spr = get_viewport_sprite();
+		int target_x = spr->x + spr->txsz*16/2;
+		int target_y = spr->y + spr->tysz*16/2;
+		calculate_viewport(temp_viewport, cur_dmap, cur_screen, world_w, world_h, target_x, target_y);
+		dest_x = temp_viewport.x + temp_viewport.w/2;
+		dest_y = temp_viewport.y + temp_viewport.h/2;
+	}
+	else
+		return;
+
+	// Advance the timer and calculate completion percentage (0.0 to 1.0).
+	state.num_frames_since_start += 1;
+	zfix t = (zfix)state.num_frames_since_start / effect.duration_in_frames;
+	if (t > 1_zf)
+		t = 1_zf;
+
+	// Apply configured easing curve.
+	zfix eased_t;
+	switch (effect.interpolation_mode)
+	{
+		case CameraEffectInterpolationMode::EaseIn:
+			eased_t = t * t;
+			break;
+		case CameraEffectInterpolationMode::EaseOut:
+			eased_t = 1_zf - ((1_zf - t) * (1_zf - t));
+			break;
+		case CameraEffectInterpolationMode::EaseInOut:
+			if (t < (1_zf / 2))
+				eased_t = 2_zf * t * t;
+			else
+				eased_t = 1_zf - ((t * -2 + 2_zf) * (t * -2 + 2_zf)) / 2_zf;
+			break;
+		case CameraEffectInterpolationMode::Smoothstep:
+			eased_t = t * t * (3_zf - 2_zf * t);
+			break;
+		case CameraEffectInterpolationMode::Smootherstep:
+			eased_t = t * t * t * (t * (t * 6_zf - 15_zf) + 10_zf);
+			break;
+		case CameraEffectInterpolationMode::EaseOutCubic:
+		{
+			zfix inv = 1_zf - t;
+			eased_t = 1_zf - (inv * inv * inv);
+			break;
+		}
+		case CameraEffectInterpolationMode::EaseOutBack:
+		{
+			// c1 dictates how far past the target it overshoots. 
+			zfix c1 = 1.70158_zf;
+			zfix c3 = c1 + 1_zf;
+			zfix inv = t - 1_zf;
+			eased_t = 1_zf + c3 * (inv * inv * inv) + c1 * (inv * inv);
+			break;
+		}
+		case CameraEffectInterpolationMode::Linear:
+		default:
+			eased_t = t;
+			break;
+	}
+
+	// Lerp between origin and destination.
+	state.x = effect.start_x + (dest_x - effect.start_x) * eased_t;
+	state.y = effect.start_y + (dest_y - effect.start_y) * eased_t;
+
+	calculate_viewport(viewport, cur_dmap, cur_screen, world_w, world_h, state.x, state.y);
+
+	// Process end of transition.
+	if (t >= 1_zf)
+	{
+		if (state.stage == CameraState::Stage::Running)
+		{
+			if (effect.idle_frames > 0)
+			{
+				state.stage = CameraState::Stage::Idle;
+				state.idle_clock = effect.idle_frames;
+			}
+			else if (effect.return_to_hero)
+				begin_returning();
+			else
+				finish_effect();
+		}
+		else
+			finish_effect();
+	}
+}
+
 void update_viewport()
 {
+	if (viewport_mode == ViewportMode::Script)
+		active_camera_effect = std::nullopt;
+
+	if (active_camera_effect)
+	{
+		apply_camera_effect(active_camera_effect.value());
+		return;
+	}
+
 	sprite* spr = get_viewport_sprite();
 	int x = spr->x + spr->txsz*16/2;
 	int y = spr->y + spr->tysz*16/2;

@@ -1099,6 +1099,8 @@ void ALLOFF(bool messagesToo, bool decorationsToo, bool force)
         refreshpal=true;
         usebombpal=false;
     }
+
+	clear_camera_effect();
 }
 zfix  HeroX()
 {
@@ -1560,6 +1562,7 @@ void init_dmap()
 void init_game_vars(bool is_cont_game = false)
 {
 	new_subscreen_map = new_subscreen_active = new_subscreen_passive = new_subscreen_overlay = nullptr;
+	clear_camera_effect();
 
 	// There are many replay tests that were made when these globals were not being reset
 	// on continue. Let's not break them.
@@ -3185,30 +3188,39 @@ void game_loop()
 				
 			--fadeclk;
 		}
-		
+
 		// Messages also freeze FF combos.
-		//
-		// TODO: this is an expensive loop due to touching the memory of every combo position. ~5%
-		// of the game loop for z3.zplay.
-		//
-		// It could be fixed by running some code on every change of a combo data to update the
-		// `freeze` state, instead of doing it all here every frame. Part of the solution is using
-		// these:
-		//
-		//   - screen_combo_modify_postroutine
-		//   - screen_ffc_modify_postroutine
-		//   - screen_combo_modify_post
-		//
-		// ... but that doesn't handle _every_ change to combo data.
-		// (ex: rpos_handle_t::increment_data()), so that needs to be resolved first.
 		bool freezeff = freezemsg;
 		bool freeze = false;
-		for_every_combo([&](const auto& handle) {
-			if (handle.ctype() == cSCREENFREEZE)
-				freeze = true;
-			if (handle.ctype() == cSCREENFREEZEFF)
-				freezeff = true;
-		}, true);
+
+		if (auto camera_effect = get_active_camera_effect(); camera_effect && camera_effect->freeze_game)
+		{
+			freezeff = true;
+			freeze = true;
+			update_viewport();
+		}
+		else
+		{
+			// TODO: this is an expensive loop due to touching the memory of every combo position. ~5%
+			// of the game loop for z3.zplay.
+			//
+			// It could be fixed by running some code on every change of a combo data to update the
+			// `freeze` state, instead of doing it all here every frame. Part of the solution is using
+			// these:
+			//
+			//   - screen_combo_modify_postroutine
+			//   - screen_ffc_modify_postroutine
+			//   - screen_combo_modify_post
+			//
+			// ... but that doesn't handle _every_ change to combo data.
+			// (ex: rpos_handle_t::increment_data()), so that needs to be resolved first.
+			for_every_combo([&](const auto& handle) {
+				if (handle.ctype() == cSCREENFREEZE)
+					freeze = true;
+				if (handle.ctype() == cSCREENFREEZEFF)
+					freezeff = true;
+			}, true);
+		}
 
 		if(!freeze_guys && !freeze && !freezemsg && !FFCore.system_suspend[susptGUYS])
 		{

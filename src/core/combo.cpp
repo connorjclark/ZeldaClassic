@@ -678,6 +678,9 @@ std::string combo_trigger::summarize(newcombo const& cmb) const
 						case CUTEFF_PLAYER_WALK:
 							effects << indent << "Auto-walk the player\n";
 							break;
+						case CUTEFF_CAMERA:
+							effects << indent << "Camera effect\n";
+							break;
 						default:
 							effects << indent << "[->ComboType Effects is checked but not doing anything]\n";
 					}

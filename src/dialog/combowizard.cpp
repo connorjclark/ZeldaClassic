@@ -1,9 +1,11 @@
 #include "combowizard.h"
+#include "base/general.h"
 #include "info.h"
 #include "alertfunc.h"
 #include "zalleg/zsys.h"
 #include "tiles.h"
 #include "gui/builder.h"
+#include "zc/maps.h"
 #include "zc_list_data.h"
 #include "items.h"
 #include "zc/weapons.h"
@@ -945,14 +947,23 @@ void combo_default(newcombo& ref, bool typeonly)
 		{
 			switch(ref.c_attributes[8].getTrunc())
 			{
-				default:
-					ref.c_attributes[8] = CUTEFF_PLAYER_WALK;
-				[[fallthrough]];
 				case CUTEFF_PLAYER_WALK:
-					ref.c_attributes[0] = ref.c_attributes[1] = 0;
-					ref.c_attributes[2] = 0;
+				{
+					ComboView_CutsceneEffect_PlayerWalk cv{ref.c_attributes};
+					cv.dest_x() = 0;
+					cv.dest_y() = 0;
+					cv.move_speed() = 0;
 					SETFLAG(ref.usrflags, cflag1, true);
 					SETFLAG(ref.usrflags, cflag2, false);
+					break;
+				}
+				case CUTEFF_CAMERA:
+					ComboView_CutsceneEffect_Camera cv{ref.c_attributes};
+					cv.idle_time() = 0;
+					cv.interpolation_mode() = 0;
+					cv.speed() = 0;
+					SETFLAG(ref.usrflags, cflag1, true); // freeze
+					SETFLAG(ref.usrflags, cflag2, true); // return to hero
 					break;
 			}
 			break;
@@ -4548,26 +4559,32 @@ std::shared_ptr<GUI::Widget> ComboWizardDialog::view()
 			zfix& effect_type = local_ref.c_attributes[8];
 			effect_type.doTrunc();
 			lists[0] = GUI::ListData({
-				{ "Player Walk", CUTEFF_PLAYER_WALK, "The player auto-walks to the destination (angularly) (when triggered via '->ComboType Effects')."
+				{
+					"Player Walk", CUTEFF_PLAYER_WALK, "The player auto-walks to the destination (angularly) (when triggered via '->ComboType Effects')."
 					"\nTriggers 'ComboType Causes->' when the player finishes the auto-walk (either because they reached their destination,"
 					" or because they reached the edge of the screen on their way to the destination, triggering just before scrolling occurs)"
 					"\nNOTE: The player will walk ignoring solidity and most combo types in a straight line to the destination."
-					"\nRequires 'Newer Hero Movement'." + QRHINT({qr_NEW_HERO_MOVEMENT2}) }
+					"\nRequires 'Newer Hero Movement'." + QRHINT({qr_NEW_HERO_MOVEMENT2})
+				},
+				{
+					"Camera", CUTEFF_CAMERA, "TODO !"
+				}
 			});
 			std::shared_ptr<GUI::Grid> g;
 			switch(effect_type.getTrunc())
 			{
 				case CUTEFF_PLAYER_WALK:
 				{
+					ComboView_CutsceneEffect_PlayerWalk cv{local_ref.c_attributes};
 					auto rel_flags = cflag1|cflag2;
 					lists[1] = GUI::ListData({
 						{ "Absolute", 0 },
 						{ "Relative to Combo", cflag1 },
 						{ "Relative to Player", cflag2 }
 					});
-					int32_t& dest_x = local_ref.c_attributes[0].val;
-					int32_t& dest_y = local_ref.c_attributes[1].val;
-					int32_t& move_speed = local_ref.c_attributes[2].val;
+					int32_t& dest_x = cv.dest_x().val;
+					int32_t& dest_y = cv.dest_y().val;
+					int32_t& move_speed = cv.move_speed().val;
 					g = Rows<3>(
 						Label(text = "Dest X:", hAlign = 1.0),
 						TextField(
@@ -4611,6 +4628,75 @@ std::shared_ptr<GUI::Widget> ComboWizardDialog::view()
 					);
 					break;
 				}
+				case CUTEFF_CAMERA:
+				{
+					ComboView_CutsceneEffect_Camera cv{local_ref.c_attributes};
+					int32_t& speed = cv.speed().val;
+					int32_t& idle_time = cv.idle_time().val;
+					int32_t& interpolation_mode = cv.interpolation_mode().val;
+
+					lists[1] = GUI::ListData({
+						{ "Linear", (int)CameraEffectInterpolationMode::Linear },
+						{ "EaseIn", (int)CameraEffectInterpolationMode::EaseIn },
+						{ "EaseOut", (int)CameraEffectInterpolationMode::EaseOut },
+						{ "EaseInOut", (int)CameraEffectInterpolationMode::EaseInOut },
+						{ "Smoothstep", (int)CameraEffectInterpolationMode::Smoothstep },
+						{ "Smootherstep", (int)CameraEffectInterpolationMode::Smootherstep },
+						{ "EaseOutCubic", (int)CameraEffectInterpolationMode::EaseOutCubic },
+						{ "EaseOutBack", (int)CameraEffectInterpolationMode::EaseOutBack }
+					});
+
+					// TODO ! any reason this should be pixels / frame instead?
+					g = Rows<3>(
+						Label(text = "Speed (pixels / sec)", hAlign = 1.0),
+						TextField(
+							fitParent = true, minwidth = 8_em,
+							type = GUI::TextField::type::SWAP_ZSINT,
+							val = speed,
+							onValChangedFunc = [&](GUI::TextField::type,std::string_view,int32_t val)
+							{
+								speed = val;
+							}),
+						INFOBTN("TODO !"),
+
+						Label(text = "Idle time (frames)", hAlign = 1.0),
+						TextField(
+							fitParent = true, minwidth = 8_em,
+							type = GUI::TextField::type::SWAP_ZSINT,
+							val = idle_time,
+							onValChangedFunc = [&](GUI::TextField::type,std::string_view,int32_t val)
+							{
+								idle_time = val;
+							}),
+						INFOBTN("TODO !"),
+
+						Label(text = "Interpolation", hAlign = 1.0),
+						ddls[0] = DropDownList(data = lists[1],
+							fitParent = true, selectedValue = interpolation_mode / 10000,
+							onSelectFunc = [&](int32_t val)
+							{
+								interpolation_mode = val * 10000;
+							}),
+						INFOBTN("TODO !"),
+
+						Checkbox(text = "Freeze", _EX_RBOX, colSpan = 2,
+							checked = (local_ref.usrflags&cflag1),
+							onToggleFunc = [&](bool state)
+							{
+								SETFLAG(local_ref.usrflags,cflag1,state);
+							}),
+						INFOBTN("TODO !"),
+
+						Checkbox(text = "Return to Hero", _EX_RBOX, colSpan = 2,
+							checked = (local_ref.usrflags&cflag2),
+							onToggleFunc = [&](bool state)
+							{
+								SETFLAG(local_ref.usrflags,cflag2,state);
+							}),
+						INFOBTN("TODO !")
+					);
+					break;
+				}
 				default: // bad type, default and reload
 				{
 					effect_type = CUTEFF_PLAYER_WALK;
@@ -4626,15 +4712,15 @@ std::shared_ptr<GUI::Widget> ComboWizardDialog::view()
 						fitParent = true, selectedValue = effect_type,
 						onSelectFunc = [&](int32_t val)
 						{
-							alt_refs[effect_type] = local_ref;
-							
 							effect_type = val;
+							alt_refs[effect_type] = local_ref;
 							
 							auto ref_it = alt_refs.find(val);
 							if(ref_it != alt_refs.end())
 								local_ref = ref_it->second;
 							else
 								combo_default(local_ref, true);
+							refresh_dlg();
 						}),
 					INFOBTN_REF(lists[0].findInfo(effect_type))
 				)

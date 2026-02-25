@@ -20559,9 +20559,11 @@ void HeroClass::moveOld2(int32_t d2, int32_t forceRate)
 void HeroClass::start_auto_walk(const combined_handle_t& target)
 {
 	auto& cmb = target.combo();
-	if(cmb.type != cCUTSCENEEFFECT || cmb.c_attributes[8].getTrunc() != CUTEFF_PLAYER_WALK) return;
-	
-	zfix dx = cmb.c_attributes[0], dy = cmb.c_attributes[1];
+	DCHECK(cmb.type == cCUTSCENEEFFECT && cmb.c_attributes[8].getTrunc() == CUTEFF_PLAYER_WALK);
+
+	ComboView_CutsceneEffect_PlayerWalk cv{cmb.c_attributes};
+	zfix dx = cv.dest_x();
+	zfix dy = cv.dest_y();
 	if(cmb.usrflags & cflag1)
 	{
 		auto [cx, cy] = target.center_xy();
@@ -20609,7 +20611,10 @@ void HeroClass::autowalk_move()
 	{
 		newcombo const& cmb = combobuf[autowalk_combo_id];
 		if(cmb.type == cCUTSCENEEFFECT && cmb.c_attributes[8].getTrunc() == CUTEFF_PLAYER_WALK)
-			pix_dist = cmb.c_attributes[2];
+		{
+			ComboView_CutsceneEffect_PlayerWalk cv{cmb.c_attributes};
+			pix_dist = cv.move_speed();
+		}
 	}
 	if(!pix_dist)
 	{
@@ -29072,10 +29077,11 @@ void HeroClass::scrollscr(int32_t scrolldir, int32_t dest_screen, int32_t destdm
 		}
 	}
 
-	if (viewport_mode != ViewportMode::CenterAndBound || get_viewport_sprite() != &Hero)
+	if (viewport_mode != ViewportMode::CenterAndBound || get_viewport_sprite() != &Hero || get_active_camera_effect())
 	{
 		set_viewport_sprite(&Hero);
 		viewport_mode = ViewportMode::CenterAndBound;
+		clear_camera_effect();
 		update_viewport();
 	}
 
