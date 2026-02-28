@@ -83,26 +83,27 @@ suite('ZScript extension', function () {
 	suite('Diagnoses errors and warnings - unsaved changes', () => {
 		const uri = getDocUri('empty.zs');
 
-		before(async () => {
+		async function setup(version: string): Promise<void> {
+			await activate(version, uri);
 			await setTestContent(uri, '#option WARN_DEPRECATED warn\n\nimport "std.zh"\n\nvoid fn() {\n\tScreen->HasItem;\n}\n');
-		});
+		}
 
 		test('2.55', async () => {
-			await activate('2.55', uri);
+			await setup('2.55');
 			await testDiagnostics(uri, [
 				{ message: `Warning S094: Variable 'Screen->HasItem' is deprecated, and should not be used.`, range: range(5, 1, 5, 16), severity: vscode.DiagnosticSeverity.Warning },
 			]);
 		});
 
 		test('3-no-json', async () => {
-			await activate('3-no-json', uri);
+			await setup('3-no-json');
 			await testDiagnostics(uri, [
 				{ message: `Warning S094: Variable 'screendata->HasItem' is deprecated, and should not be used.`, range: range(5, 1, 5, 16), severity: vscode.DiagnosticSeverity.Warning },
 			]);
 		});
 
 		test('latest', async () => {
-			await activate('latest', uri);
+			await setup('latest');
 			await testDiagnostics(uri, [
 				{ message: `S094: Variable 'screendata->HasItem' is deprecated, and should not be used.\nCheck \`->Item > -1\` instead!`, range: range(5, 1, 5, 16), severity: vscode.DiagnosticSeverity.Warning },
 			]);
