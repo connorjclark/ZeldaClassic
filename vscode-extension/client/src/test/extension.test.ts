@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import * as assert from 'assert';
-import { getDocUri, activate, setTestContent, executeDocumentSymbolProvider, executeHoverProvider, sleep, executeCompletionItemProvider } from './helper.js';
+import { getDocUri, activate, setTestContent, executeDocumentSymbolProvider, executeHoverProvider, sleep, executeCompletionItemProvider, executeDocumentHighlights } from './helper.js';
 import { before } from 'mocha';
 import { jestExpect as expect } from 'mocha-expect-snapshot';
 
@@ -31,6 +31,9 @@ suite('ZScript extension', function () {
 		if (!process.env.CI) {
 			this.snapshotStateOptions = { updateSnapshot: 'all' };
 		}
+
+		const uri = getDocUri('empty.zs');
+		await setTestContent(uri, '');
 	});
 
 	suite('Diagnoses errors and warnings', () => {
@@ -209,6 +212,35 @@ suite('ZScript extension', function () {
 			await activate('latest', uri);
 			expect(await getSymbols()).toMatchSnapshot();
 		});
+	});
+
+	test('Document highlights', async () => {
+		const uri = getDocUri('empty.zs');
+		const code = [
+			'void fn() {',
+			'	int myVar = 1;',
+			'	myVar++;',
+			'}',
+			'void fn2() {',
+			'	int myVar = 2;',
+			'	myVar++;',
+			'}'
+		].join('\n');
+
+		await setTestContent(uri, code);
+
+		await activate('latest', uri);
+
+		// Trigger highlight on `myVar` inside `fn` (Line 2).
+		const highlights = await executeDocumentHighlights(uri, new vscode.Position(2, 2));
+
+		// It should only find the 2 instances in `fn`, ignoring the 2 identically named ones in `fn2`.
+		expect(highlights).toBeDefined();
+		expect(highlights.length).toBe(2);
+
+		// Verify it highlighted line 1 (declaration) and line 2 (usage).
+		expect(highlights.some(h => h.range.start.line === 1)).toBe(true);
+		expect(highlights.some(h => h.range.start.line === 2)).toBe(true);
 	});
 
 	suite('Autocomplete global constants', () => {
