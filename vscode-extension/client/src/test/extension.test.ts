@@ -11,15 +11,32 @@ function range(sLine: number, sChar: number, eLine: number, eChar: number) {
 }
 
 async function testDiagnostics(uri: vscode.Uri, expectedDiagnostics: vscode.Diagnostic[]) {
-	// Diagnostics are a push-model, so lets give the server a moment to process the script.
-	await sleep(2000);
-	const actualDiagnostics = vscode.languages.getDiagnostics(uri)
-		.map(({ message, range, severity }) => ({ message, range, severity }));
-	for (const diag of actualDiagnostics) {
-		if (diag.message.startsWith('Error in temp file')) {
-			diag.message = 'Error in temp file';
+	let actualDiagnostics: any[] = [];
+
+	// Poll every 500ms for up to 5 seconds (10 attempts).
+	for (let i = 0; i < 10; i++) {
+		await sleep(500);
+
+		actualDiagnostics = vscode.languages.getDiagnostics(uri)
+			.map(({ message, range, severity }) => ({ message, range, severity }));
+
+		for (const diag of actualDiagnostics) {
+			if (diag.message.startsWith('Error in temp file')) {
+				diag.message = 'Error in temp file';
+			}
+		}
+
+		try {
+			// If they match, the compiler finished and we are good to go!
+			assert.deepStrictEqual(actualDiagnostics, expectedDiagnostics);
+			return;
+		} catch (e) {
+			// If they don't match yet, ignore the error and wait for the next loop.
 		}
 	}
+
+	// If we exhaust all 10 loops, run it one last time to explicitly throw the 
+	// AssertionError so Mocha reports the nice diff output.
 	assert.deepStrictEqual(actualDiagnostics, expectedDiagnostics);
 }
 

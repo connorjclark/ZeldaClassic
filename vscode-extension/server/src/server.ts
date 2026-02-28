@@ -151,7 +151,10 @@ connection.onDidChangeConfiguration(async (change) => {
 	configUpdateController = new AbortController();
 	const signal = configUpdateController.signal;
 
-	[...activeJobs.keys()].forEach(abandonJob);
+	[...activeJobs.keys()].forEach(doc => {
+		abandonJob(doc);
+		connection.sendDiagnostics({ uri: doc.uri, diagnostics: [] });
+	});
 	docJobResults.clear();
 	cachedGlobalCompletionItems.length = 0;
 	globalClasses.clear();
