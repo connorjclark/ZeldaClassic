@@ -3,6 +3,11 @@
 
 #include "base/headers.h"
 
+namespace ZScript
+{
+	class LocationData;
+}
+
 using std::shared_ptr;
 #undef TEXT
 #undef VOID
@@ -99,7 +104,7 @@ void zconsole_error(std::string const& str);
 void zconsole_info(std::string const& str);
 
 bool zparser_errored_out();
-void zparser_error_out(std::string message);
+void zparser_error_out(std::string message, ZScript::LocationData const& err_loc);
 void zparser_warn_out(std::string message);
 
 #endif

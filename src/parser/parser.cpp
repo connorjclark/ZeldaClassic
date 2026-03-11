@@ -78,29 +78,23 @@ bool zparser_errored_out()
 {
 	return zscript_error_out;
 }
-void zparser_error_out(std::string message)
+void zparser_error_out(std::string message, ZScript::LocationData const& err_loc)
 {
 	zscript_error_out = true;
 
 	if (!current_diagnostics || curfilename != input_script_filename) return;
 
-	ZScript::LocationData loc{};
-	loc.first_line = yylloc.first_line;
-	loc.last_line = yylloc.last_line;
-	loc.first_column = yylloc.first_column;
-	loc.last_column = yylloc.last_column;
-	loc.fname = input_script_filename;
-	std::string context = getErrorContext(loc);
+	std::string context = getErrorContext(err_loc);
 	if (!context.empty())
 		zconsole_error(context);
 
 	auto& diag = current_diagnostics->emplace_back();
 	diag.severity = DiagnosticSeverity::Error;
 	diag.message = message;
-	diag.range.start.line = yylloc.first_line - 1;
-	diag.range.start.character = yylloc.first_column - 1;
-	diag.range.end.line = yylloc.last_line - 1;
-	diag.range.end.character = yylloc.last_column - 1;
+	diag.range.start.line = err_loc.first_line - 1;
+	diag.range.start.character = err_loc.first_column - 1;
+	diag.range.end.line = err_loc.last_line - 1;
+	diag.range.end.character = err_loc.last_column - 1;
 }
 
 void zparser_warn_out(std::string message)

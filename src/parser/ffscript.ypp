@@ -70,10 +70,12 @@ struct AnnotData
 	string val, unescaped_val;
 	zfix intval;
 	uint type;
+	YYLTYPE location;
 };
-void annot_errstr(string const& str)
+void annot_errstr(string const& message, YYLTYPE const& loc)
 {
-	yyerrmsg(str, annot_row, annot_col, annot_err_txt.c_str());
+	zconsole_error(message.c_str());
+	zparser_error_out(message, ZScript::LocationData(loc));
 }
 void annot_trunc_str(string& str, size_t size)
 {
@@ -84,12 +86,12 @@ bool annot_type_check(uint expected, AnnotData const& data)
 	if(expected == data.type)
 		return true;
 	annot_errstr("ERROR: Bad Annotation Value: @"+data.key
-		+" expects a "+annot_tys[expected]+", not a "+annot_tys[data.type]);
+		+" expects a "+annot_tys[expected]+", not a "+annot_tys[data.type], data.location);
 	return false;
 }
-void annot_incompatible(string const& key1, string const& key2)
+void annot_incompatible(string const& key1, string const& key2, YYLTYPE const& loc)
 {
-	annot_errstr(fmt::format("ERROR: Annotation '@{}' not compatible with '@{}'", key1, key2));
+	annot_errstr(fmt::format("ERROR: Annotation '@{}' not compatible with '@{}'", key1, key2), loc);
 }
 void handle_annotations(ASTAnnotationList* list, std::function<bool(AnnotData&)> fn)
 {
@@ -129,14 +131,19 @@ void handle_annotations(ASTAnnotationList* list, std::function<bool(AnnotData&)>
 				break;
 		}
 		annot_err_txt = "@" + data.key + "(" + data.val + ")";
+
+		data.location.first_line = a->location.first_line;
+		data.location.first_column = a->location.first_column;
+		data.location.last_line = a->location.last_line;
+		data.location.last_column = a->location.last_column;
 		
 		if(used_keys.contains(data.key))
 		{
-			annot_errstr("ERROR: Duplicate Annotation Key: @"+data.key+" was already set.");
+			annot_errstr("ERROR: Duplicate Annotation Key: @"+data.key+" was already set.", data.location);
 			continue;
 		}
 		if(!fn(data))
-			annot_errstr("ERROR: Bad Annotation Key: '"+data.val+"'");
+			annot_errstr("ERROR: Bad Annotation Key: '"+data.key+"'", data.location);
 	}
 	delete list;
 }
@@ -1129,7 +1136,7 @@ Annotated_Script :
 							else if(data.val == "-1")
 								script->metadata.initd_type[c] = -1;
 							else annot_errstr("ERROR: Bad Annotation Value: '@" + key + "' must be"
-									" exactly 'D','H','LD','LH','B', or '-1' NOT '" + data.strval + "'.");
+									" exactly 'D','H','LD','LH','B', or '-1' NOT '" + data.strval + "'.", data.location);
 						}
 						return true;
 					}
@@ -1698,7 +1705,7 @@ Annotated_Loop :
 					else if(data.strval == "long" || data.strval == "float")
 						loop->overflow = ASTStmtRangeLoop::OVERFLOW_LONG;
 					else annot_errstr(annot_err_header+": '@"+key+"' must be"
-							" exactly 'off','int','float', or 'long', NOT '" + data.strval + "'.");
+							" exactly 'off','int','float', or 'long', NOT '" + data.strval + "'.", data.location);
 				}
 				return true;
 			}
@@ -1877,7 +1884,7 @@ Annotated_Enum:
 			if(key == "Increment")
 			{
 				if(en->getBitMode() != ASTDataEnum::BIT_NONE)
-					annot_incompatible("Increment", "Bitflags");
+					annot_incompatible("Increment", "Bitflags", data.location);
 				else if(annot_type_check(ANNTY_INT, data))
 					en->increment_val = data.intval;
 				return true;
@@ -1885,7 +1892,7 @@ Annotated_Enum:
 			else if(key == "Bitflags")
 			{
 				if(en->increment_val)
-					annot_incompatible("Bitflags", "Increment");
+					annot_incompatible("Bitflags", "Increment", data.location);
 				else if(annot_type_check(ANNTY_STR, data))
 				{
 					if(data.strval == "int")
@@ -2558,7 +2565,7 @@ void yywarn(string const& message, int32_t row, int32_t col, char const* txt)
 void yyerrmsg(string const& message, int32_t row, int32_t col, char const* txt)
 {
 	zconsole_error(yyerrstr(message,row,col,txt).c_str());
-	zparser_error_out(message);
+	zparser_error_out(message, ZScript::LocationData(yylloc));
 }
 void yydb(string const& message, int32_t row, int32_t col, char const* txt)
 {

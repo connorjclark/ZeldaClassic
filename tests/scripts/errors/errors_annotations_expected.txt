@@ -1,0 +1,61 @@
+stderr:
+
+Compiling 'errors_annotations.zs'
+Pass 1: Parsing
+ERROR: Bad Annotation Value: '@AlwaysRunEndpoint' must be exactly 'off','int','float', or 'long', NOT 'invalid'.
+
+
+1    void badAnnotation()
+2    {
+3        @AlwaysRunEndpoint("invalid")
+         ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+ERROR: Bad Annotation Key: 'Authors'
+
+
+ 7    }
+ 8    
+ 9    @Authors("asd")
+      ^~~~~~~~~~~~~~~
+
+
+Failure!
+Compile finished with exit code '-1' (compiled with warnings)
+
+stdout:
+
+{
+  "success": false,
+  "code": -1,
+  "diagnostics": [
+    {
+      "range": {
+        "start": {
+          "line": 2,
+          "character": 4
+        },
+        "end": {
+          "line": 2,
+          "character": 33
+        }
+      },
+      "severity": 1,
+      "message": "ERROR: Bad Annotation Value: '@AlwaysRunEndpoint' must be exactly 'off','int','float', or 'long', NOT 'invalid'."
+    },
+    {
+      "range": {
+        "start": {
+          "line": 8,
+          "character": 0
+        },
+        "end": {
+          "line": 8,
+          "character": 15
+        }
+      },
+      "severity": 1,
+      "message": "ERROR: Bad Annotation Key: 'Authors'"
+    }
+  ]
+}
