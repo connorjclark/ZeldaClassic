@@ -40,7 +40,7 @@ mdurl==0.1.2
 multidict==6.0.5
 myst-parser==4.0.0
 packaging==24.1
-pillow==10.2.0
+pillow==12.1.1
 pycparser==2.21
 pydata-sphinx-theme==0.16.0
 PyGithub==1.58.2
