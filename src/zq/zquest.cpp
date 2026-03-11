@@ -5404,7 +5404,7 @@ static void draw_screenunit_map_screen(VisibleScreen visible_screen)
 	if (!layers_valid(scr))
 		fix_layers(scr, true);
 
-	clear_to_color(mapscreenbmp, jwin_pal[jcBOX]);
+	clear_to_color(mapscreenbmp,0);
 	if (LayerDitherBG > -1)
 	{
 		if (LayerDitherSz > 0)

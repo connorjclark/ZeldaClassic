@@ -93,17 +93,18 @@ void MapViewRTI::render(bool bitmap_resized)
 
 	for (auto& [screen, x, y, _] : screens_to_draw)
 	{
-		if (layer_dither_bg > -1)
+		if (layer_dither_sz <= -1)
 		{
-			if (layer_dither_sz > 0)
-			{
-				clear_to_color(mapscreenbmp, 0);
-				ditherblit(mapscreenbmp, nullptr, vc(layer_dither_bg), dithChecker, layer_dither_sz);
-			}
-			else
-			{
-				clear_to_color(mapscreenbmp, vc(layer_dither_bg));
-			}
+			clear_to_color(bmap4_single, 0);
+		}
+		else if (layer_dither_sz > 0)
+		{
+			clear_to_color(bmap4_single, 0);
+			ditherblit(bmap4_single, nullptr, vc(layer_dither_bg), dithChecker, layer_dither_sz);
+		}
+		else
+		{
+			clear_to_color(bmap4_single, vc(layer_dither_bg));
 		}
 
 		Map.setCurrScr(screen);
