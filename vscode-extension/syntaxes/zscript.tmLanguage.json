@@ -98,6 +98,23 @@
 					"match": "\\b(OPTION_VALUE|IS_INCLUDED|new|delete)\\b"
 				},
 				{
+					"begin": "(\\[)(?=[^\\[\\]\\(\\)]*?\\))|(\\()(?=[^\\[\\]\\(\\)]*?\\])",
+					"beginCaptures": {
+						"1": { "name": "string.unquoted.range.bracket.zscript" },
+						"2": { "name": "string.unquoted.range.bracket.zscript" }
+					},
+					"end": "(\\]|\\))",
+					"endCaptures": {
+						"1": { "name": "string.unquoted.range.bracket.zscript" }
+					},
+					"name": "meta.range.halfopen.zscript",
+					"patterns": [
+						{
+							"include": "$self"
+						}
+					]
+				},
+				{
 					"name": "keyword.operator.misc.zscript",
 					"match": "(=\\.\\.=|\\.\\.\\.|=\\.\\.|\\.\\.=|\\.\\.)"
 				},
