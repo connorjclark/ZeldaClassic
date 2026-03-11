@@ -2766,6 +2766,7 @@ static constexpr script_variable variable_list[]=
 	{ "ENGINE_MUSIC_ACTIVE", ENGINE_MUSIC_ACTIVE, 0},
 	{ "CMBTRIG_PLAY_MUSIC", CMBTRIG_PLAY_MUSIC, 0},
 	{ "CMBTRIG_MUSIC_REFRESH", CMBTRIG_MUSIC_REFRESH, 0},
+	{ "SUBWIDGTY_COLOR_VISITED", SUBWIDGTY_COLOR_VISITED, 0 },
 	{"", -1},
 };
 
@@ -4745,6 +4746,7 @@ std::optional<int> get_register_ref_dependency(int reg)
 		case SUBWIDGTY_BUTTON:
 		case SUBWIDGTY_COLOR_BG:
 		case SUBWIDGTY_COLOR_BG2:
+		case SUBWIDGTY_COLOR_VISITED:
 		case SUBWIDGTY_COLOR_CMPBLNK:
 		case SUBWIDGTY_COLOR_CMPOFF:
 		case SUBWIDGTY_COLOR_FILL:
