@@ -1109,7 +1109,7 @@ void DrawConsole(Debugger* debugger)
 			ImGui::TableSetupColumn("Output", ImGuiTableColumnFlags_WidthStretch);
 			ImGui::TableSetupColumn("Location", ImGuiTableColumnFlags_WidthFixed, 140.0f);
 
-			for (int i = 0; i < debugger->console_logs.size(); ++i)
+			auto RenderLogNode = [&](int i)
 			{
 				const auto& log = debugger->console_logs[i];
 				const StackFrame* top_frame = log.stack_trace && log.stack_trace->frames.size() ? &log.stack_trace->frames.front() : nullptr;
@@ -1143,8 +1143,10 @@ void DrawConsole(Debugger* debugger)
 						// Use invisible label ("##" + ID) so we just get the arrow
 						ImGui::PushStyleColor(ImGuiCol_Text, U32ToImVec4(palette[(int)TextEditor::PaletteIndex::Comment]));
 						is_open = ImGui::TreeNodeEx((void*)(intptr_t)i, flags, "%s", "");
+
 						if (ImGui::IsItemClicked() && i == debugger->console_logs.size() - 1)
 							debugger->console_scroll_to_bottom = true;
+
 						ImGui::PopStyleColor();
 						ImGui::SameLine();
 					}
@@ -1157,7 +1159,7 @@ void DrawConsole(Debugger* debugger)
 
 					// Message Body
 					ImGui::TextWrapped("%s", log.body.c_str());
-	
+
 					// Context Menu
 					if (ImGui::BeginPopupContextItem("context_menu"))
 					{
@@ -1185,17 +1187,19 @@ void DrawConsole(Debugger* debugger)
 						{
 							const auto& frame = log.stack_trace->frames[j];
 							ImGui::PushID(j);
+
 							if (ImGui::Selectable(frame.to_string().c_str()))
 							{
 								if (frame.source_file)
 									debugger->SetSourceFileAndLine(frame.source_file, frame.line);
 							}
+
 							ImGui::PopID();
 						}
 
 						ImGui::PopStyleColor();
 						ImGui::Unindent(ImGui::GetTreeNodeToLabelSpacing() / 2);
-						ImGui::TreePop(); 
+						ImGui::TreePop();
 					}
 				}
 
@@ -1212,7 +1216,24 @@ void DrawConsole(Debugger* debugger)
 				ImGui::PopStyleColor();
 
 				ImGui::PopID();
-			}
+			};
+
+			int list_size = debugger->console_logs.size();
+
+			// Exclude the last 5 items from the clipper entirely
+			int clipped_size = std::max(0, list_size - 5);
+
+			ImGuiListClipper clipper;
+			clipper.Begin(clipped_size);
+
+			while (clipper.Step())
+				for (int i = clipper.DisplayStart; i < clipper.DisplayEnd; ++i)
+					RenderLogNode(i);
+
+			// Always render the last 5 items manually so their true height is never culled.
+			int manual_start = std::max(0, list_size - 5);
+			for (int i = manual_start; i < list_size; ++i)
+				RenderLogNode(i);
 
 			ImGui::EndTable();
 		}
@@ -1233,17 +1254,21 @@ void DrawConsole(Debugger* debugger)
 	// Stretch the input box to the full width of the window.
 	ImGui::PushItemWidth(-FLT_MIN);
 	ImGuiInputTextFlags flags = ImGuiInputTextFlags_EnterReturnsTrue | ImGuiInputTextFlags_CallbackHistory;
+
 	if (ImGui::InputTextWithHint("##ConsoleInput", "Evaluate expression...", input_buf, IM_ARRAYSIZE(input_buf), flags, ConsoleInputCallback, (void*)debugger))
 	{
 		std::string cmd = input_buf;
+
 		if (!cmd.empty())
 		{
 			debugger->AddToConsoleExpressionHistory(cmd);
 			debugger->AddConsoleMessage("> " + cmd);
+
 			if (auto v = debugger->Evaluate(cmd, false))
 				debugger->AddConsoleDebugValue(cmd, v.value());
 			else
 				debugger->AddConsoleMessage(v.error());
+
 			input_buf[0] = '\0';
 			debugger->history_pos = -1;
 			ImGui::SetKeyboardFocusHere(-1);

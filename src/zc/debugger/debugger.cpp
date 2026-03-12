@@ -339,7 +339,7 @@ void Debugger::AddConsoleMessageWithStackTrace(std::string message, StackTrace s
 		.stack_trace = std::make_unique<StackTrace>(std::move(stack_trace)),
 	});
 
-	while (console_logs.size() > 10000)
+	while (console_logs.size() > 20000)
 		console_logs.pop_front();
 
 	console_scroll_to_bottom = true;
@@ -356,7 +356,7 @@ void Debugger::AddConsoleMessage(std::string message)
 		.body = std::move(message),
 	});
 
-	while (console_logs.size() > 10000)
+	while (console_logs.size() > 20000)
 		console_logs.pop_front();
 
 	console_scroll_to_bottom = true;
@@ -371,7 +371,7 @@ void Debugger::AddConsoleDebugValue(std::string expression, DebugValue value)
         .variable = std::make_unique<Variable>(std::move(var)),
     });
 
-    while (console_logs.size() > 10000)
+    while (console_logs.size() > 20000)
 		console_logs.pop_front();
 
     console_scroll_to_bottom = true;
