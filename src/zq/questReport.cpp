@@ -1012,12 +1012,6 @@ void integrityCheckSaveCombo()
     }
 }
 
-
-bool integrityBoolStringNoGuy(mapscr *ts)
-{
-    return false;//(ts->str!=0&&ts->guy==0&&ts->room==0);
-}
-
 bool integrityBoolGuyNoString(mapscr *ts)
 {
     return (ts->guy!=0&&!(ts->roomflags&RFL_ALWAYS_GUY)&&ts->room==0&&ts->str==0);

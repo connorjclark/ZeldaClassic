@@ -87,7 +87,7 @@ static DIALOG edit_cset_dlg[] =
 	{ NULL,                 0,    0,    0,    0,   0,       0,       0,       0,          0,             0,       NULL,                           NULL,  NULL }
 };
 
-int32_t jwin_hsl_proc(int32_t msg, DIALOG *d, int32_t c)
+int32_t jwin_hsl_proc(int32_t msg, DIALOG *d, [[maybe_unused]] int32_t c)
 {
 #define HSL_FLAG_HASMOUSE	1
 #define HSL_FLAG_COLOR		2
@@ -213,7 +213,7 @@ int32_t jwin_hsl_proc(int32_t msg, DIALOG *d, int32_t c)
 	return ret;
 }
 
-int jwin_cset_proc(int msg, DIALOG* d, int c)
+int jwin_cset_proc(int msg, DIALOG* d, [[maybe_unused]] int c)
 {
 	static int cs_hei = 12, last_copy = 0, lastshow16 = 0;
 	ASSERT(d);

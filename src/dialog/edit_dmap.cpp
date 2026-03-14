@@ -266,7 +266,7 @@ std::shared_ptr<GUI::Widget> EditDMapDialog::view()
 								mapGridPtr = &local_dmap.grid[0],
 								continueScreen = local_dmap.cont, compassScreen = local_dmap.compass,
 								smallDMap = sm_dmap(local_dmap.type),
-								onUpdate = [&](byte* byteptr, byte compassScreen, byte continueScreen)
+								onUpdate = [&]([[maybe_unused]] byte* byteptr, byte compassScreen, byte continueScreen)
 								{
 									if (compassScreen != local_dmap.compass)
 									{

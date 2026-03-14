@@ -27,7 +27,7 @@ static ArrayRegistrar BOTTLEPERCENT_registrar(BOTTLEPERCENT, []{
 
 static ArrayRegistrar BOTTLEFLAGS_registrar(BOTTLEFLAGS, []{
 	static ScriptingArray_ObjectComputed<bottletype, bool> impl(
-		[](bottletype* btl){
+		[](bottletype*){
 			return 5;
 		},
 		[](bottletype* btl, int index) -> bool {

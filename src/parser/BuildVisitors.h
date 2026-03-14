@@ -109,7 +109,7 @@ namespace ZScript
 		virtual void caseOptionValue(ASTOptionValue& host, void* param);
 		virtual void caseIsIncluded(ASTIsIncluded& host, void* param);
 		// Types
-		void caseDataType(ASTDataType& host, void* param) {}
+		void caseDataType(ASTDataType&, void*) {}
 
 		void startScope(AST& host);
 		void finalizeScope();
@@ -348,7 +348,7 @@ namespace ZScript
 		MergeLabels(int targ_label, vector<int> const& labels)
 			: labels(labels),targ_label(targ_label) {}
 	public:
-		void caseLabel(LabelArgument &host, void *param)
+		void caseLabel(LabelArgument &host, void*)
 		{
 			for(int lbl : labels)
 				if(lbl == host.getID())

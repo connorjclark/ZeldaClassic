@@ -57,7 +57,7 @@ void zc_pop_config()
 	pop_config_state();
 }
 
-std::string qst_cfg_header_from_path(std::string path)
+std::string qst_cfg_header_from_path([[maybe_unused]] std::string path)
 {
 #if defined(IS_PLAYER) or defined(IS_EDITOR)
 	path = relativize_path(path);

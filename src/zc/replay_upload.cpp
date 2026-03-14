@@ -252,7 +252,7 @@ static bool should_process_replay(status_entry_t& status_entry, fs::path path, i
 	return false;
 }
 
-static bool process_replay(status_entry_t& status_entry, fs::path path, std::string rel_fname, int64_t now_time)
+static bool process_replay(status_entry_t& status_entry, fs::path path, [[maybe_unused]] std::string rel_fname, int64_t now_time)
 {
 	status_entry = {};
 	status_entry.time = now_time;

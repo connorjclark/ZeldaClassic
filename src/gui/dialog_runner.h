@@ -34,7 +34,7 @@ public:
 			realize(root);
 			realized = true;
 			dlg.post_realize();
-			runInner(root);
+			runInner();
 		}
 	}
 
@@ -101,7 +101,7 @@ private:
 	/* Sets up the DIALOG array for a dialog so that it can be run. */
 	void realize(std::shared_ptr<Widget> root);
 
-	void runInner(std::shared_ptr<Widget> root);
+	void runInner();
 
 	friend class DialogRef;
 	friend int32_t dialog_proc(int32_t msg, DIALOG *d, int32_t c);

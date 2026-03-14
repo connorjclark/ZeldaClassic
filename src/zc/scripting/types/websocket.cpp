@@ -254,7 +254,7 @@ static ArrayRegistrar WEBSOCKET_URL_registrar(WEBSOCKET_URL, []{
 	static ScriptingArray_ObjectComputed<user_websocket, char> impl(
 		[](user_websocket* ws){ return ws->url.size() + 1; },
 		[](user_websocket* ws, int index) -> char { return ws->url[index]; },
-		[](user_websocket* ws, int index, char value){}
+		[](user_websocket*, int, char){}
 	);
 	impl.setMul10000(true);
 	impl.setReadOnly();

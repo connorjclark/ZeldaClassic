@@ -39,7 +39,7 @@ struct ffdata
 	ffdata(mapscr* scr, int32_t ind);
 	void clear();
 	void load(mapscr* scr, int32_t ind);
-	void save(mapscr* scr, int screen, int32_t ind);
+	void save(int screen, int32_t ind);
 	ffdata& operator=(ffdata const& other);
 };
 

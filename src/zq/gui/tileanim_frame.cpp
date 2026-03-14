@@ -11,7 +11,7 @@
 #include "tiles.h"
 #include "core/qrs.h"
 
-int32_t tile_anim_proc(int32_t msg,DIALOG *d,int32_t c)
+int32_t tile_anim_proc(int32_t msg,DIALOG *d, [[maybe_unused]] int32_t c)
 {
 	using GUI::TileFrame;
 	assert(d->dp);

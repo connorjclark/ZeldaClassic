@@ -1,4 +1,5 @@
 #include "cornerselect.h"
+#include "base/check.h"
 #include "gui/common.h"
 #include "gui/dialog.h"
 #include "gui/dialog_runner.h"
@@ -154,7 +155,8 @@ void CornerSwatch::calculateSize()
 
 int32_t CornerSwatch::onEvent(int32_t event, MessageDispatcher& sendMessage)
 {
-	assert(event == geCHANGE_SELECTION);
+	CHECK(event == geCHANGE_SELECTION);
+
 	if(onSelectFunc)
 		onSelectFunc(alDialog->d1);
 	if(message >= 0)

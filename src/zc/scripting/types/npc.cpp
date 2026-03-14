@@ -420,7 +420,7 @@ int32_t npc_linedup()
 }
 
 
-void do_npc_hero_in_range(const bool v)
+void do_npc_hero_in_range([[maybe_unused]] const bool v)
 {
 	int32_t dist = get_register(sarg1) / 10000;
 	if(GuyH::loadNPC(GET_REF(npcref)) == SH::_NoError)
@@ -2186,7 +2186,7 @@ static ArrayRegistrar NPCMISCD_registrar(NPCMISCD, []{
 
 static ArrayRegistrar NPCDD_registrar(NPCDD, []{
 	static ScriptingArray_ObjectComputed<enemy, int32_t> impl(
-		[](enemy* enemy){ return FFCore.getQuestHeaderInfo(vZelda) >= 0x255 ? 32 : 16; },
+		[](enemy*){ return FFCore.getQuestHeaderInfo(vZelda) >= 0x255 ? 32 : 16; },
 		[](enemy* enemy, int index){ return enemy->get_dmisc(index); },
 		[](enemy* enemy, int index, int value){ enemy->set_dmisc(index, value); }
 	);
@@ -2203,7 +2203,7 @@ static ArrayRegistrar NPCFLAGS_registrar(NPCFLAGS, []{
 
 static ArrayRegistrar NPCSCRDEFENSED_registrar(NPCSCRDEFENSED, []{
 	static ScriptingArray_ObjectComputed<enemy, byte> impl(
-		[](enemy* enemy){ return edefSCRIPTDEFS_MAX + 1; },
+		[](enemy*){ return edefSCRIPTDEFS_MAX + 1; },
 		[](enemy* enemy, int index){ return enemy->defense[index + edefSCRIPT01]; },
 		[](enemy* enemy, int index, byte value){ enemy->defense[index + edefSCRIPT01] = value; }
 	);
@@ -2229,7 +2229,7 @@ static ArrayRegistrar NPCDEFENSED_registrar(NPCDEFENSED, []{
 
 static ArrayRegistrar NPCHITBY_registrar(NPCHITBY, []{
 	static ScriptingArray_ObjectComputed<enemy, int32_t> impl(
-		[](enemy* enemy){ return NUM_HIT_TYPES_USED; },
+		[](enemy*){ return NUM_HIT_TYPES_USED; },
 		[](enemy* enemy, int index){
 			switch (index)
 			{
@@ -2312,7 +2312,7 @@ static ArrayRegistrar NPCBEHAVIOUR_registrar(NPCBEHAVIOUR, []{
 
 static ArrayRegistrar NPCSHIELD_registrar(NPCSHIELD, []{
 	static ScriptingArray_ObjectComputed<enemy, bool> impl(
-		[](enemy* enemy){ return 5; },
+		[](enemy*){ return 5; },
 		[](enemy* enemy, int index) -> bool {
 			switch (index)
 			{

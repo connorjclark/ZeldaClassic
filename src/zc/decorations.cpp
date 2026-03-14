@@ -624,7 +624,7 @@ void dRipples::draw(BITMAP *dest)
 	decoration::draw8(dest);
 }
 
-dHover::dHover(zfix X,zfix Y,int32_t Id,int32_t Clk, int32_t wpnSpr) : decoration(X,Y,Id,Clk)
+dHover::dHover(zfix X,zfix Y,int32_t Id,int32_t Clk, [[maybe_unused]] int32_t wpnSpr) : decoration(X,Y,Id,Clk)
 {
 	id=Id;
 	clk=Clk;

@@ -260,7 +260,7 @@ namespace ZScript
 		virtual std::optional<std::string> getDocComment() const {return std::nullopt;}
 		
 		// Get the value at compile time.
-		virtual std::optional<int32_t> getCompileTimeValue(bool getinitvalue = false) const {return std::nullopt;}
+		virtual std::optional<int32_t> getCompileTimeValue([[maybe_unused]] bool getinitvalue = false) const {return std::nullopt;}
 
 		// Get the declaring node.
 		virtual AST* getNode() const {return NULL;}
@@ -391,7 +391,7 @@ namespace ZScript
 
 		std::optional<std::string> getName() const;
 
-		virtual std::optional<int32_t> getCompileTimeValue(bool getinitvalue = false) const {return value;}
+		virtual std::optional<int32_t> getCompileTimeValue([[maybe_unused]] bool getinitvalue = false) const {return value;}
 
 		ASTDataDecl* getNode() const {return &node;}
 	
@@ -556,7 +556,7 @@ namespace ZScript
 		
 		optional<int32_t> defaultReturn;
 		
-		bool shouldShowDepr(bool err) const;
+		bool shouldShowDepr() const;
 		
 		Function* createAlias(std::string name);
 		const std::vector<Function*>& getAliases() const {return aliases;}
@@ -565,8 +565,8 @@ namespace ZScript
 		
 		#define CONSTEXPR_CBACK_TY std::function<optional<int32_t>(vector<optional<int32_t>> const&, \
 			AST&, CompileErrorHandler*, Scope*)>
-		#define CONSTEXPR_CBACK_HEADER(...) [__VA_ARGS__](vector<optional<int32_t>> const& args, \
-			AST& node, CompileErrorHandler* handler, Scope* scope) -> optional<int32_t>
+		#define CONSTEXPR_CBACK_HEADER(...) [__VA_ARGS__]([[maybe_unused]] vector<optional<int32_t>> const& args, \
+			[[maybe_unused]] AST& node, [[maybe_unused]] CompileErrorHandler* handler, [[maybe_unused]] Scope* scope) -> optional<int32_t>
 		/** constexpr system:
 		 * This callback lambda uses the header macro 'CONSTEXPR_CBACK_HEADER()' above.
 		 * The 'vector<optional<int>> const& args' parameter contains the compile-time value of each function

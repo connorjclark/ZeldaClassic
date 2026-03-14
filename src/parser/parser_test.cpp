@@ -130,7 +130,7 @@ static std::string symbolsToString(const DebugData& debugData, const std::vector
 	return fmt::format("{}", fmt::join(parts, ", "));
 }
 
-TestResults test_parser(bool verbose)
+TestResults test_parser([[maybe_unused]] bool verbose)
 {
 	TestResults tr{};
 
@@ -379,52 +379,52 @@ TestResults test_parser(bool verbose)
 			return DebugValue{heap[object.raw_value][sym->offset], nullptr};
 		}
 
-		std::optional<std::vector<DebugValue>> readArray(DebugValue array) override
+		std::optional<std::vector<DebugValue>> readArray(DebugValue) override
 		{
 			return std::nullopt;
 		}
 
-		std::optional<DebugValue> readArrayElement(DebugValue array, int index) override
+		std::optional<DebugValue> readArrayElement(DebugValue, int) override
 		{
 			return std::nullopt;
 		}
 
-		std::optional<std::string> readString(int32_t object_ptr) override
+		std::optional<std::string> readString(int32_t) override
 		{
 			return "";
 		}
 
-		void writeGlobal(int32_t offset, int32_t value) override
+		void writeGlobal(int32_t, int32_t) override
 		{
 		}
 
-		void writeStack(int32_t offset, int32_t value) override
+		void writeStack(int32_t, int32_t) override
 		{
 		}
 
-		void writeRegister(int32_t offset, int32_t value) override
+		void writeRegister(int32_t, int32_t) override
 		{
 		}
 
-		bool writeObjectMember(DebugValue object, const DebugSymbol* sym, DebugValue value) override
-		{
-			return false;
-		}
-
-		bool writeArrayElement(DebugValue array, int32_t index, DebugValue value) override
+		bool writeObjectMember(DebugValue, const DebugSymbol*, DebugValue) override
 		{
 			return false;
 		}
 
-		void decreaseObjectReference(DebugValue value, const DebugSymbol* sym) override
+		bool writeArrayElement(DebugValue, int32_t, DebugValue) override
+		{
+			return false;
+		}
+
+		void decreaseObjectReference(DebugValue, const DebugSymbol*) override
 		{
 		}
 
-		void increaseObjectReference(DebugValue value, const DebugSymbol* sym) override
+		void increaseObjectReference(DebugValue, const DebugSymbol*) override
 		{
 		}
 
-		expected<int32_t, std::string> executeSandboxed(pc_t start_pc, int this_zasm_var, int this_raw_value, const std::vector<int32_t>& args) override
+		expected<int32_t, std::string> executeSandboxed(pc_t start_pc, [[maybe_unused]] int this_zasm_var, [[maybe_unused]] int this_raw_value, const std::vector<int32_t>& args) override
 		{
 			if (start_pc == debug_add_int_start_pc)
 			{
@@ -452,12 +452,12 @@ TestResults test_parser(bool verbose)
 			return 0;
 		}
 
-		DebugValue createArray(std::vector<int32_t> args, const DebugType* array_type) override
+		DebugValue createArray(std::vector<int32_t>, const DebugType*) override
 		{
 			return {};
 		}
 
-		DebugValue createString(const std::string& str) override
+		DebugValue createString(const std::string&) override
 		{
 			return {};
 		}

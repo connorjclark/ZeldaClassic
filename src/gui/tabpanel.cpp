@@ -1,4 +1,5 @@
 #include "gui/tabpanel.h"
+#include "base/check.h"
 #include "zalleg/zalleg.h"
 #include "gui/dialog_runner.h"
 #include "gui/jwin.h"
@@ -182,9 +183,9 @@ void TabPanel::realize(DialogRunner& runner)
 	children[visibleChild]->setExposed(true);
 }
 
-int32_t TabPanel::onEvent(int32_t event, MessageDispatcher& sendMessage)
+int32_t TabPanel::onEvent(int32_t event, [[maybe_unused]] MessageDispatcher& sendMessage)
 {
-	assert(event == geCHANGE_SELECTION);
+	CHECK(event == geCHANGE_SELECTION);
 	
 	return -1;
 }

@@ -3777,7 +3777,7 @@ void do_ffc_layer(BITMAP* bmp, int32_t layer, const screen_handle_t& screen_hand
 void _do_current_ffc_layer(BITMAP* bmp, int32_t layer)
 {
 	if(!show_ffcs) return;
-	for_every_base_screen_in_region([&](mapscr* base_scr, unsigned int region_scr_x, unsigned int region_scr_y) {
+	for_every_base_screen_in_region([&](mapscr* base_scr, unsigned int, unsigned int) {
 		screen_handle_t handle = {base_scr, base_scr, base_scr->screen, 0};
 		do_ffc_layer(bmp, layer, handle, 0, 0);
 	});
@@ -4185,27 +4185,7 @@ static void put_walkflags_a5(int32_t x, int32_t y, word cmbdat, int32_t lyr)
 	}
 }
 
-void put_effectflags(BITMAP *dest,int32_t x,int32_t y,int32_t xofs,int32_t yofs, word cmbdat,int32_t lyr)
-{
-	newcombo const &c = combobuf[cmbdat];
-	
-	int32_t xx = x-xofs-viewport.x;
-	int32_t yy = y+playing_field_offset-yofs-viewport.y;
-	
-	for(int32_t i=0; i<4; i++)
-	{
-		int32_t tx=((i&2)<<2)+xx;
-		int32_t ty=((i&1)<<3)+yy;
-	
-		if(((c.walk>>4)&(1<<i)) && c.type != cNONE)
-		{
-				int32_t color = vc(10);
-					
-				rectfill(dest,tx,ty,tx+7,ty+7,color);
-		}
-	}
-}
-static void put_effectflags_a5(int32_t x, int32_t y, word cmbdat, int32_t lyr)
+static void put_effectflags_a5(int32_t x, int32_t y, word cmbdat)
 {
 	ALLEGRO_COLOR col_eff = al_map_rgba(85,255,85,info_opacity);
 	newcombo const &c = combobuf[cmbdat];
@@ -4328,7 +4308,7 @@ void do_effectflags(mapscr* scr, int32_t x, int32_t y)
 		
 		for(int32_t i=0; i<176; i++)
 		{
-			put_effectflags_a5(((i&15)<<4) + x, (i&0xF0) + y, scr->data[i], 0);
+			put_effectflags_a5(((i&15)<<4) + x, (i&0xF0) + y, scr->data[i]);
 		}
 		
 		end_info_bmp();
@@ -4678,7 +4658,7 @@ void draw_screen(bool showhero, bool runGeneric, bool drawPassiveSubscreenSepara
 	// Handle layer 2/3 possibly being background layers.
 	if (classic_draw) // weird ordering (-3 > -2)
 	{
-		for_every_nearby_screen(nearby_screens, [&](screen_handles_t screen_handles, int screen, int offx, int offy) {
+		for_every_nearby_screen(nearby_screens, [&](screen_handles_t screen_handles, int, int offx, int offy) {
 			mapscr* base_scr = screen_handles[0].base_scr;
 			if (XOR(base_scr->flags7&fLAYER2BG, DMaps[cur_dmap].flags&dmfLAYER2BG))
 				do_layer(scrollbuf, 0, screen_handles[2], offx, offy);
@@ -4695,7 +4675,7 @@ void draw_screen(bool showhero, bool runGeneric, bool drawPassiveSubscreenSepara
 			draw_msgstr(2, scrollbuf);
 	}
 	
-	for_every_nearby_screen(nearby_screens, [&](screen_handles_t screen_handles, int screen, int offx, int offy) {
+	for_every_nearby_screen(nearby_screens, [&](screen_handles_t screen_handles, int, int offx, int offy) {
 		mapscr* base_scr = screen_handles[0].base_scr;
 		if (XOR(base_scr->flags7&fLAYER3BG, DMaps[cur_dmap].flags&dmfLAYER3BG))
 			do_layer(scrollbuf, 0, screen_handles[3], offx, offy);
@@ -4714,7 +4694,7 @@ void draw_screen(bool showhero, bool runGeneric, bool drawPassiveSubscreenSepara
 	{
 		do_primitives(scrollbuf, -3);
 		// Actually use proper ordering (-3 < -2)
-		for_every_nearby_screen(nearby_screens, [&](screen_handles_t screen_handles, int screen, int offx, int offy) {
+		for_every_nearby_screen(nearby_screens, [&](screen_handles_t screen_handles, int, int offx, int offy) {
 			mapscr* base_scr = screen_handles[0].base_scr;
 			if (XOR(base_scr->flags7&fLAYER2BG, DMaps[cur_dmap].flags&dmfLAYER2BG))
 				do_layer(scrollbuf, 0, screen_handles[2], offx, offy);
@@ -4737,7 +4717,7 @@ void draw_screen(bool showhero, bool runGeneric, bool drawPassiveSubscreenSepara
 	}
 	
 	// Draw the main combo screens ("layer 0").
-	for_every_nearby_screen(nearby_screens, [&](screen_handles_t screen_handles, int screen, int offx, int offy) {
+	for_every_nearby_screen(nearby_screens, [&](screen_handles_t screen_handles, int, int offx, int offy) {
 		mapscr* base_scr = screen_handles[0].base_scr;
 		if (lenscheck(base_scr, 0))
 		{
@@ -4809,7 +4789,7 @@ void draw_screen(bool showhero, bool runGeneric, bool drawPassiveSubscreenSepara
 		hero_draw_done = true;
 	}
 	
-	for_every_nearby_screen(nearby_screens, [&](screen_handles_t screen_handles, int screen, int offx, int offy) {
+	for_every_nearby_screen(nearby_screens, [&](screen_handles_t screen_handles, int, int offx, int offy) {
 		do_layer(scrollbuf, 0, screen_handles[1], offx, offy); // LAYER 1
 	});
 
@@ -4819,7 +4799,7 @@ void draw_screen(bool showhero, bool runGeneric, bool drawPassiveSubscreenSepara
 	draw_msgstr(1, scrollbuf);
 
 	// Handle layer 2 NOT being used as background layers.
-	for_every_nearby_screen(nearby_screens, [&](screen_handles_t screen_handles, int screen, int offx, int offy) {
+	for_every_nearby_screen(nearby_screens, [&](screen_handles_t screen_handles, int, int offx, int offy) {
 		mapscr* base_scr = screen_handles[0].base_scr;
 		if (!XOR(base_scr->flags7&fLAYER2BG, DMaps[cur_dmap].flags&dmfLAYER2BG))
 			do_layer(scrollbuf, 0, screen_handles[2], offx, offy);
@@ -4869,7 +4849,7 @@ void draw_screen(bool showhero, bool runGeneric, bool drawPassiveSubscreenSepara
 
 	if (get_qr(qr_PUSHBLOCK_SPRITE_LAYER))
 	{
-		for_every_nearby_screen(nearby_screens, [&](screen_handles_t screen_handles, int screen, int offx, int offy) {
+		for_every_nearby_screen(nearby_screens, [&](screen_handles_t screen_handles, int, int offx, int offy) {
 			do_layer(scrollbuf, -2, screen_handles[0], offx, offy); // push blocks!
 			if(get_qr(qr_PUSHBLOCK_LAYER_1_2))
 			{
@@ -4884,7 +4864,7 @@ void draw_screen(bool showhero, bool runGeneric, bool drawPassiveSubscreenSepara
 	// Show walkflags cheat
 	if (show_walkflags || show_effectflags)
 	{
-		for_every_nearby_screen(nearby_screens, [&](screen_handles_t screen_handles, int screen, int offx, int offy) {
+		for_every_nearby_screen(nearby_screens, [&](screen_handles_t screen_handles, int, int offx, int offy) {
 			do_walkflags(screen_handles, offx, offy);
 			do_effectflags(screen_handles[0].base_scr, offx, offy);
 		});
@@ -5198,7 +5178,7 @@ void draw_screen(bool showhero, bool runGeneric, bool drawPassiveSubscreenSepara
 		add_clip_rect(dest, 0, playing_field_offset, dest->w, dest->h);
 
 	// Handle layer 3 NOT being used as background layers.
-	for_every_nearby_screen(nearby_screens, [&](screen_handles_t screen_handles, int screen, int offx, int offy) {
+	for_every_nearby_screen(nearby_screens, [&](screen_handles_t screen_handles, int, int offx, int offy) {
 		mapscr* base_scr = screen_handles[0].base_scr;
 		if (!XOR(base_scr->flags7&fLAYER3BG, DMaps[cur_dmap].flags&dmfLAYER3BG))
 			do_layer(dest, 0, screen_handles[3], offx, offy);
@@ -5217,7 +5197,7 @@ void draw_screen(bool showhero, bool runGeneric, bool drawPassiveSubscreenSepara
 		draw_msgstr(3);
 	
 	
-	for_every_nearby_screen(nearby_screens, [&](screen_handles_t screen_handles, int screen, int offx, int offy) {
+	for_every_nearby_screen(nearby_screens, [&](screen_handles_t screen_handles, int, int offx, int offy) {
 		do_layer(dest, 0, screen_handles[4], offx, offy);
 	});
 	
@@ -5229,7 +5209,7 @@ void draw_screen(bool showhero, bool runGeneric, bool drawPassiveSubscreenSepara
 	_do_current_ffc_layer(dest, 4);
 	draw_msgstr(4);
 
-	for_every_nearby_screen(nearby_screens, [&](screen_handles_t screen_handles, int screen, int offx, int offy) {
+	for_every_nearby_screen(nearby_screens, [&](screen_handles_t screen_handles, int, int offx, int offy) {
 		do_layer(dest, -1, screen_handles[0], offx, offy);
 		if (get_qr(qr_OVERHEAD_COMBOS_L1_L2))
 		{
@@ -5311,7 +5291,7 @@ void draw_screen(bool showhero, bool runGeneric, bool drawPassiveSubscreenSepara
 		color_map = trans_table;
 	}
 
-	for_every_nearby_screen(nearby_screens, [&](screen_handles_t screen_handles, int screen, int offx, int offy) {
+	for_every_nearby_screen(nearby_screens, [&](screen_handles_t screen_handles, int, int offx, int offy) {
 		do_layer(dest, 0, screen_handles[5], offx, offy);
 	});
 
@@ -5327,7 +5307,7 @@ void draw_screen(bool showhero, bool runGeneric, bool drawPassiveSubscreenSepara
 
 	do_primitives(dest, SPLAYER_OVERHEAD_FFC);
 
-	for_every_nearby_screen(nearby_screens, [&](screen_handles_t screen_handles, int screen, int offx, int offy) {
+	for_every_nearby_screen(nearby_screens, [&](screen_handles_t screen_handles, int, int offx, int offy) {
 		do_layer(dest, 0, screen_handles[6], offx, offy);
 	});
 
@@ -5339,7 +5319,7 @@ void draw_screen(bool showhero, bool runGeneric, bool drawPassiveSubscreenSepara
 	_do_current_ffc_layer(dest, 6);
 
 	bool any_dark = false;
-	for_every_nearby_screen(nearby_screens, [&](screen_handles_t screen_handles, int screen, int offx, int offy) {
+	for_every_nearby_screen(nearby_screens, [&](screen_handles_t screen_handles, int, int, int) {
 		mapscr* base_scr = screen_handles[0].base_scr;
 		any_dark |= is_dark(base_scr);
 	});
@@ -5347,14 +5327,14 @@ void draw_screen(bool showhero, bool runGeneric, bool drawPassiveSubscreenSepara
 	// Handle low drawn darkness
 	if(get_qr(qr_NEW_DARKROOM) && any_dark)
 	{
-		for_every_nearby_screen(nearby_screens, [&](screen_handles_t screen_handles, int screen, int offx, int offy) {
+		for_every_nearby_screen(nearby_screens, [&](screen_handles_t screen_handles, int, int offx, int offy) {
 			mapscr* base_scr = screen_handles[0].base_scr;
 			calc_darkroom_combos(base_scr, offx, offy + playing_field_offset);
 			calc_darkroom_ffcs(base_scr, 0, playing_field_offset);
 		});
 		if(showhero)
 			Hero.calc_darkroom_hero(0, -playing_field_offset);
-		for_every_nearby_screen(nearby_screens, [&](screen_handles_t screen_handles, int screen, int offx, int offy) {
+		for_every_nearby_screen(nearby_screens, [&](screen_handles_t screen_handles, int, int offx, int offy) {
 			mapscr* base_scr = screen_handles[0].base_scr;
 			if (!is_dark(base_scr))
 			{
@@ -6037,7 +6017,7 @@ bool scrolling_is_dark(const mapscr* scr)
 bool is_any_dark()
 {
 	bool dark = false;
-	for_every_base_screen_in_region([&](mapscr* scr, unsigned int region_scr_x, unsigned int region_scr_y) {
+	for_every_base_screen_in_region([&](mapscr* scr, unsigned int, unsigned int) {
 		dark |= (bool)(is_dark(scr));
 	});
 	return dark;
@@ -6105,7 +6085,7 @@ static void handle_screen_overlay(const std::vector<mapscr*>& screens)
 	}
 }
 
-static void load_a_screen_and_layers_init(int dmap, int screen, int ldir, bool screen_overlay, bool ffc_overlay)
+static void load_a_screen_and_layers_init(int screen, bool screen_overlay, bool ffc_overlay)
 {
 	std::vector<mapscr*> screens;
 
@@ -6444,13 +6424,13 @@ void loadscr(int32_t destdmap, int32_t screen, int32_t ldir, bool origin_screen_
 			{
 				bool screen_overlay = origin_screen_overlay && screen == cur_screen;
 				bool ffc_overlay = origin_ffc_overlay && screen == cur_screen;
-				load_a_screen_and_layers_init(destdmap, screen, ldir, screen_overlay, ffc_overlay);
+				load_a_screen_and_layers_init(screen, screen_overlay, ffc_overlay);
 			}
 		}
 	}
 	else
 	{
-		load_a_screen_and_layers_init(destdmap, screen, ldir, origin_screen_overlay, origin_ffc_overlay);
+		load_a_screen_and_layers_init(screen, origin_screen_overlay, origin_ffc_overlay);
 	}
 
 	prepare_current_region_handles();
@@ -6991,7 +6971,7 @@ static void putscrdoors(const nearby_screens_t& nearby_screens, BITMAP *dest, in
 	x -= viewport.x;
 	y -= viewport.y;
 
-	for_every_nearby_screen(nearby_screens, [&](screen_handles_t screen_handles, int screen, int offx, int offy) {
+	for_every_nearby_screen(nearby_screens, [&](screen_handles_t screen_handles, int, int offx, int offy) {
 		mapscr* scr = screen_handles[0].base_scr;
 		if (!scr->is_valid())
 			return;
@@ -7493,7 +7473,7 @@ void toggle_switches(dword flags, bool entry)
 {
 	if(!flags) return; //No flags to toggle
 
-	for_every_base_screen_in_region([&](mapscr* scr, unsigned int region_scr_x, unsigned int region_scr_y) {
+	for_every_base_screen_in_region([&](mapscr* scr, unsigned int, unsigned int) {
 		toggle_switches(flags, entry, create_screen_handles(scr));
 	});
 }
@@ -7643,7 +7623,7 @@ void toggle_switches(dword flags, bool entry, const screen_handles_t& screen_han
 
 void toggle_gswitches(int32_t state, bool entry)
 {
-	for_every_base_screen_in_region([&](mapscr* scr, unsigned int region_scr_x, unsigned int region_scr_y) {
+	for_every_base_screen_in_region([&](mapscr* scr, unsigned int, unsigned int) {
 		toggle_gswitches(state, entry, create_screen_handles(scr));
 	});
 }
@@ -7837,7 +7817,7 @@ void run_gswitch_timers()
 			}
 		++it;
 	}
-	for_every_base_screen_in_region([&](mapscr* scr, unsigned int region_scr_x, unsigned int region_scr_y) {
+	for_every_base_screen_in_region([&](mapscr* scr, unsigned int, unsigned int) {
 		toggle_gswitches(states, false, create_screen_handles(scr));
 	});
 }

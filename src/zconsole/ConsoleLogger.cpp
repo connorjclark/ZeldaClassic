@@ -7,7 +7,7 @@ byte monochrome_console;
 #ifdef _WIN32
 
 static OVERLAPPED k_Over = {0};
-static void WINAPI CompletionRoutine(DWORD u32_ErrorCode, DWORD u32_BytesTransfered, OVERLAPPED* pk_Overlapped)
+static void WINAPI CompletionRoutine([[maybe_unused]] DWORD u32_ErrorCode, [[maybe_unused]] DWORD u32_BytesTransfered, [[maybe_unused]] OVERLAPPED* pk_Overlapped)
 {
     // Don't care.
 }
@@ -521,10 +521,11 @@ CConsoleLogger::~CConsoleLogger()
 // logger_name     : pipe name . the default is f(this,time)
 // helper_executable: which (and where) is the EXE that will write the pipe's output
 //////////////////////////////////////////////////////////////////////////
-int32_t CConsoleLogger::Create(const char	*lpszWindowTitle/*=NULL*/,
-							int32_t			buffer_size_x/*=-1*/,int32_t buffer_size_y/*=-1*/,
-							const char	*logger_name/*=NULL*/,
-							const char	*helper_executable/*=NULL*/)
+int32_t CConsoleLogger::Create([[maybe_unused]] const char	*lpszWindowTitle/*=NULL*/,
+							[[maybe_unused]] int32_t			buffer_size_x/*=-1*/,
+							[[maybe_unused]] int32_t buffer_size_y/*=-1*/,
+							[[maybe_unused]] const char	*logger_name/*=NULL*/,
+							[[maybe_unused]] const char	*helper_executable/*=NULL*/)
 {
 #ifdef __EMSCRIPTEN__
 	return 0;
@@ -561,7 +562,7 @@ int32_t CConsoleLogger::Close(void)
 // 
 // this is the fastest way to print a simple (not formatted) string
 //////////////////////////////////////////////////////////////////////////
-inline int32_t CConsoleLogger::print(const char *lpszText,int32_t iSize/*=-1*/)
+inline int32_t CConsoleLogger::print(const char *lpszText, [[maybe_unused]] int32_t iSize/*=-1*/)
 {
 #ifndef __EMSCRIPTEN__
 	if (m_textlog) al_append_native_text_log(m_textlog, "%s", lpszText);
@@ -619,7 +620,7 @@ int32_t CConsoleLogger::ResetDefaultOutput(void)
 // _print: print helper
 // we use the thread-safe funtion "SafeWriteFile()" to output the data
 //////////////////////////////////////////////////////////////////////////
-int32_t CConsoleLogger::_print(const char *lpszText,int32_t iSize)
+int32_t CConsoleLogger::_print([[maybe_unused]] const char *lpszText, [[maybe_unused]] int32_t iSize)
 {
 	return 0;
 }
@@ -638,7 +639,7 @@ CConsoleLoggerEx::CConsoleLoggerEx()
 // first output the "command" (which is COMMAND_PRINT) and the size,
 // and than output the string itself	
 //////////////////////////////////////////////////////////////////////////
-int32_t CConsoleLoggerEx::_print(const char *lpszText,int32_t iSize)
+int32_t CConsoleLoggerEx::_print([[maybe_unused]] const char *lpszText, [[maybe_unused]] int32_t iSize)
 {
 	return 0;
 }
@@ -654,7 +655,7 @@ void CConsoleLoggerEx::cls(void)
 //////////////////////////////////////////////////////////////////////////
 // cls(DWORD) : clear screen with specific color
 //////////////////////////////////////////////////////////////////////////
-void CConsoleLoggerEx::cls(word color)
+void CConsoleLoggerEx::cls([[maybe_unused]] word color)
 {
 
 }	
@@ -670,7 +671,7 @@ void CConsoleLoggerEx::clear_eol(void)
 //////////////////////////////////////////////////////////////////////////
 // clear_eol(DWORD) : clear till the end of current line with specific color
 //////////////////////////////////////////////////////////////////////////
-void CConsoleLoggerEx::clear_eol(word color)
+void CConsoleLoggerEx::clear_eol([[maybe_unused]] word color)
 {
 
 }	
@@ -678,7 +679,7 @@ void CConsoleLoggerEx::clear_eol(word color)
 //////////////////////////////////////////////////////////////////////////
 // gotoxy(x,y) : sets the cursor to x,y location
 //////////////////////////////////////////////////////////////////////////
-void CConsoleLoggerEx::gotoxy(int32_t x,int32_t y)
+void CConsoleLoggerEx::gotoxy([[maybe_unused]] int32_t x, [[maybe_unused]] int32_t y)
 {
 
 }	
@@ -686,7 +687,7 @@ void CConsoleLoggerEx::gotoxy(int32_t x,int32_t y)
 //////////////////////////////////////////////////////////////////////////
 // cprintf(attr,str,...) : prints a formatted string with the "attributes" color
 //////////////////////////////////////////////////////////////////////////
-int32_t CConsoleLoggerEx::cprintf(int32_t attributes,const char *format,...)
+int32_t CConsoleLoggerEx::cprintf([[maybe_unused]] int32_t attributes, const char *format,...)
 {
 	int32_t ret;
 	char tmp[1024];
@@ -703,7 +704,7 @@ int32_t CConsoleLoggerEx::cprintf(int32_t attributes,const char *format,...)
 #endif
 	return ret;
 }
-int32_t CConsoleLoggerEx::safeprint(int32_t attributes,const char *str)
+int32_t CConsoleLoggerEx::safeprint([[maybe_unused]] int32_t attributes, const char *str)
 {
 	int32_t sz = strlen(str);
 #ifndef __EMSCRIPTEN__
@@ -743,7 +744,7 @@ int32_t CConsoleLoggerEx::safeprint(const char *str)
 //////////////////////////////////////////////////////////////////////////
 // the _cprintf() helper . do the actual output
 //////////////////////////////////////////////////////////////////////////
-int32_t CConsoleLoggerEx::_cprint(int32_t attributes,const char *lpszText,int32_t iSize)
+int32_t CConsoleLoggerEx::_cprint([[maybe_unused]] int32_t attributes, [[maybe_unused]] const char *lpszText, [[maybe_unused]] int32_t iSize)
 {
 	return 0;
 }

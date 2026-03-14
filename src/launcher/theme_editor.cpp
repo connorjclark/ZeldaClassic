@@ -288,7 +288,7 @@ bool ThemeEditor::handleMessage(const GUI::DialogMessage<message>& msg)
 				work_pal[dvc(q)] = work_pal[q];
 				jwin_a5_colors[q] = al_map_rgb(work_colors[q][0],work_colors[q][1],work_colors[q][2]);
 			}
-			save_themefile(path, work_pal, jwin_a5_colors);
+			save_themefile(path, jwin_a5_colors);
 			//Restore
 			memcpy(jwin_pal, restore_jwin_pal, sizeof(jwin_pal));
 			jwin_set_colors(jwin_pal);

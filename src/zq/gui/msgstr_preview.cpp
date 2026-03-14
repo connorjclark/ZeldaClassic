@@ -24,7 +24,8 @@ bool bottom_margin_clip(int32_t cursor_y, int32_t msg_h, int32_t bottom_margin)
 }
 #define BOTTOM_MARGIN_CLIP() bottom_margin_clip(cursor_y, h, msg_margins[down])
 
-void put_msg_str(char const* s, int32_t x, int32_t y, MsgStr const* str, int32_t index = -1)
+// TODO: remove unused param?
+void put_msg_str([[maybe_unused]] char const* s, int32_t x, int32_t y, MsgStr const* str, int32_t index = -1)
 {
 	int32_t w = str->w; //8-256
 	int32_t h = str->h; //8-168

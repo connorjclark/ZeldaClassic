@@ -8,7 +8,7 @@
 
 static MapViewRTI rti_map_view;
 
-void MapViewRTI::render(bool bitmap_resized)
+void MapViewRTI::render([[maybe_unused]] bool bitmap_resized)
 {
 	Map.ConfigureCursorHistory(false);
 

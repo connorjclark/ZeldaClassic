@@ -31,6 +31,8 @@ void ffcdata::draw(BITMAP* dest)
 
 void ffcdata::draw_ffc(BITMAP* dest, int32_t xofs, int32_t yofs, bool overlay)
 {
+	(void)overlay;
+
 	if (flags&ffc_changer) return;
 	#ifdef IS_PLAYER
 	if(combobuf[data].animflags & AF_EDITOR_ONLY) return;
@@ -129,6 +131,8 @@ bool ffcdata::getLoaded() const
 
 void ffcdata::doContactDamage(int32_t hdir)
 {
+	(void)hdir;
+
 #ifdef IS_PLAYER
 	if(flags & (ffc_changer | ffc_ethereal))
 		return; //Changer or ethereal; has no type

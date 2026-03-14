@@ -170,7 +170,7 @@ bool ZScript::operator>=(DataType const& lhs, DataType const& rhs)
 	return lhs.compare(rhs) >= 0;
 }
 
-DataType const& ZScript::getNaiveType(DataType const& type, Scope* scope)
+DataType const& ZScript::getNaiveType(DataType const& type, Scope*)
 {
 	DataType const* t = &type;
 
@@ -237,7 +237,7 @@ DataType const* DataTypeUnresolved::baseType(Scope& scope, CompileErrorHandler* 
 	return nullptr;
 }
 
-DataType const& DataTypeUnresolved::getShared(DataType const& target, Scope const* scope) const
+DataType const& DataTypeUnresolved::getShared(DataType const&, Scope const*) const
 {
 	return UNTYPED;
 }
@@ -300,7 +300,7 @@ bool DataTypeSimple::canCastTo(DataType const& target, bool allowDeprecatedArray
 	return false;
 }
 
-DataType const& DataTypeSimple::getShared(DataType const& target, Scope const* scope) const
+DataType const& DataTypeSimple::getShared(DataType const& target, Scope const*) const
 {
 	if(isVoid() || target.isVoid()) return ZVOID;
 	if(isUntyped()) return target;
@@ -332,7 +332,7 @@ DataType const& DataTypeSimple::getShared(DataType const& target, Scope const* s
 	return UNTYPED;
 }
 
-DataType const* DataTypeSimple::baseType(Scope& scope, CompileErrorHandler* errorHandler) const
+DataType const* DataTypeSimple::baseType(Scope&, CompileErrorHandler*) const
 {
 	return DataType::get(simpleId);
 }
@@ -343,7 +343,7 @@ DataType const* DataTypeSimple::baseType(Scope& scope, CompileErrorHandler* erro
 DataTypeSimpleConst::DataTypeSimpleConst(int32_t simpleId, string const& name)
 	: DataTypeSimple(simpleId, name, NULL)
 {}
-DataType const* DataTypeSimpleConst::baseType(Scope& scope, CompileErrorHandler* errorHandler) const
+DataType const* DataTypeSimpleConst::baseType(Scope&, CompileErrorHandler*) const
 {
 	auto* ty = DataType::get(simpleId);
 	return ty ? ty->getConstType() : nullptr;
@@ -393,7 +393,7 @@ DataType const& ZScript::getBaseType(DataType const& type)
 		current = &t->getElementType();
 	return *current;
 }
-DataType const* DataTypeArray::baseType(Scope& scope, CompileErrorHandler* errorHandler) const
+DataType const* DataTypeArray::baseType(Scope&, CompileErrorHandler*) const
 {
 	auto& ty = ZScript::getBaseType(elementType);
 	return &ty;
@@ -526,7 +526,7 @@ bool DataTypeCustom::canCastTo(DataType const& target, bool allowDeprecatedArray
 	return false;
 }
 
-DataType const& DataTypeCustom::getShared(DataType const& target, Scope const* scope) const
+DataType const& DataTypeCustom::getShared(DataType const& target, Scope const*) const
 {
 	if(target.isVoid()) return target;
 	if(target.isUntyped()) return *this;
@@ -561,12 +561,12 @@ int32_t DataTypeCustom::selfCompare(DataType const& other) const
 	return id - o.id;
 }
 
-DataType const* DataTypeCustom::baseType(Scope& scope, CompileErrorHandler* errorHandler) const
+DataType const* DataTypeCustom::baseType(Scope&, CompileErrorHandler*) const
 {
 	return DataType::getCustom(id);
 }
 
-DataType const* DataTypeCustomConst::baseType(Scope& scope, CompileErrorHandler* errorHandler) const
+DataType const* DataTypeCustomConst::baseType(Scope&, CompileErrorHandler*) const
 {
 	auto* ty = DataType::getCustom(id);
 	return ty ? ty->getConstType() : nullptr;
@@ -592,7 +592,7 @@ DataTypeTemplate::DataTypeTemplate(string const& name, uint32_t id, DataTypeTemp
 		constty->mut_type = this;
 }
 
-bool DataTypeTemplate::canCastTo(DataType const& target, bool allowDeprecatedArrayCast) const
+bool DataTypeTemplate::canCastTo(DataType const& target, [[maybe_unused]] bool allowDeprecatedArrayCast) const
 {
 	if(target.isUntyped()) return true;
 	if (DataTypeTemplate const* t = dynamic_cast<DataTypeTemplate const*>(&target))
@@ -600,7 +600,7 @@ bool DataTypeTemplate::canCastTo(DataType const& target, bool allowDeprecatedArr
 	return false;
 }
 
-DataType const& DataTypeTemplate::getShared(DataType const& target, Scope const* scope) const
+DataType const& DataTypeTemplate::getShared(DataType const& target, Scope const*) const
 {
 	if(target.isUntyped()) return *this;
 	if (DataTypeTemplate const* t = dynamic_cast<DataTypeTemplate const*>(&target))

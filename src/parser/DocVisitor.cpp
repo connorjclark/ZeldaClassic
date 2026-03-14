@@ -199,7 +199,7 @@ void DocVisitor::caseDataDecl(ASTDataDecl& host, void* param)
 	RecursiveVisitor::caseDataDecl(host, param);
 }
 
-void DocVisitor::caseDataEnum(ASTDataEnum& host, void* param)
+void DocVisitor::caseDataEnum(ASTDataEnum& host, void*)
 {
 	auto symbol = appendSymbol(SymbolKind::Enum, host);
 	DataType const* baseType = host.baseType->resolve_ornull(*scope, this);
@@ -220,7 +220,7 @@ void DocVisitor::caseDataEnum(ASTDataEnum& host, void* param)
 	active = prev_active;
 }
 
-void DocVisitor::caseFuncDecl(ASTFuncDecl& host, void* param)
+void DocVisitor::caseFuncDecl(ASTFuncDecl& host, void*)
 {
 	if (host.prototype || host.getFlag(FUNCFLAG_NIL))
 		return;

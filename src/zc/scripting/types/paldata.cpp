@@ -15,7 +15,7 @@ static std::optional<int> value_transform_rgb(int value)
 
 static ArrayRegistrar PALDATAR_registrar(PALDATAR, []{
 	static ScriptingArray_ObjectComputed<user_paldata, int> impl(
-		[](user_paldata* pd){ return PALDATA_NUM_COLORS; },
+		[](user_paldata*){ return PALDATA_NUM_COLORS; },
 		[](user_paldata* pd, int index) -> int {
 			return FFCore.do_paldata_getrgb(pd, index, 0);
 		},
@@ -31,7 +31,7 @@ static ArrayRegistrar PALDATAR_registrar(PALDATAR, []{
 
 static ArrayRegistrar PALDATAG_registrar(PALDATAG, []{
 	static ScriptingArray_ObjectComputed<user_paldata, int> impl(
-		[](user_paldata* pd){ return PALDATA_NUM_COLORS; },
+		[](user_paldata*){ return PALDATA_NUM_COLORS; },
 		[](user_paldata* pd, int index) -> int {
 			return FFCore.do_paldata_getrgb(pd, index, 1);
 		},
@@ -47,7 +47,7 @@ static ArrayRegistrar PALDATAG_registrar(PALDATAG, []{
 
 static ArrayRegistrar PALDATAB_registrar(PALDATAB, []{
 	static ScriptingArray_ObjectComputed<user_paldata, int> impl(
-		[](user_paldata* pd){ return PALDATA_NUM_COLORS; },
+		[](user_paldata*){ return PALDATA_NUM_COLORS; },
 		[](user_paldata* pd, int index) -> int {
 			return FFCore.do_paldata_getrgb(pd, index, 2);
 		},
@@ -63,7 +63,7 @@ static ArrayRegistrar PALDATAB_registrar(PALDATAB, []{
 
 static ArrayRegistrar PALDATACOLOR_registrar(PALDATACOLOR, []{
 	static ScriptingArray_ObjectComputed<user_paldata, int> impl(
-		[](user_paldata* pd){ return PALDATA_NUM_COLORS; },
+		[](user_paldata*){ return PALDATA_NUM_COLORS; },
 		[](user_paldata* pd, int index) -> int {
 			if (get_bit(pd->colors_used, index))
 			{

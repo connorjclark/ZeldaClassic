@@ -437,7 +437,7 @@ void MetadataVisitor::caseDataDecl(ASTDataDecl& host, void* param)
 	active = prev_active;
 }
 
-void MetadataVisitor::caseDataEnum(ASTDataEnum& host, void* param)
+void MetadataVisitor::caseDataEnum(ASTDataEnum& host, void*)
 {
 	auto* base_type = host.baseType.get();
 	if (base_type)

@@ -162,7 +162,7 @@ void stream_setspeed(ALSTREAMFILE* als, int32_t speed);
 int32_t stream_getlength(ALSTREAMFILE* als);
 void stream_setloop(ALSTREAMFILE* als, double start, double end);
 
-Music_Emu* gme_load_file(const char* filename, const char* ext);
+Music_Emu* gme_load_file(const char* filename);
 int32_t poll_gme_file(GMEFILE *gme);
 int32_t unload_gme_file(GMEFILE* gme);
 int32_t gme_play(GMEFILE *gme, int32_t vol);
@@ -423,7 +423,7 @@ ZCMUSIC * zcmusic_load_file(const char *filename)
 		
 			Music_Emu *emu;
 			
-			emu=gme_load_file(std::string(filename).c_str(), ext);
+			emu=gme_load_file(std::string(filename).c_str());
 			
 			if(emu)
 			{
@@ -762,8 +762,9 @@ int32_t zcmusic_change_track(ZCMUSIC* zcm, int32_t tracknum)
 	return 0;
 }
 
-std::string zcmusic_get_track_name(ZCMUSIC *zcm, int track)
+std::string zcmusic_get_track_name([[maybe_unused]] ZCMUSIC *zcm, [[maybe_unused]] int track)
 {
+	// TODO: try to restore this code.
 	return "";
 }
 
@@ -978,7 +979,7 @@ int32_t poll_gme_file(GMEFILE* gme)
 }
 
 
-Music_Emu* gme_load_file(const char* filename, const char* ext)
+Music_Emu* gme_load_file(const char* filename)
 {
     Music_Emu* emu=NULL;
     gme_err_t err = gme_open_file(filename, &emu, DUH_SAMPLES);

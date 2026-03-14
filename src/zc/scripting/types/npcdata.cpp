@@ -60,7 +60,7 @@ static ArrayRegistrar NPCDATAWMOVEFLAGS_registrar(NPCDATAWMOVEFLAGS, []{
 
 static ArrayRegistrar NPCDATASHIELD_registrar(NPCDATASHIELD, []{
 	static ScriptingArray_ObjectComputed<guydata, bool> impl(
-		[](guydata* guy){ return 5; },
+		[](guydata*){ return 5; },
 		[](guydata* guy, int index) -> bool {
 			switch (index)
 			{

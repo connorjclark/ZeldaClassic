@@ -38,7 +38,7 @@ public:
 	virtual void solid_update(bool push = true);
 	virtual void solid_push(solid_object* pusher);
 	//Overload to do damage to Hero on pushing them
-	virtual void doContactDamage(int32_t hdir){}
+	virtual void doContactDamage([[maybe_unused]] int32_t hdir){}
 	//Overload to give 'riding sideview platform' behaviors
 	virtual bool sideview_mode() const {return false;}
 protected:

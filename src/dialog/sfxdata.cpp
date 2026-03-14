@@ -112,7 +112,7 @@ std::shared_ptr<GUI::Widget> SFXDataDialog::view()
 						maxLength = 255,
 						fitParent = true,
 						text = local_ref.sfx_name,
-						onValChangedFunc = [&](GUI::TextField::type type, std::string_view text, int32_t)
+						onValChangedFunc = [&]([[maybe_unused]] GUI::TextField::type type, std::string_view text, int32_t)
 						{
 							local_ref.sfx_name = text;
 						}

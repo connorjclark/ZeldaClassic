@@ -552,6 +552,8 @@ static void _get_progressive_item(int32_t itmid, prog_item_data& data);
 static void _check_itembundle_recursive(int32_t itmid, prog_item_data& data)
 {
 #ifdef IS_EDITOR
+	(void)itmid;
+	(void)data;
 	return;
 #else
 	if(invalid_item_id(itmid))
@@ -609,6 +611,8 @@ static void _check_itembundle_recursive(int32_t itmid, prog_item_data& data)
 static void _get_progressive_item(int32_t itmid, prog_item_data& data)
 {
 #ifdef IS_EDITOR
+	(void)itmid;
+	(void)data;
 	return;
 #else
 	if(invalid_item_id(itmid))
@@ -872,6 +876,16 @@ void draw_lens_hint_sprite(BITMAP *dest, int32_t x, int32_t y, int32_t sprite_id
 		lens_hint_sprite.erase(sprite_id);
 	else
 		lens_hint_sprite[sprite_id] = data;
+#else
+	(void)dest;
+	(void)x;
+	(void)y;
+	(void)sprite_id;
+	(void)type;
+	(void)dir;
+	(void)parentid;
+	(void)peek;
+	(void)weapon_id;
 #endif
 }
 void reset_lens_hints()
@@ -1452,7 +1466,7 @@ itemdata const& get_item_data(int id)
 }
 
 
-void run_first_script_of_type(int itype)
+void run_first_script_of_type([[maybe_unused]] int itype)
 {
 #ifdef IS_PLAYER
 	for (int32_t q = 0; q < itemsbuf.capacity(); ++q)

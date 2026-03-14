@@ -936,7 +936,7 @@ static ArrayRegistrar GAMEEVENTDATA_registrar(GAMEEVENTDATA, []{
 static ArrayRegistrar GAMEGENERICD_registrar(GAMEGENERICD, []{
 	static ScriptingArray_GlobalComputed<int> impl(
 		[](int) { return genMAX; },
-		[](int ref, int index) {
+		[](int, int index) {
 			switch (index)
 			{
 				case genCONTHP:
@@ -950,7 +950,7 @@ static ArrayRegistrar GAMEGENERICD_registrar(GAMEGENERICD, []{
 					return game->get_generic(index);
 			}
 		},
-		[](int ref, int index, int value) {
+		[](int, int index, int value) {
 			switch (index)
 			{
 				case genCONTHP:
@@ -994,11 +994,11 @@ static ArrayRegistrar GAMEGSWITCH_registrar(GAMEGSWITCH, []{
 static ArrayRegistrar GAMEGUYCOUNT_registrar(GAMEGUYCOUNT, []{
 	static ScriptingArray_GlobalComputed<int> impl(
 		[](int) { return MAPSCRSNORMAL; },
-		[](int ref, int index) -> int { // index is screen number for current map
+		[](int, int index) -> int { // index is screen number for current map
 			int mi = mapind(cur_map, index);
 			return game->guys[mi];
 		},
-		[](int ref, int index, int value) {
+		[](int, int index, int value) {
 			int mi = mapind(cur_map, index);
 			game->guys[mi] = value;
 			return true;
@@ -1049,10 +1049,10 @@ static ArrayRegistrar GAMEOVERRIDEITEMS_registrar(GAMEOVERRIDEITEMS, []{
 static ArrayRegistrar GAMEMCOUNTERD_registrar(GAMEMCOUNTERD, []{
 	static ScriptingArray_GlobalComputed<int> impl(
 		[](int) { return MAX_COUNTERS; },
-		[](int ref, int index) -> int {
+		[](int, int index) -> int {
 			return game->get_maxcounter(index);
 		},
-		[](int ref, int index, int value) {
+		[](int, int index, int value) {
 			game->set_maxcounter(value, index);
 			return true;
 		}
@@ -1064,10 +1064,10 @@ static ArrayRegistrar GAMEMCOUNTERD_registrar(GAMEMCOUNTERD, []{
 static ArrayRegistrar GAMEMISC_registrar(GAMEMISC, []{
 	static ScriptingArray_GlobalComputed<int> impl(
 		[](int) { return comptime_array_size(QMisc.questmisc); },
-		[](int ref, int index) -> int {
+		[](int, int index) -> int {
 			return game->get_maxcounter(index) * (get_qr(qr_OLDQUESTMISC) ? 10000 : 1);
 		},
-		[](int ref, int index, int value) {
+		[](int, int index, int value) {
 			game->set_maxcounter(value / (get_qr(qr_OLDQUESTMISC) ? 10000 : 1), index);
 			return true;
 		}
@@ -1111,7 +1111,7 @@ static ArrayRegistrar GAMETRIGGROUPS_registrar(GAMETRIGGROUPS, []{
 		[](int, int index) {
 			return cpos_trig_group_count(index);
 		},
-		[](int, int index, int value) { return false; }
+		[](int, int, int) { return false; }
 	);
 	impl.setMul10000(true);
 	impl.readOnly();
@@ -1124,7 +1124,7 @@ static ArrayRegistrar DMAPMAP_registrar(DMAPMAP, []{
 		[](int, int index) -> int {
 			return DMaps[index].map + 1;
 		},
-		[](int, int index, int value){
+		[](int, int, int){
 			return false;
 		}
 	);
@@ -1140,7 +1140,7 @@ static ArrayRegistrar DMAPOFFSET_registrar(DMAPOFFSET, []{
 		[](int, int index) -> int {
 			return DMaps[index].xoff;
 		},
-		[](int, int index, int value){
+		[](int, int, int){
 			return false;
 		}
 	);
@@ -1294,7 +1294,7 @@ static ArrayRegistrar DMAPMIDID_registrar(DMAPMIDID, []{
 static ArrayRegistrar SETGAMEOVERELEMENT_registrar(SETGAMEOVERELEMENT, []{
 	static ScriptingArray_GlobalComputed<int> impl(
 		[](int){ return SAVESC_LAST; },
-		[](int, int index) -> int {
+		[](int, int) -> int {
 			if (!script_is_within_debugger_vm)
 				scripting_log_error_with_context("This array is write-only");
 			return 0;
@@ -1312,7 +1312,7 @@ static ArrayRegistrar SETGAMEOVERELEMENT_registrar(SETGAMEOVERELEMENT, []{
 static ArrayRegistrar SETGAMEOVERSTRING_registrar(SETGAMEOVERSTRING, []{
 	static ScriptingArray_GlobalComputed<int> impl(
 		[](int){ return SAVESC_LAST; },
-		[](int, int index) -> int {
+		[](int, int) -> int {
 			if (!script_is_within_debugger_vm)
 				scripting_log_error_with_context("This array is write-only");
 			return 0;
@@ -1401,7 +1401,7 @@ static ArrayRegistrar GAME_SAVED_PORTALS_registrar(GAME_SAVED_PORTALS, []{
 		[](int, int index) -> int {
 			return game->user_portals[index].getUID();
 		},
-		[](int, int index, int value){
+		[](int, int, int){
 			return false;
 		}
 	);

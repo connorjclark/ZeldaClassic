@@ -1044,7 +1044,7 @@ struct SW_MiscGaugePiece : public SW_GaugePiece
 	
 	SW_MiscGaugePiece() = default;
 
-	virtual bool load_old(subscreen_object const& old) override {return false;};
+	virtual bool load_old([[maybe_unused]] subscreen_object const& old) override {return false;};
 	virtual byte getType() const override;
 	virtual dword get_ctr() const override;
 	virtual dword get_ctr_max() const override;
@@ -1067,7 +1067,7 @@ struct SW_ItemCooldownGauge : public SW_GaugePiece
 
 	SW_ItemCooldownGauge() = default;
 
-	virtual bool load_old(subscreen_object const& old) override { return false; };
+	virtual bool load_old([[maybe_unused]] subscreen_object const& old) override { return false; };
 	virtual byte getType() const override;
 	virtual dword get_ctr() const override;
 	virtual dword get_ctr_max() const override;
@@ -1095,7 +1095,7 @@ struct SW_ItemCooldownText : public SubscrWidget
 	
 	std::string format_text(int cd) const;
 	std::string get_text() const;
-	virtual bool load_old(subscreen_object const& old) override { return false; }
+	virtual bool load_old([[maybe_unused]] subscreen_object const& old) override { return false; }
 	virtual int16_t getX() const override; //Returns x in pixels
 	virtual int16_t getY() const override; //Returns y in pixels
 	virtual word getW() const override; //Returns width in pixels

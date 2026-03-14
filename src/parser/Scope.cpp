@@ -495,7 +495,7 @@ Datum* ZScript::lookupDatum(Scope& scope, ASTExprIdentifier& host, CompileErrorH
 	return NULL;
 }
 
-UserClassVar* ZScript::lookupClassVars(Scope& scope, ASTExprIdentifier& host, CompileErrorHandler* errorHandler)
+UserClassVar* ZScript::lookupClassVars(Scope& scope, ASTExprIdentifier& host, CompileErrorHandler*)
 {
 	vector<string> names = host.components;
 	if (names.size() != 1)
@@ -1530,7 +1530,7 @@ FunctionScope* BasicScope::makeFunctionChild(Function& function)
 }
 
 DataType const* BasicScope::addDataType(
-		string const& name, DataType const* type, AST* node)
+		string const& name, DataType const* type, AST*)
 {
 	if (find<DataType const*>(dataTypes_, name)) return NULL;
 	type = typeStore_.getCanonicalType(*type);
@@ -1539,7 +1539,7 @@ DataType const* BasicScope::addDataType(
 }
 
 bool BasicScope::addScriptType(
-	string const& name, ParserScriptType type, AST* node)
+	string const& name, ParserScriptType type, AST*)
 {
 	if (find<ParserScriptType>(scriptTypes_, name)) return false;
 	scriptTypes_[name] = type;
@@ -1548,7 +1548,7 @@ bool BasicScope::addScriptType(
 
 Function* BasicScope::addGetter(
 		DataType const* returnType, string const& name,
-		vector<DataType const*> const& paramTypes, vector<shared_ptr<const string>> const& paramNames, int32_t flags, AST* node)
+		vector<DataType const*> const& paramTypes, vector<shared_ptr<const string>> const& paramNames, int32_t flags, AST*)
 {
 	if (find<Function*>(getters_, name)) return NULL;
 
@@ -1560,7 +1560,7 @@ Function* BasicScope::addGetter(
 
 Function* BasicScope::addSetter(
 		DataType const* returnType, string const& name,
-		vector<DataType const*> const& paramTypes, vector<shared_ptr<const string>> const& paramNames, int32_t flags, AST* node)
+		vector<DataType const*> const& paramTypes, vector<shared_ptr<const string>> const& paramNames, int32_t flags, AST*)
 {
 	if (find<Function*>(setters_, name)) return NULL;
 
@@ -1662,7 +1662,7 @@ Function* BasicScope::addFunction(
 	functionsBySignature_[signature] = fun;
 	return fun;
 }
-bool BasicScope::addAlias(Function* funcptr, CompileErrorHandler* handler)
+bool BasicScope::addAlias(Function* funcptr, CompileErrorHandler*)
 {
 	if(funcptr->is_aliased())
 	{
@@ -2211,7 +2211,7 @@ std::optional<Function*> RootScope::getDescFuncBySig(FunctionSignature& sig)
 }
 
 // Guard against duplicate imports.
-bool RootScope::checkImport(ASTImportDecl* node, CompileErrorHandler* errorHandler)
+bool RootScope::checkImport(ASTImportDecl* node, CompileErrorHandler*)
 {
 	if(node->wasChecked()) return true;
 	node->check();

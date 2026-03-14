@@ -351,7 +351,7 @@ void BuildOpcodes::caseSetOption(ASTSetOption&, void*)
 	// Do nothing, not even recurse.
 }
 
-void BuildOpcodes::caseUsing(ASTUsingDecl& host, void*)
+void BuildOpcodes::caseUsing(ASTUsingDecl&, void*)
 {
 	// Do nothing, not even recurse.
 }
@@ -1751,7 +1751,7 @@ void BuildOpcodes::buildVariable(ASTDataDecl& host, OpcodeContext& context)
 	}
 }
 
-void BuildOpcodes::buildArrayUninit(ASTDataDecl& host, OpcodeContext& context)
+void BuildOpcodes::buildArrayUninit(ASTDataDecl& host, OpcodeContext&)
 {
 	Datum& manager = *host.manager;
 
@@ -1802,7 +1802,7 @@ void BuildOpcodes::caseCustomDataTypeDef(ASTDataTypeDef&, void*) {}
 
 // Expressions
 
-void BuildOpcodes::caseExprAssign(ASTExprAssign &host, void *param)
+void BuildOpcodes::caseExprAssign(ASTExprAssign &host, void* param)
 {
 	//load the rval into EXP1
 	VISIT_USEVAL(host.right.get(), param);
@@ -1819,7 +1819,7 @@ void BuildOpcodes::caseExprAssign(ASTExprAssign &host, void *param)
 	addOpcodes(helper.getResult());
 }
 
-void BuildOpcodes::caseExprIdentifier(ASTExprIdentifier& host, void* param)
+void BuildOpcodes::caseExprIdentifier(ASTExprIdentifier& host, void*)
 {
 	if(sidefx_only)
 		return;
@@ -3709,8 +3709,7 @@ void BuildOpcodes::caseStringLiteral(ASTStringLiteral& host, void* param)
 	else stringLiteralFree(host, context);
 }
 
-void BuildOpcodes::stringLiteralDeclaration(
-		ASTStringLiteral& host, OpcodeContext& context)
+void BuildOpcodes::stringLiteralDeclaration(ASTStringLiteral& host, OpcodeContext&)
 {
 	ASTDataDecl& declaration = *host.declaration;
 	Datum& manager = *declaration.manager;
@@ -3761,8 +3760,7 @@ void BuildOpcodes::stringLiteralDeclaration(
 }
 
 // "free" means it is not attached to a variable declaration (so it's either a param value, or used in an assignment)
-void BuildOpcodes::stringLiteralFree(
-		ASTStringLiteral& host, OpcodeContext& context)
+void BuildOpcodes::stringLiteralFree(ASTStringLiteral& host, OpcodeContext&)
 {
 	string data = host.value;
 	int32_t size = data.size() + 1;

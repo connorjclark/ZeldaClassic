@@ -191,8 +191,8 @@ void killgenwpn(weapon* w)
 	}
 }
 
-void do_generic_combo(const rpos_handle_t& rpos_handle, weapon *w, int32_t wid, 
-	int32_t cid, int32_t flag, int32_t flag2, int32_t ft, bool single16) //WID currently is unused; if you add code relating to it, make sure to check if it's greater than 0
+void do_generic_combo(const rpos_handle_t& rpos_handle, weapon *w, [[maybe_unused]] int32_t wid, 
+	int32_t cid, [[maybe_unused]] int32_t flag, [[maybe_unused]] int32_t flag2, int32_t ft, [[maybe_unused]] bool single16) //WID currently is unused; if you add code relating to it, make sure to check if it's greater than 0
 {
 	if ( combobuf[cid].type < cTRIGGERGENERIC && !(combobuf[cid].usrflags&cflag9 )  )  //Script combos need an 'Engine' flag
 	{ 
@@ -3376,7 +3376,7 @@ void weapon::limited_animate()
 	}
 	if(rundeath) do_death_fx();
 }
-bool weapon::animate(int32_t index)
+bool weapon::animate([[maybe_unused]] int32_t index)
 {
 	update_current_screen();
 	if(weapon_start_frame)
@@ -7593,7 +7593,7 @@ void weapon::draw_hitbox()
 	sprite::draw_hitbox();
 }
 //Dummy weapon for visual effects.
-weapon::weapon(zfix X,zfix Y,zfix Z,int32_t Id,int32_t usesprite, int32_t Dir, int32_t step, int32_t prntid, int32_t height, int32_t width, int32_t a, int32_t b, int32_t c, int32_t d, int32_t e, int32_t f, int32_t g) : sprite(), parentid(prntid)
+weapon::weapon(zfix X,zfix Y,zfix Z,int32_t Id,int32_t usesprite, int32_t Dir, int32_t step, int32_t prntid, int32_t height, int32_t width, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t) : sprite(), parentid(prntid)
 {
 	screen_spawned=current_screen=get_screen_for_world_xy(x.getInt(), y.getInt());
 	unblockable = 0;

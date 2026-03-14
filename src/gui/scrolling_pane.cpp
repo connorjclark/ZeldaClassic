@@ -44,7 +44,7 @@ static int32_t minusOneHundred()
  * mouse functions.
  */
 
-int32_t ScrollingPane::mouseBreakerProc(int32_t msg, DIALOG* d, int32_t c)
+int32_t ScrollingPane::mouseBreakerProc(int32_t msg, DIALOG* d, [[maybe_unused]] int32_t c)
 {
 	switch (msg)
 	{
@@ -68,7 +68,7 @@ int32_t ScrollingPane::mouseBreakerProc(int32_t msg, DIALOG* d, int32_t c)
 	return D_O_K;
 }
 
-int32_t ScrollingPane::mouseFixerProc(int32_t msg, DIALOG* d, int32_t c)
+int32_t ScrollingPane::mouseFixerProc(int32_t msg, DIALOG* d, [[maybe_unused]] int32_t c)
 {
 	switch (msg)
 	{

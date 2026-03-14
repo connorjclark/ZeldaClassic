@@ -1,5 +1,6 @@
 #include "gui/button.h"
 
+#include "base/check.h"
 #include "base/zc_math.h"
 #include "gui/common.h"
 #include "gui/dialog.h"
@@ -588,7 +589,7 @@ void Button::realize(DialogRunner& runner)
 
 int32_t Button::onEvent(int32_t event, MessageDispatcher& sendMessage)
 {
-	assert(event == geCLICK);
+	CHECK(event == geCLICK);
 	// jwin_button_proc doesn't seem to allow for a non-toggle button...
 	alDialog->flags &= ~D_SELECTED;
 	

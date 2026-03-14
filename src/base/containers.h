@@ -548,7 +548,7 @@ public:
 };
 
 template<typename T>
-void _do_normalize(T& v){}
+void _do_normalize([[maybe_unused]] T& v){}
 template<>
 inline void _do_normalize<bitstring>(bitstring& v)
 {

@@ -7,7 +7,7 @@ void info_dsa(string const& title, string const& text, string const& dsastr)
 	if(!zc_get_config("dsa",dsastr.c_str(),0))
 	{
 		AlertDialog(title, text,
-			[&](bool ret,bool dsa)
+			[&]([[maybe_unused]] bool ret, bool dsa)
 			{
 				if(dsa)
 				{

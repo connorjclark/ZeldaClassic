@@ -267,7 +267,7 @@ bool combocheck(const newcombo& cdata)
     return true;
 }
 
-void animate(newcombo& cdata, bool forceNextFrame, word cid)
+void animate(newcombo& cdata, bool forceNextFrame, [[maybe_unused]] word cid)
 {
 	if(cdata.aclk>=cdata.speed || forceNextFrame)      //time to animate
 	{
@@ -576,7 +576,7 @@ static const byte* get_tile_bytes(int32_t tile, int32_t flip)
 }
 
 // unpacks from tilebuf to unpackbuf
-void unpack_tile(tiledata *buf, int32_t tile, int32_t flip, bool force)
+void unpack_tile(tiledata *buf, int32_t tile, int32_t flip, [[maybe_unused]] bool force)
 {
     static byte *si, *di;
     static byte *oldnewtilebuf=buf[tile].data;

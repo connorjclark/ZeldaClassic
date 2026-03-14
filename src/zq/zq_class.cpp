@@ -2688,7 +2688,9 @@ static mapscr* _zmap_get_lyr_checked(int lyr, mapscr* basescr)
 	}
 	return nullptr;
 }
-static void _zmap_draw_ffc_layer(BITMAP* dest,int32_t x,int32_t y,int32_t flags,mapscr* basescr, int32_t layer)
+
+// TODO: remove flags? or use? I didn't try to figure it out.
+static void _zmap_draw_ffc_layer(BITMAP* dest,int32_t x,int32_t y,[[maybe_unused]] int32_t flags,mapscr* basescr, int32_t layer)
 {
 	int num_ffcs = basescr->numFFC();
 	for(int32_t i=num_ffcs-1; i>=0; i--)
@@ -9283,7 +9285,7 @@ int32_t writemaps(PACKFILE *f, zquestheader *)
 	new_return(0);
 }
 
-int32_t writecombo_triggers_loop(PACKFILE *f, word section_version, combo_trigger const& tmp_trig)
+int32_t writecombo_triggers_loop(PACKFILE *f, combo_trigger const& tmp_trig)
 {
 	if(!p_putcstr(tmp_trig.label,f))
 		return 22;
@@ -9438,7 +9440,7 @@ int32_t writecombo_triggers_loop(PACKFILE *f, word section_version, combo_trigge
 		return 134;
 	return 0;
 }
-int32_t writecombo_loop(PACKFILE *f, word section_version, newcombo const& tmp_cmb)
+int32_t writecombo_loop(PACKFILE *f, newcombo const& tmp_cmb)
 {
 	//Check what needs writing
 	word combo_has_flags = 0;
@@ -9570,7 +9572,7 @@ int32_t writecombo_loop(PACKFILE *f, word section_version, newcombo const& tmp_c
 			return 34;
 		for(byte q = 0; q < sz; ++q)
 		{
-			auto ret = writecombo_triggers_loop(f, section_version, tmp_cmb.triggers[q]);
+			auto ret = writecombo_triggers_loop(f, tmp_cmb.triggers[q]);
 			if(ret) return ret;
 		}
 		if(!p_putc(tmp_cmb.only_gentrig,f))
@@ -9727,7 +9729,7 @@ int32_t writecombos(PACKFILE *f, word version, word build, word start_combo, wor
 		size_t end_combo = start_combo+combos_used;
 		for(size_t q = start_combo; q < end_combo; ++q)
 		{
-			auto ret = writecombo_loop(f, section_version, combobuf[q]);
+			auto ret = writecombo_loop(f, combobuf[q]);
 			if(ret) new_return(ret);
 		}
         if(writecycle==0)
@@ -11804,7 +11806,7 @@ int32_t writeherosprites(PACKFILE *f, zquestheader *Header)
     new_return(0);
 }
 
-int32_t writesubscreens(PACKFILE *f, zquestheader *Header)
+int32_t writesubscreens(PACKFILE *f, [[maybe_unused]] zquestheader *Header)
 {
 	dword section_id=ID_SUBSCREEN;
 	dword section_version=V_SUBSCREEN;
@@ -11918,7 +11920,7 @@ extern script_data *subscreenscripts[NUMSCRIPTSSUBSCREEN];
 int32_t writeffscript(PACKFILE *f, zquestheader *Header)
 {
 	if (QMisc.zscript_last_compiled_version <= 26)
-		return writeffscript_old(f, Header);
+		return writeffscript_old(f);
 
     dword section_id       = ID_FFSCRIPT;
     dword section_version  = V_FFSCRIPT;
@@ -12767,7 +12769,7 @@ int32_t write_one_ffscript_meta(PACKFILE *f, zasm_meta const& tmeta)
 	return 0;
 }
 
-int32_t write_one_ffscript(PACKFILE *f, zquestheader *Header, int32_t i, script_data *script)
+int32_t write_one_ffscript(PACKFILE *f, [[maybe_unused]] zquestheader *Header, [[maybe_unused]] int32_t i, script_data *script)
 {
 	if (!script->valid())
 	{
@@ -12791,7 +12793,7 @@ int32_t write_one_ffscript(PACKFILE *f, zquestheader *Header, int32_t i, script_
     return 0;
 }
 
-int32_t writeffscript_old(PACKFILE *f, zquestheader *Header)
+int32_t writeffscript_old(PACKFILE *f)
 {
     dword section_id       = ID_FFSCRIPT;
     dword section_version  = 26;
@@ -12837,7 +12839,7 @@ int32_t writeffscript_old(PACKFILE *f, zquestheader *Header)
         
         for(int32_t i=0; i<NUMSCRIPTFFC; i++)
         {
-            int32_t ret = write_one_ffscript_old(f, Header, i, ffscripts[i]);
+            int32_t ret = write_one_ffscript_old(f, ffscripts[i]);
             fake_pack_writing=(writecycle==0);
             
             if(ret!=0)
@@ -12848,7 +12850,7 @@ int32_t writeffscript_old(PACKFILE *f, zquestheader *Header)
         
         for(int32_t i=0; i<NUMSCRIPTITEM; i++)
         {
-            int32_t ret = write_one_ffscript_old(f, Header, i, itemscripts[i]);
+            int32_t ret = write_one_ffscript_old(f, itemscripts[i]);
             fake_pack_writing=(writecycle==0);
             
             if(ret!=0)
@@ -12859,7 +12861,7 @@ int32_t writeffscript_old(PACKFILE *f, zquestheader *Header)
         
         for(int32_t i=0; i<NUMSCRIPTGUYS; i++)
         {
-            int32_t ret = write_one_ffscript_old(f, Header, i, guyscripts[i]);
+            int32_t ret = write_one_ffscript_old(f, guyscripts[i]);
             fake_pack_writing=(writecycle==0);
             
             if(ret!=0)
@@ -12871,7 +12873,7 @@ int32_t writeffscript_old(PACKFILE *f, zquestheader *Header)
 		script_data *fake = new script_data(ScriptType::None, 0);
         for(int32_t i=0; i<NUMSCRIPTWEAPONS; i++)
         {
-            int32_t ret = write_one_ffscript_old(f, Header, i, fake);
+            int32_t ret = write_one_ffscript_old(f, fake);
             fake_pack_writing=(writecycle==0);
             
             if(ret!=0)
@@ -12883,7 +12885,7 @@ int32_t writeffscript_old(PACKFILE *f, zquestheader *Header)
         
         for(int32_t i=0; i<NUMSCRIPTSCREEN; i++)
         {
-            int32_t ret = write_one_ffscript_old(f, Header, i, screenscripts[i]);
+            int32_t ret = write_one_ffscript_old(f, screenscripts[i]);
             fake_pack_writing=(writecycle==0);
             
             if(ret!=0)
@@ -12894,7 +12896,7 @@ int32_t writeffscript_old(PACKFILE *f, zquestheader *Header)
         
         for(int32_t i=0; i<NUMSCRIPTGLOBAL; i++)
         {
-            int32_t ret = write_one_ffscript_old(f, Header, i, globalscripts[i]);
+            int32_t ret = write_one_ffscript_old(f, globalscripts[i]);
             fake_pack_writing=(writecycle==0);
             
             if(ret!=0)
@@ -12905,7 +12907,7 @@ int32_t writeffscript_old(PACKFILE *f, zquestheader *Header)
 		
         for(int32_t i=0; i<NUMSCRIPTHERO; i++)
         {
-            int32_t ret = write_one_ffscript_old(f, Header, i, playerscripts[i]);
+            int32_t ret = write_one_ffscript_old(f, playerscripts[i]);
             fake_pack_writing=(writecycle==0);
             
             if(ret!=0)
@@ -12916,7 +12918,7 @@ int32_t writeffscript_old(PACKFILE *f, zquestheader *Header)
 		
         for(int32_t i=0; i<NUMSCRIPTWEAPONS; i++)
         {
-            int32_t ret = write_one_ffscript_old(f, Header, i, lwpnscripts[i]);
+            int32_t ret = write_one_ffscript_old(f, lwpnscripts[i]);
             fake_pack_writing=(writecycle==0);
             
             if(ret!=0)
@@ -12927,7 +12929,7 @@ int32_t writeffscript_old(PACKFILE *f, zquestheader *Header)
 		
 		for(int32_t i=0; i<NUMSCRIPTWEAPONS; i++)
         {
-            int32_t ret = write_one_ffscript_old(f, Header, i, ewpnscripts[i]);
+            int32_t ret = write_one_ffscript_old(f, ewpnscripts[i]);
             fake_pack_writing=(writecycle==0);
             
             if(ret!=0)
@@ -12938,7 +12940,7 @@ int32_t writeffscript_old(PACKFILE *f, zquestheader *Header)
         
 		for(int32_t i=0; i<NUMSCRIPTSDMAP; i++)
         {
-            int32_t ret = write_one_ffscript_old(f, Header, i, dmapscripts[i]);
+            int32_t ret = write_one_ffscript_old(f, dmapscripts[i]);
             fake_pack_writing=(writecycle==0);
             
             if(ret!=0)
@@ -12949,7 +12951,7 @@ int32_t writeffscript_old(PACKFILE *f, zquestheader *Header)
 		
 		for(int32_t i=0; i<NUMSCRIPTSITEMSPRITE; i++)
         {
-            int32_t ret = write_one_ffscript_old(f, Header, i, itemspritescripts[i]);
+            int32_t ret = write_one_ffscript_old(f, itemspritescripts[i]);
             fake_pack_writing=(writecycle==0);
             
             if(ret!=0)
@@ -12960,7 +12962,7 @@ int32_t writeffscript_old(PACKFILE *f, zquestheader *Header)
 		
 		for(int32_t i=0; i<NUMSCRIPTSCOMBODATA; i++)
         {
-            int32_t ret = write_one_ffscript_old(f, Header, i, comboscripts[i]);
+            int32_t ret = write_one_ffscript_old(f, comboscripts[i]);
             fake_pack_writing=(writecycle==0);
             
             if(ret!=0)
@@ -12975,7 +12977,7 @@ int32_t writeffscript_old(PACKFILE *f, zquestheader *Header)
 		}
 		for(int32_t i=0; i<NUMSCRIPTSGENERIC; i++)
         {
-            int32_t ret = write_one_ffscript_old(f, Header, i, genericscripts[i]);
+            int32_t ret = write_one_ffscript_old(f, genericscripts[i]);
             fake_pack_writing=(writecycle==0);
             
             if(ret!=0)
@@ -12990,7 +12992,7 @@ int32_t writeffscript_old(PACKFILE *f, zquestheader *Header)
 		}
 		for(int32_t i=0; i<NUMSCRIPTSSUBSCREEN; i++)
         {
-            int32_t ret = write_one_ffscript_old(f, Header, i, subscreenscripts[i]);
+            int32_t ret = write_one_ffscript_old(f, subscreenscripts[i]);
             fake_pack_writing=(writecycle==0);
             
             if(ret!=0)
@@ -13506,7 +13508,7 @@ int32_t writeffscript_old(PACKFILE *f, zquestheader *Header)
     //the irony is that it causes an "unreachable code" warning.
 }
 
-int32_t write_one_ffscript_old(PACKFILE *f, zquestheader *Header, int32_t i, script_data *script)
+int32_t write_one_ffscript_old(PACKFILE *f, script_data *script)
 {
     size_t num_commands = script->zasm_script ? script->zasm_script->size : 0;
     

@@ -280,7 +280,7 @@ public:
 	HotKeysRTI(std::string name) : RenderTreeItem(name) {};
 
 private:
-	void render(bool bitmap_resized)
+	void render([[maybe_unused]] bool bitmap_resized)
 	{
 		int num_columns = 3;
 		auto color_text = hex(0xadbac7);

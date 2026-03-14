@@ -1165,7 +1165,7 @@ void SemanticAnalyzer::caseImportDecl(ASTImportDecl& host, void*)
 		RecursiveVisitor::caseImportDecl(host);
 	}
 }
-void SemanticAnalyzer::caseIncludePath(ASTIncludePath& host, void*)
+void SemanticAnalyzer::caseIncludePath(ASTIncludePath&, void*)
 {}
 
 void SemanticAnalyzer::caseImportCondDecl(ASTImportCondDecl& host, void* param)
@@ -1252,8 +1252,7 @@ void SemanticAnalyzer::caseExprAssign(ASTExprAssign& host, void*)
 	if (breakRecursion(host)) return;	
 }
 
-void SemanticAnalyzer::caseExprIdentifier(
-		ASTExprIdentifier& host, void* param)
+void SemanticAnalyzer::caseExprIdentifier(ASTExprIdentifier& host, void*)
 {
 	if(host.binding) return; //Skip if already handled
 	// Bind to named variable.
@@ -1845,7 +1844,7 @@ void SemanticAnalyzer::caseExprDecrement(ASTExprDecrement& host, void*)
 	analyzeIncrement(host);
 }
 
-void SemanticAnalyzer::caseExprCast(ASTExprCast& host, void* param)
+void SemanticAnalyzer::caseExprCast(ASTExprCast& host, void*)
 {
 	RecursiveVisitor::caseExprCast(host);
 	DataType const& castType = host.type->resolve(*scope, this);
@@ -2064,7 +2063,7 @@ void SemanticAnalyzer::caseExprTernary(ASTTernaryExpr& host, void*)
 
 // Literals
 
-void SemanticAnalyzer::caseStringLiteral(ASTStringLiteral& host, void*)
+void SemanticAnalyzer::caseStringLiteral(ASTStringLiteral&, void*)
 {
 }
 
@@ -2159,7 +2158,7 @@ void SemanticAnalyzer::caseArrayLiteral(ASTArrayLiteral& host, void*)
 	}
 }
 
-void SemanticAnalyzer::caseOptionValue(ASTOptionValue& host, void*)
+void SemanticAnalyzer::caseOptionValue(ASTOptionValue&, void*)
 {
 	/* handled in `ASTOptionValue->getCompileTimeValue()` now
 	if (std::optional<int32_t> value = lookupOption(*scope, host.option))
@@ -2168,7 +2167,7 @@ void SemanticAnalyzer::caseOptionValue(ASTOptionValue& host, void*)
 		handleError(CompileError::UnknownOption(&host, host.name));*/
 }
 
-void SemanticAnalyzer::caseIsIncluded(ASTIsIncluded& host, void*)
+void SemanticAnalyzer::caseIsIncluded(ASTIsIncluded&, void*)
 {}
 
 void SemanticAnalyzer::analyzeUnaryExpr(

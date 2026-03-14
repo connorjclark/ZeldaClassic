@@ -678,7 +678,7 @@ static void TEST(std::string name, TestResults& tr, std::function<bool()> cb)
 	tr.total++;
 }
 
-TestResults test_debugger(bool verbose)
+TestResults test_debugger([[maybe_unused]] bool verbose)
 {
 	static TestResults tr{};
 

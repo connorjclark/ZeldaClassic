@@ -1030,7 +1030,7 @@ bool reset_wpns(bool validate, zquestheader *Header)
     return ret;
 }
 
-bool reset_mapstyles(bool validate, miscQdata *Misc)
+bool reset_mapstyles(miscQdata *Misc)
 {
     Misc->colors.blueframe_tile = 20044;
     Misc->colors.blueframe_cset = 0;
@@ -1745,7 +1745,7 @@ bool check_keyfiles(char const* path, vector<uint> types, zquestheader* Header)
 	return false;
 }
 
-void print_quest_metadata(zquestheader const& tempheader, char const* path, byte qst_num)
+void print_quest_metadata(zquestheader const& tempheader, char const* path)
 {
 	zprint2("\n");
 	zprint2("[QUEST METADATA]\n");
@@ -2510,7 +2510,7 @@ int32_t readheader(PACKFILE *f, zquestheader *Header, byte printmetadata)
 
 	if(printmetadata)
 	{
-		print_quest_metadata(tempheader, loading_qst_name, loading_qst_num);
+		print_quest_metadata(tempheader, loading_qst_name);
 	}
 	
 	//{ Version Warning
@@ -12684,6 +12684,7 @@ void reset_scripts()
 // 3.0+ calls this.
 int32_t read_quest_zasm(PACKFILE *f, word s_version)
 {
+	(void)s_version;
 	int32_t num_commands;
 	if(!p_igetl(&num_commands,f))
 		return qe_invalid;
@@ -12903,11 +12904,13 @@ int32_t read_one_zmeta(PACKFILE *f, zasm_meta& temp_meta, word zmeta_version)
 	
 	return 0;
 }
-int32_t read_one_ffscript(PACKFILE *f, zquestheader *, int32_t script_index, word s_version, script_data *script, word zmeta_version)
+
+// TODO: remove unused parameter.
+int32_t read_one_ffscript(PACKFILE *f, zquestheader *, [[maybe_unused]] int32_t script_index, word s_version, script_data *script, word zmeta_version)
 {
 	ASSERT(script);
 	if(s_version < 27)
-		return read_old_ffscript(f, script_index, s_version, script, zmeta_version);
+		return read_old_ffscript(f, s_version, script, zmeta_version);
 
 	char exists;
 	if (!p_getc(&exists, f))
@@ -12946,7 +12949,7 @@ int32_t read_one_ffscript(PACKFILE *f, zquestheader *, int32_t script_index, wor
 	return 0;
 }
 
-int32_t read_old_ffscript(PACKFILE *f, int32_t script_index, word s_version, script_data *script, word zmeta_version)
+int32_t read_old_ffscript(PACKFILE *f, word s_version, script_data *script, word zmeta_version)
 {
 	int32_t num_commands=1000;
 	

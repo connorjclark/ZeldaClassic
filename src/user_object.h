@@ -42,7 +42,7 @@ struct user_abstract_obj
 
 	virtual ~user_abstract_obj() = default;
 
-	virtual void get_retained_ids(std::vector<uint32_t>& ids) {};
+	virtual void get_retained_ids([[maybe_unused]] std::vector<uint32_t>& ids) {};
 	virtual void restore_references() {};
 
 	void disown()

@@ -570,7 +570,7 @@ bool enemy::is_move_paused()
 	return (clk<0 || dying || stunclk || watch || ceiling || frozenclock || fallclk || drownclk);
 }
 
-bool enemy::scr_walkflag(int32_t dx,int32_t dy,int32_t special, int32_t dir, int32_t input_x, int32_t input_y, bool kb)
+bool enemy::scr_walkflag(int32_t dx,int32_t dy,int32_t special, [[maybe_unused]] int32_t dir, int32_t input_x, int32_t input_y, bool kb)
 {
 	int32_t yg = (special==spw_floater)?8:0;
 	int32_t nb = get_qr(qr_NOBORDER) ? 16 : 0;
@@ -12255,7 +12255,7 @@ void eDodongo::draw(BITMAP *dest)
 	
 }
 
-int32_t eDodongo::takehit(weapon *w, weapon* realweap)
+int32_t eDodongo::takehit(weapon *w, [[maybe_unused]] weapon* realweap)
 {
 	int32_t wpnId = w->id;
 	int32_t power = w->power;
@@ -12384,7 +12384,7 @@ void eDodongo2::draw(BITMAP *dest)
 	yofs=tempy;
 }
 
-int32_t eDodongo2::takehit(weapon *w, weapon* realweap)
+int32_t eDodongo2::takehit(weapon *w, [[maybe_unused]] weapon* realweap)
 {
 	int32_t wpnId = w->id;
 	int32_t power = w->power;
@@ -13152,7 +13152,7 @@ void eBigDig::draw(BITMAP *dest)
 	yofs+=8;
 }
 
-int32_t eBigDig::takehit(weapon *w, weapon* realweap)
+int32_t eBigDig::takehit(weapon *w, [[maybe_unused]] weapon* realweap)
 {
 	int32_t wpnId = w->id;
 	
@@ -13323,7 +13323,7 @@ bool eGanon::animate(int32_t index) //DO NOT ADD a check for do_animation to thi
 }
 
 
-int32_t eGanon::takehit(weapon *w, weapon* realweap)
+int32_t eGanon::takehit(weapon *w, [[maybe_unused]] weapon* realweap)
 {
 	//these are here to bypass compiler warnings about unused arguments
 	int32_t wpnId = w->id;
@@ -14366,7 +14366,7 @@ bool eManhandla::animate(int32_t index)
 }
 
 
-int32_t eManhandla::takehit(weapon *w, weapon* realweap)
+int32_t eManhandla::takehit(weapon *w, [[maybe_unused]] weapon* realweap)
 {
 	int32_t wpnId = w->id;
 	
@@ -18110,7 +18110,7 @@ void loadguys()
 		prices[i] = 0;
 	}
 
-	for_every_base_screen_in_region([&](mapscr* scr, unsigned int region_scr_x, unsigned int region_scr_y) {
+	for_every_base_screen_in_region([&](mapscr* scr, unsigned int, unsigned int) {
 		get_screen_state(scr->screen).item_state = ScreenItemState::None;
 		loadguys(scr);
 	});
@@ -18541,7 +18541,7 @@ void update_slope_comboposes()
 
 	if (Hero.sideview_mode())
 	{
-		for_every_base_screen_in_region([&](mapscr* scr, unsigned int region_scr_x, unsigned int region_scr_y) {
+		for_every_base_screen_in_region([&](mapscr* scr, unsigned int, unsigned int) {
 			for (int dir = up; dir <= right; dir++)
 				handle_slope_combopos_bordering_screen(scr->screen, dir);
 		});
@@ -18557,7 +18557,7 @@ void screen_combo_modify_preroutine(const rpos_handle_t& rpos_handle)
 }
 
 //Placeholder in case we need it.
-void screen_ffc_modify_preroutine(const ffc_handle_t& ffc_handle)
+void screen_ffc_modify_preroutine([[maybe_unused]] const ffc_handle_t& ffc_handle)
 {
 	return;
 }
@@ -21531,7 +21531,7 @@ static void roaming_item(mapscr* scr)
 
 void roaming_item()
 {
-	for_every_base_screen_in_region([&](mapscr* scr, unsigned int region_scr_x, unsigned int region_scr_y) {
+	for_every_base_screen_in_region([&](mapscr* scr, unsigned int, unsigned int) {
 		roaming_item(scr);
 	});
 }

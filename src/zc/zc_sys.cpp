@@ -3244,7 +3244,7 @@ void draw_lens_under(BITMAP *dest, bool layer)
 			}
 		});
 
-		for_every_base_screen_in_region([&](mapscr* scr, unsigned int region_scr_x, unsigned int region_scr_y) {
+		for_every_base_screen_in_region([&](mapscr* scr, unsigned int, unsigned int) {
 			auto [offx, offy] = translate_screen_coordinates_to_world(scr->screen);
 
 			offx -= viewport.x;

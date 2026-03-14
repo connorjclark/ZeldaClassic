@@ -1079,7 +1079,7 @@ void ALLOFF(bool messagesToo, bool decorationsToo, bool force)
         Hero.setClock(false);
     }
 
-    if (origin_scr) for_every_base_screen_in_region([&](mapscr* scr, unsigned int region_scr_x, unsigned int region_scr_y) {
+    if (origin_scr) for_every_base_screen_in_region([&](mapscr* scr, unsigned int, unsigned int) {
         get_screen_state(scr->screen).loaded_enemies = false;
     });
 
@@ -1745,7 +1745,7 @@ int32_t init_game()
 
 	flushItemCache();
 
-	print_quest_metadata(QHeader, qstpath, byte(game->get_quest()-1));
+	print_quest_metadata(QHeader, qstpath);
 
 	if (replay_is_active())
 	{
@@ -3389,7 +3389,7 @@ void game_loop()
 		
 		if (FFCore.getQuestHeaderInfo(vZelda) >= 0x255 && !FFCore.system_suspend[susptSCREENSCRIPTS])
 		{
-			for_every_base_screen_in_region([&](mapscr* scr, unsigned int region_scr_x, unsigned int region_scr_y) {
+			for_every_base_screen_in_region([&](mapscr* scr, unsigned int, unsigned int) {
 				if (scr->script != 0 && FFCore.doscript(ScriptType::Screen, scr->screen) && FFCore.waitdraw(ScriptType::Screen, scr->screen))
 				{
 					ZScriptVersion::RunScript(ScriptType::Screen, scr->script, scr->screen);  
@@ -5158,10 +5158,10 @@ void paymagiccost(int32_t itemid, bool ignoreTimer, bool onlyTimer)
 		payCost(id.cost_counter[1], id.cost_amount[1], id.magiccosttimer[1], ignoreTimer);
 }
 
-std::string getComboTypeHelpText(int32_t id) { return ""; }
-std::string getMapFlagHelpText(int32_t id) { return ""; }
+std::string getComboTypeHelpText([[maybe_unused]] int32_t id) { return ""; }
+std::string getMapFlagHelpText([[maybe_unused]] int32_t id) { return ""; }
 
-string get_box_cfg_hdr(int num)
+string get_box_cfg_hdr([[maybe_unused]] int num)
 {
 	return "misc";
 }

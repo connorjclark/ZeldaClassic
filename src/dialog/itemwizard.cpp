@@ -68,7 +68,9 @@ size_t ItemWizardDialog::getRadio(size_t rs)
 #define RESET(member) (local_ref.member = src_ref.member)
 #define ZERO(member) (local_ref.member = 0)
 #define RESET_ZERO(member,flag) (local_ref.member = (flag ? 0 : src_ref.member))
-void ItemWizardDialog::update(bool first)
+
+// TODO: remove unused param?
+void ItemWizardDialog::update([[maybe_unused]] bool first)
 {
 	switch(local_ref.type)
 	{

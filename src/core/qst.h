@@ -159,7 +159,7 @@ char *byte_conversion2(int32_t number1, int32_t number2, int32_t format1, int32_
 
 bool valid_zqt(PACKFILE *f);
 bool valid_zqt(const char *filename);
-bool reset_mapstyles(bool validate, miscQdata *Misc);
+bool reset_mapstyles(miscQdata *Misc);
 bool reset_items(bool validate, zquestheader *Header);
 bool reset_guys();
 bool reset_wpns(bool validate, zquestheader *Header);
@@ -185,7 +185,7 @@ void initMsgStr(MsgStr *str);
 void init_msgstrings(int32_t start, int32_t end);
 
 int32_t copyquest(PACKFILE *f);
-void print_quest_metadata(zquestheader const& tempheader, char const* path = NULL, byte qst_num = 0);
+void print_quest_metadata(zquestheader const& tempheader, char const* path = NULL);
 int32_t readheader(PACKFILE *f, zquestheader *Header, byte printmetadata = 0);
 int32_t readrules(PACKFILE *f, zquestheader *Header);
 int32_t readstrings(PACKFILE *f, zquestheader *Header);
@@ -213,7 +213,7 @@ int32_t readinitdata(PACKFILE *f, zquestheader *Header);
 int32_t readffscript(PACKFILE *f, zquestheader *Header);
 int32_t read_quest_zasm(PACKFILE *f, word s_version);
 int32_t read_one_ffscript(PACKFILE *f, zquestheader *Header, int32_t i, word s_version, script_data *script, word zmeta_version);
-int32_t read_old_ffscript(PACKFILE *f, int32_t script_index, word s_version, script_data *script, word zmeta_version);
+int32_t read_old_ffscript(PACKFILE *f, word s_version, script_data *script, word zmeta_version);
 int32_t readsfx(PACKFILE *f, zquestheader *Header);
 int32_t readitemdropsets(PACKFILE *f, word version);
 int32_t readfavorites(PACKFILE *f, int32_t);

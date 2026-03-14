@@ -50,7 +50,7 @@ static ArrayRegistrar SUBWIDGPRESSINITD_registrar(SUBWIDGPRESSINITD, []{
 
 static ArrayRegistrar SUBWIDGSELECTORASPD_registrar(SUBWIDGSELECTORASPD, []{
 	static ScriptingArray_ObjectComputed<SubscrWidgetActive, int> impl(
-		[](SubscrWidgetActive* widg){
+		[](SubscrWidgetActive*){
 			return SUBSCR_SELECTOR_NUMTILEINFO;
 		},
 		[](SubscrWidgetActive* widg, int index) -> int {
@@ -67,7 +67,7 @@ static ArrayRegistrar SUBWIDGSELECTORASPD_registrar(SUBWIDGSELECTORASPD, []{
 
 static ArrayRegistrar SUBWIDGSELECTORFRM_registrar(SUBWIDGSELECTORFRM, []{
 	static ScriptingArray_ObjectComputed<SubscrWidgetActive, int> impl(
-		[](SubscrWidgetActive* widg){
+		[](SubscrWidgetActive*){
 			return SUBSCR_SELECTOR_NUMTILEINFO;
 		},
 		[](SubscrWidgetActive* widg, int index) -> int {
@@ -84,7 +84,7 @@ static ArrayRegistrar SUBWIDGSELECTORFRM_registrar(SUBWIDGSELECTORFRM, []{
 
 static ArrayRegistrar SUBWIDGSELECTORTILE_registrar(SUBWIDGSELECTORTILE, []{
 	static ScriptingArray_ObjectComputed<SubscrWidgetActive, int> impl(
-		[](SubscrWidgetActive* widg){
+		[](SubscrWidgetActive*){
 			return SUBSCR_SELECTOR_NUMTILEINFO;
 		},
 		[](SubscrWidgetActive* widg, int index) -> int {
@@ -101,7 +101,7 @@ static ArrayRegistrar SUBWIDGSELECTORTILE_registrar(SUBWIDGSELECTORTILE, []{
 
 static ArrayRegistrar SUBWIDGSELECTORHEI_registrar(SUBWIDGSELECTORHEI, []{
 	static ScriptingArray_ObjectComputed<SubscrWidgetActive, int> impl(
-		[](SubscrWidgetActive* widg){
+		[](SubscrWidgetActive*){
 			return SUBSCR_SELECTOR_NUMTILEINFO;
 		},
 		[](SubscrWidgetActive* widg, int index) -> int {
@@ -118,7 +118,7 @@ static ArrayRegistrar SUBWIDGSELECTORHEI_registrar(SUBWIDGSELECTORHEI, []{
 
 static ArrayRegistrar SUBWIDGSELECTORWID_registrar(SUBWIDGSELECTORWID, []{
 	static ScriptingArray_ObjectComputed<SubscrWidgetActive, int> impl(
-		[](SubscrWidgetActive* widg){
+		[](SubscrWidgetActive*){
 			return SUBSCR_SELECTOR_NUMTILEINFO;
 		},
 		[](SubscrWidgetActive* widg, int index) -> int {
@@ -135,7 +135,7 @@ static ArrayRegistrar SUBWIDGSELECTORWID_registrar(SUBWIDGSELECTORWID, []{
 
 static ArrayRegistrar SUBWIDGSELECTORDELAY_registrar(SUBWIDGSELECTORDELAY, []{
 	static ScriptingArray_ObjectComputed<SubscrWidgetActive, int> impl(
-		[](SubscrWidgetActive* widg){
+		[](SubscrWidgetActive*){
 			return SUBSCR_SELECTOR_NUMTILEINFO;
 		},
 		[](SubscrWidgetActive* widg, int index) -> int {
@@ -152,7 +152,7 @@ static ArrayRegistrar SUBWIDGSELECTORDELAY_registrar(SUBWIDGSELECTORDELAY, []{
 
 static ArrayRegistrar SUBWIDGSELECTORCSET_registrar(SUBWIDGSELECTORCSET, []{
 	static ScriptingArray_ObjectComputed<SubscrWidgetActive, int> impl(
-		[](SubscrWidgetActive* widg){
+		[](SubscrWidgetActive*){
 			return SUBSCR_SELECTOR_NUMTILEINFO;
 		},
 		[](SubscrWidgetActive* widg, int index) -> int {
@@ -170,7 +170,7 @@ static ArrayRegistrar SUBWIDGSELECTORCSET_registrar(SUBWIDGSELECTORCSET, []{
 
 static ArrayRegistrar SUBWIDGSELECTORFLASHCSET_registrar(SUBWIDGSELECTORFLASHCSET, []{
 	static ScriptingArray_ObjectComputed<SubscrWidgetActive, int> impl(
-		[](SubscrWidgetActive* widg){
+		[](SubscrWidgetActive*){
 			return SUBSCR_SELECTOR_NUMTILEINFO;
 		},
 		[](SubscrWidgetActive* widg, int index) -> int {
@@ -188,7 +188,7 @@ static ArrayRegistrar SUBWIDGSELECTORFLASHCSET_registrar(SUBWIDGSELECTORFLASHCSE
 
 static ArrayRegistrar SUBWIDGTRANSPGARGS_registrar(SUBWIDGTRANSPGARGS, []{
 	static ScriptingArray_ObjectComputed<SubscrWidgetActive, int> impl(
-		[](SubscrWidgetActive* widg){
+		[](SubscrWidgetActive*){
 			return SUBSCR_TRANSITION_MAXARG;
 		},
 		[](SubscrWidgetActive* widg, int index) -> int {
@@ -207,7 +207,7 @@ static ArrayRegistrar SUBWIDGTRANSPGARGS_registrar(SUBWIDGTRANSPGARGS, []{
 
 static ArrayRegistrar SUBWIDGTRANSPGFLAGS_registrar(SUBWIDGTRANSPGFLAGS, []{
 	static ScriptingArray_ObjectComputed<SubscrWidgetActive, bool> impl(
-		[](SubscrWidgetActive* widg){
+		[](SubscrWidgetActive*){
 			return SUBSCR_TRANS_NUMFLAGS;
 		},
 		[](SubscrWidgetActive* widg, int index) -> bool {
@@ -281,7 +281,7 @@ static ArrayRegistrar SUBWIDGREQ_LEVEL_STATE_registrar(SUBWIDGREQ_LEVEL_STATE, [
 
 static ArrayRegistrar SUBWIDGPOSES_registrar(SUBWIDGPOSES, []{
 	static ScriptingArray_ObjectComputed<SubscrWidget, int> impl(
-		[](SubscrWidget* widg){
+		[](SubscrWidget*){
 			return 4;
 		},
 		[](SubscrWidget* widg, int index) -> int {

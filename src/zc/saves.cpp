@@ -1977,7 +1977,7 @@ static void do_save_order()
 
 // Creates an empty save_t (no header or gamedata, just path) for every file in the
 // save folder.
-static bool init_from_save_folder(std::string& err)
+static bool init_from_save_folder()
 {
 	auto dir = get_save_folder_path();
 	for (const auto & entry : fs::directory_iterator(dir))
@@ -2083,7 +2083,7 @@ bool saves_load(std::string& err)
 
 	// Lastly, just set up the save vector to contain paths.
 	// Each header will get loaded as requested from the title screen. gamedata is read only when needed.
-	if (!init_from_save_folder(err))
+	if (!init_from_save_folder())
 		return false;
 
 	int index = 0;

@@ -116,7 +116,7 @@ static const GUI::ListData combostrs
 	{ " -2: Screen Catchall", -2 },
 	{ " -1: Screen Message String", -1 }
 };
-GUI::ListData GUI::ZCListData::strings(bool combostr, bool respect_order, bool numbered)
+GUI::ListData GUI::ZCListData::strings([[maybe_unused]] bool combostr, [[maybe_unused]] bool respect_order, [[maybe_unused]] bool numbered)
 {
 	GUI::ListData ls;
 	#ifdef IS_EDITOR
@@ -646,7 +646,8 @@ static string DefenseToWeaponName(byte def)
 	}
 }
 
-GUI::ListData GUI::ZCListData::defenses(byte first, byte last, bool enemy)
+// TODO: remove unused param?
+GUI::ListData GUI::ZCListData::defenses(byte first, byte last, [[maybe_unused]] bool enemy)
 {
 	map<std::string, int32_t> vals;
 

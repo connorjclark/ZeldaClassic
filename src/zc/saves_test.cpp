@@ -17,7 +17,7 @@ static bool gd_compare(const char* a, const char* b)
 	return strcmp(a, b) == 0;
 }
 
-TestResults test_saves(bool verbose)
+TestResults test_saves([[maybe_unused]] bool verbose)
 {
 	TestResults tr{};
 

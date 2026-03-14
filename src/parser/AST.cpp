@@ -673,7 +673,7 @@ ASTAnnotation::ASTAnnotation(ASTString* key, LocationData const& location)
 	: AST(location), key(key), strval(), intval()
 {}
 
-void ASTAnnotation::execute(ASTVisitor& visitor, void* param)
+void ASTAnnotation::execute(ASTVisitor&, void*)
 {
 	
 }
@@ -684,7 +684,7 @@ ASTAnnotationList::ASTAnnotationList(LocationData const& location)
 	: AST(location)
 {}
 
-void ASTAnnotationList::execute(ASTVisitor& visitor, void* param)
+void ASTAnnotationList::execute(ASTVisitor&, void*)
 {
 	
 }
@@ -1770,18 +1770,17 @@ string ASTExprIdentifier::asString() const
 	return s;
 }
 
-std::optional<int32_t> ASTExprIdentifier::getCompileTimeValue(
-		CompileErrorHandler* errorHandler, Scope* scope)
+std::optional<int32_t> ASTExprIdentifier::getCompileTimeValue(CompileErrorHandler*, Scope* scope)
 {
 	return binding ? binding->getCompileTimeValue(scope->isGlobal() || scope->isScript()) : std::nullopt;
 }
 
-DataType const* ASTExprIdentifier::getReadType(Scope* scope, CompileErrorHandler* errorHandler)
+DataType const* ASTExprIdentifier::getReadType(Scope*, CompileErrorHandler*)
 {
 	return binding ? &binding->type : NULL;
 }
 
-DataType const* ASTExprIdentifier::getWriteType(Scope* scope, CompileErrorHandler* errorHandler)
+DataType const* ASTExprIdentifier::getWriteType(Scope*, CompileErrorHandler*)
 {
 	return binding ? &binding->type : NULL;
 }
@@ -1816,13 +1815,13 @@ bool ASTExprArrow::isTypeArrowNonUsrClass() const
 	return !isTypeArrowUsrClass();
 }
 
-DataType const* ASTExprArrow::getReadType(Scope* scope, CompileErrorHandler* errorHandler)
+DataType const* ASTExprArrow::getReadType(Scope*, CompileErrorHandler*)
 {
 	if(rtype) return rtype;
 	return readFunction ? readFunction->returnType : NULL;
 }
 
-DataType const* ASTExprArrow::getWriteType(Scope* scope, CompileErrorHandler* errorHandler)
+DataType const* ASTExprArrow::getWriteType(Scope*, CompileErrorHandler*)
 {
 	if(wtype) return wtype;
 	return writeFunction ? writeFunction->paramTypes.back() : NULL;
@@ -1896,12 +1895,12 @@ optional<int32_t> ASTExprCall::getCompileTimeValue(CompileErrorHandler* errorHan
 		param_vals.push_back(expr->getCompileTimeValue(errorHandler, scope));
 	return constfunc(param_vals, *this, errorHandler, scope);
 }
-DataType const* ASTExprCall::getReadType(Scope* scope, CompileErrorHandler* errorHandler)
+DataType const* ASTExprCall::getReadType(Scope*, CompileErrorHandler*)
 {
 	return binding ? binding->returnType : NULL;
 }
 
-DataType const* ASTExprCall::getWriteType(Scope* scope, CompileErrorHandler* errorHandler)
+DataType const* ASTExprCall::getWriteType(Scope*, CompileErrorHandler*)
 {
 	return NULL;
 }
@@ -2714,8 +2713,7 @@ void ASTExprCoalesceAssign::execute(ASTVisitor& visitor, void* param)
 	visitor.caseExprCoalesceAssign(*this, param);
 }
 
-std::optional<int32_t> ASTExprCoalesceAssign::getCompileTimeValue(
-		CompileErrorHandler* errorHandler, Scope* scope)
+std::optional<int32_t> ASTExprCoalesceAssign::getCompileTimeValue(CompileErrorHandler*, Scope*)
 {
 	return std::nullopt;
 }
@@ -2896,7 +2894,7 @@ std::string ASTStringLiteral::asString() const
 	return "\"" + value + "\"";
 }
 
-DataTypeArray const* ASTStringLiteral::getReadType(Scope* scope, CompileErrorHandler* errorHandler)
+DataTypeArray const* ASTStringLiteral::getReadType(Scope*, CompileErrorHandler*)
 {
 	return DataType::STRING;
 }
@@ -2991,8 +2989,7 @@ void ASTIsIncluded::execute(ASTVisitor& visitor, void* param)
 	visitor.caseIsIncluded(*this, param);
 }
 
-std::optional<int32_t> ASTIsIncluded::getCompileTimeValue(
-	CompileErrorHandler* errorHandler, Scope* scope)
+std::optional<int32_t> ASTIsIncluded::getCompileTimeValue(CompileErrorHandler*, Scope* scope)
 {
 	RootScope* root = getRoot(*scope);
 	return root->isImported(name) ? (*lookupOption(*scope, CompileOption::OPT_BOOL_TRUE_RETURN_DECIMAL) ? 1L : 10000L) : 0;

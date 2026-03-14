@@ -12,7 +12,7 @@ static ArrayRegistrar DROPSETITEMS_registrar(DROPSETITEMS, []{
 
 static ArrayRegistrar DROPSETCHANCES_registrar(DROPSETCHANCES, []{
 	static ScriptingArray_ObjectComputed<item_drop_object, int> impl(
-		[](item_drop_object* drop){
+		[](item_drop_object*){
 			return 10;
 		},
 		[](item_drop_object* drop, int index) -> int {

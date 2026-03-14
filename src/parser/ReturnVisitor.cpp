@@ -111,7 +111,7 @@ bool ReturnVisitor::block_retvisit(AST& host, void* param)
 	return ret;
 }
 
-void ReturnVisitor::caseDefault(AST& host, void* param)
+void ReturnVisitor::caseDefault(AST& host, void*)
 {
 	markReachable(host);
 }

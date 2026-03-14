@@ -200,9 +200,9 @@ void load_themefile(char const* fpath, PALETTE pal, ALLEGRO_COLOR* colors)
 
 void save_themefile(char const* fpath)
 {
-	save_themefile(fpath, RAMpal, jwin_a5_colors);
+	save_themefile(fpath, jwin_a5_colors);
 }
-void save_themefile(char const* fpath, PALETTE pal, ALLEGRO_COLOR* colors)
+void save_themefile(char const* fpath, ALLEGRO_COLOR* colors)
 {
 	zc_push_config();
 	zc_config_file(fpath);
@@ -254,7 +254,7 @@ void load_udef_colorset(App a, PALETTE pal, ALLEGRO_COLOR* colors)
 		//Write these back to the custom theme file
 		strcpy(tmp_themefile, get_app_theme_filename());
 		load_themefile(get_config_file_name(a), pal, colors);
-		save_themefile(tmp_themefile, pal, colors);
+		save_themefile(tmp_themefile, colors);
 	}
 	else load_themefile(tmp_themefile, pal, colors);
 	if (defaulted_theme)

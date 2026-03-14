@@ -1,7 +1,7 @@
 #include "test_runner/test_runner.h"
 #include "zc/zasm_optimize.h"
 
-TestResults test_zasm_optimize(bool verbose)
+TestResults test_zasm_optimize([[maybe_unused]] bool verbose)
 {
 	TestResults tr{};
 

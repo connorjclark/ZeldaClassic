@@ -28,12 +28,12 @@ bool zscript_error_out = false;
 ////////////////////////////////////////////////////////////////
 // RecursiveVisitor
 
-bool RecursiveVisitor::breakRecursion(AST& host, void* param) const
+bool RecursiveVisitor::breakRecursion(AST& host, void*) const
 {
 	return host.errorDisabled || failure_temp || failure_halt || breakNode;
 }
 
-bool RecursiveVisitor::breakRecursion(void* param) const
+bool RecursiveVisitor::breakRecursion(void*) const
 {
 	return failure_temp || failure_halt || breakNode;
 }
@@ -93,13 +93,13 @@ void RecursiveVisitor::deprecWarn(Function* func, AST* host, std::string const& 
 		case 0: //No warn
 			break;
 		case 2: //Error
-			if(func->shouldShowDepr(true))
+			if(func->shouldShowDepr())
 			{
 				handleError(CompileError::DeprecatedError(host, s1, s2), &func->getInfo());
 			}
 			break;
 		default: //Warn
-			if(func->shouldShowDepr(false))
+			if(func->shouldShowDepr())
 			{
 				handleError(CompileError::DeprecatedWarn(host, s1, s2), &func->getInfo());
 			}
@@ -553,7 +553,7 @@ void RecursiveVisitor::caseImportDecl(ASTImportDecl& host, void* param)
 {
 	visit(host.getTree(), param);
 }
-void RecursiveVisitor::caseIncludePath(ASTIncludePath& host, void* param)
+void RecursiveVisitor::caseIncludePath(ASTIncludePath&, void*)
 {}
 
 void RecursiveVisitor::caseImportCondDecl(ASTImportCondDecl& host, void* param)
@@ -631,7 +631,7 @@ void RecursiveVisitor::caseCustomDataTypeDef(ASTCustomDataTypeDef& host, void* p
 	visit(host.definition.get(), param);
 }
 
-void RecursiveVisitor::caseAssert(ASTAssert& host, void* param)
+void RecursiveVisitor::caseAssert(ASTAssert&, void*)
 {
 	//Ignored, except in SemanticAnalyzer
 }

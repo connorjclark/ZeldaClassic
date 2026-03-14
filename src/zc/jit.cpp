@@ -95,7 +95,7 @@ static JittedScript* find_jitted_script(zasm_script* script)
 	return nullptr;
 }
 
-static void collect_scripts(std::vector<zasm_script*>& scripts, script_data *scripts_array[], size_t start, size_t max, ScriptType type)
+static void collect_scripts(std::vector<zasm_script*>& scripts, script_data *scripts_array[], size_t start, size_t max)
 {
 	for (size_t i = start; i < max; i++)
 	{
@@ -110,36 +110,36 @@ static void collect_scripts(std::vector<zasm_script*>& scripts, script_data *scr
 	}
 }
 
-static void collect_scripts(std::vector<zasm_script*>& scripts, script_data *scripts_array[], size_t len, ScriptType type)
+static void collect_scripts(std::vector<zasm_script*>& scripts, script_data *scripts_array[], size_t len)
 {
-	collect_scripts(scripts, scripts_array, 0, len, type);
+	collect_scripts(scripts, scripts_array, 0, len);
 }
 
 static std::vector<zasm_script*> collect_scripts()
 {
 	std::vector<zasm_script*> scripts;
 
-	collect_scripts(scripts, ffscripts, NUMSCRIPTFFC, ScriptType::FFC);
-	collect_scripts(scripts, itemscripts, NUMSCRIPTITEM, ScriptType::Item);
-	collect_scripts(scripts, guyscripts, NUMSCRIPTGUYS, ScriptType::NPC);
-	collect_scripts(scripts, screenscripts, NUMSCRIPTSCREEN, ScriptType::Screen);
-	collect_scripts(scripts, lwpnscripts, NUMSCRIPTWEAPONS, ScriptType::Lwpn);
-	collect_scripts(scripts, ewpnscripts, NUMSCRIPTWEAPONS, ScriptType::Ewpn);
-	collect_scripts(scripts, dmapscripts, NUMSCRIPTSDMAP, ScriptType::DMap);
-	collect_scripts(scripts, itemspritescripts, NUMSCRIPTSITEMSPRITE, ScriptType::ItemSprite);
-	collect_scripts(scripts, comboscripts, NUMSCRIPTSCOMBODATA, ScriptType::Combo);
-	collect_scripts(scripts, genericscripts, NUMSCRIPTSGENERIC, ScriptType::Generic);
-	collect_scripts(scripts, subscreenscripts, NUMSCRIPTSSUBSCREEN, ScriptType::EngineSubscreen);
+	collect_scripts(scripts, ffscripts, NUMSCRIPTFFC);
+	collect_scripts(scripts, itemscripts, NUMSCRIPTITEM);
+	collect_scripts(scripts, guyscripts, NUMSCRIPTGUYS);
+	collect_scripts(scripts, screenscripts, NUMSCRIPTSCREEN);
+	collect_scripts(scripts, lwpnscripts, NUMSCRIPTWEAPONS);
+	collect_scripts(scripts, ewpnscripts, NUMSCRIPTWEAPONS);
+	collect_scripts(scripts, dmapscripts, NUMSCRIPTSDMAP);
+	collect_scripts(scripts, itemspritescripts, NUMSCRIPTSITEMSPRITE);
+	collect_scripts(scripts, comboscripts, NUMSCRIPTSCOMBODATA);
+	collect_scripts(scripts, genericscripts, NUMSCRIPTSGENERIC);
+	collect_scripts(scripts, subscreenscripts, NUMSCRIPTSSUBSCREEN);
 	// Skip the first two - are priortizied below the sort.
-	collect_scripts(scripts, globalscripts, GLOBAL_SCRIPT_INIT+2, NUMSCRIPTGLOBAL, ScriptType::Global);
+	collect_scripts(scripts, globalscripts, GLOBAL_SCRIPT_INIT+2, NUMSCRIPTGLOBAL);
 	// Sort by # of commands, so that biggest scripts get compiled first.
 	std::sort(scripts.begin(), scripts.end(), [](zasm_script* a, zasm_script* b) {
 		return a->size < b->size;
 	});
 	// Make sure player and global scripts (just the INIT and GAME ones) are compiled first, as they
 	// are needed on frame 1.
-	collect_scripts(scripts, playerscripts, NUMSCRIPTHERO, ScriptType::Hero);
-	collect_scripts(scripts, globalscripts, GLOBAL_SCRIPT_INIT, 2, ScriptType::Global);
+	collect_scripts(scripts, playerscripts, NUMSCRIPTHERO);
+	collect_scripts(scripts, globalscripts, GLOBAL_SCRIPT_INIT, 2);
 
 	return scripts;
 }

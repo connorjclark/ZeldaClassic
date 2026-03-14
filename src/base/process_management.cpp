@@ -89,7 +89,7 @@ bool process_killer::kill()
 #ifdef _WIN32
 static size_t callback_complete_count = 0;
 static bool callback_error = false;
-static VOID WINAPI FileCallback(DWORD error_code, DWORD bytes_transferred, LPOVERLAPPED ptr_overlapped)
+static VOID WINAPI FileCallback(DWORD error_code, [[maybe_unused]] DWORD bytes_transferred, [[maybe_unused]] LPOVERLAPPED ptr_overlapped)
 {
 	if(error_code)
 		callback_error = true;
@@ -480,7 +480,7 @@ process_killer launch_process(std::string file, const std::vector<std::string>& 
 #endif
 }
 
-process_manager* launch_piped_process(std::string file, std::string pipename, const std::vector<std::string>& args)
+process_manager* launch_piped_process(std::string file, [[maybe_unused]] std::string pipename, const std::vector<std::string>& args)
 {
 	process_manager* pm = new process_manager();
 #ifdef _WIN32

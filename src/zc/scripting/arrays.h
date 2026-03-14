@@ -342,7 +342,7 @@ public:
 
 	size_t getSize(int) const override { return m_size; }
 
-	std::vector<int> getAll(int ref) const override
+	std::vector<int> getAll(int) const override
 	{
 		std::vector<int> values(m_data, m_data + m_size);
 		if (m_mul10000)

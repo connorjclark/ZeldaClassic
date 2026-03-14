@@ -46,7 +46,7 @@ static ArrayRegistrar MAPDATACOMBODATAD_registrar(MAPDATACOMBODATAD, []{
 
 			return -10000;
 		},
-		[](mapdata* mapdata, int index, int value){}
+		[](mapdata*, int, int){}
 	);
 	impl.compatSetDefaultValue(-10000);
 	impl.setMul10000(false);
@@ -314,7 +314,7 @@ static ArrayRegistrar MAPDATAINITDARRAY_registrar(MAPDATAINITDARRAY, []{
 
 static ArrayRegistrar MAPDATASCREENSTATED_registrar(MAPDATASCREENSTATED, []{
 	static ScriptingArray_ObjectComputed<mapdata, bool> impl(
-		[](mapdata* mapdata){ return mMAXIND; },
+		[](mapdata*){ return mMAXIND; },
 		[](mapdata* mapdata, int index) -> bool {
 			int mi = get_mi(*mapdata);
 			if (mi < 0)
@@ -336,7 +336,7 @@ static ArrayRegistrar MAPDATASCREENSTATED_registrar(MAPDATASCREENSTATED, []{
 
 static ArrayRegistrar MAPDATAEXSTATED_registrar(MAPDATAEXSTATED, []{
 	static ScriptingArray_ObjectComputed<mapdata, bool> impl(
-		[](mapdata* mapdata){ return 32; },
+		[](mapdata*){ return 32; },
 		[](mapdata* mapdata, int index) -> bool {
 			int mi = get_mi(*mapdata);
 			if (mi < 0)
@@ -358,7 +358,7 @@ static ArrayRegistrar MAPDATAEXSTATED_registrar(MAPDATAEXSTATED, []{
 
 static ArrayRegistrar MAPDATASIDEWARPID_registrar(MAPDATASIDEWARPID, []{
 	static ScriptingArray_ObjectComputed<mapscr, int> impl(
-		[](mapscr* scr){ return 4; },
+		[](mapscr*){ return 4; },
 		[](mapscr* scr, int index) -> int {
 			return ((scr->flags2 >> index) & 1)
 				? (scr->sidewarpindex >> (2*index)) & 3 //Return which warp is set
@@ -413,7 +413,7 @@ static ArrayRegistrar MAPDATASCRDATA_registrar(MAPDATASCRDATA, []{
 
 static ArrayRegistrar MAPDATASWARPRETSQR_registrar(MAPDATASWARPRETSQR, []{
 	static ScriptingArray_ObjectComputed<mapscr, int> impl(
-		[](mapscr* scr){ return 4; },
+		[](mapscr*){ return 4; },
 		[](mapscr* scr, int index){ return (scr->warpreturnc >> (8+(index*2))) & 3; },
 		[](mapscr* scr, int index, int value){
 			scr->warpreturnc = (scr->warpreturnc&~(3<<(8+(index*2)))) | (value<<(8+(index*2)));
@@ -427,7 +427,7 @@ static ArrayRegistrar MAPDATASWARPRETSQR_registrar(MAPDATASWARPRETSQR, []{
 
 static ArrayRegistrar MAPDATATWARPRETSQR_registrar(MAPDATATWARPRETSQR, []{
 	static ScriptingArray_ObjectComputed<mapscr, int> impl(
-		[](mapscr* scr){ return 4; },
+		[](mapscr*){ return 4; },
 		[](mapscr* scr, int index){ return (scr->warpreturnc >> (index*2)) & 3; },
 		[](mapscr* scr, int index, int value){
 			scr->warpreturnc = (scr->warpreturnc&~(3<<(index*2))) | (value<<(index*2));
@@ -514,7 +514,7 @@ static ArrayRegistrar MAPDATALENSSHOWS_registrar(MAPDATALENSSHOWS, []{
 
 static ArrayRegistrar MAPDATAFLAGS_registrar(MAPDATAFLAGS, []{
 	static ScriptingArray_ObjectComputed<mapscr, byte> impl(
-		[](mapscr* scr){ return 11; },
+		[](mapscr*){ return 11; },
 		[](mapscr* scr, int index){ return (&scr->flags)[index]; },
 		[](mapscr* scr, int index, byte value){ (&scr->flags)[index] = value; }
 	);
@@ -525,9 +525,9 @@ static ArrayRegistrar MAPDATAFLAGS_registrar(MAPDATAFLAGS, []{
 
 static ArrayRegistrar MAPDATASCREENEFLAGSD_registrar(MAPDATASCREENEFLAGSD, []{
 	static ScriptingArray_ObjectComputed<mapscr, int> impl(
-		[](mapscr* scr){ return 3; },
+		[](mapscr*){ return 3; },
 		[](mapscr* scr, int index){ return get_screeneflags(scr, index); },
-		[](mapscr* scr, int index, int value){}
+		[](mapscr*, int, int){}
 	);
 	impl.setMul10000(true);
 	impl.compatBoundIndex();
@@ -537,9 +537,9 @@ static ArrayRegistrar MAPDATASCREENEFLAGSD_registrar(MAPDATASCREENEFLAGSD, []{
 
 static ArrayRegistrar MAPDATASCREENFLAGSD_registrar(MAPDATASCREENFLAGSD, []{
 	static ScriptingArray_ObjectComputed<mapscr, int> impl(
-		[](mapscr* scr){ return 10; },
+		[](mapscr*){ return 10; },
 		[](mapscr* scr, int index){ return get_screenflags(scr, index); },
-		[](mapscr* scr, int index, int value){}
+		[](mapscr*, int, int){}
 	);
 	impl.setMul10000(true);
 	impl.compatBoundIndex();
@@ -549,7 +549,7 @@ static ArrayRegistrar MAPDATASCREENFLAGSD_registrar(MAPDATASCREENFLAGSD, []{
 
 static ArrayRegistrar MAPDATA_FLAG_registrar(MAPDATA_FLAG, []{
 	static ScriptingArray_ObjectComputed<mapscr, bool> impl(
-		[](mapscr* scr){ return 8*11; },
+		[](mapscr*){ return 8*11; },
 		[](mapscr* scr, int index) -> bool {
 			return (&scr->flags)[index/8] & (1 << (index%8));
 		},
@@ -564,7 +564,7 @@ static ArrayRegistrar MAPDATA_FLAG_registrar(MAPDATA_FLAG, []{
 
 static ArrayRegistrar MAPDATAMISCD_registrar(MAPDATAMISCD, []{
 	static ScriptingArray_ObjectComputed<mapdata, int> impl(
-		[](mapdata* mapdata){ return 8; },
+		[](mapdata*){ return 8; },
 		[](mapdata* mapdata, int index) -> int {
 			int mi = mapind(mapdata->scr->map, mapdata->scr->screen);
 			if (mi < 0)

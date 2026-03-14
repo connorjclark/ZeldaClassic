@@ -2084,7 +2084,7 @@ void set_theme(char const* fpath);
 void reset_theme();
 void load_themefile(char const* fpath, PALETTE pal, ALLEGRO_COLOR* colors);
 void load_themefile(char const* fpath);
-void save_themefile(char const* fpath, PALETTE pal, ALLEGRO_COLOR* colors);
+void save_themefile(char const* fpath, ALLEGRO_COLOR* colors);
 void save_themefile(char const* fpath);
 void load_udef_colorset(App a, PALETTE pal, ALLEGRO_COLOR* colors);
 void load_udef_colorset(App a);

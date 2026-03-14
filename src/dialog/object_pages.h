@@ -86,7 +86,7 @@ public:
 	virtual void do_delete(int index) = 0;
 	virtual size_t size() const = 0;
 	
-	virtual bool do_rclick(int indx){return false;}
+	virtual bool do_rclick([[maybe_unused]] int indx){return false;}
 	virtual bool do_tick(){return false;}
 	virtual void postinit(){}
 	

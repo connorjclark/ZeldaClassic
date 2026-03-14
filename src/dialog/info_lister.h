@@ -37,9 +37,9 @@ public:
 protected:
 	virtual void preinit(){};
 	virtual void postinit(){};
-	virtual void update(bool startup = false){};
+	virtual void update([[maybe_unused]] bool startup = false){};
 	virtual void edit(){};
-	virtual void rclick(int x, int y){};
+	virtual void rclick([[maybe_unused]] int x, [[maybe_unused]] int y){};
 	virtual bool clear(){return false;};
 	virtual void copy(){};
 	virtual bool paste(){return false;};

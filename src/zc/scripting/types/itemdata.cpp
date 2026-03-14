@@ -55,7 +55,7 @@ static ArrayRegistrar IDATABURNINGLIGHTRAD_registrar(IDATABURNINGLIGHTRAD, []{
 
 static ArrayRegistrar IDATAATTRIB_registrar(IDATAATTRIB, []{
 	static ScriptingArray_ObjectComputed<itemdata, int> impl(
-		[](itemdata* item){
+		[](itemdata*){
 			return 10;
 		},
 		[](itemdata* item, int index) -> int {
@@ -99,7 +99,7 @@ static ArrayRegistrar IDATAATTRIB_registrar(IDATAATTRIB, []{
 
 static ArrayRegistrar IDATAATTRIB_L_registrar(IDATAATTRIB_L, []{
 	static ScriptingArray_ObjectComputed<itemdata, int> impl(
-		[](itemdata* item){
+		[](itemdata*){
 			return 10;
 		},
 		[](itemdata* item, int index) -> int {
@@ -151,7 +151,7 @@ static ArrayRegistrar IDATASPRITE_registrar(IDATASPRITE, []{
 
 static ArrayRegistrar IDATAFLAGS_registrar(IDATAFLAGS, []{
 	static ScriptingArray_ObjectComputed<itemdata, bool> impl(
-		[](itemdata* item){
+		[](itemdata*){
 			return 16;
 		},
 		[](itemdata* item, int index) -> bool {

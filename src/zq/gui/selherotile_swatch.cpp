@@ -1612,7 +1612,7 @@ namespace GUI
 			});
 	}
 
-	int32_t SelHeroTileSwatch::onEvent(int32_t event, MessageDispatcher& sendMessage)
+	int32_t SelHeroTileSwatch::onEvent([[maybe_unused]] int32_t event, [[maybe_unused]] MessageDispatcher& sendMessage)
 	{
 		return -1;
 	}

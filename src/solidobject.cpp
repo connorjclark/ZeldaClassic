@@ -14,7 +14,7 @@ extern sprite_list guys;
 static solid_object* curobject = NULL;
 
 template <class F>
-static bool for_every_solid_object(const F& fn)
+static bool for_every_solid_object([[maybe_unused]] const F& fn)
 {
 #ifdef IS_PLAYER
 	bool should_continue = true;
@@ -157,7 +157,7 @@ void solid_object::draw_a5(int32_t tx, int32_t ty, ALLEGRO_COLOR col)
 	         ty + hit_height + sysz_ofs, col);
 }
 
-void solid_object::solid_update(bool push)
+void solid_object::solid_update([[maybe_unused]] bool push)
 {
 #ifdef IS_PLAYER
 	if(push && solid)
@@ -174,7 +174,7 @@ void solid_object::solid_update(bool push)
 	old_x = x;
 	old_y = y;
 }
-void solid_object::solid_push(solid_object* pusher)
+void solid_object::solid_push([[maybe_unused]] solid_object* pusher)
 {
 	//Default behavior: Ignore
 }

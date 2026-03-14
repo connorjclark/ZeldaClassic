@@ -53,7 +53,7 @@ This is the implementation in `Checkbox`:
 ```
 int32_t Checkbox::onEvent(int32_t event, MessageDispatcher sendMessage)
 {
-	assert(event == ngeTOGGLE); // The only valid event for a Checkbox
+	CHECK(event == ngeTOGGLE); // The only valid event for a Checkbox
 	if(message >= 0) // -1 indicates no message has been set
 		sendMessage(message, (alDialog->flags&D_SELECTED) != 0);
 	return -1; // A negative return value means the DIALOG proc should keep running

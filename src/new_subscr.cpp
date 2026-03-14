@@ -1013,7 +1013,7 @@ void SubscrColorInfo::set_int_cset(int32_t val)
 	}
 }
 
-int32_t SubscrColorInfo::read(PACKFILE *f, word s_version)
+int32_t SubscrColorInfo::read(PACKFILE *f, [[maybe_unused]] word s_version)
 {
 	if(!p_getc(&type,f))
 		return qe_invalid;
@@ -1080,7 +1080,7 @@ void SubscrMTInfo::setCrn(byte crn)
 {
 	mt_crn = crn;
 }
-int32_t SubscrMTInfo::read(PACKFILE *f, word s_version)
+int32_t SubscrMTInfo::read(PACKFILE *f, [[maybe_unused]] word s_version)
 {
 	int32_t tilecrn;
 	if(!p_igetl(&tilecrn,f))
@@ -1103,7 +1103,7 @@ void SubscrSelectorTileInfo::clear()
 {
 	*this = SubscrSelectorTileInfo();
 }
-int32_t SubscrSelectorTileInfo::read(PACKFILE *f, word s_version)
+int32_t SubscrSelectorTileInfo::read(PACKFILE *f, [[maybe_unused]] word s_version)
 {
 	if(!p_igetw(&sw,f))
 		return qe_invalid;
@@ -1416,11 +1416,11 @@ ButtonItemData SubscrWidget::getDisplayItem() const
 {
 	return {};
 }
-void SubscrWidget::draw(BITMAP* dest, int32_t xofs, int32_t yofs, SubscrPage& page) const
+void SubscrWidget::draw([[maybe_unused]] BITMAP* dest, [[maybe_unused]] int32_t xofs, [[maybe_unused]] int32_t yofs, [[maybe_unused]] SubscrPage& page) const
 {
 	
 }
-bool SubscrWidget::visible(byte pos, bool showtime) const
+bool SubscrWidget::visible(byte pos, [[maybe_unused]] bool showtime) const
 {
 	#ifdef IS_PLAYER
 	if(msg_onscreen && (posflags&sspNOMSGSTR))
@@ -1976,7 +1976,7 @@ byte SW_2x2Frame::getType() const
 {
 	return widgFRAME;
 }
-void SW_2x2Frame::draw(BITMAP* dest, int32_t xofs, int32_t yofs, SubscrPage& page) const
+void SW_2x2Frame::draw(BITMAP* dest, int32_t xofs, int32_t yofs, [[maybe_unused]] SubscrPage& page) const
 {
 	frame2x2(dest, x+xofs, y+yofs, tile, cs.get_cset(), w, h, 0,
 		flags&SUBSCR_2X2FR_OVERLAY, flags&SUBSCR_2X2FR_TRANSP);
@@ -2065,7 +2065,7 @@ byte SW_Text::getType() const
 {
 	return widgTEXT;
 }
-void SW_Text::draw(BITMAP* dest, int32_t xofs, int32_t yofs, SubscrPage& page) const
+void SW_Text::draw(BITMAP* dest, int32_t xofs, int32_t yofs, [[maybe_unused]] SubscrPage& page) const
 {
 	FONT* tempfont = get_zc_font(fontid);
 	textout_styled_aligned_ex(dest,tempfont,text.c_str(),x+xofs,y+yofs,
@@ -2149,7 +2149,7 @@ byte SW_Line::getType() const
 {
 	return widgLINE;
 }
-void SW_Line::draw(BITMAP* dest, int32_t xofs, int32_t yofs, SubscrPage& page) const
+void SW_Line::draw(BITMAP* dest, int32_t xofs, int32_t yofs, [[maybe_unused]] SubscrPage& page) const
 {
 	if(flags&SUBSCR_LINE_TRANSP)
 		drawing_mode(DRAW_MODE_TRANS, NULL, 0, 0);
@@ -2209,7 +2209,7 @@ byte SW_Rect::getType() const
 {
 	return widgRECT;
 }
-void SW_Rect::draw(BITMAP* dest, int32_t xofs, int32_t yofs, SubscrPage& page) const
+void SW_Rect::draw(BITMAP* dest, int32_t xofs, int32_t yofs, [[maybe_unused]] SubscrPage& page) const
 {
 	if(flags&SUBSCR_RECT_TRANSP)
 		drawing_mode(DRAW_MODE_TRANS, NULL, 0, 0);
@@ -2313,7 +2313,7 @@ byte SW_Time::getType() const
 {
 	return widgTIME;
 }
-void SW_Time::draw(BITMAP* dest, int32_t xofs, int32_t yofs, SubscrPage& page) const
+void SW_Time::draw(BITMAP* dest, int32_t xofs, int32_t yofs, [[maybe_unused]] SubscrPage& page) const
 {
 	char *ts;
 	auto tm = game ? game->get_time() : 0;
@@ -2413,7 +2413,7 @@ byte SW_MagicMeter::getType() const
 {
 	return widgMMETER;
 }
-void SW_MagicMeter::draw(BITMAP* dest, int32_t xofs, int32_t yofs, SubscrPage& page) const
+void SW_MagicMeter::draw(BITMAP* dest, int32_t xofs, int32_t yofs, [[maybe_unused]] SubscrPage& page) const
 {
 	magicmeter(dest, x+xofs, y+yofs);
 }
@@ -2474,7 +2474,7 @@ byte SW_LifeMeter::getType() const
 {
 	return widgLMETER;
 }
-void SW_LifeMeter::draw(BITMAP* dest, int32_t xofs, int32_t yofs, SubscrPage& page) const
+void SW_LifeMeter::draw(BITMAP* dest, int32_t xofs, int32_t yofs, [[maybe_unused]] SubscrPage& page) const
 {
 	lifemeter(dest, x+xofs, y+yofs, 1, flags&SUBSCR_LIFEMET_BOT);
 }
@@ -2534,7 +2534,7 @@ byte SW_ButtonItem::getType() const
 {
 	return widgBTNITM;
 }
-void SW_ButtonItem::draw(BITMAP* dest, int32_t xofs, int32_t yofs, SubscrPage& page) const
+void SW_ButtonItem::draw(BITMAP* dest, int32_t xofs, int32_t yofs, [[maybe_unused]] SubscrPage& page) const
 {
 	if(!show_subscreen_items) return;
 	if(flags&SUBSCR_BTNITM_TRANSP)
@@ -2712,7 +2712,7 @@ static string format_counter(int value, int max_value, byte mindigits, byte maxd
 	}
 	return ret;
 }
-void SW_Counter::draw(BITMAP* dest, int32_t xofs, int32_t yofs, SubscrPage& page) const
+void SW_Counter::draw(BITMAP* dest, int32_t xofs, int32_t yofs, [[maybe_unused]] SubscrPage& page) const
 {
 	FONT* tempfont = get_zc_font(fontid);
 	auto b = zq_ignore_item_ownership;
@@ -2967,7 +2967,7 @@ byte SW_Counters::getType() const
 {
 	return widgOLDCTR;
 }
-void SW_Counters::draw(BITMAP* dest, int32_t xofs, int32_t yofs, SubscrPage& page) const
+void SW_Counters::draw(BITMAP* dest, int32_t xofs, int32_t yofs, [[maybe_unused]] SubscrPage& page) const
 {
 	FONT* tempfont = get_zc_font(fontid);
 	defaultcounters(dest, x+xofs, y+yofs, tempfont, c_text.get_color(),
@@ -3070,7 +3070,7 @@ byte SW_BtnCounter::getType() const
 {
 	return widgBTNCOUNTER;
 }
-void SW_BtnCounter::draw(BITMAP* dest, int32_t xofs, int32_t yofs, SubscrPage& page) const
+void SW_BtnCounter::draw(BITMAP* dest, int32_t xofs, int32_t yofs, [[maybe_unused]] SubscrPage& page) const
 {
 	int32_t counter;
 	ButtonItemData data = get_button_data(btn);
@@ -3347,7 +3347,7 @@ byte SW_MMapTitle::get_strs(char* line1, char* line2) const
 	}
 }
 
-void SW_MMapTitle::draw(BITMAP* dest, int32_t xofs, int32_t yofs, SubscrPage& page) const
+void SW_MMapTitle::draw(BITMAP* dest, int32_t xofs, int32_t yofs, [[maybe_unused]] SubscrPage& page) const
 {
 	if((flags&SUBSCR_MMAPTIT_REQMAP) && !has_item(itype_map, -1))
 		return;
@@ -3356,14 +3356,14 @@ void SW_MMapTitle::draw(BITMAP* dest, int32_t xofs, int32_t yofs, SubscrPage& pa
 	else
 		draw_new(dest, xofs, yofs, page);
 }
-void SW_MMapTitle::draw_new(BITMAP* dest, int32_t xofs, int32_t yofs, SubscrPage& page) const
+void SW_MMapTitle::draw_new(BITMAP* dest, int32_t xofs, int32_t yofs, [[maybe_unused]] SubscrPage& page) const
 {
 	FONT* tempfont = get_zc_font(fontid);
 	draw_textbox(dest, x + xofs, y + yofs, w, h, tempfont, DMaps[get_sub_dmap()].title.c_str(),
 		flags & SUBSCR_MMAPTIT_WORDWRAP, tabsize, align, shadtype,
 		c_text.get_color(), c_shadow.get_color(), c_bg.get_color());
 }
-void SW_MMapTitle::draw_old(BITMAP* dest, int32_t xofs, int32_t yofs, SubscrPage& page) const
+void SW_MMapTitle::draw_old(BITMAP* dest, int32_t xofs, int32_t yofs, [[maybe_unused]] SubscrPage& page) const
 {
 	FONT* tempfont = get_zc_font(fontid);
 	auto y1 = y+yofs, y2 = y1+8;
@@ -3481,7 +3481,7 @@ byte SW_MMap::getType() const
 	return widgMMAP;
 }
 
-void SW_MMap::draw(BITMAP* dest, int32_t xofs, int32_t yofs, SubscrPage& page) const
+void SW_MMap::draw(BITMAP* dest, int32_t xofs, int32_t yofs, [[maybe_unused]] SubscrPage& page) const
 {
 	auto dmid = get_sub_dmap();
 	auto const& thedmap = DMaps[dmid];
@@ -3697,7 +3697,7 @@ byte SW_LMap::getType() const
 {
 	return widgLMAP;
 }
-void SW_LMap::draw(BITMAP* dest, int32_t xofs, int32_t yofs, SubscrPage& page) const
+void SW_LMap::draw(BITMAP* dest, int32_t xofs, int32_t yofs, [[maybe_unused]] SubscrPage& page) const
 {
 	putBmap(dest, x+xofs, y+yofs, flags&SUBSCR_LMAP_SHOWMAP,
 		flags&SUBSCR_LMAP_SHOWROOM, flags&SUBSCR_LMAP_SHOWPLR, c_room.get_color(),
@@ -3777,7 +3777,7 @@ byte SW_Clear::getType() const
 {
 	return widgBGCOLOR;
 }
-void SW_Clear::draw(BITMAP* dest, int32_t xofs, int32_t yofs, SubscrPage& page) const
+void SW_Clear::draw(BITMAP* dest, int32_t xofs, int32_t yofs, [[maybe_unused]] SubscrPage& page) const
 {
 	if(replay_version_check(0,19))
 		clear_to_color(dest,c_bg.get_color());
@@ -3861,6 +3861,7 @@ static bool check_bomb(optional<int> iid = nullopt)
 		return true; // Remote Bombs - still usable without cost
 	return false;
 #else
+	(void)iid;
 	return true;
 #endif
 }
@@ -3883,6 +3884,7 @@ static bool check_sbomb(optional<int> iid = nullopt)
 		return true; // Remote Bombs - still usable without cost
 	return false;
 #else
+	(void)iid;
 	return true;
 #endif
 }
@@ -4120,7 +4122,7 @@ ButtonItemData SW_ItemSlot::getDisplayItem() const
 	return {itemid, fam == itype_bowandarrow};
 #endif
 }
-void SW_ItemSlot::draw(BITMAP* dest, int32_t xofs, int32_t yofs, SubscrPage& page) const
+void SW_ItemSlot::draw(BITMAP* dest, int32_t xofs, int32_t yofs, [[maybe_unused]] SubscrPage& page) const
 {
 	if(subscr_itemless && iid < 0) return;
 	#ifdef IS_PLAYER
@@ -4229,7 +4231,7 @@ byte SW_TriFrame::getType() const
 {
 	return widgMCGUFF_FRAME;
 }
-void SW_TriFrame::draw(BITMAP* dest, int32_t xofs, int32_t yofs, SubscrPage& page) const
+void SW_TriFrame::draw(BITMAP* dest, int32_t xofs, int32_t yofs, [[maybe_unused]] SubscrPage& page) const
 {
 	puttriframe(dest, x+xofs,y+yofs, c_outline.get_color(), c_number.get_color(),
 		frame_tile, frame_cset, piece_tile, piece_cset, flags&SUBSCR_TRIFR_SHOWFR,
@@ -4320,7 +4322,7 @@ byte SW_McGuffin::getType() const
 {
 	return widgMCGUFF;
 }
-void SW_McGuffin::draw(BITMAP* dest, int32_t xofs, int32_t yofs, SubscrPage& page) const
+void SW_McGuffin::draw(BITMAP* dest, int32_t xofs, int32_t yofs, [[maybe_unused]] SubscrPage& page) const
 {
 	puttriforce(dest,x+xofs,y+yofs,tile,cs.get_cset(),w,h,
 		flip,flags&SUBSCR_MCGUF_OVERLAY,flags&SUBSCR_MCGUF_TRANSP,number);
@@ -4399,7 +4401,7 @@ byte SW_TileBlock::getType() const
 {
 	return widgTILEBLOCK;
 }
-void SW_TileBlock::draw(BITMAP* dest, int32_t xofs, int32_t yofs, SubscrPage& page) const
+void SW_TileBlock::draw(BITMAP* dest, int32_t xofs, int32_t yofs, [[maybe_unused]] SubscrPage& page) const
 {
 	draw_block_flip(dest,x+xofs,y+yofs,tile,cs.get_cset(),
 		w,h,flip,flags&SUBSCR_TILEBL_OVERLAY,flags&SUBSCR_TILEBL_TRANSP);
@@ -4523,7 +4525,7 @@ void SW_MiniTile::set_int_tile(int32_t val)
 		special_tile = -1;
 	}
 }
-void SW_MiniTile::draw(BITMAP* dest, int32_t xofs, int32_t yofs, SubscrPage& page) const
+void SW_MiniTile::draw(BITMAP* dest, int32_t xofs, int32_t yofs, [[maybe_unused]] SubscrPage& page) const
 {
 	auto t = (get_tile()<<2)+crn;
 	auto tx = x+xofs, ty = y+yofs;
@@ -4887,7 +4889,7 @@ void SW_GaugePiece::draw_piece(BITMAP* dest, int dx, int dy, int container, int 
 		overtile16(dest,tile+offs,dx,dy,cset,0);
 	else overtile8(dest,mtile+offs,dx,dy,cset,0);
 }
-void SW_GaugePiece::draw(BITMAP* dest, int xofs, int yofs, SubscrPage& page) const
+void SW_GaugePiece::draw(BITMAP* dest, int xofs, int yofs, [[maybe_unused]] SubscrPage& page) const
 {
 	auto b = zq_ignore_item_ownership;
 	
@@ -5631,7 +5633,7 @@ string SW_ItemCooldownText::get_text() const
 	}
 	return format_text(cd);
 }
-void SW_ItemCooldownText::draw(BITMAP* dest, int32_t xofs, int32_t yofs, SubscrPage& page) const
+void SW_ItemCooldownText::draw(BITMAP* dest, int32_t xofs, int32_t yofs, [[maybe_unused]] SubscrPage& page) const
 {
 	FONT* tempfont = get_zc_font(fontid);
 	textout_styled_aligned_ex(dest,tempfont,get_text().c_str(),x+xofs,y+yofs,
@@ -5733,7 +5735,7 @@ byte SW_TextBox::getType() const
 {
 	return widgTEXTBOX;
 }
-void SW_TextBox::draw(BITMAP* dest, int32_t xofs, int32_t yofs, SubscrPage& page) const
+void SW_TextBox::draw(BITMAP* dest, int32_t xofs, int32_t yofs, [[maybe_unused]] SubscrPage& page) const
 {
 	FONT* tempfont = get_zc_font(fontid);
 	draw_textbox(dest, x+xofs, y+yofs, w, h, tempfont, text.c_str(),
@@ -5931,7 +5933,7 @@ byte SW_CounterPercentBar::getType() const
 {
 	return widgCOUNTERPERCBAR;
 }
-void SW_CounterPercentBar::draw(BITMAP* dest, int32_t xofs, int32_t yofs, SubscrPage& page) const
+void SW_CounterPercentBar::draw(BITMAP* dest, int32_t xofs, int32_t yofs, [[maybe_unused]] SubscrPage& page) const
 {
 	auto c1 = c_fill.get_color();
 	auto c2 = c_bg.get_color();

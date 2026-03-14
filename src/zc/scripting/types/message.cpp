@@ -20,7 +20,7 @@ static ArrayRegistrar MESSAGEDATASEGMENTS_registrar(MESSAGEDATASEGMENTS, []{
 	static ScriptingArray_ObjectComputed<MsgStr, int32_t> impl(
 		[](MsgStr* msg){ return msg->segmentsAsIntArray().size(); },
 		[](MsgStr* msg, int index){ return msg->segmentsAsIntArray()[index]; },
-		[](MsgStr* msg, int index, int value){}
+		[](MsgStr*, int, int){}
 	);
 	impl.setMul10000(true);
 	impl.setReadOnly();

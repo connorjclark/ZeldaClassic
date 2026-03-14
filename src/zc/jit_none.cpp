@@ -5,25 +5,25 @@ void jit_startup_impl()
 {
 }
 
-JittedScript* jit_compile_script(zasm_script* script)
+JittedScript* jit_compile_script([[maybe_unused]] zasm_script* script)
 {
 	return nullptr;
 }
 
-int jit_run_script(JittedScriptInstance* j_instance)
+int jit_run_script([[maybe_unused]] JittedScriptInstance* j_instance)
 {
 	return RUNSCRIPT_ERROR;
 }
 
-JittedScriptInstance* jit_create_script_impl(script_data *script, refInfo* ri, JittedScript* j_script)
+JittedScriptInstance* jit_create_script_impl([[maybe_unused]] script_data *script, [[maybe_unused]] refInfo* ri, [[maybe_unused]] JittedScript* j_script)
 {
 	return nullptr;
 }
 
-void jit_profiler_increment_function_back_edge(JittedScriptInstance* j_instance, pc_t pc)
+void jit_profiler_increment_function_back_edge([[maybe_unused]] JittedScriptInstance* j_instance, [[maybe_unused]] pc_t pc)
 {
 }
 
-void jit_release(JittedScript* j_script)
+void jit_release([[maybe_unused]] JittedScript* j_script)
 {
 }

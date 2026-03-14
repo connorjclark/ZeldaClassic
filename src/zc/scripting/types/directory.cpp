@@ -139,7 +139,7 @@ std::optional<int32_t> directory_get_register(int32_t reg)
 	return ret;
 }
 
-bool directory_set_register(int32_t reg, int32_t value)
+bool directory_set_register([[maybe_unused]] int32_t reg, [[maybe_unused]] int32_t value)
 {
 	return false;
 }

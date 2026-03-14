@@ -789,7 +789,7 @@ std::shared_ptr<GUI::Widget> OptionsDialog::view()
 					Checkbox(checked = do_prevscale,
 						text = "Preview Scale",
 						hAlign = 0.0,
-						onToggleFunc = [&](bool state)
+						onToggleFunc = [&]([[maybe_unused]] bool state)
 						{
 							do_prevscale = !do_prevscale;
 							preview_font();

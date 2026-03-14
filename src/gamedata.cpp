@@ -1069,6 +1069,7 @@ void gamedata::set_portal(int16_t destdmap, int16_t srcdmap, byte scr, int32_t x
 
 portal* loadportal(savedportal& p)
 {
+	(void)p;
 	portal* retp = nullptr;
 #ifndef IS_EDITOR
 	if(cur_dmap == p.srcdmap && cur_screen == p.srcscr)

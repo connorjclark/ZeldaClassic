@@ -364,7 +364,7 @@ public:
         return 0;    
     }
 	
-	void	SetCurrentColor(word dwColor)
+	void	SetCurrentColor([[maybe_unused]] word dwColor)
 	{
             
     }

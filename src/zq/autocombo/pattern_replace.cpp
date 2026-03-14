@@ -48,11 +48,11 @@ namespace AutoPattern
 		return ap->cid;
 	}
 
-	uint32_t autopattern_replace::slot_to_flags(int32_t slot)
+	uint32_t autopattern_replace::slot_to_flags([[maybe_unused]] int32_t slot)
 	{
 		return 0;
 	}
-	int32_t autopattern_replace::flags_to_slot(uint32_t flags)
+	int32_t autopattern_replace::flags_to_slot([[maybe_unused]] uint32_t flags)
 	{
 		return 0;
 	}

@@ -553,7 +553,7 @@ void TextField::setFixedPlaces(size_t places)
 void TextField::applyReadableFont()
 {
 }
-void TextField::updateReadOnly(bool ro)
+void TextField::updateReadOnly([[maybe_unused]] bool ro)
 {
 	applyReadableFont();
 }

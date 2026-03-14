@@ -125,7 +125,7 @@ bool EnhancedMusic::play() const
 	return true;
 }
 
-int32_t EnhancedMusic::read(PACKFILE *f, word s_version)
+int32_t EnhancedMusic::read(PACKFILE *f, [[maybe_unused]] word s_version)
 {
 	clear();
 	if (!p_getcstr(&path, f))

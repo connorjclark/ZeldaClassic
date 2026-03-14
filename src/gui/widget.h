@@ -235,7 +235,7 @@ public:
 		return flags&f_DISABLED;
 	}
 	
-	virtual void updateReadOnly(bool ro){}
+	virtual void updateReadOnly([[maybe_unused]] bool ro){}
 	
 	/* If this is true, this widget is non-interactable (but NOT greyed-out) 
 	 * when the dialog starts.

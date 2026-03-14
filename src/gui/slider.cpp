@@ -1,4 +1,5 @@
 #include "slider.h"
+#include "base/check.h"
 #include "gui/common.h"
 #include "gui/dialog.h"
 #include "gui/dialog_runner.h"
@@ -151,7 +152,7 @@ namespace GUI
 
 	int32_t Slider::onEvent(int32_t event, MessageDispatcher& sendMessage)
 	{
-		assert(event == geCHANGE_VALUE);
+		CHECK(event == geCHANGE_VALUE);
 		int ret = -1;
 		if (onValChangedFunc)
 		{

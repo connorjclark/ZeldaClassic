@@ -117,7 +117,7 @@ static void debug_pre_command(int32_t pc, uint32_t sp)
 class MyErrorHandler : public ErrorHandler
 {
 public:
-	void handleError(Error err, const char *message, BaseEmitter *origin) override
+	void handleError(Error, const char *message, BaseEmitter*) override
 	{
 		al_trace("[jit ERROR] AsmJit error: %s\n", message);
 	}
@@ -656,7 +656,7 @@ static void cast_bool(x86::Compiler& cc, x86::Gp reg)
 	cc.setne(reg.r8());
 }
 
-static void compile_compare_goto(CompilationState& state, x86::Compiler& cc, int pc, int command, int arg1, int arg2, int arg3)
+static void compile_compare_goto(CompilationState& state, x86::Compiler& cc, int command, int arg1, int arg2, int arg3)
 {
 	auto& goto_labels = state.goto_labels;
 	
@@ -715,11 +715,11 @@ static void compile_compare_goto(CompilationState& state, x86::Compiler& cc, int
 	}
 }
 
-static void compile_compare(CompilationState& state, x86::Compiler& cc, int pc, int command, int arg1, int arg2, int arg3)
+static void compile_compare(CompilationState& state, x86::Compiler& cc, int command, int arg1, int arg2, int arg3)
 {
 	if (command_is_goto(command))
 	{
-		compile_compare_goto(state, cc, pc, command, arg1, arg2, arg3);
+		compile_compare_goto(state, cc, command, arg1, arg2, arg3);
 		return;
 	}
 
@@ -1047,7 +1047,7 @@ static bool command_is_compiled(int command)
 }
 
 // Check for stack overflows, but only once per contiguous series of PUSH (or POP) commands.
-static void handle_check_sp_push(CompilationState& state, x86::Compiler& cc, const zasm_script* script, x86::Gp vStackIndex)
+static void handle_check_sp_push(CompilationState& state, x86::Compiler& cc, const zasm_script* script)
 {
 	if (state.pc >= state.num_push_commands_in_row_end_pc)
 	{
@@ -1213,7 +1213,7 @@ static void compile_single_command(CompilationState& state, x86::Compiler& cc, c
 				break;
 			}
 
-			handle_check_sp_push(state, cc, script, state.vSp);
+			handle_check_sp_push(state, cc, script);
 
 			modify_sp(state, cc, state.vSp, -1);
 			cc.mov(x86::ptr_32(state.ptrStackBase, state.vSp, 2), arg1);
@@ -1233,7 +1233,7 @@ static void compile_single_command(CompilationState& state, x86::Compiler& cc, c
 				break;
 			}
 
-			handle_check_sp_push(state, cc, script, state.vSp);
+			handle_check_sp_push(state, cc, script);
 
 			// Grab value from register and push onto stack.
 			x86::Gp val = get_z_register(state, cc, arg1);
@@ -1249,7 +1249,7 @@ static void compile_single_command(CompilationState& state, x86::Compiler& cc, c
 				break;
 			}
 
-			handle_check_sp_push(state, cc, script, state.vSp);
+			handle_check_sp_push(state, cc, script);
 
 			if(arg2 < 1) break; //do nothing
 
@@ -1283,7 +1283,7 @@ static void compile_single_command(CompilationState& state, x86::Compiler& cc, c
 				break;
 			}
 
-			handle_check_sp_push(state, cc, script, state.vSp);
+			handle_check_sp_push(state, cc, script);
 
 			if(arg2 < 1) break; //do nothing
 
@@ -2172,7 +2172,7 @@ static std::optional<JittedFunction> compile_function(zasm_script* script, Jitte
 
 		if (command_uses_comparison_result(command))
 		{
-			compile_compare(state, cc, i, command, op.arg1, op.arg2, op.arg3);
+			compile_compare(state, cc, command, op.arg1, op.arg2, op.arg3);
 			continue;
 		}
 

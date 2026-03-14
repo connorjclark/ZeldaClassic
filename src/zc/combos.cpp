@@ -99,7 +99,8 @@ bool alwaysCTypeEffects(int32_t type)
 	return false;
 }
 
-static void do_generic_combo2(int32_t bx, int32_t by, int32_t cid, int32_t flag, int32_t flag2, int32_t ft, const rpos_handle_t& rpos_handle, bool single16)
+// TODO: remove unused params?
+static void do_generic_combo2(int32_t bx, [[maybe_unused]] int32_t by, int32_t cid, [[maybe_unused]] int32_t flag, [[maybe_unused]] int32_t flag2, int32_t ft, const rpos_handle_t& rpos_handle, [[maybe_unused]] bool single16)
 {
 	if ( combobuf[cid].type < cTRIGGERGENERIC && !(combobuf[cid].usrflags&cflag9 )  )  //Script combos need an 'Engine' flag
 	{ 

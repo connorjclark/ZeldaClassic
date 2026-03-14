@@ -129,27 +129,27 @@ static bool em_destroy_wasm_module(int id)
 
 #else
 
-static int em_compile_wasm(const char* name, void* ptr, size_t size)
+static int em_compile_wasm([[maybe_unused]] const char* name, [[maybe_unused]] void* ptr, [[maybe_unused]] size_t size)
 {
 	return 0;
 }
 
-static int em_create_wasm_handle(int module_id)
+static int em_create_wasm_handle([[maybe_unused]] int module_id)
 {
 	return 0;
 }
 
-static int em_poll_wasm_handle(int id, uintptr_t ptr)
+static int em_poll_wasm_handle([[maybe_unused]] int id, [[maybe_unused]] uintptr_t ptr)
 {
 	return 0;
 }
 
-static bool em_destroy_wasm_handle(int id)
+static bool em_destroy_wasm_handle([[maybe_unused]] int id)
 {
 	return false;
 }
 
-static bool em_destroy_wasm_module(int id)
+static bool em_destroy_wasm_module([[maybe_unused]] int id)
 {
 	return false;
 }
@@ -1598,7 +1598,7 @@ JittedScriptInstance* jit_create_script_impl(script_data* script, refInfo* ri, J
 	};
 }
 
-void jit_profiler_increment_function_back_edge(JittedScriptInstance* j_instance, pc_t pc)
+void jit_profiler_increment_function_back_edge([[maybe_unused]] JittedScriptInstance* j_instance, [[maybe_unused]] pc_t pc)
 {
 	// Not used - the wasm backend currently only supports precompiling scripts.
 }

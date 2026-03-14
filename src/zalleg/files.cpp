@@ -184,7 +184,7 @@ static void trim_filename(std::string& path)
 		path[i--] = 0;
 }
 
-static int getname(std::string prompt, std::string ext, EXT_LIST *list, std::string initial_path, bool usefilename)
+static int getname(std::string prompt, std::string ext, EXT_LIST *list, std::string initial_path)
 {
     int sel = 0;
     strcpy(temppath, initial_path.c_str());
@@ -203,7 +203,7 @@ std::optional<std::string> prompt_for_existing_file(std::string prompt, std::str
 
 	if (!use_native_file_dialog)
 	{
-		int ret = getname(prompt, ext, list, initial_path, usefilename);
+		int ret = getname(prompt, ext, list, initial_path);
 		if (ret != FS_EXPLORER)
 		{
 			if (!ret)
@@ -253,7 +253,7 @@ std::optional<std::string> prompt_for_new_file(std::string prompt, std::string e
 
 	if (!use_native_file_dialog)
 	{
-		int ret = getname(prompt, ext, list, initial_path, usefilename);
+		int ret = getname(prompt, ext, list, initial_path);
 		if (ret != FS_EXPLORER)
 		{
 			if (!ret)

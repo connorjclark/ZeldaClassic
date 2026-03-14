@@ -2531,7 +2531,8 @@ newcombo* checkCombo(int32_t ref, bool skipError)
 {
 	if (ref < 0 || ref > (MAXCOMBOS-1) )
 	{
-		scripting_log_error_with_context("Invalid combodata ID: {}", ref);
+		if (!skipError)
+			scripting_log_error_with_context("Invalid combodata ID: {}", ref);
 		return nullptr;
 	}
 
@@ -21329,7 +21330,7 @@ void item_shown_name()
 		Z_scripterrlog("Array supplied to 'itemdata->GetShownName()' not large enough\n");
 }
 
-void FFScript::do_getDMapData_dmapname(const bool v)
+void FFScript::do_getDMapData_dmapname([[maybe_unused]] const bool v)
 {
 	int32_t ID = GET_REF(dmapdataref);
 	int32_t arrayptr = get_register(sarg1);
@@ -21341,7 +21342,7 @@ void FFScript::do_getDMapData_dmapname(const bool v)
 		Z_scripterrlog("Array supplied to 'dmapdata->GetName()' not large enough\n");
 }
 
-void FFScript::do_setDMapData_dmapname(const bool v)
+void FFScript::do_setDMapData_dmapname([[maybe_unused]] const bool v)
 {
 	int32_t ID = GET_REF(dmapdataref);
 	int32_t arrayptr = get_register(sarg1);
@@ -21357,7 +21358,7 @@ void FFScript::do_setDMapData_dmapname(const bool v)
 	DMaps[ID].name[20]='\0';
 }
 
-void FFScript::do_getDMapData_dmaptitle(const bool v)
+void FFScript::do_getDMapData_dmaptitle([[maybe_unused]] const bool v)
 {
 	int32_t ID = GET_REF(dmapdataref);
 	int32_t arrayptr = get_register(sarg1);
@@ -21374,7 +21375,7 @@ void FFScript::do_getDMapData_dmaptitle(const bool v)
 		Z_scripterrlog("Array supplied to 'dmapdata->GetTitle()' not large enough\n");
 }
 
-void FFScript::do_setDMapData_dmaptitle(const bool v)
+void FFScript::do_setDMapData_dmaptitle([[maybe_unused]] const bool v)
 {
 	int32_t ID = GET_REF(dmapdataref);
 	int32_t arrayptr = get_register(sarg1);
@@ -21398,7 +21399,7 @@ void FFScript::do_setDMapData_dmaptitle(const bool v)
 	}
 }
 
-void FFScript::do_getDMapData_dmapintro(const bool v)
+void FFScript::do_getDMapData_dmapintro([[maybe_unused]] const bool v)
 {
 	int32_t ID = GET_REF(dmapdataref);
 	int32_t arrayptr = get_register(sarg1);
@@ -21410,7 +21411,7 @@ void FFScript::do_getDMapData_dmapintro(const bool v)
 		Z_scripterrlog("Array supplied to 'dmapdata->GetIntro()' not large enough\n");
 }
 
-void FFScript::do_setDMapData_dmapintro(const bool v)
+void FFScript::do_setDMapData_dmapintro([[maybe_unused]] const bool v)
 {
 	int32_t ID = GET_REF(dmapdataref);
 	int32_t arrayptr = get_register(sarg1);
@@ -21425,7 +21426,7 @@ void FFScript::do_setDMapData_dmapintro(const bool v)
 	DMaps[ID].intro[72]='\0';
 }
 
-void FFScript::do_getDMapData_music(const bool v)
+void FFScript::do_getDMapData_music([[maybe_unused]] const bool v)
 {
 	int32_t ID = GET_REF(dmapdataref);
 	int32_t arrayptr = get_register(sarg1);
@@ -21441,7 +21442,7 @@ void FFScript::do_getDMapData_music(const bool v)
 		Z_scripterrlog("Array supplied to 'dmapdata->GetMusic()' not large enough\n");
 }
 
-void FFScript::do_setDMapData_music(const bool v)
+void FFScript::do_setDMapData_music([[maybe_unused]] const bool v)
 {
 	int32_t ID = GET_REF(dmapdataref);
 	int32_t arrayptr = get_register(sarg1);
@@ -21481,7 +21482,7 @@ void FFScript::do_loadmessagedata(const bool v)
 }
 //same syntax as loadmessage data
 //the input is an array
-void FFScript::do_messagedata_setstring(const bool v)
+void FFScript::do_messagedata_setstring([[maybe_unused]] const bool v)
 {
 	int32_t arrayptr = get_register(sarg1);
 	int32_t ID = GET_REF(msgdataref);
@@ -21496,7 +21497,7 @@ void FFScript::do_messagedata_setstring(const bool v)
 		MsgStr::EncodingType::Ascii;
 	MsgStrings[ID].set(s, encoding_type);
 }
-void FFScript::do_messagedata_getstring(const bool v)
+void FFScript::do_messagedata_getstring([[maybe_unused]] const bool v)
 {
 	int32_t ID = GET_REF(msgdataref);
 	int32_t arrayptr = get_register(sarg1);
@@ -22712,7 +22713,7 @@ void FFScript::AlloffLimited(int32_t flagset)
 	watch=freeze_guys=loaded_guys=blockpath=false;
 
 	activation_counters.fill({});
-	for_every_base_screen_in_region([&](mapscr* scr, unsigned int region_scr_x, unsigned int region_scr_y) {
+	for_every_base_screen_in_region([&](mapscr* scr, unsigned int, unsigned int) {
 		get_screen_state(scr->screen).loaded_enemies = false;
 	});
 
@@ -23623,7 +23624,7 @@ void do_get_enh_music_track(const bool v)
 		set_register(sarg1, 0);
 }
 
-void do_set_dmap_enh_music(const bool v)
+void do_set_dmap_enh_music([[maybe_unused]] const bool v)
 {
 	int32_t ID   = SH::read_stack(ri->sp + 2) / 10000;
 	int32_t arrayptr = SH::read_stack(ri->sp + 1);
@@ -28290,7 +28291,7 @@ int32_t ffscript_engine(const bool preload)
 
 	if (!FFCore.system_suspend[susptSCREENSCRIPTS] && FFCore.getQuestHeaderInfo(vZelda) >= 0x255 && !get_qr(qr_ZS_OLD_SUSPEND_FFC))
 	{
-		for_every_base_screen_in_region([&](mapscr* scr, unsigned int region_scr_x, unsigned int region_scr_y) {
+		for_every_base_screen_in_region([&](mapscr* scr, unsigned int, unsigned int) {
 			if ((preload && scr->preloadscript) || !preload)
 			{
 				if (scr->script > 0 && FFCore.doscript(ScriptType::Screen, scr->screen))
@@ -28306,7 +28307,7 @@ int32_t ffscript_engine(const bool preload)
 		//intentional it's for compatability
 		if (FFCore.getQuestHeaderInfo(vZelda) >= 0x255 && get_qr(qr_ZS_OLD_SUSPEND_FFC))
 		{
-			for_every_base_screen_in_region([&](mapscr* scr, unsigned int region_scr_x, unsigned int region_scr_y) {
+			for_every_base_screen_in_region([&](mapscr* scr, unsigned int, unsigned int) {
 				if ((preload && scr->preloadscript) || !preload)
 				{
 					if (scr->script > 0 && FFCore.doscript(ScriptType::Screen, scr->screen))
@@ -28569,7 +28570,7 @@ int32_t FFScript::GetQuestBuild()
 {
 	return QHeader.build;
 }
-int32_t FFScript::GetQuestSectionVersion(int32_t section)
+int32_t FFScript::GetQuestSectionVersion([[maybe_unused]] int32_t section)
 {
 	return QHeader.zelda_version;
 }
@@ -29060,12 +29061,12 @@ int32_t FFScript::getSubscreenScrollSpeed()
 	return (int32_t)subscreen_scroll_speed;
 }
 
-void FFScript::do_greyscale(const bool v)
+void FFScript::do_greyscale([[maybe_unused]] const bool v)
 {
 	// This has been removed.
 }
 
-void FFScript::do_monochromatic(const bool v)
+void FFScript::do_monochromatic([[maybe_unused]] const bool v)
 {
 	// This has been removed.
 }
@@ -29297,7 +29298,7 @@ void FFScript::runWarpScripts(bool waitdraw)
 		//no doscript check here, becauseb of preload? Do we want to write doscript here? -Z 13th July, 2019
 		if (FFCore.getQuestHeaderInfo(vZelda) >= 0x255 && !FFCore.system_suspend[susptSCREENSCRIPTS])
 		{
-			for_every_base_screen_in_region([&](mapscr* scr, unsigned int region_scr_x, unsigned int region_scr_y) {
+			for_every_base_screen_in_region([&](mapscr* scr, unsigned int, unsigned int) {
 				if (scr->script != 0 && FFCore.waitdraw(ScriptType::Screen, scr->screen) && scr->preloadscript)
 				{
 					ZScriptVersion::RunScript(ScriptType::Screen, scr->script, scr->screen);  
@@ -29330,7 +29331,7 @@ void FFScript::runWarpScripts(bool waitdraw)
 		}
 		if (FFCore.getQuestHeaderInfo(vZelda) >= 0x255 && !FFCore.system_suspend[susptSCREENSCRIPTS])
 		{
-			for_every_base_screen_in_region([&](mapscr* scr, unsigned int region_scr_x, unsigned int region_scr_y) {
+			for_every_base_screen_in_region([&](mapscr* scr, unsigned int, unsigned int) {
 				if (scr->script != 0 && scr->preloadscript)
 				{
 					ZScriptVersion::RunScript(ScriptType::Screen, scr->script, scr->screen);
@@ -30006,7 +30007,7 @@ void FFScript::do_stricmp()
 	set_register(sarg1, (stricmp(strA.c_str(), strB.c_str()) * 10000));
 }
 
-void FFScript::do_LowerToUpper(const bool v)
+void FFScript::do_LowerToUpper([[maybe_unused]] const bool v)
 {
 	int32_t arrayptr_a = get_register(sarg1);
 	string strA;
@@ -30017,7 +30018,7 @@ void FFScript::do_LowerToUpper(const bool v)
 	set_register(sarg1, 10000); // used to return 0 if string was empty.
 }
 
-void FFScript::do_UpperToLower(const bool v)
+void FFScript::do_UpperToLower([[maybe_unused]] const bool v)
 {
 	int32_t arrayptr_a = get_register(sarg1);
 	string strA;
@@ -30175,7 +30176,7 @@ void FFScript::do_getdmapbyname()
 ////////////////////////
 /// String Utilities ///
 ////////////////////////
-void FFScript::do_ConvertCase(const bool v)
+void FFScript::do_ConvertCase([[maybe_unused]] const bool v)
 {
 	int32_t arrayptr_a = get_register(sarg1);
 	string strA;
@@ -31554,7 +31555,7 @@ void FFScript::clear_combo_script(const rpos_handle_t& rpos_handle)
 	clear_script_engine_data(ScriptType::Combo, index);
 }
 
-int32_t FFScript::combo_script_engine(const bool preload, const bool waitdraw)
+int32_t FFScript::combo_script_engine([[maybe_unused]] const bool preload, const bool waitdraw)
 {
 	bool enabled[7];
 	for (int32_t q = 0; q < 7; ++q)

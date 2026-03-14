@@ -13,7 +13,7 @@ void drawxmap(ALLEGRO_BITMAP* dest, int32_t themap, int32_t xoff, bool large, in
 
 namespace GUI
 {
-	int32_t new_xmaplist_proc(int32_t msg, DIALOG* d, int32_t c)
+	int32_t new_xmaplist_proc(int32_t msg, DIALOG* d, [[maybe_unused]] int32_t c)
 	{
 		static bool xmap_drawn = false;
 		int32_t ret = D_O_K;

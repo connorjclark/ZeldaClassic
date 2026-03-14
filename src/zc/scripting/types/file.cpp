@@ -588,7 +588,7 @@ std::optional<int32_t> file_get_register(int32_t reg)
 	return ret;
 }
 
-bool file_set_register(int32_t reg, int32_t value)
+bool file_set_register([[maybe_unused]] int32_t reg, [[maybe_unused]] int32_t value)
 {
 	return false;
 }

@@ -59,7 +59,7 @@ void RegistrationVisitor::block_regvisit_vec(Container const& nodes, void* param
 	}
 }
 
-void RegistrationVisitor::caseDefault(AST& host, void* param)
+void RegistrationVisitor::caseDefault(AST& host, void*)
 {
 	doRegister(host);
 }
@@ -613,7 +613,7 @@ void RegistrationVisitor::caseImportDecl(ASTImportDecl& host, void* param)
 		if(registered(host.getTree())) doRegister(host);
 	}
 }
-void RegistrationVisitor::caseIncludePath(ASTIncludePath& host, void* param)
+void RegistrationVisitor::caseIncludePath(ASTIncludePath&, void*)
 {}
 
 void RegistrationVisitor::caseImportCondDecl(ASTImportCondDecl& host, void* param)
@@ -634,7 +634,7 @@ void RegistrationVisitor::caseImportCondDecl(ASTImportCondDecl& host, void* para
 	doRegister(host);
 }
 
-void RegistrationVisitor::caseUsing(ASTUsingDecl& host, void* param)
+void RegistrationVisitor::caseUsing(ASTUsingDecl& host, void*)
 {
 	//Handle adding scope
 	ASTExprIdentifier* iden = host.getIdentifier();
@@ -649,7 +649,7 @@ void RegistrationVisitor::caseUsing(ASTUsingDecl& host, void* param)
 		handleError(CompileError::DuplicateUsing(&host, iden->asString()));
 }
 
-void RegistrationVisitor::caseDataTypeDef(ASTDataTypeDef& host, void* param)
+void RegistrationVisitor::caseDataTypeDef(ASTDataTypeDef& host, void*)
 {
 	visit(host.type.get());
 	if (breakRecursion(*host.type.get())) return;
@@ -669,7 +669,7 @@ void RegistrationVisitor::caseDataTypeDef(ASTDataTypeDef& host, void* param)
 	}
 }
 
-void RegistrationVisitor::caseCustomDataTypeDef(ASTCustomDataTypeDef& host, void* param)
+void RegistrationVisitor::caseCustomDataTypeDef(ASTCustomDataTypeDef& host, void*)
 {
 	if(!host.type)
 	{
@@ -708,7 +708,7 @@ void RegistrationVisitor::caseCustomDataTypeDef(ASTCustomDataTypeDef& host, void
 	if(registered(host.definition.get())) doRegister(host);
 }
 
-void RegistrationVisitor::caseScriptTypeDef(ASTScriptTypeDef& host, void* param)
+void RegistrationVisitor::caseScriptTypeDef(ASTScriptTypeDef& host, void*)
 {
 	// Resolve the base type under current scope.
 	ParserScriptType type = resolveScriptType(*host.oldType, *scope);
@@ -727,7 +727,7 @@ void RegistrationVisitor::caseScriptTypeDef(ASTScriptTypeDef& host, void* param)
 	}
 }
 
-void RegistrationVisitor::caseDataDeclList(ASTDataDeclList& host, void* param)
+void RegistrationVisitor::caseDataDeclList(ASTDataDeclList& host, void*)
 {
 	// Resolve the base type.
 	DataType const* baseType = host.baseType->resolve_ornull(*scope, this);
@@ -838,7 +838,7 @@ void RegistrationVisitor::caseDataEnum(ASTDataEnum& host, void* param)
 	if(registered_vec(host.getDeclarations())) doRegister(host);
 }
 
-void RegistrationVisitor::caseDataDecl(ASTDataDecl& host, void* param)
+void RegistrationVisitor::caseDataDecl(ASTDataDecl& host, void*)
 {
 	// First do standard recursing.
 	RecursiveVisitor::caseDataDecl(host, paramRead);
@@ -969,7 +969,7 @@ void RegistrationVisitor::caseDataDecl(ASTDataDecl& host, void* param)
 	}
 }
 
-void RegistrationVisitor::caseDataDeclExtraArray(ASTDataDeclExtraArray& host, void* param)
+void RegistrationVisitor::caseDataDeclExtraArray(ASTDataDeclExtraArray& host, void*)
 {
 	// Type Check size expressions.
 	RecursiveVisitor::caseDataDeclExtraArray(host);
@@ -1187,7 +1187,7 @@ void RegistrationVisitor::caseVarInitializer(ASTExprVarInitializer& host, void* 
 	}
 }
 
-void RegistrationVisitor::caseExprAssign(ASTExprAssign& host, void* param)
+void RegistrationVisitor::caseExprAssign(ASTExprAssign& host, void*)
 {
 	visit(host.left.get(), paramWrite);
 	if (breakRecursion(host)) return;
@@ -1207,7 +1207,7 @@ void RegistrationVisitor::caseExprAssign(ASTExprAssign& host, void* param)
 		handleError(CompileError::LValConst(&host, host.left->asString()));
 }
 
-void RegistrationVisitor::caseExprIdentifier(ASTExprIdentifier& host, void* param)
+void RegistrationVisitor::caseExprIdentifier(ASTExprIdentifier& host, void*)
 {
 	// Bind to named variable.
 	host.binding = lookupDatum(*scope, host, this);
@@ -1220,13 +1220,13 @@ void RegistrationVisitor::caseExprIdentifier(ASTExprIdentifier& host, void* para
 	}
 }
 
-void RegistrationVisitor::caseExprArrow(ASTExprArrow& host, void* param)
+void RegistrationVisitor::caseExprArrow(ASTExprArrow& host, void*)
 {
 	//Doesn't get hit at registration time?
 	doRegister(host);
 }
 
-void RegistrationVisitor::caseExprIndex(ASTExprIndex& host, void* param)
+void RegistrationVisitor::caseExprIndex(ASTExprIndex& host, void*)
 {
 	visit(host.array.get());
 	if (breakRecursion(host)) return;
@@ -1235,7 +1235,7 @@ void RegistrationVisitor::caseExprIndex(ASTExprIndex& host, void* param)
 	if(registered(host.array.get()) && registered(host.index.get())) doRegister(host);
 }
 
-void RegistrationVisitor::caseExprCall(ASTExprCall& host, void* param)
+void RegistrationVisitor::caseExprCall(ASTExprCall& host, void*)
 {
 	// Cast left.
 	ASTExprArrow* arrow = NULL;
@@ -1550,7 +1550,7 @@ void RegistrationVisitor::caseExprCall(ASTExprCall& host, void* param)
 	doRegister(host);
 }
 
-void RegistrationVisitor::caseExprNegate(ASTExprNegate& host, void* param)
+void RegistrationVisitor::caseExprNegate(ASTExprNegate& host, void*)
 {
 	if(!host.done)
 	{
@@ -1565,137 +1565,137 @@ void RegistrationVisitor::caseExprNegate(ASTExprNegate& host, void* param)
 	}
 	analyzeUnaryExpr(host);
 }
-void RegistrationVisitor::caseExprDelete(ASTExprDelete& host, void* param)
+void RegistrationVisitor::caseExprDelete(ASTExprDelete& host, void*)
 {
 	analyzeUnaryExpr(host);
 }
 
-void RegistrationVisitor::caseExprNot(ASTExprNot& host, void* param)
+void RegistrationVisitor::caseExprNot(ASTExprNot& host, void*)
 {
 	analyzeUnaryExpr(host);
 }
 
-void RegistrationVisitor::caseExprBitNot(ASTExprBitNot& host, void* param)
+void RegistrationVisitor::caseExprBitNot(ASTExprBitNot& host, void*)
 {
 	analyzeUnaryExpr(host);
 }
 
-void RegistrationVisitor::caseExprIncrement(ASTExprIncrement& host, void* param)
+void RegistrationVisitor::caseExprIncrement(ASTExprIncrement& host, void*)
 {
 	analyzeUnaryExpr(host);
 }
 
-void RegistrationVisitor::caseExprDecrement(ASTExprDecrement& host, void* param)
+void RegistrationVisitor::caseExprDecrement(ASTExprDecrement& host, void*)
 {
 	analyzeUnaryExpr(host);
 }
 
-void RegistrationVisitor::caseExprCast(ASTExprCast& host, void* param)
+void RegistrationVisitor::caseExprCast(ASTExprCast& host, void*)
 {
 	analyzeUnaryExpr(host);
 }
 
-void RegistrationVisitor::caseExprAnd(ASTExprAnd& host, void* param)
+void RegistrationVisitor::caseExprAnd(ASTExprAnd& host, void*)
 {
 	analyzeBinaryExpr(host);
 }
 
-void RegistrationVisitor::caseExprOr(ASTExprOr& host, void* param)
+void RegistrationVisitor::caseExprOr(ASTExprOr& host, void*)
 {
 	analyzeBinaryExpr(host);
 }
 
-void RegistrationVisitor::caseExprGT(ASTExprGT& host, void* param)
+void RegistrationVisitor::caseExprGT(ASTExprGT& host, void*)
 {
 	analyzeBinaryExpr(host);
 }
 
-void RegistrationVisitor::caseExprGE(ASTExprGE& host, void* param)
+void RegistrationVisitor::caseExprGE(ASTExprGE& host, void*)
 {
 	analyzeBinaryExpr(host);
 }
 
-void RegistrationVisitor::caseExprLT(ASTExprLT& host, void* param)
+void RegistrationVisitor::caseExprLT(ASTExprLT& host, void*)
 {
 	analyzeBinaryExpr(host);
 }
 
-void RegistrationVisitor::caseExprLE(ASTExprLE& host, void* param)
+void RegistrationVisitor::caseExprLE(ASTExprLE& host, void*)
 {
 	analyzeBinaryExpr(host);
 }
 
-void RegistrationVisitor::caseExprEQ(ASTExprEQ& host, void* param)
+void RegistrationVisitor::caseExprEQ(ASTExprEQ& host, void*)
 {
 	analyzeBinaryExpr(host);
 }
 
-void RegistrationVisitor::caseExprNE(ASTExprNE& host, void* param)
+void RegistrationVisitor::caseExprNE(ASTExprNE& host, void*)
 {
 	analyzeBinaryExpr(host);
 }
 
-void RegistrationVisitor::caseExprAppxEQ(ASTExprAppxEQ& host, void* param)
+void RegistrationVisitor::caseExprAppxEQ(ASTExprAppxEQ& host, void*)
 {
 	analyzeBinaryExpr(host);
 }
 
-void RegistrationVisitor::caseExprPlus(ASTExprPlus& host, void* param)
+void RegistrationVisitor::caseExprPlus(ASTExprPlus& host, void*)
 {
 	analyzeBinaryExpr(host);
 }
 
-void RegistrationVisitor::caseExprMinus(ASTExprMinus& host, void* param)
+void RegistrationVisitor::caseExprMinus(ASTExprMinus& host, void*)
 {
 	analyzeBinaryExpr(host);
 }
 
-void RegistrationVisitor::caseExprTimes(ASTExprTimes& host, void* param)
+void RegistrationVisitor::caseExprTimes(ASTExprTimes& host, void*)
 {
 	analyzeBinaryExpr(host);
 }
 
-void RegistrationVisitor::caseExprExpn(ASTExprExpn& host, void* param)
+void RegistrationVisitor::caseExprExpn(ASTExprExpn& host, void*)
 {
 	analyzeBinaryExpr(host);
 }
 
-void RegistrationVisitor::caseExprDivide(ASTExprDivide& host, void* param)
+void RegistrationVisitor::caseExprDivide(ASTExprDivide& host, void*)
 {
 	analyzeBinaryExpr(host);
 }
 
-void RegistrationVisitor::caseExprModulo(ASTExprModulo& host, void* param)
+void RegistrationVisitor::caseExprModulo(ASTExprModulo& host, void*)
 {
 	analyzeBinaryExpr(host);
 }
 
-void RegistrationVisitor::caseExprBitAnd(ASTExprBitAnd& host, void* param)
+void RegistrationVisitor::caseExprBitAnd(ASTExprBitAnd& host, void*)
 {
 	analyzeBinaryExpr(host);
 }
 
-void RegistrationVisitor::caseExprBitOr(ASTExprBitOr& host, void* param)
+void RegistrationVisitor::caseExprBitOr(ASTExprBitOr& host, void*)
 {
 	analyzeBinaryExpr(host);
 }
 
-void RegistrationVisitor::caseExprBitXor(ASTExprBitXor& host, void* param)
+void RegistrationVisitor::caseExprBitXor(ASTExprBitXor& host, void*)
 {
 	analyzeBinaryExpr(host);
 }
 
-void RegistrationVisitor::caseExprLShift(ASTExprLShift& host, void* param)
+void RegistrationVisitor::caseExprLShift(ASTExprLShift& host, void*)
 {
 	analyzeBinaryExpr(host);
 }
 
-void RegistrationVisitor::caseExprRShift(ASTExprRShift& host, void* param)
+void RegistrationVisitor::caseExprRShift(ASTExprRShift& host, void*)
 {
 	analyzeBinaryExpr(host);
 }
 
-void RegistrationVisitor::caseExprCoalesce(ASTExprCoalesce& host, void* param)
+void RegistrationVisitor::caseExprCoalesce(ASTExprCoalesce& host, void*)
 {
 	visit(host.left.get());
 	if (breakRecursion(host)) return;
@@ -1708,7 +1708,7 @@ void RegistrationVisitor::caseExprCoalesceAssign(ASTExprCoalesceAssign& host, vo
 	caseExprCoalesce(host, param);
 }
 
-void RegistrationVisitor::caseExprTernary(ASTTernaryExpr& host, void* param)
+void RegistrationVisitor::caseExprTernary(ASTTernaryExpr& host, void*)
 {
 	visit(host.left.get());
 	if (breakRecursion(host)) return;
@@ -1720,13 +1720,13 @@ void RegistrationVisitor::caseExprTernary(ASTTernaryExpr& host, void* param)
 }
 
 //Types
-void RegistrationVisitor::caseScriptType(ASTScriptType& host, void* param)
+void RegistrationVisitor::caseScriptType(ASTScriptType& host, void*)
 {
 	ParserScriptType const& type = resolveScriptType(host, *scope);
 	if(type.isValid()) doRegister(host);
 }
 
-void RegistrationVisitor::caseDataType(ASTDataType& host, void* param)
+void RegistrationVisitor::caseDataType(ASTDataType& host, void*)
 {
 	DataType const& type = host.resolve(*scope, this);
 	if(type.isResolved()) doRegister(host);
@@ -1740,7 +1740,7 @@ void RegistrationVisitor::caseArrayLiteral(ASTArrayLiteral& host, void* param)
 		doRegister(host);
 }
 
-void RegistrationVisitor::caseStringLiteral(ASTStringLiteral& host, void* param)
+void RegistrationVisitor::caseStringLiteral(ASTStringLiteral& host, void*)
 {
 	doRegister(host);
 }

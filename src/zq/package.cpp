@@ -194,6 +194,8 @@ std::optional<std::string> package_create(std::string quest_path_, std::string p
 		return fmt::format("Filesystem error: {}", e.what());
 	}
 #else
+	(void)quest_path_;
+	(void)package_name;
 	return "Not implemented";
 #endif
 }

@@ -2040,7 +2040,7 @@ void sprite::drawshadow(BITMAP* dest,bool translucent)
 	}
 }
 
-int32_t sprite::run_script(int32_t mode)
+int32_t sprite::run_script([[maybe_unused]] int32_t mode)
 {
 	return RUNSCRIPT_OK; //Default implementation; override in subclasses
 }
@@ -2274,6 +2274,8 @@ void sprite_list::draw_smooth_maze(BITMAP* dest)
 	}
 
 	clear_clip_rect(dest);
+#else
+	(void)dest;
 #endif
 }
 
@@ -2305,6 +2307,9 @@ void sprite_list::drawshadow_smooth_maze(BITMAP* dest, bool translucent)
 	}
 
 	clear_clip_rect(dest);
+#else
+	(void)dest;
+	(void)translucent;
 #endif
 }
 

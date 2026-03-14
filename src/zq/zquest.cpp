@@ -1874,7 +1874,7 @@ static DIALOG save_tiles_dlg[] =
 };
 
 
-void savesometiles(const char *prompt,int32_t initialval)
+void savesometiles([[maybe_unused]] const char *prompt, [[maybe_unused]] int32_t initialval)
 {
 	
 	char firsttile[8], tilecount[8];
@@ -1940,7 +1940,7 @@ static DIALOG read_tiles_dlg[] =
 };
 
 
-void writesometiles_to(const char *prompt,int32_t initialval)
+void writesometiles_to([[maybe_unused]] const char *prompt, [[maybe_unused]] int32_t initialval)
 {
 	
 	char firsttile[8];;
@@ -2014,7 +2014,7 @@ static DIALOG save_combofiles_dlg[] =
 };
 
 
-void savesomecombos(const char *prompt,int32_t initialval)
+void savesomecombos([[maybe_unused]] const char *prompt, [[maybe_unused]] int32_t initialval)
 {
 	
 	char firsttile[8], tilecount[8];
@@ -2082,7 +2082,7 @@ static DIALOG load_comboset_dlg[] =
     { NULL,                 0,    0,    0,    0,   0,       0,       0,       0,          0,             0,       NULL,                           NULL,  NULL }
 };
 
-void writesomecombos(const char *prompt,int32_t initialval)
+void writesomecombos([[maybe_unused]] const char *prompt, [[maybe_unused]] int32_t initialval)
 {
 	
 	char firsttile[8];
@@ -2163,7 +2163,7 @@ static DIALOG load_combopack_dlg[] =
     { NULL,                 0,    0,    0,    0,   0,       0,       0,       0,          0,             0,       NULL,                           NULL,  NULL }
 };
 
-void loadcombopack(const char *prompt,int32_t initialval)
+void loadcombopack([[maybe_unused]] const char *prompt, [[maybe_unused]] int32_t initialval)
 {
 	
 	char firsttile[8];
@@ -2252,7 +2252,7 @@ static DIALOG read_combopack_dlg[] =
 
 
 
-void writesomecombos_to(const char *prompt,int32_t initialval)
+void writesomecombos_to([[maybe_unused]] const char *prompt, [[maybe_unused]] int32_t initialval)
 {
 	
 	char firsttile[8];
@@ -2342,7 +2342,7 @@ static DIALOG save_dmaps_dlg[] =
 };
 
 
-void savesomedmaps(const char *prompt,int32_t initialval)
+void savesomedmaps([[maybe_unused]] const char *prompt, [[maybe_unused]] int32_t initialval)
 {
 	
 	char firstdmap[8], lastdmap[8];
@@ -2425,7 +2425,7 @@ static DIALOG save_comboaliasfiles_dlg[] =
 };
 
 
-void savesomecomboaliases(const char *prompt,int32_t initialval)
+void savesomecomboaliases([[maybe_unused]] const char *prompt, [[maybe_unused]] int32_t initialval)
 {
 	
 	char firsttile[8], tilecount[8];
@@ -2492,7 +2492,7 @@ static DIALOG read_comboaliaspack_dlg[] =
 };
 
 
-void writesomecomboaliases_to(const char *prompt,int32_t initialval)
+void writesomecomboaliases_to([[maybe_unused]] const char *prompt, [[maybe_unused]] int32_t initialval)
 {
 	
 	char firsttile[8];;
@@ -2568,7 +2568,7 @@ static DIALOG save_doorset_dlg[] =
 };
 
 
-void do_exportdoorset(const char *prompt,int32_t initialval)
+void do_exportdoorset([[maybe_unused]] const char *prompt, [[maybe_unused]] int32_t initialval)
 {
 	char firstdoor[8], doorct[8];
 	int32_t first_doorset_id = 0; int32_t the_doorset_count = 1;
@@ -2636,7 +2636,7 @@ static DIALOG load_doorset_dlg[] =
     { NULL,                 0,    0,    0,    0,   0,       0,       0,       0,          0,             0,       NULL,                           NULL,  NULL }
 };
 
-void do_importdoorset(const char *prompt,int32_t initialval)
+void do_importdoorset([[maybe_unused]] const char *prompt, [[maybe_unused]] int32_t initialval)
 {
 	
 	char firstdoor[8], doorct[8], destid[8];
@@ -3263,7 +3263,7 @@ int32_t onDefault_MapStyles()
     if (alert_confirm("Confirm Reset", "Reset all map styles?"))
     {
         mark_save_dirty();
-        reset_mapstyles(true, &QMisc);
+        reset_mapstyles(&QMisc);
     }
     
     return D_O_K;
@@ -8841,7 +8841,7 @@ finished:
 }
 
 // Drag FFCs around
-static void moveffc(int i, int cx, int cy)
+static void moveffc(int i, [[maybe_unused]] int cx, [[maybe_unused]] int cy)
 {
 	mapscr* scr = active_visible_screen->scr;
 	int screen = active_visible_screen->screen;
@@ -18669,7 +18669,7 @@ void Z_init_sound()
 	// master_volume(digi_volume,midi_volume);
 }
 
-int32_t pan(int32_t x)
+int32_t pan([[maybe_unused]] int32_t x)
 {
 	return 128;
 }
@@ -19382,7 +19382,7 @@ int32_t get_homescr()
     return DMaps[zinit.start_dmap].cont;
 }
 
-int get_screen_for_world_xy(int x, int y)
+int get_screen_for_world_xy([[maybe_unused]] int x, [[maybe_unused]] int y)
 {
 	return -1;
 }
@@ -21679,7 +21679,7 @@ void highlight_sqr(BITMAP* dest, int color, size_and_pos const& rec, int thick)
 {
 	highlight_sqr(dest, color, rec.x, rec.y, rec.tw(), rec.th(), thick);
 }
-void highlight_frag(BITMAP* dest, int color, int x1, int y1, int w, int h, int fw, int fh, int thick)
+void highlight_frag(BITMAP* dest, int color, int x1, int y1, int w, int h, int fw, int fh, [[maybe_unused]] int thick)
 {
 	int xc = x1+fw-1;
 	int yc = y1+fh-1;
@@ -21826,7 +21826,7 @@ void update_tooltip(int32_t x, int32_t y, size_and_pos const& sqr, char const* t
 {
 	update_tooltip(x,y,sqr.x,sqr.y,sqr.w*sqr.xscale,sqr.h*sqr.yscale,tipmsg,sqr.fw,sqr.fh,scale);
 }
-void update_tooltip(int32_t x, int32_t y, int32_t tx, int32_t ty, int32_t tw, int32_t th, char const* tipmsg, int fw, int fh, double scale)
+void update_tooltip(int32_t x, int32_t y, int32_t tx, int32_t ty, int32_t tw, int32_t th, char const* tipmsg, int fw, int fh, [[maybe_unused]] double scale)
 {
 	if(!EnableTooltips)
 	{
@@ -21844,7 +21844,7 @@ void ZQ_ClearQuestPath()
 
 //FFCore
 
-void FFScript::init(bool for_continue)
+void FFScript::init([[maybe_unused]] bool for_continue)
 {
 	for ( int32_t q = 0; q < wexLast; q++ ) warpex[q] = 0;
 	numscriptdraws = 0;
@@ -22024,7 +22024,7 @@ int32_t FFScript::getQuestHeaderInfo(int32_t type)
     return quest_format[type];
 }
 
-bool isSideViewGravity(int32_t t)
+bool isSideViewGravity([[maybe_unused]] int32_t t)
 {
     return (Map.CurrScr()->flags7&fSIDEVIEW) != 0;
 }
@@ -22032,7 +22032,7 @@ bool isSideViewGravity(int32_t t)
 
 
 
-void FFScript::ZScriptConsole(bool open)
+void FFScript::ZScriptConsole([[maybe_unused]] bool open)
 {
 
 
@@ -22054,15 +22054,18 @@ void FFScript::ZScriptConsole(bool open)
 }
 
 template <typename ...Params>
-void FFScript::ZScriptConsole(int32_t attributes,const char *format, Params&&... params)
+void FFScript::ZScriptConsole(int32_t attributes,const char *format, [[maybe_unused]] Params&&... params)
 {
 	#ifdef _WIN32
 	initConsole();
 	zscript_coloured_console.cprintf( attributes, format, std::forward<Params>(params)... );
+	#else
+	(void)attributes;
+	(void)format;
 	#endif	
 }
 
-int32_t getpitfall(int32_t x, int32_t y){return 0;}
+int32_t getpitfall([[maybe_unused]] int32_t x, [[maybe_unused]] int32_t y){return 0;}
 
 bool update_hw_pal = false;
 void update_hw_screen()
@@ -22128,7 +22131,7 @@ bool checkCost(int32_t ctr, int32_t amnt)
 	}
 	return (game->get_counter(ctr)+game->get_dcounter(ctr)>=amnt);
 }
-bool checkmagiccost(int32_t itemid, bool checkTime)
+bool checkmagiccost(int32_t itemid, [[maybe_unused]] bool checkTime)
 {
 	if(invalid_item_id(itemid))
 		return false;
@@ -22136,16 +22139,16 @@ bool checkmagiccost(int32_t itemid, bool checkTime)
 	return checkCost(id.cost_counter[0], id.cost_amount[0])
 		&& checkCost(id.cost_counter[1], id.cost_amount[1]);
 }
-bool checkbunny(int32_t itemid)
+bool checkbunny([[maybe_unused]] int32_t itemid)
 {
 	return true;
 }
 
-void payCost(int32_t ctr, int32_t amnt, int32_t tmr, bool ignoreTimer)
+void payCost([[maybe_unused]] int32_t ctr, [[maybe_unused]] int32_t amnt, [[maybe_unused]] int32_t tmr, [[maybe_unused]] bool ignoreTimer)
 {
 	return;
 }
-void paymagiccost(int32_t itemid, bool ignoreTimer, bool onlyTimer)
+void paymagiccost([[maybe_unused]] int32_t itemid, [[maybe_unused]] bool ignoreTimer, [[maybe_unused]] bool onlyTimer)
 {
 	return;
 }
@@ -22157,14 +22160,14 @@ bool is_in_scrolling_region()
 void enter_sys_pal(){}
 void exit_sys_pal(){}
 
-void replay_step_comment(std::string comment) {}
+void replay_step_comment([[maybe_unused]] std::string comment) {}
 bool replay_is_active() {return false;}
 bool replay_is_replaying() {return false;}
-bool replay_version_check(int min, int max) {return max == -1;}
+bool replay_version_check([[maybe_unused]] int min, int max) {return max == -1;}
 bool replay_is_debug() {return false;}
-std::string replay_get_meta_str(std::string key){return "";}
-int32_t item::run_script(int32_t mode){return 0;};
-ffcdata* slopes_getFFC(int id)
+std::string replay_get_meta_str([[maybe_unused]] std::string key){return "";}
+int32_t item::run_script([[maybe_unused]] int32_t mode){return 0;};
+ffcdata* slopes_getFFC([[maybe_unused]] int id)
 {
 	return nullptr;
 }
@@ -22215,4 +22218,4 @@ extern "C" void get_shareable_url()
 }
 #endif
 
-void setZScriptVersion(int32_t v){}
+void setZScriptVersion([[maybe_unused]] int32_t v){}

@@ -50,7 +50,7 @@ static ArrayRegistrar SUBDATAFLAGS_registrar(SUBDATAFLAGS, []{
 
 static ArrayRegistrar SUBDATASELECTORASPD_registrar(SUBDATASELECTORASPD, []{
 	static ScriptingArray_ObjectComputed<ZCSubscreenActive, int> impl(
-		[](ZCSubscreenActive* sub){
+		[](ZCSubscreenActive*){
 			return SUBSCR_SELECTOR_NUMTILEINFO;
 		},
 		[](ZCSubscreenActive* sub, int index) -> int {
@@ -109,7 +109,7 @@ static ArrayRegistrar SUBDATATRANSARGS_registrar(SUBDATATRANSARGS, []{
 
 static ArrayRegistrar SUBDATATRANSLEFTARGS_registrar(SUBDATATRANSLEFTARGS, []{
 	static ScriptingArray_ObjectComputed<ZCSubscreenActive, int> impl(
-		[](ZCSubscreenActive* sub){
+		[](ZCSubscreenActive*){
 			return SUBSCR_TRANSITION_MAXARG;
 		},
 		[](ZCSubscreenActive* sub, int index) -> int {
@@ -127,7 +127,7 @@ static ArrayRegistrar SUBDATATRANSLEFTARGS_registrar(SUBDATATRANSLEFTARGS, []{
 
 static ArrayRegistrar SUBDATATRANSRIGHTARGS_registrar(SUBDATATRANSRIGHTARGS, []{
 	static ScriptingArray_ObjectComputed<ZCSubscreenActive, int> impl(
-		[](ZCSubscreenActive* sub){
+		[](ZCSubscreenActive*){
 			return SUBSCR_TRANSITION_MAXARG;
 		},
 		[](ZCSubscreenActive* sub, int index) -> int {
@@ -187,7 +187,7 @@ static ArrayRegistrar SUBDATATRANSFLAGS_registrar(SUBDATATRANSFLAGS, []{
 
 static ArrayRegistrar SUBDATATRANSLEFTFLAGS_registrar(SUBDATATRANSLEFTFLAGS, []{
 	static ScriptingArray_ObjectComputed<ZCSubscreenActive, bool> impl(
-		[](ZCSubscreenActive* sub){
+		[](ZCSubscreenActive*){
 			return SUBSCR_TRANS_NUMFLAGS;
 		},
 		[](ZCSubscreenActive* sub, int index) -> bool {
@@ -205,7 +205,7 @@ static ArrayRegistrar SUBDATATRANSLEFTFLAGS_registrar(SUBDATATRANSLEFTFLAGS, []{
 
 static ArrayRegistrar SUBDATATRANSRIGHTFLAGS_registrar(SUBDATATRANSRIGHTFLAGS, []{
 	static ScriptingArray_ObjectComputed<ZCSubscreenActive, bool> impl(
-		[](ZCSubscreenActive* sub){
+		[](ZCSubscreenActive*){
 			return SUBSCR_TRANS_NUMFLAGS;
 		},
 		[](ZCSubscreenActive* sub, int index) -> bool {
@@ -223,7 +223,7 @@ static ArrayRegistrar SUBDATATRANSRIGHTFLAGS_registrar(SUBDATATRANSRIGHTFLAGS, [
 
 static ArrayRegistrar SUBDATASELECTORCSET_registrar(SUBDATASELECTORCSET, []{
 	static ScriptingArray_ObjectComputed<ZCSubscreenActive, int> impl(
-		[](ZCSubscreenActive* sub){
+		[](ZCSubscreenActive*){
 			return SUBSCR_SELECTOR_NUMTILEINFO;
 		},
 		[](ZCSubscreenActive* sub, int index) -> int {
@@ -242,7 +242,7 @@ static ArrayRegistrar SUBDATASELECTORCSET_registrar(SUBDATASELECTORCSET, []{
 
 static ArrayRegistrar SUBDATASELECTORFLASHCSET_registrar(SUBDATASELECTORFLASHCSET, []{
 	static ScriptingArray_ObjectComputed<ZCSubscreenActive, int> impl(
-		[](ZCSubscreenActive* sub){
+		[](ZCSubscreenActive*){
 			return SUBSCR_SELECTOR_NUMTILEINFO;
 		},
 		[](ZCSubscreenActive* sub, int index) -> int {
@@ -261,7 +261,7 @@ static ArrayRegistrar SUBDATASELECTORFLASHCSET_registrar(SUBDATASELECTORFLASHCSE
 
 static ArrayRegistrar SUBDATASELECTORDELAY_registrar(SUBDATASELECTORDELAY, []{
 	static ScriptingArray_ObjectComputed<ZCSubscreenActive, int> impl(
-		[](ZCSubscreenActive* sub){
+		[](ZCSubscreenActive*){
 			return SUBSCR_SELECTOR_NUMTILEINFO;
 		},
 		[](ZCSubscreenActive* sub, int index) -> int {
@@ -278,7 +278,7 @@ static ArrayRegistrar SUBDATASELECTORDELAY_registrar(SUBDATASELECTORDELAY, []{
 
 static ArrayRegistrar SUBDATASELECTORFRM_registrar(SUBDATASELECTORFRM, []{
 	static ScriptingArray_ObjectComputed<ZCSubscreenActive, int> impl(
-		[](ZCSubscreenActive* sub){
+		[](ZCSubscreenActive*){
 			return SUBSCR_SELECTOR_NUMTILEINFO;
 		},
 		[](ZCSubscreenActive* sub, int index) -> int {
@@ -295,7 +295,7 @@ static ArrayRegistrar SUBDATASELECTORFRM_registrar(SUBDATASELECTORFRM, []{
 
 static ArrayRegistrar SUBDATASELECTORWID_registrar(SUBDATASELECTORWID, []{
 	static ScriptingArray_ObjectComputed<ZCSubscreenActive, int> impl(
-		[](ZCSubscreenActive* sub){
+		[](ZCSubscreenActive*){
 			return SUBSCR_SELECTOR_NUMTILEINFO;
 		},
 		[](ZCSubscreenActive* sub, int index) -> int {
@@ -312,7 +312,7 @@ static ArrayRegistrar SUBDATASELECTORWID_registrar(SUBDATASELECTORWID, []{
 
 static ArrayRegistrar SUBDATASELECTORHEI_registrar(SUBDATASELECTORHEI, []{
 	static ScriptingArray_ObjectComputed<ZCSubscreenActive, int> impl(
-		[](ZCSubscreenActive* sub){
+		[](ZCSubscreenActive*){
 			return SUBSCR_SELECTOR_NUMTILEINFO;
 		},
 		[](ZCSubscreenActive* sub, int index) -> int {
@@ -329,7 +329,7 @@ static ArrayRegistrar SUBDATASELECTORHEI_registrar(SUBDATASELECTORHEI, []{
 
 static ArrayRegistrar SUBDATASELECTORTILE_registrar(SUBDATASELECTORTILE, []{
 	static ScriptingArray_ObjectComputed<ZCSubscreenActive, int> impl(
-		[](ZCSubscreenActive* sub){
+		[](ZCSubscreenActive*){
 			return SUBSCR_SELECTOR_NUMTILEINFO;
 		},
 		[](ZCSubscreenActive* sub, int index) -> int {
@@ -360,7 +360,7 @@ static ArrayRegistrar SUBDATAPAGES_registrar(SUBDATAPAGES, []{
 
 			return 0;
 		},
-		[](int, int index, int value){ return false; }
+		[](int, int, int){ return false; }
 	);
 	impl.setMul10000(false);
 	impl.readOnly();

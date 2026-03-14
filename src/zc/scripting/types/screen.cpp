@@ -125,7 +125,7 @@ static ArrayRegistrar COMBOED_registrar(COMBOED, []{
 			auto rpos_handle = get_rpos_handle(rpos, 0);
 			return (rpos_handle.combo().walk & 0xF0) >> 4;
 		},
-		[](int ref, int index, int value) {
+		[](int, int index, int value) {
 			auto rpos = (rpos_t)index;
 			auto rpos_handle = get_rpos_handle(rpos, 0);
 			auto& cmb = rpos_handle.combo();
@@ -148,7 +148,7 @@ static ArrayRegistrar COMBOSD_registrar(COMBOSD, []{
 			auto rpos_handle = get_rpos_handle(rpos, 0);
 			return rpos_handle.combo().walk & 0x0F;
 		},
-		[](int ref, int index, int value) {
+		[](int, int index, int value) {
 			auto rpos = (rpos_t)index;
 			auto rpos_handle = get_rpos_handle(rpos, 0);
 			auto& cmb = rpos_handle.combo();
@@ -171,7 +171,7 @@ static ArrayRegistrar COMBODATAD_registrar(COMBODATAD, []{
 			auto rpos_handle = get_rpos_handle(rpos, 0);
 			return rpos_handle.data();
 		},
-		[](int ref, int index, int value) {
+		[](int, int, int) {
 			return false;
 		}
 	);
@@ -192,7 +192,7 @@ static ArrayRegistrar SCRDOORD_registrar(SCRDOORD, []{
 
 static ArrayRegistrar SCREEN_FLAG_registrar(SCREEN_FLAG, []{
 	static ScriptingArray_ObjectComputed<screendata, bool> impl(
-		[](screendata* scr){ return 8 * 11; },
+		[](screendata*){ return 8 * 11; },
 		[](screendata* scr, int index) -> bool {
 			return (&scr->flags)[index/8] & (1 << (index%8));
 		},
@@ -207,7 +207,7 @@ static ArrayRegistrar SCREEN_FLAG_registrar(SCREEN_FLAG, []{
 
 static ArrayRegistrar SCREENDATASWARPRETSQR_registrar(SCREENDATASWARPRETSQR, []{
 	static ScriptingArray_ObjectComputed<screendata, int> impl(
-		[](screendata* scr){ return 4; },
+		[](screendata*){ return 4; },
 		[](screendata* scr, int index){ return (scr->warpreturnc >> (8+(index*2))) & 3; },
 		[](screendata* scr, int index, int value){
 			scr->warpreturnc = (scr->warpreturnc&~(3<<(8+(index*2)))) | (value<<(8+(index*2)));
@@ -221,7 +221,7 @@ static ArrayRegistrar SCREENDATASWARPRETSQR_registrar(SCREENDATASWARPRETSQR, []{
 
 static ArrayRegistrar SCREENDATATWARPRETSQR_registrar(SCREENDATATWARPRETSQR, []{
 	static ScriptingArray_ObjectComputed<screendata, int> impl(
-		[](screendata* scr){ return 4; },
+		[](screendata*){ return 4; },
 		[](screendata* scr, int index){ return (scr->warpreturnc >> (index*2)) & 3; },
 		[](screendata* scr, int index, int value){
 			scr->warpreturnc = (scr->warpreturnc&~(3<<(index*2))) | (value<<(index*2));
@@ -235,7 +235,7 @@ static ArrayRegistrar SCREENDATATWARPRETSQR_registrar(SCREENDATATWARPRETSQR, []{
 
 static ArrayRegistrar SCREENDATAFLAGS_registrar(SCREENDATAFLAGS, []{
 	static ScriptingArray_ObjectComputed<screendata, byte> impl(
-		[](screendata* scr){ return 11; },
+		[](screendata*){ return 11; },
 		[](screendata* scr, int index){ return (&scr->flags)[index]; },
 		[](screendata* scr, int index, byte value){ (&scr->flags)[index] = value; }
 	);
@@ -246,9 +246,9 @@ static ArrayRegistrar SCREENDATAFLAGS_registrar(SCREENDATAFLAGS, []{
 
 static ArrayRegistrar SCREENEFLAGSD_registrar(SCREENEFLAGSD, []{
 	static ScriptingArray_ObjectComputed<screendata, int> impl(
-		[](screendata* scr){ return 3; },
+		[](screendata*){ return 3; },
 		[](screendata* scr, int index){ return get_screeneflags(scr, index); },
-		[](screendata* scr, int index, int value){}
+		[](screendata*, int, int){}
 	);
 	impl.setMul10000(true);
 	impl.compatBoundIndex();
@@ -258,9 +258,9 @@ static ArrayRegistrar SCREENEFLAGSD_registrar(SCREENEFLAGSD, []{
 
 static ArrayRegistrar SCREENFLAGSD_registrar(SCREENFLAGSD, []{
 	static ScriptingArray_ObjectComputed<screendata, int> impl(
-		[](screendata* scr){ return 10; },
+		[](screendata*){ return 10; },
 		[](screendata* scr, int index){ return get_screenflags(scr, index); },
-		[](screendata* scr, int index, int value){}
+		[](screendata*, int, int){}
 	);
 	impl.setMul10000(true);
 	impl.compatBoundIndex();
@@ -531,7 +531,7 @@ static ArrayRegistrar SCREENINITD_registrar(SCREENINITD, []{
 
 static ArrayRegistrar SCREENSTATED_registrar(SCREENSTATED, []{
 	static ScriptingArray_ObjectComputed<screendata, bool> impl(
-		[](screendata* scr){ return mMAXIND; },
+		[](screendata*){ return mMAXIND; },
 		[](screendata* scr, int index) -> bool {
 			int mi = mapind(cur_map, scr->screen);
 			if (mi < 0)
@@ -553,7 +553,7 @@ static ArrayRegistrar SCREENSTATED_registrar(SCREENSTATED, []{
 
 static ArrayRegistrar SCREENEXSTATED_registrar(SCREENEXSTATED, []{
 	static ScriptingArray_ObjectComputed<screendata, bool> impl(
-		[](screendata* scr){ return 32; },
+		[](screendata*){ return 32; },
 		[](screendata* scr, int index) -> bool {
 			int mi = mapind(cur_map, scr->screen);
 			if (mi < 0)
@@ -575,7 +575,7 @@ static ArrayRegistrar SCREENEXSTATED_registrar(SCREENEXSTATED, []{
 
 static ArrayRegistrar SCREENSIDEWARPID_registrar(SCREENSIDEWARPID, []{
 	static ScriptingArray_ObjectComputed<screendata, int> impl(
-		[](screendata* scr){ return 4; },
+		[](screendata*){ return 4; },
 		[](screendata* scr, int index) -> int {
 			return ((scr->flags2 >> index) & 1)
 				? (scr->sidewarpindex >> (2*index)) & 3 //Return which warp is set
@@ -659,7 +659,7 @@ static ArrayRegistrar SCREEN_NPCS_registrar(SCREEN_NPCS, []{
 		[](int, int index){
 			return guys.spr(index)->getUID();
 		},
-		[](int, int index, int value){
+		[](int, int, int){
 			return false;
 		}
 	);
@@ -676,7 +676,7 @@ static ArrayRegistrar SCREEN_ITEMS_registrar(SCREEN_ITEMS, []{
 		[](int, int index){
 			return items.spr(index)->getUID();
 		},
-		[](int, int index, int value){
+		[](int, int, int){
 			return false;
 		}
 	);
@@ -693,7 +693,7 @@ static ArrayRegistrar SCREEN_LWEAPONS_registrar(SCREEN_LWEAPONS, []{
 		[](int, int index){
 			return Lwpns.spr(index)->getUID();
 		},
-		[](int, int index, int value){
+		[](int, int, int){
 			return false;
 		}
 	);
@@ -710,7 +710,7 @@ static ArrayRegistrar SCREEN_EWEAPONS_registrar(SCREEN_EWEAPONS, []{
 		[](int, int index){
 			return Ewpns.spr(index)->getUID();
 		},
-		[](int, int index, int value){
+		[](int, int, int){
 			return false;
 		}
 	);
@@ -727,7 +727,7 @@ static ArrayRegistrar SCREEN_PORTALS_registrar(SCREEN_PORTALS, []{
 		[](int, int index){
 			return portals.spr(index)->getUID();
 		},
-		[](int, int index, int value){
+		[](int, int, int){
 			return false;
 		}
 	);
@@ -752,7 +752,7 @@ static ArrayRegistrar SCREEN_FFCS_registrar(SCREEN_FFCS, []{
 
 			return 0;
 		},
-		[](int, int index, int value){
+		[](int, int, int){
 			return false;
 		}
 	);

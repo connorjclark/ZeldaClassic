@@ -93,14 +93,14 @@ public:
 
 // Disable ==.
 template <typename T, typename U>
-bool operator==(SafeBool<T> const& lhs, SafeBool<U> const& rhs) {
+bool operator==(SafeBool<T> const& lhs, [[maybe_unused]] SafeBool<U> const& rhs) {
 	lhs.this_type_does_not_support_comparisons(); // compile error
 	return false;
 }
 
 // Disable !=
 template <typename T, typename U>
-bool operator!=(SafeBool<T> const& lhs, SafeBool<U> const& rhs) {
+bool operator!=(SafeBool<T> const& lhs, [[maybe_unused]] SafeBool<U> const& rhs) {
     lhs.this_type_does_not_support_comparisons(); // compile error
     return false;
 }

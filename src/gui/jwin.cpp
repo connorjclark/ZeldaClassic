@@ -6552,7 +6552,7 @@ static DIALOG selcolor_dlg[] =
 	{ NULL,              0,    0,    0,    0,    0,    0,    0,    0,       0,    0,    NULL,  NULL,  NULL }
 };
 
-int32_t jwin_color_swatch(int32_t msg, DIALOG *d, int32_t c)
+int32_t jwin_color_swatch(int32_t msg, DIALOG *d, [[maybe_unused]] int32_t c)
 {
 	int32_t ret = D_O_K;
 	

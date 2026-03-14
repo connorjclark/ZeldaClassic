@@ -30,7 +30,7 @@ static ArrayRegistrar MOUSEARR_registrar(MOUSEARR, []{
 				default: NOTREACHED();
 			}
 		},
-		[](int ref, int index, int value) {
+		[](int, int index, int value) {
 			switch (index)
 			{
 				case 0: //MouseX
@@ -189,7 +189,7 @@ static ArrayRegistrar KEYBINDINGS_registrar(KEYBINDINGS, []{
 				return active_control_scheme->keys[index];
 			NOTREACHED();
 		},
-		[](int, int index, int value) {
+		[](int, int, int) {
 			// read-only, scripts can't change the user's keybinds
 			return true;
 		}

@@ -1005,6 +1005,7 @@ set(zc_clang_errors
 	-Werror=return-type
 	-Werror=type-limits
 	-Werror=unreachable-code
+	-Werror=unused-parameter
 	# -Werror=reorder
 	# -Werror=unused
 	-Wno-write-strings
@@ -1025,6 +1026,7 @@ set(zc_gcc_errors
 	# -Wunused-result
 )
 set(zc_msvc_errors
+	/we4100 # unreferenced formal parameter
 	# /we5038
 	# /we4265
 )

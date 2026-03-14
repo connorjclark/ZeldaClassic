@@ -205,7 +205,7 @@ EditMapSettingsDialog::EditMapSettingsDialog(int32_t slot) :
 #define BTN_REGIONIDX(index, indexstr) \
 region_checks[index] = Checkbox(checked = region_grid->getCurrentRegionIndex() == index, \
 	text = indexstr, maxheight = 16_px, \
-	onToggleFunc = [&](bool state) \
+	onToggleFunc = [&]([[maybe_unused]] bool state) \
 	{ \
 		region_grid->setCurrentRegionIndex(index); \
 		refreshRegionGrid(); \

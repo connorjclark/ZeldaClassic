@@ -174,7 +174,7 @@ int32_t d_timer_proc(int32_t, DIALOG *, int32_t)
 	return D_O_K;
 }
 
-string get_box_cfg_hdr(int num)
+string get_box_cfg_hdr([[maybe_unused]] int num)
 {
 	return "misc";
 }
@@ -398,4 +398,4 @@ void ttip_uninstall_all()
 // void replay_step_comment(std::string comment) {}
 // bool fake_pack_writing=false;
 bool replay_is_active() {return false;}
-bool replay_version_check(int min, int max) {return false;}
+bool replay_version_check([[maybe_unused]] int min, [[maybe_unused]] int max) {return false;}

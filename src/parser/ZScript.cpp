@@ -301,9 +301,7 @@ Namespace::Namespace(ASTNamespace& namesp)
 	: name(namesp.getName())
 {}
 
-Namespace* ZScript::createNamespace(
-		Program& program, Scope& parentScope, ASTNamespace& node,
-		CompileErrorHandler* errorHandler)
+Namespace* ZScript::createNamespace(Program&, Scope& parentScope, ASTNamespace& node, CompileErrorHandler*)
 {
 	NamespaceScope* scope = parentScope.makeNamespaceChild(node);
 	if (!scope) return nullptr;
@@ -674,8 +672,7 @@ bool Function::isTracing() const
 		&& (prefix == "Trace" || prefix == "print");
 }
 
-//Return true the first time it is called, if func is deprecated
-bool Function::shouldShowDepr(bool err) const
+bool Function::shouldShowDepr() const
 {
 	return getFlag(FUNCFLAG_DEPRECATED);
 }

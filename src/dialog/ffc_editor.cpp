@@ -64,7 +64,7 @@ void ffdata::load(mapscr* scr, int32_t ind)
 	for(auto q = 0; q < 8; ++q)
 		initd[q] = ffc.initd[q];
 }
-void ffdata::save(mapscr* scr, int32_t screen, int32_t ind)
+void ffdata::save(int32_t screen, int32_t ind)
 {
 	if(unsigned(ind)>MAXFFCS-1) return;
 
@@ -514,7 +514,7 @@ bool FFCDialog::handleMessage(const GUI::DialogMessage<message>& msg)
 				if (!alert_confirm("Inactive FFC","FFCs that use Combo 0 cannot run scripts! Continue?"))
 					return false; //cancelled
 			}
-			ffc.save(thescr, screen, ffind);
+			ffc.save(screen, ffind);
 			mark_save_dirty();
 			edited = true;
 			[[fallthrough]];

@@ -474,7 +474,7 @@ bool get_lights(mapscr* scr)
 		return !dark;
 	return !dark || stayLit;
 }
-void set_lights(bool state, int32_t specialstate)
+void set_lights(bool state, [[maybe_unused]] int32_t specialstate)
 {
 	region_is_lit = !state;
 	if(!get_qr(qr_NEW_DARKROOM))
@@ -484,7 +484,7 @@ void set_lights(bool state, int32_t specialstate)
 	}
 	is_any_room_dark = is_any_dark();
 }
-void toggle_lights(int32_t specialstate)
+void toggle_lights([[maybe_unused]] int32_t specialstate)
 {
 	region_is_lit = get_lights();
 	if(!get_qr(qr_NEW_DARKROOM))

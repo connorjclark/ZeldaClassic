@@ -1907,7 +1907,7 @@ std::shared_ptr<GUI::Widget> ItemEditorDialog::view()
 									hAlign = 0.0,
 									checked = (local_itemref.pickup & (1<<14)),
 									text = "--",
-									onToggleFunc = [&](bool state)
+									onToggleFunc = [&]([[maybe_unused]] bool state)
 									{
 										//SETFLAG(local_itemref.pickup,(1<<14),state);
 									}
@@ -1917,7 +1917,7 @@ std::shared_ptr<GUI::Widget> ItemEditorDialog::view()
 									hAlign = 0.0,
 									checked = (local_itemref.pickup & (1<<15)),
 									text = "--",
-									onToggleFunc = [&](bool state)
+									onToggleFunc = [&]([[maybe_unused]] bool state)
 									{
 										//SETFLAG(local_itemref.pickup,(1<<15),state);
 									}

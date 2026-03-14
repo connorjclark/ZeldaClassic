@@ -827,7 +827,8 @@ size_t ComboPoolPageObj::size() const
 	return MAXCOMBOPOOLS;
 }
 
-bool ComboPoolPageObj::do_rclick(int indx)
+// TODO: remove unused param?
+bool ComboPoolPageObj::do_rclick([[maybe_unused]] int indx)
 {
 	bool ret = false;
 	NewMenu rcmenu
@@ -973,7 +974,8 @@ size_t AutoComboPageObj::size() const
 	return MAXAUTOCOMBOS;
 }
 
-bool AutoComboPageObj::do_rclick(int indx)
+// TODO: remove unused param?
+bool AutoComboPageObj::do_rclick([[maybe_unused]] int indx)
 {
 	bool ret = false;
 	NewMenu rcmenu
@@ -1060,7 +1062,8 @@ size_t AliasPageObj::size() const
 	return MAXCOMBOALIASES;
 }
 
-bool AliasPageObj::do_rclick(int indx)
+// TODO: remove unused param?
+bool AliasPageObj::do_rclick([[maybe_unused]] int indx)
 {
 	bool ret = false;
 	NewMenu rcmenu

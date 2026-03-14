@@ -365,12 +365,12 @@ bool VM::writeArrayElement(DebugValue array, int32_t index, DebugValue value)
 
 // TODO: this only mostly works. Need to actually handle special cases like assigning a variable in
 // an untyped array, or to an object member field.
-void VM::decreaseObjectReference(DebugValue value, const DebugSymbol* sym)
+void VM::decreaseObjectReference(DebugValue value, [[maybe_unused]] const DebugSymbol* sym)
 {
 	script_object_ref_dec(value.raw_value);
 }
 
-void VM::increaseObjectReference(DebugValue value, const DebugSymbol* sym)
+void VM::increaseObjectReference(DebugValue value, [[maybe_unused]] const DebugSymbol* sym)
 {
 	script_object_ref_inc(value.raw_value);
 }

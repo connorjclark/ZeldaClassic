@@ -566,7 +566,8 @@ void AutoComboDialog::addSlotReplace(autocombo_entry& entrybefore, autocombo_ent
 	ind += 2;
 }
 
-void AutoComboDialog::addSlotsExtend(std::vector<autocombo_entry>& entries, size_t& ind, size_t& wid, size_t& hei)
+// TODO: remove unused param?
+void AutoComboDialog::addSlotsExtend([[maybe_unused]] std::vector<autocombo_entry>& entries, size_t& ind, size_t& wid, size_t& hei)
 {
 	using namespace GUI::Builder;
 	using namespace GUI::Key;

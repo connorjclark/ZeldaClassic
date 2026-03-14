@@ -3598,7 +3598,7 @@ std::shared_ptr<GUI::Widget> ComboWizardDialog::view()
 									text = "Separate Locked Prompt", hAlign = 0.0,
 									checked = lvl > 1 && (local_ref.usrflags&cflag13) && def_prompt_combo2,
 									disabled = lvl < 2 || !(local_ref.usrflags&cflag13),
-									onToggleFunc = [&](bool state)
+									onToggleFunc = [&]([[maybe_unused]] bool state)
 									{
 										update();
 									}
@@ -4078,7 +4078,7 @@ std::shared_ptr<GUI::Widget> ComboWizardDialog::view()
 									text = "Separate Locked Prompt", hAlign = 0.0,
 									checked = lvl > 1 && (local_ref.usrflags&cflag13) && def_prompt_combo2,
 									disabled = lvl < 2 || !(local_ref.usrflags&cflag13),
-									onToggleFunc = [&](bool state)
+									onToggleFunc = [&]([[maybe_unused]] bool state)
 									{
 										update();
 									}

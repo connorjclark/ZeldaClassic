@@ -1,4 +1,5 @@
 #include "gui/checkbox.h"
+#include "base/check.h"
 #include "gui/common.h"
 #include "gui/dialog.h"
 #include "gui/dialog_runner.h"
@@ -194,7 +195,7 @@ void Checkbox::calculateSize()
 
 int32_t Checkbox::onEvent(int32_t event, MessageDispatcher& sendMessage)
 {
-	assert(event == geTOGGLE);
+	CHECK(event == geTOGGLE);
 	if(onToggleFunc)
 		onToggleFunc((alDialog->flags&D_SELECTED) != 0);
 	if(message >= 0)

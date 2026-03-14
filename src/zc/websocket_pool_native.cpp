@@ -293,7 +293,7 @@ void websocket_endpoint<client_tls>::secure_handler(std::string host)
 #endif
 
 template<>
-void websocket_endpoint<client_no_tls>::secure_handler(std::string host)
+void websocket_endpoint<client_no_tls>::secure_handler([[maybe_unused]] std::string host)
 {
 }
 

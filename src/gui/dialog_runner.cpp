@@ -115,7 +115,7 @@ void DialogRunner::realize(shared_ptr<Widget> root)
 		window->load();
 }
 
-void DialogRunner::runInner(std::shared_ptr<Widget> root)
+void DialogRunner::runInner()
 {
 	popup_zqdialog_start_a5();
 	new_gui_popup_dialog(alDialog.data(), focused, done, running);

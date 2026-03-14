@@ -132,7 +132,7 @@ uint MenuItem::calc_width(uint style, uint drawflags, optional<FONT*> usefont) c
 	}
 	return wid;
 }
-uint MenuItem::calc_height(uint style, uint drawflags, optional<FONT*> usefont) const
+uint MenuItem::calc_height(uint style, [[maybe_unused]] uint drawflags, optional<FONT*> usefont) const
 {
 	if(isEmpty())
 		return empty_height;
@@ -312,7 +312,7 @@ GuiMenu::GuiMenu(optional<uint> chop, bool borderless,std::initializer_list<Menu
 {
 	add(entries);
 }
-int GuiMenu::proc(int msg, DIALOG* d, int c)
+int GuiMenu::proc(int msg, DIALOG* d, [[maybe_unused]] int c)
 {
 	GuiMenu* ptr = static_cast<GuiMenu*>(d->dp);
 	if(!ptr)

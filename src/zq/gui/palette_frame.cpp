@@ -1,4 +1,5 @@
 #include "palette_frame.h"
+#include "base/check.h"
 #include "zq/zquest.h"
 #include "gui/common.h"
 #include "gui/dialog.h"
@@ -96,9 +97,9 @@ void PaletteFrame::realize(DialogRunner& runner)
 	});
 }
 
-int32_t PaletteFrame::onEvent(int32_t event, MessageDispatcher& sendMessage)
+int32_t PaletteFrame::onEvent(int32_t event, [[maybe_unused]] MessageDispatcher& sendMessage)
 {
-	assert(event == geCHANGE_SELECTION);
+	CHECK(event == geCHANGE_SELECTION);
 	
 	if(onUpdate)
 		onUpdate();

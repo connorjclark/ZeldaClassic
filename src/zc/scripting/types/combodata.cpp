@@ -6,7 +6,7 @@
 
 static ArrayRegistrar COMBODATTRIBUTES_registrar(COMBODATTRIBUTES, []{
 	static ScriptingArray_ObjectComputed<newcombo, int> impl(
-		[](newcombo* cmb) {
+		[](newcombo*) {
 			return NUM_COMBO_ATTRIBUTES;
 		},
 		[](newcombo* cmb, int index) -> int {
@@ -23,7 +23,7 @@ static ArrayRegistrar COMBODATTRIBUTES_registrar(COMBODATTRIBUTES, []{
 
 static ArrayRegistrar COMBODATTRISHORTS_registrar(COMBODATTRISHORTS, []{
 	static ScriptingArray_ObjectComputed<newcombo, int> impl(
-		[](newcombo* cmb){
+		[](newcombo*){
 			return 8;
 		},
 		[](newcombo* cmb, int index) -> int {
@@ -41,7 +41,7 @@ static ArrayRegistrar COMBODATTRISHORTS_registrar(COMBODATTRISHORTS, []{
 
 static ArrayRegistrar COMBODATTRIBYTES_registrar(COMBODATTRIBYTES, []{
 	static ScriptingArray_ObjectComputed<newcombo, int> impl(
-		[](newcombo* cmb){
+		[](newcombo*){
 			return 8;
 		},
 		[](newcombo* cmb, int index) -> int {
@@ -65,7 +65,7 @@ static ArrayRegistrar COMBODGENFLAGARR_registrar(COMBODGENFLAGARR, []{
 
 static ArrayRegistrar COMBODLIFTFLAGS_registrar(COMBODLIFTFLAGS, []{
 	static ScriptingArray_ObjectComputed<newcombo, int> impl(
-		[](newcombo* cmb){
+		[](newcombo*){
 			return 8;
 		},
 		[](newcombo* cmb, int index) -> int {
@@ -111,15 +111,15 @@ static ArrayRegistrar COMBODATAINITD_registrar(COMBODATAINITD, []{
 
 static ArrayRegistrar COMBODTRIGGERBUTTON_registrar(COMBODTRIGGERBUTTON, []{
 	static ScriptingArray_ObjectComputed<newcombo, bool> impl(
-		[](newcombo* cmb){
+		[](newcombo*){
 			return 8;
 		},
-		[](newcombo* cmb, int index) -> bool {
+		[](newcombo*, int index) -> bool {
 			if (auto* trig = get_first_combo_trigger())
 				return trig->triggerbtn & (1<<index);
 			return 0;
 		},
-		[](newcombo* cmb, int index, bool value){
+		[](newcombo*, int index, bool value){
 			if (auto* trig = get_first_combo_trigger())
 				SETFLAG(trig->triggerbtn, 1<<index, value);
 		}
@@ -130,7 +130,7 @@ static ArrayRegistrar COMBODTRIGGERBUTTON_registrar(COMBODTRIGGERBUTTON, []{
 
 static ArrayRegistrar COMBODTRIGGERFLAGS2_registrar(COMBODTRIGGERFLAGS2, []{
 	static ScriptingArray_ObjectComputed<newcombo, bool> impl(
-		[](newcombo* cmb){
+		[](newcombo*){
 			return 32*6;
 		},
 		[](newcombo* cmb, int index) -> bool {
@@ -168,7 +168,7 @@ static ArrayRegistrar COMBODTRIGGERS_registrar(COMBODTRIGGERS, []{
 		[](int ref, int index) -> int {
 			return dword(ref) | dword(index) << 24;
 		},
-		[](int ref, int index, int value){
+		[](int, int, int){
 			return false;
 		}
 	);

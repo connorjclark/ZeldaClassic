@@ -91,7 +91,7 @@ int32_t legacy_get_int_arr(const int32_t ptr, int32_t indx)
 		}
 	}
 }
-void legacy_set_int_arr(const int32_t ptr, int32_t indx, int32_t val)
+void legacy_set_int_arr(const int32_t ptr, [[maybe_unused]] int32_t indx, [[maybe_unused]] int32_t val)
 {
 	switch(ptr)
 	{

@@ -1,4 +1,5 @@
 #include "zq/gui/dmap_mapgrid.h"
+#include "base/check.h"
 #include "gui/common.h"
 #include "gui/dialog.h"
 #include "gui/dialog_runner.h"
@@ -187,9 +188,10 @@ namespace GUI
 			});
 	}
 
-	int32_t DMapMapGrid::onEvent(int32_t event, MessageDispatcher& sendMessage)
+	int32_t DMapMapGrid::onEvent(int32_t event, [[maybe_unused]] MessageDispatcher& sendMessage)
 	{
-		assert(event == geCHANGE_VALUE);
+		CHECK(event == geCHANGE_VALUE);
+
 		int ret = -1;
 		if (onUpdateFunc)
 		{

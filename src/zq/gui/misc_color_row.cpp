@@ -1,3 +1,4 @@
+#include "base/check.h"
 #include "misc_color_sel.h"
 #include "zalleg/zalleg.h"
 #include "gui/dialog_runner.h"
@@ -172,9 +173,9 @@ void MiscColorRow::setOnUpdate(std::function<void(int32_t)> newOnUpdate)
 	onUpdate = std::move(newOnUpdate);
 }
 
-int32_t MiscColorRow::onEvent(int32_t event, MessageDispatcher& sendMessage)
+int32_t MiscColorRow::onEvent(int32_t event, [[maybe_unused]] MessageDispatcher& sendMessage)
 {
-	assert(event == geCHANGE_SELECTION);
+	CHECK(event == geCHANGE_SELECTION);
 	
 	if(alDialog) val = alDialog->d1;
 	

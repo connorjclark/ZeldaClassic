@@ -93,7 +93,7 @@ std::shared_ptr<GUI::Widget> MidiEditorDialog::view()
 					maxLength = MIDI_NAME_LENGTH,
 					fitParent = true,
 					text = local_midiref.song_title,
-					onValChangedFunc = [&](GUI::TextField::type type, std::string_view text, int32_t)
+					onValChangedFunc = [&]([[maybe_unused]] GUI::TextField::type type, std::string_view text, int32_t)
 					{
 						local_midiref.song_title = text.substr(0, MIDI_NAME_LENGTH);
 					}
@@ -105,7 +105,7 @@ std::shared_ptr<GUI::Widget> MidiEditorDialog::view()
 					type = GUI::TextField::type::INT_DECIMAL,
 					maxLength = 4,
 					val = local_midiref.volume,
-					onValChangedFunc = [&](GUI::TextField::type type, std::string_view, int32_t val)
+					onValChangedFunc = [&]([[maybe_unused]] GUI::TextField::type type, std::string_view, int32_t val)
 					{
 						local_midiref.volume = val;
 					}
@@ -115,7 +115,7 @@ std::shared_ptr<GUI::Widget> MidiEditorDialog::view()
 					type = GUI::TextField::type::INT_DECIMAL,
 					maxLength = 4,
 					val = local_midiref.loop_start,
-					onValChangedFunc = [&](GUI::TextField::type type, std::string_view, int32_t val)
+					onValChangedFunc = [&]([[maybe_unused]] GUI::TextField::type type, std::string_view, int32_t val)
 					{
 						local_midiref.loop_start = val;
 					}
@@ -127,7 +127,7 @@ std::shared_ptr<GUI::Widget> MidiEditorDialog::view()
 					maxLength = 4,
 					val = local_midiref.start,
 					maxLength = 4,
-					onValChangedFunc = [&](GUI::TextField::type type, std::string_view, int32_t val)
+					onValChangedFunc = [&]([[maybe_unused]] GUI::TextField::type type, std::string_view, int32_t val)
 					{
 						local_midiref.start = val;
 					}
@@ -137,7 +137,7 @@ std::shared_ptr<GUI::Widget> MidiEditorDialog::view()
 					type = GUI::TextField::type::INT_DECIMAL,
 					maxLength = 4,
 					val = local_midiref.loop_end,
-					onValChangedFunc = [&](GUI::TextField::type type, std::string_view, int32_t val)
+					onValChangedFunc = [&]([[maybe_unused]] GUI::TextField::type type, std::string_view, int32_t val)
 					{
 						local_midiref.loop_end = val;
 					}

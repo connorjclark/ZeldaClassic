@@ -85,6 +85,8 @@ int play_midi_em(MIDI *midi, int32_t loop)
   current_midi = midi;
   return 0;
 #else
+  (void)midi;
+  (void)loop;
   return 0;
 #endif
 }

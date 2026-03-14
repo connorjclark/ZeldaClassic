@@ -20,7 +20,7 @@ namespace ZScript
 			in_func(nullptr), scope(nullptr), lexical_options_scope(nullptr) {}
 		virtual ~ASTVisitor() = default;
 		
-		virtual void caseDefault(AST& host, void* param = NULL) {}
+		virtual void caseDefault(AST&, [[maybe_unused]] void* param = NULL) {}
 		// AST Subclasses
 		virtual void caseFile(ASTFile& host, void* param = NULL) {
 			caseDefault(host, param);}
@@ -257,7 +257,7 @@ namespace ZScript
 		
 		//internals
 		void visitFunctionInternals(ZScript::Program& program);
-		virtual void analyzeFunctionInternals(ZScript::Function& function) {}
+		virtual void analyzeFunctionInternals(ZScript::Function&) {}
 
 		////////////////////////////////////////////////////////////////
 		// Convenience Functions

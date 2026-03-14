@@ -341,7 +341,7 @@ namespace util
 		}
 	}
 	
-	int32_t do_mkdir(const char* path, int32_t mode)
+	int32_t do_mkdir(const char* path, [[maybe_unused]] int32_t mode)
 	{
 #ifdef _WIN32
 		return _mkdir(path);

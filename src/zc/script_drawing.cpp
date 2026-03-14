@@ -787,7 +787,7 @@ void do_liner(BITMAP *bmp, int32_t *sdci, int32_t xoffset, int32_t yoffset)
     drawing_mode(DRAW_MODE_SOLID, NULL, 0, 0);
 }
 
-void do_linesr(BITMAP *bmp, int32_t i, int32_t *sdci, int32_t xoffset, int32_t yoffset)
+void do_linesr(BITMAP *bmp, int32_t i, int32_t *, int32_t xoffset, int32_t yoffset)
 {
     //sdci[1]=layer
     //sdci[2]=array[10] = { x, y, x2, y2, colour, scale, rx, ry, angle, opacity }
@@ -938,7 +938,7 @@ void do_polygonr(BITMAP *bmp, int32_t i, int32_t *sdci, int32_t xoffset, int32_t
 	drawing_mode(DRAW_MODE_SOLID, NULL, 0, 0);
 }
 
-void bmp_do_polygonr(BITMAP *bmp, int32_t i, int32_t *sdci, int32_t xoffset, int32_t yoffset)
+void bmp_do_polygonr(BITMAP*, int32_t i, int32_t *sdci, int32_t xoffset, int32_t yoffset)
 {
     //sdci[1]=layer
     //sdci[2]=point count
@@ -1531,7 +1531,7 @@ void do_fasttiler(BITMAP *bmp, int32_t *sdci, int32_t xoffset, int32_t yoffset)
         overtile16(bmp, sdci[4]/10000, x, y, sdci[5]/10000, 0);
 }
 
-void do_fasttilesr(BITMAP *bmp, int32_t i, int32_t *sdci, int32_t xoffset, int32_t yoffset)
+void do_fasttilesr(BITMAP *bmp, int32_t i, int32_t*, int32_t xoffset, int32_t yoffset)
 {
     /* layer, x, y, tile, color opacity */
     
@@ -1595,7 +1595,7 @@ void do_fastcombor(BITMAP *bmp, int32_t *sdci, int32_t xoffset, int32_t yoffset)
 	}
 }
 
-void do_fastcombosr(BITMAP *bmp, int32_t i, int32_t *sdci, int32_t xoffset, int32_t yoffset)
+void do_fastcombosr(BITMAP *bmp, int32_t i, int32_t*, int32_t xoffset, int32_t yoffset)
 {
 	/* layer, x, y, combo, cset, opacity */
 	std::vector<int32_t>* v_ptr = (std::vector<int32_t>*)script_drawing_commands[i].GetPtr();
@@ -3920,7 +3920,7 @@ void do_drawtriangle3dr(BITMAP *bmp, int32_t i, int32_t *sdci, int32_t xoffset, 
         
 }
 
-void bmp_do_rectr(BITMAP *bmp, int32_t *sdci, int32_t xoffset, int32_t yoffset)
+void bmp_do_rectr(BITMAP*, int32_t *sdci, int32_t xoffset, int32_t yoffset)
 {
 	//Z_scripterrlog("rect sdci[13] is: %d\n", sdci[13]);
     //sdci[1]=layer
@@ -4042,7 +4042,7 @@ void bmp_do_rectr(BITMAP *bmp, int32_t *sdci, int32_t xoffset, int32_t yoffset)
     drawing_mode(DRAW_MODE_SOLID, NULL, 0, 0);
 }
 
-void bmp_do_framer(BITMAP *bmp, int32_t *sdci, int32_t xoffset, int32_t yoffset)
+void bmp_do_framer(BITMAP*, int32_t *sdci, int32_t xoffset, int32_t yoffset)
 {
     //sdci[1]=layer
     //sdci[2]=x
@@ -4078,7 +4078,7 @@ void bmp_do_framer(BITMAP *bmp, int32_t *sdci, int32_t xoffset, int32_t yoffset)
 }
 
 
-void bmp_do_circler(BITMAP *bmp, int32_t *sdci, int32_t xoffset, int32_t yoffset)
+void bmp_do_circler(BITMAP*, int32_t *sdci, int32_t xoffset, int32_t yoffset)
 {
     //sdci[1]=layer
     //sdci[2]=x
@@ -4153,7 +4153,7 @@ void bmp_do_circler(BITMAP *bmp, int32_t *sdci, int32_t xoffset, int32_t yoffset
 }
 
 
-void bmp_do_arcr(BITMAP *bmp, int32_t *sdci, int32_t xoffset, int32_t yoffset)
+void bmp_do_arcr(BITMAP*, int32_t *sdci, int32_t xoffset, int32_t yoffset)
 {
     //sdci[1]=layer
     //sdci[2]=x
@@ -4380,7 +4380,7 @@ void bmp_do_ellipser(BITMAP *bmp, int32_t *sdci, int32_t xoffset, int32_t yoffse
 }
 
 
-void bmp_do_liner(BITMAP *bmp, int32_t *sdci, int32_t xoffset, int32_t yoffset)
+void bmp_do_liner(BITMAP*, int32_t *sdci, int32_t xoffset, int32_t yoffset)
 {
     //sdci[1]=layer
     //sdci[2]=x
@@ -4458,7 +4458,7 @@ void bmp_do_liner(BITMAP *bmp, int32_t *sdci, int32_t xoffset, int32_t yoffset)
 }
 
 
-void bmp_do_spliner(BITMAP *bmp, int32_t *sdci, int32_t xoffset, int32_t yoffset)
+void bmp_do_spliner(BITMAP*, int32_t *sdci, int32_t xoffset, int32_t yoffset)
 {
     /* layer, x1, y1, x2, y2, x3, y3, x4, y4, color, opacity */
 	//sdci[DRAWCMD_BMP_TARGET] Bitmap Pointer
@@ -4491,7 +4491,7 @@ void bmp_do_spliner(BITMAP *bmp, int32_t *sdci, int32_t xoffset, int32_t yoffset
 }
 
 
-void bmp_do_putpixelr(BITMAP *bmp, int32_t *sdci, int32_t xoffset, int32_t yoffset)
+void bmp_do_putpixelr(BITMAP*, int32_t *sdci, int32_t xoffset, int32_t yoffset)
 {
     //sdci[1]=layer
     //sdci[2]=x
@@ -4719,7 +4719,7 @@ void bmp_do_drawtiler(BITMAP *bmp, int32_t *sdci, int32_t xoffset, int32_t yoffs
     }
 }
 
-void bmp_do_drawtilecloakedr(BITMAP *bmp, int32_t *sdci, int32_t xoffset, int32_t yoffset)
+void bmp_do_drawtilecloakedr(BITMAP*, int32_t *sdci, int32_t xoffset, int32_t yoffset)
 {
 	//sdci[1]=layer
 	//sdci[2]=x
@@ -4759,7 +4759,7 @@ void bmp_do_drawtilecloakedr(BITMAP *bmp, int32_t *sdci, int32_t xoffset, int32_
 }
 
 
-void bmp_do_drawcombor(BITMAP *bmp, int32_t *sdci, int32_t xoffset, int32_t yoffset)
+void bmp_do_drawcombor(BITMAP*, int32_t *sdci, int32_t xoffset, int32_t yoffset)
 {
     //sdci[1]=layer
     //sdci[2]=x
@@ -4949,7 +4949,7 @@ void bmp_do_drawcombor(BITMAP *bmp, int32_t *sdci, int32_t xoffset, int32_t yoff
 }
 
 
-void bmp_do_drawcombocloakedr(BITMAP *bmp, int32_t *sdci, int32_t xoffset, int32_t yoffset)
+void bmp_do_drawcombocloakedr(BITMAP*, int32_t *sdci, int32_t xoffset, int32_t yoffset)
 {
 	//sdci[1]=layer
 	//sdci[2]=x
@@ -4998,7 +4998,7 @@ void bmp_do_drawcombocloakedr(BITMAP *bmp, int32_t *sdci, int32_t xoffset, int32
 }
 
 
-void bmp_do_fasttiler(BITMAP *bmp, int32_t *sdci, int32_t xoffset, int32_t yoffset)
+void bmp_do_fasttiler(BITMAP*, int32_t *sdci, int32_t xoffset, int32_t yoffset)
 {
     /* layer, x, y, tile, color opacity */
 	//sdci[DRAWCMD_BMP_TARGET] Bitmap Pointer
@@ -5023,7 +5023,7 @@ void bmp_do_fasttiler(BITMAP *bmp, int32_t *sdci, int32_t xoffset, int32_t yoffs
         overtile16(refbmp, sdci[4]/10000, x, y, sdci[5]/10000, 0);
 }
 
-void do_bmpwritetile(BITMAP *bmp, int32_t *sdci, int32_t xoffset, int32_t yoffset)
+void do_bmpwritetile(BITMAP*, int32_t *sdci, int32_t xoffset, int32_t yoffset)
 {
 	/* layer, x, y, tile, is8bit, mask */
 	//sdci[DRAWCMD_BMP_TARGET] Bitmap Pointer
@@ -5043,7 +5043,7 @@ void do_bmpwritetile(BITMAP *bmp, int32_t *sdci, int32_t xoffset, int32_t yoffse
 	write_tile(newtilebuf, refbmp, tl, x+xoffset, y+yoffset, is8bit, mask);
 }
 
-void do_bmpdither(BITMAP *bmp, int32_t *sdci, int32_t xoffset, int32_t yoffset)
+void do_bmpdither(BITMAP*, int32_t *sdci, [[maybe_unused]] int32_t xoffset, [[maybe_unused]] int32_t yoffset)
 {
 	/* layer, mask, color, ditherType, ditherArg */
 	//sdci[2] Mask Bitmap Pointer
@@ -5074,7 +5074,7 @@ void do_bmpdither(BITMAP *bmp, int32_t *sdci, int32_t xoffset, int32_t yoffset)
 	ditherblit(refbmp, mask, byte(sdci[3]/10000L), dType, sdci[5]/10000L);
 }
 
-void do_bmpreplcol(BITMAP *bmp, int32_t *sdci, int32_t xoffset, int32_t yoffset)
+void do_bmpreplcol(BITMAP*, int32_t *sdci, [[maybe_unused]] int32_t xoffset, [[maybe_unused]] int32_t yoffset)
 {
 	/* layer, shift, startcol, endcol */
 	//sdci[2] NewCol
@@ -5091,7 +5091,7 @@ void do_bmpreplcol(BITMAP *bmp, int32_t *sdci, int32_t xoffset, int32_t yoffset)
 	replColor(refbmp, sdci[2]/10000L, sdci[3]/10000L, sdci[4]/10000L, false);
 }
 
-void do_bmpshiftcol(BITMAP *bmp, int32_t *sdci, int32_t xoffset, int32_t yoffset)
+void do_bmpshiftcol(BITMAP*, int32_t *sdci, [[maybe_unused]] int32_t xoffset, [[maybe_unused]] int32_t yoffset)
 {
 	/* layer, shift, startcol, endcol */
 	//sdci[2] ShiftAmount
@@ -5108,7 +5108,7 @@ void do_bmpshiftcol(BITMAP *bmp, int32_t *sdci, int32_t xoffset, int32_t yoffset
 	replColor(refbmp, sdci[2]/10000L, sdci[3]/10000L, sdci[4]/10000L, true);
 }
 
-void do_bmpmaskdraw(BITMAP *bmp, int32_t *sdci, int32_t xoffset, int32_t yoffset)
+void do_bmpmaskdraw(BITMAP*, int32_t *sdci, [[maybe_unused]] int32_t xoffset, [[maybe_unused]] int32_t yoffset)
 {
 	/* layer, mask, color */
 	//sdci[2] Mask Bitmap Pointer
@@ -5135,7 +5135,7 @@ void do_bmpmaskdraw(BITMAP *bmp, int32_t *sdci, int32_t xoffset, int32_t yoffset
 	mask_colorfill(refbmp, mask, fillcol, startcol, endcol);
 }
 
-void do_bmpmaskblit(BITMAP *bmp, int32_t *sdci, int32_t xoffset, int32_t yoffset)
+void do_bmpmaskblit(BITMAP*, int32_t *sdci, [[maybe_unused]] int32_t xoffset, [[maybe_unused]] int32_t yoffset)
 {
 	/* layer, mask, color */
 	//sdci[2] Mask Bitmap Pointer
@@ -5168,7 +5168,7 @@ void do_bmpmaskblit(BITMAP *bmp, int32_t *sdci, int32_t xoffset, int32_t yoffset
 	mask_blit(refbmp, mask, pattern, repeats, startcol, endcol);
 }
 
-void bmp_do_fastcombor(BITMAP *bmp, int32_t *sdci, int32_t xoffset, int32_t yoffset)
+void bmp_do_fastcombor(BITMAP*, int32_t *sdci, int32_t xoffset, int32_t yoffset)
 {
     /* layer, x, y, tile, color opacity */
     //sdci[DRAWCMD_BMP_TARGET] Bitmap Pointer
@@ -5209,7 +5209,7 @@ void bmp_do_fastcombor(BITMAP *bmp, int32_t *sdci, int32_t xoffset, int32_t yoff
 
 
 
-void bmp_do_drawcharr(BITMAP *bmp, int32_t *sdci, int32_t xoffset, int32_t yoffset)
+void bmp_do_drawcharr(BITMAP*, int32_t *sdci, int32_t xoffset, int32_t yoffset)
 {
 	if ( sdci[DRAWCMD_BMP_TARGET] <= 0 )
 	{
@@ -5392,7 +5392,7 @@ void bmp_do_drawcharr(BITMAP *bmp, int32_t *sdci, int32_t xoffset, int32_t yoffs
 }
 
 
-void bmp_do_drawintr(BITMAP *bmp, int32_t *sdci, int32_t xoffset, int32_t yoffset)
+void bmp_do_drawintr(BITMAP*, int32_t *sdci, int32_t xoffset, int32_t yoffset)
 {
 	if ( sdci[DRAWCMD_BMP_TARGET] <= 0 )
 	{
@@ -5640,7 +5640,7 @@ void bmp_do_drawintr(BITMAP *bmp, int32_t *sdci, int32_t xoffset, int32_t yoffse
 }
 
 
-void bmp_do_drawstringr(BITMAP *bmp, int32_t i, int32_t *sdci, int32_t xoffset, int32_t yoffset)
+void bmp_do_drawstringr(BITMAP*, int32_t i, int32_t *sdci, int32_t xoffset, int32_t yoffset)
 {
     //sdci[1]=layer
     //sdci[2]=x
@@ -5713,7 +5713,7 @@ void bmp_do_drawstringr(BITMAP *bmp, int32_t i, int32_t *sdci, int32_t xoffset, 
     }
 }
 
-void bmp_do_drawstringr2(BITMAP *bmp, int32_t i, int32_t *sdci, int32_t xoffset, int32_t yoffset)
+void bmp_do_drawstringr2(BITMAP*, int32_t i, int32_t *sdci, int32_t xoffset, int32_t yoffset)
 {
     //sdci[1]=layer
     //sdci[2]=x
@@ -5779,7 +5779,7 @@ void bmp_do_drawstringr2(BITMAP *bmp, int32_t i, int32_t *sdci, int32_t xoffset,
     }
 }
 
-void bmp_do_clearr(BITMAP *bmp, int32_t *sdci, int32_t xoffset, int32_t yoffset)
+void bmp_do_clearr(BITMAP*, int32_t *sdci, [[maybe_unused]] int32_t xoffset, [[maybe_unused]] int32_t yoffset)
 {
     if ( sdci[DRAWCMD_BMP_TARGET] <= 0 )
     {
@@ -5793,7 +5793,7 @@ void bmp_do_clearr(BITMAP *bmp, int32_t *sdci, int32_t xoffset, int32_t yoffset)
 	clear_bitmap(refbmp);
 }
 
-void bmp_do_clearcolorr(BITMAP *bmp, int32_t *sdci, int32_t xoffset, int32_t yoffset)
+void bmp_do_clearcolorr(BITMAP*, int32_t *sdci, [[maybe_unused]] int32_t xoffset, [[maybe_unused]] int32_t yoffset)
 {
     //sdci[1]=layer
     //sdci[2]=color
@@ -5812,7 +5812,7 @@ void bmp_do_clearcolorr(BITMAP *bmp, int32_t *sdci, int32_t xoffset, int32_t yof
 }
 
 
-void bmp_do_regenr(BITMAP *bmp, int32_t *sdci, int32_t xoffset, int32_t yoffset)
+void bmp_do_regenr(BITMAP*, int32_t *sdci, [[maybe_unused]] int32_t xoffset, [[maybe_unused]] int32_t yoffset)
 {
     //sdci[1]=layer
 	int32_t h = sdci[3]/10000;
@@ -5841,7 +5841,7 @@ void bmp_do_regenr(BITMAP *bmp, int32_t *sdci, int32_t xoffset, int32_t yoffset)
 	usr_bmp.height = h;
 }
 
-void bmp_do_readr(BITMAP *bmp, int32_t i, int32_t *sdci, int32_t xoffset, int32_t yoffset)
+void bmp_do_readr(BITMAP*, int32_t i, int32_t *sdci, [[maybe_unused]] int32_t xoffset, [[maybe_unused]] int32_t yoffset)
 {
     //sdci[1]=layer
     //sdci[2]=filename
@@ -5897,7 +5897,7 @@ void bmp_do_readr(BITMAP *bmp, int32_t i, int32_t *sdci, int32_t xoffset, int32_
 
 
 
-void bmp_do_writer(BITMAP *bmp, int32_t i, int32_t *sdci, int32_t xoffset, int32_t yoffset)
+void bmp_do_writer(BITMAP*, int32_t i, int32_t *sdci, [[maybe_unused]] int32_t xoffset, [[maybe_unused]] int32_t yoffset)
 {
     //sdci[1]=layer
     //sdci[2]=filename
@@ -5965,7 +5965,7 @@ void bmp_do_writer(BITMAP *bmp, int32_t i, int32_t *sdci, int32_t xoffset, int32
 }
 
 
-void bmp_do_drawquadr(BITMAP *bmp, int32_t *sdci, int32_t xoffset, int32_t yoffset)
+void bmp_do_drawquadr(BITMAP*, int32_t *sdci, int32_t xoffset, int32_t yoffset)
 {
     //sdci[1]=layer
     //sdci[2]=x1
@@ -6115,7 +6115,7 @@ void bmp_do_drawquadr(BITMAP *bmp, int32_t *sdci, int32_t xoffset, int32_t yoffs
         
 }
 
-void bmp_do_drawtriangler(BITMAP *bmp, int32_t *sdci, int32_t xoffset, int32_t yoffset)
+void bmp_do_drawtriangler(BITMAP*, int32_t *sdci, int32_t xoffset, int32_t yoffset)
 {
     //sdci[1]=layer
     //sdci[2]=x1
@@ -6251,8 +6251,7 @@ void bmp_do_drawtriangler(BITMAP *bmp, int32_t *sdci, int32_t xoffset, int32_t y
         destroy_bitmap(tex);
 }
 
-
-void bmp_do_mode7r(BITMAP *bmp, int32_t *sdci, int32_t xoffset, int32_t yoffset)
+void bmp_do_mode7r(BITMAP *bmp, int32_t *sdci, [[maybe_unused]] int32_t xoffset, int32_t yoffset)
 {
 	/*
 	int32_t layer, int32_t rt, int32_t srcX, int32_t srcY, int32_t srcW, int32_t srcH, int32_t destW, int32_t destH, int32_t angle, int32_t cx, int32_t cy, int32_t space_z, int32_t horizon, 
@@ -10415,7 +10414,7 @@ void do_comboblit(BITMAP *bmp, int32_t *sdci, int32_t xoffset, int32_t yoffset, 
 	do_tileblit(bmp, sdci, xoffset, yoffset, is_bmp, "ComboBlit()");
 }
 
-void bmp_do_drawquad3dr(BITMAP *bmp, int32_t i, int32_t *sdci, int32_t xoffset, int32_t yoffset)
+void bmp_do_drawquad3dr(BITMAP*, int32_t i, int32_t *sdci, int32_t xoffset, int32_t yoffset)
 {
 	
 	//sdci[1]=layer
@@ -10552,7 +10551,7 @@ void bmp_do_drawquad3dr(BITMAP *bmp, int32_t i, int32_t *sdci, int32_t xoffset, 
 
 
 
-void bmp_do_drawtriangle3dr(BITMAP *bmp, int32_t i, int32_t *sdci, int32_t xoffset, int32_t yoffset)
+void bmp_do_drawtriangle3dr(BITMAP*, int32_t i, int32_t *sdci, int32_t xoffset, int32_t yoffset)
 {
 	//sdci[1]=layer
 	//sdci[2]=pos[9]
@@ -10745,7 +10744,7 @@ void draw_map_solidity(BITMAP *b, const mapscr& m, int32_t x, int32_t y)
 	destroy_bitmap(square);
 }
 
-void do_bmpdrawscreen_solidmaskr(BITMAP *bmp, int32_t *sdci, int32_t xoffset, int32_t yoffset, bool isOffScreen)
+void do_bmpdrawscreen_solidmaskr(BITMAP*, int32_t *sdci, int32_t xoffset, int32_t yoffset, [[maybe_unused]] bool isOffScreen)
 {
 	//sdci[1]=layer
 	//sdci[2]=map
@@ -10845,7 +10844,7 @@ void draw_map_solid(BITMAP *b, const mapscr& m, int32_t x, int32_t y)
 	destroy_bitmap(subsquare);
 }
 
-void do_bmpdrawscreen_solidr(BITMAP *bmp, int32_t *sdci, int32_t xoffset, int32_t yoffset, bool isOffScreen)
+void do_bmpdrawscreen_solidr(BITMAP*, int32_t *sdci, int32_t xoffset, int32_t yoffset, [[maybe_unused]] bool isOffScreen)
 {
 	//sdci[1]=layer
 	//sdci[2]=map
@@ -10924,7 +10923,7 @@ void draw_map_cflag(BITMAP *b, const mapscr& m, int32_t x, int32_t y)
 	destroy_bitmap(square);
 }
 
-void do_bmpdrawscreen_cflagr(BITMAP *bmp, int32_t *sdci, int32_t xoffset, int32_t yoffset, bool isOffScreen)
+void do_bmpdrawscreen_cflagr(BITMAP*, int32_t *sdci, int32_t xoffset, int32_t yoffset, [[maybe_unused]] bool isOffScreen)
 {
 	//sdci[1]=layer
 	//sdci[2]=map
@@ -11006,7 +11005,7 @@ void draw_map_combotype(BITMAP *b, const mapscr& m, int32_t x, int32_t y)
 	destroy_bitmap(square);
 }
 
-void do_bmpdrawscreen_ctyper(BITMAP *bmp, int32_t *sdci, int32_t xoffset, int32_t yoffset, bool isOffScreen)
+void do_bmpdrawscreen_ctyper(BITMAP*, int32_t *sdci, int32_t xoffset, int32_t yoffset, [[maybe_unused]] bool isOffScreen)
 {
 	//sdci[1]=layer
 	//sdci[2]=map
@@ -11089,7 +11088,7 @@ void draw_map_comboiflag(BITMAP *b, const mapscr& m, int32_t x, int32_t y)
 	destroy_bitmap(square);
 }
 
-void do_bmpdrawscreen_ciflagr(BITMAP *bmp, int32_t *sdci, int32_t xoffset, int32_t yoffset, bool isOffScreen)
+void do_bmpdrawscreen_ciflagr(BITMAP*, int32_t *sdci, int32_t xoffset, int32_t yoffset, [[maybe_unused]] bool isOffScreen)
 {
 	//sdci[1]=layer
 	//sdci[2]=map
@@ -11234,7 +11233,7 @@ void do_drawlayerr(BITMAP *bmp, int32_t *sdci, int32_t xoffset, int32_t yoffset,
 
 
 
-void do_drawscreenr(BITMAP *bmp, int32_t *sdci, int32_t xoffset, int32_t yoffset, bool isOffScreen)
+void do_drawscreenr(BITMAP *bmp, int32_t *sdci, int32_t xoffset, int32_t yoffset, [[maybe_unused]] bool isOffScreen)
 {
     //sdci[1]=layer
     //sdci[2]=map
@@ -11293,7 +11292,7 @@ void do_drawscreenr(BITMAP *bmp, int32_t *sdci, int32_t xoffset, int32_t yoffset
 }
 
 
-void do_bmpdrawlayerr(BITMAP *bmp, int32_t *sdci, int32_t xoffset, int32_t yoffset, bool isOffScreen)
+void do_bmpdrawlayerr(BITMAP*, int32_t *sdci, [[maybe_unused]] int32_t xoffset, int32_t yoffset, bool isOffScreen)
 {
     //sdci[1]=layer
     //sdci[2]=map
@@ -11378,7 +11377,7 @@ void do_bmpdrawlayerr(BITMAP *bmp, int32_t *sdci, int32_t xoffset, int32_t yoffs
 
 
 
-void do_bmpdrawscreenr(BITMAP *bmp, int32_t *sdci, int32_t xoffset, int32_t yoffset, bool isOffScreen)
+void do_bmpdrawscreenr(BITMAP*, int32_t *sdci, int32_t xoffset, int32_t yoffset, [[maybe_unused]] bool isOffScreen)
 {
     //sdci[1]=layer
     //sdci[2]=map

@@ -584,7 +584,7 @@ static bool optimize_conseq_additive(OptContext& ctx)
 
 	bool is_entry_fn = ctx.fn.is_entry_function;
 
-	optimize_by_block(ctx, [&](pc_t block_index, pc_t start_pc, pc_t final_pc){
+	optimize_by_block(ctx, [&]([[maybe_unused]] pc_t block_index, pc_t start_pc, pc_t final_pc){
 		for (pc_t j = final_pc; j > start_pc; j--)
 		{
 			word command = C(j).command;
@@ -737,7 +737,7 @@ static bool optimize_load_store(OptContext& ctx)
 static bool optimize_setv_pushr(OptContext& ctx)
 {
 	add_context_cfg(ctx);
-	optimize_by_block(ctx, [&](pc_t block_index, pc_t start_pc, pc_t final_pc){
+	optimize_by_block(ctx, [&]([[maybe_unused]] pc_t block_index, pc_t start_pc, pc_t final_pc){
 		for (int j = start_pc; j < final_pc; j++)
 		{
 			if (C(j).command != SETV) continue;
@@ -765,7 +765,7 @@ static bool optimize_setv_pushr(OptContext& ctx)
 static bool optimize_setr_pushr(OptContext& ctx)
 {
 	add_context_cfg(ctx);
-	optimize_by_block(ctx, [&](pc_t block_index, pc_t start_pc, pc_t final_pc){
+	optimize_by_block(ctx, [&]([[maybe_unused]] pc_t block_index, pc_t start_pc, pc_t final_pc){
 		for (int j = start_pc; j < final_pc; j++)
 		{
 			if (C(j).command != SETR) continue;
@@ -775,7 +775,7 @@ static bool optimize_setr_pushr(OptContext& ctx)
 			if (j + 2 <= final_pc)
 			{
 				bool reads_from_reg = false;
-				for_every_register_side_effect(C(j + 2), [&](bool read, bool write, int reg, int argn){
+				for_every_register_side_effect(C(j + 2), [&](bool read, [[maybe_unused]] bool write, int reg, [[maybe_unused]] int argn){
 					if (reg == C(j).arg1 && read)
 						reads_from_reg = true;
 				});
@@ -798,7 +798,7 @@ static bool optimize_setr_pushr(OptContext& ctx)
 static bool optimize_stack(OptContext& ctx)
 {
 	add_context_cfg(ctx);
-	optimize_by_block(ctx, [&](pc_t block_index, pc_t start_pc, pc_t final_pc){
+	optimize_by_block(ctx, [&]([[maybe_unused]] pc_t block_index, pc_t start_pc, pc_t final_pc){
 		for (int j = start_pc; j < final_pc; j++)
 		{
 			if (C(j).command != PUSHR) continue;
@@ -854,7 +854,7 @@ static bool optimize_stack(OptContext& ctx)
 				// table: keep this stack usage if anything writes to the register between the
 				// PUSH/POP.
 				bool writes_to_reg = false;
-				for_every_register_side_effect(C(k), [&](bool read, bool write, int arg, int argn){
+				for_every_register_side_effect(C(k), [&]([[maybe_unused]] bool read, bool write, int arg, [[maybe_unused]] int argn){
 					if (arg == reg && write)
 						writes_to_reg = true;
 				});
@@ -1065,7 +1065,7 @@ static SimulationValue evaluate_binary_op(int cmp, SimulationValue a, Simulation
 	return {ValueType::Unknown};
 }
 
-static void infer_assign(OptContext& ctx, SimulationState& state, int reg, const SimulationValue& rhs)
+static void infer_assign(OptContext&, SimulationState& state, int reg, const SimulationValue& rhs)
 {
 	// If this is <reg == any>, just set the register to op2.
 	if (rhs.type == ValueType::Expression && rhs.data == CMP_EQ)
@@ -1136,7 +1136,7 @@ static void infer_values_given_branch(OptContext& ctx, SimulationState& state)
 	infer(state.operand_2, expression);
 }
 
-static void simulate_set_value(OptContext& ctx, SimulationState& state, int reg, SimulationValue value)
+static void simulate_set_value(OptContext&, SimulationState& state, int reg, SimulationValue value)
 {
 	for (auto& v : state.stack)
 	{
@@ -1389,7 +1389,7 @@ static void simulate(OptContext& ctx, SimulationState& state)
 			command_handled = false;
 	}
 
-	for_every_register_side_effect(C(state.pc), [&](bool read, bool write, int reg, int argn){
+	for_every_register_side_effect(C(state.pc), [&]([[maybe_unused]] bool read, bool write, int reg, int argn){
 		if (!write)
 			return;
 
@@ -1603,7 +1603,7 @@ static bool optimize_propagate_values(OptContext& ctx)
 		return false;
 
 	add_context_cfg(ctx);
-	optimize_by_block(ctx, [&](pc_t block_index, pc_t start_pc, pc_t final_pc){
+	optimize_by_block(ctx, [&](pc_t block_index, pc_t start_pc, [[maybe_unused]] pc_t final_pc){
 		SimulationState state{};
 		state.set_block(ctx, block_index);
 
@@ -1894,7 +1894,7 @@ static bool optimize_reduce_comparisons(OptContext& ctx)
 					break;
 				}
 
-				for_every_register_side_effect(C(k), [&](bool read, bool write, int arg, int argn){
+				for_every_register_side_effect(C(k), [&]([[maybe_unused]] bool read, bool write, int arg, [[maybe_unused]] int argn){
 					if (arg == D(2) && write)
 					{
 						writes_comparison_result_to_d2 = true;
@@ -2332,7 +2332,7 @@ static bool optimize_inline_functions(OptContext& ctx)
 		}
 		else
 		{
-			for_every_side_effect_all_args(inline_instr, [&](bool read, bool write, int& reg, int argn){
+			for_every_side_effect_all_args(inline_instr, [&](bool read, bool write, int& reg, [[maybe_unused]] int argn){
 				if (read || write)
 				{
 					if (data.internal_reg_to_type[reg] == 0)

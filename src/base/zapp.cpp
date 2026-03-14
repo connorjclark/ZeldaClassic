@@ -88,7 +88,7 @@ static bool is_exe_in_bin_folder()
 	return fs::path(zapp_get_exe_folder_path()).filename() == "bin";
 }
 
-void zapp_set_crash_cb(std::function<void()> cb)
+void zapp_set_crash_cb([[maybe_unused]] std::function<void()> cb)
 {
 #ifdef HAS_SENTRY
 	crash_cb = cb;
@@ -342,7 +342,7 @@ bool is_headless()
 	return headless;
 }
 
-void zapp_reporting_add_breadcrumb(const char* category, const char* message)
+void zapp_reporting_add_breadcrumb([[maybe_unused]] const char* category, [[maybe_unused]] const char* message)
 {
 #ifdef HAS_SENTRY
 	sentry_value_t crumb = sentry_value_new_breadcrumb("info", message);
@@ -351,14 +351,14 @@ void zapp_reporting_add_breadcrumb(const char* category, const char* message)
 #endif
 }
 
-void zapp_reporting_set_tag(const char* key, const char* value)
+void zapp_reporting_set_tag([[maybe_unused]] const char* key, [[maybe_unused]] const char* value)
 {
 #ifdef HAS_SENTRY
 	sentry_set_tag(key, value);
 #endif
 }
 
-void zapp_reporting_set_tag(const char* key, int value)
+void zapp_reporting_set_tag([[maybe_unused]] const char* key, [[maybe_unused]] int value)
 {
 #ifdef HAS_SENTRY
 	sentry_set_tag(key, std::to_string(value).c_str());

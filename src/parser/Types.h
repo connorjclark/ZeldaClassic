@@ -213,7 +213,7 @@ namespace ZScript
 
 		// Resolution.
 		virtual bool isResolved() const {return true;}
-		virtual DataType const* resolve(ZScript::Scope& scope, CompileErrorHandler* errorHandler) {return this;}
+		virtual DataType const* resolve([[maybe_unused]] ZScript::Scope& scope, [[maybe_unused]] CompileErrorHandler* errorHandler) {return this;}
 		virtual DataType const& getBaseType() const {return *this;}
 		virtual DataType const* baseType(ZScript::Scope& scope, CompileErrorHandler* errorHandler) const = 0;
 		// Basics
@@ -321,7 +321,7 @@ namespace ZScript
 		
 		virtual std::string getName() const;
 		ASTExprIdentifier const* getIdentifier() const {return iden;}
-		virtual bool canCastTo(DataType const& target, bool allowDeprecatedArrayCast = true) const {return false;}
+		virtual bool canCastTo([[maybe_unused]] DataType const& target, [[maybe_unused]] bool allowDeprecatedArrayCast = true) const {return false;}
 		virtual DataType const& getShared(DataType const& target, Scope const* scope) const;
 
 	private:
@@ -498,7 +498,7 @@ namespace ZScript
 		
 		virtual bool isTemplate() const {return true;}
 		
-		virtual DataType const* baseType(ZScript::Scope& scope, CompileErrorHandler* errorHandler) const {return this;}
+		virtual DataType const* baseType([[maybe_unused]] ZScript::Scope& scope, [[maybe_unused]] CompileErrorHandler* errorHandler) const {return this;}
 	protected:
 		DataTypeTemplate(std::string const& name, uint32_t id, DataTypeTemplateConst*);
 		std::string name;
@@ -514,7 +514,7 @@ namespace ZScript
 			: DataTypeTemplate(name, id, nullptr), mut_type(nullptr) {}
 		DataTypeTemplateConst* clone() const {return new DataTypeTemplateConst(*this);};
 		
-		virtual DataType const* baseType(ZScript::Scope& scope, CompileErrorHandler* errorHandler) const {return this;}
+		virtual DataType const* baseType([[maybe_unused]] ZScript::Scope& scope, [[maybe_unused]] CompileErrorHandler* errorHandler) const {return this;}
 		
 		virtual bool isConstant() const {return true;}
 		virtual DataType const* getConstType() const {return this;}

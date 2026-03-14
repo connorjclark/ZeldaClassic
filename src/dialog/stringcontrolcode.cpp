@@ -1597,7 +1597,7 @@ std::shared_ptr<GUI::Widget> SCCDialog::view()
 				Checkbox(
 					text = "Font Sort",
 					checked = sorted_fontdd,
-					onToggleFunc = [&](bool state)
+					onToggleFunc = [&]([[maybe_unused]] bool state)
 					{
 						sorted_fontdd = !sorted_fontdd;
 						fontlist->setListData(sorted_fontdd ? list_font : list_font_order);

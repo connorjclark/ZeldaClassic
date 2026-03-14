@@ -1,4 +1,5 @@
 #include "gui/frame.h"
+#include "base/check.h"
 #include "gui/dialog_runner.h"
 #include "gui/jwin.h"
 
@@ -158,7 +159,7 @@ void Frame::realize(DialogRunner& runner)
 
 int32_t Frame::onEvent(int32_t event, MessageDispatcher& sendMessage)
 {
-	assert(event == geCLICK);
+	CHECK(event == geCLICK);
 	
 	if(infoMessage >= 0)
 		sendMessage(infoMessage, MessageArg::none);

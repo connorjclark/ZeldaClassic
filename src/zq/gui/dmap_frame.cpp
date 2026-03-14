@@ -5,7 +5,7 @@
 #include "gui/dialog_runner.h"
 #include "gui/jwin.h"
 
-int dmap_frame_proc(int32_t msg, DIALOG* d, int32_t c)
+int dmap_frame_proc(int32_t msg, DIALOG* d, [[maybe_unused]] int32_t c)
 {
 	using GUI::DMapFrame;
 	if (msg == MSG_DRAW)

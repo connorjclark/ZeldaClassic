@@ -4649,7 +4649,7 @@ bool leech_tiles(tiledata *dest,int32_t start,int32_t cs)
 	return true;
 }
 
-void grab(byte(*dest)[256],byte *def, int32_t width, int32_t height, int32_t oformat, byte *newformat)
+void grab(byte(*dest)[256],byte *def, int32_t width, int32_t height, [[maybe_unused]] int32_t oformat, byte *newformat)
 {
 	byte defFormat=(bp==8) ? tf8Bit : tf4Bit;
 	byte format=defFormat;
@@ -11762,7 +11762,7 @@ int32_t d_combo_loader(int32_t msg,DIALOG *d,int32_t c)
 }
 
 bool call_combo_editor(int32_t);
-bool edit_combo(int32_t c,bool freshen,int32_t cs)
+bool edit_combo(int32_t c,bool freshen,[[maybe_unused]] int32_t cs)
 {
 	FONT* ofont = font;
 	//CSet = cs;
@@ -12377,7 +12377,7 @@ void center_zq_tiles_dialogs()
 //.ZCOMBO
 
 int32_t readcombo_loop(PACKFILE* f, word section_version, newcombo& temp_combo);
-int32_t writecombo_loop(PACKFILE *f, word section_version, newcombo const& tmp_cmb);
+int32_t writecombo_loop(PACKFILE *f, newcombo const& tmp_cmb);
 
 int32_t readcombofile_old(PACKFILE *f, int32_t skip, byte nooverwrite, int32_t zversion,
 	dword section_version, int32_t index, int32_t count)
@@ -12797,7 +12797,7 @@ int32_t writecombofile(PACKFILE *f, int32_t index, int32_t count)
 	size_t end = index+count;
 	for(size_t q = index; q < end; ++q)
 	{
-		if(writecombo_loop(f, section_version, combobuf[q]))
+		if(writecombo_loop(f, combobuf[q]))
 			return 0;
 	}
 	

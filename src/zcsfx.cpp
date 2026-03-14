@@ -212,7 +212,7 @@ namespace // sample implementations
 		return oss.str();
 	}
 	
-	int SampleOGG::read(PACKFILE* f, word s_version)
+	int SampleOGG::read(PACKFILE* f, [[maybe_unused]] word s_version)
 	{
 		cleanup_memory();
 		if (!p_igetl(&buffer_size, f))
@@ -548,7 +548,7 @@ namespace // sample implementations
 		return oss.str();
 	}
 	
-	int SampleWAV_NoSound::read(PACKFILE* f, word s_version)
+	int SampleWAV_NoSound::read(PACKFILE* f, [[maybe_unused]] word s_version)
 	{
 		byte dummy;
 		if (!p_getc(&dummy, f))
@@ -586,10 +586,10 @@ namespace // sample implementations
 		return 0;
 	}
 	
-	void SampleWAV_NoSound::update_pan(int pan) {}
-	void SampleWAV_NoSound::update_loop(bool loop) {}
-	void SampleWAV_NoSound::update_freq(int freq) {}
-	void SampleWAV_NoSound::update_gain(double gain) {}
+	void SampleWAV_NoSound::update_pan([[maybe_unused]] int pan) {}
+	void SampleWAV_NoSound::update_loop([[maybe_unused]] bool loop) {}
+	void SampleWAV_NoSound::update_freq([[maybe_unused]] int freq) {}
+	void SampleWAV_NoSound::update_gain([[maybe_unused]] double gain) {}
 	
 	size_t SampleWAV_NoSound::get_pos() const
 	{
@@ -621,7 +621,7 @@ namespace // sample implementations
 		return false;
 	}
 	
-	bool SampleWAV_NoSound::play(int pan, bool loop, bool restart, double gain, int freq)
+	bool SampleWAV_NoSound::play([[maybe_unused]] int pan, [[maybe_unused]] bool loop, [[maybe_unused]] bool restart, [[maybe_unused]] double gain, [[maybe_unused]] int freq)
 	{
 		return false;
 	}
@@ -1165,6 +1165,8 @@ static void sfx_replay_comment(string sfx_name)
 			sfx_name = "Player dies";
 		replay_step_comment(fmt::format("sfx {}", sfx_name));
 	}
+#else
+	(void)sfx_name;
 #endif
 }
 

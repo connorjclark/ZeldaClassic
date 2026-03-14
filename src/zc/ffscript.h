@@ -288,7 +288,7 @@ struct user_stack : public user_abstract_obj
 	std::deque<int32_t> theStack;
 
 	// TODO: support retaining objects.
-	void get_retained_ids(std::vector<uint32_t>& ids) {}
+	void get_retained_ids([[maybe_unused]] std::vector<uint32_t>& ids) {}
 	
 	int32_t size()
 	{

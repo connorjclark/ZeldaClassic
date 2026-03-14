@@ -313,7 +313,7 @@ namespace ZScript
 	public:
 		Opcode0() {}
 		~Opcode0() {}
-		void execute(ArgumentVisitor &host, void *param)
+		void execute([[maybe_unused]] ArgumentVisitor &host, [[maybe_unused]] void *param)
 		{
 		}
 		std::string toString() const
@@ -502,7 +502,7 @@ namespace ZScript
 	{
 	public:
 		RawOpcode(std::string str) : str(str) {}
-		void execute(ArgumentVisitor &host, void *param)
+		void execute([[maybe_unused]] ArgumentVisitor &host, [[maybe_unused]] void *param)
 		{
 		}
 		std::string toString() const

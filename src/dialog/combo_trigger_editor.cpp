@@ -29,7 +29,8 @@ bool call_trigger_editor(ComboEditorDialog& parentdlg, size_t index)
 	return edited;
 }
 
-ComboTriggerDialog::ComboTriggerDialog(ComboEditorDialog& parentdlg, combo_trigger& trigger, size_t index):
+// TODO: remove unused param?
+ComboTriggerDialog::ComboTriggerDialog(ComboEditorDialog& parentdlg, [[maybe_unused]] combo_trigger& trigger, size_t index):
 	local_ref(parentdlg.local_comboref.triggers[index]), parent(parentdlg),
 	parent_comboref(parentdlg.local_comboref), index(index), _ice_cs(0)
 {
