@@ -1168,7 +1168,50 @@ void handle_region_load_trigger()
 	else handle_screen_load_trigger(create_screen_handles_one(get_scr(Hero.current_screen)));
 }
 
-static void apply_state_changes_to_screen(mapscr& scr, int32_t map, int32_t screen, int32_t flags, bool secrets_do_replay_comment)
+static void apply_screen_state_remove_combos(const screen_handles_t& screen_handles, uint32_t flags, bool do_layers)
+{
+	// TODO: not sure if can do here.
+	// if (flags & mLIGHTBEAM)
+	// {
+	// 	for_every_rpos_in_screen(screen_handles, [&](const rpos_handle_t& rpos_handle) {
+	// 		if (!do_layers && rpos_handle.layer != screen_handles[0].layer)
+	// 			return;
+
+	// 		if (rpos_handle.ctype() == cLIGHTTARGET)
+	// 		{
+	// 			if (!(rpos_handle.combo().usrflags&cflag1)) //Unlit version
+	// 				rpos_handle.increment_data();
+	// 		}
+	// 	});
+	// }
+
+	if(flags&mLOCKBLOCK)              // if special stuff done before
+	{
+		remove_screenstatecombos2(screen_handles, do_layers, cLOCKBLOCK, cLOCKBLOCK2);
+	}
+
+	if(flags&mBOSSLOCKBLOCK)          // if special stuff done before
+	{
+		remove_screenstatecombos2(screen_handles, do_layers, cBOSSLOCKBLOCK, cBOSSLOCKBLOCK2);
+	}
+
+	if(flags&mCHEST)              // if special stuff done before
+	{
+		remove_screenstatecombos2(screen_handles, do_layers, cCHEST, cCHEST2);
+	}
+
+	if(flags&mLOCKEDCHEST)              // if special stuff done before
+	{
+		remove_screenstatecombos2(screen_handles, do_layers, cLOCKEDCHEST, cLOCKEDCHEST2);
+	}
+
+	if(flags&mBOSSCHEST)              // if special stuff done before
+	{
+		remove_screenstatecombos2(screen_handles, do_layers, cBOSSCHEST, cBOSSCHEST2);
+	}
+}
+
+static void apply_state_changes_to_screen(mapscr& scr, int32_t map, int32_t screen, uint32_t flags, bool secrets_do_replay_comment)
 {
 	auto screen_handles = create_screen_handles_one(&scr);
 
@@ -1182,6 +1225,9 @@ static void apply_state_changes_to_screen(mapscr& scr, int32_t map, int32_t scre
 	if (flags & mLIGHTBEAM)
 	{
 		for_every_rpos_in_screen(screen_handles, [&](const rpos_handle_t& rpos_handle) {
+			if (rpos_handle.layer != screen_handles[0].layer)
+				return;
+
 			if (rpos_handle.ctype() == cLIGHTTARGET)
 			{
 				if (!(rpos_handle.combo().usrflags&cflag1)) //Unlit version
@@ -1194,31 +1240,8 @@ static void apply_state_changes_to_screen(mapscr& scr, int32_t map, int32_t scre
 	toggle_switches(game->lvlswitches[lvl], true, screen_handles);
 	toggle_gswitches_load(screen_handles);
 
-	if(flags&mLOCKBLOCK)              // if special stuff done before
-	{
-	    remove_screenstatecombos2(screen_handles, false, cLOCKBLOCK, cLOCKBLOCK2);
-	}
-
-	if(flags&mBOSSLOCKBLOCK)          // if special stuff done before
-	{
-	    remove_screenstatecombos2(screen_handles, false, cBOSSLOCKBLOCK, cBOSSLOCKBLOCK2);
-	}
-
-	if(flags&mCHEST)              // if special stuff done before
-	{
-	    remove_screenstatecombos2(screen_handles, false, cCHEST, cCHEST2);
-	}
-
-	if(flags&mCHEST)              // if special stuff done before
-	{
-	    remove_screenstatecombos2(screen_handles, false, cLOCKEDCHEST, cLOCKEDCHEST2);
-	}
-
-	if(flags&mBOSSCHEST)              // if special stuff done before
-	{
-	    remove_screenstatecombos2(screen_handles, false, cBOSSCHEST, cBOSSCHEST2);
-	}
-	
+	bool do_layers = false;
+	apply_screen_state_remove_combos(screen_handles, flags, do_layers);
 
 	int mi = mapind(map, screen);
 	clear_xdoors_mi(screen_handles, mi);
@@ -1521,6 +1544,12 @@ void setmapflag_mi(mapscr* scr, int32_t mi, uint32_t flag)
                 log_state_change(nmap, nscr, "State change carried over");
                 if (replay_is_active())
                     replay_step_comment(fmt::format("map {} scr {} flag {} carry", nmap, nscr, replay_state_string));
+                if (nmap - 1 == cur_map && is_in_current_region(nscr))
+                {
+                    auto screen_handles = create_screen_handles_one(get_scr(nscr));
+                    bool do_layers = true;
+                    apply_screen_state_remove_combos(screen_handles, flag, do_layers);
+                }
                 game->maps[((nmap-1)<<7)+nscr] |= flag;
             }
             
@@ -6634,31 +6663,8 @@ void loadscr_old(int32_t destdmap, int32_t screen,int32_t ldir,bool overlay)
 	toggle_switches(game->lvlswitches[destlvl], true, screen_handles);
 	toggle_gswitches_load(screen_handles);
 
-	if(game->maps[mi]&mLOCKBLOCK)			  // if special stuff done before
-	{
-		remove_lockblocks(screen_handles);
-	}
-	
-	if(game->maps[mi]&mBOSSLOCKBLOCK)		  // if special stuff done before
-	{
-		remove_bosslockblocks(screen_handles);
-	}
-	
-	if(game->maps[mi]&mCHEST)			  // if special stuff done before
-	{
-		remove_chests(screen_handles);
-	}
-	
-	if(game->maps[mi]&mLOCKEDCHEST)			  // if special stuff done before
-	{
-		remove_lockedchests(screen_handles);
-	}
-	
-	if(game->maps[mi]&mBOSSCHEST)			  // if special stuff done before
-	{
-		remove_bosschests(screen_handles);
-	}
-	
+	apply_screen_state_remove_combos(screen_handles, game->maps[mi], true);
+
 	clear_xdoors(screen_handles, true);
 	clear_xstatecombos(screen_handles, true);
 
