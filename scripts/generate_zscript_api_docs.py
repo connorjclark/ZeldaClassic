@@ -29,7 +29,9 @@ from zscript_doc_parser import (
     EnumMember,
     File,
     Function,
+    Namespace,
     Scope,
+    Symbol,
     Variable,
     format_value,
     get_doc_data,
@@ -68,6 +70,26 @@ tmp_file.write_text(
 )
 
 all_files = get_doc_data(tmp_file)
+
+symbol_id_to_namespace = {}
+for file in all_files:
+
+    def cb(symbol, parent):
+        if isinstance(parent, Namespace):
+            symbol_id_to_namespace[symbol.symbol_id] = parent
+
+    walk(file, cb)
+
+
+def get_full_symbol_name(symbol):
+    # Note: currently don't need nested namespaces. Turn this into a while loop if ever needed,
+    # should work.
+    ns = symbol_id_to_namespace.get(symbol.symbol_id)
+    if ns:
+        return f'{ns.name}::{symbol.name}'
+    return symbol.name
+
+
 lines = []
 symbols_by_id = {}
 
@@ -313,7 +335,7 @@ def handle_variable(symbol: Variable):
 
     parts = [
         str(symbol.type),
-        f'**{symbol.name}**',
+        f'**{get_full_symbol_name(symbol)}**',
         (
             f'= ``{format_value(symbol.type, symbol.value)}``'
             if symbol.value != None
@@ -336,7 +358,7 @@ def handle_variable(symbol: Variable):
 def handle_enum(symbol: Enum):
     add(f'.. _{symbol.loc.ref}:\n')
 
-    add(f'enum **{symbol.name}**: {reflink(symbol)}')
+    add(f'enum **{get_full_symbol_name(symbol)}**: {reflink(symbol)}')
     if symbol.loc:
         add(symbol.loc.reflink())
     add('')
@@ -365,7 +387,7 @@ def handle_function(symbol: Function):
 
     parts = [
         str(symbol.return_type),
-        f'**{symbol.name}**' + '\\ ' + str(symbol.parameters),
+        f'**{get_full_symbol_name(symbol)}**' + '\\ ' + str(symbol.parameters),
         reflink(symbol),
     ]
     if symbol.loc:
@@ -399,12 +421,15 @@ def handle_scope(symbol):
 
     walk(symbol, cb)
 
-    def deprecated(x):
+    def deprecated(x: Symbol) -> str:
         return ' **deprecated**' if x.deprecated() else ''
+
+    def link(x: Symbol) -> str:
+        return reflink(x, get_full_symbol_name(x))
 
     if variables:
         rst_h2('Variables')
-        add_table([[str(x.type), x.link() + deprecated(x)] for x in variables])
+        add_table([[str(x.type), link(x) + deprecated(x)] for x in variables])
 
     if constructors:
         rst_h2('Constructors')
@@ -412,7 +437,7 @@ def handle_scope(symbol):
             [
                 [
                     str(x.return_type),
-                    (x.link() + '\\ ' + str(x.parameters) + deprecated(x)),
+                    (link(x) + '\\ ' + str(x.parameters) + deprecated(x)),
                 ]
                 for x in constructors
             ]
@@ -424,7 +449,7 @@ def handle_scope(symbol):
             [
                 [
                     str(x.return_type),
-                    (x.link() + '\\ ' + str(x.parameters) + deprecated(x)),
+                    (link(x) + '\\ ' + str(x.parameters) + deprecated(x)),
                 ]
                 for x in functions
             ]
@@ -492,6 +517,7 @@ def process_bindings_class(file: File, symbol: Class):
     handle_scope(
         Scope(
             name='',
+            namespaces=file.namespaces,
             enums=file.enums,
             classes=[],
             functions=[*symbol.constructors, *symbol.functions],
@@ -604,7 +630,14 @@ document = 'zscript/globals/constants'
 sections['Globals'].insert(0, document)
 rst_title('Global constants')
 handle_scope(
-    Scope(name='constants', enums=enums, classes=[], functions=[], variables=variables)
+    Scope(
+        name='constants',
+        namespaces=[],
+        enums=enums,
+        classes=[],
+        functions=[],
+        variables=variables,
+    )
 )
 write(document)
 
@@ -612,7 +645,14 @@ document = 'zscript/globals/functions'
 sections['Globals'].insert(0, document)
 rst_title('Global functions')
 handle_scope(
-    Scope(name='globals', enums=[], classes=[], functions=functions, variables=[])
+    Scope(
+        name='globals',
+        namespaces=[],
+        enums=[],
+        classes=[],
+        functions=functions,
+        variables=[],
+    )
 )
 write(document)
 

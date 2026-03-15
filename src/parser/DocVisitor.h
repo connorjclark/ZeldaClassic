@@ -19,6 +19,7 @@ namespace ZScript
 		void caseDataDecl(ASTDataDecl& host, void* param);
 		void caseDataEnum(ASTDataEnum& host, void* param);
 		void caseFuncDecl(ASTFuncDecl& host, void* param);
+		void caseNamespace(ASTNamespace& host, void* param);
 
 		std::string getOutput();
 	};

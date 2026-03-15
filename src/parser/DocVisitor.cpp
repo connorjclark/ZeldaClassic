@@ -189,6 +189,16 @@ void DocVisitor::caseClass(ASTClass& host, void* param)
 	active = prev_active;
 }
 
+void DocVisitor::caseNamespace(ASTNamespace& host, void* param)
+{
+	auto symbol = appendSymbol(SymbolKind::Namespace, host);
+
+	auto prev_active = active;
+	active = &(*symbol)["children"];
+	RecursiveVisitor::caseNamespace(host, param);
+	active = prev_active;
+}
+
 void DocVisitor::caseDataDecl(ASTDataDecl& host, void* param)
 {
 	auto symbol = appendSymbol(SymbolKind::Variable, host);

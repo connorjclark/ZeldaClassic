@@ -146,9 +146,6 @@ class Variable(Symbol):
     type: Type
     value: Optional[str]
 
-    def link(self) -> str:
-        return reflink(self, self.name)
-
 
 @dataclass
 class EnumMember(Symbol):
@@ -187,9 +184,6 @@ class Function(Symbol):
     return_type: Type
     constructor: bool
 
-    def link(self) -> str:
-        return reflink(self, self.name)
-
 
 @dataclass
 class Class(Symbol):
@@ -204,8 +198,18 @@ class Class(Symbol):
 
 
 @dataclass
+class Namespace(Symbol):
+    namespaces: list[Namespace]
+    classes: list[Function]
+    functions: list[Function]
+    variables: list[Variable]
+    enums: list[Enum]
+
+
+@dataclass
 class File:
     name: str
+    namespaces: list[Namespace]
     enums: list[Enum]
     classes: list[Class]
     functions: list[Function]
@@ -215,6 +219,7 @@ class File:
 @dataclass
 class Scope:
     name: str
+    namespaces: list[Namespace]
     enums: list[Enum]
     classes: list[Class]
     functions: list[Function]
@@ -414,13 +419,51 @@ def parse_doc_symbol(x, parent=None) -> File:
             variables=variables,
             enums=enums,
         )
+    elif kind == SymbolKind.Namespace:
+        symbol_id = x['id']
+        loc = parse_location(x)
+        comment = parse_doc_comment(x)
+        name = x['name']
+        namespaces = []
+        classes = []
+        functions = []
+        variables = []
+        enums = []
+        for symbol in x['children']:
+            kind = SymbolKind(symbol['kind'])
+            if kind == SymbolKind.Namespace:
+                namespaces.append(parse_doc_symbol(symbol, name))
+            elif kind == SymbolKind.Class:
+                classes.append(parse_doc_symbol(symbol, name))
+            elif kind == SymbolKind.Function:
+                functions.append(parse_doc_symbol(symbol, name))
+            elif kind == SymbolKind.Variable:
+                variables.append(parse_doc_symbol(symbol, name))
+            elif kind == SymbolKind.Enum:
+                enums.append(parse_doc_symbol(symbol, name))
+
+        return Namespace(
+            symbol_id=symbol_id,
+            loc=loc,
+            comment=comment,
+            name=name,
+            namespaces=namespaces,
+            classes=classes,
+            functions=functions,
+            variables=variables,
+            enums=enums,
+        )
 
 
 def parse_doc_file(x) -> File:
-    file = File(name=x['name'], enums=[], classes=[], functions=[], variables=[])
+    file = File(
+        name=x['name'], namespaces=[], enums=[], classes=[], functions=[], variables=[]
+    )
     for symbol in x['symbols']:
         kind = SymbolKind(symbol['kind'])
-        if kind == SymbolKind.Variable:
+        if kind == SymbolKind.Namespace:
+            file.namespaces.append(parse_doc_symbol(symbol))
+        elif kind == SymbolKind.Variable:
             file.variables.append(parse_doc_symbol(symbol))
         elif kind == SymbolKind.Enum:
             file.enums.append(parse_doc_symbol(symbol))
@@ -456,7 +499,13 @@ def get_doc_data(script_path: Path) -> list[File]:
     files = []
     for file in data['files']:
         file = parse_doc_file(file)
-        if file.variables or file.functions or file.classes or file.enums:
+        if (
+            file.namespaces
+            or file.variables
+            or file.functions
+            or file.classes
+            or file.enums
+        ):
             files.append(file)
     files.sort(key=lambda x: x.name)
 
@@ -485,6 +534,17 @@ def walk(node, cb, parent=None):
             walk(x, cb, node)
         for x in node.variables:
             walk(x, cb, node)
+    elif isinstance(node, Namespace):
+        for x in node.classes:
+            walk(x, cb, node)
+        for x in node.functions:
+            walk(x, cb, node)
+        for x in node.variables:
+            walk(x, cb, node)
+        for x in node.enums:
+            walk(x, cb, node)
+        for x in node.namespaces:
+            walk(x, cb, node)
     elif isinstance(node, File) or isinstance(node, Scope):
         for x in node.functions:
             walk(x, cb, node)
@@ -493,6 +553,8 @@ def walk(node, cb, parent=None):
         for x in node.classes:
             walk(x, cb, node)
         for x in node.enums:
+            walk(x, cb, node)
+        for x in node.namespaces:
             walk(x, cb, node)
     elif isinstance(node, Enum):
         for x in node.members:
