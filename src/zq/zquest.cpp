@@ -8820,7 +8820,16 @@ void doflags()
 			object_message(dialogs+1, MSG_XCHAR, k);
 			Flags=cFLAGS;
 		}
-		
+
+		// It's possible that a hotkey enabled preview mode.
+		// Cancel until preview mode is done, then go back to doflags (see run_zq_frame).
+		if (prv_mode)
+		{
+			Flags=of;
+			MouseSprite::set(ZQM_NORMAL);
+			return;
+		}
+
 		MouseSprite::set(ZQM_FLAG_0+(shift?0:Flag%16));
 		
 		refresh(rALL | rCLEAR | rNOCURSOR);
@@ -21147,6 +21156,9 @@ void run_zq_frame()
 		load_size_poses();
 		reload_fonts = false;
 	}
+
+	if (placing_flags)
+		doflags();
 
 	handlePreviewMode();
 	domouse();
