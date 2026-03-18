@@ -949,7 +949,7 @@ void combo_default(newcombo& ref, bool typeonly)
 			{
 				case CUTEFF_PLAYER_WALK:
 				{
-					ComboView_CutsceneEffect_PlayerWalk cv{ref.c_attributes};
+					ComboView_CutsceneEffect_PlayerWalk cv{ref};
 					cv.dest_x() = 0;
 					cv.dest_y() = 0;
 					cv.move_speed() = 0;
@@ -958,7 +958,7 @@ void combo_default(newcombo& ref, bool typeonly)
 					break;
 				}
 				case CUTEFF_CAMERA:
-					ComboView_CutsceneEffect_Camera cv{ref.c_attributes};
+					ComboView_CutsceneEffect_Camera cv{ref};
 					cv.idle_time() = 0;
 					cv.interpolation_mode() = 0;
 					cv.speed() = 0;
@@ -4575,7 +4575,7 @@ std::shared_ptr<GUI::Widget> ComboWizardDialog::view()
 			{
 				case CUTEFF_PLAYER_WALK:
 				{
-					ComboView_CutsceneEffect_PlayerWalk cv{local_ref.c_attributes};
+					ComboView_CutsceneEffect_PlayerWalk cv{local_ref};
 					auto rel_flags = cflag1|cflag2;
 					lists[1] = GUI::ListData({
 						{ "Absolute", 0 },
@@ -4630,7 +4630,7 @@ std::shared_ptr<GUI::Widget> ComboWizardDialog::view()
 				}
 				case CUTEFF_CAMERA:
 				{
-					ComboView_CutsceneEffect_Camera cv{local_ref.c_attributes};
+					ComboView_CutsceneEffect_Camera cv{local_ref};
 					int32_t& speed = cv.speed().val;
 					int32_t& idle_time = cv.idle_time().val;
 					int32_t& interpolation_mode = cv.interpolation_mode().val;

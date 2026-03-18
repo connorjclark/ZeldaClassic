@@ -348,7 +348,7 @@ static bool validate_interpolation_mode(CameraEffectInterpolationMode mode)
 static void start_cutscene_camera_effect(const combined_handle_t& handle)
 {
 	auto& cmb = handle.combo();
-	ComboView_CutsceneEffect_Camera cv{cmb.c_attributes};
+	ComboView_CutsceneEffect_Camera cv{cmb};
 
 	zfix speed = cv.speed() / 60;
 	if (speed <= 0)

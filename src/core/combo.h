@@ -192,7 +192,7 @@ struct newcombo
 };
 
 // Define "view" structs to help access combo's c_attributes. Usage:
-//     ComboAttrView_CutsceneEffect_Camera cv{cmb.c_attributes};
+//     ComboView_CutsceneEffect_Camera cv{cmb};
 //     zfix& speed = cv.speed()
 
 // Macro helpers.
@@ -207,12 +207,12 @@ struct newcombo
 	struct ComboView_##ViewName \
 	{ \
 		zfix* attr; \
-		ComboView_##ViewName(zfix* a) : attr(a) \
+		ComboView_##ViewName(newcombo& cmb) : attr(cmb.c_attributes) \
 		{ \
 		} \
-		ComboView_##ViewName(const zfix* a) \
+		ComboView_##ViewName(const newcombo& cmb) \
 		{ \
-			attr = const_cast<zfix*>(a); \
+			attr = const_cast<newcombo&>(cmb).c_attributes; \
 		} \
 		AttrList(MAKE_VIEW_ATTR) \
 	};

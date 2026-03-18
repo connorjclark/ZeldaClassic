@@ -20561,7 +20561,7 @@ void HeroClass::start_auto_walk(const combined_handle_t& target)
 	auto& cmb = target.combo();
 	DCHECK(cmb.type == cCUTSCENEEFFECT && cmb.c_attributes[8].getTrunc() == CUTEFF_PLAYER_WALK);
 
-	ComboView_CutsceneEffect_PlayerWalk cv{cmb.c_attributes};
+	ComboView_CutsceneEffect_PlayerWalk cv{cmb};
 	zfix dx = cv.dest_x();
 	zfix dy = cv.dest_y();
 	if(cmb.usrflags & cflag1)
@@ -20612,7 +20612,7 @@ void HeroClass::autowalk_move()
 		newcombo const& cmb = combobuf[autowalk_combo_id];
 		if(cmb.type == cCUTSCENEEFFECT && cmb.c_attributes[8].getTrunc() == CUTEFF_PLAYER_WALK)
 		{
-			ComboView_CutsceneEffect_PlayerWalk cv{cmb.c_attributes};
+			ComboView_CutsceneEffect_PlayerWalk cv{cmb};
 			pix_dist = cv.move_speed();
 		}
 	}
