@@ -1315,7 +1315,7 @@ static void *read_block(PACKFILE *f, int32_t size, int32_t alloc_size)
 }
 
 // Only use for reading parts of older quests (Header->zelda_version <= 0x192)
-static const byte* legacy_skip_flags;
+const byte* legacy_skip_flags;
 
 /* read_midi:
   *  Reads MIDI data from a datafile (this is not the same thing as the
@@ -19697,68 +19697,6 @@ int32_t readmidis(PACKFILE *f, zquestheader *Header, zctune *tunes /*zcmidi_ *mi
 	}
 	temp.reset();
 	return 0;
-}
-
-int32_t readcheatcodes(PACKFILE *f, zquestheader *Header)
-{
-	bool should_skip = legacy_skip_flags && get_bit(legacy_skip_flags, skip_cheats);
-
-    int32_t dummy;
-    ZCHEATS tempzcheats;
-    char temp_use_cheats=1;
-    memset(&tempzcheats, 0, sizeof(tempzcheats));
-    word s_version = 0;
-    
-    if(Header->zelda_version > 0x192)
-    {
-        //section version info
-        if(!p_igetw(&s_version,f))
-        {
-            return qe_invalid;
-        }
-
-		if (s_version > V_CHEATS)
-			return qe_version;
-        
-	FFCore.quest_format[vCheats] = s_version;
-        if(!p_igetw(&dummy,f))
-        {
-            return qe_invalid;
-        }
-        
-        //section size
-        if(!p_igetl(&dummy,f))
-        {
-            return qe_invalid;
-        }
-        
-        //finally...  section data
-        if(!p_getc(&temp_use_cheats,f))
-        {
-            return qe_invalid;
-        }
-    }
-    
-    if(Header->data_flags[ZQ_CHEATS2])
-    {
-        if(!p_igetl(&tempzcheats.flags,f))
-        {
-            return qe_invalid;
-        }
-        
-        if(!pfread(&tempzcheats.codes, sizeof(tempzcheats.codes),f))
-        {
-            return qe_invalid;
-        }
-    }
-    
-	if (should_skip)
-		return 0;
-
-	memcpy(&zcheats, &tempzcheats, sizeof(tempzcheats));
-	Header->data_flags[ZQ_CHEATS2]=temp_use_cheats;
-    
-    return 0;
 }
 
 int32_t readinitdata_old(PACKFILE *f, zquestheader *Header, word s_version, zinitdata& temp_zinit)
