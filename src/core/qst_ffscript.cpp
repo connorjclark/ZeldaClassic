@@ -11,6 +11,75 @@ extern std::string zScript;
 static std::vector<const script_data*> read_scripts;
 static script_data fake_script_data(ScriptType::None, 0);
 
+// 3.0+ calls this.
+int32_t read_quest_zasm(PACKFILE *f, word s_version)
+{
+	(void)s_version;
+	int32_t num_commands;
+	if(!p_igetl(&num_commands,f))
+		return qe_invalid;
+#ifdef ZC_FUZZ
+	const int32_t command_limit = 300000;
+#else
+	const int32_t command_limit = 25000000;
+#endif
+	if (num_commands < 0 || num_commands > command_limit)
+		return qe_invalid;
+
+	std::vector<ffscript> zasm;
+	zasm.reserve(num_commands);
+	for(int32_t j=0; j<num_commands; j++)
+	{
+		ffscript temp_script;
+		if(!p_igetw(&(temp_script.command),f))
+			return qe_invalid;
+		
+		if(!p_igetl(&(temp_script.arg1),f))
+			return qe_invalid;
+		
+		if(!p_igetl(&(temp_script.arg2),f))
+			return qe_invalid;
+		
+		if(!p_igetl(&(temp_script.arg3),f))
+			return qe_invalid;
+		
+		uint32_t sz = 0;
+		if(!p_igetl(&sz,f))
+			return qe_invalid;
+		if(sz) //string found
+		{
+			temp_script.strptr = new std::string();
+			char dummy;
+			for(size_t q = 0; q < sz; ++q)
+			{
+				if(!p_getc(&dummy,f))
+					return qe_invalid;
+				temp_script.strptr->push_back(dummy);
+			}
+		}
+		if(!p_igetl(&sz,f))
+			return qe_invalid;
+		if(sz) //vector found
+		{
+			temp_script.vecptr = new std::vector<int32_t>();
+			int32_t dummy;
+			for(size_t q = 0; q < sz; ++q)
+			{
+				if(!p_igetl(&dummy,f))
+					return qe_invalid;
+				temp_script.vecptr->push_back(dummy);
+			}
+		}
+		zasm.emplace_back(std::move(temp_script));
+	}
+
+	assert(zasm_scripts.empty());
+	zasm_script_id id = zasm_scripts.size();
+	zasm_scripts.emplace_back(std::make_shared<zasm_script>(id, "@single", std::move(zasm)));
+
+	return 0;
+}
+
 int32_t read_one_zmeta(PACKFILE *f, zasm_meta& temp_meta, word zmeta_version)
 {
 	char b33[34] = { 0 };
