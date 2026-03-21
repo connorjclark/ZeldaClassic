@@ -607,7 +607,6 @@ set(core_sources
 	src/core/qst_doors.cpp
 	src/core/qst_favorites.cpp
 	src/core/qst_ffscript.cpp
-	src/core/qst_graphicspack.cpp
 	src/core/qst_guys.cpp
 	src/core/qst_herosprites.cpp
 	src/core/qst_icons.cpp
@@ -618,13 +617,11 @@ set(core_sources
 	src/core/qst_midis.cpp
 	src/core/qst_misc.cpp
 	src/core/qst_rules.cpp
-	src/core/qst_savegame.cpp
 	src/core/qst_sfx.cpp
 	src/core/qst_strings.cpp
 	src/core/qst_subscreen.cpp
 	src/core/qst_tiles.cpp
 	src/core/qst_weapons.cpp
-	src/core/qst_zinfo.cpp
 	src/core/qst.cpp
 	src/core/weapon_data.cpp
 	src/core/zdefs.cpp
