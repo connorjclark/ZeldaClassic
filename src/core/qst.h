@@ -201,6 +201,7 @@ int32_t readitems(PACKFILE *f, word version, word build);
 int32_t read_single_spritedata(PACKFILE *f, zquestheader *Header, word s_version, word index);
 int32_t readweapons(PACKFILE *f, zquestheader *Header);
 int32_t readguys(PACKFILE *f, zquestheader *Header);
+int32_t readherosprites2(PACKFILE *f, int32_t v_herosprites);
 int32_t readmapscreen(PACKFILE *f, zquestheader *Header, mapscr *temp_mapscr, word version, int scrind = -1, bool keep_music = false);
 int32_t readmaps(PACKFILE *f, zquestheader *Header);
 int32_t readcombos(PACKFILE *f, zquestheader *Header, word version, word build, word start_combo, word max_combos);
@@ -222,6 +223,8 @@ int32_t read_adv_music(PACKFILE *f);
 int32_t readsubscreens(PACKFILE *f);
 int32_t read_old_subscreens(PACKFILE *f, word s_version);
 int32_t read_one_old_subscreen(PACKFILE* f, subscreen_group* g, word s_version);
+
+int32_t read_weap_data(weapon_data& data, PACKFILE* f);
 
 void init_msgstr(MsgStr *str);
 
