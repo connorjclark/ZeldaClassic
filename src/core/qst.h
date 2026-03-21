@@ -164,6 +164,7 @@ bool reset_items(bool validate, zquestheader *Header);
 bool reset_guys();
 bool reset_wpns(bool validate, zquestheader *Header);
 bool init_tiles(bool validate, zquestheader *Header);
+bool init_tiles_for_190(bool validate, zquestheader *Header);
 bool init_colordata(bool validate, zquestheader *Header, miscQdata *Misc);
 bool init_combos(bool validate, zquestheader *Header);
 
@@ -236,7 +237,6 @@ void reset_subscreens();
 int32_t setupsubscreens();
 void setupsfx();
 void reset_itembuf(itemdata *item, int32_t id);
-void reset_itemname(int32_t id);
 void reset_weaponname(int32_t i);
 void init_guys(int32_t guyversion);
 void init_item_drop_sets();
