@@ -4646,9 +4646,8 @@ std::shared_ptr<GUI::Widget> ComboWizardDialog::view()
 						{ "EaseOutBack", (int)CameraEffectInterpolationMode::EaseOutBack }
 					});
 
-					// TODO ! any reason this should be pixels / frame instead?
 					g = Rows<3>(
-						Label(text = "Speed (pixels / sec)", hAlign = 1.0),
+						Label(text = "Speed (px/frame)", hAlign = 1.0),
 						TextField(
 							fitParent = true, minwidth = 8_em,
 							type = GUI::TextField::type::SWAP_ZSINT,

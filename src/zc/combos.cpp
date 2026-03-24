@@ -350,7 +350,7 @@ static void start_cutscene_camera_effect(const combined_handle_t& handle)
 	auto& cmb = handle.combo();
 	ComboView_CutsceneEffect_Camera cv{cmb};
 
-	zfix speed = cv.speed() / 60;
+	zfix speed = cv.speed();
 	if (speed <= 0)
 	{
 		Z_error("Invalid speed, ignoring camera effect. Got: %f\n", speed.getFloat());
