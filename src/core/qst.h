@@ -214,7 +214,7 @@ int32_t readcheatcodes(PACKFILE *f, zquestheader *Header);
 int32_t readinitdata(PACKFILE *f, zquestheader *Header);
 int32_t readffscript(PACKFILE *f, zquestheader *Header);
 int32_t readsfx(PACKFILE *f, zquestheader *Header);
-int32_t readitemdropsets(PACKFILE *f, word version);
+int32_t readitemdropsets(PACKFILE *f, int32_t version);
 int32_t readfavorites(PACKFILE *f, int32_t);
 int32_t read_adv_music(PACKFILE *f);
 

@@ -1,13 +1,53 @@
 #include "base/ints.h"
 #include "core/qrs.h"
 #include "core/qst.h"
+#include "defdata.h"
 #include "zalleg/packfile.h"
 #include "zc/ffscript.h"
 
 extern const byte* legacy_skip_flags;
 extern byte deprecated_rules[QUESTRULES_NEW_SIZE];
 
-int32_t readitemdropsets(PACKFILE *f, word version)
+void init_item_drop_sets()
+{
+    for(int32_t i=0; i<MAXITEMDROPSETS; i++)
+    {
+//    item_drop_sets[i] = default_item_drop_sets[0];
+        memset(&item_drop_sets[i], 0, sizeof(item_drop_object));
+    }
+    
+    for(int32_t i=0; i<isMAX; i++)
+    {
+        item_drop_sets[i] = default_item_drop_sets[i];
+        
+        // Deprecated: qr_NOCLOCKS and qr_ALLOW10RUPEEDROPS
+        for(int32_t j=0; j<10; ++j)
+        {
+            int32_t it = item_drop_sets[i].item[j];
+            
+            if((itemsbuf.get(it).type == itype_rupee && ((itemsbuf.get(it).amount)&0xFFF) == 10)
+                    && !get_bit(deprecated_rules, qr_ALLOW10RUPEEDROPS_DEP))
+            {
+                item_drop_sets[i].chance[j+1]=0;
+            }
+            else if(itemsbuf.get(it).type == itype_clock && get_bit(deprecated_rules, qr_NOCLOCKS_DEP))
+            {
+                item_drop_sets[i].chance[j+1]=0;
+            }
+            
+            // From Sept 2007 to Dec 2008, non-gameplay items were prohibited.
+            if(itemsbuf.get(it).type == itype_misc)
+            {
+                // If a non-gameplay item was selected, then item drop was aborted.
+                // Reflect this by increasing the 'Nothing' chance accordingly.
+                item_drop_sets[i].chance[0]+=item_drop_sets[i].chance[j+1];
+                item_drop_sets[i].chance[j+1]=0;
+            }
+        }
+    }
+}
+
+int32_t readitemdropsets(PACKFILE *f, int32_t version)
 {
 	bool should_skip = legacy_skip_flags && get_bit(legacy_skip_flags, skip_itemdropsets);
 
