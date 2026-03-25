@@ -77,8 +77,6 @@ extern comboclass          *combo_class_buf;
 extern guydata             *guysbuf;
 extern ZCHEATS             zcheats;
 extern char                palnames[MAXLEVELS][17];
-extern char                *byte_conversion(int32_t number, int32_t format);
-extern char                *byte_conversion2(int32_t number1, int32_t number2, int32_t format1, int32_t format2);
 string				             zScript;
 std::map<int32_t, script_slot_data > ffcmap;
 std::map<int32_t, script_slot_data > globalmap;
@@ -131,7 +129,6 @@ char qstdat_string[2048] = { 0 };
 
 zinfo* load_tmp_zi = NULL;
 
-int32_t memDBGwatch[8]= {0,0,0,0,0,0,0,0}; //So I can monitor memory crap
 const byte clavio[9]={97,109,111,110,103,117,115,0};
 
 //enum { qe_OK, qe_notfound, qe_invalid, qe_version, qe_obsolete,
@@ -148,153 +145,6 @@ const char *qst_error[] =
 };
 
 byte deprecated_rules[QUESTRULES_NEW_SIZE];
-
-
-char *byte_conversion(int32_t number, int32_t format)
-{
-    static char num_str[40];
-    
-    if(format==-1)                                            //auto
-    {
-        format=1;                                               //bytes
-        
-        if(number>1024)
-        {
-            format=2;                                             //kilobytes
-        }
-        
-        if(number>1024*1024)
-        {
-            format=3;                                             //megabytes
-        }
-        
-        if(number>1024*1024*1024)
-        {
-            format=4;                                             //gigabytes (dude, what are you doing?)
-        }
-    }
-    
-    switch(format)
-    {
-    case 1:                                                 //bytes
-        sprintf(num_str,"%db",number);
-        break;
-        
-    case 2:                                                 //kilobytes
-        sprintf(num_str,"%.2fk",float(number)/1024);
-        break;
-        
-    case 3:                                                 //megabytes
-        sprintf(num_str,"%.2fM",float(number)/(1024*1024));
-        break;
-        
-    case 4:                                                 //gigabytes
-        sprintf(num_str,"%.2fG",float(number)/(1024*1024*1024));
-        break;
-        
-    default:
-        abort();
-        break;
-    }
-    
-    return num_str;
-}
-
-char *byte_conversion2(int32_t number1, int32_t number2, int32_t format1, int32_t format2)
-{
-    static char num_str1[40];
-    static char num_str2[40];
-    static char num_str[80];
-    
-    if(format1==-1)                                           //auto
-    {
-        format1=1;                                              //bytes
-        
-        if(number1>1024)
-        {
-            format1=2;                                            //kilobytes
-        }
-        
-        if(number1>1024*1024)
-        {
-            format1=3;                                            //megabytes
-        }
-        
-        if(number1>1024*1024*1024)
-        {
-            format1=4;                                            //gigabytes (dude, what are you doing?)
-        }
-    }
-    
-    if(format2==-1)                                           //auto
-    {
-        format2=1;                                              //bytes
-        
-        if(number2>1024)
-        {
-            format2=2;                                            //kilobytes
-        }
-        
-        if(number2>1024*1024)
-        {
-            format2=3;                                            //megabytes
-        }
-        
-        if(number2>1024*1024*1024)
-        {
-            format2=4;                                            //gigabytes (dude, what are you doing?)
-        }
-    }
-    
-    switch(format1)
-    {
-    case 1:                                                 //bytes
-        sprintf(num_str1,"%db",number1);
-        break;
-        
-    case 2:                                                 //kilobytes
-        sprintf(num_str1,"%.2fk",float(number1)/1024);
-        break;
-        
-    case 3:                                                 //megabytes
-        sprintf(num_str1,"%.2fM",float(number1)/(1024*1024));
-        break;
-        
-    case 4:                                                 //gigabytes
-        sprintf(num_str1,"%.2fG",float(number1)/(1024*1024*1024));
-        break;
-        
-    default:
-        abort();
-        break;
-    }
-    
-    switch(format2)
-    {
-    case 1:                                                 //bytes
-        sprintf(num_str2,"%db",number2);
-        break;
-        
-    case 2:                                                 //kilobytes
-        sprintf(num_str2,"%.2fk",float(number2)/1024);
-        break;
-        
-    case 3:                                                 //megabytes
-        sprintf(num_str2,"%.2fM",float(number2)/(1024*1024));
-        break;
-        
-    case 4:                                                 //gigabytes
-        sprintf(num_str2,"%.2fG",float(number2)/(1024*1024*1024));
-        break;
-        
-    default:
-        abort();
-        break;
-    }
-    
-    sprintf(num_str, "%s/%s", num_str1, num_str2);
-    return num_str;
-}
 
 char *ordinal(int32_t num)
 {
@@ -1243,36 +1093,6 @@ void del_qst_buffers()
     if(combo_class_buf) free(combo_class_buf);
 }
 
-bool init_palnames()
-{
-    // if(palnames==NULL)
-        // return false;
-        
-    for(int32_t x=0; x<MAXLEVELS; x++)
-    {
-        switch(x)
-        {
-        case 0:
-            sprintf(palnames[x],"Overworld");
-            break;
-            
-        case 10:
-            sprintf(palnames[x],"Caves");
-            break;
-            
-        case 11:
-            sprintf(palnames[x],"Passageways");
-            break;
-            
-        default:
-            sprintf(palnames[x],"%c",0);
-            break;
-        }
-    }
-    
-    return true;
-}
-
 // Only use for reading parts of older quests (Header->zelda_version <= 0x192)
 const byte* legacy_skip_flags;
 
@@ -1285,17 +1105,6 @@ void clear_combos()
 {
     for(int32_t tmpcounter=0; tmpcounter<MAXCOMBOS; tmpcounter++)
         clear_combo(tmpcounter);
-}
-
-void pack_combos()
-{
-    int32_t di = 0;
-    
-    for(int32_t si=0; si<1024; si+=2)
-        combobuf[di++] = combobuf[si];
-        
-    for(; di<1024; di++)
-        clear_combo(di);
 }
 
 
@@ -1637,64 +1446,6 @@ void reset_itembuf(itemdata *item, int32_t id)
 		item->delay = delay;
 		item->ltm = ltm;
 	}
-}
-
-int32_t read_single_spritedata(PACKFILE *f, zquestheader *Header, word s_version, word index)
-{
-	static sprite_data _nil_sprite;
-	
-	bool should_skip = legacy_skip_flags && get_bit(legacy_skip_flags, skip_weapons);
-	sprite_data& sprite_ref = should_skip ? _nil_sprite : sprite_data_buf[index];
-	string oldname = sprite_ref.name;
-	sprite_ref = sprite_data();
-	
-	byte tempbyte;
-	word tempword;
-	if (s_version >= 9)
-	{
-		if (!p_getcstr(&sprite_ref.name, f))
-			return qe_invalid;
-	}
-	else sprite_ref.name = oldname;
-	
-	if (s_version < 8)
-	{
-		if (!p_igetw(&tempword, f))
-			return qe_invalid;
-		if (s_version < 7)
-			sprite_ref.tile = tempword;
-	}
-
-	if(!p_getc(&sprite_ref.misc,f))
-		return qe_invalid;
-	
-	if(!p_getc(&sprite_ref.csets,f))
-		return qe_invalid;
-	
-	if(!p_getc(&sprite_ref.frames,f))
-		return qe_invalid;
-	
-	if(!p_getc(&sprite_ref.speed,f))
-		return qe_invalid;
-	
-	if(!p_getc(&sprite_ref.type,f))
-		return qe_invalid;
-
-	if ( s_version >= 7 )
-	{
-		if(!p_igetw(&sprite_ref.script,f))
-			return qe_invalid;
-		if(!p_igetl(&sprite_ref.tile,f))
-			return qe_invalid;
-	}
-	
-	if(Header->zelda_version < 0x193)
-		if(!p_getc(&tempbyte,f))
-			return qe_invalid;
-	
-	if(s_version < 6)
-		SETFLAG(sprite_ref.misc, WF_BEHIND, index == ewFIRETRAIL);
-	return 0;
 }
 
 void init_favorites()

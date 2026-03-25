@@ -136,7 +136,6 @@ PACKFILE *open_quest_template(zquestheader *Header, const char *filename, bool v
 
 void clear_combo(int32_t i);
 void clear_combos();
-void pack_combos();
 void fix_maps(mapscr *buf,int32_t cnt);
 
 extern void(*reset_scripts_hook)();
@@ -153,9 +152,6 @@ std::string get_last_loaded_qstpath();
 int32_t loadquest(const char *filename, zquestheader *Header, miscQdata *Misc,
 	zctune *tunes, bool show_progress, byte *skip_flags, byte printmetadata = 1,
 	bool report = true, byte qst_num = 0, dword tileset_flags = 0);
-
-char *byte_conversion(int32_t number, int32_t format);
-char *byte_conversion2(int32_t number1, int32_t number2, int32_t format1, int32_t format2);
 
 bool valid_zqt(PACKFILE *f);
 bool valid_zqt(const char *filename);

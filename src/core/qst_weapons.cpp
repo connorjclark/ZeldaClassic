@@ -16,6 +16,64 @@ void reset_weaponname(int32_t i)
 
 } // end namespace
 
+int32_t read_single_spritedata(PACKFILE *f, zquestheader *Header, word s_version, word index)
+{
+	static sprite_data _nil_sprite;
+	
+	bool should_skip = legacy_skip_flags && get_bit(legacy_skip_flags, skip_weapons);
+	sprite_data& sprite_ref = should_skip ? _nil_sprite : sprite_data_buf[index];
+	string oldname = sprite_ref.name;
+	sprite_ref = sprite_data();
+	
+	byte tempbyte;
+	word tempword;
+	if (s_version >= 9)
+	{
+		if (!p_getcstr(&sprite_ref.name, f))
+			return qe_invalid;
+	}
+	else sprite_ref.name = oldname;
+	
+	if (s_version < 8)
+	{
+		if (!p_igetw(&tempword, f))
+			return qe_invalid;
+		if (s_version < 7)
+			sprite_ref.tile = tempword;
+	}
+
+	if(!p_getc(&sprite_ref.misc,f))
+		return qe_invalid;
+	
+	if(!p_getc(&sprite_ref.csets,f))
+		return qe_invalid;
+	
+	if(!p_getc(&sprite_ref.frames,f))
+		return qe_invalid;
+	
+	if(!p_getc(&sprite_ref.speed,f))
+		return qe_invalid;
+	
+	if(!p_getc(&sprite_ref.type,f))
+		return qe_invalid;
+
+	if ( s_version >= 7 )
+	{
+		if(!p_igetw(&sprite_ref.script,f))
+			return qe_invalid;
+		if(!p_igetl(&sprite_ref.tile,f))
+			return qe_invalid;
+	}
+	
+	if(Header->zelda_version < 0x193)
+		if(!p_getc(&tempbyte,f))
+			return qe_invalid;
+	
+	if(s_version < 6)
+		SETFLAG(sprite_ref.misc, WF_BEHIND, index == ewFIRETRAIL);
+	return 0;
+}
+
 int32_t readweapons(PACKFILE *f, zquestheader *Header)
 {
 	bool should_skip = legacy_skip_flags && get_bit(legacy_skip_flags, skip_weapons);

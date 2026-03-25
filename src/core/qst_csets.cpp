@@ -4,6 +4,40 @@
 
 extern const byte* legacy_skip_flags;
 
+namespace {
+
+bool init_palnames()
+{
+    // if(palnames==NULL)
+        // return false;
+        
+    for(int32_t x=0; x<MAXLEVELS; x++)
+    {
+        switch(x)
+        {
+        case 0:
+            sprintf(palnames[x],"Overworld");
+            break;
+            
+        case 10:
+            sprintf(palnames[x],"Caves");
+            break;
+            
+        case 11:
+            sprintf(palnames[x],"Passageways");
+            break;
+            
+        default:
+            sprintf(palnames[x],"%c",0);
+            break;
+        }
+    }
+    
+    return true;
+}
+
+} // end namespace
+
 int32_t readcolordata(PACKFILE *f, miscQdata *Misc, word version, word build, word start_cset, word max_csets)
 {
 	bool should_skip = legacy_skip_flags && get_bit(legacy_skip_flags, skip_colors);
