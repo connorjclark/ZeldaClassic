@@ -11,7 +11,9 @@ extern const char *old_guy_string[OLDMAXGUYS];
 extern byte deprecated_rules[QUESTRULES_NEW_SIZE];
 extern bool fixpolsvoice;
 
-static void guy_update_firesfx(guydata& tempguy)
+namespace {
+
+void guy_update_firesfx(guydata& tempguy)
 {
 	tempguy.firesfx = 0;
 	if (tempguy.type == eeWIZZ)
@@ -111,7 +113,7 @@ static void guy_update_firesfx(guydata& tempguy)
 	}
 }
 
-static void guy_update_weaponflags(guydata& tempguy)
+void guy_update_weaponflags(guydata& tempguy)
 {
 	tempguy.weap_data.unblockable = 0;
 	tempguy.weap_data.moveflags = move_none;
@@ -153,7 +155,7 @@ static void guy_update_weaponflags(guydata& tempguy)
 	}
 }
 
-static void guy_update_weaponspecialsfx(guydata& tempguy)
+void guy_update_weaponspecialsfx(guydata& tempguy)
 {
 	switch (tempguy.weapon)
 	{
@@ -168,6 +170,254 @@ static void guy_update_weaponspecialsfx(guydata& tempguy)
 		break;
 	}
 }
+
+void update_guy_1(guydata *tempguy) // November 2009
+{
+    bool doesntcount = false;
+    tempguy->flags &= ~guy_weak_arrow; // Formerly 'weak to arrow' which wasn't implemented
+    
+    switch(tempguy->type)
+    {
+    case 1: //eeWALK
+        switch(tempguy->attributes[9])
+        {
+        case 0: //Stalfos
+            if(tempguy->attributes[0]==1)  // Fires four projectiles at once
+                tempguy->attributes[0]=4;
+                
+            break;
+            
+        case 1: //Darknut
+            goto darknuts;
+            break;
+        }
+        
+        tempguy->attributes[9] = 0;
+        break;
+        
+    case 2: //eeSHOOT
+        tempguy->type = eeWALK;
+        
+        switch(tempguy->attributes[9])
+        {
+        case 0: //Octorok
+            if(tempguy->attributes[0]==1||tempguy->attributes[0]==2)
+            {
+                tempguy->attributes[0]=e1tFIREOCTO;
+                tempguy->attributes[1]=e2tFIREOCTO;
+            }
+            else tempguy->attributes[0] = 0;
+            
+            tempguy->attributes[5]=tempguy->attributes[3];
+            tempguy->attributes[3]=tempguy->attributes[2];
+            tempguy->attributes[2]=0;
+            break;
+            
+        case 1: // Moblin
+            tempguy->attributes[0] = 0;
+            break;
+            
+        case 2: //Lynel
+            tempguy->attributes[5]=tempguy->attributes[0]+1;
+            tempguy->attributes[0]=0;
+            break;
+            
+        case 3: //Stalfos 2
+            if(tempguy->attributes[0]==1)  // Fires four projectiles at once
+                tempguy->attributes[0]=e1t4SHOTS;
+            else tempguy->attributes[0] = 0;
+            
+            break;
+            
+        case 4: //Darknut 5
+darknuts:
+            tempguy->defense[edefFIRE] = edIGNORE;
+            tempguy->defense[edefBRANG] = edSTUNORCHINK;
+            tempguy->defense[edefHOOKSHOT] = 0;
+            tempguy->defense[edefARROW] = tempguy->defense[edefBYRNA] = tempguy->defense[edefREFROCK] =
+                                              tempguy->defense[edefMAGIC] = tempguy->defense[edefSTOMP] = edCHINK;
+                                              
+            if(tempguy->attributes[0]==1)
+                tempguy->attributes[0]=2;
+            else if(tempguy->attributes[0]==2)
+            {
+                tempguy->attributes[3]=tempguy->attributes[2];
+                tempguy->attributes[2]=tempguy->attributes[1];
+                tempguy->attributes[1]=e2tSPLIT;
+                tempguy->attributes[0] = 0;
+            }
+            else tempguy->attributes[0] = 0;
+            
+            tempguy->flags |= guy_shield_front;
+            
+            if(!get_bit(deprecated_rules,qr_BRKBLSHLDS_DEP))
+                tempguy->flags &= ~guy_bkshield;
+			else
+				tempguy->flags |= guy_bkshield;
+                
+            break;
+        }
+        
+        tempguy->attributes[9] = 0;
+        break;
+        
+        /*
+        		case 9: //eeARMOS
+        		tempguy->family = eeWALK;
+        		break;
+        */
+    case 11: //eeGEL
+    case 33: //eeGELTRIB
+        if(tempguy->type==33)
+        {
+            tempguy->attributes[3] = 1;
+            
+            if(get_bit(deprecated_rules, qr_OLDTRIBBLES_DEP))  //Old Tribbles
+                tempguy->attributes[2] = tempguy->attributes[1];
+                
+            tempguy->attributes[1] = e2tTRIBBLE;
+        }
+        else
+        {
+            tempguy->attributes[3] = 0;
+            tempguy->attributes[2] = 0;
+            tempguy->attributes[1] = 0;
+        }
+        
+        tempguy->type = eeWALK;
+        
+        if(tempguy->attributes[0])
+        {
+            tempguy->attributes[0]=1;
+            tempguy->weapon = ewFireTrail;
+        }
+        
+        break;
+        
+    case 34: //eeZOLTRIB
+    case 12: //eeZOL
+        tempguy->attributes[3]=tempguy->attributes[2];
+        tempguy->attributes[2]=tempguy->attributes[1];
+        tempguy->type = eeWALK;
+        tempguy->attributes[1]=e2tSPLITHIT;
+        
+        if(tempguy->attributes[0])
+        {
+            tempguy->attributes[0]=1;
+            tempguy->weapon = ewFireTrail;
+        }
+        
+        break;
+        
+    case 13: //eeROPE
+        tempguy->type = eeWALK;
+        tempguy->attributes[8] = e9tROPE;
+        
+        if(tempguy->attributes[0])
+        {
+            tempguy->attributes[3] = tempguy->attributes[2];
+            tempguy->attributes[2] = tempguy->attributes[1];
+            tempguy->attributes[1] = e2tBOMBCHU;
+        }
+        
+        tempguy->attributes[0] = 0;
+        break;
+        
+    case 14: //eeGORIYA
+        tempguy->type = eeWALK;
+        
+        if(tempguy->attributes[0]!=2) tempguy->attributes[0] = 0;
+        
+        break;
+        
+    case 17: //eeBUBBLE
+        tempguy->type = eeWALK;
+        tempguy->attributes[7] = tempguy->attributes[1];
+        tempguy->attributes[6] = tempguy->attributes[0] + 1;
+        tempguy->attributes[0] = tempguy->attributes[1] = 0;
+        
+        //fallthrogh
+    case eeTRAP:
+    case eeROCK:
+        doesntcount = true;
+        break;
+        
+    case 35: //eeVIRETRIB
+    case 18: //eeVIRE
+        tempguy->type = eeWALK;
+        tempguy->attributes[3]=tempguy->attributes[2];
+        tempguy->attributes[2]=tempguy->attributes[1];
+        tempguy->attributes[1]=e2tSPLITHIT;
+        tempguy->attributes[8]=e9tVIRE;
+        break;
+        
+    case 19: //eeLIKE
+        tempguy->type = eeWALK;
+        tempguy->attributes[6] = e7tEATITEMS;
+        tempguy->attributes[7]=95;
+        break;
+        
+    case 20: //eePOLSV
+        tempguy->defense[edefBRANG] = edSTUNORCHINK;
+        tempguy->defense[edefBOMB] = tempguy->defense[edefSBOMB] = tempguy->defense[edefFIRE] = edIGNORE;
+        tempguy->defense[edefMAGIC] = tempguy->defense[edefBYRNA] = edCHINK;
+        tempguy->defense[edefARROW] = ed1HKO;
+        tempguy->defense[edefHOOKSHOT] = edSTUNONLY;
+        tempguy->type = eeWALK;
+        tempguy->attributes[8] = e9tPOLSVOICE;
+        tempguy->rate = 4;
+        tempguy->homing = 32;
+        tempguy->hrate = 10;
+        tempguy->grumble = 0;
+        break;
+        
+    case eeWIZZ:
+        if(tempguy->attributes[3])
+        {
+            for(int32_t i=0; i < edefLAST; i++)
+                tempguy->defense[i] = (i != edefREFBEAM && i != edefREFMAGIC && i != edefQUAKE) ? edIGNORE : 0;
+        }
+        else
+        {
+            tempguy->defense[edefBRANG] = edSTUNORCHINK;
+            tempguy->defense[edefMAGIC] = edCHINK;
+            tempguy->defense[edefHOOKSHOT] = edSTUNONLY;
+            tempguy->defense[edefARROW] = tempguy->defense[edefFIRE] =
+                                              tempguy->defense[edefWAND] = tempguy->defense[edefBYRNA] = edIGNORE;
+        }
+        
+        break;
+        
+    case eePEAHAT:
+        tempguy->flags &= ~(guy_superman|guy_sbombonly);
+        
+        if(!(tempguy->flags & guy_bhit))
+            tempguy->defense[edefBRANG] = edSTUNONLY;
+            
+        break;
+        
+    case eeLEV:
+        tempguy->defense[edefSTOMP] = edCHINK;
+        break;
+    }
+    
+    // Old flags
+    if(tempguy->flags & guy_superman)
+    {
+        for(int32_t i = 0; i < edefLAST; i++)
+            if(!(i==edefSBOMB && (tempguy->flags & guy_sbombonly)))
+                tempguy->defense[i] = (i==edefBRANG && tempguy->defense[i] != edIGNORE
+                                       && tempguy->type != eeROCK && tempguy->type != eeTRAP
+                                       && tempguy->type != eePROJECTILE) ? edSTUNORIGNORE : edIGNORE;
+    }
+    
+    tempguy->flags &= ~(guy_superman|guy_sbombonly);
+    
+    if(doesntcount)
+        tempguy->flags |= (guy_doesnt_count);
+}
+
+} // end namespace
 
 void init_guys(int32_t guyversion)
 {
@@ -1902,250 +2152,4 @@ int32_t readguys(PACKFILE *f, zquestheader *Header)
     }
     
     return 0;
-}
-
-void update_guy_1(guydata *tempguy) // November 2009
-{
-    bool doesntcount = false;
-    tempguy->flags &= ~guy_weak_arrow; // Formerly 'weak to arrow' which wasn't implemented
-    
-    switch(tempguy->type)
-    {
-    case 1: //eeWALK
-        switch(tempguy->attributes[9])
-        {
-        case 0: //Stalfos
-            if(tempguy->attributes[0]==1)  // Fires four projectiles at once
-                tempguy->attributes[0]=4;
-                
-            break;
-            
-        case 1: //Darknut
-            goto darknuts;
-            break;
-        }
-        
-        tempguy->attributes[9] = 0;
-        break;
-        
-    case 2: //eeSHOOT
-        tempguy->type = eeWALK;
-        
-        switch(tempguy->attributes[9])
-        {
-        case 0: //Octorok
-            if(tempguy->attributes[0]==1||tempguy->attributes[0]==2)
-            {
-                tempguy->attributes[0]=e1tFIREOCTO;
-                tempguy->attributes[1]=e2tFIREOCTO;
-            }
-            else tempguy->attributes[0] = 0;
-            
-            tempguy->attributes[5]=tempguy->attributes[3];
-            tempguy->attributes[3]=tempguy->attributes[2];
-            tempguy->attributes[2]=0;
-            break;
-            
-        case 1: // Moblin
-            tempguy->attributes[0] = 0;
-            break;
-            
-        case 2: //Lynel
-            tempguy->attributes[5]=tempguy->attributes[0]+1;
-            tempguy->attributes[0]=0;
-            break;
-            
-        case 3: //Stalfos 2
-            if(tempguy->attributes[0]==1)  // Fires four projectiles at once
-                tempguy->attributes[0]=e1t4SHOTS;
-            else tempguy->attributes[0] = 0;
-            
-            break;
-            
-        case 4: //Darknut 5
-darknuts:
-            tempguy->defense[edefFIRE] = edIGNORE;
-            tempguy->defense[edefBRANG] = edSTUNORCHINK;
-            tempguy->defense[edefHOOKSHOT] = 0;
-            tempguy->defense[edefARROW] = tempguy->defense[edefBYRNA] = tempguy->defense[edefREFROCK] =
-                                              tempguy->defense[edefMAGIC] = tempguy->defense[edefSTOMP] = edCHINK;
-                                              
-            if(tempguy->attributes[0]==1)
-                tempguy->attributes[0]=2;
-            else if(tempguy->attributes[0]==2)
-            {
-                tempguy->attributes[3]=tempguy->attributes[2];
-                tempguy->attributes[2]=tempguy->attributes[1];
-                tempguy->attributes[1]=e2tSPLIT;
-                tempguy->attributes[0] = 0;
-            }
-            else tempguy->attributes[0] = 0;
-            
-            tempguy->flags |= guy_shield_front;
-            
-            if(!get_bit(deprecated_rules,qr_BRKBLSHLDS_DEP))
-                tempguy->flags &= ~guy_bkshield;
-			else
-				tempguy->flags |= guy_bkshield;
-                
-            break;
-        }
-        
-        tempguy->attributes[9] = 0;
-        break;
-        
-        /*
-        		case 9: //eeARMOS
-        		tempguy->family = eeWALK;
-        		break;
-        */
-    case 11: //eeGEL
-    case 33: //eeGELTRIB
-        if(tempguy->type==33)
-        {
-            tempguy->attributes[3] = 1;
-            
-            if(get_bit(deprecated_rules, qr_OLDTRIBBLES_DEP))  //Old Tribbles
-                tempguy->attributes[2] = tempguy->attributes[1];
-                
-            tempguy->attributes[1] = e2tTRIBBLE;
-        }
-        else
-        {
-            tempguy->attributes[3] = 0;
-            tempguy->attributes[2] = 0;
-            tempguy->attributes[1] = 0;
-        }
-        
-        tempguy->type = eeWALK;
-        
-        if(tempguy->attributes[0])
-        {
-            tempguy->attributes[0]=1;
-            tempguy->weapon = ewFireTrail;
-        }
-        
-        break;
-        
-    case 34: //eeZOLTRIB
-    case 12: //eeZOL
-        tempguy->attributes[3]=tempguy->attributes[2];
-        tempguy->attributes[2]=tempguy->attributes[1];
-        tempguy->type = eeWALK;
-        tempguy->attributes[1]=e2tSPLITHIT;
-        
-        if(tempguy->attributes[0])
-        {
-            tempguy->attributes[0]=1;
-            tempguy->weapon = ewFireTrail;
-        }
-        
-        break;
-        
-    case 13: //eeROPE
-        tempguy->type = eeWALK;
-        tempguy->attributes[8] = e9tROPE;
-        
-        if(tempguy->attributes[0])
-        {
-            tempguy->attributes[3] = tempguy->attributes[2];
-            tempguy->attributes[2] = tempguy->attributes[1];
-            tempguy->attributes[1] = e2tBOMBCHU;
-        }
-        
-        tempguy->attributes[0] = 0;
-        break;
-        
-    case 14: //eeGORIYA
-        tempguy->type = eeWALK;
-        
-        if(tempguy->attributes[0]!=2) tempguy->attributes[0] = 0;
-        
-        break;
-        
-    case 17: //eeBUBBLE
-        tempguy->type = eeWALK;
-        tempguy->attributes[7] = tempguy->attributes[1];
-        tempguy->attributes[6] = tempguy->attributes[0] + 1;
-        tempguy->attributes[0] = tempguy->attributes[1] = 0;
-        
-        //fallthrogh
-    case eeTRAP:
-    case eeROCK:
-        doesntcount = true;
-        break;
-        
-    case 35: //eeVIRETRIB
-    case 18: //eeVIRE
-        tempguy->type = eeWALK;
-        tempguy->attributes[3]=tempguy->attributes[2];
-        tempguy->attributes[2]=tempguy->attributes[1];
-        tempguy->attributes[1]=e2tSPLITHIT;
-        tempguy->attributes[8]=e9tVIRE;
-        break;
-        
-    case 19: //eeLIKE
-        tempguy->type = eeWALK;
-        tempguy->attributes[6] = e7tEATITEMS;
-        tempguy->attributes[7]=95;
-        break;
-        
-    case 20: //eePOLSV
-        tempguy->defense[edefBRANG] = edSTUNORCHINK;
-        tempguy->defense[edefBOMB] = tempguy->defense[edefSBOMB] = tempguy->defense[edefFIRE] = edIGNORE;
-        tempguy->defense[edefMAGIC] = tempguy->defense[edefBYRNA] = edCHINK;
-        tempguy->defense[edefARROW] = ed1HKO;
-        tempguy->defense[edefHOOKSHOT] = edSTUNONLY;
-        tempguy->type = eeWALK;
-        tempguy->attributes[8] = e9tPOLSVOICE;
-        tempguy->rate = 4;
-        tempguy->homing = 32;
-        tempguy->hrate = 10;
-        tempguy->grumble = 0;
-        break;
-        
-    case eeWIZZ:
-        if(tempguy->attributes[3])
-        {
-            for(int32_t i=0; i < edefLAST; i++)
-                tempguy->defense[i] = (i != edefREFBEAM && i != edefREFMAGIC && i != edefQUAKE) ? edIGNORE : 0;
-        }
-        else
-        {
-            tempguy->defense[edefBRANG] = edSTUNORCHINK;
-            tempguy->defense[edefMAGIC] = edCHINK;
-            tempguy->defense[edefHOOKSHOT] = edSTUNONLY;
-            tempguy->defense[edefARROW] = tempguy->defense[edefFIRE] =
-                                              tempguy->defense[edefWAND] = tempguy->defense[edefBYRNA] = edIGNORE;
-        }
-        
-        break;
-        
-    case eePEAHAT:
-        tempguy->flags &= ~(guy_superman|guy_sbombonly);
-        
-        if(!(tempguy->flags & guy_bhit))
-            tempguy->defense[edefBRANG] = edSTUNONLY;
-            
-        break;
-        
-    case eeLEV:
-        tempguy->defense[edefSTOMP] = edCHINK;
-        break;
-    }
-    
-    // Old flags
-    if(tempguy->flags & guy_superman)
-    {
-        for(int32_t i = 0; i < edefLAST; i++)
-            if(!(i==edefSBOMB && (tempguy->flags & guy_sbombonly)))
-                tempguy->defense[i] = (i==edefBRANG && tempguy->defense[i] != edIGNORE
-                                       && tempguy->type != eeROCK && tempguy->type != eeTRAP
-                                       && tempguy->type != eePROJECTILE) ? edSTUNORIGNORE : edIGNORE;
-    }
-    
-    tempguy->flags &= ~(guy_superman|guy_sbombonly);
-    
-    if(doesntcount)
-        tempguy->flags |= (guy_doesnt_count);
 }

@@ -9,6 +9,8 @@ extern byte subscr_mode;
 extern byte deprecated_rules[QUESTRULES_NEW_SIZE];
 extern bool fixpolsvoice;
 
+namespace {
+
 static int32_t readinitdata_old(PACKFILE *f, zquestheader *Header, word s_version, zinitdata& temp_zinit)
 {
 	bool should_skip = legacy_skip_flags && get_bit(legacy_skip_flags, skip_initdata);
@@ -1390,6 +1392,8 @@ static int32_t readinitdata_old(PACKFILE *f, zquestheader *Header, word s_versio
 	
 	return 0;
 }
+
+} // end namespace
 
 int32_t readinitdata(PACKFILE *f, zquestheader *Header)
 {

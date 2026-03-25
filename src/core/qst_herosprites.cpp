@@ -4,11 +4,13 @@
 
 extern const byte* legacy_skip_flags;
 
+namespace {
+
 void setSprite(int32_t* arr, int32_t tile, int32_t flip, int32_t ext)
 {
-    arr[spr_tile] = tile;
-    arr[spr_flip] = (flip > 3 ? 0 : flip);
-    arr[spr_extend] = (ext > 2 ? 0 : ext);
+	arr[spr_tile] = tile;
+	arr[spr_flip] = (flip > 3 ? 0 : flip);
+	arr[spr_extend] = (ext > 2 ? 0 : ext);
 }
 
 //Used to read the player sprites as int32_t, not word.
@@ -886,6 +888,8 @@ int32_t readherosprites3(PACKFILE *f, int32_t v_herosprites)
 	}
 	return 0;
 }
+
+} // end namespace
 
 int32_t readherosprites2(PACKFILE *f, int32_t v_herosprites)
 {

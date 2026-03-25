@@ -5,7 +5,9 @@
 extern const byte* legacy_skip_flags;
 extern bitstring midi_bitstr;
 
-static void *read_block(PACKFILE *f, int32_t size, int32_t alloc_size)
+namespace {
+
+void *read_block(PACKFILE *f, int32_t size, int32_t alloc_size)
 {
     void *p;
     
@@ -35,7 +37,7 @@ static void *read_block(PACKFILE *f, int32_t size, int32_t alloc_size)
   *  Reads MIDI data from a datafile (this is not the same thing as the
   *  standard midi file format).
   */
-static MIDI *read_midi(PACKFILE *f)
+MIDI *read_midi(PACKFILE *f)
 {
     MIDI *m;
     int32_t c;
@@ -84,6 +86,8 @@ static MIDI *read_midi(PACKFILE *f)
     
     return m;
 }
+
+} // end namespace
 
 int32_t readmidis(PACKFILE *f, zquestheader *Header, zctune *tunes /*zcmidi_ *midis*/)
 {

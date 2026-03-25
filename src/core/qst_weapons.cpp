@@ -5,12 +5,16 @@
 extern const byte* legacy_skip_flags;
 extern const char *old_weapon_string[wLast];
 
+namespace {
+
 void reset_weaponname(int32_t i)
 {
 	sprite_data_buf[i].name = i < wLast
 		? old_weapon_string[i]
 		: fmt::format("zz{:03}", i);
 }
+
+} // end namespace
 
 int32_t readweapons(PACKFILE *f, zquestheader *Header)
 {

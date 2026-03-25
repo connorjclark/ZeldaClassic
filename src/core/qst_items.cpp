@@ -8,7 +8,9 @@ extern dword loading_tileset_flags;
 extern const char *old_item_string[iLast];
 extern byte deprecated_rules[QUESTRULES_NEW_SIZE];
 
-static void reset_itemname(int32_t id)
+namespace {
+
+void reset_itemname(int32_t id)
 {
 	if(id < iLast)
 		itemsbuf[id].name = old_item_string[id];
@@ -16,7 +18,7 @@ static void reset_itemname(int32_t id)
 		itemsbuf[id].name = fmt::format("zz{:03}", id);
 }
 
-static int32_t read_single_item_old(PACKFILE *f, word s_version, word index, word version, word build)
+int32_t read_single_item_old(PACKFILE *f, word s_version, word index, word version, word build)
 {
     byte padding, tempbyte;
     int32_t dummy;
@@ -815,7 +817,7 @@ static int32_t read_single_item_old(PACKFILE *f, word s_version, word index, wor
 	return 0;
 }
 
-static int32_t read_items_old(PACKFILE *f, word s_version, word version, word build)
+int32_t read_items_old(PACKFILE *f, word s_version, word version, word build)
 {
 	bool should_skip = legacy_skip_flags && get_bit(legacy_skip_flags, skip_items);
 
@@ -885,6 +887,8 @@ static int32_t read_items_old(PACKFILE *f, word s_version, word version, word bu
 	
 	return 0;
 }
+
+} // end namespace
 
 void update_old_item(word s_version, word index, word version)
 {

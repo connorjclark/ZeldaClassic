@@ -10,6 +10,8 @@ extern const byte* legacy_skip_flags;
 extern dword loading_tileset_flags;
 extern zinfo* load_tmp_zi;
 
+namespace {
+
 void update_combo(newcombo& cmb, word section_version)
 {
 	if(section_version < 40)
@@ -872,6 +874,8 @@ int32_t readcombo_triggers_loop(PACKFILE* f, word s_version, combo_trigger& temp
 	}
 	return 0;
 }
+
+} // end namespace
 
 int32_t readcombo_loop(PACKFILE* f, word s_version, newcombo& temp_combo)
 {

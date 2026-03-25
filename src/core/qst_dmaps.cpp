@@ -601,6 +601,7 @@ int32_t read_one_dmap(PACKFILE* f, zquestheader *Header, int s_version, int inde
 	}
 	return 0;
 }
+
 int32_t readdmaps(PACKFILE *f, zquestheader *Header, word, word, word start_dmap, word max_dmaps)
 {
 	bool should_skip = legacy_skip_flags && get_bit(legacy_skip_flags, skip_dmaps);

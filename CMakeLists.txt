@@ -608,6 +608,7 @@ set(core_sources
 	src/core/qst_favorites.cpp
 	src/core/qst_ffscript.cpp
 	src/core/qst_guys.cpp
+	src/core/qst_header.cpp
 	src/core/qst_herosprites.cpp
 	src/core/qst_icons.cpp
 	src/core/qst_initdata.cpp

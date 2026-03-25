@@ -8,8 +8,10 @@ extern const byte* legacy_skip_flags;
 extern void setZScriptVersion(int32_t s_version);
 extern std::string zScript;
 
-static std::vector<const script_data*> read_scripts;
-static script_data fake_script_data(ScriptType::None, 0);
+namespace {
+
+std::vector<const script_data*> read_scripts;
+script_data fake_script_data(ScriptType::None, 0);
 
 // 3.0+ calls this.
 int32_t read_quest_zasm(PACKFILE *f, word s_version)
@@ -235,50 +237,6 @@ int32_t read_one_zmeta(PACKFILE *f, zasm_meta& temp_meta, word zmeta_version)
 	return 0;
 }
 
-// TODO: remove unused parameter.
-int32_t read_one_ffscript(PACKFILE *f, zquestheader *, [[maybe_unused]] int32_t script_index, word s_version, script_data *script, word zmeta_version)
-{
-	ASSERT(script);
-	if(s_version < 27)
-		return read_old_ffscript(f, s_version, script, zmeta_version);
-
-	char exists;
-	if (!p_getc(&exists, f))
-		return qe_invalid;
-	if (!exists)
-	{
-		script->disable();
-		return 0;
-	}
-
-	//Read meta
-	{
-		zasm_meta temp_meta;
-		if (auto ret = read_one_zmeta(f, temp_meta, zmeta_version))
-			return ret;
-		script->meta = temp_meta;
-	}
-	if(!p_igetl(&script->pc, f))
-		return qe_invalid;
-	if(!p_igetl(&script->end_pc, f))
-		return qe_invalid;
-
-	if (script == &fake_script_data)
-		return 0;
-
-	assert(zasm_scripts.size() == 1);
-	auto& zs = zasm_scripts[0];
-	script->zasm_script = zs;
-
-	if (script->valid())
-	{
-		zs->script_datas.push_back(script);
-		read_scripts.push_back(script);
-	}
-
-	return 0;
-}
-
 int32_t read_old_ffscript(PACKFILE *f, word s_version, script_data *script, word zmeta_version)
 {
 	int32_t num_commands=1000;
@@ -403,6 +361,52 @@ int32_t read_old_ffscript(PACKFILE *f, word s_version, script_data *script, word
 
 	return 0;
 }
+
+// TODO: remove unused parameter.
+int32_t read_one_ffscript(PACKFILE *f, zquestheader *, [[maybe_unused]] int32_t script_index, word s_version, script_data *script, word zmeta_version)
+{
+	ASSERT(script);
+	if(s_version < 27)
+		return read_old_ffscript(f, s_version, script, zmeta_version);
+
+	char exists;
+	if (!p_getc(&exists, f))
+		return qe_invalid;
+	if (!exists)
+	{
+		script->disable();
+		return 0;
+	}
+
+	//Read meta
+	{
+		zasm_meta temp_meta;
+		if (auto ret = read_one_zmeta(f, temp_meta, zmeta_version))
+			return ret;
+		script->meta = temp_meta;
+	}
+	if(!p_igetl(&script->pc, f))
+		return qe_invalid;
+	if(!p_igetl(&script->end_pc, f))
+		return qe_invalid;
+
+	if (script == &fake_script_data)
+		return 0;
+
+	assert(zasm_scripts.size() == 1);
+	auto& zs = zasm_scripts[0];
+	script->zasm_script = zs;
+
+	if (script->valid())
+	{
+		zs->script_datas.push_back(script);
+		read_scripts.push_back(script);
+	}
+
+	return 0;
+}
+
+} // end namespace
 
 int32_t readffscript(PACKFILE *f, zquestheader *Header)
 {

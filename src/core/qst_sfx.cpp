@@ -22,17 +22,7 @@ const char *old_sfx_string[Z35] =
     "Sword tapping (secret)", "Whistle whirlwind", "Cane of Byrna orbit"
 };
 
-void setupsfx()
-{
-	quest_sounds.clear();
-	quest_sounds.reserve(Z35-1);
-    for(size_t q = 1; q < Z35; ++q)
-    {
-		SAMPLE *temp_sample = (SAMPLE *)sfxdata[q].dat;
-		auto& sound = quest_sounds.emplace_back(*temp_sample);
-		sound.sfx_name = old_sfx_string[q-1];
-    }
-}
+namespace {
 
 int32_t readsfx_old(PACKFILE *f, word s_version)
 {
@@ -258,6 +248,21 @@ int32_t readsfx_old(PACKFILE *f, word s_version)
 	sfxdat = 0;
 	return 0;
 }
+
+} // end namespace
+
+void setupsfx()
+{
+	quest_sounds.clear();
+	quest_sounds.reserve(Z35-1);
+    for(size_t q = 1; q < Z35; ++q)
+    {
+		SAMPLE *temp_sample = (SAMPLE *)sfxdata[q].dat;
+		auto& sound = quest_sounds.emplace_back(*temp_sample);
+		sound.sfx_name = old_sfx_string[q-1];
+    }
+}
+
 int32_t readsfx(PACKFILE *f, zquestheader *)
 {
 	int32_t dummy;

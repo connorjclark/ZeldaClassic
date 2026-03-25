@@ -8,6 +8,8 @@ extern dword loading_tileset_flags;
 extern bool fixffcs;
 extern std::vector<byte> old_combo_pages;
 
+namespace {
+
 int32_t doortranslations_u[9][4]=
 {
     {37,38,53,54},
@@ -97,7 +99,7 @@ int32_t tcmbflag2(int32_t map, int32_t pos)
     return TheMaps[map*MAPSCRS+TEMPLATE2].sflag[pos];
 }
 
-static int32_t MakeDoors(int32_t map, int32_t scr)
+int32_t MakeDoors(int32_t map, int32_t scr)
 {
     if(!(TheMaps[map*MAPSCRS+scr].valid&mVALID))
     {
@@ -1633,6 +1635,10 @@ int32_t readmapscreen_old(PACKFILE *f, zquestheader *Header, mapscr *temp_mapscr
 	
 	return 0;
 }
+
+} // end namespace
+
+
 int32_t readmapscreen(PACKFILE *f, zquestheader *Header, mapscr *temp_mapscr, word version, int scrind, bool keep_music)
 {
 	if(version < 23)

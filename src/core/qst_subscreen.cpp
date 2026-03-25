@@ -5,6 +5,8 @@
 
 extern byte deprecated_rules[QUESTRULES_NEW_SIZE];
 
+namespace {
+
 enum { ssiBOMB, ssiSWORD, ssiSHIELD, ssiCANDLE, ssiLETTER, ssiPOTION, ssiLETTERPOTION, ssiBOW, ssiARROW, ssiBOWANDARROW, ssiBAIT, ssiRING, ssiBRACELET, ssiMAP,
        ssiCOMPASS, ssiBOSSKEY, ssiMAGICKEY, ssiBRANG, ssiWAND, ssiRAFT, ssiLADDER, ssiWHISTLE, ssiBOOK, ssiWALLET, ssiSBOMB, ssiHCPIECE, ssiAMULET, ssiFLIPPERS,
        ssiHOOKSHOT, ssiLENS, ssiHAMMER, ssiBOOTS, ssiDIVINEFIRE, ssiDIVINEESCAPE, ssiDIVINEPROTECTION, ssiQUIVER, ssiBOMBBAG, ssiCBYRNA, ssiROCS, ssiHOVERBOOTS,
@@ -33,6 +35,8 @@ int32_t read_old_subscreens(PACKFILE *f, word s_version)
 	
 	return 0;
 }
+
+} // end namespace
 
 int32_t read_one_old_subscreen(PACKFILE *f, subscreen_group* g, word s_version)
 {
@@ -620,24 +624,4 @@ int32_t readsubscreens(PACKFILE *f)
 		}
 	}
 	return 0;
-}
-
-void reset_subscreen(subscreen_group *tempss)
-{
-    for(int32_t i=0; i<OLD_MAXSUBSCREENITEMS; ++i)
-    {
-        switch(tempss->objects[i].type)
-        {
-        case ssoTEXT:
-        case ssoTEXTBOX:
-        case ssoCURRENTITEMTEXT:
-        case ssoCURRENTITEMCLASSTEXT:
-            if(tempss->objects[i].dp1 != NULL) delete [](char *)tempss->objects[i].dp1;
-            
-            //fall through
-        default:
-            memset(&tempss->objects[i],0,sizeof(subscreen_object));
-            break;
-        }
-    }
 }
