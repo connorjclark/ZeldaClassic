@@ -1,319 +1,232 @@
+#include "core/misctypes.h"
 #include "core/qst.h"
 #include "zalleg/packfile.h"
 #include "zc/ffscript.h"
 
 extern const byte* legacy_skip_flags;
 
-int32_t readcolordata(PACKFILE *f, miscQdata *Misc, word version, word build, word start_cset, word max_csets)
+int32_t readmisccolors(PACKFILE *f, zquestheader *Header, miscQdata *Misc)
 {
-	bool should_skip = legacy_skip_flags && get_bit(legacy_skip_flags, skip_colors);
-
 	//these are here to bypass compiler warnings about unused arguments
-	//THE *48 REFERS TO EACH CSET BEING 16 COLORS with 3 VALUES OF RGB (3*16 is 48)
-	//Capitalized cause it'll save you a headache. -Deedee
-	start_cset=start_cset;
-	max_csets=max_csets;
-	word s_version=0;
+	Header=Header;
 	
 	miscQdata temp_misc;
+	word s_version=0;
+	int32_t tempsize=0;
+	word dummyw;
+	
 	temp_misc = *Misc;
 	
-	byte temp_colordata[48];
-	char temp_palname[PALNAMESIZE+1];
-	
-	int32_t dummy;
-	word palcycles;
-	
-	if(version > 0x192)
+	//section version info
+	if(!p_igetw(&s_version,f))
 	{
-		//section version info
-		if(!p_igetw(&s_version,f))
-		{
-			return qe_invalid;
-		}
-
-		if (s_version > V_CSETS)
-			return qe_version;
-	
-		FFCore.quest_format[vCSets] = s_version;
-		
-		if(!p_igetw(&dummy,f))
-		{
-			return qe_invalid;
-		}
-		
-		//section size
-		if(!p_igetl(&dummy,f))
-		{
-			return qe_invalid;
-		}
+		return qe_invalid;
 	}
-	if (s_version < 5)
+
+	if (s_version > V_COLORS)
+		return qe_version;
+	
+	FFCore.quest_format[vColours] = s_version;
+	
+	al_trace("Misc Colours section version: %d\n", s_version);
+	
+	if(!read_deprecated_section_cversion(f))
 	{
-		bool RealOldVerion = ((version < 0x192)||((version == 0x192)&&(build<73)));
+		return qe_invalid;
+	}
+	
+	
+	//section size
+	if(!p_igetl(&tempsize,f))
+	{
+		return qe_invalid;
+	}
+	
+	//finally...  section data
+	readsize=0;
+	
+	if(!p_getc(&temp_misc.colors.text,f))
+	{
+		return qe_invalid;
+	}
+	
+	if(!p_getc(&temp_misc.colors.caption,f))
+	{
+		return qe_invalid;
+	}
+	
+	if(!p_getc(&temp_misc.colors.overw_bg,f))
+	{
+		return qe_invalid;
+	}
+	
+	if(!p_getc(&temp_misc.colors.dngn_bg,f))
+	{
+		return qe_invalid;
+	}
+	
+	if(!p_getc(&temp_misc.colors.dngn_fg,f))
+	{
+		return qe_invalid;
+	}
+	
+	if(!p_getc(&temp_misc.colors.cave_fg,f))
+	{
+		return qe_invalid;
+	}
+	
+	if(!p_getc(&temp_misc.colors.bs_dk,f))
+	{
+		return qe_invalid;
+	}
+	
+	if(!p_getc(&temp_misc.colors.bs_goal,f))
+	{
+		return qe_invalid;
+	}
+	
+	if(!p_getc(&temp_misc.colors.compass_lt,f))
+	{
+		return qe_invalid;
+	}
+	
+	if(!p_getc(&temp_misc.colors.compass_dk,f))
+	{
+		return qe_invalid;
+	}
+	
+	if(!p_getc(&temp_misc.colors.subscr_bg,f))
+	{
+		return qe_invalid;
+	}
+	
+	if(!p_getc(&temp_misc.colors.triframe_color,f))
+	{
+		return qe_invalid;
+	}
+	
+	if(!p_getc(&temp_misc.colors.hero_dot,f))
+	{
+		return qe_invalid;
+	}
+	
+	if(!p_getc(&temp_misc.colors.bmap_bg,f))
+	{
+		return qe_invalid;
+	}
+	
+	if(!p_getc(&temp_misc.colors.bmap_fg,f))
+	{
+		return qe_invalid;
+	}
+	
+	if(!p_getc(&temp_misc.colors.triforce_cset,f))
+	{
+		return qe_invalid;
+	}
+	
+	if(!p_getc(&temp_misc.colors.triframe_cset,f))
+	{
+		return qe_invalid;
+	}
+	
+	if(!p_getc(&temp_misc.colors.overworld_map_cset,f))
+	{
+		return qe_invalid;
+	}
+	
+	if(!p_getc(&temp_misc.colors.dungeon_map_cset,f))
+	{
+		return qe_invalid;
+	}
+	
+	if(!p_getc(&temp_misc.colors.blueframe_cset,f))
+	{
+		return qe_invalid;
+	}
+	if(s_version < 4)
+	{
+		if(!p_igetw(&dummyw,f))
+			return qe_invalid;
+		temp_misc.colors.triforce_tile = dummyw;
 		
-		//finally...  section data
-		int32_t q = 0;
-		int32_t p = -15;
-		for(int32_t i=0; i<oldpdTOTAL; ++i)
-		{
-			memset(temp_colordata, 0, 48);
-			
-			if(!pfread(temp_colordata,48,f))
-			{
-				return qe_invalid;
-			}
-
-			if (should_skip)
-				continue;
-
-			memcpy(&colordata[q*48], temp_colordata, 48);
-
-			++q;
-			if (p > 0 && (p%13)==12 && (i < oldpoSPRITE || !RealOldVerion)) //It's > 0 instead of >= 0 because it should append 
-			{
-				if (s_version < 5) //Bumping up the size of level palettes
-				{
-					memcpy(&colordata[(q)*48], &colordata[1*48], 48);
-					memcpy(&colordata[(q+1)*48], &colordata[5*48], 48);
-					memcpy(&colordata[(q+2)*48], &colordata[7*48], 48);
-					memcpy(&colordata[(q+3)*48], &colordata[8*48], 48);
-					q+=4;
-				}
-				else
-				{
-					for(int m = 0; m < 4; ++m)
-					{
-						memset(temp_colordata, 0, 48);
-						if(!pfread(temp_colordata,48,f))
-						{
-							return qe_invalid;
-						}
-						memcpy(&colordata[q*48], temp_colordata, 48);
-						++q;
-					}
-				}
-			}
-			++p;
-		}
+		if(!p_igetw(&dummyw,f))
+			return qe_invalid;
+		temp_misc.colors.triframe_tile = dummyw;
 		
-		if(RealOldVerion)
-		{
-			if (!should_skip)
-			{
-				memcpy(colordata+(poSPRITE255*48), colordata+((q-30)*48), 30*16*3);
-				memset(colordata+((q-30)*48), 0, ((poSPRITE255-(q-30))*48));
-				memcpy(colordata+((poSPRITE255+11)*48), colordata+((poSPRITE255+10)*48), 48);
-				memcpy(colordata+((poSPRITE255+10)*48), colordata+((poSPRITE255+9)*48), 48);
-				memcpy(colordata+((poSPRITE255+9)*48), colordata+((poSPRITE255+8)*48), 48);
-				memset(colordata+((poSPRITE255+8)*48), 0, 48);
-			}
-		}
-		else
-		{
-			memset(temp_colordata, 0, 48);
-			
-			for(int32_t i=0; i<newpdTOTAL-oldpdTOTAL; ++i)
-			{
-				if(!pfread(temp_colordata,48,f))
-				{
-					return qe_invalid;
-				}
-
-				if (should_skip)
-					continue;
-
-				memcpy(&colordata[q*48], temp_colordata, 48);
-
-				++q;
-				if (p > 0 && (p%13)==12 && (i < (newpoSPRITE-oldpdTOTAL) || (s_version >= 4))) //It's > 0 instead of >= 0 because it should append 
-				{
-					if (s_version < 5) //Bumping up the size of level palettes
-					{
-						memcpy(&colordata[(q)*48], &colordata[1*48], 48);
-						memcpy(&colordata[(q+1)*48], &colordata[5*48], 48);
-						memcpy(&colordata[(q+2)*48], &colordata[7*48], 48);
-						memcpy(&colordata[(q+3)*48], &colordata[8*48], 48);
-						q+=4;
-					}
-					else
-					{
-						for(int m = 0; m < 4; ++m)
-						{
-							memset(temp_colordata, 0, 48);
-							if(!pfread(temp_colordata,48,f))
-							{
-								return qe_invalid;
-							}
-							memcpy(&colordata[q*48], temp_colordata, 48);
-							++q;
-						}
-					}
-				}
-				++p;
-			}
-			
-			if(s_version < 4)
-			{
-				if (!should_skip)
-				{
-					memcpy(colordata+(poSPRITE255*48), colordata+((q-30)*48), 30*16*3);
-					memset(colordata+((q-30)*48), 0, ((poSPRITE255-(q-30))*48));
-				}
-			}
-			else
-			{
-				for(int32_t i=0; i<newerpdTOTAL-newpdTOTAL; ++i)
-				{
-					if(!pfread(temp_colordata,48,f))
-					{
-						return qe_invalid;
-					}
-
-					if (should_skip)
-						continue;
-					
-					memcpy(&colordata[q*48], temp_colordata, 48);
-					++q;
-					if (p > 0 && (p%13)==12 && i < newerpoSPRITE-newpdTOTAL) //It's > 0 instead of >= 0 because it should append 
-					{
-						if (s_version < 5) //Bumping up the size of level palettes
-						{
-							memcpy(&colordata[(q)*48], &colordata[1*48], 48);
-							memcpy(&colordata[(q+1)*48], &colordata[5*48], 48);
-							memcpy(&colordata[(q+2)*48], &colordata[7*48], 48);
-							memcpy(&colordata[(q+3)*48], &colordata[8*48], 48);
-							q+=4;
-						}
-						else
-						{
-							for(int m = 0; m < 4; ++m)
-							{
-								memset(temp_colordata, 0, 48);
-								if(!pfread(temp_colordata,48,f))
-								{
-									return qe_invalid;
-								}
-								memcpy(&colordata[q*48], temp_colordata, 48);
-								++q;
-							}
-						}
-					}
-					++p;
-				}
-				
-				//By this point, q should be about equal to pdTOTAL255. If it isn't, I've fucked up. -Deedee
-			}
-		}
+		if(!p_igetw(&dummyw,f))
+			return qe_invalid;
+		temp_misc.colors.overworld_map_tile = dummyw;
+		
+		if(!p_igetw(&dummyw,f))
+			return qe_invalid;
+		temp_misc.colors.dungeon_map_tile = dummyw;
+		
+		if(!p_igetw(&dummyw,f))
+			return qe_invalid;
+		temp_misc.colors.blueframe_tile = dummyw;
+		
+		if(!p_igetw(&dummyw,f))
+			return qe_invalid;
+		temp_misc.colors.HCpieces_tile = dummyw;
+	}
+	
+	if(!p_getc(&temp_misc.colors.HCpieces_cset,f))
+	{
+		return qe_invalid;
+	}
+	
+	if(!p_getc(&temp_misc.colors.subscr_shadow,f))
+	{
+		return qe_invalid;
+	}
+	
+	if(s_version < 2)
+	{
+		temp_misc.colors.msgtext = 0x01;
 	}
 	else
 	{
-		for(int32_t i=0; i<pdTOTAL255; ++i)
+		if(!p_getc(&temp_misc.colors.msgtext, f))
 		{
-			memset(temp_colordata, 0, 48);
-			
-			if(!pfread(temp_colordata,48,f))
-			{
-				return qe_invalid;
-			}
-			
-			memcpy(&colordata[i*48], temp_colordata, 48);
-		}
-	}
-
-	if (!should_skip && s_version < 6)
-	{
-		for (int i = 0; i < psTOTAL255; i++)
-		{
-			colordata[i] = _rgb_scale_6[colordata[i]];
-		}
-	}
-
-	if((version < 0x192)||((version == 0x192)&&(build<76)))
-	{
-		if (!should_skip)
-			init_palnames();
-	}
-	else
-	{
-		int32_t palnamestoread = 0;
-		
-		if(s_version < 3)
-			palnamestoread = OLDMAXLEVELS;
-		else
-			palnamestoread = 512;
-			
-		for(int32_t i=0; i<palnamestoread; ++i)
-		{
-			if(!p_getstr(temp_palname,PALNAMESIZE,f))
-			{
-				return qe_invalid;
-			}
-
-			if (!should_skip)
-				memcpy(palnames[i], temp_palname, PALNAMESIZE);
-		}
-
-		if (should_skip)
-			return 0;
-		
-		for(int32_t i=palnamestoread; i<MAXLEVELS; i++)
-		{
-			memset(palnames[i], 0, PALNAMESIZE);
+			return qe_invalid;
 		}
 	}
 	
-	if(version > 0x192)
+	if ( s_version >= 3 ) //expanded tile pages to 825
 	{
-		for(int32_t i=0; i<256; i++)
+		if(!p_igetl(&temp_misc.colors.triforce_tile,f))
 		{
-			for(int32_t j=0; j<3; j++)
-			{
-				temp_misc.cycles[i][j].first=0;
-				temp_misc.cycles[i][j].count=0;
-				temp_misc.cycles[i][j].speed=0;
-			}
+			 return qe_invalid;
 		}
 		
-		if(!p_igetw(&palcycles,f))
+		if(!p_igetl(&temp_misc.colors.triframe_tile,f))
 		{
-			return qe_invalid;
-		}
-
-		if (palcycles > NUM_PAL_CYCLES)
-		{
-			return qe_invalid;
+			 return qe_invalid;
 		}
 		
-		for(int32_t i=0; i<palcycles; i++)
+		if(!p_igetl(&temp_misc.colors.overworld_map_tile,f))
 		{
-			for(int32_t j=0; j<3; j++)
-			{
-				if(!p_getc(&temp_misc.cycles[i][j].first,f))
-				{
-					return qe_invalid;
-				}
-			}
-			
-			for(int32_t j=0; j<3; j++)
-			{
-				if(!p_getc(&temp_misc.cycles[i][j].count,f))
-				{
-					return qe_invalid;
-				}
-			}
-			
-			for(int32_t j=0; j<3; j++)
-			{
-				if(!p_getc(&temp_misc.cycles[i][j].speed,f))
-				{
-					return qe_invalid;
-				}
-			}
+			 return qe_invalid;
 		}
 		
-		*Misc = temp_misc;
+		if(!p_igetl(&temp_misc.colors.dungeon_map_tile,f))
+		{
+			 return qe_invalid;
+		}
+		
+		if(!p_igetl(&temp_misc.colors.blueframe_tile,f))
+		{
+			 return qe_invalid;
+		}
+		
+		if(!p_igetl(&temp_misc.colors.HCpieces_tile,f))
+		{
+			 return qe_invalid;
+		}
 	}
+	
+	*Misc = temp_misc;
 	
 	return 0;
 }

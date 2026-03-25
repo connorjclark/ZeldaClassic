@@ -202,6 +202,7 @@ int32_t readitems(PACKFILE *f, word version, word build);
 int32_t read_single_spritedata(PACKFILE *f, zquestheader *Header, word s_version, word index);
 int32_t readweapons(PACKFILE *f, zquestheader *Header);
 int32_t readguys(PACKFILE *f, zquestheader *Header);
+int32_t readherosprites(PACKFILE *f, zquestheader *Header);
 int32_t readherosprites2(PACKFILE *f, int32_t v_herosprites);
 int32_t readmapscreen(PACKFILE *f, zquestheader *Header, mapscr *temp_mapscr, word version, int scrind = -1, bool keep_music = false);
 int32_t readmaps(PACKFILE *f, zquestheader *Header);
