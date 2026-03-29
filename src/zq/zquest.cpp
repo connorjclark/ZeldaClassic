@@ -19901,6 +19901,10 @@ int32_t main(int32_t argc,char **argv)
 	window_width = zc_get_config("zquest","window_width",-1);
 	window_height = zc_get_config("zquest","window_height",-1);
 	auto [w, h] = zalleg_get_default_display_size(LARGE_W, LARGE_H, window_width, window_height);
+#ifdef __EMSCRIPTEN__
+	if(w < 320) w = 320;
+	if(h < 240) h = 240;
+#endif
 	int32_t videofail = is_headless() ? 0 : (set_gfx_mode(tempmode,w,h,zq_screen_w,zq_screen_h));
 
 	//extra block here is intentional
