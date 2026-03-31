@@ -1,6 +1,7 @@
 #include "zalleg/zalleg.h"
 #include "allegro/base.h"
 #include "allegro/file.h"
+#include "allegro/inline/system.inl"
 #include "allegro/palette.h"
 #include "allegro5/events.h"
 #include "zalleg/files.h"
@@ -318,11 +319,23 @@ void zalleg_setup_allegro(App id, int argc, char **argv)
 	packfile_password(NULL);
 }
 
-void zalleg_create_window()
+void zalleg_create_window(const char* title, int gfx_mode, int v_width, int v_height, int saved_window_width, int saved_window_height, int max_scale)
 {
-	// TODO: move window creation stuff to here.
-	zapp_setup_icon();
+	// Doesn't really belong here, but whatever.
 	initFonts();
+
+	if (is_headless())
+	{
+		Z_message("gfx mode set: %s %dbpp %d x %d \n", "headless", get_color_depth(), v_width, v_height);
+		return;
+	}
+
+	auto [w, h] = zalleg_get_default_display_size(v_width, v_height, saved_window_width, saved_window_height, max_scale);
+	if (set_gfx_mode(gfx_mode, w, h, v_width, v_height))
+		Z_error_fatal("Failed to create window: %s\n", allegro_error);
+	Z_message("gfx mode set: %d %dbpp %d x %d \n", gfx_mode, get_color_depth(), v_width, v_height);
+	set_window_title(title);
+	zapp_setup_icon();
 }
 
 void zalleg_wait_for_all_keys_up()
