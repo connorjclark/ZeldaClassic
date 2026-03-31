@@ -607,7 +607,7 @@ int set_gfx_mode(int card, int w, int h, int v_w, int v_h)
    // local edit
    if (card != GFX_TEXT && (w <= 0 || h <= 0))
    {
-      TRACE(PREFIX_E "Invalid w or h.\n");
+      ustrzcpy(allegro_error, ALLEGRO_LEGACY_ERROR_SIZE, get_config_text("Invalid w or h."));
       return -1;
    }
 

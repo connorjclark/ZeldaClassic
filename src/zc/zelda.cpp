@@ -4114,15 +4114,17 @@ static void init_display()
 		saved_window_height = atoi(argv[res_arg+2]);
 	}
 
-	zq_screen_w = 640;
-	zq_screen_h = 480;
-
 	const char* window_title = "ZQuest Classic";
 	int window_title_arg = used_switch(argc, argv, "-window-title");
 	if (window_title_arg > 0)
 		window_title = argv[window_title_arg + 1];
 
-	zalleg_create_window(window_title, gfx_mode, zq_screen_w, zq_screen_h, saved_window_width, saved_window_height);
+	zq_screen_w = 640;
+	zq_screen_h = 480;
+	int v_width = is_web() ? zq_screen_w/2 : zq_screen_w;
+	int v_height = is_web() ? zq_screen_h/2 : zq_screen_h;
+
+	zalleg_create_window(window_title, gfx_mode, v_width, v_height, saved_window_width, saved_window_height);
 
 #ifndef __EMSCRIPTEN__
 	if (!all_get_fullscreen_flag() && !is_headless())
@@ -4135,6 +4137,9 @@ static void init_display()
 #else
 		if (new_x == 0 && new_y == 0)
 		{
+			int window_w = al_get_display_width(all_get_display());
+			int window_h = al_get_display_height(all_get_display());
+
 			ALLEGRO_MONITOR_INFO info;
 			al_get_monitor_info(0, &info);
 
