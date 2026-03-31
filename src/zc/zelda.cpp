@@ -4121,10 +4121,8 @@ static void init_display()
 
 	zq_screen_w = 640;
 	zq_screen_h = 480;
-	int v_width = is_web() ? zq_screen_w/2 : zq_screen_w;
-	int v_height = is_web() ? zq_screen_h/2 : zq_screen_h;
 
-	zalleg_create_window(window_title, gfx_mode, v_width, v_height, saved_window_width, saved_window_height);
+	zalleg_create_window(window_title, gfx_mode, zq_screen_w, zq_screen_h, saved_window_width, saved_window_height);
 
 #ifndef __EMSCRIPTEN__
 	if (!all_get_fullscreen_flag() && !is_headless())

@@ -19893,10 +19893,8 @@ int32_t main(int32_t argc,char **argv)
 	zq_screen_h = LARGE_H;
 	window_width = zc_get_config("zquest","window_width",-1);
 	window_height = zc_get_config("zquest","window_height",-1);
-	int v_width = is_web() ? zq_screen_w/2 : zq_screen_w;
-	int v_height = is_web() ? zq_screen_h/2 : zq_screen_h;
 
-	zalleg_create_window("ZC Editor", gfx_mode, v_width, v_height, window_width, window_height);
+	zalleg_create_window("ZC Editor", gfx_mode, zq_screen_w, zq_screen_h, window_width, window_height);
 
 	load_assets();
 	load_size_poses();
