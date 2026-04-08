@@ -5246,8 +5246,6 @@ void draw_screen(bool showhero, bool runGeneric, bool drawPassiveSubscreenSepara
 
 	// Draw some flying sprites onto dest
 	clear_clip_rect(dest);
-	// if (!is_extended_height_mode() && is_in_scrolling_region() && !get_qr(qr_SUBSCREENOVERSPRITES))
-	// 	add_clip_rect(dest, 0, playing_field_offset, dest->w, dest->h);
 	
 	if (classic_draw)
 	{
