@@ -3016,6 +3016,22 @@ int32_t get_register(int32_t arg)
 
 	current_zasm_register = arg;
 
+	if (zasm_array_supports(arg))
+	{
+		int ref_arg = get_register_ref_dependency(arg).value_or(0);
+#ifdef DEBUG_REGISTER_DEPS
+		if (ref_arg) debug_get_ref(ref_arg);
+#endif
+		int ref = ref_arg ? get_ref(ref_arg) : 0;
+		ret = zasm_array_get(arg, ref, GET_D(rINDEX) / 10000);
+	}
+	else ret = scripting_engine_get_register(arg);
+
+	current_zasm_register = 0;
+
+	if (screen) return ret;
+	// TODO ! delete
+
 	// Do not ever use `return` in these cases!
 	switch(arg)
 	{

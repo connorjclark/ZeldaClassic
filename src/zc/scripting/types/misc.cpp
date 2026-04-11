@@ -42,9 +42,7 @@ int32_t misc_get_register(int32_t reg)
 		case GDD: // Unused, remove?
 			ret = read_array(game->global_d, GET_D(rINDEX) / 10000);
 			break;
-		case PC:
-			ret = ri->pc;
-			break;
+		case PC: ret = ri->pc; break;
 		case REFBITMAP: ret = ri->bitmapref; break;
 		case REFBOTTLESHOP: ret = ri->bottleshopref; break;
 		case REFBOTTLETYPE: ret = ri->bottletyperef; break;
@@ -53,48 +51,28 @@ int32_t misc_get_register(int32_t reg)
 		case REFDIRECTORY: ret = ri->directoryref; break;
 		case REFDMAPDATA: ret = ri->dmapdataref; break;
 		case REFDROPSETDATA: ret = ri->dropsetdataref; break;
-		case REFEWPN:
-			ret = ri->ewpnref;
-			break;
+		case REFEWPN: ret = ri->ewpnref; break;
 		case REFFFC:
 			ret = ZScriptVersion::ffcRefIsSpriteId() ? ri->ffcref : ri->ffcref * 10000;
 			break;
 		case REFFILE: ret = ri->fileref; break;
 		case REFGENERICDATA: ret = ri->genericdataref; break;
-		case REFITEM:
-			ret = ri->itemref;
-			break;
-		case REFITEMDATA:
-			ret = ri->itemdataref;
-			break;
-		case REFLWPN:
-			ret = ri->lwpnref;
-			break;
+		case REFITEM: ret = ri->itemref; break;
+		case REFITEMDATA: ret = ri->itemdataref; break;
+		case REFLWPN: ret = ri->lwpnref; break;
 		case REFMAPDATA: ret = ri->mapdataref; break;
 		case REFMSGDATA: ret = ri->msgdataref; break;
 		case REFMUSIC: ret = ri->musicref; break;
-		case REFNPC:
-			ret = ri->npcref;
-			break;
+		case REFNPC: ret = ri->npcref; break;
 		case REFNPCDATA: ret = ri->npcdataref; break;
 		case REFPALDATA: ret = ri->paldataref; break;
-		case REFPORTAL:
-		{
-			ret = ri->portalref;
-			break;
-		}
+		case REFPORTAL: ret = ri->portalref; break;
 		case REFRNG: ret = ri->rngref; break;
 		case REFSAVEMENU: ret = ri->savemenuref; break;
-		case REFSAVPORTAL:
-		{
-			ret = ri->savportalref;
-			break;
-		}
+		case REFSAVPORTAL: ret = ri->savportalref; break;
 		case REFSCREEN: ret = ri->screenref; break;
 		case REFSHOPDATA: ret = ri->shopdataref; break;
-		case REFSPRITE:
-			ret = ri->spriteref;
-			break;
+		case REFSPRITE: ret = ri->spriteref; break;
 		case REFSPRITEDATA: ret = ri->spritedataref; break;
 		case REFSTACK: ret = ri->stackref; break;
 		case REFSUBSCREENDATA: ret = ri->subscreendataref; break;

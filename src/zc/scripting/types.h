@@ -4,31 +4,97 @@
 #include "base/check.h"
 #include "base/compiler.h"
 #include "base/ints.h"
+#include "zc/scripting/types/audio.h"
+#include "zc/scripting/types/bitmap.h"
+#include "zc/scripting/types/bottledata.h"
+#include "zc/scripting/types/combodata.h"
+#include "zc/scripting/types/combotrigger.h"
+#include "zc/scripting/types/debug.h"
 #include "zc/scripting/types/directory.h"
+#include "zc/scripting/types/dmapdata.h"
+#include "zc/scripting/types/dropsetdata.h"
+#include "zc/scripting/types/eweapon.h"
+#include "zc/scripting/types/ffc.h"
 #include "zc/scripting/types/file.h"
 #include "zc/scripting/types/game.h"
+#include "zc/scripting/types/genericdata.h"
+#include "zc/scripting/types/global.h"
+#include "zc/scripting/types/graphics.h"
+#include "zc/scripting/types/hero.h"
+#include "zc/scripting/types/input.h"
+#include "zc/scripting/types/itemdata.h"
 #include "zc/scripting/types/itemsprite.h"
+#include "zc/scripting/types/lweapon.h"
+#include "zc/scripting/types/mapdata.h"
+#include "zc/scripting/types/messagedata.h"
+#include "zc/scripting/types/misc.h"
 #include "zc/scripting/types/musicdata.h"
 #include "zc/scripting/types/npc.h"
+#include "zc/scripting/types/npcdata.h"
+#include "zc/scripting/types/portal.h"
+#include "zc/scripting/types/region.h"
+#include "zc/scripting/types/savedportal.h"
 #include "zc/scripting/types/savemenu.h"
+#include "zc/scripting/types/screendata.h"
+#include "zc/scripting/types/shopdata.h"
 #include "zc/scripting/types/sprite.h"
+#include "zc/scripting/types/spritedata.h"
+#include "zc/scripting/types/stack.h"
+#include "zc/scripting/types/subscreendata.h"
+#include "zc/scripting/types/subscreenpage.h"
+#include "zc/scripting/types/subscreenwidget.h"
 #include "zc/scripting/types/user_object.h"
+#include "zc/scripting/types/viewport.h"
 #include "zc/scripting/types/websocket.h"
 
 #include <optional>
 
 enum class EngineSubsystem : uint8_t
 {
-	None,
-	Directory,
-	File,
-	Game,
-	Item,
-	Music,
-	Npc,
-	SaveMenu,
-	Sprite,
-	Websocket,
+	none,
+	audio,
+	bitmap,
+	bottledata,
+	combodata,
+	combotrigger,
+	debug,
+	directory,
+	dmapdata,
+	dropsetdata,
+	eweapon,
+	ffc,
+	file,
+	game,
+	genericdata,
+	global,
+	graphics,
+	hero,
+	input,
+	itemdata,
+	itemsprite,
+	lweapon,
+	mapdata,
+	messagedata,
+	misc,
+	musicdata,
+	npc,
+	npcdata,
+	portal,
+	region,
+	savedportal,
+	savemenu,
+	screendata,
+	shopdata,
+	sprite,
+	spritedata,
+	stack,
+	subscreendata,
+	subscreenpage,
+	subscreenwidget,
+	user_object,
+	viewport,
+	weapon,
+	websocket,
 };
 
 constexpr int MAX_REGISTER_ID = NUMVARIABLES;
@@ -43,15 +109,47 @@ ZC_FORCE_INLINE int32_t scripting_engine_get_register(int32_t reg)
 
 	switch (register_routing_table[reg])
 	{
-		case EngineSubsystem::Directory: return directory_get_register(reg);
-		case EngineSubsystem::File: return file_get_register(reg);
-		case EngineSubsystem::Game: return game_get_register(reg);
-		case EngineSubsystem::Item: return itemsprite_get_register(reg);
-		case EngineSubsystem::Music: return musicdata_get_register(reg);
-		case EngineSubsystem::Npc: return npc_get_register(reg);
-		case EngineSubsystem::SaveMenu: return savemenu_get_register(reg);
-		case EngineSubsystem::Sprite: return sprite_get_register(reg);
-		case EngineSubsystem::Websocket: return websocket_get_register(reg);
+		case EngineSubsystem::audio: return audio_get_register(reg);
+		case EngineSubsystem::bitmap: return bitmap_get_register(reg);
+		case EngineSubsystem::bottledata: return bottledata_get_register(reg);
+		case EngineSubsystem::combodata: return combodata_get_register(reg);
+		case EngineSubsystem::combotrigger: return combotrigger_get_register(reg);
+		case EngineSubsystem::debug: return debug_get_register(reg);
+		case EngineSubsystem::directory: return directory_get_register(reg);
+		case EngineSubsystem::dmapdata: return dmapdata_get_register(reg);
+		case EngineSubsystem::dropsetdata: return dropsetdata_get_register(reg);
+		case EngineSubsystem::eweapon: return eweapon_get_register(reg);
+		case EngineSubsystem::ffc: return ffc_get_register(reg);
+		case EngineSubsystem::file: return file_get_register(reg);
+		case EngineSubsystem::game: return game_get_register(reg);
+		case EngineSubsystem::genericdata: return genericdata_get_register(reg);
+		case EngineSubsystem::global: return global_get_register(reg);
+		case EngineSubsystem::graphics: return graphics_get_register(reg);
+		case EngineSubsystem::hero: return hero_get_register(reg);
+		case EngineSubsystem::input: return input_get_register(reg);
+		case EngineSubsystem::itemdata: return itemdata_get_register(reg);
+		case EngineSubsystem::itemsprite: return itemsprite_get_register(reg);
+		case EngineSubsystem::lweapon: return lweapon_get_register(reg);
+		case EngineSubsystem::mapdata: return mapdata_get_register(reg);
+		case EngineSubsystem::messagedata: return messagedata_get_register(reg);
+		case EngineSubsystem::misc: return misc_get_register(reg);
+		case EngineSubsystem::musicdata: return musicdata_get_register(reg);
+		case EngineSubsystem::npc: return npc_get_register(reg);
+		case EngineSubsystem::npcdata: return npcdata_get_register(reg);
+		case EngineSubsystem::portal: return portal_get_register(reg);
+		case EngineSubsystem::region: return region_get_register(reg);
+		case EngineSubsystem::savedportal: return savedportal_get_register(reg);
+		case EngineSubsystem::savemenu: return savemenu_get_register(reg);
+		case EngineSubsystem::screendata: return screendata_get_register(reg);
+		case EngineSubsystem::shopdata: return shopdata_get_register(reg);
+		case EngineSubsystem::sprite: return sprite_get_register(reg);
+		case EngineSubsystem::spritedata: return spritedata_get_register(reg);
+		case EngineSubsystem::stack: return stack_get_register(reg);
+		case EngineSubsystem::subscreendata: return subscreendata_get_register(reg);
+		case EngineSubsystem::subscreenpage: return subscreenpage_get_register(reg);
+		case EngineSubsystem::subscreenwidget: return subscreenwidget_get_register(reg);
+		case EngineSubsystem::viewport: return viewport_get_register(reg);
+		case EngineSubsystem::websocket: return websocket_get_register(reg);
     }
 
 	NOTREACHED();
@@ -64,15 +162,15 @@ ZC_FORCE_INLINE void scripting_engine_set_register(int32_t reg, int32_t value)
 
 	switch (register_routing_table[reg])
 	{
-		case EngineSubsystem::Directory: directory_set_register(reg, value); return;
-		case EngineSubsystem::File: file_set_register(reg, value); return;
-		case EngineSubsystem::Game: game_set_register(reg, value); return;
-		case EngineSubsystem::Item: itemsprite_set_register(reg, value); return;
-		case EngineSubsystem::Music: musicdata_set_register(reg, value); return;
-		case EngineSubsystem::Npc: npc_set_register(reg, value); return;
-		case EngineSubsystem::SaveMenu: savemenu_set_register(reg, value); return;
-		case EngineSubsystem::Sprite: sprite_set_register(reg, value); return;
-		case EngineSubsystem::Websocket: websocket_set_register(reg, value); return;
+		case EngineSubsystem::directory: directory_set_register(reg, value); return;
+		case EngineSubsystem::file: file_set_register(reg, value); return;
+		case EngineSubsystem::game: game_set_register(reg, value); return;
+		case EngineSubsystem::itemsprite: itemsprite_set_register(reg, value); return;
+		case EngineSubsystem::musicdata: musicdata_set_register(reg, value); return;
+		case EngineSubsystem::npc: npc_set_register(reg, value); return;
+		case EngineSubsystem::savemenu: savemenu_set_register(reg, value); return;
+		case EngineSubsystem::sprite: sprite_set_register(reg, value); return;
+		case EngineSubsystem::websocket: websocket_set_register(reg, value); return;
     }
 
 	NOTREACHED();

@@ -14,8 +14,52 @@ void initializeRegisterRoutingTable()
 	{
 		switch (i)
 		{
+			case CLASS_THISKEY:
+			case CLASS_THISKEY2:
+			case GDD:
+			case PC:
+			case REFBITMAP:
+			case REFBOTTLESHOP:
+			case REFBOTTLETYPE:
+			case REFCOMBODATA:
+			case REFCOMBOTRIGGER:
+			case REFDIRECTORY:
+			case REFDMAPDATA:
+			case REFDROPSETDATA:
+			case REFEWPN:
+			case REFFFC:
+			case REFFILE:
+			case REFGENERICDATA:
+			case REFITEM:
+			case REFITEMDATA:
+			case REFLWPN:
+			case REFMAPDATA:
+			case REFMSGDATA:
+			case REFMUSIC:
+			case REFNPC:
+			case REFNPCDATA:
+			case REFPALDATA:
+			case REFPORTAL:
+			case REFRNG:
+			case REFSAVEMENU:
+			case REFSAVPORTAL:
+			case REFSCREEN:
+			case REFSHOPDATA:
+			case REFSPRITE:
+			case REFSPRITEDATA:
+			case REFSTACK:
+			case REFSUBSCREENDATA:
+			case REFSUBSCREENPAGE:
+			case REFSUBSCREENWIDG:
+			case REFWEBSOCKET:
+			case SP:
+			case SP2:
+			case SWITCHKEY:
+				register_routing_table[i] = EngineSubsystem::misc;
+				continue;
+
 			case ITEMCOUNT:
-				register_routing_table[i] = EngineSubsystem::Item;
+				register_routing_table[i] = EngineSubsystem::itemsprite;
 				continue;
 
 			case ACTIVESSSPEED:
@@ -60,7 +104,7 @@ void initializeRegisterRoutingTable()
 			case ZELDABUILD:
 			case ZELDAVERSION:
 			case ZSCRIPTVERSION:
-				register_routing_table[i] = EngineSubsystem::Game;
+				register_routing_table[i] = EngineSubsystem::game;
 				continue;
 		}
 
@@ -68,14 +112,14 @@ void initializeRegisterRoutingTable()
 		{
 			switch (*ref)
 			{
-				case REFDIRECTORY: register_routing_table[i] = EngineSubsystem::Directory; break;
-				case REFFILE: register_routing_table[i] = EngineSubsystem::File; break;
-				case REFITEM: register_routing_table[i] = EngineSubsystem::Item; break;
-				case REFMUSIC: register_routing_table[i] = EngineSubsystem::Music; break;
-				case REFNPC: register_routing_table[i] = EngineSubsystem::Npc; break;
-				case REFSAVEMENU: register_routing_table[i] = EngineSubsystem::SaveMenu; break;
-				case REFSPRITE: register_routing_table[i] = EngineSubsystem::Sprite; break;
-				case REFWEBSOCKET: register_routing_table[i] = EngineSubsystem::Websocket; break;
+				case REFDIRECTORY: register_routing_table[i] = EngineSubsystem::directory; break;
+				case REFFILE: register_routing_table[i] = EngineSubsystem::file; break;
+				case REFITEM: register_routing_table[i] = EngineSubsystem::itemsprite; break;
+				case REFMUSIC: register_routing_table[i] = EngineSubsystem::musicdata; break;
+				case REFNPC: register_routing_table[i] = EngineSubsystem::npc; break;
+				case REFSAVEMENU: register_routing_table[i] = EngineSubsystem::savemenu; break;
+				case REFSPRITE: register_routing_table[i] = EngineSubsystem::sprite; break;
+				case REFWEBSOCKET: register_routing_table[i] = EngineSubsystem::websocket; break;
 			}
 		}
 	}

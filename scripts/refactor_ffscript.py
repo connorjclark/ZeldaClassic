@@ -1692,4 +1692,10 @@ void {sub}_set_register(int32_t reg, int32_t value);
 
 
 if __name__ == "__main__":
-    generate_cpp_files()
+    # generate_cpp_files()
+
+    for path in Path('src/zc/scripting/types').glob('*.cpp'):
+        print(path)
+        content = path.read_text()
+        matches = re.findall(r'case (.*):')
+        print(path.name, matches)
