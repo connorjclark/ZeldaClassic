@@ -164,7 +164,7 @@ static UserDataContainer<script_array, 1000000> script_arrays = {script_object_t
 static UserDataContainer<user_paldata, MAX_USER_PALDATAS> user_paldatas = {script_object_type::paldata, "paldata"};
 static UserDataContainer<user_rng, MAX_USER_RNGS> user_rngs = {script_object_type::rng, "rng"};
 static UserDataContainer<user_stack, MAX_USER_STACKS> user_stacks = {script_object_type::stack, "stack"};
-static UserDataContainer<user_bitmap, MAX_USER_BITMAPS> user_bitmaps = {script_object_type::bitmap, "bitmap"};
+extern UserDataContainer<user_bitmap, MAX_USER_BITMAPS> user_bitmaps;
 
 script_array* create_script_array()
 {
@@ -590,6 +590,7 @@ int32_t FFScript::atox(char *ip_str)
 
 char runningItemScripts[256] = {0};
 
+// TODO ! rm?
 extern int32_t directItemA;
 extern int32_t directItemB;
 extern int32_t directItemX;
@@ -1252,7 +1253,7 @@ void clearScriptHelperData()
 static int32_t numInstructions = 0; // Used to detect hangs
 static bool scriptCanSave = true;
 
-static ScriptEngineData& get_script_engine_data(ScriptType type, int index)
+ScriptEngineData& get_script_engine_data(ScriptType type, int index)
 {
 	if (type == ScriptType::DMap || type == ScriptType::OnMap || type == ScriptType::ScriptedPassiveSubscreen || type == ScriptType::ScriptedActiveSubscreen)
 	{
@@ -1268,7 +1269,7 @@ static ScriptEngineData& get_script_engine_data(ScriptType type, int index)
 	return scriptEngineDatas[{type, index}];
 }
 
-static bool script_engine_data_exists(ScriptType type, int index)
+bool script_engine_data_exists(ScriptType type, int index)
 {
 	if (type == ScriptType::DMap || type == ScriptType::OnMap || type == ScriptType::ScriptedPassiveSubscreen || type == ScriptType::ScriptedActiveSubscreen)
 	{
@@ -1284,7 +1285,7 @@ static bool script_engine_data_exists(ScriptType type, int index)
 	return scriptEngineDatas.contains({type, index});
 }
 
-static ScriptEngineData& get_script_engine_data(ScriptType type)
+ScriptEngineData& get_script_engine_data(ScriptType type)
 {
 	return get_script_engine_data(type, 0);
 }
@@ -1691,6 +1692,7 @@ static void set_current_script_engine_data(ScriptEngineData& data, ScriptType ty
 	}
 }
 
+// TODO ! move ffc.cpp?
 ffcdata* ResolveFFCWithID(ffc_id_t id)
 {
 	if (BC::checkFFC(id) != SH::_NoError)
@@ -1703,7 +1705,7 @@ ffcdata* ResolveFFCWithID(ffc_id_t id)
 	return ffc;
 }
 
-static ffcdata *ResolveFFC(int32_t ffcref)
+ffcdata *ResolveFFC(int32_t ffcref)
 {
 	if (ZScriptVersion::ffcRefIsSpriteId())
 		return ResolveSprite<ffcdata>(ffcref, "ffc");
@@ -1711,7 +1713,8 @@ static ffcdata *ResolveFFC(int32_t ffcref)
 	return ResolveFFCWithID(ffcref);
 }
 
-static mapscr* ResolveMapdataScr(int32_t mapdataref)
+// TODO ! move?
+mapscr* ResolveMapdataScr(int32_t mapdataref)
 {
 	auto mapdata = decode_mapdata_ref(mapdataref);
 	if (!mapdata.scr)
@@ -1719,7 +1722,7 @@ static mapscr* ResolveMapdataScr(int32_t mapdataref)
 	return mapdata.scr;
 }
 
-static rpos_handle_t ResolveMapdataPos(int32_t mapdataref, int pos)
+rpos_handle_t ResolveMapdataPos(int32_t mapdataref, int pos)
 {
 	auto mapdata = decode_mapdata_ref(mapdataref);
 	if (!mapdata.scr)
@@ -1812,7 +1815,8 @@ ffcdata* mapdata::resolve_ffc(int index)
 	return resolve_ffc_handle(index).ffc;
 }
 
-static ffc_handle_t ResolveMapdataFFC(int32_t mapdataref, int index)
+// TODO ! mv?
+ffc_handle_t ResolveMapdataFFC(int32_t mapdataref, int index)
 {
 	index -= 1;
 	if (BC::checkMapdataFFC(index) != SH::_NoError)
@@ -2176,14 +2180,14 @@ void ArrayH::copyValues(const int32_t ptr, const int32_t ptr2)
 	}
 }
 //Get element from array
-INLINE int32_t ArrayH::getElement(const int32_t ptr, int32_t offset, const bool neg)
+int32_t ArrayH::getElement(const int32_t ptr, int32_t offset, const bool neg)
 {
 	ArrayManager am(ptr,neg);
 	return am.get(offset);
 }
 
 //Set element in array
-INLINE void ArrayH::setElement(const int32_t ptr, int32_t offset, const int32_t value, const bool neg, const script_object_type type)
+void ArrayH::setElement(const int32_t ptr, int32_t offset, const int32_t value, const bool neg, const script_object_type type)
 {
 	ArrayManager am(ptr,neg);
 	am.set(offset, value, type);
@@ -2458,6 +2462,7 @@ weapon *checkWpn(int32_t uid)
 	return ResolveSprite<weapon>(uid, "weapon");
 }
 
+// TODO ! move
 user_genscript *checkGenericScr(int32_t ref)
 {
 	if (BC::checkBounds(ref, 1, NUMSCRIPTSGENERIC-1) != SH::_NoError)
@@ -2510,7 +2515,8 @@ int32_t getPortalFromSaved(savedportal* p)
 	return prtl ? prtl->getUID() : 0;
 }
 
-static user_stack *checkStack(uint32_t id, bool skipError = false)
+// TODO ! mv
+user_stack *checkStack(uint32_t id, bool skipError = false)
 {
 	return user_stacks.check(id, skipError);
 }
@@ -2539,7 +2545,7 @@ newcombo* checkCombo(int32_t ref, bool skipError)
 	return &combobuf[ref];
 }
 
-// TODO: replace with checkCombo.
+// TODO ! remove
 static bool checkComboRef()
 {
 	if (GET_REF(combodataref) < 0 || GET_REF(combodataref) > (MAXCOMBOS-1))
@@ -2584,7 +2590,7 @@ guydata* checkNPCData(int32_t ref)
 	return nullptr;
 }
 
-// TODO: replace with checkNPCData.
+// TODO ! rm
 static bool checkNPCDataRef()
 {
 	if( (unsigned) GET_REF(npcdataref) > (MAXNPCS-1) )
@@ -2811,7 +2817,7 @@ SubscrWidget *checkSubWidg(int32_t ref, std::set<int> const& req_sub_tys, int re
 	return NULL;
 }
 
-static void bad_subwidg_type(bool func, byte type)
+void bad_subwidg_type(bool func, byte type)
 {
 	auto tyname = type < widgMAX ? subwidg_internal_names[type].c_str() : "";
 	scripting_log_error_with_context("Widget type {} '{}' does not have this {}!",
@@ -2840,12 +2846,12 @@ void item_flag(item_flags flag, bool val)
 bool scripting_use_8bit_colors;
 int scripting_max_color_val;
 
-static int scripting_read_pal_color(int c)
+int scripting_read_pal_color(int c)
 {
 	return scripting_use_8bit_colors ? c : c / 4;
 }
 
-static int scripting_write_pal_color(int c)
+int scripting_write_pal_color(int c)
 {
 	return scripting_use_8bit_colors ? c : _rgb_scale_6[c];
 }
@@ -2916,6 +2922,7 @@ static void apply_qr_rules()
 	apply_qr_rule(qr_ZS_NO_NEG_ARRAY);
 }
 
+// TODO ! rm
 //Forward decl
 int32_t do_msgheight(int32_t msg);
 int32_t do_msgwidth(int32_t msg);
@@ -5824,7 +5831,7 @@ int32_t get_register(int32_t arg)
 		///----------------------------------------------------------------------------------------------------//
 		//Screen Information
 		
-			#define	GET_SCREENDATA_VAR_INT32(member) \
+		#define	GET_SCREENDATA_VAR_INT32(member) \
 		{ \
 			ret = (get_scr(GET_REF(screenref))->member *10000); \
 		} \

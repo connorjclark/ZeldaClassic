@@ -1,4 +1,58 @@
+#include "zc/scripting/types/bottledata.h"
+
+#include "base/check.h"
+#include "components/zasm/defines.h"
+#include "core/misctypes.h"
+#include "zc/ffscript.h"
 #include "zc/scripting/arrays.h"
+
+extern refInfo *ri;
+extern int32_t sarg1;
+extern int32_t sarg2;
+extern int32_t sarg3;
+
+// TODO ! move checkBottleData here?
+
+int32_t bottledata_get_register(int32_t reg)
+{
+	int32_t ret = 0;
+
+	switch (reg)
+	{
+		case BOTTLENEXT:
+		{
+			if(bottletype* ptr = checkBottleData(GET_REF(bottletyperef)))
+			{
+				ret = 10000L * ptr->next_type;
+			}
+			else ret = -10000L;
+		}
+		break;
+
+		default:
+			NOTREACHED();
+	}
+
+	return ret;
+}
+
+void bottledata_set_register(int32_t reg, int32_t value)
+{
+	switch (reg)
+	{
+		case BOTTLENEXT:
+		{
+			if(bottletype* ptr = checkBottleData(GET_REF(bottletyperef)))
+			{
+				ptr->next_type = vbound(value/10000, 0, 64);
+			}
+		}
+		break;
+
+		default:
+			NOTREACHED();
+	}
+}
 
 // bottledata arrays.
 

@@ -1,5 +1,69 @@
+#include "zc/scripting/types/audio.h"
+
+#include "advanced_music.h"
+#include "base/check.h"
+#include "components/zasm/defines.h"
 #include "core/qrs.h"
+#include "zc/ffscript.h"
 #include "zc/scripting/arrays.h"
+#include "zc/zelda.h"
+
+int32_t audio_get_register(int32_t reg)
+{
+	int32_t ret = 0;
+
+	switch (reg)
+	{
+		case AUDIOPAN:
+		{
+			ret = FFScript::do_getSFX_pan() * 10000;
+			break;
+		}
+		case ENGINE_MUSIC_ACTIVE:
+			ret = engine_music_active ? 10000 : 0;
+			break;
+		case GETMIDI:
+			ret=(currmidi-MIDIOFFSET_ZSCRIPT)*10000;
+			break;
+		case MUSICUPDATECOND:
+		{
+			ret = ((byte)FFCore.music_update_cond) * 10000; break;
+		}
+		case NUM_MUSICS:
+			ret = quest_music.size() * 10000;
+			break;
+
+		default:
+			NOTREACHED();
+	}
+
+	return ret;
+}
+
+void audio_set_register(int32_t reg, int32_t value)
+{
+	switch (reg)
+	{
+		case AUDIOPAN:
+		{
+			if ( !(FFCore.coreflags&FFCORE_SCRIPTED_PANSTYLE) ) 
+			{
+				FFCore.usr_panstyle = FFScript::do_getSFX_pan();
+				FFCore.SetFFEngineFlag(FFCORE_SCRIPTED_PANSTYLE,true);
+			}
+			FFScript::do_setSFX_pan(value/10000);
+			break;
+		}
+		case MUSICUPDATECOND:
+		{
+			FFCore.music_update_cond = vbound(value / 10000, 0, 255);
+			break;
+		}
+
+		default:
+			NOTREACHED();
+	}
+}
 
 // Audio arrays.
 

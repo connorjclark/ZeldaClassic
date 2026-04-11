@@ -83,6 +83,9 @@ static void scripting_log_error_with_context(fmt::format_string<Args...> s, Args
 enum { warpEffectNONE, warpEffectZap, warpEffectWave, warpEffectInstant, warpEffectOpen, warpEffectNONE2 };
 void doWarpEffect(int32_t warpEffect, bool out);
 
+int scripting_read_pal_color(int c);
+int scripting_write_pal_color(int c);
+
 void apply_qr_rule(int qr_id);
 
 enum herospritetype
@@ -625,6 +628,7 @@ ZCSubscreen *checkSubData(int32_t ref, std::set<int> const& req_tys = {});
 SubscrPage *checkSubPage(int32_t ref, std::set<int> const& req_tys = {});
 combo_trigger* checkComboTrigger(dword ref);
 combo_trigger* get_first_combo_trigger();
+combo_trigger* get_combo_trigger(dword ref);
 
 std::tuple<byte,int8_t,byte,word> from_subref(dword ref);
 dword get_subref(int sub, byte ty, byte pg = 0, word ind = 0);
@@ -1103,6 +1107,10 @@ int32_t get_screeneflags(mapscr *m, int32_t flagset);
 int32_t get_ref_map_index(int32_t ref);
 
 ffcdata* ResolveFFCWithID(ffc_id_t id);
+ffcdata *ResolveFFC(int32_t ffcref);
+mapscr* ResolveMapdataScr(int32_t mapdataref);
+rpos_handle_t ResolveMapdataPos(int32_t mapdataref, int pos);
+ffc_handle_t ResolveMapdataFFC(int32_t mapdataref, int index);
 sprite* ResolveBaseSprite(int32_t uid);
 item* ResolveItemSprite(int32_t uid);
 enemy* ResolveNpc(int32_t uid);
@@ -1193,10 +1201,10 @@ public:
 	static void copyValues(const int32_t ptr, const int32_t ptr2);
 
 	//Get element from array
-	static INLINE int32_t getElement(const int32_t ptr, int32_t offset, const bool neg = false);
+	static int32_t getElement(const int32_t ptr, int32_t offset, const bool neg = false);
 	
 	//Set element in array
-	static INLINE void setElement(const int32_t ptr, int32_t offset, const int32_t value, const bool neg = false, const script_object_type type = script_object_type::none);
+	static void setElement(const int32_t ptr, int32_t offset, const int32_t value, const bool neg = false, const script_object_type type = script_object_type::none);
 	
 	//Puts values of a zscript array into a client <type> array. returns 0 on success. Overloaded
 	template <typename T>
@@ -1493,6 +1501,9 @@ struct ScriptEngineData {
 extern std::map<std::pair<ScriptType, int>, ScriptEngineData> scriptEngineDatas;
 
 void on_reassign_script_engine_data(ScriptType type, int index);
+ScriptEngineData& get_script_engine_data(ScriptType type, int index);
+bool script_engine_data_exists(ScriptType type, int index);
+ScriptEngineData& get_script_engine_data(ScriptType type);
 ScriptEngineData& get_ffc_script_engine_data(int index);
 ScriptEngineData& get_item_script_engine_data(int index);
 

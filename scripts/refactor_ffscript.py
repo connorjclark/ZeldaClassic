@@ -27,7 +27,6 @@ subsystems['misc'] = [
     'CLASS_THISKEY',
     'CLASS_THISKEY2',
     'GDD',
-    'GLOBALRAM',
     'PC',
     'REFBITMAP',
     'REFBOTTLESHOP',
@@ -65,7 +64,6 @@ subsystems['misc'] = [
     'REFSUBSCREENPAGE',
     'REFSUBSCREENWIDG',
     'REFWEBSOCKET',
-    'SCRIPTRAM',
     'SP',
     'SP2',
     'SWITCHKEY',
@@ -1470,6 +1468,12 @@ def get_subsystem(register_name):
     ]:
         return 'input'
 
+    if register_name in [
+        'SCRIPTRAM',
+        'GLOBALRAM',
+    ]:
+        return 'game'
+
     if register_name.startswith('SCREEN'):
         return 'screendata'
     if register_name.startswith('HERO'):
@@ -1551,6 +1555,15 @@ def parse_switch_cases(filepath):
             {'registers': current_registers, 'body': "".join(current_body)}
         )
 
+    for b in parsed_blocks:
+        assert len(b['registers']) == 1
+
+    parsed_blocks.sort(key=lambda x: x['registers'][0])
+
+    for b in parsed_blocks:
+        if 'Dropset Variables' in b['body']:
+            print(b)
+
     return parsed_blocks
 
 
@@ -1562,15 +1575,24 @@ def format_cases(blocks, tabs=2):
     base_indent = "\t" * tabs
 
     for block in blocks:
-        lines = block['body'].splitlines()
-        if not lines:
+        raw_lines = block['body'].splitlines()
+
+        # Remove trailing empty lines AND trailing comment-only lines
+        while raw_lines:
+            last_line = raw_lines[-1].strip()
+            if not last_line or last_line.startswith('//'):
+                raw_lines.pop()
+            else:
+                break
+
+        if not raw_lines:
             continue
 
         # Grab the exact leading whitespace of the 'case' line to act as our baseline
-        first_line = lines[0]
+        first_line = raw_lines[0]
         baseline_ws = first_line[: len(first_line) - len(first_line.lstrip())]
 
-        for line in lines:
+        for line in raw_lines:
             if not line.strip():
                 output += "\n"
                 continue
@@ -1579,14 +1601,10 @@ def format_cases(blocks, tabs=2):
             if line.startswith(baseline_ws):
                 cleaned = line[len(baseline_ws) :]
             else:
-                cleaned = line.lstrip()  # Fallback if strangely indented
+                cleaned = line.lstrip()
 
-            # Convert any remaining 4-space chunks into tabs for strict tab-indented formatting
             cleaned = cleaned.replace("    ", "\t")
-
             output += f"{base_indent}{cleaned}\n"
-
-        output += "\n"
 
     return output.rstrip()
 
@@ -1655,6 +1673,22 @@ void {sub}_set_register(int32_t reg, int32_t value)
             f.write(cpp_content)
 
         print(f"Generated: {out_path}")
+
+        header = f'''
+#ifndef ZC_SCRIPTING_{sub.upper()}_H_
+#define ZC_SCRIPTING_{sub.upper()}_H_
+
+#include <cstdint>
+
+int32_t {sub}_get_register(int32_t reg);
+void {sub}_set_register(int32_t reg, int32_t value);
+
+#endif
+        '''.strip() + '\n'
+        out_path = Path(os.path.join(OUTPUT_DIR, f"{sub}.h"))
+        if not out_path.exists():
+            out_path.write_text(header)
+            print(f"Generated: {out_path}")
 
 
 if __name__ == "__main__":
