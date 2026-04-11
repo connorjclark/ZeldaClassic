@@ -6036,23 +6036,6 @@ int32_t get_register(int32_t arg)
 		case SCREENSCRIPT:
 			ret=get_scr(GET_REF(screenref))->script*10000;
 			break;
-
-		//These use the same method as GetScreenD -Z
-		case SCREENWIDTH:
-			// ret=FFScript::get_screenWidth(&TheMaps[(GET_D(rINDEX2) / 10000) * MAPSCRS + (GET_D(rINDEX)/10000)]);
-			break;
-
-		case SCREENHEIGHT:
-			// ret=FFScript::get_screenHeight(&TheMaps[(GET_D(rINDEX2) / 10000) * MAPSCRS + (GET_D(rINDEX)/10000)]);
-			break;
-
-		case SCREENVIEWX:
-			// ret=get_screenViewX(&TheMaps[(GET_D(rINDEX2) / 10000) * MAPSCRS + (GET_D(rINDEX)/10000)]);
-			break;
-
-		case SCREENVIEWY:
-			// ret=get_screenViewY(&TheMaps[(GET_D(rINDEX2) / 10000) * MAPSCRS + (GET_D(rINDEX)/10000)]);
-			break;
 			
 		case LIT:
 			ret= get_lights() ? 10000 : 0;
@@ -13663,23 +13646,6 @@ void set_register(int32_t arg, int32_t value)
 				set_xdoorstate_mi(mi, dir, ind);
 			break;
 		}
-
-		//These use the same method as SetScreenD
-		case SCREENWIDTH:
-			// FFScript::set_screenWidth(&TheMaps[(GET_D(rINDEX2) / 10000) * MAPSCRS + (GET_D(rINDEX)/10000)], value/10000);
-			break;
-
-		case SCREENHEIGHT:
-			// FFScript::set_screenHeight(&TheMaps[(GET_D(rINDEX2) / 10000) * MAPSCRS + (GET_D(rINDEX)/10000)], value/10000);
-			break;
-
-		case SCREENVIEWX:
-			// FFScript::set_screenViewX(&TheMaps[(GET_D(rINDEX2) / 10000) * MAPSCRS + (GET_D(rINDEX)/10000)], value/10000);
-			break;
-
-		case SCREENVIEWY:
-			// FFScript::set_screenViewY(&TheMaps[(GET_D(rINDEX2) / 10000) * MAPSCRS + (GET_D(rINDEX)/10000)], value/10000);
-			break;
 
 		//These use the method of SetScreenEnemy
 		
