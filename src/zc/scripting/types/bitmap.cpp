@@ -14,6 +14,11 @@ extern int32_t sarg3;
 // TODO ! static?
 UserDataContainer<user_bitmap, MAX_USER_BITMAPS> user_bitmaps = {script_object_type::bitmap, "bitmap"};
 
+user_bitmap* checkBitmap(int32_t ref)
+{
+	return user_bitmaps.check(ref);
+}
+
 int32_t bitmap_get_register(int32_t reg)
 {
 	int32_t ret = 0;

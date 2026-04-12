@@ -11,6 +11,14 @@ extern int32_t sarg1;
 extern int32_t sarg2;
 extern int32_t sarg3;
 
+user_genscript* checkGenericScr(int32_t ref)
+{
+	if (BC::checkBounds(ref, 1, NUMSCRIPTSGENERIC-1) != SH::_NoError)
+		return NULL;
+
+	return &user_genscript::get(ref);
+}
+
 int32_t genericdata_get_register(int32_t reg)
 {
 	int32_t ret = 0;

@@ -16,6 +16,38 @@ extern int32_t sarg3;
 mapdata decode_mapdata_ref(int ref);
 void playLevelMusic();
 
+namespace {
+
+mapscr* ResolveMapdataScr(int32_t mapdataref)
+{
+	auto mapdata = decode_mapdata_ref(mapdataref);
+	if (!mapdata.scr)
+		scripting_log_error_with_context("mapdata id is invalid: {}", mapdataref);
+	return mapdata.scr;
+}
+
+ffc_handle_t ResolveMapdataFFC(int32_t mapdataref, int index)
+{
+	index -= 1;
+	if (BC::checkMapdataFFC(index) != SH::_NoError)
+		return ffc_handle_t{};
+
+	auto result = decode_mapdata_ref(mapdataref);
+	if (!result.scr)
+	{
+		scripting_log_error_with_context("mapdata id is invalid: {}", mapdataref);
+		return ffc_handle_t{};
+	}
+
+	int screen_index_offset = 0;
+	if (result.current() && result.layer == 0)
+		screen_index_offset = get_region_screen_offset(result.screen);
+
+	return *result.scr->getFFCHandle(index, screen_index_offset);
+}
+
+}
+
 int32_t mapdata_get_register(int32_t reg)
 {
 	int32_t ret = 0;

@@ -11,7 +11,17 @@ extern int32_t sarg1;
 extern int32_t sarg2;
 extern int32_t sarg3;
 
-// TODO ! move checkBottleData here?
+bottletype* checkBottleData(int32_t ref, bool skipError)
+{
+	if(ref > 0 && ref <= 64)
+	{
+		return &QMisc.bottle_types[ref-1];
+	}
+	if(skipError) return NULL;
+
+	scripting_log_error_with_context("Invalid {} using UID = {}", "bottledata", ref);
+	return NULL;
+}
 
 int32_t bottledata_get_register(int32_t reg)
 {

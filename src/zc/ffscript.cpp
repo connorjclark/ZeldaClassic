@@ -164,7 +164,8 @@ FFScript FFCore;
 static UserDataContainer<script_array, 1000000> script_arrays = {script_object_type::array, "array"};
 static UserDataContainer<user_paldata, MAX_USER_PALDATAS> user_paldatas = {script_object_type::paldata, "paldata"};
 static UserDataContainer<user_rng, MAX_USER_RNGS> user_rngs = {script_object_type::rng, "rng"};
-static UserDataContainer<user_stack, MAX_USER_STACKS> user_stacks = {script_object_type::stack, "stack"};
+// TODO !
+extern UserDataContainer<user_stack, MAX_USER_STACKS> user_stacks;
 extern UserDataContainer<user_bitmap, MAX_USER_BITMAPS> user_bitmaps;
 
 script_array* create_script_array()
@@ -330,7 +331,7 @@ int32_t CScriptDrawingCommands::GetCount()
 //
 // If temporary, and loaded without specifiying a screen index, we allow combo array variables (like
 // `ComboX[pos]`) to address any rpos in the region. Otherwise, only positions in the exact screen
-// referenced by `mapdataref` can be used (0-175). See ResolveMapdataPos.
+// referenced by `mapdataref` can be used (0-175).
 mapdata decode_mapdata_ref(int ref)
 {
 	if (ref == 0)
@@ -590,12 +591,6 @@ int32_t FFScript::atox(char *ip_str)
 }
 
 char runningItemScripts[256] = {0};
-
-// TODO ! rm?
-extern int32_t directItemA;
-extern int32_t directItemB;
-extern int32_t directItemX;
-extern int32_t directItemY;
 
 
 #ifdef _MSC_VER
@@ -1714,27 +1709,6 @@ ffcdata *ResolveFFC(int32_t ffcref)
 	return ResolveFFCWithID(ffcref);
 }
 
-// TODO ! move?
-mapscr* ResolveMapdataScr(int32_t mapdataref)
-{
-	auto mapdata = decode_mapdata_ref(mapdataref);
-	if (!mapdata.scr)
-		scripting_log_error_with_context("mapdata id is invalid: {}", mapdataref);
-	return mapdata.scr;
-}
-
-rpos_handle_t ResolveMapdataPos(int32_t mapdataref, int pos)
-{
-	auto mapdata = decode_mapdata_ref(mapdataref);
-	if (!mapdata.scr)
-	{
-		scripting_log_error_with_context("mapdata id is invalid: {}", mapdataref);
-		return rpos_handle_t{};
-	}
-
-	return mapdata.resolve_pos(pos);
-}
-
 int mapdata::max_pos()
 {
 	if (type == mapdata_type::TemporaryCurrentRegion)
@@ -1814,27 +1788,6 @@ ffc_handle_t mapdata::resolve_ffc_handle(int index)
 ffcdata* mapdata::resolve_ffc(int index)
 {
 	return resolve_ffc_handle(index).ffc;
-}
-
-// TODO ! mv?
-ffc_handle_t ResolveMapdataFFC(int32_t mapdataref, int index)
-{
-	index -= 1;
-	if (BC::checkMapdataFFC(index) != SH::_NoError)
-		return ffc_handle_t{};
-
-	auto result = decode_mapdata_ref(mapdataref);
-	if (!result.scr)
-	{
-		scripting_log_error_with_context("mapdata id is invalid: {}", mapdataref);
-		return ffc_handle_t{};
-	}
-
-	int screen_index_offset = 0;
-	if (result.current() && result.layer == 0)
-		screen_index_offset = get_region_screen_offset(result.screen);
-
-	return *result.scr->getFFCHandle(index, screen_index_offset);
 }
 
 int32_t genscript_timing = SCR_TIMING_START_FRAME;
@@ -2463,14 +2416,6 @@ weapon *checkWpn(int32_t uid)
 	return ResolveSprite<weapon>(uid, "weapon");
 }
 
-// TODO ! move
-user_genscript *checkGenericScr(int32_t ref)
-{
-	if (BC::checkBounds(ref, 1, NUMSCRIPTSGENERIC-1) != SH::_NoError)
-		return NULL;
-
-	return &user_genscript::get(ref);
-}
 extern portal mirror_portal;
 portal *checkPortal(int32_t ref, bool skiperr = false)
 {
@@ -2516,12 +2461,6 @@ int32_t getPortalFromSaved(savedportal* p)
 	return prtl ? prtl->getUID() : 0;
 }
 
-// TODO ! mv
-user_stack *checkStack(uint32_t id, bool skipError = false)
-{
-	return user_stacks.check(id, skipError);
-}
-
 static user_rng *checkRNG(uint32_t id, bool skipError = false)
 {
 	// A null RNG pointer is special-case, access engine rng.
@@ -2546,7 +2485,6 @@ newcombo* checkCombo(int32_t ref, bool skipError)
 	return &combobuf[ref];
 }
 
-// TODO ! remove
 static bool checkComboRef()
 {
 	if (GET_REF(combodataref) < 0 || GET_REF(combodataref) > (MAXCOMBOS-1))
@@ -2591,18 +2529,6 @@ guydata* checkNPCData(int32_t ref)
 	return nullptr;
 }
 
-// TODO ! rm
-static bool checkNPCDataRef()
-{
-	if( (unsigned) GET_REF(npcdataref) > (MAXNPCS-1) )
-	{
-		scripting_log_error_with_context("Invalid npcdata ID: {}", GET_REF(npcdataref));
-		return false;
-	}
-
-	return true;
-}
-
 item* checkItem(int32_t ref)
 {
 	return ResolveItemSprite(ref);
@@ -2639,23 +2565,6 @@ mapscr* checkMapDataScr(int32_t ref)
 screendata* checkScreen(int32_t ref)
 {
 	return (screendata*)get_scr_maybe(cur_map, ref);
-}
-
-user_bitmap* checkBitmap(int32_t ref)
-{
-	return user_bitmaps.check(ref);
-}
-
-bottletype* checkBottleData(int32_t ref, bool skipError)
-{
-	if(ref > 0 && ref <= 64)
-	{
-		return &QMisc.bottle_types[ref-1];
-	}
-	if(skipError) return NULL;
-
-	scripting_log_error_with_context("Invalid {} using UID = {}", "bottledata", ref);
-	return NULL;
 }
 
 bottleshoptype *checkBottleShopData(int32_t ref, bool skipError)

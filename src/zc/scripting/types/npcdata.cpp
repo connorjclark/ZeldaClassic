@@ -9,8 +9,10 @@ extern int32_t sarg1;
 extern int32_t sarg2;
 extern int32_t sarg3;
 
+namespace {
+
 // TODO: replace with checkNPCData.
-static bool checkNPCDataRef()
+bool checkNPCDataRef()
 {
 	if( (unsigned) GET_REF(npcdataref) > (MAXNPCS-1) )
 	{
@@ -20,6 +22,8 @@ static bool checkNPCDataRef()
 
 	return true;
 }
+
+} // end namespace
 
 int32_t npcdata_get_register(int32_t reg)
 {

@@ -15,8 +15,10 @@ extern int32_t sarg3;
 extern ScriptType curScriptType;
 extern script_data* curscript;
 
+namespace {
+
 // TODO: replace with checkCombo.
-static bool checkComboRef()
+bool checkComboRef()
 {
 	if (GET_REF(combodataref) < 0 || GET_REF(combodataref) > (MAXCOMBOS-1))
 	{
@@ -26,6 +28,8 @@ static bool checkComboRef()
 
 	return true;
 }
+
+} // end namespace
 
 int32_t combodata_get_register(int32_t reg)
 {
