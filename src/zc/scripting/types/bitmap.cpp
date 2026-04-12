@@ -6,6 +6,8 @@
 #include "core/zdefs.h"
 #include "zc/scripting/script_object.h"
 
+#include <cstdint>
+
 extern refInfo *ri;
 extern int32_t sarg1;
 extern int32_t sarg2;
