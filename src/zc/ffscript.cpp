@@ -44,6 +44,7 @@
 #include "zc/scripting/string_utils.h"
 #include "zc/scripting/types.h"
 #include "zc/scripting/types/genericdata.h"
+#include "zc/scripting/types/mapdata.h"
 #include "zc/scripting/types/portal.h"
 #include "zc/scripting/types/savedportal.h"
 #include "zc/scripting/types/subscreenwidget.h"
@@ -319,101 +320,6 @@ int32_t CScriptDrawingCommands::GetCount()
 {
 	al_trace("current number of draws is: %d\n", count);
 	return count;
-}
-
-// Decodes a `mapdataref` (reference number) for a temporary screen.
-//
-// A mapdataref can refer to:
-//
-// - the canonical mapscr data, loaded via `Game->LoadMapData(int map, int screen)`
-// - a temporary mapscr, loaded via `Game->LoadTempScreen(int layer, int? screen)`
-// - a temporary mapscr, loaded via `Game->LoadScrollingScreen(int layer, int? screen)`
-//
-// The canonical maprefs are > 0, and temporary ones are all negative. 0 is invalid (null).
-//
-// If temporary, and loaded without specifiying a screen index, we allow combo array variables (like
-// `ComboX[pos]`) to address any rpos in the region. Otherwise, only positions in the exact screen
-// referenced by `mapdataref` can be used (0-175).
-mapdata decode_mapdata_ref(int ref)
-{
-	if (ref == 0)
-		return mapdata{};
-
-	if (ref > 0)
-	{
-		ref -= 1;
-		if (ref >= TheMaps.size())
-			return mapdata{};
-
-		int screen = ref % MAPSCRS;
-		mapscr* scr = &TheMaps[ref];
-		return mapdata{mapdata_type::CanonicalScreen, scr, scr, screen, 0};
-	}
-
-	// Negative values are for temporary screens.
-
-	ref = -(ref + 1);
-	bool is_scrolling = ref & 1;
-	bool is_region = ref & 2;
-	int screen = (ref & 0x0000FF00) >> 8;
-	int layer  = (ref & 0x00FF0000) >> 16;
-
-	if (is_region)
-	{
-		if (is_scrolling)
-			screen = scrolling_region.origin_screen;
-		else
-			screen = cur_screen;
-	}
-
-	mapscr* base_scr = nullptr;
-	mapscr* scr = nullptr;
-	if (is_scrolling)
-	{
-		int index = screen * 7 + layer;
-		if (index >= 0 && index < FFCore.ScrollingScreensAll.size())
-		{
-			base_scr = FFCore.ScrollingScreensAll[screen * 7];
-			scr = FFCore.ScrollingScreensAll[index];
-		}
-	}
-	else
-	{
-		if (layer >= 0 && layer <= 6 && is_in_current_region(screen))
-		{
-			base_scr = get_scr_layer(screen, 0);
-			scr = get_scr_layer(screen, layer);
-		}
-	}
-
-	if (!scr)
-		return mapdata{};
-
-	auto type = mapdata_type::None;
-	if (is_region && is_scrolling)
-		type = mapdata_type::TemporaryScrollingRegion;
-	else if (is_region && !is_scrolling)
-		type = mapdata_type::TemporaryCurrentRegion;
-	else if (!is_region && is_scrolling)
-		type = mapdata_type::TemporaryScrollingScreen;
-	else if (!is_region && !is_scrolling)
-		type = mapdata_type::TemporaryCurrentScreen;
-
-	return mapdata{type, base_scr, scr, screen, layer};
-}
-
-static int create_mapdata_temp_ref(mapdata_type type, int screen, int layer)
-{
-	bool is_scrolling = type == mapdata_type::TemporaryScrollingScreen || type == mapdata_type::TemporaryScrollingRegion;
-	bool is_region = type == mapdata_type::TemporaryScrollingRegion || type == mapdata_type::TemporaryCurrentRegion;
-
-	int ref = 0;
-	ref |= is_scrolling ? 1 : 0;
-	ref |= is_region ? 2 : 0;
-	if (!is_region)
-		ref |= ((screen & 0xFF) << 8);
-	ref |= ((layer & 0xFF) << 16);
-	return -ref-1;
 }
 
 mapscr* GetScrollingMapscr(int layer, int x, int y)
@@ -1708,87 +1614,6 @@ ffcdata *ResolveFFC(int32_t ffcref)
 		return ResolveSprite<ffcdata>(ffcref, "ffc");
 
 	return ResolveFFCWithID(ffcref);
-}
-
-int mapdata::max_pos()
-{
-	if (type == mapdata_type::TemporaryCurrentRegion)
-		return (int)region_max_rpos;
-
-	if (type == mapdata_type::TemporaryScrollingRegion)
-		return (int)scrolling_region.screen_count * 176 - 1;
-
-	return 175;
-}
-
-rpos_handle_t mapdata::resolve_pos(int pos)
-{
-	if (!screenscrolling && scrolling())
-	{
-		int32_t mapdataref = create_mapdata_temp_ref(type, screen, layer);
-		scripting_log_error_with_context("mapdata id is invalid: {} - screen is not scrolling right now", mapdataref);
-		return rpos_handle_t{};
-	}
-
-	// mapdata loaded via `Game->LoadTempScreen(layer)` have access to the entire region.
-	if (type == mapdata_type::TemporaryCurrentRegion)
-	{
-		rpos_t rpos = (rpos_t)pos;
-		if (BC::checkComboRpos(rpos) != SH::_NoError)
-			return rpos_handle_t{};
-
-		return get_rpos_handle(rpos, layer);
-	}
-
-	// mapdata loaded via `Game->LoadScrollingScreen(layer)` have access to the entire scrolling region.
-	if (type == mapdata_type::TemporaryScrollingRegion)
-	{
-		rpos_t rpos = (rpos_t)pos;
-		rpos_t max = (rpos_t)(scrolling_region.screen_count * 176 - 1);
-		if (BC::checkBoundsRpos(rpos, (rpos_t)0, max) != SH::_NoError)
-			return rpos_handle_t{};
-
-		return {base_scr, scr, scr->screen, layer, rpos, RPOS_TO_POS(rpos)};
-	}
-
-	// Otherwise, access is limited to just one screen.
-	if (BC::checkComboPos(pos) != SH::_NoError)
-		return rpos_handle_t{};
-
-	if (type == mapdata_type::CanonicalScreen)
-		return {base_scr, scr, screen, 0, (rpos_t)pos, pos};
-
-	if (scrolling())
-	{
-		if (!scr->is_valid())
-			return rpos_handle_t{};
-
-		return {base_scr, scr, screen, layer, (rpos_t)pos, pos};
-	}
-
-	rpos_t rpos = POS_TO_RPOS(pos, screen);
-	if (BC::checkComboRpos(rpos) != SH::_NoError)
-		return rpos_handle_t{};
-
-	return {base_scr, scr, screen, layer, rpos, pos};
-}
-
-ffc_handle_t mapdata::resolve_ffc_handle(int index)
-{
-	index -= 1;
-	if (BC::checkMapdataFFC(index) != SH::_NoError)
-		return ffc_handle_t{};
-
-	int screen_index_offset = 0;
-	if (current() && layer == 0)
-		screen_index_offset = get_region_screen_offset(screen);
-
-	return *scr->getFFCHandle(index, screen_index_offset);
-}
-
-ffcdata* mapdata::resolve_ffc(int index)
-{
-	return resolve_ffc_handle(index).ffc;
 }
 
 int32_t genscript_timing = SCR_TIMING_START_FRAME;

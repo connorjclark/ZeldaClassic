@@ -419,48 +419,7 @@ void load_genscript(const gamedata& gd);
 void load_genscript(const zinitdata& gd);
 void save_genscript(gamedata& gd);
 
-enum class mapdata_type
-{
-	None,
-	CanonicalScreen,
-	TemporaryCurrentScreen,
-	TemporaryCurrentRegion,
-	TemporaryScrollingScreen,
-	TemporaryScrollingRegion,
-};
-
-struct mapdata {
-	mapdata_type type;
-	mapscr* base_scr;
-	mapscr* scr;
-	int screen;
-	int layer;
-
-	bool temporary() const
-	{
-		return type != mapdata_type::None && type != mapdata_type::CanonicalScreen;
-	}
-
-	bool canonical() const
-	{
-		return type == mapdata_type::CanonicalScreen;
-	}
-
-	bool current() const
-	{
-		return type == mapdata_type::TemporaryCurrentRegion || type == mapdata_type::TemporaryCurrentScreen;
-	}
-
-	bool scrolling() const
-	{
-		return type == mapdata_type::TemporaryScrollingRegion || type == mapdata_type::TemporaryScrollingScreen;
-	}
-
-	int max_pos();
-	rpos_handle_t resolve_pos(int pos);
-	ffc_handle_t resolve_ffc_handle(int index);
-	ffcdata* resolve_ffc(int index);
-};
+struct mapdata;
 
 newcombo* checkCombo(int32_t ref, bool skipError = false);
 newcombo* checkComboFromTriggerRef(dword ref);
