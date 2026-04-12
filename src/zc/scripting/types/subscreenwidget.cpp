@@ -10,8 +10,7 @@ extern int32_t sarg1;
 extern int32_t sarg2;
 extern int32_t sarg3;
 
-// TODO ! mv
-static void bad_subwidg_type(bool func, byte type)
+void bad_subwidg_type(bool func, byte type)
 {
 	auto tyname = type < widgMAX ? subwidg_internal_names[type].c_str() : "";
 	scripting_log_error_with_context("Widget type {} '{}' does not have this {}!",

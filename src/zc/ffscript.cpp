@@ -43,6 +43,7 @@
 #include "zc/scripting/sram.h"
 #include "zc/scripting/string_utils.h"
 #include "zc/scripting/types.h"
+#include "zc/scripting/types/subscreenwidget.h"
 #include "zc/zc_ffc.h"
 #include "zc/zc_sys.h"
 #include "zc/jit.h"
@@ -2817,32 +2818,6 @@ SubscrWidget *checkSubWidg(int32_t ref, std::set<int> const& req_sub_tys, int re
 	return NULL;
 }
 
-void bad_subwidg_type(bool func, byte type)
-{
-	auto tyname = type < widgMAX ? subwidg_internal_names[type].c_str() : "";
-	scripting_log_error_with_context("Widget type {} '{}' does not have this {}!",
-		type, tyname, func ? "function" : "value");
-}
-
-int32_t item_flag(item_flags flag)
-{
-	if(invalid_item_id(GET_REF(itemdataref)))
-	{
-		scripting_log_error_with_context("Invalid itemdata access: {}", GET_REF(itemdataref));
-		return 0;
-	}
-	return (itemsbuf.get(GET_REF(itemdataref)).flags & flag) ? 10000 : 0;
-}
-void item_flag(item_flags flag, bool val)
-{
-	if(invalid_item_id(GET_REF(itemdataref)))
-	{
-		scripting_log_error_with_context("Invalid itemdata access: {}", GET_REF(itemdataref));
-		return;
-	}
-	SETFLAG(itemsbuf[GET_REF(itemdataref)].flags, flag, val);
-}
-
 bool scripting_use_8bit_colors;
 int scripting_max_color_val;
 
@@ -2921,12 +2896,6 @@ static void apply_qr_rules()
 	apply_qr_rule(qr_SCRIPTS_6_BIT_COLOR);
 	apply_qr_rule(qr_ZS_NO_NEG_ARRAY);
 }
-
-// TODO ! rm
-//Forward decl
-int32_t do_msgheight(int32_t msg);
-int32_t do_msgwidth(int32_t msg);
-//
 
 template <typename T, size_t N>
 static int read_array(const T(&arr)[N], int index)
@@ -4161,27 +4130,6 @@ void do_charwidth()
 	cstr[1] = '\0';
 	SET_D(rEXP1, text_length(get_zc_font(font), cstr)*10000);
 	delete[] cstr;
-}
-
-int32_t do_msgwidth(int32_t ID)
-{
-	if(BC::checkMessage(ID) != SH::_NoError)
-	{
-		return -1;
-	}
-	
-	int32_t v = text_length(get_zc_font(MsgStrings[ID].font),
-		MsgStrings[ID].s.substr(0,MsgStrings[ID].s.find_last_not_of(' ')+1).c_str());
-	return v;
-}
-
-int32_t do_msgheight(int32_t ID)
-{
-	if(BC::checkMessage(ID) != SH::_NoError)
-	{
-		return -1;
-	}
-	return text_height(get_zc_font(MsgStrings[ID].font));
 }
 
 ///----------------------------------------------------------------------------------------------------//

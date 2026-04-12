@@ -9,9 +9,26 @@ extern int32_t sarg1;
 extern int32_t sarg2;
 extern int32_t sarg3;
 
-// TODO !
-int32_t do_msgheight(int32_t msg);
-int32_t do_msgwidth(int32_t msg);
+int32_t do_msgwidth(int32_t ID)
+{
+	if(BC::checkMessage(ID) != SH::_NoError)
+	{
+		return -1;
+	}
+	
+	int32_t v = text_length(get_zc_font(MsgStrings[ID].font),
+		MsgStrings[ID].s.substr(0,MsgStrings[ID].s.find_last_not_of(' ')+1).c_str());
+	return v;
+}
+
+int32_t do_msgheight(int32_t ID)
+{
+	if(BC::checkMessage(ID) != SH::_NoError)
+	{
+		return -1;
+	}
+	return text_height(get_zc_font(MsgStrings[ID].font));
+}
 
 int32_t messagedata_get_register(int32_t reg)
 {

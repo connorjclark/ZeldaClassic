@@ -9,9 +9,28 @@ extern int32_t sarg1;
 extern int32_t sarg2;
 extern int32_t sarg3;
 
-// TODO !
-int32_t item_flag(item_flags flag);
-void item_flag(item_flags flag, bool val);
+namespace {
+
+int32_t item_flag(item_flags flag)
+{
+	if(invalid_item_id(GET_REF(itemdataref)))
+	{
+		scripting_log_error_with_context("Invalid itemdata access: {}", GET_REF(itemdataref));
+		return 0;
+	}
+	return (itemsbuf.get(GET_REF(itemdataref)).flags & flag) ? 10000 : 0;
+}
+void item_flag(item_flags flag, bool val)
+{
+	if(invalid_item_id(GET_REF(itemdataref)))
+	{
+		scripting_log_error_with_context("Invalid itemdata access: {}", GET_REF(itemdataref));
+		return;
+	}
+	SETFLAG(itemsbuf[GET_REF(itemdataref)].flags, flag, val);
+}
+
+} // end namespace
 
 int32_t itemdata_get_register(int32_t reg)
 {
