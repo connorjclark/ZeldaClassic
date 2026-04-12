@@ -1793,53 +1793,6 @@ ffcdata* mapdata::resolve_ffc(int index)
 int32_t genscript_timing = SCR_TIMING_START_FRAME;
 static word max_valid_genscript;
 
-void user_genscript::clear()
-{
-	wait_atleast = true;
-	waituntil = SCR_TIMING_START_FRAME;
-	waitevent = false;
-	exitState = 0;
-	reloadState = 0;
-	eventstate = 0;
-	initd.clear();
-	data.clear();
-	quit();
-}
-void user_genscript::launch()
-{
-	quit();
-	doscript() = true;
-	wait_atleast = true;
-	waituntil = SCR_TIMING_START_FRAME;
-	waitevent = false;
-}
-void user_genscript::quit()
-{
-	if(indx > -1)
-	{
-		FFCore.destroyScriptableObject(ScriptType::Generic, indx);
-	}
-	_doscript = false;
-}
-byte& user_genscript::doscript()
-{
-	return _doscript;
-}
-byte const& user_genscript::doscript() const
-{
-	return _doscript;
-}
-
-
-user_genscript& user_genscript::get(int ind)
-{
-	if(ind < 1 || ind >= NUMSCRIPTSGENERIC)
-		ind = 0;
-	user_scripts[ind].indx = ind;
-	return user_scripts[ind];
-}
-user_genscript user_genscript::user_scripts[NUMSCRIPTSGENERIC];
-
 void countGenScripts()
 {
 	max_valid_genscript = 0;

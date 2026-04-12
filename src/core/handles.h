@@ -5,6 +5,7 @@
 #include "base/compiler.h"
 #include "core/cpos_info.h"
 #include "core/mapscr.h"
+#include "ffc.h"
 #include <stdint.h>
 #include <variant>
 #include <utility>

@@ -3,6 +3,7 @@
 
 #include "ffc.h"
 #include <array>
+#include <cstddef>
 #include <vector>
 
 struct ffc_handle_t;
