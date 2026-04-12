@@ -541,6 +541,7 @@ int32_t game_get_register(int32_t reg)
 			ret = subscreens_passive.size()*10000;
 			break;
 		}
+		case SCRIPTRAM:
 		case GLOBALRAM:
 			ret = ArrayH::getElement(GET_D(rINDEX), GET_D(rINDEX2) / 10000);
 			break;
@@ -574,7 +575,6 @@ int32_t game_get_register(int32_t reg)
 			ret = game->user_portals.size()*10000;
 			break;
 		}
-		case SCRIPTRAM:
 		case SDDD:
 			ret=FFScript::get_screen_d((GET_D(rINDEX))/10000 + ((get_currdmap())<<7), GET_D(rINDEX2) / 10000);
 			break;
@@ -901,10 +901,14 @@ void game_set_register(int32_t reg, int32_t value)
 			}
 			break;
 		}
+		case SCRIPTRAM:
 		case GLOBALRAM:
 			ArrayH::setElement(GET_D(rINDEX), GET_D(rINDEX2) / 10000, value);
 			break;
-		case SCRIPTRAM:
+		case SCRIPTRAMD:
+		case GLOBALRAMD:
+			ArrayH::setElement(GET_D(rINDEX), 0, value);
+			break;
 		case SDDD:
 			FFScript::set_screen_d((GET_D(rINDEX))/10000 + ((get_currdmap())<<7), GET_D(rINDEX2)/10000, value);
 			break;
