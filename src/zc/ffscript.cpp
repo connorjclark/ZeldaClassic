@@ -43,6 +43,7 @@
 #include "zc/scripting/sram.h"
 #include "zc/scripting/string_utils.h"
 #include "zc/scripting/types.h"
+#include "zc/scripting/types/genericdata.h"
 #include "zc/scripting/types/subscreenwidget.h"
 #include "zc/zc_ffc.h"
 #include "zc/zc_sys.h"
