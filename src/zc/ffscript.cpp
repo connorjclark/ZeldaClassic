@@ -2565,42 +2565,6 @@ combo_trigger* checkComboTrigger(dword ref)
 	return get_combo_trigger(ref);
 }
 
-user_bitmap *checkBitmap(int32_t ref, bool req_valid = false, bool skipError = false)
-{
-	switch (ref - 10)
-	{
-		case rtSCREEN:
-		case rtBMP0:
-		case rtBMP1:
-		case rtBMP2:
-		case rtBMP3:
-		case rtBMP4:
-		case rtBMP5:
-		case rtBMP6:
-			zprint2("Internal error: 'checkBitmap()' recieved ref pointing to system bitmap!\n");
-			zprint2("Please report this as a bug!\n");
-
-			if(skipError) return NULL;
-
-			scripting_log_error_with_context("Tried to reference a non-existent bitmap with UID = {}", ref);
-			return NULL;
-
-		default:
-		{
-			user_bitmap* b = user_bitmaps.check(ref, skipError);
-			if (req_valid && (!b || !b->u_bmp))
-			{
-				if (skipError) return NULL;
-
-				scripting_log_error_with_context("Tried to reference an invalid user bitmap with UID = {}.", ref);
-				Z_scripterrlog("Did you forget to create the bitmap with `new bitmap()` or `->Create()`?.\n");
-				return NULL;
-			}
-			return b;
-		}
-	}
-}
-
 extern const std::string subscr_names[sstMAX];
 static std::string subscr_type_names(std::set<int> const& req_tys)
 {

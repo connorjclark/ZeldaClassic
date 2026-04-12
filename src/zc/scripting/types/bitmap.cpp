@@ -19,6 +19,42 @@ user_bitmap* checkBitmap(int32_t ref)
 	return user_bitmaps.check(ref);
 }
 
+user_bitmap* checkBitmap(int32_t ref, bool req_valid, bool skipError)
+{
+	switch (ref - 10)
+	{
+		case rtSCREEN:
+		case rtBMP0:
+		case rtBMP1:
+		case rtBMP2:
+		case rtBMP3:
+		case rtBMP4:
+		case rtBMP5:
+		case rtBMP6:
+			zprint2("Internal error: 'checkBitmap()' recieved ref pointing to system bitmap!\n");
+			zprint2("Please report this as a bug!\n");
+
+			if(skipError) return NULL;
+
+			scripting_log_error_with_context("Tried to reference a non-existent bitmap with UID = {}", ref);
+			return NULL;
+
+		default:
+		{
+			user_bitmap* b = user_bitmaps.check(ref, skipError);
+			if (req_valid && (!b || !b->u_bmp))
+			{
+				if (skipError) return NULL;
+
+				scripting_log_error_with_context("Tried to reference an invalid user bitmap with UID = {}.", ref);
+				Z_scripterrlog("Did you forget to create the bitmap with `new bitmap()` or `->Create()`?.\n");
+				return NULL;
+			}
+			return b;
+		}
+	}
+}
+
 int32_t bitmap_get_register(int32_t reg)
 {
 	int32_t ret = 0;

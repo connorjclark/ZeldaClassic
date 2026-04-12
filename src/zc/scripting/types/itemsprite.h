@@ -2,6 +2,7 @@
 #define ZC_SCRIPTING_ITEMSPRITE_H_
 
 #include "base/ints.h"
+#include "items.h"
 #include "zc/ffscript.h"
 
 #include <optional>

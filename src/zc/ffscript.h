@@ -17,6 +17,7 @@
 #include "zc/scripting/array_manager.h"
 #include "zc/scripting/context_strings.h"
 #include "zc/jit.h"
+#include "zc/scripting/types/bitmap.h"
 #include "zc/zelda.h"
 #include "zc/hero.h"
 #include "sprite_data.h"
@@ -218,56 +219,6 @@ enum //ScrollingData indexes
 
 	SZ_SCROLLDATA
 };
-
-//User-generated / Script-Generated bitmap object
-#define UBMPFLAG_FREEING               0x01
-#define UBMPFLAG_CAN_DELETE            0x02
-struct user_bitmap : public user_abstract_obj
-{
-	BITMAP* u_bmp;
-	int32_t width;
-	int32_t height;
-	byte flags;
-
-	user_bitmap() = default;
-	user_bitmap(const user_bitmap&) = delete;
-
-	~user_bitmap()
-	{
-		destroy_bitmap(u_bmp);
-	}
-
-	void destroy()
-	{
-		destroy_bitmap(u_bmp);
-		width = 0;
-		height = 0;
-		flags = 0;
-		u_bmp = NULL;
-	}
-
-	void free_obj()
-	{
-		flags |= UBMPFLAG_FREEING;
-	}
-
-	void mark_can_del()
-	{
-		flags |= UBMPFLAG_CAN_DELETE;
-	}
-
-	bool is_freeing()
-	{
-		return flags & UBMPFLAG_FREEING;
-	}
-
-	bool can_del()
-	{
-		return flags & UBMPFLAG_CAN_DELETE;
-	}
-};
-
-
 
 //Old, 2.50 bitmap IDs
 enum { rtSCREEN = -1, rtBMP0 = 0, rtBMP1, 
