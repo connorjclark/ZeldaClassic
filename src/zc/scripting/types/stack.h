@@ -1,8 +1,9 @@
 #ifndef ZC_SCRIPTING_STACK_H_
 #define ZC_SCRIPTING_STACK_H_
 
-#include "zc/ffscript.h"
 #include <cstdint>
+
+struct user_stack;
 
 user_stack* checkStack(uint32_t id, bool skipError = false);
 

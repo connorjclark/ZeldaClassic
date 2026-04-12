@@ -1,9 +1,11 @@
 #ifndef ZC_SCRIPTING_BITMAP_H_
 #define ZC_SCRIPTING_BITMAP_H_
 
+#include <user_object.h>
 #include "allegro5/display.h"
 #include "allegro/gfx.h"
-#include "../../user_object.h"
+#include "base/ints.h"
+
 #include <cstdint>
 
 //User-generated / Script-Generated bitmap object
