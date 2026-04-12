@@ -45,9 +45,6 @@ int32_t global_get_register(int32_t reg)
 
 			break;
 		}
-		case GLOBALRAMD:
-			ret = ArrayH::getElement(GET_D(rINDEX), 0);
-			break;
 		case LONGDISTANCE: 
 		{
 			double x1 = double(GET_D(rSFTEMP));
@@ -77,7 +74,6 @@ int32_t global_get_register(int32_t reg)
 
 			break;
 		}
-		case SCRIPTRAMD:
 
 		default:
 			NOTREACHED();
@@ -86,16 +82,7 @@ int32_t global_get_register(int32_t reg)
 	return ret;
 }
 
-void global_set_register(int32_t reg, int32_t value)
+void global_set_register([[maybe_unused]] int32_t reg, [[maybe_unused]] int32_t value)
 {
-	switch (reg)
-	{
-		case GLOBALRAMD:
-			ArrayH::setElement(GET_D(rINDEX), 0, value);
-			break;
-		case SCRIPTRAMD:
-
-		default:
-			NOTREACHED();
-	}
+	NOTREACHED();
 }

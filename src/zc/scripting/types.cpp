@@ -365,6 +365,7 @@ constexpr EngineSubsystem getEngineSubsystemForRegister(int reg)
 		case GAME_SAVEMENU_F6:
 		case GAME_SAVEMENU_GAMEOVER:
 		case GLOBALRAM:
+		case GLOBALRAMD:
 		case HERO_SCREEN:
 		case INCQST:
 		case LOADMAPDATA:
@@ -372,6 +373,7 @@ constexpr EngineSubsystem getEngineSubsystemForRegister(int reg)
 		case SAVEDPORTALCOUNT:
 		case SCREENSTATEDD:
 		case SCRIPTRAM:
+		case SCRIPTRAMD:
 		case SDDD:
 		case SDDDD:
 		case SKIPCREDITS:
@@ -391,10 +393,8 @@ constexpr EngineSubsystem getEngineSubsystemForRegister(int reg)
 
 		case DISTANCE:
 		case DISTANCESCALE:
-		case GLOBALRAMD:
 		case LONGDISTANCE:
 		case LONGDISTANCESCALE:
-		case SCRIPTRAMD:
 			return EngineSubsystem::global;
 
 		case MAXDRAWS:
