@@ -567,8 +567,8 @@ int32_t game_get_register(int32_t reg)
 			break;
 		}
 		case LOADMAPDATA:
-				ret=FFScript::loadMapData();
-				break;
+			ret=FFScript::loadMapData();
+			break;
 		case SAVEDPORTALCOUNT:
 		{
 			ret = game->user_portals.size()*10000;
