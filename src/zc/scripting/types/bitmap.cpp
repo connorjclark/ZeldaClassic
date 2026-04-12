@@ -3,13 +3,15 @@
 #include "base/check.h"
 #include "base/general.h"
 #include "components/zasm/defines.h"
-#include "zc/ffscript.h"
+#include "core/zdefs.h"
 #include "zc/scripting/script_object.h"
 
 extern refInfo *ri;
 extern int32_t sarg1;
 extern int32_t sarg2;
 extern int32_t sarg3;
+
+void scripting_log_error_with_context(std::string text);
 
 UserDataContainer<user_bitmap, MAX_USER_BITMAPS> user_bitmaps = {script_object_type::bitmap, "bitmap"};
 
