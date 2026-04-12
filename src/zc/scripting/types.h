@@ -47,6 +47,7 @@
 #include "zc/scripting/types/viewport.h"
 #include "zc/scripting/types/websocket.h"
 
+#include <array>
 #include <optional>
 
 enum class EngineSubsystem : uint8_t
@@ -98,9 +99,7 @@ enum class EngineSubsystem : uint8_t
 };
 
 constexpr int MAX_REGISTER_ID = NUMVARIABLES;
-extern EngineSubsystem register_routing_table[MAX_REGISTER_ID + 1];
-
-void initializeRegisterRoutingTable();
+extern const std::array<EngineSubsystem, MAX_REGISTER_ID + 1> register_routing_table;
 
 ZC_FORCE_INLINE int32_t scripting_engine_get_register(int32_t reg)
 {
@@ -162,20 +161,53 @@ ZC_FORCE_INLINE void scripting_engine_set_register(int32_t reg, int32_t value)
 
 	switch (register_routing_table[reg])
 	{
+		case EngineSubsystem::audio: audio_set_register(reg, value); return;
+		case EngineSubsystem::bitmap: bitmap_set_register(reg, value); return;
+		case EngineSubsystem::bottledata: bottledata_set_register(reg, value); return;
+		case EngineSubsystem::combodata: combodata_set_register(reg, value); return;
+		case EngineSubsystem::combotrigger: combotrigger_set_register(reg, value); return;
+		case EngineSubsystem::debug: debug_set_register(reg, value); return;
 		case EngineSubsystem::directory: directory_set_register(reg, value); return;
+		case EngineSubsystem::dmapdata: dmapdata_set_register(reg, value); return;
+		case EngineSubsystem::dropsetdata: dropsetdata_set_register(reg, value); return;
+		case EngineSubsystem::eweapon: eweapon_set_register(reg, value); return;
+		case EngineSubsystem::ffc: ffc_set_register(reg, value); return;
 		case EngineSubsystem::file: file_set_register(reg, value); return;
 		case EngineSubsystem::game: game_set_register(reg, value); return;
+		case EngineSubsystem::genericdata: genericdata_set_register(reg, value); return;
+		case EngineSubsystem::global: global_set_register(reg, value); return;
+		case EngineSubsystem::graphics: graphics_set_register(reg, value); return;
+		case EngineSubsystem::hero: hero_set_register(reg, value); return;
+		case EngineSubsystem::input: input_set_register(reg, value); return;
+		case EngineSubsystem::itemdata: itemdata_set_register(reg, value); return;
 		case EngineSubsystem::itemsprite: itemsprite_set_register(reg, value); return;
+		case EngineSubsystem::lweapon: lweapon_set_register(reg, value); return;
+		case EngineSubsystem::mapdata: mapdata_set_register(reg, value); return;
+		case EngineSubsystem::messagedata: messagedata_set_register(reg, value); return;
+		case EngineSubsystem::misc: misc_set_register(reg, value); return;
 		case EngineSubsystem::musicdata: musicdata_set_register(reg, value); return;
 		case EngineSubsystem::npc: npc_set_register(reg, value); return;
+		case EngineSubsystem::npcdata: npcdata_set_register(reg, value); return;
+		case EngineSubsystem::portal: portal_set_register(reg, value); return;
+		case EngineSubsystem::region: region_set_register(reg, value); return;
+		case EngineSubsystem::savedportal: savedportal_set_register(reg, value); return;
 		case EngineSubsystem::savemenu: savemenu_set_register(reg, value); return;
+		case EngineSubsystem::screendata: screendata_set_register(reg, value); return;
+		case EngineSubsystem::shopdata: shopdata_set_register(reg, value); return;
 		case EngineSubsystem::sprite: sprite_set_register(reg, value); return;
+		case EngineSubsystem::spritedata: spritedata_set_register(reg, value); return;
+		case EngineSubsystem::stack: stack_set_register(reg, value); return;
+		case EngineSubsystem::subscreendata: subscreendata_set_register(reg, value); return;
+		case EngineSubsystem::subscreenpage: subscreenpage_set_register(reg, value); return;
+		case EngineSubsystem::subscreenwidget: subscreenwidget_set_register(reg, value); return;
+		case EngineSubsystem::viewport: viewport_set_register(reg, value); return;
 		case EngineSubsystem::websocket: websocket_set_register(reg, value); return;
     }
 
 	NOTREACHED();
 }
 
+// TODO: replace cascading code with a routing table (see above).
 ZC_FORCE_INLINE std::optional<int32_t> scripting_engine_run_command(word command)
 {
 	if (auto r = user_object_run_command(command))

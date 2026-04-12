@@ -413,6 +413,81 @@ int32_t hero_get_register(int32_t reg)
 		} 
 		case LINKZOFS:
 			ret = (int32_t)(Hero.zofs)*10000;
+			break;	
+		case LINKMAXHP:
+			ret=(int32_t)(game->get_maxlife())*10000;
+			break;
+		case LINKMAXMP:
+			ret=(int32_t)(game->get_maxmagic())*10000;
+			break;
+		case LINKJUMP:
+			ret = Hero.getJump().getZLong();
+			break;
+		case LINKMP:
+			ret=(int32_t)(game->get_magic())*10000;
+			break;
+		case LINKINVIS:
+			ret = (((int32_t)(Hero.getDontDraw())) ? 10000 : 0);
+			break;
+		case LINKINVINC:
+			ret = (int32_t)(Hero.scriptcoldet)*10000;
+			break;
+		case LINKLADDERX:
+			ret=(int32_t)(Hero.getLadderX())*10000;
+			break;
+		case LINKLADDERY:
+			ret=(int32_t)(Hero.getLadderY())*10000;
+			break;
+		case LINKSWORDJINX:
+			ret = (int32_t)(Hero.getSwordClk())*10000;
+			break;
+		case LINKITEMJINX:
+			ret = (int32_t)(Hero.getItemClk())*10000;
+			break;
+		case LINKROTATION:
+			if ( get_qr(qr_OLDSPRITEDRAWS) ) 
+			{
+				scripting_log_error_with_context("To use this you must disable the quest rule 'Old (Faster) Sprite Drawing'.");
+				ret = -1; break;
+			}
+			ret = (int32_t)(Hero.rotation)*10000;
+			break;
+		case LINKSCALE:
+		{
+			if ( get_qr(qr_OLDSPRITEDRAWS) ) 
+			{
+				scripting_log_error_with_context("To use this you must disable the quest rule 'Old (Faster) Sprite Drawing'.");
+				ret = -1; break;
+			}
+			ret = (int32_t)(Hero.scale*100.0);
+			break;
+		}
+		case LINKPUSH:
+			ret=(int32_t)Hero.getPushing()*10000;
+			break;
+		case LINKSTUN:
+			ret=(int32_t)Hero.StunClock()*10000;
+			break;
+		case LINKSCRIPTTILE:
+			ret=script_hero_sprite*10000;
+			break;
+		case LINKSCRIPFLIP:
+			ret=script_hero_flip*10000;
+			break;
+		case LINKITEMB:
+			ret = Bwpn.id * 10000;
+			break;
+		case LINKITEMA:
+			ret = Awpn.id * 10000;
+			break;
+		case LINKITEMX:
+			ret = Xwpn.id * 10000;
+			break;
+		case LINKITEMY:
+			ret = Ywpn.id * 10000;
+			break;
+		case LINKTILEMOD:
+			ret = Hero.getTileModifier() * 10000;
 			break;
 		case PRESSAXISDOWN:
 			ret=button_press[15]?10000:0;

@@ -10422,6 +10422,24 @@ void set_register(int32_t arg, int32_t value)
 
 	current_zasm_register = arg;
 
+	if (zasm_array_supports(arg))
+	{
+		int ref_arg = get_register_ref_dependency(arg).value_or(0);
+#ifdef DEBUG_REGISTER_DEPS
+		if (ref_arg) debug_get_ref(ref_arg);
+#endif
+		int ref = ref_arg ? get_ref(ref_arg) : 0;
+		zasm_array_set(arg, ref, GET_D(rINDEX) / 10000, value, script_object_type::none);
+	}
+	else
+	{
+		scripting_engine_set_register(arg, value);
+	}
+
+	current_zasm_register = 0;
+
+	if (screen) return; // TODO !
+
 	// Do not ever use `return` in these cases!
 	switch(arg)
 	{
@@ -28969,7 +28987,6 @@ int32_t FFScript::getHeroAction()
 
 void FFScript::init(bool for_continue)
 {
-	initializeRegisterRoutingTable();
 	apply_qr_rules();
 	eventData.clear();
 	countGenScripts();

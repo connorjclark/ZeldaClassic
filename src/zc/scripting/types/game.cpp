@@ -422,10 +422,6 @@ int32_t game_get_register(int32_t reg)
 			ret=FFCore.get_free_bitmap();
 			break;
 			
-		case GETMIDI:
-			ret=(currmidi-MIDIOFFSET_ZSCRIPT)*10000;
-			break;
-			
 		case CURDSCR:
 		{
 			int32_t di = (get_currscr()-DMaps[get_currdmap()].xoff);
