@@ -207,7 +207,7 @@ ZC_FORCE_INLINE void scripting_engine_set_register(int32_t reg, int32_t value)
 	NOTREACHED();
 }
 
-// TODO: replace cascading code with a routing table (like above).
+// TODO: replace cascading code with a routing table (like above), and move all commands to files in types/
 ZC_FORCE_INLINE std::optional<int32_t> scripting_engine_run_command(word command)
 {
 	if (auto r = user_object_run_command(command))
