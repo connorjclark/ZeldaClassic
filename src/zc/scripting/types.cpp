@@ -1442,7 +1442,7 @@ constexpr EngineSubsystem getEngineSubsystemForRegister(int reg)
 
 } // end namespace
 
-extern const auto register_routing_table = []() constexpr {
+extern const std::array<EngineSubsystem, MAX_REGISTER_ID + 1> register_routing_table = []() constexpr {
 	std::array<EngineSubsystem, MAX_REGISTER_ID + 1> data{};
 
 	for (int i = 0; i <= MAX_REGISTER_ID; i++)
