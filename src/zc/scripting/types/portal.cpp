@@ -5,15 +5,29 @@
 #include "core/zdefs.h"
 #include "sprite.h"
 #include "zc/ffscript.h"
+#include "zc/scripting/types/savedportal.h"
 
 extern refInfo *ri;
 extern int32_t sarg1;
 extern int32_t sarg2;
 extern int32_t sarg3;
 
-// TODO !
-portal *checkPortal(int32_t ref, bool skiperr = false);
-savedportal *checkSavedPortal(int32_t ref, bool skiperr = false);
+portal* checkPortal(int32_t ref, bool skiperr)
+{
+	extern portal mirror_portal;
+
+	if(ref == -1)
+		return &mirror_portal;
+
+	portal* p = (portal*)portals.getByUID(ref);
+	if(!p)
+	{
+		if(!skiperr)
+			scripting_log_error_with_context("Invalid portal pointer: {}", ref);
+		return nullptr;
+	}
+	return p;
+}
 
 int32_t portal_get_register(int32_t reg)
 {

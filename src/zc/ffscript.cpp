@@ -44,6 +44,8 @@
 #include "zc/scripting/string_utils.h"
 #include "zc/scripting/types.h"
 #include "zc/scripting/types/genericdata.h"
+#include "zc/scripting/types/portal.h"
+#include "zc/scripting/types/savedportal.h"
 #include "zc/scripting/types/subscreenwidget.h"
 #include "zc/zc_ffc.h"
 #include "zc/zc_sys.h"
@@ -165,7 +167,6 @@ FFScript FFCore;
 static UserDataContainer<script_array, 1000000> script_arrays = {script_object_type::array, "array"};
 static UserDataContainer<user_paldata, MAX_USER_PALDATAS> user_paldatas = {script_object_type::paldata, "paldata"};
 static UserDataContainer<user_rng, MAX_USER_RNGS> user_rngs = {script_object_type::rng, "rng"};
-// TODO !
 extern UserDataContainer<user_stack, MAX_USER_STACKS> user_stacks;
 extern UserDataContainer<user_bitmap, MAX_USER_BITMAPS> user_bitmaps;
 
@@ -1689,7 +1690,6 @@ static void set_current_script_engine_data(ScriptEngineData& data, ScriptType ty
 	}
 }
 
-// TODO ! move ffc.cpp?
 ffcdata* ResolveFFCWithID(ffc_id_t id)
 {
 	if (BC::checkFFC(id) != SH::_NoError)
@@ -2368,51 +2368,6 @@ weapon *checkEWpn(int32_t uid)
 weapon *checkWpn(int32_t uid)
 {
 	return ResolveSprite<weapon>(uid, "weapon");
-}
-
-extern portal mirror_portal;
-portal *checkPortal(int32_t ref, bool skiperr = false)
-{
-	if(ref == -1)
-		return &mirror_portal;
-
-	portal* p = (portal*)portals.getByUID(ref);
-	if(!p)
-	{
-		if(!skiperr)
-			scripting_log_error_with_context("Invalid portal pointer: {}", ref);
-		return nullptr;
-	}
-	return p;
-}
-
-savedportal *checkSavedPortal(int32_t ref, bool skiperr = false)
-{
-	savedportal* sp = game->getSavedPortal(ref);
-	if(!sp)
-	{
-		if(!skiperr)
-			scripting_log_error_with_context("Invalid savedportal pointer: {}", ref);
-		return nullptr;
-	}
-	return sp;
-}
-int32_t getPortalFromSaved(savedportal* p)
-{
-	if(p == &(game->saved_mirror_portal))
-		return -1;
-	portal* prtl = nullptr;
-	portals.forEach([&](sprite& spr)
-	{
-		portal* tmp = (portal*)&spr;
-		if(p->getUID() == tmp->saved_data)
-		{
-			prtl = tmp;
-			return true;
-		}
-		return false;
-	});
-	return prtl ? prtl->getUID() : 0;
 }
 
 static user_rng *checkRNG(uint32_t id, bool skipError = false)
@@ -12261,6 +12216,8 @@ int32_t run_script_int(JittedScriptInstance* j_instance)
 			}
 			case PORTALREMOVE:
 			{
+				extern portal mirror_portal;
+
 				if(portal* p = checkPortal(GET_REF(portalref), true))
 				{
 					if(p == &mirror_portal)

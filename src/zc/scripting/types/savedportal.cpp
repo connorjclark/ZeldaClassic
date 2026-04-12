@@ -5,16 +5,42 @@
 #include "core/zdefs.h"
 #include "gamedata.h"
 #include "zc/ffscript.h"
+#include "zc/scripting/types/portal.h"
 
 extern refInfo *ri;
 extern int32_t sarg1;
 extern int32_t sarg2;
 extern int32_t sarg3;
 
-// TODO !
-portal *checkPortal(int32_t ref, bool skiperr = false);
-savedportal *checkSavedPortal(int32_t ref, bool skiperr = false);
-int32_t getPortalFromSaved(savedportal* p);
+savedportal* checkSavedPortal(int32_t ref, bool skiperr)
+{
+	savedportal* sp = game->getSavedPortal(ref);
+	if(!sp)
+	{
+		if(!skiperr)
+			scripting_log_error_with_context("Invalid savedportal pointer: {}", ref);
+		return nullptr;
+	}
+	return sp;
+}
+
+int32_t getPortalFromSaved(savedportal* p)
+{
+	if(p == &(game->saved_mirror_portal))
+		return -1;
+	portal* prtl = nullptr;
+	portals.forEach([&](sprite& spr)
+	{
+		portal* tmp = (portal*)&spr;
+		if(p->getUID() == tmp->saved_data)
+		{
+			prtl = tmp;
+			return true;
+		}
+		return false;
+	});
+	return prtl ? prtl->getUID() : 0;
+}
 
 int32_t savedportal_get_register(int32_t reg)
 {

@@ -11,7 +11,6 @@ extern int32_t sarg1;
 extern int32_t sarg2;
 extern int32_t sarg3;
 
-// TODO ! static?
 UserDataContainer<user_bitmap, MAX_USER_BITMAPS> user_bitmaps = {script_object_type::bitmap, "bitmap"};
 
 user_bitmap* checkBitmap(int32_t ref)
