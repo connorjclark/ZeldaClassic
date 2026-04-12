@@ -79,14 +79,6 @@ int32_t combodata_get_register(int32_t reg)
 		case COMBODASPEED:		GET_COMBO_VAR_BYTE(speed); break;					//char
 		case COMBODATAID: 		ret = (GET_REF(combodataref)*10000); break;
 		case COMBODATASCRIPT:			GET_COMBO_VAR_DWORD(script); break;						//W
-		// TODO !
-		// case COMBODBLOCKHOLE:		GET_COMBOCLASS_VAR_BYTE(block_hole); break;			//C
-		// case COMBODBLOCKNPC:		GET_COMBOCLASS_VAR_BYTE(block_enemies); break;			//C
-		// case COMBODBLOCKTRIG:		GET_COMBOCLASS_VAR_BYTE(block_trigger); break; 		//C
-		// case COMBODBLOCKWEAPON:		GET_COMBOCLASS_BYTE_INDEX(block_weapon, 32); break;		//C, 32 INDICES
-		// case COMBODBLOCKWPNLEVEL:	GET_COMBOCLASS_VAR_BYTE(block_weapon_lvl); break;		//C
-		// case COMBODCONVXSPEED:		GET_COMBOCLASS_VAR_DWORD(conveyor_x_speed); break;		//SHORT
-		// case COMBODCONVYSPEED:		GET_COMBOCLASS_VAR_DWORD(conveyor_y_speed); break;		//SHORT
 		case COMBODCSET:
 		{
 			if(!checkComboRef())
@@ -108,10 +100,6 @@ int32_t combodata_get_register(int32_t reg)
 			}
 			break;
 		}
-		// case COMBODDIRCHANGETYPE:	GET_COMBOCLASS_VAR_BYTE(directional_change_type); break;		//C
-		// case COMBODDISTANCECHANGETILES:	GET_COMBOCLASS_VAR_INT(distance_change_tiles); break; 	//LONG
-		// case COMBODDIVEITEM:		GET_COMBOCLASS_VAR_DWORD(dive_item); break;				//SHORT
-		// case COMBODDOCK:		GET_COMBOCLASS_VAR_BYTE(dock); break;					//C
 		case COMBODEFFECT:
 		{
 			if(!checkComboRef())
@@ -124,16 +112,10 @@ int32_t combodata_get_register(int32_t reg)
 			}
 			break;
 		}
-		// case COMBODFAIRY:		GET_COMBOCLASS_VAR_BYTE(fairy); break;					//C
-		// case COMBODFFATTRCHANGE:	GET_COMBOCLASS_VAR_BYTE(ff_combo_attr_change); break;	//C
 		case COMBODFLAG:		GET_COMBO_VAR_BYTE(flag); break;					//C
 		case COMBODFLIP:		GET_COMBO_VAR_BYTE(flip); break;					//char
-		// case COMBODFOORDECOTILE:	GET_COMBOCLASS_VAR_INT(foot_decorations_tile); break;		//LONG
-		// case COMBODFOORDECOTYPE:	GET_COMBOCLASS_VAR_BYTE(foot_decorations_type); break;	//C
 		case COMBODFRAME:		GET_COMBO_VAR_BYTE(cur_frame); break;				//char
 		case COMBODFRAMES:		GET_COMBO_VAR_BYTE(frames); break;					//C
-		// case COMBODHOOKSHOTPOINT:	GET_COMBOCLASS_VAR_BYTE(hookshot_grab_point); break;		//C
-		// case COMBODLADDERPASS:		GET_COMBOCLASS_VAR_BYTE(ladder_pass); break;				//C
 		case COMBODLIFTBREAKSFX:
 		{
 			ret = -10000;
@@ -270,19 +252,9 @@ int32_t combodata_get_register(int32_t reg)
 			ret = (combobuf[GET_REF(combodataref)].lift_parent_item) * 10000;
 			break;
 		}
-		// case COMBODLOCKBLOCK:		GET_COMBOCLASS_VAR_BYTE(lock_block_type); break;			//C
-		// case COMBODLOCKBLOCKCHANGE:	GET_COMBOCLASS_VAR_INT(lock_block_change); break;		//LONG
-		// case COMBODMAGICMIRROR:		GET_COMBOCLASS_VAR_BYTE(magic_mirror_type); break;			//C
-		// case COMBODMODHPAMOUNT:		GET_COMBOCLASS_VAR_DWORD(modify_hp_amount); break;		//SHORT
-		// case COMBODMODHPDELAY:		GET_COMBOCLASS_VAR_BYTE(modify_hp_delay); break;			//C
-		// case COMBODMODHPTYPE:		GET_COMBOCLASS_VAR_BYTE(modify_hp_type); break; 			//C
-		// case COMBODMODMPDELAY:		GET_COMBOCLASS_VAR_BYTE(modify_mp_delay); break;			//C
-		// case COMBODMODMPTYPE:		GET_COMBOCLASS_VAR_BYTE(modify_mp_type);	break;			//C
 		case COMBODNEXTC:		GET_COMBO_VAR_BYTE(nextcset); break;				//C
 		case COMBODNEXTD:		GET_COMBO_VAR_INT(nextcombo); break;					//W
 		case COMBODNEXTTIMER:		GET_COMBO_VAR_DWORD(nexttimer); break;				//W
-		// case COMBODNMODMPAMOUNT:	GET_COMBOCLASS_VAR_DWORD(modify_mp_amount); break;		//SHORT
-		// case COMBODNOPUSHBLOCK:		GET_COMBOCLASS_VAR_BYTE(no_push_blocks); break;			//C
 		case COMBODNUMTRIGGERS:
 		{
 			ret = -10000;
@@ -300,34 +272,8 @@ int32_t combodata_get_register(int32_t reg)
 			break;
 		}
 		case COMBODOTILE:		GET_COMBO_VAR_DWORD(o_tile); break;			//word
-		// case COMBODOVERHEAD:		GET_COMBOCLASS_VAR_BYTE(overhead); break;				//C
-// 		case COMBODPLACENPC:		GET_COMBOCLASS_VAR_BYTE(place_enemy); break;			//C
-		// case COMBODPUSHDIR:		GET_COMBOCLASS_VAR_BYTE(push_direction); break; 			//C
-		// case COMBODPUSHED:		GET_COMBOCLASS_VAR_BYTE(pushed); break;				//C
-		// case COMBODPUSHHEAVY:		GET_COMBOCLASS_VAR_BYTE(push_weight); break;				//C
-		// case COMBODPUSHWAIT:		GET_COMBOCLASS_VAR_BYTE(push_wait); break;				//C
-		// case COMBODRAFT:		GET_COMBOCLASS_VAR_BYTE(raft); break;					//C
-		// case COMBODRESETROOM:		GET_COMBOCLASS_VAR_BYTE(reset_room); break;			//C
-		// case COMBODSAVEPOINTTYPE:	GET_COMBOCLASS_VAR_BYTE(save_point_type); break;			//C
-		// case COMBODSCREENFREEZETYPE:	GET_COMBOCLASS_VAR_BYTE(screen_freeze_type); break;		//C
-		// case COMBODSECRETCOMBO:		GET_COMBOCLASS_VAR_BYTE(secret_combo); break;			//C
-		// case COMBODSINGULAR:		GET_COMBOCLASS_VAR_BYTE(singular); break;				//C
 		case COMBODSKIPANIM:		GET_COMBO_VAR_BYTE(skipanim); break;				//C
-		// case COMBODSLOWWALK:		GET_COMBOCLASS_VAR_BYTE(slow_movement); break;			//C
-		// case COMBODSPAWNNPC:		GET_COMBOCLASS_VAR_DWORD(create_enemy); break;			//W
-		// case COMBODSPAWNNPCCHANGE:	GET_COMBOCLASS_VAR_INT(create_enemy_change); break;		//LONG
-		// case COMBODSPAWNNPCWHEN:	GET_COMBOCLASS_VAR_BYTE(create_enemy_when); break;		//C
-		// case COMBODSTATUETYPE:		GET_COMBOCLASS_VAR_BYTE(statue_type); break;				//C
-		// case COMBODSTEPCHANGEINTO:	GET_COMBOCLASS_VAR_INT(step_change_to); break;			//LONG
-		// case COMBODSTEPTYPE:		GET_COMBOCLASS_VAR_BYTE(step_type); break;				//C
-		// case COMBODSTRIKECHANGE:	GET_COMBOCLASS_VAR_INT(strike_change); break;			//LONG
-		// case COMBODSTRIKEITEM:		GET_COMBOCLASS_VAR_DWORD(strike_item); break;			//SHORT
-		// case COMBODSTRIKEREMNANTS:	GET_COMBOCLASS_VAR_INT(strike_remnants); break;		//LONG
-		// case COMBODSTRIKEREMNANTSTYPE:	GET_COMBOCLASS_VAR_BYTE(strike_remnants_type); break;	//C
-		// case COMBODSTRIKEWEAPONS:	GET_COMBOCLASS_BYTE_INDEX(strike_weapons, 32); break;			//BYTE, 32 INDICES. 
 		case COMBODTILE:		GET_COMBO_VAR_DWORD(tile); break;					//word
-		// case COMBODTOUCHITEM:		GET_COMBOCLASS_VAR_DWORD(touch_item); break;			//SHORT
-		// case COMBODTOUCHSTAIRS:		GET_COMBOCLASS_VAR_BYTE(touch_stairs); break;			//C
 		case COMBODTRIGBOSSPAL:
 		{
 			ret = -10000;
@@ -526,7 +472,6 @@ int32_t combodata_get_register(int32_t reg)
 				ret = trig->trigprox * 10000;
 			break;
 		}
-		// case COMBODTRIGGERSENS:		GET_COMBOCLASS_VAR_BYTE(trigger_sensitive); break;	//C
 		case COMBODTRIGGERSFX:
 		{
 			ret = -10000;
@@ -545,7 +490,6 @@ int32_t combodata_get_register(int32_t reg)
 				ret = trig->trigtimer * 10000;
 			break;
 		}
-		// case COMBODTRIGGERTYPE:		GET_COMBOCLASS_VAR_BYTE(trigger_type); break;			//C
 		case COMBODTRIGITEMJINX:
 		{
 			ret = -10000;
@@ -692,13 +636,6 @@ int32_t combodata_get_register(int32_t reg)
 			}
 			break;
 		}
-		// case COMBODWARPDIRECT:		GET_COMBOCLASS_VAR_BYTE(warp_direct); break;			//C
-		// case COMBODWARPLOCATION:	GET_COMBOCLASS_VAR_BYTE(warp_location); break;			//C
-		// case COMBODWARPSENS:		GET_COMBOCLASS_VAR_BYTE(warp_sensitive); break; 		//C
-		// case COMBODWARPTYPE:		GET_COMBOCLASS_VAR_BYTE(warp_type); break;				//C
-		// case COMBODWATER:		GET_COMBOCLASS_VAR_BYTE(water); break;					//C
-		// case COMBODWHISTLE:		GET_COMBOCLASS_VAR_BYTE(whistle); break;				//C
-		// case COMBODWINGAME:		GET_COMBOCLASS_VAR_BYTE(win_game); break; 				//C
 		case COMBOD_DIVE_UNDER_LEVEL:
 		{
 			ret = 0;
@@ -829,13 +766,6 @@ void combodata_set_register(int32_t reg, int32_t value)
 		case COMBODANIMFLAGS:	SET_COMBO_VAR_BYTE(animflags); break;					//C
 		case COMBODASPEED:	SET_COMBO_VAR_BYTE(speed); break;						//char
 		case COMBODATASCRIPT:	SET_COMBO_VAR_DWORD(script); break;						//word
-		// case COMBODBLOCKHOLE:		SET_COMBOCLASS_VAR_BYTE(block_hole); break;			//C
-		// case COMBODBLOCKNPC:		SET_COMBOCLASS_VAR_BYTE(block_enemies); break;			//C
-		// case COMBODBLOCKTRIG:		SET_COMBOCLASS_VAR_BYTE(block_trigger); break; 		//C
-		// case COMBODBLOCKWEAPON:		SET_COMBOCLASS_BYTE_INDEX(block_weapon, 32); break;			//C, 32 INDICES
-		// case COMBODBLOCKWPNLEVEL:	SET_COMBOCLASS_VAR_BYTE(block_weapon_lvl); break;		//C
-		// case COMBODCONVXSPEED:		SET_COMBOCLASS_VAR_DWORD(conveyor_x_speed); break;		//SHORT
-		// case COMBODCONVYSPEED:		SET_COMBOCLASS_VAR_DWORD(conveyor_y_speed); break;		//SHORT
 		case COMBODCSET:
 		{
 			if (!checkComboRef()) break;
@@ -857,10 +787,6 @@ void combodata_set_register(int32_t reg, int32_t value)
 			screen_combo_modify_post(GET_REF(combodataref));
 			break;
 		}
-		// case COMBODDIRCHANGETYPE:	SET_COMBOCLASS_VAR_BYTE(directional_change_type); break;		//C
-		// case COMBODDISTANCECHANGETILES:	SET_COMBOCLASS_VAR_INT(distance_change_tiles); break; 	//LONG
-		// case COMBODDIVEITEM:		SET_COMBOCLASS_VAR_DWORD(dive_item); break;				//SHORT
-		// case COMBODDOCK:		SET_COMBOCLASS_VAR_BYTE(dock); break;					//C
 		case COMBODEFFECT:
 		{
 			if (!checkComboRef()) break;
@@ -869,16 +795,10 @@ void combodata_set_register(int32_t reg, int32_t value)
 			combobuf[GET_REF(combodataref)].walk |= ((value / 10000)&0x0F)<<4;
 			break;
 		}
-		// case COMBODFAIRY:		SET_COMBOCLASS_VAR_BYTE(fairy); break;					//C
-		// case COMBODFFATTRCHANGE:	SET_COMBOCLASS_VAR_BYTE(ff_combo_attr_change); break;	//C
 		case COMBODFLAG:	SET_COMBO_VAR_BYTE(flag); break;						//C
 		case COMBODFLIP:	SET_COMBO_VAR_BYTE(flip); break;						//char
-		// case COMBODFOORDECOTILE:	SET_COMBOCLASS_VAR_INT(foot_decorations_tile); break;		//LONG
-		// case COMBODFOORDECOTYPE:	SET_COMBOCLASS_VAR_BYTE(foot_decorations_type); break;	//C
 		case COMBODFRAME:		SET_COMBO_VAR_BYTE(cur_frame); break;				//char
 		case COMBODFRAMES:	SET_COMBO_VAR_BYTE(frames); break;						//C
-		// case COMBODHOOKSHOTPOINT:	SET_COMBOCLASS_VAR_BYTE(hookshot_grab_point); break;		//C
-		// case COMBODLADDERPASS:		SET_COMBOCLASS_VAR_BYTE(ladder_pass); break;				//C
 		case COMBODLIFTBREAKSFX:
 		{
 			if (!checkComboRef()) break;
@@ -998,19 +918,9 @@ void combodata_set_register(int32_t reg, int32_t value)
 			combobuf[GET_REF(combodataref)].lift_parent_item = vbound(value/10000, 0, MAXITEMS-1);
 			break;
 		}
-		// case COMBODLOCKBLOCK:		SET_COMBOCLASS_VAR_BYTE(lock_block_type); break;			//C
-		// case COMBODLOCKBLOCKCHANGE:	SET_COMBOCLASS_VAR_INT(lock_block_change); break;		//LONG
-		// case COMBODMAGICMIRROR:		SET_COMBOCLASS_VAR_BYTE(magic_mirror_type); break;			//C
-		// case COMBODMODHPAMOUNT:		SET_COMBOCLASS_VAR_DWORD(modify_hp_amount); break;		//SHORT
-		// case COMBODMODHPDELAY:		SET_COMBOCLASS_VAR_BYTE(modify_hp_delay); break;			//C
-		// case COMBODMODHPTYPE:		SET_COMBOCLASS_VAR_BYTE(modify_hp_type); break; 			//C
-		// case COMBODMODMPDELAY:		SET_COMBOCLASS_VAR_BYTE(modify_mp_delay); break;			//C
-		// case COMBODMODMPTYPE:		SET_COMBOCLASS_VAR_BYTE(modify_mp_type); break;				//C
 		case COMBODNEXTC:	SET_COMBO_VAR_BYTE(nextcset); break;					//C
 		case COMBODNEXTD:	SET_COMBO_VAR_INT(nextcombo); break;						//W
 		case COMBODNEXTTIMER:	SET_COMBO_VAR_DWORD(nexttimer); break;					//W
-		// case COMBODNMODMPAMOUNT:	SET_COMBOCLASS_VAR_DWORD(modify_mp_amount); break;		//SHORT
-		// case COMBODNOPUSHBLOCK:		SET_COMBOCLASS_VAR_BYTE(no_push_blocks); break;			//C
 		case COMBODNUMTRIGGERS:
 		{
 			if(checkComboRef())
@@ -1040,34 +950,8 @@ void combodata_set_register(int32_t reg, int32_t value)
 			}
 			break;
 		}
-		// case COMBODOVERHEAD:		SET_COMBOCLASS_VAR_BYTE(overhead); break;				//C
-		// case COMBODPLACENPC:		SET_COMBOCLASS_VAR_BYTE(place_enemy); break;			//C
-		// case COMBODPUSHDIR:		SET_COMBOCLASS_VAR_BYTE(push_direction); break; 			//C
-		// case COMBODPUSHED:		SET_COMBOCLASS_VAR_BYTE(pushed); break;				//C
-		// case COMBODPUSHHEAVY:		SET_COMBOCLASS_VAR_BYTE(push_weight); break;				//C
-		// case COMBODPUSHWAIT:		SET_COMBOCLASS_VAR_BYTE(push_wait); break;				//C
-		// case COMBODRAFT:		SET_COMBOCLASS_VAR_BYTE(raft); break;					//C
-		// case COMBODRESETROOM:		SET_COMBOCLASS_VAR_BYTE(reset_room); break;			//C
-		// case COMBODSAVEPOINTTYPE:	SET_COMBOCLASS_VAR_BYTE(save_point_type); break;			//C
-		// case COMBODSCREENFREEZETYPE:	SET_COMBOCLASS_VAR_BYTE(screen_freeze_type); break;		//C
-		// case COMBODSECRETCOMBO:		SET_COMBOCLASS_VAR_BYTE(secret_combo); break;			//C
-		// case COMBODSINGULAR:		SET_COMBOCLASS_VAR_BYTE(singular); break;				//C
 		case COMBODSKIPANIM:	SET_COMBO_VAR_BYTE(skipanim); break;					//C
-		// case COMBODSLOWWALK:		SET_COMBOCLASS_VAR_BYTE(slow_movement); break;			//C
-		// case COMBODSPAWNNPC:		SET_COMBOCLASS_VAR_DWORD(create_enemy); break;			//W
-		// case COMBODSPAWNNPCCHANGE:	SET_COMBOCLASS_VAR_INT(create_enemy_change); break;		//LONG
-		// case COMBODSPAWNNPCWHEN:	SET_COMBOCLASS_VAR_BYTE(create_enemy_when); break;		//C
-		// case COMBODSTATUETYPE:		SET_COMBOCLASS_VAR_BYTE(statue_type); break;				//C
-		// case COMBODSTEPCHANGEINTO:	SET_COMBOCLASS_VAR_INT(step_change_to); break;			//LONG
-		// case COMBODSTEPTYPE:		SET_COMBOCLASS_VAR_BYTE(step_type); break;				//C
-		// case COMBODSTRIKECHANGE:	SET_COMBOCLASS_VAR_INT(strike_change); break;			//LONG
-		// case COMBODSTRIKEITEM:		SET_COMBOCLASS_VAR_DWORD(strike_item); break;			//SHORT
-		// case COMBODSTRIKEREMNANTS:	SET_COMBOCLASS_VAR_INT(strike_remnants); break;		//LONG
-		// case COMBODSTRIKEREMNANTSTYPE:	SET_COMBOCLASS_VAR_BYTE(strike_remnants_type); break;	//C
-		// case COMBODSTRIKEWEAPONS:	SET_COMBOCLASS_BYTE_INDEX(strike_weapons, 32); break;			//BYTE, 32 INDICES. 
 		case COMBODTILE:	SET_COMBO_VAR_INT(tile); break;						//word
-		// case COMBODTOUCHITEM:		SET_COMBOCLASS_VAR_DWORD(touch_item); break;			//SHORT
-		// case COMBODTOUCHSTAIRS:		SET_COMBOCLASS_VAR_BYTE(touch_stairs); break;			//C
 		case COMBODTRIGBOSSPAL:
 		{
 			if (!checkComboRef()) break;
@@ -1244,7 +1128,6 @@ void combodata_set_register(int32_t reg, int32_t value)
 				trig->trigprox = vbound(value/10000,0,65535);
 			break;
 		}
-		// case COMBODTRIGGERSENS:		SET_COMBOCLASS_VAR_BYTE(trigger_sensitive); break;	//C
 		case COMBODTRIGGERSFX:
 		{
 			if (!checkComboRef()) break;
@@ -1263,7 +1146,6 @@ void combodata_set_register(int32_t reg, int32_t value)
 			screen_combo_modify_post(GET_REF(combodataref));
 			break;
 		}
-		// case COMBODTRIGGERTYPE:		SET_COMBOCLASS_VAR_BYTE(trigger_type); break;			//C
 		case COMBODTRIGITEMJINX:
 		{
 			if (!checkComboRef()) break;
@@ -1403,13 +1285,6 @@ void combodata_set_register(int32_t reg, int32_t value)
 			combobuf[GET_REF(combodataref)].walk |= (value / 10000)&0x0F;
 			break;
 		}
-		// case COMBODWARPDIRECT:		SET_COMBOCLASS_VAR_BYTE(warp_direct); break;			//C
-		// case COMBODWARPLOCATION:	SET_COMBOCLASS_VAR_BYTE(warp_location); break;			//C
-		// case COMBODWARPSENS:		SET_COMBOCLASS_VAR_BYTE(warp_sensitive); break; 		//C
-		// case COMBODWARPTYPE:		SET_COMBOCLASS_VAR_BYTE(warp_type); break;				//C
-		// case COMBODWATER:		SET_COMBOCLASS_VAR_BYTE(water); break;					//C
-		// case COMBODWHISTLE:		SET_COMBOCLASS_VAR_BYTE(whistle); break;				//C
-		// case COMBODWINGAME:		SET_COMBOCLASS_VAR_BYTE(win_game); break; 				//C
 		case COMBOD_DIVE_UNDER_LEVEL:
 		{
 			if(checkComboRef())
