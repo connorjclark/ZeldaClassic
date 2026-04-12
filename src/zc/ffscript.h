@@ -17,7 +17,6 @@
 #include "zc/scripting/array_manager.h"
 #include "zc/scripting/context_strings.h"
 #include "zc/jit.h"
-#include "zc/scripting/types/bitmap.h"
 #include "zc/zelda.h"
 #include "zc/hero.h"
 #include "sprite_data.h"
@@ -218,22 +217,6 @@ enum //ScrollingData indexes
 	SCROLLDATA_OLD_VIEWPORT_X, SCROLLDATA_OLD_VIEWPORT_Y,
 
 	SZ_SCROLLDATA
-};
-
-//Old, 2.50 bitmap IDs
-enum { rtSCREEN = -1, rtBMP0 = 0, rtBMP1, 
-	rtBMP2, rtBMP3, rtBMP4, rtBMP5, rtBMP6, firstUserGeneratedBitmap };
-//bitmap constants
-#define MAX_USER_BITMAPS 256
-#define MIN_OLD_RENDERTARGETS -1 //old script drawing
-#define MAX_OLD_RENDERTARGETS 6
-	
-//Holds all of the user-generated / script-generated bitmaps and their information.
-	//User bitmap lowest viable ID is 'rtBMP6+1' (firstUserGeneratedBitmap)
-struct script_bitmaps
-{
-	void update();
-	user_bitmap& get(int32_t id);
 };
 
 #define MAX_USER_STACKS 256

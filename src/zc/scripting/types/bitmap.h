@@ -8,6 +8,12 @@
 
 #include <cstdint>
 
+//Old, 2.50 bitmap IDs
+enum { rtSCREEN = -1, rtBMP0 = 0, rtBMP1,
+	rtBMP2, rtBMP3, rtBMP4, rtBMP5, rtBMP6, firstUserGeneratedBitmap };
+
+#define MAX_USER_BITMAPS 256
+
 //User-generated / Script-Generated bitmap object
 #define UBMPFLAG_FREEING               0x01
 #define UBMPFLAG_CAN_DELETE            0x02
@@ -55,6 +61,14 @@ struct user_bitmap : public user_abstract_obj
 	{
 		return flags & UBMPFLAG_CAN_DELETE;
 	}
+};
+
+//Holds all of the user-generated / script-generated bitmaps and their information.
+//User bitmap lowest viable ID is 'rtBMP6+1' (firstUserGeneratedBitmap)
+struct script_bitmaps
+{
+	void update();
+	user_bitmap& get(int32_t id);
 };
 
 user_bitmap* checkBitmap(int32_t ref);
