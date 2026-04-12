@@ -489,6 +489,33 @@ int32_t hero_get_register(int32_t reg)
 		case LINKTILEMOD:
 			ret = Hero.getTileModifier() * 10000;
 			break;
+		case LINKHXOFS:
+			ret = (int32_t)(Hero.hxofs)*10000;
+			break;
+		case LINKHYOFS:
+			ret = (int32_t)(Hero.hyofs)*10000;
+			break;
+		case LINKHXSZ:
+			ret = (int32_t)(Hero.hit_width)*10000;
+			break;
+		case LINKHYSZ:
+			ret = (int32_t)(Hero.hit_height)*10000;
+			break;
+		case LINKHZSZ:
+			ret = (int32_t)(Hero.hzsz)*10000;
+			break;
+		case LINKTXSZ:
+			ret = (int32_t)(Hero.txsz)*10000;
+			break;
+		case LINKTYSZ:
+			ret = (int32_t)(Hero.tysz)*10000;
+			break;
+		case LINKTILE:
+			ret = (int32_t)(Hero.tile)*10000;
+			break;
+		case LINKINVFRAME:
+			ret = (int32_t)Hero.getHClk()*10000;
+			break;
 		case PRESSAXISDOWN:
 			ret=button_press[15]?10000:0;
 			break;
