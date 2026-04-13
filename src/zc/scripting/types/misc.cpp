@@ -4,7 +4,7 @@
 #include "components/zasm/defines.h"
 #include "core/zdefs.h"
 #include "gamedata.h"
-#include "zc/ffscript.h"
+#include "zc/scripting/common.h"
 #include "zc/zscriptversion.h"
 
 extern refInfo *ri;

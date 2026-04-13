@@ -4,6 +4,7 @@
 #include "base/check.h"
 #include "base/compiler.h"
 #include "base/ints.h"
+#include "components/zasm/defines.h"
 #include "zc/scripting/types/audio.h"
 #include "zc/scripting/types/bitmap.h"
 #include "zc/scripting/types/bottledata.h"

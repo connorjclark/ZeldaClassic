@@ -4,6 +4,7 @@
 #include "base/zc_math.h"
 #include "components/zasm/defines.h"
 #include "core/qrs.h"
+#include "zc/ffscript.h"
 #include "zc/render.h"
 #include "zc/scripting/arrays.h"
 

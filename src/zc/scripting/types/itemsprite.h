@@ -3,7 +3,7 @@
 
 #include "base/ints.h"
 #include "items.h"
-#include "zc/ffscript.h"
+#include "zc/scripting/common.h"
 
 #include <optional>
 

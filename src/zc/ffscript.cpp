@@ -596,38 +596,14 @@ void pop_ri()
 //           Helper Functions           //
 ///-------------------------------------//
 
-static void log_stack_overflow_error()
+void log_stack_overflow_error()
 {
 	scripting_log_error_with_context("Stack overflow!");
 }
 
-static void log_call_limit_error()
+void log_call_limit_error()
 {
 	scripting_log_error_with_context("Function call limit reached! Too much recursion. Max nested function calls is {}", MAX_CALL_FRAMES);
-}
-
-void SH::write_stack(const uint32_t sp, const int32_t value)
-{
-	if (sp >= MAX_STACK_SIZE)
-	{
-		log_stack_overflow_error();
-		ri->overflow = true;
-		return;
-	}
-	
-	(*stack)[sp] = value;
-}
-
-int32_t SH::read_stack(const uint32_t sp)
-{
-	if (sp >= MAX_STACK_SIZE)
-	{
-		log_stack_overflow_error();
-		ri->overflow = true;
-		return -10000;
-	}
-	
-	return (*stack)[sp];
 }
 
 ///----------------------------//

@@ -5,6 +5,7 @@
 #include "core/zdefs.h"
 #include "zc/ffscript.h"
 #include "zc/maps.h"
+#include "zc/scripting/common.h"
 
 extern refInfo *ri;
 extern int32_t sarg1;

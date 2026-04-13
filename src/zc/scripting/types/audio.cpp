@@ -4,6 +4,7 @@
 #include "base/check.h"
 #include "components/zasm/defines.h"
 #include "core/qrs.h"
+#include "zc/ffscript.h"
 #include "zc/scripting/arrays.h"
 #include "zc/zelda.h"
 
