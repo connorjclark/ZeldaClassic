@@ -8,6 +8,7 @@
 #include "core/qrs.h"
 #include "ffc.h"
 #include "new_subscr.h"
+#include "zc/ffscript.h"
 #include "zc/hero.h"
 #include "zc/scripting/common.h"
 #include "zc/scripting/types/bottledata.h"
@@ -20,37 +21,6 @@
 #include <type_traits>
 #include <utility>
 #include <vector>
-
-// Avoid including ffscript.h b/c it causes circular includes, errors on windows.
-// TODO: move all these to seperate files in `zc/scripting/types`, so this file doesn't need to rely on ffscript.cpp.
-
-struct dmap;
-class enemy;
-struct mapdata;
-struct user_paldata;
-struct sprite_data;
-struct MsgStr;
-
-sprite* ResolveBaseSprite(int32_t uid);
-newcombo* checkCombo(int32_t ref, bool skipError = false);
-dmap* checkDmap(int32_t ref);
-ffcdata* checkFFC(int32_t ref);
-enemy* checkNPC(int32_t ref);
-guydata* checkNPCData(int32_t ref);
-item* checkItem(int32_t ref);
-itemdata* checkItemData(int32_t ref);
-mapdata* checkMapData(int32_t ref);
-mapscr* checkMapDataScr(int32_t ref);
-screendata* checkScreen(int32_t ref);
-user_paldata* checkPalData(int32_t ref, bool skipError = false);
-weapon* checkWpn(int32_t uid);
-bottleshoptype *checkBottleShopData(int32_t ref, bool skipError = false);
-item_drop_object *checkDropSetData(int32_t ref);
-sprite_data *checkSpriteData(int32_t ref);
-MsgStr *checkMessageData(int32_t ref);
-SubscrWidget *checkSubWidg(int32_t ref, std::set<int> const& req_sub_tys = {}, int req_widg_ty = -1);
-ZCSubscreen *checkSubData(int32_t ref, std::set<int> const& req_tys = {});
-combo_trigger* checkComboTrigger(dword ref);
 
 #define MAX_ZC_ARRAY_SIZE 214748
 

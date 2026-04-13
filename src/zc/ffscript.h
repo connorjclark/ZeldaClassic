@@ -417,11 +417,31 @@ void save_genscript(gamedata& gd);
 
 struct mapdata;
 
+newcombo* checkCombo(int32_t ref, bool skipError = false);
 newcombo* checkComboFromTriggerRef(dword ref);
+dmap* checkDmap(int32_t ref);
+ffcdata* checkFFC(int32_t ref);
+enemy* checkNPC(int32_t ref);
+guydata* checkNPCData(int32_t ref);
+item* checkItem(int32_t ref);
+itemdata* checkItemData(int32_t ref);
+mapdata* checkMapData(int32_t ref);
+mapscr* checkMapDataScr(int32_t ref);
+screendata* checkScreen(int32_t ref);
+user_paldata* checkPalData(int32_t ref, bool skipError = false);
+weapon* checkWpn(int32_t uid);
 weapon* checkLWpn(int32_t uid);
 weapon* checkEWpn(int32_t uid);
+bottleshoptype *checkBottleShopData(int32_t ref, bool skipError = false);
+item_drop_object *checkDropSetData(int32_t ref);
+sprite_data *checkSpriteData(int32_t ref);
+MsgStr *checkMessageData(int32_t ref);
+SubscrWidget *checkSubWidg(int32_t ref, std::set<int> const& req_sub_tys = {}, int req_widg_ty = -1);
+ZCSubscreen *checkSubData(int32_t ref, std::set<int> const& req_tys = {});
 SubscrPage *checkSubPage(int32_t ref, std::set<int> const& req_tys = {});
+combo_trigger* checkComboTrigger(dword ref);
 combo_trigger* get_first_combo_trigger();
+
 combo_trigger* get_combo_trigger(dword ref);
 
 std::tuple<byte,int8_t,byte,word> from_subref(dword ref);
