@@ -6,6 +6,7 @@
 #include "zc/guys.h"
 #include "zc/scripting/arrays.h"
 #include "zc/scripting/types/musicdata.h"
+#include "../../ffc.h"
 
 extern refInfo *ri;
 extern int32_t sarg1;

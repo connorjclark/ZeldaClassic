@@ -192,7 +192,7 @@ struct mapscr
 	byte hidelayers;
 	byte hidescriptlayers;
 	
-	string usr_notes;
+	std::string usr_notes;
 	
 	zfix screen_gravity, screen_terminal_v;
 	

@@ -2,9 +2,10 @@
 #define ZC_SCRIPTING_NPC_H_
 
 #include "base/ints.h"
-#include "zc/guys.h"
 #include "zc/scripting/common.h"
 #include <optional>
+
+class enemy;
 
 class GuyH : public SH
 {
