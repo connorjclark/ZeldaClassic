@@ -7,6 +7,7 @@
 #include <vector>
 
 struct ffc_handle_t;
+class ffcdata;
 
 enum
 {
