@@ -4,8 +4,8 @@
 #include "core/combo.h"
 #include "base/compiler.h"
 #include "core/cpos_info.h"
-#include "core/mapscr.h"
 #include "ffc.h"
+#include "core/mapscr.h"
 #include <stdint.h>
 #include <variant>
 #include <utility>

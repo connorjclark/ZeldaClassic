@@ -3,11 +3,9 @@
 
 #include "core/dmap.h"
 #include "base/general.h"
+#include "ffc.h"
 #include "core/mapscr.h"
 #include "core/misctypes.h"
-#include "core/zdefs.h"
-#include "core/initdata.h"
-#include "ffc.h"
 #include "parser/parserDefs.h"
 #include <utility>
 #include <string>

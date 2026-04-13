@@ -1,13 +1,13 @@
 #ifndef CORE_MAPSCR_H_
 #define CORE_MAPSCR_H_
 
+class ffcdata;
+struct ffc_handle_t;
+
 #include "ffc.h"
 #include <array>
 #include <cstddef>
 #include <vector>
-
-struct ffc_handle_t;
-class ffcdata;
 
 enum
 {
