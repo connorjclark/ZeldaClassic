@@ -10561,6 +10561,9 @@ static bool drown_check(int cid)
 }
 int HeroClass::onWater(bool drownonly)
 {
+	if (action == inwind)
+		return false;
+
 	if (replay_is_active() && replay_get_meta_str("sav") == "nargads_trail_crystal_crusades_23_of_24.sav")
 		; // old broken behavior skips the below check in some circumstances
 	else if(ladderx || laddery || hoverclk || action == rafting
