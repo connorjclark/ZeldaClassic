@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches:
-      - main
-      - releases/2.55
+    # branches:
+    #   - main
+    #   - releases/2.55
   pull_request:
   workflow_dispatch:
 
@@ -17,7 +17,7 @@ env:
 
 jobs:
   # Get the LFS cache ready. This avoids every shard of each environment downloading the LFS objects
-  # at the same time on any change, which is bad for quota.
+  # at the same time on any change, which is bad for quota. 
   warm-lfs-cache:
     runs-on: ubuntu-latest
     steps:
@@ -62,8 +62,8 @@ jobs:
             extra-args: --filter playground --frame=keys.zplay=20
       fail-fast: false
     # See https://github.com/community/community/discussions/40777
-    # uses: ./.github/workflows/test.yml
-    uses: ZQuestClassic/ZQuestClassic/.github/workflows/test.yml@main
+    uses: ./.github/workflows/test.yml
+    # uses: ZQuestClassic/ZQuestClassic/.github/workflows/test.yml@main
     with:
       runs-on: ${{ matrix.runs-on }}
       arch: ${{ matrix.arch }}
