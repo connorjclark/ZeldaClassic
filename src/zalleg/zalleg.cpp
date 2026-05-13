@@ -10,6 +10,7 @@
 #include "base/zapp.h"
 #include "core/zdefs.h"
 #include "zalleg/zsys.h"
+#include "zconfig.h"
 #include "sfx.h"
 #include "zsyssimple.h"
 #include <al5_img.h>
@@ -194,6 +195,13 @@ void zalleg_setup_allegro(App id, int argc, char **argv)
 		al_merge_config_into(al_get_system_config(), tempcfg);
 		al_destroy_config(tempcfg);
 	}
+
+#ifndef __EMSCRIPTEN__
+	if (!is_headless() && zc_get_config("gui", "native_file_dialog", 1, id))
+	{
+		init_native_file_dialog();
+	}
+#endif
 
 #ifdef __EMSCRIPTEN__
 	em_mark_initializing_status();

@@ -28,9 +28,9 @@ void set_always_use_native_file_dialog(bool active)
 	use_native_file_dialog = active;
 }
 
-#ifdef HAS_NFD
-static bool init_dialog()
+bool init_native_file_dialog()
 {
+#ifdef HAS_NFD
 	static bool initialized, tried;
 	if (!initialized)
 	{
@@ -49,7 +49,12 @@ static bool init_dialog()
 	}
 
 	return true;
+#else
+	return false;
+#endif
 }
+
+#ifdef HAS_NFD
 
 // In allegro 4 `parse_extension_string` allows , ; and space, despite only documenting that ; is supported.
 // Convert to `,` which is what NFD expects.
@@ -147,7 +152,7 @@ static std::optional<std::string> open_native_dialog_impl(FileMode mode, std::st
 static std::optional<std::string> open_native_dialog(FileMode mode, std::string initial_path, std::vector<filteritem_t>& filters)
 {
 	NFD_ClearError();
-	if (!init_dialog())
+	if (!init_native_file_dialog())
 		return std::nullopt;
 
 	std::vector<nfdfilteritem_t> filters_nfd;
