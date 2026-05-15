@@ -332,8 +332,7 @@ int32_t readonenpc(PACKFILE *f, int32_t index)
 		return 0;
 
 	guysbuf[index] = tempguy;
-	guysbuf[bie[index].i] = tempguy;
-	strcpy(guy_string[bie[index].i], npcstring);
+	strcpy(guy_string[index], npcstring);
 
 	return 1;
 }

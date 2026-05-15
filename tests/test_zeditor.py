@@ -302,13 +302,13 @@ class TestZEditor(unittest.TestCase):
         if 'emscripten' in str(run_target.get_build_folder()):
             return
 
-        qst = root_dir / 'tests/replays/classic_1st/classic_1st.qst'
+        src_qst = root_dir / 'tests/replays/classic_1st/classic_1st.qst'
         work_qst = tmp_dir / 'tiles_work.qst'
         export1 = tmp_dir / 'tiles1.ztileset'
         export2 = tmp_dir / 'tiles2.ztileset'
 
-        shutil.copy(qst, work_qst)
-        self.run_zeditor(['-export-tiles', qst, export1, '0', '5'])
+        shutil.copy(root_dir / 'tests/replays/playground/playground.qst', work_qst)
+        self.run_zeditor(['-export-tiles', src_qst, export1, '0', '5'])
         self.run_zeditor(['-import-tiles', work_qst, export1, '0'])
         self.run_zeditor(['-export-tiles', work_qst, export2, '0', '5'])
 
@@ -322,13 +322,13 @@ class TestZEditor(unittest.TestCase):
         if 'emscripten' in str(run_target.get_build_folder()):
             return
 
-        qst = root_dir / 'tests/replays/classic_1st/classic_1st.qst'
+        src_qst = root_dir / 'tests/replays/classic_1st/classic_1st.qst'
         work_qst = tmp_dir / 'guys_work.qst'
         export1 = tmp_dir / 'guys1.guy'
         export2 = tmp_dir / 'guys2.guy'
 
-        shutil.copy(qst, work_qst)
-        self.run_zeditor(['-export-guys', qst, export1])
+        shutil.copy(root_dir / 'tests/replays/playground/playground.qst', work_qst)
+        self.run_zeditor(['-export-guys', src_qst, export1])
         self.run_zeditor(['-import-guys', work_qst, export1])
         self.run_zeditor(['-export-guys', work_qst, export2])
 
@@ -342,14 +342,14 @@ class TestZEditor(unittest.TestCase):
         if 'emscripten' in str(run_target.get_build_folder()):
             return
 
-        qst = root_dir / 'tests/replays/classic_1st/classic_1st.qst'
+        src_qst = root_dir / 'tests/replays/classic_1st/classic_1st.qst'
         work_qst = tmp_dir / 'npc_work.qst'
         export1 = tmp_dir / 'npc1.znpc'
         export2 = tmp_dir / 'npc2.znpc'
         npc_index = 5
 
-        shutil.copy(qst, work_qst)
-        self.run_zeditor(['-export-npc', qst, export1, str(npc_index)])
+        shutil.copy(root_dir / 'tests/replays/playground/playground.qst', work_qst)
+        self.run_zeditor(['-export-npc', src_qst, export1, str(npc_index)])
         self.run_zeditor(['-import-npc', work_qst, export1, str(npc_index)])
         self.run_zeditor(['-export-npc', work_qst, export2, str(npc_index)])
 
