@@ -8,7 +8,10 @@
 #include "zc/ffscript.h"
 #include "zq/package.h"
 #include "zq/zq_class.h"
+#include "zq/zq_custom.h"
+#include "zq/zq_tiles.h"
 #include "zq/zquest.h"
+#include "zalleg/packfile.h"
 #include <fstream>
 
 extern bool is_zq_replay_test;
@@ -952,6 +955,117 @@ void zeditor_handle_commands()
 			zq_exit(1);
 		}
 
+		zq_exit(0);
+	}
+
+	int export_tiles_arg = zapp_check_switch("-export-tiles", {"input.qst", "output.ztileset", "start_page", "page_count"});
+	if (export_tiles_arg > 0)
+	{
+		set_headless_mode();
+		std::string input_filename = zapp_get_arg_string(export_tiles_arg + 1);
+		std::string output_filename = zapp_get_arg_string(export_tiles_arg + 2);
+		int start_page = zapp_get_arg_int(export_tiles_arg + 3);
+		int page_count = zapp_get_arg_int(export_tiles_arg + 4);
+
+		int load_ret = load_quest(input_filename.c_str(), false);
+		if (load_ret != qe_OK) { printf("Failed to load quest: %d\n", load_ret); zq_exit(1); }
+
+		PACKFILE *f = zalleg_pack_fopen_password(output_filename.c_str(), F_WRITE, "");
+		if (!f) { printf("Failed to open output file\n"); zq_exit(1); }
+		int ret = writetilefile(f, start_page * TILES_PER_PAGE, page_count * TILES_PER_PAGE);
+		pack_fclose(f);
+		if (!ret) { printf("Failed to export tiles\n"); zq_exit(1); }
+		zq_exit(0);
+	}
+
+	int import_tiles_arg = zapp_check_switch("-import-tiles", {"qst", "input.ztileset", "dest_page"});
+	if (import_tiles_arg > 0)
+	{
+		set_headless_mode();
+		std::string qst = zapp_get_arg_string(import_tiles_arg + 1);
+		std::string input_tileset = zapp_get_arg_string(import_tiles_arg + 2);
+		int dest_page = zapp_get_arg_int(import_tiles_arg + 3);
+
+		int load_ret = load_quest(qst.c_str(), false);
+		if (load_ret != qe_OK) { printf("Failed to load quest: %d\n", load_ret); zq_exit(1); }
+
+		PACKFILE *f = zalleg_pack_fopen_password(input_tileset.c_str(), F_READ, "");
+		if (!f) { printf("Failed to open tileset file\n"); zq_exit(1); }
+		int ret = readtilefile_to_location(f, dest_page * TILES_PER_PAGE);
+		pack_fclose(f);
+		if (!ret) { printf("Failed to import tiles\n"); zq_exit(1); }
+
+		if (save_quest(qst.c_str()) != 0) { printf("Failed to save quest\n"); zq_exit(1); }
+		zq_exit(0);
+	}
+
+	int export_guys_arg = zapp_check_switch("-export-guys", {"input.qst", "output.guy"});
+	if (export_guys_arg > 0)
+	{
+		set_headless_mode();
+		std::string input_filename = zapp_get_arg_string(export_guys_arg + 1);
+		std::string output_filename = zapp_get_arg_string(export_guys_arg + 2);
+
+		int load_ret = load_quest(input_filename.c_str(), false);
+		if (load_ret != qe_OK) { printf("Failed to load quest: %d\n", load_ret); zq_exit(1); }
+
+		if (!save_guys(output_filename.c_str())) { printf("Failed to export guys\n"); zq_exit(1); }
+		zq_exit(0);
+	}
+
+	int import_guys_arg = zapp_check_switch("-import-guys", {"qst", "input.guy"});
+	if (import_guys_arg > 0)
+	{
+		set_headless_mode();
+		std::string qst = zapp_get_arg_string(import_guys_arg + 1);
+		std::string input_guys = zapp_get_arg_string(import_guys_arg + 2);
+
+		int load_ret = load_quest(qst.c_str(), false);
+		if (load_ret != qe_OK) { printf("Failed to load quest: %d\n", load_ret); zq_exit(1); }
+
+		if (!load_guys(input_guys.c_str())) { printf("Failed to import guys\n"); zq_exit(1); }
+
+		if (save_quest(qst.c_str()) != 0) { printf("Failed to save quest\n"); zq_exit(1); }
+		zq_exit(0);
+	}
+
+	int export_npc_arg = zapp_check_switch("-export-npc", {"input.qst", "output.znpc", "npc_index"});
+	if (export_npc_arg > 0)
+	{
+		set_headless_mode();
+		std::string input_filename = zapp_get_arg_string(export_npc_arg + 1);
+		std::string output_filename = zapp_get_arg_string(export_npc_arg + 2);
+		int npc_index = zapp_get_arg_int(export_npc_arg + 3);
+
+		int load_ret = load_quest(input_filename.c_str(), false);
+		if (load_ret != qe_OK) { printf("Failed to load quest: %d\n", load_ret); zq_exit(1); }
+
+		PACKFILE *f = zalleg_pack_fopen_password(output_filename.c_str(), F_WRITE, "");
+		if (!f) { printf("Failed to open output file\n"); zq_exit(1); }
+		int ret = writeonenpc(f, npc_index);
+		pack_fclose(f);
+		if (!ret) { printf("Failed to export npc\n"); zq_exit(1); }
+		zq_exit(0);
+	}
+
+	int import_npc_arg = zapp_check_switch("-import-npc", {"qst", "input.znpc", "npc_index"});
+	if (import_npc_arg > 0)
+	{
+		set_headless_mode();
+		std::string qst = zapp_get_arg_string(import_npc_arg + 1);
+		std::string input_npc = zapp_get_arg_string(import_npc_arg + 2);
+		int npc_index = zapp_get_arg_int(import_npc_arg + 3);
+
+		int load_ret = load_quest(qst.c_str(), false);
+		if (load_ret != qe_OK) { printf("Failed to load quest: %d\n", load_ret); zq_exit(1); }
+
+		PACKFILE *f = zalleg_pack_fopen_password(input_npc.c_str(), F_READ, "");
+		if (!f) { printf("Failed to open npc file\n"); zq_exit(1); }
+		int ret = readonenpc(f, npc_index);
+		pack_fclose(f);
+		if (!ret) { printf("Failed to import npc\n"); zq_exit(1); }
+
+		if (save_quest(qst.c_str()) != 0) { printf("Failed to save quest\n"); zq_exit(1); }
 		zq_exit(0);
 	}
 }
