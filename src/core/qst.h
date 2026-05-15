@@ -222,6 +222,9 @@ int32_t readsubscreens(PACKFILE *f);
 int32_t read_one_old_subscreen(PACKFILE* f, subscreen_group* g, word s_version);
 
 int32_t read_weap_data(weapon_data& data, PACKFILE* f);
+int32_t write_weap_data(weapon_data const& data, PACKFILE* f);
+int32_t writecombo_triggers_loop(PACKFILE *f, combo_trigger const& tmp_trig);
+int32_t writecombo_loop(PACKFILE *f, newcombo const& tmp_cmb);
 
 void init_msgstr(MsgStr *str);
 

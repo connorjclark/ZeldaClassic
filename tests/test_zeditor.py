@@ -402,6 +402,28 @@ class TestZEditor(unittest.TestCase):
             allegro_log,
         )
 
+    def test_roundtrip_combo(self):
+        if 'emscripten' in str(run_target.get_build_folder()):
+            return
+
+        src_qst = root_dir / 'tests/replays/classic_1st/classic_1st.qst'
+        work_qst = tmp_dir / 'combo_work.qst'
+        export1 = tmp_dir / 'combo1.zcombo'
+        export2 = tmp_dir / 'combo2.zcombo'
+        start_combo = 0
+        count = 10
+
+        shutil.copy(root_dir / 'tests/replays/playground/playground.qst', work_qst)
+        self.run_zeditor(['-export-combo', src_qst, export1, str(start_combo), str(count)])
+        self.run_zeditor(['-import-combo', work_qst, export1, str(start_combo)])
+        self.run_zeditor(['-export-combo', work_qst, export2, str(start_combo), str(count)])
+
+        self.assertEqual(
+            export1.read_bytes(),
+            export2.read_bytes(),
+            'combo export after import+save differs from original export',
+        )
+
     def test_package_export(self):
         if (
             'emscripten' in str(run_target.get_build_folder())

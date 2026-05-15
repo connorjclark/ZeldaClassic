@@ -1109,4 +1109,45 @@ void zeditor_handle_commands()
 		if (save_quest(qst.c_str()) != 0) { printf("Failed to save quest\n"); zq_exit(1); }
 		zq_exit(0);
 	}
+
+	int export_combo_arg = zapp_check_switch("-export-combo", {"input.qst", "output.zcombo", "start_combo", "count"});
+	if (export_combo_arg > 0)
+	{
+		set_headless_mode();
+		std::string input_filename = zapp_get_arg_string(export_combo_arg + 1);
+		std::string output_filename = zapp_get_arg_string(export_combo_arg + 2);
+		int start_combo = zapp_get_arg_int(export_combo_arg + 3);
+		int count = zapp_get_arg_int(export_combo_arg + 4);
+
+		int load_ret = load_quest(input_filename.c_str(), false);
+		if (load_ret != qe_OK) { printf("Failed to load quest: %d\n", load_ret); zq_exit(1); }
+
+		PACKFILE *f = zalleg_pack_fopen_password(output_filename.c_str(), F_WRITE, "");
+		if (!f) { printf("Failed to open output file\n"); zq_exit(1); }
+		int ret = writecombofile(f, start_combo, count);
+		pack_fclose(f);
+		if (!ret) { printf("Failed to export combo\n"); zq_exit(1); }
+		zq_exit(0);
+	}
+
+	int import_combo_arg = zapp_check_switch("-import-combo", {"qst", "input.zcombo", "start_combo"});
+	if (import_combo_arg > 0)
+	{
+		set_headless_mode();
+		std::string qst = zapp_get_arg_string(import_combo_arg + 1);
+		std::string input_combo = zapp_get_arg_string(import_combo_arg + 2);
+		int start_combo = zapp_get_arg_int(import_combo_arg + 3);
+
+		int load_ret = load_quest(qst.c_str(), false);
+		if (load_ret != qe_OK) { printf("Failed to load quest: %d\n", load_ret); zq_exit(1); }
+
+		PACKFILE *f = zalleg_pack_fopen_password(input_combo.c_str(), F_READ, "");
+		if (!f) { printf("Failed to open combo file\n"); zq_exit(1); }
+		int ret = readcombofile_to_location(f, start_combo, 0, 0);
+		pack_fclose(f);
+		if (!ret) { printf("Failed to import combo\n"); zq_exit(1); }
+
+		if (save_quest(qst.c_str()) != 0) { printf("Failed to save quest\n"); zq_exit(1); }
+		zq_exit(0);
+	}
 }
