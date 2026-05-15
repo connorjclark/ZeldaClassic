@@ -10502,6 +10502,37 @@ void parse_strings_tsv(std::string tsv)
 }
 
 bool isblanktile(tiledata *buf, int32_t i);
+int32_t write_tile_entry(PACKFILE *f, tiledata *buf, int32_t i)
+{
+	if(isblanktile(buf, i))
+	{
+		if(!p_putc(0,f))
+			return 1;
+	}
+	else
+	{
+		int format = buf[i].format;
+		if(!p_putc(format,f))
+			return 2;
+		if(format == tf4Bit)
+		{
+			byte temp_tile[128];
+			byte *di = temp_tile;
+			byte *src = buf[i].data;
+			for(int32_t si=0; si<256; si+=2)
+			{
+				*di = (src[si]&15) + ((src[si+1]&15) << 4);
+				++di;
+			}
+			if(!pfwrite(temp_tile,128,f))
+				return 3;
+		}
+		else if(!pfwrite(buf[i].data,tilesize(format),f))
+			return 3;
+	}
+	return 0;
+}
+
 int32_t writetiles(PACKFILE *f, word version, word build, int32_t start_tile, int32_t max_tiles)
 {
     //these are here to bypass compiler warnings about unused arguments
@@ -10557,39 +10588,8 @@ int32_t writetiles(PACKFILE *f, word version, word build, int32_t start_tile, in
         
         for(int32_t i=0; i<tiles_used; ++i)
         {
-			if(isblanktile(newtilebuf, start_tile+i))
-			{
-				if(!p_putc(0,f))
-					new_return(8);
-			}
-			else
-			{
-				int format = newtilebuf[start_tile+i].format;
-				if(!p_putc(format,f))
-				{
-					new_return(6);
-				}
-				
-				if (format == tf4Bit)
-				{
-					byte temp_tile[128];
-					byte *di = temp_tile;
-					byte *src = newtilebuf[start_tile+i].data;
-					for (int32_t si=0; si<256; si+=2)
-					{
-						*di = (src[si]&15) + ((src[si+1]&15) << 4);
-						++di;
-					}
-					if (!pfwrite(temp_tile,128,f))
-					{
-						new_return(7);
-					}
-				}
-				else if (!pfwrite(newtilebuf[start_tile+i].data,tilesize(format),f))
-				{
-					new_return(7);
-				}
-			}
+			if(auto ret = write_tile_entry(f, newtilebuf, start_tile+i))
+				return ret;
         }
         
         if(writecycle==0)
@@ -10793,464 +10793,464 @@ int32_t writecheats(PACKFILE *f, zquestheader *Header)
 int32_t writeguy_single(PACKFILE *f, guydata& guy)
 {
 	uint32_t flags1 = uint32_t(guy.flags);
-			uint32_t flags2 = uint32_t(guy.flags >> 32ULL);
-			if (!p_iputl(flags1, f))
-			{
-				new_return(6);
-			}
-			if (!p_iputl(flags2, f))
-			{
-				new_return(7);
-			}
-			
-			if(!p_iputl(guy.tile,f))
-			{
-				new_return(8);
-			}
-			
-			if(!p_putc(guy.width,f))
-			{
-				new_return(9);
-			}
-			
-			if(!p_putc(guy.height,f))
-			{
-				new_return(10);
-			}
-			
-			if(!p_iputl(guy.s_tile,f))
-			{
-				new_return(11);
-			}
-			
-			if(!p_putc(guy.s_width,f))
-			{
-				new_return(12);
-			}
-			
-			if(!p_putc(guy.s_height,f))
-			{
-				new_return(13);
-			}
-			
-			if(!p_iputl(guy.e_tile,f))
-			{
-				new_return(14);
-			}
-			
-			if(!p_putc(guy.e_width,f))
-			{
-				new_return(15);
-			}
-			
-			if(!p_putc(guy.e_height,f))
-			{
-				new_return(16);
-			}
-			
-			if(!p_iputw(guy.hp,f))
-			{
-				new_return(17);
-			}
-			
-			if(!p_iputw(guy.type,f))
-			{
-				new_return(18);
-			}
-			
-			if(!p_iputw(guy.cset,f))
-			{
-				new_return(19);
-			}
-			
-			if(!p_iputw(guy.anim,f))
-			{
-				new_return(20);
-			}
-			
-			if(!p_iputw(guy.e_anim,f))
-			{
-				new_return(21);
-			}
-			
-			if(!p_iputw(guy.frate,f))
-			{
-				new_return(22);
-			}
-			
-			if(!p_iputw(guy.e_frate,f))
-			{
-				new_return(23);
-			}
-			
-			if(!p_iputw(guy.dp,f))
-			{
-				new_return(24);
-			}
-			
-			if(!p_iputw(guy.wdp,f))
-			{
-				new_return(25);
-			}
-			
-			if(!p_iputw(guy.weapon,f))
-			{
-				new_return(26);
-			}
-			
-			if(!p_iputw(guy.rate,f))
-			{
-				new_return(27);
-			}
-			
-			if(!p_iputw(guy.hrate,f))
-			{
-				new_return(28);
-			}
-			
-			if(!p_iputw(guy.step,f))
-			{
-				new_return(29);
-			}
-			
-			if(!p_iputw(guy.homing,f))
-			{
-				new_return(30);
-			}
-			
-			if(!p_iputw(guy.grumble,f))
-			{
-				new_return(31);
-			}
-			
-			if(!p_iputw(guy.item_set,f))
-			{
-				new_return(32);
-			}
-			
-			if(!p_iputl(guy.attributes[0], f))
-			{
-				new_return(33);
-			}
-			
-			if(!p_iputl(guy.attributes[1],f))
-			{
-				new_return(34);
-			}
-			
-			if(!p_iputl(guy.attributes[2],f))
-			{
-				new_return(35);
-			}
-			
-			if(!p_iputl(guy.attributes[3],f))
-			{
-				new_return(36);
-			}
-			
-			if(!p_iputl(guy.attributes[4],f))
-			{
-				new_return(37);
-			}
-			
-			if(!p_iputl(guy.attributes[5],f))
-			{
-				new_return(38);
-			}
-			
-			if(!p_iputl(guy.attributes[6],f))
-			{
-				new_return(39);
-			}
-			
-			if(!p_iputl(guy.attributes[7],f))
-			{
-				new_return(40);
-			}
-			
-			if(!p_iputl(guy.attributes[8],f))
-			{
-				new_return(41);
-			}
-			
-			if(!p_iputl(guy.attributes[9],f))
-			{
-				new_return(42);
-			}
-			
-			if(!p_iputw(guy.bgsfx,f))
-			{
-				new_return(43);
-			}
-			
-			if(!p_iputw(guy.bosspal,f))
-			{
-				new_return(44);
-			}
-			
-			if(!p_iputw(guy.extend,f))
-			{
-				new_return(45);
-			}
-			
-			for(int32_t j=0; j < edefLAST; j++)
-			{
-				if(!p_putc(guy.defense[j],f))
-				{
-					new_return(46);
-				}
-			}
-			
-			if ( FFCore.getQuestHeaderInfo(vZelda) < 0x250 || (( FFCore.getQuestHeaderInfo(vZelda) == 0x250 ) && FFCore.getQuestHeaderInfo(vBuild) < 32 ) )
-			{
-				//If no user-set hit sound was in place, and the quest was made in a version before 2.53.0 Gamma 2:
-				if ( guy.hitsfx == 0 ) guy.hitsfx = WAV_EHIT; //Fix quests using the wrong hit sound when loading this. 
-				//Force SFX_HIT here. 
-			
-			}
-		
-			if(!p_iputw(guy.hitsfx,f))
-				new_return(47);
-			
-			if(!p_iputw(guy.deadsfx,f))
-				new_return(48);
-			
-			if(!p_iputl(guy.attributes[10],f))
-			{
-				new_return(49);
-			}
-			
-			if(!p_iputl(guy.attributes[11],f))
-			{
-				new_return(50);
-			}
-			
-			//New 2.6 defences
-			for(int32_t j=edefLAST; j < edefLAST255; j++)
-			{
-				if(!p_putc(guy.defense[j],f))
-				{
-					new_return(51);
-				}
-			}
-			
-			//tilewidth, tileheight, hitwidth, hitheight, hitzheight, hitxofs, hityofs, hitzofs
-			if(!p_iputl(guy.txsz,f))
-			{
-				new_return(52);
-			}
-			if(!p_iputl(guy.tysz,f))
-			{
-				new_return(53);
-			}
-			if(!p_iputl(guy.hxsz,f))
-			{
-				new_return(54);
-			}
-			if(!p_iputl(guy.hysz,f))
-			{
-				new_return(55);
-			}
-			if(!p_iputl(guy.hzsz,f))
-			{
-				new_return(56);
-			}
-			// These are not fixed types, but ints, so they are safe to use here. 
-			if(!p_iputl(guy.hxofs,f))
-			{
-				new_return(57);
-			}
-			if(!p_iputl(guy.hyofs,f))
-			{
-				new_return(58);
-			}
-			if(!p_iputl(guy.xofs,f))
-			{
-				new_return(59);
-			}
-			if(!p_iputl(guy.yofs,f))
-			{
-				new_return(60);
-			}
-			if(!p_iputl(guy.zofs,f))
-			{
-				new_return(61);
-			}
-			if(!p_iputl(guy.wpnsprite,f))
-			{
-				new_return(62);
-			}
-			if(!p_iputl(guy.SIZEflags,f))
-			{
-				new_return(63);
-			}
-			if(!p_iputl(guy.frozentile,f))
-			{
-				new_return(64);
-			}
-			if(!p_iputl(guy.frozencset,f))
-			{
-				new_return(65);
-			}
-			if(!p_iputl(guy.frozenclock,f))
-			{
-				new_return(66);
-			}
-			
-			for ( int32_t q = 0; q < 10; q++ ) 
-			{
-				if(!p_iputw(guy.frozenmisc[q],f))
-				{
-					new_return(67);
-				}
-			}
-			if(!p_iputw(guy.firesfx,f))
-			{
-				new_return(68);
-			}
-			//misc 16->31
-			if(!p_iputl(guy.attributes[15],f))
-			{
-				new_return(69);
-			}
-			if(!p_iputl(guy.attributes[16],f))
-			{
-				new_return(70);
-			}
-			if(!p_iputl(guy.attributes[17],f))
-			{
-				new_return(71);
-			}
-			if(!p_iputl(guy.attributes[18],f))
-			{
-				new_return(72);
-			}
-			if(!p_iputl(guy.attributes[19],f))
-			{
-				new_return(73);
-			}
-			if(!p_iputl(guy.attributes[20],f))
-			{
-				new_return(74);
-			}
-			if(!p_iputl(guy.attributes[21],f))
-			{
-				new_return(75);
-			}
-			if(!p_iputl(guy.attributes[22],f))
-			{
-				new_return(76);
-			}
-			if(!p_iputl(guy.attributes[23],f))
-			{
-				new_return(77);
-			}
-			if(!p_iputl(guy.attributes[24],f))
-			{
-				new_return(78);
-			}
-			if(!p_iputl(guy.attributes[25],f))
-			{
-				new_return(79);
-			}
-			if(!p_iputl(guy.attributes[26],f))
-			{
-				new_return(80);
-			}
-			if(!p_iputl(guy.attributes[27],f))
-			{
-				new_return(81);
-			}
-			if(!p_iputl(guy.attributes[28],f))
-			{
-				new_return(82);
-			}
-			if(!p_iputl(guy.attributes[29],f))
-			{
-				new_return(83);
-			}
-			if(!p_iputl(guy.attributes[30],f))
-			{
-				new_return(84);
-			}
-			if(!p_iputl(guy.attributes[31],f))
-			{
-				new_return(85);
-			}
-			for ( int32_t q = 0; q < 32; q++ )
-			{
-				if(!p_iputl(guy.movement[q],f))
-				{
-					new_return(86);
-				}
-			}
-			for ( int32_t q = 0; q < 32; q++ )
-			{
-				if(!p_iputl(guy.new_weapon[q],f))
-				{
-					new_return(87);
-				}
-			}
-			if(!p_iputw(guy.script,f))
-			{
-				new_return(88);
-			}
-			for ( int32_t q = 0; q < 8; q++ )
-			{
-				if(!p_iputl(guy.initD[q],f))
-				{
-					new_return(89);
-				}
-			}
-			for ( int32_t q = 0; q < 2; q++ )
-			{
-				if(!p_iputl(0,f))
-				{
-					new_return(90);
-				}
-			}
-			if(!p_iputl(guy.editorflags,f))
-			{
-				new_return(91);
-			}
-			//somehow forgot these in the older builds -Z
-			if(!p_iputl(guy.attributes[12],f))
-			{
-				new_return(92);
-			}
-			if(!p_iputl(guy.attributes[13],f))
-			{
-				new_return(93);
-			}
-			if(!p_iputl(guy.attributes[14],f))
-			{
-				new_return(94);
-			}
-			
-			//Enemy Editor InitD[] labels
-			for ( int32_t q = 0; q < 8; q++ )
-			{
-				for ( int32_t w = 0; w < 65; w++ )
-				{
-					if(!p_putc(guy.initD_label[q][w],f))
-					{
-						new_return(95);
-					} 
-				}
-			}
-			if(!p_iputl(guy.moveflags,f))
-				new_return(99);
-			if(!p_iputw(guy.spr_shadow,f))
-				new_return(100);
-			if(!p_iputw(guy.spr_death,f))
-				new_return(101);
-			if(!p_iputw(guy.spr_spawn,f))
-				new_return(102);
-			if (!p_iputw(guy.specialsfx, f))
-				new_return(103);
-			if(auto ret = write_weap_data(guy.weap_data, f))
-				return ret;
-	new_return(0);
+	uint32_t flags2 = uint32_t(guy.flags >> 32ULL);
+	if (!p_iputl(flags1, f))
+	{
+		return 6;
+	}
+	if (!p_iputl(flags2, f))
+	{
+		return 7;
+	}
+	
+	if(!p_iputl(guy.tile,f))
+	{
+		return 8;
+	}
+	
+	if(!p_putc(guy.width,f))
+	{
+		return 9;
+	}
+	
+	if(!p_putc(guy.height,f))
+	{
+		return 10;
+	}
+	
+	if(!p_iputl(guy.s_tile,f))
+	{
+		return 11;
+	}
+	
+	if(!p_putc(guy.s_width,f))
+	{
+		return 12;
+	}
+	
+	if(!p_putc(guy.s_height,f))
+	{
+		return 13;
+	}
+	
+	if(!p_iputl(guy.e_tile,f))
+	{
+		return 14;
+	}
+	
+	if(!p_putc(guy.e_width,f))
+	{
+		return 15;
+	}
+	
+	if(!p_putc(guy.e_height,f))
+	{
+		return 16;
+	}
+	
+	if(!p_iputw(guy.hp,f))
+	{
+		return 17;
+	}
+	
+	if(!p_iputw(guy.type,f))
+	{
+		return 18;
+	}
+	
+	if(!p_iputw(guy.cset,f))
+	{
+		return 19;
+	}
+	
+	if(!p_iputw(guy.anim,f))
+	{
+		return 20;
+	}
+	
+	if(!p_iputw(guy.e_anim,f))
+	{
+		return 21;
+	}
+	
+	if(!p_iputw(guy.frate,f))
+	{
+		return 22;
+	}
+	
+	if(!p_iputw(guy.e_frate,f))
+	{
+		return 23;
+	}
+	
+	if(!p_iputw(guy.dp,f))
+	{
+		return 24;
+	}
+	
+	if(!p_iputw(guy.wdp,f))
+	{
+		return 25;
+	}
+	
+	if(!p_iputw(guy.weapon,f))
+	{
+		return 26;
+	}
+	
+	if(!p_iputw(guy.rate,f))
+	{
+		return 27;
+	}
+	
+	if(!p_iputw(guy.hrate,f))
+	{
+		return 28;
+	}
+	
+	if(!p_iputw(guy.step,f))
+	{
+		return 29;
+	}
+	
+	if(!p_iputw(guy.homing,f))
+	{
+		return 30;
+	}
+	
+	if(!p_iputw(guy.grumble,f))
+	{
+		return 31;
+	}
+	
+	if(!p_iputw(guy.item_set,f))
+	{
+		return 32;
+	}
+	
+	if(!p_iputl(guy.attributes[0], f))
+	{
+		return 33;
+	}
+	
+	if(!p_iputl(guy.attributes[1],f))
+	{
+		return 34;
+	}
+	
+	if(!p_iputl(guy.attributes[2],f))
+	{
+		return 35;
+	}
+	
+	if(!p_iputl(guy.attributes[3],f))
+	{
+		return 36;
+	}
+	
+	if(!p_iputl(guy.attributes[4],f))
+	{
+		return 37;
+	}
+	
+	if(!p_iputl(guy.attributes[5],f))
+	{
+		return 38;
+	}
+	
+	if(!p_iputl(guy.attributes[6],f))
+	{
+		return 39;
+	}
+	
+	if(!p_iputl(guy.attributes[7],f))
+	{
+		return 40;
+	}
+	
+	if(!p_iputl(guy.attributes[8],f))
+	{
+		return 41;
+	}
+	
+	if(!p_iputl(guy.attributes[9],f))
+	{
+		return 42;
+	}
+	
+	if(!p_iputw(guy.bgsfx,f))
+	{
+		return 43;
+	}
+	
+	if(!p_iputw(guy.bosspal,f))
+	{
+		return 44;
+	}
+	
+	if(!p_iputw(guy.extend,f))
+	{
+		return 45;
+	}
+	
+	for(int32_t j=0; j < edefLAST; j++)
+	{
+		if(!p_putc(guy.defense[j],f))
+		{
+			return 46;
+		}
+	}
+	
+	if ( FFCore.getQuestHeaderInfo(vZelda) < 0x250 || (( FFCore.getQuestHeaderInfo(vZelda) == 0x250 ) && FFCore.getQuestHeaderInfo(vBuild) < 32 ) )
+	{
+		//If no user-set hit sound was in place, and the quest was made in a version before 2.53.0 Gamma 2:
+		if ( guy.hitsfx == 0 ) guy.hitsfx = WAV_EHIT; //Fix quests using the wrong hit sound when loading this. 
+		//Force SFX_HIT here. 
+	
+	}
+
+	if(!p_iputw(guy.hitsfx,f))
+		return 47;
+	
+	if(!p_iputw(guy.deadsfx,f))
+		return 48;
+	
+	if(!p_iputl(guy.attributes[10],f))
+	{
+		return 49;
+	}
+	
+	if(!p_iputl(guy.attributes[11],f))
+	{
+		return 50;
+	}
+	
+	//New 2.6 defences
+	for(int32_t j=edefLAST; j < edefLAST255; j++)
+	{
+		if(!p_putc(guy.defense[j],f))
+		{
+			return 51;
+		}
+	}
+	
+	//tilewidth, tileheight, hitwidth, hitheight, hitzheight, hitxofs, hityofs, hitzofs
+	if(!p_iputl(guy.txsz,f))
+	{
+		return 52;
+	}
+	if(!p_iputl(guy.tysz,f))
+	{
+		return 53;
+	}
+	if(!p_iputl(guy.hxsz,f))
+	{
+		return 54;
+	}
+	if(!p_iputl(guy.hysz,f))
+	{
+		return 55;
+	}
+	if(!p_iputl(guy.hzsz,f))
+	{
+		return 56;
+	}
+	// These are not fixed types, but ints, so they are safe to use here. 
+	if(!p_iputl(guy.hxofs,f))
+	{
+		return 57;
+	}
+	if(!p_iputl(guy.hyofs,f))
+	{
+		return 58;
+	}
+	if(!p_iputl(guy.xofs,f))
+	{
+		return 59;
+	}
+	if(!p_iputl(guy.yofs,f))
+	{
+		return 60;
+	}
+	if(!p_iputl(guy.zofs,f))
+	{
+		return 61;
+	}
+	if(!p_iputl(guy.wpnsprite,f))
+	{
+		return 62;
+	}
+	if(!p_iputl(guy.SIZEflags,f))
+	{
+		return 63;
+	}
+	if(!p_iputl(guy.frozentile,f))
+	{
+		return 64;
+	}
+	if(!p_iputl(guy.frozencset,f))
+	{
+		return 65;
+	}
+	if(!p_iputl(guy.frozenclock,f))
+	{
+		return 66;
+	}
+	
+	for ( int32_t q = 0; q < 10; q++ ) 
+	{
+		if(!p_iputw(guy.frozenmisc[q],f))
+		{
+			return 67;
+		}
+	}
+	if(!p_iputw(guy.firesfx,f))
+	{
+		return 68;
+	}
+	//misc 16->31
+	if(!p_iputl(guy.attributes[15],f))
+	{
+		return 69;
+	}
+	if(!p_iputl(guy.attributes[16],f))
+	{
+		return 70;
+	}
+	if(!p_iputl(guy.attributes[17],f))
+	{
+		return 71;
+	}
+	if(!p_iputl(guy.attributes[18],f))
+	{
+		return 72;
+	}
+	if(!p_iputl(guy.attributes[19],f))
+	{
+		return 73;
+	}
+	if(!p_iputl(guy.attributes[20],f))
+	{
+		return 74;
+	}
+	if(!p_iputl(guy.attributes[21],f))
+	{
+		return 75;
+	}
+	if(!p_iputl(guy.attributes[22],f))
+	{
+		return 76;
+	}
+	if(!p_iputl(guy.attributes[23],f))
+	{
+		return 77;
+	}
+	if(!p_iputl(guy.attributes[24],f))
+	{
+		return 78;
+	}
+	if(!p_iputl(guy.attributes[25],f))
+	{
+		return 79;
+	}
+	if(!p_iputl(guy.attributes[26],f))
+	{
+		return 80;
+	}
+	if(!p_iputl(guy.attributes[27],f))
+	{
+		return 81;
+	}
+	if(!p_iputl(guy.attributes[28],f))
+	{
+		return 82;
+	}
+	if(!p_iputl(guy.attributes[29],f))
+	{
+		return 83;
+	}
+	if(!p_iputl(guy.attributes[30],f))
+	{
+		return 84;
+	}
+	if(!p_iputl(guy.attributes[31],f))
+	{
+		return 85;
+	}
+	for ( int32_t q = 0; q < 32; q++ )
+	{
+		if(!p_iputl(guy.movement[q],f))
+		{
+			return 86;
+		}
+	}
+	for ( int32_t q = 0; q < 32; q++ )
+	{
+		if(!p_iputl(guy.new_weapon[q],f))
+		{
+			return 87;
+		}
+	}
+	if(!p_iputw(guy.script,f))
+	{
+		return 88;
+	}
+	for ( int32_t q = 0; q < 8; q++ )
+	{
+		if(!p_iputl(guy.initD[q],f))
+		{
+			return 89;
+		}
+	}
+	for ( int32_t q = 0; q < 2; q++ )
+	{
+		if(!p_iputl(0,f))
+		{
+			return 90;
+		}
+	}
+	if(!p_iputl(guy.editorflags,f))
+	{
+		return 91;
+	}
+	//somehow forgot these in the older builds -Z
+	if(!p_iputl(guy.attributes[12],f))
+	{
+		return 92;
+	}
+	if(!p_iputl(guy.attributes[13],f))
+	{
+		return 93;
+	}
+	if(!p_iputl(guy.attributes[14],f))
+	{
+		return 94;
+	}
+	
+	//Enemy Editor InitD[] labels
+	for ( int32_t q = 0; q < 8; q++ )
+	{
+		for ( int32_t w = 0; w < 65; w++ )
+		{
+			if(!p_putc(guy.initD_label[q][w],f))
+			{
+				return 95;
+			} 
+		}
+	}
+	if(!p_iputl(guy.moveflags,f))
+		return 99;
+	if(!p_iputw(guy.spr_shadow,f))
+		return 100;
+	if(!p_iputw(guy.spr_death,f))
+		return 101;
+	if(!p_iputw(guy.spr_spawn,f))
+		return 102;
+	if (!p_iputw(guy.specialsfx, f))
+		return 103;
+	if(auto ret = write_weap_data(guy.weap_data, f))
+		return ret;
+	return 0;
 }
 
 int32_t writeguys(PACKFILE *f, zquestheader *Header)

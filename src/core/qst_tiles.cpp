@@ -5,6 +5,46 @@
 
 extern const byte* legacy_skip_flags;
 
+int32_t read_tile_entry(PACKFILE *f, tiledata *buf, int32_t i, byte *temp_tile)
+{
+	byte format = tf4Bit;
+	memset(temp_tile, 0, tilesize(tf32Bit));
+	if(!p_getc(&format,f))
+		return qe_invalid;
+	if(!format)
+	{
+		reset_tile(buf, i, tf4Bit);
+		return 0;
+	}
+	int size = format == tf4Bit ? 128 : tilesize(format);
+	if(!pfread(temp_tile, size, f))
+		return qe_invalid;
+	buf[i].format = format;
+	if(buf[i].data)
+	{
+		free(buf[i].data);
+		buf[i].data = NULL;
+	}
+	buf[i].data = (byte *)malloc(tilesize(buf[i].format));
+	if(format == tf4Bit)
+	{
+		byte temp[256];
+		byte *si = temp_tile + 128;
+		byte *di = temp + 256;
+		for(int j=127; j>=0; --j)
+		{
+			(*(--di)) = (*(--si)) >> 4;
+			(*(--di)) = (*si) & 15;
+		}
+		memcpy(buf[i].data, temp, 256);
+	}
+	else
+	{
+		memcpy(buf[i].data, temp_tile, tilesize(buf[i].format));
+	}
+	return 0;
+}
+
 int32_t readtiles(PACKFILE *f, tiledata *buf, zquestheader *Header, word version, word build, word start_tile, int32_t max_tiles, bool from_init)
 {
     bool should_skip = legacy_skip_flags && get_bit(legacy_skip_flags, skip_tiles);

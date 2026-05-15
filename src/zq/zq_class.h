@@ -555,6 +555,7 @@ int32_t writecolordata(PACKFILE *f, word version, word build, word start_cset, w
 int32_t writecombos(PACKFILE *f, word version, word build, word start_combo, word max_combos);
 int32_t writecomboaliases(PACKFILE *f, word version, word build);
 
+int32_t write_tile_entry(PACKFILE *f, tiledata *buf, int32_t i);
 int32_t writetiles(PACKFILE *f, word version, word build, int32_t start_tile, int32_t max_tiles);
 
 int32_t write_one_dmap(PACKFILE* f, int index);

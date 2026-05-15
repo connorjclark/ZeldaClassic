@@ -1047,54 +1047,57 @@ int32_t onExport_Combos()
 
 int32_t onImport_Tiles()
 {
-	int ret;
-	if (auto num = call_get_num("Import Start Page", 0, TILE_PAGES-1))
-		ret = *num;
+	int dest_page;
+	if(auto num = call_get_num("Destination Page", 0, TILE_PAGES-1))
+		dest_page = *num;
 	else return D_O_K;
-    
-    if(!prompt_for_existing_file_compat("Import Tiles (.ztileset)","ztileset",NULL,datapath,false))
-        return D_O_K;
-        
-    mark_save_dirty();
-    char name[256];
-    extract_name(temppath,name,FILENAMEALL);
-    PACKFILE *f=zalleg_pack_fopen_password(temppath,F_READ, "");
+
+	if(!prompt_for_existing_file_compat("Import Tiles (.ztileset)","ztileset",NULL,datapath,false))
+		return D_O_K;
+
+	mark_save_dirty();
+	char name[256];
+	extract_name(temppath,name,FILENAMEALL);
+	PACKFILE *f=zalleg_pack_fopen_password(temppath,F_READ, "");
 	if(f)
 	{
-		if(!readtilefile_to_location(f,0,ret))
+		if(!readtilefile_to_location(f, dest_page * TILES_PER_PAGE))
 			InfoDialog("Error",fmt::format("Unable to load {}",name)).show();
 		else
 			InfoDialog("Success!",fmt::format("Loaded {}",name)).show();
+		pack_fclose(f);
 	}
-	pack_fclose(f);
-    
-    
-    refresh(rALL);
-    return D_O_K;
+
+	refresh(rALL);
+	return D_O_K;
 }
 
 int32_t onExport_Tiles()
 {
-    if(!prompt_for_new_file_compat("Export Tiles (.ztileset)","ztileset",NULL,datapath,false))
-        return D_O_K;
-        
-    char name[256];
-    extract_name(temppath,name,FILENAMEALL);
-    
-    //writetilefile(f,first_tile_id,the_tile_count);
-    
+	int start_page, page_count;
+	if(auto num = call_get_num("Start Page", 0, TILE_PAGES-1))
+		start_page = *num;
+	else return D_O_K;
+	if(auto num = call_get_num("Page Count", 1, TILE_PAGES - start_page))
+		page_count = *num;
+	else return D_O_K;
+
+	if(!prompt_for_new_file_compat("Export Tiles (.ztileset)","ztileset",NULL,datapath,false))
+		return D_O_K;
+
+	char name[256];
+	extract_name(temppath,name,FILENAMEALL);
 	PACKFILE *f=zalleg_pack_fopen_password(temppath,F_WRITE, "");
 	if(f)
 	{
-		writetilefile(f,0,NEWMAXTILES);
+		writetilefile(f, start_page * TILES_PER_PAGE, page_count * TILES_PER_PAGE);
 		pack_fclose(f);
-		
 		InfoDialog("Success!",fmt::format("Saved {}", name)).show();
 	}
 	else
 		InfoDialog("Error", fmt::format("Error saving {}", name)).show();
-    
-    return D_O_K;
+
+	return D_O_K;
 }
 
 int32_t onImport_Guys()
