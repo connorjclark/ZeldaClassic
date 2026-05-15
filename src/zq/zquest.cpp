@@ -751,8 +751,6 @@ int onOldHelp();
 
 static NewMenu import_250_menu
 {
-	{ "&DMaps", onImport_DMaps },
-	{ "&Combo Table", onImport_Combos },
 	{ "&Combo Alias", onImport_ComboAlias },
 };
 
@@ -789,8 +787,6 @@ static NewMenu import_menu
 
 static NewMenu export_250_menu
 {
-	{ "&DMaps", onExport_DMaps },
-	{ "&Combo Table", onExport_Combos },
 	{ "&Combo Alias", onExport_ComboAlias },
 	{ "&Graphics Pack", onExport_ZGP },
 };
