@@ -151,7 +151,8 @@ enum {ENC_METHOD_192B104=0, ENC_METHOD_192B105, ENC_METHOD_192B185, ENC_METHOD_2
 #define V_ICONS            10 //Game Icons
 #define V_GRAPHICSPACK     1
 #define V_INITDATA        48
-#define V_GUYS            56
+#define V_GUYS            57
+#define V_GUYS_ZNPC_MIN   57 // .znpc files before this used a different field ordering
 #define V_MIDIS            5
 #define V_CHEATS           1
 #define V_SAVEGAME        49
