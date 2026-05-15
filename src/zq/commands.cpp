@@ -9,6 +9,7 @@
 #include "zq/package.h"
 #include "zq/zq_class.h"
 #include "zq/zq_custom.h"
+#include "zq/zq_files.h"
 #include "zq/zq_tiles.h"
 #include "zq/zquest.h"
 #include "zalleg/packfile.h"
@@ -1064,6 +1065,46 @@ void zeditor_handle_commands()
 		int ret = readonenpc(f, npc_index);
 		pack_fclose(f);
 		if (!ret) { printf("Failed to import npc\n"); zq_exit(1); }
+
+		if (save_quest(qst.c_str()) != 0) { printf("Failed to save quest\n"); zq_exit(1); }
+		zq_exit(0);
+	}
+
+	int export_doorset_arg = zapp_check_switch("-export-doorset", {"input.qst", "output.zdoors", "index"});
+	if (export_doorset_arg > 0)
+	{
+		set_headless_mode();
+		std::string input_filename = zapp_get_arg_string(export_doorset_arg + 1);
+		std::string output_filename = zapp_get_arg_string(export_doorset_arg + 2);
+		int index = zapp_get_arg_int(export_doorset_arg + 3);
+
+		int load_ret = load_quest(input_filename.c_str(), false);
+		if (load_ret != qe_OK) { printf("Failed to load quest: %d\n", load_ret); zq_exit(1); }
+
+		PACKFILE *f = zalleg_pack_fopen_password(output_filename.c_str(), F_WRITE, "");
+		if (!f) { printf("Failed to open output file\n"); zq_exit(1); }
+		int ret = writeonezdoorset(f, index);
+		pack_fclose(f);
+		if (!ret) { printf("Failed to export doorset\n"); zq_exit(1); }
+		zq_exit(0);
+	}
+
+	int import_doorset_arg = zapp_check_switch("-import-doorset", {"qst", "input.zdoors", "index"});
+	if (import_doorset_arg > 0)
+	{
+		set_headless_mode();
+		std::string qst = zapp_get_arg_string(import_doorset_arg + 1);
+		std::string input_doorset = zapp_get_arg_string(import_doorset_arg + 2);
+		int index = zapp_get_arg_int(import_doorset_arg + 3);
+
+		int load_ret = load_quest(qst.c_str(), false);
+		if (load_ret != qe_OK) { printf("Failed to load quest: %d\n", load_ret); zq_exit(1); }
+
+		PACKFILE *f = zalleg_pack_fopen_password(input_doorset.c_str(), F_READ, "");
+		if (!f) { printf("Failed to open doorset file\n"); zq_exit(1); }
+		int ret = readonezdoorset(f, index);
+		pack_fclose(f);
+		if (!ret) { printf("Failed to import doorset\n"); zq_exit(1); }
 
 		if (save_quest(qst.c_str()) != 0) { printf("Failed to save quest\n"); zq_exit(1); }
 		zq_exit(0);

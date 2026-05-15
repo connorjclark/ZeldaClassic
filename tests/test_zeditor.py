@@ -359,6 +359,27 @@ class TestZEditor(unittest.TestCase):
             'npc export after import+save differs from original export',
         )
 
+    def test_roundtrip_doorset(self):
+        if 'emscripten' in str(run_target.get_build_folder()):
+            return
+
+        src_qst = root_dir / 'tests/replays/classic_1st/classic_1st.qst'
+        work_qst = tmp_dir / 'doorset_work.qst'
+        export1 = tmp_dir / 'doorset1.zdoors'
+        export2 = tmp_dir / 'doorset2.zdoors'
+        doorset_index = 0
+
+        shutil.copy(root_dir / 'tests/replays/playground/playground.qst', work_qst)
+        self.run_zeditor(['-export-doorset', src_qst, export1, str(doorset_index)])
+        self.run_zeditor(['-import-doorset', work_qst, export1, str(doorset_index)])
+        self.run_zeditor(['-export-doorset', work_qst, export2, str(doorset_index)])
+
+        self.assertEqual(
+            export1.read_bytes(),
+            export2.read_bytes(),
+            'doorset export after import+save differs from original export',
+        )
+
     def test_import_npc_rejects_old_format(self):
         if 'emscripten' in str(run_target.get_build_folder()):
             return

@@ -185,6 +185,8 @@ void print_quest_metadata(zquestheader const& tempheader, char const* path = NUL
 int32_t readheader(PACKFILE *f, zquestheader *Header, byte printmetadata = 0);
 int32_t readrules(PACKFILE *f, zquestheader *Header);
 int32_t readstrings(PACKFILE *f, zquestheader *Header);
+int32_t write_door_entry(PACKFILE *f, int32_t i);
+int32_t read_door_entry(PACKFILE *f, int32_t i, int32_t zelda_version, bool skip);
 int32_t readdoorcombosets(PACKFILE *f, zquestheader *Header);
 int32_t read_one_dmap(PACKFILE* f, zquestheader *Header, int s_version, int index);
 int32_t readdmaps(PACKFILE *f, zquestheader *Header, word version, word build, word start_dmap, word max_dmaps);
