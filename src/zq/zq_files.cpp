@@ -860,21 +860,6 @@ int32_t onImport_Combopack()
 		return D_O_K;
 }
 
-
-int32_t onExport_Comboaliaspack()
-{
-	savesomecomboaliases("Save Combo Alias Package", 0);
-	return D_O_K;
-	
-}
-
-int32_t onImport_Comboaliaspack_To()
-{
-	writesomecomboaliases_to("Load Combo Alias Package to:", 0);
-	return D_O_K;
-	
-}
-
 int32_t onImport_Comboaliaspack()
 {
 		if(prompt_for_existing_file_compat("Load ZALIAS(.zalias)", "zalias", NULL,datapath,false))
