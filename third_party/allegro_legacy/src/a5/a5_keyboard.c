@@ -30,16 +30,23 @@ static int a5_keyboard_keycode_map[256];
 // local edit
 static void update_key_shifts(ALLEGRO_EVENT* event) {
     _key_shifts = 0;
+
+    // local edit - On Windows, AltGr is reported as Ctrl+Alt. If we propagate
+    // KB_CTRL_FLAG in that case, MSG_CHAR handlers like jwin_edit_proc will
+    // suppress character input (treating it as a Ctrl shortcut) and break
+    // typing characters that require AltGr (e.g. '$' on Swedish QWERTY).
+    bool is_ctrl_mod = (event->keyboard.modifiers & ALLEGRO_KEYMOD_CTRL) != 0;
+    bool is_alt_mod = (event->keyboard.modifiers & ALLEGRO_KEYMOD_ALT) != 0;
+    bool is_altgr_mod = (event->keyboard.modifiers & ALLEGRO_KEYMOD_ALTGR) != 0;
+    bool is_altgr = is_altgr_mod || (is_ctrl_mod && is_alt_mod);
+
     if ((ALLEGRO_KEYMOD_SHIFT & event->keyboard.modifiers) != 0) {
         _key_shifts |= KB_SHIFT_FLAG;
     }
-    if ((ALLEGRO_KEYMOD_CTRL & event->keyboard.modifiers) != 0) {
+    if (is_ctrl_mod && !is_altgr) {
         _key_shifts |= KB_CTRL_FLAG;
     }
-    if ((ALLEGRO_KEYMOD_ALT & event->keyboard.modifiers) != 0) {
-        _key_shifts |= KB_ALT_FLAG;
-    }
-    if ((ALLEGRO_KEYMOD_ALTGR & event->keyboard.modifiers) != 0) {
+    if (is_alt_mod || is_altgr_mod) {
         _key_shifts |= KB_ALT_FLAG;
     }
     if ((ALLEGRO_KEYMOD_LWIN & event->keyboard.modifiers) != 0) {
