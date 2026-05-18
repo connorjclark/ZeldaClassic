@@ -1,0 +1,24 @@
+version: '3.8'
+
+services:
+  giftless:
+    image: datopian/giftless:0.6.2
+    container_name: giftless_lfs
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./giftless.yaml:/app/giftless.yaml:ro
+    env_file:
+      - .env
+    environment:
+      - GIFTLESS_CONFIG_FILE=/app/giftless.yaml
+    entrypoint: ["uwsgi"]
+    command: >
+      --http 0.0.0.0:8080 
+      --master 
+      --processes 4 
+      --threads 2 
+      --manage-script-name 
+      --module giftless.wsgi_entrypoint 
+      --callable app

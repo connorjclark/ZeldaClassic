@@ -57,6 +57,27 @@ Host: DigitalOcean
 
 This is the production server used by ZC. It's currently only used to facilitate the opt-in replay upload feature.
 
+## https://lfs.zquestclassic.com
+
+Host: DigitalOcean (via Docker)
+Storage: DigitalOcean Spaces (S3)
+
+We use a self-hosted Git LFS server (using [Giftless](https://github.com/datopian/giftless)) to store large binary assets like quest files and replays.
+
+### Authentication
+
+Authentication is handled via SSH. We sync GitHub organization members' public keys to a dedicated `git` user on the server. When you run `git push` or `git fetch`, Git LFS uses SSH to authenticate and receive a short-lived JWT for the HTTPS transfer.
+
+*   **Key Sync:** A cron job runs `infra/scripts/sync_github_keys.sh` every hour to fetch the public keys of all members of the `ZQuestClassic` GitHub organization.
+*   **Authentication Script:** The `git` user is restricted to running `lfs_server/git_lfs_authenticate.py` (via a wrapper script). This script verifies the user and issues a JWT with the appropriate scopes.
+*   **Auditability:** The JWT includes the user's GitHub username in the `sub` claim, allowing for tracking of LFS actions in the Giftless logs.
+
+### Configuration
+
+*   **Server Config:** `lfs_server/giftless.template.yaml` defines the Giftless configuration, including the S3 storage backend (DigitalOcean Spaces).
+*   **Infrastructure:** Nginx acts as a reverse proxy for the Docker container running Giftless. SSH configuration is managed in `infra/sshd/zc-git-lfs.conf`.
+*   **Client Config:** The `.lfsconfig` file in the repository root points clients to the self-hosted server for both HTTPS (download) and SSH (push) operations.
+
 ## Uploaded replays
 
 Host: DigitalOcean Spaces (S3)
@@ -78,7 +99,3 @@ Mostly every version of ZC is kept here, including many test builds for random c
 When a replay fails in CI, an HTML compare replay report is generated via [compare.yml](https://github.com/ZQuestClassic/ZQuestClassic/blob/main/.github/workflows/compare.yml). The report is uploaded to [surge.sh](https://surge.sh/) for a short amount of time. It's also uploaded as an artifact in the GitHub workflow - if downloaded, run a local webserver (eg `python -m http.server`) to view it.
 
 See `tests/compare_replays.py` for how this report is generated.
-
-## Git LFS
-
-We use LFS to host many huge replay/qst files that change frequently. The current provider for this is GitHub.

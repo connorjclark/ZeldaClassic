@@ -1,0 +1,22 @@
+AUTH_PROVIDERS:
+  - factory: giftless.auth.jwt:factory
+    options:
+      algorithm: HS256
+      private_key: "${GIFTLESS_JWT_SECRET}"
+  # - factory: giftless.auth.github:factory
+  #   options:
+  #     api_url: "https://api.github.com"
+  #     restrict_to:
+  #       ZQuestClassic: null
+  - giftless.auth.allow_anon:read_only
+
+TRANSFER_ADAPTERS:
+  basic:
+    factory: giftless.transfer.basic_external:factory
+    options:
+      storage_class: giftless.storage.amazon_s3:AmazonS3Storage
+      storage_options:
+        endpoint: "https://nyc3.digitaloceanspaces.com"
+        bucket_name: "zc-lfs"
+
+DEBUG: false

@@ -1,0 +1,4 @@
+[lfs]
+	url = https://lfs.zquestclassic.com/ZQuestClassic/ZQuestClassic
+	pushurl = ssh://git@lfs.zquestclassic.com/ZQuestClassic/ZQuestClassic
+	locksverify = false

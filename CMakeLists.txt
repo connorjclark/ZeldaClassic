@@ -72,8 +72,24 @@ else()
 	set(CMAKE_EXE_LINKER_FLAGS_ASAN "${CMAKE_EXE_LINKER_FLAGS_DEBUG} -fsanitize=address" CACHE STRING "" FORCE)
 endif()
 
-if(WANT_GIT_HOOKS)
-	if(IS_DIRECTORY "${CMAKE_SOURCE_DIR}/.git")
+if(IS_DIRECTORY "${CMAKE_SOURCE_DIR}/.git")
+	# Ensure the local LFS URL is set to the new server if no local override exists.
+	# This ensures older commits with outdated .lfsconfig files still use the correct LFS server.
+	execute_process(
+		COMMAND git config --local lfs.url
+		WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+		RESULT_VARIABLE LFS_URL_SET
+		OUTPUT_QUIET
+		ERROR_QUIET
+	)
+	if(NOT LFS_URL_SET EQUAL 0)
+		execute_process(
+			COMMAND git config lfs.url "https://lfs.zquestclassic.com/ZQuestClassic/ZQuestClassic"
+			WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+		)
+	endif()
+
+	if(WANT_GIT_HOOKS)
 		if(UNIX)
 			configure_file("${CMAKE_CURRENT_SOURCE_DIR}/cmake/commit-msg.in" "${CMAKE_SOURCE_DIR}/.git/commit-msg")
 			configure_file("${CMAKE_CURRENT_SOURCE_DIR}/cmake/prepare-commit-msg.in" "${CMAKE_SOURCE_DIR}/.git/prepare-commit-msg")

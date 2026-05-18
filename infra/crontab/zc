@@ -1,5 +1,8 @@
 # Update docs every 10 minutes
 */10 * * * * root bash /home/zc/ZQuestClassic/infra/scripts/update.sh >> /var/log/zc-docs-update.log 2>&1
 
-# Restart once a day to periodically update manifest.json
+# Restart API server once a day to periodically update database manifest.json
 0 1 * * * root /bin/systemctl try-restart zc.api_server >> /var/log/zc-restart-api-server.log 2>&1
+
+# Run GitHub SSH key sync every hour
+0 * * * * root bash /home/zc/ZQuestClassic/infra/scripts/sync_github_keys.sh >> /var/log/zc-github-key-sync.log 2>&1
