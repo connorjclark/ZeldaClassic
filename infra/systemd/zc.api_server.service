@@ -9,6 +9,8 @@ WorkingDirectory=/home/zc/ZQuestClassic/api_server
 Environment="PATH=/home/zc/ZQuestClassic/venv/bin:/usr/bin/"
 Environment="FLASK_PRODUCTION=1"
 Environment="FLASK_DATA_DIR=/home/zc/api-server-data"
+StandardOutput=append:/var/log/zc-api-server.log
+StandardError=append:/var/log/zc-api-server.log
 ExecStart=bash /home/zc/ZQuestClassic/api_server/start.sh
 
 [Install]
