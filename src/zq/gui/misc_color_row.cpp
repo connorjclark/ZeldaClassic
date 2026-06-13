@@ -168,7 +168,7 @@ void MiscColorRow::realize(DialogRunner& runner)
 	}
 }
 
-void MiscColorRow::setOnUpdate(std::function<void(int32_t)> newOnUpdate)
+void MiscColorRow::setOnUpdate(GUI::function<void(int32_t)> newOnUpdate)
 {
 	onUpdate = std::move(newOnUpdate);
 }

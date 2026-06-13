@@ -106,7 +106,7 @@ int32_t PaletteFrame::onEvent(int32_t event, [[maybe_unused]] MessageDispatcher&
 	return -1;
 }
 
-void PaletteFrame::setOnUpdate(std::function<void()> newOnUpdate)
+void PaletteFrame::setOnUpdate(GUI::function<void()> newOnUpdate)
 {
 	onUpdate = std::move(newOnUpdate);
 }

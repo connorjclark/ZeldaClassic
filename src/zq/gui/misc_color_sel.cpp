@@ -209,7 +209,7 @@ void MiscColorSel::doUpdate2(int32_t val, bool func)
 		onUpdate(c1,c2);
 }
 
-void MiscColorSel::setOnUpdate(std::function<void(int32_t,int32_t)> newOnUpdate)
+void MiscColorSel::setOnUpdate(GUI::function<void(int32_t,int32_t)> newOnUpdate)
 {
 	onUpdate = std::move(newOnUpdate);
 }
