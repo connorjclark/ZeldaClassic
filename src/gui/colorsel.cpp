@@ -33,7 +33,7 @@ byte ColorSel::getVal()
 {
 	return colorVal;
 }
-void ColorSel::setOnValChanged(std::function<void(byte)> newOnValChanged)
+void ColorSel::setOnValChanged(GUI::function<void(byte)> newOnValChanged)
 {
 	onValChanged = std::move(newOnValChanged);
 }
