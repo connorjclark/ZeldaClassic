@@ -13,10 +13,12 @@ int32_t main(int32_t argc, char* argv[])
 	bool verbose = argc >= 2 && (strcmp(argv[1], "-verbose") == 0 || strcmp(argv[1], "-v") == 0);
 
 	extern TestResults test_scc(bool);
+	extern TestResults test_zc_math(bool);
 
-	run_tests(test_scc, "test_scc", verbose);
+	success = run_tests(test_scc, "test_scc", verbose);
+	success &= run_tests(test_zc_math, "test_zc_math", verbose);
 
-	return success ? 1 : 0;
+	return success ? 0 : 1;
 }
 END_OF_MAIN()
 

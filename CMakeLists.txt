@@ -597,6 +597,7 @@ if(WANT_ZC_TESTS)
 		src/test_runner/base_test_runner.cpp
 		src/test_runner/test_runner.cpp
 		src/components/scc/scc_test.cpp
+		src/base/zc_math_test.cpp
 	)
 	target_link_libraries(base_test_runner PRIVATE base scc)
 
