@@ -966,13 +966,20 @@ endif()
 # Dialog code is UI glue with no perf-sensitive code, but the templated GUI
 # builder DSL makes these by far the slowest files in the project to compile
 # at high optimization levels (-O3 spends most of its time inlining the widget
-# trees). -O1 cuts their compile time by ~25% with no observable difference.
-# Excluded for emscripten: the less-optimized -O1 objects bloat the input to
-# the link-time wasm-opt -O3 pass, which OOM-kills the editor link on CI.
-if(NOT MSVC AND NOT EMSCRIPTEN)
+# trees). Dialing back the inlining cuts their compile time by ~25% with no
+# observable difference: -O1 for Clang/GCC; /Ob1 for MSVC, which keeps /O2's
+# speed optimizations but only inlines functions marked inline.
+# Excluded for emscripten: the less-optimized objects bloat the input to the
+# link-time wasm-opt -O3 pass, which OOM-kills the editor link on CI.
+if(NOT EMSCRIPTEN)
+	if(MSVC)
+		set(zc_dialog_opt_flag /Ob1)
+	else()
+		set(zc_dialog_opt_flag -O1)
+	endif()
 	file(GLOB zc_dialog_sources CONFIGURE_DEPENDS src/dialog/*.cpp)
 	set_source_files_properties(${zc_dialog_sources} PROPERTIES
-		COMPILE_OPTIONS "$<$<CONFIG:Release,RelWithDebInfo>:-O1>")
+		COMPILE_OPTIONS "$<$<CONFIG:Release,RelWithDebInfo>:${zc_dialog_opt_flag}>")
 endif()
 
 #############################################################
