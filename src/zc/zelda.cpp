@@ -1823,6 +1823,12 @@ int32_t init_game()
 
 	zasm_pipeline_init();
 
+	// A new game always starts with the subscreen closed. Reset this here because
+	// updateShowBottomPixels() (just below) no-ops while subscreen_open is set, and a
+	// previous in-process game may have left it open (e.g. running replays back-to-back),
+	// which would leave the framebuffer at the wrong height for this game.
+	subscreen_open = false;
+
 	if (replay_version_check(0, 39))
 		set_qr(qr_HIDE_BOTTOM_8_PIXELS, 1);
 	updateShowBottomPixels();
