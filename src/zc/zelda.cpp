@@ -1564,6 +1564,7 @@ void init_dmap()
 void init_game_vars(bool is_cont_game = false)
 {
 	new_subscreen_map = new_subscreen_active = new_subscreen_passive = new_subscreen_overlay = nullptr;
+	subscreen_open = false;
 
 	// There are many replay tests that were made when these globals were not being reset
 	// on continue. Let's not break them.
@@ -1835,12 +1836,6 @@ int32_t init_game()
 	}
 
 	zasm_pipeline_init();
-
-	// A new game always starts with the subscreen closed. Reset this here because
-	// updateShowBottomPixels() (just below) no-ops while subscreen_open is set, and a
-	// previous in-process game may have left it open (e.g. running replays back-to-back),
-	// which would leave the framebuffer at the wrong height for this game.
-	subscreen_open = false;
 
 	if (replay_version_check(0, 39))
 		set_qr(qr_HIDE_BOTTOM_8_PIXELS, 1);
