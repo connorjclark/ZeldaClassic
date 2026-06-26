@@ -1580,6 +1580,7 @@ void init_game_vars(bool is_cont_game = false)
 	Hero.reset_ladder();
 	// Most of the above Hero function calls are redundant, but some do set global variables that HeroClass::init wouldn't.
 	Hero.init();
+	HeroClass::reset_step_statics();
 
 	if (!is_cont_game)
 	{
@@ -3942,13 +3943,7 @@ static bool current_session_is_replay = false;
 static void load_replay_file(ReplayMode mode, std::string replay_file, int frame)
 {
 	ASSERT(mode == ReplayMode::Replay || mode == ReplayMode::Assert || mode == ReplayMode::Update);
-	// The collision-clamped hero step amounts (hero_newstep/_diag, z3step) are file-statics that
-	// aren't reset on game start, so when one replay runs after another in the same process (e.g.
-	// -replay-batch) a leftover clamped value bleeds into the next replay and shortens its first
-	// move, desyncing it. Reset here -- at the per-replay-load boundary -- rather than in
-	// init_game_vars, which also runs on a mid-replay game-over restart where resetting the step
-	// would change movement and desync an already-recorded replay.
-	HeroClass::reset_step_statics();
+
 	if (!replay_start(mode, replay_file, frame))
 	{
 		// replay_start leaves replay mode Off on failure, so no replay_quit() is needed.
