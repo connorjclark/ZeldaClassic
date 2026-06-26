@@ -4033,11 +4033,6 @@ static void load_replay_file(ReplayMode mode, std::string replay_file, int frame
 	else
 	{
 		use_testingst_start = false;
-		// Clear any init-data delta left over from a previously-loaded replay. This global is a
-		// file-static that persists across in-process replays; if a prior replay set a delta (via
-		// its test_mode "init_data" meta) and this one has none, the stale delta would otherwise be
-		// applied to this quest's zinit at game start, changing the hero's starting items/counters
-		// and desyncing the replay (e.g. classic_1st_init_data -> stellar_seas_intro at frame 0).
 		testingqst_init_data.clear();
 	}
 
