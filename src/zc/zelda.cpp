@@ -4119,7 +4119,6 @@ static void init_bitmaps()
 
 int main(int argc, char **argv)
 {
-	DCHECK(argc < 0); // TEMPORARY: prove DCHECK is live in CI; revert.
 	int test_zc_arg = used_switch(argc, argv, "-test-zc");
 	if (test_zc_arg > 0)
 		set_headless_mode();
