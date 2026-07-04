@@ -6,8 +6,10 @@
 //
 // Algorithm: dominator-tree-guided recursive translation, following
 // Norman Ramsey, "Beyond Relooper" (ICFP 2022). Handles any *reducible*
-// CFG; irreducible CFGs are detected up front (run() returns false) so the
-// caller can fall back to the loop-switch for that one function.
+// CFG; irreducible CFGs are detected by analyze() (returns false) so the
+// caller can fall back to the loop-switch for that one function. Analysis
+// and emission are separate steps: callers can probe reducibility without a
+// sink, and emit later from the same analysis (see detect_yielder_regions).
 //
 // You bind two things:
 //   1. StructSink  -- structural WASM emission (block/loop/if/br/...). In the
@@ -74,30 +76,37 @@ struct StructSink {
 
 class WasmStructurer {
 public:
-		WasmStructurer(int num_blocks, int entry, const std::vector<BlockInfo>& blocks, StructSink& sink)
-				: n(num_blocks), entry(entry), blocks(blocks), sink(sink) {}
+		// Copies `blocks` so the structurer can be kept (e.g. cached in a plan)
+		// independently of the caller's vector.
+		WasmStructurer(int num_blocks, int entry, std::vector<BlockInfo> blocks)
+				: n(num_blocks), entry(entry), blocks(std::move(blocks)) {}
 
-		// Returns false if the CFG is irreducible (caller should fall back to the
-		// loop-switch). On true, structural control flow has been emitted.
-		bool run() {
+		// Returns false if the CFG is irreducible (caller should fall back to
+		// the loop-switch). Emits nothing. Unreachable blocks are fine; they
+		// are simply never emitted.
+		bool analyze() {
 				build_succs_preds();
 				compute_rpo();
-				if ((int)rpo.size() != reachable_count) {
-						// Unreachable blocks exist; they are simply never emitted. Fine.
-				}
 				compute_idom();
 				classify();
-				if (!reducible) return false;
+				analyzed = true;
+				return reducible;
+		}
+
+		// Emits structural control flow through `out`. Requires a successful
+		// analyze(); call at most once.
+		void emit(StructSink& out) {
+				assert(analyzed && reducible);
+				sink = &out;
 				build_merge_children();
 				placed.assign(n, false);
 				do_tree(entry);
-				return true;
 		}
 
 private:
 		int n, entry;
-		const std::vector<BlockInfo>& blocks;
-		StructSink& sink;
+		std::vector<BlockInfo> blocks;
+		StructSink* sink = nullptr;
 
 		std::vector<std::vector<int>> succ, pred;
 		std::vector<int> rpo;            // blocks in reverse postorder
@@ -107,8 +116,8 @@ private:
 		std::vector<uint8_t> is_merge;   // >= 2 forward predecessors
 		std::vector<std::vector<int>> merge_children; // dom children that are merge nodes, sorted
 		std::vector<uint8_t> placed;
-		int reachable_count = 0;
 		bool reducible = true;
+		bool analyzed = false;
 
 		// set of retreating edges found in DFS, as (from,to) pairs flattened
 		std::vector<std::pair<int,int>> retreating;
@@ -157,7 +166,6 @@ private:
 								st.pop_back();
 						}
 				}
-				reachable_count = (int)post.size();
 				rpo.assign(post.rbegin(), post.rend());
 				for (int i = 0; i < (int)rpo.size(); i++) rpo_num[rpo[i]] = i;
 		}
@@ -262,12 +270,12 @@ private:
 		}
 		// Emit an unconditional edge transfer that is known to be a br target.
 		void emit_edge_br(int from, int to) {
-				if (is_backedge(from, to)) sink.emit_br(depth_to_loop(to), to);
-				else                        sink.emit_br(depth_to_block(to), to);
+				if (is_backedge(from, to)) sink->emit_br(depth_to_loop(to), to);
+				else                        sink->emit_br(depth_to_block(to), to);
 		}
 		void emit_edge_br_if(int from, int to) {
-				if (is_backedge(from, to)) sink.emit_br_if(depth_to_loop(to), to);
-				else                        sink.emit_br_if(depth_to_block(to), to);
+				if (is_backedge(from, to)) sink->emit_br_if(depth_to_loop(to), to);
+				else                        sink->emit_br_if(depth_to_block(to), to);
 		}
 
 		// ---- recursive translation ----
@@ -276,11 +284,11 @@ private:
 				placed[node] = true;
 
 				if (is_backedge_target[node]) {
-						sink.emit_loop(node);
+						sink->emit_loop(node);
 						ctx.push_back({Frame::LOOP, node});
 						node_within(node);
 						ctx.pop_back();
-						sink.emit_end();
+						sink->emit_end();
 				} else {
 						node_within(node);
 				}
@@ -288,26 +296,26 @@ private:
 
 		void node_within(int node) {
 				const auto& ms = merge_children[node]; // sorted desc by rpo
-				for (int m : ms) { sink.emit_block(m); ctx.push_back({Frame::BLOCK, m}); }
+				for (int m : ms) { sink->emit_block(m); ctx.push_back({Frame::BLOCK, m}); }
 
 				emit_block_and_terminator(node);
 
 				for (auto it = ms.rbegin(); it != ms.rend(); ++it) {
 						ctx.pop_back();
-						sink.emit_end();
+						sink->emit_end();
 						do_tree(*it);
 				}
 		}
 
 		void emit_block_and_terminator(int node) {
-				sink.emit_body(node);
+				sink->emit_body(node);
 				const BlockInfo& bi = blocks[node];
 				switch (bi.term) {
 						case Term::Exit:
 								// emit_body already emitted the trap/return.
 								break;
 						case Term::Dispatch:
-								sink.emit_dispatch(node, (int)ctx.size());
+								sink->emit_dispatch(node, (int)ctx.size());
 								break;
 						case Term::Uncond:
 								do_branch(node, bi.succ_true);
@@ -316,12 +324,12 @@ private:
 								int t = bi.succ_true, f = bi.succ_false;
 								bool t_br = is_br_target(node, t);
 								bool f_br = is_br_target(node, f);
-								sink.emit_cond(node); // leaves i32; nonzero => take t
+								sink->emit_cond(node); // leaves i32; nonzero => take t
 								if (t_br && !f_br) {
 										emit_edge_br_if(node, t);   // branch if true
 										do_branch(node, f);         // inline the fall-through
 								} else if (!t_br && f_br) {
-										sink.emit_i32_eqz();        // invert
+										sink->emit_i32_eqz();        // invert
 										emit_edge_br_if(node, f);   // branch if false
 										do_branch(node, t);         // inline the taken side
 								} else if (t_br && f_br) {
@@ -329,13 +337,13 @@ private:
 										emit_edge_br(node, f);
 								} else {
 										// both sides inline: a genuine if/else diamond.
-										sink.emit_if();
+										sink->emit_if();
 										ctx.push_back({Frame::IF, -1});
 										do_branch(node, t);
-										sink.emit_else();
+										sink->emit_else();
 										do_branch(node, f);
 										ctx.pop_back();
-										sink.emit_end();
+										sink->emit_end();
 								}
 								break;
 						}
