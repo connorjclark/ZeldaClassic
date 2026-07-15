@@ -17,13 +17,12 @@ Usage:
 """
 
 import argparse
-import os
 import re
 import sys
 
 from pathlib import Path
 
-script_dir = Path(os.path.dirname(os.path.realpath(__file__)))
+script_dir = Path(__file__).resolve().parent
 root_dir = script_dir.parent
 bindings_dir = root_dir / 'resources/include/bindings'
 
@@ -85,8 +84,14 @@ TYPO_FIXES.update(
     }
 )
 TYPO_RE = re.compile(
-    r'\b(' + '|'.join(re.escape(t) for t in sorted(TYPO_FIXES, key=len, reverse=True)) + r')\b'
+    r'\b('
+    + '|'.join(re.escape(t) for t in sorted(TYPO_FIXES, key=len, reverse=True))
+    + r')\b'
 )
+
+# The start of a trailing comment. Skips the `//` of a `://`, so a URL in code
+# before the comment is not mistaken for one.
+TRAILING_COMMENT_RE = re.compile(r'(?<!:)//')
 
 # Anything else is reported as a typo. If a new tag is introduced, add it here.
 KNOWN_TAGS = {
@@ -137,18 +142,23 @@ SINGLE_USE_TAGS = {
 
 # Tags listed here sort first, in this order. Everything else sorts
 # alphabetically after them.
-TAG_PRIORITY = [
-    'alias',
-    'deprecated_alias',
-    'deprecated',
-    'deprecated_future',
-    'deprecated_getter',
-    'soft_deprecated',
-    'param',
-    'length',
-    'index',
-    'value',
-]
+TAG_PRIORITY = {
+    name: index
+    for index, name in enumerate(
+        [
+            'alias',
+            'deprecated_alias',
+            'deprecated',
+            'deprecated_future',
+            'deprecated_getter',
+            'soft_deprecated',
+            'param',
+            'length',
+            'index',
+            'value',
+        ]
+    )
+}
 
 
 def is_comment_line(line):
@@ -172,7 +182,7 @@ def get_tag_name(line):
 
 def tag_sort_key(name):
     if name in TAG_PRIORITY:
-        return (0, TAG_PRIORITY.index(name), '')
+        return (0, TAG_PRIORITY[name], '')
     return (1, 0, name)
 
 
@@ -196,11 +206,16 @@ class Formatter:
     def __init__(self, path, text):
         self.path = path
         self.issues = []
+        self._seen_issues = set()
+        self.crlf = '\r\n' in text
+        if self.crlf:
+            text = text.replace('\r\n', '\n')
         self.lines = text.split('\n')
 
     def issue(self, line_index, message, fixable=True):
         entry = (line_index + 1, message, fixable)
-        if entry not in self.issues:
+        if entry not in self._seen_issues:
+            self._seen_issues.add(entry)
             self.issues.append(entry)
 
     def format(self):
@@ -218,7 +233,12 @@ class Formatter:
             self.align_enum_comments()
             if self.lines == before:
                 break
-        return '\n'.join(self.lines)
+        else:
+            self.issue(0, 'formatter did not converge', fixable=False)
+        text = '\n'.join(self.lines)
+        if self.crlf:
+            text = text.replace('\n', '\r\n')
+        return text
 
     def strip_trailing_whitespace(self):
         for i, line in enumerate(self.lines):
@@ -229,14 +249,16 @@ class Formatter:
 
     def fix_typos(self):
         for i, line in enumerate(self.lines):
-            index = line.find('//')
-            if index == -1:
+            m = TRAILING_COMMENT_RE.search(line)
+            if not m:
                 continue
+            index = m.start()
             comment = line[index:]
             fixed = TYPO_RE.sub(lambda m: TYPO_FIXES[m.group(0)], comment)
             if fixed != comment:
                 for m in TYPO_RE.finditer(comment):
-                    self.issue(i, f"typo: '{m.group(0)}' -> '{TYPO_FIXES[m.group(0)]}'")
+                    typo = m.group(0)
+                    self.issue(i, f"typo: '{typo}' -> '{TYPO_FIXES[typo]}'")
                 self.lines[i] = line[:index] + fixed
 
     def add_missing_comment_spaces(self):
@@ -260,23 +282,16 @@ class Formatter:
     def merge_split_doc_comments(self):
         # A doc comment accidentally split by a blank line, where the part
         # after the blank line is more tags, should be one doc comment.
-        while True:
-            blocks = find_comment_blocks(self.lines)
-            merged = False
-            for (start_a, end_a), (start_b, _) in zip(blocks, blocks[1:]):
-                gap = self.lines[end_a:start_b]
-                if not gap or any(l.strip() for l in gap):
-                    continue
-                block_a_has_tag = any(
-                    get_tag_name(l) for l in self.lines[start_a:end_a]
-                )
-                if block_a_has_tag and get_tag_name(self.lines[start_b]):
-                    self.issue(end_a, 'blank line splits a doc comment')
-                    del self.lines[end_a:start_b]
-                    merged = True
-                    break
-            if not merged:
-                return
+        # Deletes in reverse so earlier indices stay valid.
+        blocks = find_comment_blocks(self.lines)
+        for (start_a, end_a), (start_b, _) in reversed(list(zip(blocks, blocks[1:]))):
+            gap = self.lines[end_a:start_b]
+            if not gap or any(l.strip() for l in gap):
+                continue
+            block_a_has_tag = any(get_tag_name(l) for l in self.lines[start_a:end_a])
+            if block_a_has_tag and get_tag_name(self.lines[start_b]):
+                self.issue(end_a, 'blank line splits a doc comment')
+                del self.lines[end_a:start_b]
 
     def reflow_description(self, indent, desc, start):
         # Rewraps prose paragraphs containing a line over COLUMN_LIMIT. Code
@@ -290,11 +305,13 @@ class Formatter:
 
         def fill(words, first_prefix, cont_prefix):
             # Keep [bracketed] and `quoted` spans together when they contain
-            # spaces.
+            # spaces. A span longer than COLUMN_LIMIT cannot fit on one line
+            # anyway (and suggests an unclosed bracket), so stop merging there.
             tokens = []
             for word in words:
                 prev = tokens[-1] if tokens else ''
-                if prev.count('[') > prev.count(']') or prev.count('`') % 2:
+                unbalanced = prev.count('[') > prev.count(']') or prev.count('`') % 2
+                if unbalanced and len(prev) <= COLUMN_LIMIT:
                     tokens[-1] += f' {word}'
                 else:
                     tokens.append(word)
@@ -327,14 +344,17 @@ class Formatter:
             first_prefix = prefix + extra_indent
             # A wrapped list item's continuation lines align with the text
             # after the item's marker.
-            marker = re.match(r' ?\s*((?:[-*+]|\d+[.)])\s+)', first_content)
-            cont_prefix = first_prefix + ' ' * len(marker.group(1) if marker else '')
+            marker = re.match(r'(?:[-*+]|\d+[.)])\s+', first_content.lstrip())
+            cont_prefix = first_prefix + ' ' * (len(marker.group(0)) if marker else 0)
+            # The leading whitespace every continuation line's content must
+            # have to sit at cont_prefix's column.
+            continuation_indent = len(cont_prefix) - len(f'{indent}//')
 
             message = None
             if not all(fits(line) for line in lines):
                 message = f'prose exceeds {COLUMN_LIMIT} columns'
             elif any(
-                len(c) - len(c.lstrip()) != len(cont_prefix) - len(f'{indent}//')
+                len(c) - len(c.lstrip()) != continuation_indent
                 for c in map(comment_content, lines[1:])
             ):
                 message = (
@@ -387,7 +407,7 @@ class Formatter:
             if comment_content(line).strip():
                 last = k
         if last is None:
-            return
+            return desc
         content = comment_content(desc[last])
         stripped = content.strip()
         in_fence = False
@@ -405,6 +425,7 @@ class Formatter:
         ):
             self.issue(start + last, 'description missing terminal punctuation')
             desc[last] += '.'
+        return desc
 
     def format_block(self, start, end):
         block = self.lines[start:end]
@@ -424,7 +445,7 @@ class Formatter:
             desc.pop()
             num_trailing_empty += 1
         desc = self.reflow_description(indent, desc, start)
-        self.add_terminal_punctuation(desc, start)
+        desc = self.add_terminal_punctuation(desc, start)
 
         # Group each tag line with its continuation lines, dropping empty
         # comment lines within the tag section.
@@ -444,9 +465,7 @@ class Formatter:
         names = [name for name, _ in tags]
         for name in sorted(set(names)):
             if names.count(name) > 1 and name in SINGLE_USE_TAGS:
-                self.issue(
-                    start + first_tag, f'duplicate tag @{name}', fixable=False
-                )
+                self.issue(start + first_tag, f'duplicate tag @{name}', fixable=False)
 
         if desc:
             if num_trailing_empty == 0:
@@ -491,7 +510,7 @@ class Formatter:
                 (
                     j
                     for j in range(i, min(i + 3, len(self.lines)))
-                    if '{' in self.lines[j]
+                    if self.lines[j].rstrip().endswith('{')
                 ),
                 None,
             )
@@ -499,7 +518,9 @@ class Formatter:
                 i += 1
                 continue
             end = open_index + 1
-            while end < len(self.lines) and '}' not in self.lines[end]:
+            while end < len(self.lines) and not self.lines[end].lstrip().startswith(
+                '}'
+            ):
                 end += 1
             self.align_enum_body(open_index + 1, end)
             i = end + 1
@@ -537,7 +558,9 @@ class Formatter:
                 prev_had_comment = False
                 continue
             code = line[:comment_index].rstrip()
-            runs[-1].append((i, code, line[comment_index:], width(line[:comment_index])))
+            runs[-1].append(
+                (i, code, line[comment_index:], width(line[:comment_index]))
+            )
             prev_had_comment = True
 
         for run in runs:
@@ -598,14 +621,13 @@ def main():
     args = arg_parser.parse_args()
 
     if args.stdin:
-        text = sys.stdin.read()
-        crlf = '\r\n' in text
-        if crlf:
-            text = text.replace('\r\n', '\n')
-        formatted = Formatter(Path('<stdin>'), text).format()
-        if crlf:
-            formatted = formatted.replace('\n', '\r\n')
-        sys.stdout.write(formatted)
+        # Read and write bytes so line endings survive the text layer intact
+        # (Formatter itself preserves CRLF).
+        formatter = Formatter(Path('<stdin>'), sys.stdin.buffer.read().decode())
+        sys.stdout.buffer.write(formatter.format().encode())
+        for line, message, fixable in sorted(formatter.issues):
+            if not fixable:
+                print(f'<stdin>:{line}: {message}', file=sys.stderr)
         return
 
     files = args.files or sorted(bindings_dir.glob('*.zh'))
@@ -613,22 +635,19 @@ def main():
     any_fixable = False
     any_unfixable = False
     for path in files:
-        text = path.read_text()
-        formatter = Formatter(path, text)
+        formatter = Formatter(path, path.read_bytes().decode())
         formatted = formatter.format()
         if not formatter.issues:
             continue
 
-        rel_path = (
-            path.relative_to(root_dir) if path.is_relative_to(root_dir) else path
-        )
+        rel_path = path.relative_to(root_dir) if path.is_relative_to(root_dir) else path
         fixable = [issue for issue in formatter.issues if issue[2]]
         unfixable = [issue for issue in formatter.issues if not issue[2]]
         any_fixable = any_fixable or bool(fixable)
         any_unfixable = any_unfixable or bool(unfixable)
 
         if args.fix and fixable:
-            path.write_text(formatted)
+            path.write_bytes(formatted.encode())
             print(f'fixed {len(fixable)} issues in {path.name}')
 
         reportable = unfixable if args.fix else formatter.issues
