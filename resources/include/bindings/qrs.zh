@@ -3035,7 +3035,7 @@ enum QR
 
 	// 'Binary Operations use true 32-bit Int'
 	//
-	// COMPAT - treats all binary operations as 'long' type
+	// COMPAT - treats all binary operations as 'long' type.
 	//
 	// @versionadded 3.0
 	qr_PARSER_BINARY_32BIT,

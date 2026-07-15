@@ -489,7 +489,7 @@ class combodata {
 	// @zasm_var COMBODTRIGGERCTRAMNT
 	internal int TrigCtrAmount;
 
-	// The combo's cooldown between triggers
+	// The combo's cooldown between triggers.
 	//
 	// @deprecated Use [Triggers] / [combotrigger::Cooldown] instead!
 	// @zasm_var COMBODTRIGGERCOOLDOWN
@@ -518,7 +518,7 @@ class combodata {
 	// @zasm_var COMBODTRIGEXSTATE
 	internal int TrigExState;
 
-	// If > -1, the direction of ExDoor that the combo is linked to
+	// If > -1, the direction of ExDoor that the combo is linked to.
 	//
 	// @deprecated Use [Triggers] / [combotrigger::ExDoorDir] instead!
 	// @zasm_var COMBODTRIGEXDOORDIR

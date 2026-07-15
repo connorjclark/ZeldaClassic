@@ -87,7 +87,7 @@ class websocket {
 	// *pre-3.0*: When the script terminates (at the same time any Local Arrays
 	// in the script are cleared), the pointer will be automatically freed.
 	//
-	// See "Object Memory Management" section
+	// See "Object Memory Management" section.
 	//
 	// @zasm
 	//   POP REFWEBSOCKET

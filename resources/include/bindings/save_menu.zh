@@ -46,7 +46,7 @@ class save_menu
 	//   SAVEMENU_OPEN
 	internal int Open();
 
-	// Fills the buffer with the name of this save menu
+	// Fills the buffer with the name of this save menu.
 	//
 	// @zasm
 	//   POP D2
@@ -62,12 +62,12 @@ class save_menu
 	//   SAVEMENU_SETNAME D2
 	internal void SetName(char32[] buffer);
 
-	// The tile used by this save menu for the cursor
+	// The tile used by this save menu for the cursor.
 	//
 	// @zasm_var SAVEMENU_CURSORTILE
 	internal int CursorTile;
 
-	// The cset used by this save menu for the cursor
+	// The cset used by this save menu for the cursor.
 	//
 	// @zasm_var SAVEMENU_CURSORCSET
 	internal int CursorCSet;
@@ -123,12 +123,12 @@ class save_menu
 	// @zasm_var SAVEMENU_OPTX
 	internal int X;
 
-	// The Y value of the first option
+	// The Y value of the first option.
 	//
 	// @zasm_var SAVEMENU_OPTY
 	internal int Y;
 
-	// The alignment of the text within the textbox
+	// The alignment of the text within the textbox.
 	//
 	// @zasm_var SAVEMENU_TEXT_ALIGN
 	internal TextAlignment TextAlign;
@@ -199,7 +199,7 @@ class save_menu
 	//   SAVEMENU_OPT_GET_STRING D2 D3
 	internal void GetString(int index, char32[] buffer);
 
-	// Sets the string for option [index] to the contents of the buffer
+	// Sets the string for option [index] to the contents of the buffer.
 	//
 	// @zasm
 	//   POP D3

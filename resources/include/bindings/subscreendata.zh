@@ -114,17 +114,17 @@ enum SubscreenWidgetGenFlag
 	SUBW_GENFL_SELECTABLE, // If the widget is "selectable" by the subscreen cursor
 	SUBW_GENFL_PGMODE_NOWRAP, // If going left from the leftmost page or right from the rightmost page should do nothing instead of wrapping, when changing pages
 	SUBW_GENFL_SELECTOR_OVERRIDE, // If this widget uses a customly overridden subscreen selector cursor graphic
-	// If the counter requirement should use the "max" of the counter, instead of it's plain value
+	// If the counter requirement should use the "max" of the counter, instead of its plain value.
 	//
 	// @versionadded 3.0
 	SUBW_GENFL_REQ_COUNTER_MAX,
-	// If the counter requirement should use the "percentage of max" of the counter, instead of it's
+	// If the counter requirement should use the "percentage of max" of the counter, instead of its
 	// plain value (overrides [SUBW_GENFL_REQ_COUNTER_MAX])
 	//
 	// @versionadded 3.0
 	SUBW_GENFL_REQ_COUNTER_PERC,
 	// If the level item requirement should require *not having any of the LItems*, instead of
-	// having all of the level items
+	// having all of the level items.
 	//
 	// @versionadded 3.0
 	SUBW_GENFL_REQ_INVERT_LITEM,
@@ -171,7 +171,7 @@ enum SubscreenPageMode
 	SUB_PGMODE_NEXT, //next page
 	SUB_PGMODE_PREV, //previous page
 	SUB_PGMODE_TARG, //specified page
-	// transition to same page
+	// transition to same page.
 	//
 	// @versionadded 3.0
 	SUB_PGMODE_CURRENT,
@@ -304,7 +304,7 @@ enum // Flags for [SUBWIDG_MMAP]
 	SUBW_MMAP_FLAG_SHOWMAP, // If the map itself is drawn
 	SUBW_MMAP_FLAG_SHOWPLAYER, // If the player marker is drawn
 	SUBW_MMAP_FLAG_SHOWCOMPASS, // If the compass marker is drawn
-	// If visited rooms are only drawn once map is obtained
+	// If visited rooms are only drawn once map is obtained.
 	//
 	// @versionadded 3.0
 	SUBW_MMAP_VISITED_REQ_MAP,
@@ -443,12 +443,12 @@ class subscreendata {
 	// @zasm_var SUBDATACURPG
 	internal int CurPage;
 
-	// The total number of pages
+	// The total number of pages.
 	//
 	// @zasm_var SUBDATANUMPG
 	internal int NumPages;
 
-	// The array containing the pages
+	// The array containing the pages.
 	//
 	// @zasm_var SUBDATAPAGES
 	internal const subscreenpage Pages[];
@@ -475,7 +475,7 @@ class subscreendata {
 	// @zasm_var SUBDATASCRIPT
 	internal int Script;
 
-	// The subscreen's InitD[] parameters
+	// The subscreen's InitD[] parameters.
 	//
 	// @zasm_var SUBDATAINITD
 	internal untyped InitD[];
@@ -675,7 +675,7 @@ class subscreendata {
 
 	// The arguments used for the current transition.
 	//
-	// Use the 'TRANS_`_ARG_` constants to access these
+	// Use the 'TRANS_`_ARG_` constants to access these.
 	//
 	// @zasm_var SUBDATATRANSARGS
 	internal int TransArgs[];

@@ -503,17 +503,17 @@ class npcdata {
 	// @zasm_var NPCDATAWEAPONINITD
 	internal int WeaponInitD[];
 
-	// The shadow sprite used by the npc, 0-255
+	// The shadow sprite used by the npc, 0-255.
 	//
 	// @zasm_var NPCDSHADOWSPR
 	internal int ShadowSprite;
 
-	// The spawn sprite used by the npc, 0-255
+	// The spawn sprite used by the npc, 0-255.
 	//
 	// @zasm_var NPCDSPAWNSPR
 	internal int SpawnSprite;
 
-	// The death sprite used by the npc, 0-255
+	// The death sprite used by the npc, 0-255.
 	//
 	// @zasm_var NPCDDEATHSPR
 	internal int DeathSprite;

@@ -184,7 +184,7 @@ enum NPCFlags
 	NPCF_NOT_BEATABLE, // Doesn't Count as beatable Enemy.
 	NPCF_SPAWNFLICKER, // Flicker in when spawning
 	NPCF_SPAWNINSTANT, // Spawn instantly
-	// No Contact Damage
+	// No Contact Damage.
 	//
 	// @versionadded 3.0
 	NPCF_NO_CONTACT_DAMAGE = 7,
@@ -561,12 +561,12 @@ class npc {
 	// @zasm_var NPCKNOCKBACKSPEED
 	internal int SlideSpeed;
 
-	// The spawn sprite used by the npc, 0-255
+	// The spawn sprite used by the npc, 0-255.
 	//
 	// @zasm_var NPCSPAWNSPR
 	internal int SpawnSprite;
 
-	// The death sprite used by the npc, 0-255
+	// The death sprite used by the npc, 0-255.
 	//
 	// @zasm_var NPCDEATHSPR
 	internal int DeathSprite;
@@ -666,14 +666,14 @@ class npc {
 	//   REPAIRSHIELD D2
 	internal void RepairShield();
 
-	// Returns if the NPC is dead, or dying
+	// Returns if the NPC is dead, or dying.
 	//
 	// @zasm
 	//   POP REFNPC
 	//   NPCDEAD D2
 	internal bool isDead();
 
-	// Unimplemented
+	// Unimplemented.
 	//
 	// @zasm
 	//   POP REFNPC

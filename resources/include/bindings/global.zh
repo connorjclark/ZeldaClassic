@@ -370,7 +370,7 @@ internal void SwapTile(int a, int b);
 //   CLEARTILER D3
 internal void ClearTile(int tile);
 
-// Returns the size of the array
+// Returns the size of the array.
 //
 // @deprecated_alias SizeOfArrayBool
 // @deprecated_alias SizeOfArrayFFC

@@ -372,7 +372,7 @@ class eweapon {
 	internal void MakeAngular();
 
 	// If the weapon is Angular, makes it not Angular, and set its Dir based
-	// on its Angle
+	// on its Angle.
 	//
 	// @zasm
 	//   POP D2

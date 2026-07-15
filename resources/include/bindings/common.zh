@@ -124,7 +124,7 @@ enum WeaponFlag
 	WFLAG_STOP_ON_LANDING, // The weapon stops moving when it lands after being in mid-air.
 	WFLAG_STOP_ON_SOLID, // The weapon stops moving when it touches a solid.
 	WFLAG_UPDATE_BURNSPR, // The weapon changes sprites when it's BURN weapon flags change.
-	// The weapon has no collision while it isn't moving
+	// The weapon has no collision while it isn't moving.
 	//
 	// @versionadded 3.0
 	WFLAG_NO_COLL_WHEN_STILL,
@@ -818,7 +818,7 @@ enum ComboFlag
 	CF_NO_ENEMIES_SPAWN            = 163, // No Enemies Spawn.
 	CF_ALL_ENEMIES_SPAWN           = 164, // All Enemies Spawn.
 	CF_SECRETS_NEXT                = 165, // Secrets->Next.
-	// No Mirror
+	// No Mirror.
 	//
 	// @versionadded 3.0
 	CF_NO_MIRROR                   = 166,
@@ -826,7 +826,7 @@ enum ComboFlag
 	//
 	// @versionadded 3.0
 	CF_UNSAFE_GROUND_SENS          = 167,
-	// Unsafe Ground
+	// Unsafe Ground.
 	//
 	// @versionadded 3.0
 	CF_UNSAFE_GROUND               = 168,
@@ -1005,7 +1005,7 @@ enum SpecialDrawLayer
 	SPLAYER_LENS_UNDER_1, //Lens drawing secrets/revealing things
 	SPLAYER_LENS_UNDER_2, //Lens drawing secrets/revealing things
 	SPLAYER_LENS_OVER, //Lens drawing blackness to cover most of the screen
-	// Just underneath the [Hero]'s draw
+	// Just underneath the [Hero]'s draw.
 	//
 	// @versionadded 3.0
 	SPLAYER_UNDER_PLAYER_DRAW,

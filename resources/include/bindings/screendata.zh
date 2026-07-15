@@ -166,7 +166,7 @@ enum ScreenFlag
 	SFL_ENEMIES_ITEM = 1, // Killing enemies spawns screen item.
 	SFL_ENEMIES_SECRETS = 15, // Enemies->Secrets.
 	SFL_ENEMIES_SECRETS_PERM = 28, // Enemies->Secrets (perm).
-	// Enemies->Stay Dead - once all enemies are killed they will not respawn again
+	// Enemies->Stay Dead - once all enemies are killed they will not respawn again.
 	//
 	// @versionadded 3.0
 	SFL_ENEMIES_STAY_DEAD = 71,
@@ -266,11 +266,11 @@ enum ScreenFlagWarp
 	SFW_MAZEOVERRIDE, //maze Overrides Sidewarps
 	SFW_SPRITECARRY, //Sprites carry over.
 	SFW_DISABLE_MIRROR, //Disable Magic Mirror
-	// Maze Can Get Lost
+	// Maze Can Get Lost.
 	//
 	// @versionadded 3.0
 	SFW_MAZE_CAN_GET_LOST,
-	// Maze Loopy
+	// Maze Loopy.
 	//
 	// @versionadded 3.0
 	SFW_MAZE_LOOPY,
@@ -445,7 +445,7 @@ class screendata {
 	// - screendata scripts use the screen they are assigned to
 	// - ffc, npc, eweapon, lweapon, itemsprite, combo - all use the screen they were spawned on
 	//   ([sprite::SpawnScreen])
-	// - player - uses [Game->HeroScreen], which updates as the player moves around
+	// - player - uses [Game->HeroScreen], which updates as the player moves around.
 	//
 	// @versionadded 2.55.9 equivalent to [Game->CurScreen]
 	// @zasm_var SCREEN_INDEX
@@ -821,7 +821,7 @@ class screendata {
 	// @zasm_var SCREENDATASIDEWARPDMAP
 	internal int SideWarpDMap[];
 
-	// The palette for the screen set via 'F4' or 'Screen>>Palette' in ZQuest
+	// The palette for the screen set via 'F4' or 'Screen>>Palette' in ZQuest.
 	//
 	// @zasm_var SCREENDATACOLOUR
 	internal int Palette;
@@ -866,13 +866,13 @@ class screendata {
 	// @zasm_var SCREENDATANOCARRY
 	internal int NoCarry;
 
-	// Which of the 32 ExStates should be carried over to the target screen
+	// Which of the 32 ExStates should be carried over to the target screen.
 	//
 	// @versionadded 3.0
 	// @zasm_var SCREENDATAEXCARRY
 	internal bool ExStateCarry[];
 
-	// Which of the 32 ExStates should be reset by 'Reset Room' combos
+	// Which of the 32 ExStates should be reset by 'Reset Room' combos.
 	//
 	// @versionadded 3.0
 	// @zasm_var SCREENDATAEXRESET
@@ -926,7 +926,7 @@ class screendata {
 	// @zasm_var SCREENDATASCRIPTDRAWS
 	internal bool ScriptDraws[];
 
-	// The timer used by 'Time Warp Tics' in Screen Data->T.Warp
+	// The timer used by 'Time Warp Tics' in Screen Data->T.Warp.
 	//
 	// @zasm_var SCREENDATATIMEDWARPTICS
 	internal int TimedWarpTimer;
@@ -1089,7 +1089,7 @@ class screendata {
 	// @zasm_var ROOMDATA
 	internal int RoomData;
 
-	// The palette for the screen set via 'F4' or 'Screen>>Palette' in ZQuest
+	// The palette for the screen set via 'F4' or 'Screen>>Palette' in ZQuest.
 	//
 	// @zasm_var SCREENDATACOLOUR
 	internal int CSet;

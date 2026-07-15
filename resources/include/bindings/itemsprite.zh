@@ -24,7 +24,7 @@ class itemsprite {
 	// @zasm_var SPRITEMAXITEM
 	internal int Max;
 
-	// The item's level
+	// The item's level.
 	//
 	// @zasm_var ITEMLEVEL
 	internal int Level;

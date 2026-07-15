@@ -40,7 +40,7 @@ class spritedata {
 	// @zasm_var SPRITEDATAFRAMES
 	internal int Frames;
 
-	// The speed of the `spritedata`, in frames per frame
+	// The speed of the `spritedata`, in frames per frame.
 	//
 	// @zasm_var SPRITEDATASPEED
 	internal int Speed;

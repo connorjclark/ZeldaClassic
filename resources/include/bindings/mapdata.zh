@@ -470,13 +470,13 @@ class mapdata {
 	// @zasm_var MAPDATANOCARRY
 	internal int NoCarry;
 
-	// Which of the 32 ExStates should be carried over to the target screen
+	// Which of the 32 ExStates should be carried over to the target screen.
 	//
 	// @versionadded 3.0
 	// @zasm_var MAPDATAEXCARRY
 	internal bool ExStateCarry[];
 
-	// Which of the 32 ExStates should be reset by 'Reset Room' combos
+	// Which of the 32 ExStates should be reset by 'Reset Room' combos.
 	//
 	// @versionadded 3.0
 	// @zasm_var MAPDATAEXRESET
@@ -511,7 +511,7 @@ class mapdata {
 	// @zasm_var MAPDATASCRIPTDRAWS
 	internal bool ScriptDraws[];
 
-	// The timer used by 'Time Warp Tics' in Screen Data->T.Warp
+	// The timer used by 'Time Warp Tics' in Screen Data->T.Warp.
 	//
 	// @zasm_var MAPDATATIMEDWARPTICS
 	internal int TimedWarpTimer;
@@ -861,7 +861,7 @@ class mapdata {
 	//
 	// May be used to pause/resume ffc script execution?
 	//
-	// This needs to be cloned over to ffc->Running
+	// This needs to be cloned over to ffc->Running.
 	//
 	// @zasm_var MAPDATAFFINITIALISED
 	internal bool FFCRunning[];

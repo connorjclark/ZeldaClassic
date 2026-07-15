@@ -112,7 +112,7 @@ class messagedata {
 	// @zasm_var MESSAGEDATAPORTTILE
 	internal int PortraitTile;
 
-	// The CSet to draw the portrait in
+	// The CSet to draw the portrait in.
 	//
 	// @zasm_var MESSAGEDATAPORTCSET
 	internal int PortraitCSet;

@@ -78,7 +78,7 @@ enum MusicRefreshMode
 	MR_DMAP,   // Refresh when the dmap changes.
 	MR_LEVEL,  // Refresh when the level changes.
 	MR_NEVER,  // Never refresh on a screen transition.
-	// Refresh when the region changes
+	// Refresh when the region changes.
 	//
 	// @versionadded 3.0
 	MR_REGION,
@@ -266,7 +266,7 @@ class Audio {
 	// Returns the current seek position of the currently playing enhanced music
 	// in seconds.
 	//
-	// CURRENTLY ONLY SUPPORTS MP3 / OGG / IT / XM / S3M / MOD
+	// CURRENTLY ONLY SUPPORTS MP3 / OGG / IT / XM / S3M / MOD.
 	//
 	// @zasm
 	//   GETENHMUSICPOS D2
@@ -274,7 +274,7 @@ class Audio {
 
 	// Sets the position for the currently playing enhanced music, in seconds.
 	//
-	// CURRENTLY ONLY SUPPORTS MP3 / OGG / IT / XM / S3M / MOD
+	// CURRENTLY ONLY SUPPORTS MP3 / OGG / IT / XM / S3M / MOD.
 	//
 	// @zasm
 	//   POP D2
@@ -283,7 +283,7 @@ class Audio {
 
 	// Sets the playback speed of the currently playing enhanced music.
 	//
-	// CURRENTLY ONLY SUPPORTS MP3 / OGG / IT / XM / S3M / MOD
+	// CURRENTLY ONLY SUPPORTS MP3 / OGG / IT / XM / S3M / MOD.
 	//
 	// @zasm
 	//   POP D2
@@ -292,7 +292,7 @@ class Audio {
 
 	// Returns the length of the current playing enhanced music in seconds.
 	//
-	// CURRENTLY ONLY SUPPORTS MP3 / OGG / IT / XM / S3M / MOD
+	// CURRENTLY ONLY SUPPORTS MP3 / OGG / IT / XM / S3M / MOD.
 	//
 	// @zasm
 	//   GETENHMUSICLEN D2
@@ -301,7 +301,7 @@ class Audio {
 	// Loops the currently playing enhanced music between two timestamps in
 	// seconds.
 	//
-	// CURRENTLY ONLY SUPPORTS MP3 / OGG / IT / XM / S3M / MOD
+	// CURRENTLY ONLY SUPPORTS MP3 / OGG / IT / XM / S3M / MOD.
 	//
 	// @zasm
 	//   POP D3

@@ -52,7 +52,7 @@ class subscreenwidget {
 	// The display/equip item ID for the widget.
 	//
 	// Reads as -1 if no item exists, the widget is of a type that has no item,
-	// etc
+	// etc.
 	//
 	// @zasm_var SUBWIDGDISPITM
 	internal const int DisplayItem;
@@ -60,7 +60,7 @@ class subscreenwidget {
 	// The display/equip item ID for the widget.
 	//
 	// Reads as -1 if no item exists, the widget is of a type that has no item,
-	// etc
+	// etc.
 	//
 	// @zasm_var SUBWIDGEQPITM
 	internal const int EquipItem;
@@ -228,7 +228,7 @@ class subscreenwidget {
 	//   compared
 	// - Otherwise, if [SUBW_GENFL_REQ_COUNTER_MAX] is set, then the max value of this counter will
 	//   be compared
-	// - Otherwise, this counter's value will be compared
+	// - Otherwise, this counter's value will be compared.
 	//
 	// @value [enum CounterIndex]
 	// @versionadded 3.0
@@ -424,7 +424,7 @@ class subscreenwidget {
 	// @zasm_var SUBWIDGPRESSSCRIPT
 	internal int PressScript;
 
-	// The 8 InitD[] args for the PressScript
+	// The 8 InitD[] args for the PressScript.
 	//
 	// @zasm_var SUBWIDGPRESSINITD
 	internal untyped PressInitD[];
@@ -479,7 +479,7 @@ class subscreenwidget {
 
 	// The arguments used for [PageMode] transition.
 	//
-	// Use the 'TRANS_*_ARG_' constants to access these
+	// Use the 'TRANS_*_ARG_' constants to access these.
 	//
 	// @zasm_var SUBWIDGTRANSPGARGS
 	internal int PageTransArgs[];
@@ -496,7 +496,7 @@ class subscreenwidget {
 	// - [SUBWIDG_MISCGAUGE] - 4 values
 	// - [SUBWIDG_ITEMCOOLDOWNGAUGE] - 4 values
 	// - [SUBWIDG_LGAUGE] - 4 values
-	// - [SUBWIDG_MGAUGE] - 4 values
+	// - [SUBWIDG_MGAUGE] - 4 values.
 	//
 	// @zasm_var SUBWIDGTY_CSET
 	internal int CSet[];
@@ -512,7 +512,7 @@ class subscreenwidget {
 	// - [SUBWIDG_MISCGAUGE] - 4 values
 	// - [SUBWIDG_ITEMCOOLDOWNGAUGE] - 4 values
 	// - [SUBWIDG_LGAUGE] - 4 values
-	// - [SUBWIDG_MGAUGE] - 4 values
+	// - [SUBWIDG_MGAUGE] - 4 values.
 	//
 	// @zasm_var SUBWIDGTY_TILE
 	internal int Tile[];
@@ -834,7 +834,7 @@ class subscreenwidget {
 	// - [SUBWIDG_LGAUGE] - 4 values
 	// - [SUBWIDG_MGAUGE] - 4 values
 	// - [SUBWIDG_MISCGAUGE] - 4 values
-	// - [SUBWIDG_ITEMCOOLDOWNGAUGE] - 4 values
+	// - [SUBWIDG_ITEMCOOLDOWNGAUGE] - 4 values.
 	//
 	// @value [enum CornerIndex]
 	// @zasm_var SUBWIDGTY_CORNER

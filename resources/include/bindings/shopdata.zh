@@ -6,7 +6,7 @@ class shopdata {
 	internal shopdata();
 
 	// Returns the type of the shop, where:
-	// TODO document values
+	// TODO document values.
 	//
 	// @zasm_var SHOPDATATYPE
 	internal const int Type;

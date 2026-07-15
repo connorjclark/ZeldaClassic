@@ -262,19 +262,19 @@ enum ItemType {
 	IC_NOTE                    = 277,
 	IC_REFILL                  = 278,
 	IC_LIFTGLOVE               = 279,
-	// Modifies the player's gravity
+	// Modifies the player's gravity.
 	//
 	// @versionadded 3.0
 	IC_GRAVITY_BOOTS           = 280,
-	// Modifies the player's gravity while holding Up in Sideview
+	// Modifies the player's gravity while holding Up in Sideview.
 	//
 	// @versionadded 3.0
 	IC_GRAVITY_UP_BOOTS        = 281,
-	// Modifies the player's gravity while holding Down in Sideview
+	// Modifies the player's gravity while holding Down in Sideview.
 	//
 	// @versionadded 3.0
 	IC_GRAVITY_DOWN_BOOTS      = 282,
-	// Modifies item cooldowns of other items
+	// Modifies item cooldowns of other items.
 	//
 	// @versionadded 3.0
 	IC_COOLDOWN_RING           = 283,
@@ -420,7 +420,7 @@ class itemdata {
 	// @zasm_var IDATAMAX
 	internal int Max;
 
-	// How much to increase the max of the [Counter] by
+	// How much to increase the max of the [Counter] by.
 	//
 	// @zasm_var IDATASETMAX
 	internal int MaxIncrement;
@@ -469,17 +469,17 @@ class itemdata {
 	// @zasm_var IDATALTM
 	internal int TileMod;
 
-	// The item's Action Script
+	// The item's Action Script.
 	//
 	// @zasm_var IDATASCRIPT
 	internal int Script;
 
-	// The item's Pickup Script
+	// The item's Pickup Script.
 	//
 	// @zasm_var IDATAPSCRIPT
 	internal int PScript;
 
-	// The item's ItemSprite Script
+	// The item's ItemSprite Script.
 	//
 	// @zasm_var IDATASPRSCRIPT
 	internal int SpriteScript;
@@ -531,7 +531,7 @@ class itemdata {
 	// @zasm_var IDATAMINHEARTS
 	internal int MinHearts;
 
-	// The starting tile of the item's animation
+	// The starting tile of the item's animation.
 	//
 	// @zasm_var IDATATILE
 	internal int Tile;
@@ -568,7 +568,7 @@ class itemdata {
 	// @zasm_var IDATADELAY
 	internal int Delay;
 
-	// The `Upgrade When Collected Twice` flag
+	// The `Upgrade When Collected Twice` flag.
 	//
 	// @zasm_var IDATACOMBINE
 	internal bool Combine;
@@ -578,7 +578,7 @@ class itemdata {
 	// @zasm_var IDATADOWNGRADE
 	internal bool Downgrade;
 
-	// The `Keep Lower Level Items` flag
+	// The `Keep Lower Level Items` flag.
 	//
 	// @zasm_var IDATAKEEPOLD
 	internal bool KeepOld;
@@ -593,7 +593,7 @@ class itemdata {
 	// @zasm_var IDATAEDIBLE
 	internal bool Edible;
 
-	// The `Gain All Lower Level Items` flag
+	// The `Gain All Lower Level Items` flag.
 	//
 	// @zasm_var IDATAGAINLOWER
 	internal bool GainLower;
@@ -641,7 +641,7 @@ class itemdata {
 	// @zasm_var IDATAWPNINITD
 	internal untyped WeaponInitD[];
 
-	// The item's lweapon script
+	// The item's lweapon script.
 	//
 	// @deprecated use [WeaponData] / [weapondata::Script] instead!
 	// @zasm_var IDATAWEAPONSCRIPT
@@ -791,12 +791,12 @@ class itemdata {
 	// @zasm_var IDATATILEHWEAP
 	internal int WeaponTileHeight;
 
-	// The `Only Validate Cost`/`Only Validate Cost 2` checkboxes
+	// The `Only Validate Cost`/`Only Validate Cost 2` checkboxes.
 	//
 	// @zasm_var IDATAVALIDATE
 	internal bool Validate;
 
-	// The `Only Validate Cost`/`Only Validate Cost 2` checkboxes
+	// The `Only Validate Cost`/`Only Validate Cost 2` checkboxes.
 	//
 	// @zasm_var IDATAVALIDATE2
 	internal bool Validate2;
@@ -872,7 +872,7 @@ class itemdata {
 	// @zasm_var IDATAATTRIB
 	internal untyped Misc[];
 
-	// The Flash value for the CSet
+	// The Flash value for the CSet.
 	//
 	// @zasm_var IDATAMISC
 	internal int Flash;

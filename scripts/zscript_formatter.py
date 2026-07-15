@@ -146,16 +146,24 @@ class Formatter:
         self.lines = text.split('\n')
 
     def issue(self, line_index, message, fixable=True):
-        self.issues.append((line_index + 1, message, fixable))
+        entry = (line_index + 1, message, fixable)
+        if entry not in self.issues:
+            self.issues.append(entry)
 
     def format(self):
-        self.strip_trailing_whitespace()
-        self.add_missing_comment_spaces()
-        self.collapse_blank_lines()
-        self.merge_split_doc_comments()
-        for start, end in reversed(find_comment_blocks(self.lines)):
-            self.format_block(start, end)
-        self.align_enum_comments()
+        # One rule's fix can trip another (e.g. adding terminal punctuation
+        # can push a line over COLUMN_LIMIT), so run the passes to a fixpoint.
+        for _ in range(10):
+            before = list(self.lines)
+            self.strip_trailing_whitespace()
+            self.add_missing_comment_spaces()
+            self.collapse_blank_lines()
+            self.merge_split_doc_comments()
+            for start, end in reversed(find_comment_blocks(self.lines)):
+                self.format_block(start, end)
+            self.align_enum_comments()
+            if self.lines == before:
+                break
         return '\n'.join(self.lines)
 
     def strip_trailing_whitespace(self):
@@ -304,6 +312,34 @@ class Formatter:
         flush()
         return out
 
+    def add_terminal_punctuation(self, desc, start):
+        # The last prose line of a description should end a sentence. Only
+        # appends a period after a letter or digit - anything else (a code
+        # span, link, quote, parenthetical, ...) is left alone.
+        last = None
+        for k, line in enumerate(desc):
+            if comment_content(line).strip():
+                last = k
+        if last is None:
+            return
+        content = comment_content(desc[last])
+        stripped = content.strip()
+        in_fence = False
+        for line in desc[:last]:
+            if comment_content(line).strip().startswith('```'):
+                in_fence = not in_fence
+        if (
+            not in_fence
+            and not stripped.startswith('```')
+            and stripped[0] not in '|>#'
+            and not re.match(r'\s\s', content)
+            and stripped[-1].isalnum()
+            # A period would corrupt a trailing URL.
+            and not re.match(r'https?://', stripped.split()[-1])
+        ):
+            self.issue(start + last, 'description missing terminal punctuation')
+            desc[last] += '.'
+
     def format_block(self, start, end):
         block = self.lines[start:end]
         first_tag = next((i for i, l in enumerate(block) if get_tag_name(l)), None)
@@ -322,6 +358,7 @@ class Formatter:
             desc.pop()
             num_trailing_empty += 1
         desc = self.reflow_description(indent, desc, start)
+        self.add_terminal_punctuation(desc, start)
 
         # Group each tag line with its continuation lines, dropping empty
         # comment lines within the tag section.

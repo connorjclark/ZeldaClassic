@@ -129,23 +129,23 @@ enum GenericIndex
 	GEN_LIGHT_WAVE_RATE      = 27,
 	// @versionadded 3.0
 	GEN_LIGHT_WAVE_SIZE      = 28,
-	// Which [RegionMapping] (method of mapping) is used for regions
+	// Which [RegionMapping] (method of mapping) is used for regions.
 	//
 	// @versionadded 3.0
 	GEN_REGION_MAPPING       = 29,
-	// The duration of flickering after an item spawns
+	// The duration of flickering after an item spawns.
 	//
 	// @versionadded 3.0
 	GEN_ITEM_SPAWN_FLICKER   = 30,
-	// The duration before disappearing items vanish
+	// The duration before disappearing items vanish.
 	//
 	// @versionadded 3.0
 	GEN_ITEM_TIMEOUT_DUR     = 31,
-	// The duration disappearing items flicker before they vanish
+	// The duration disappearing items flicker before they vanish.
 	//
 	// @versionadded 3.0
 	GEN_ITEM_TIMEOUT_FLICKER = 32,
-	// The speed items flicker at
+	// The speed items flicker at.
 	//
 	// @versionadded 3.0
 	GEN_ITEM_FLICKER_SPEED   = 33,
@@ -576,7 +576,7 @@ class Game {
 	internal long LevelStates[];
 
 	// The 256 global switch timers.
-	// -1 = on, 0 = off, > 0 = on for that many frames
+	// -1 = on, 0 = off, > 0 = on for that many frames.
 	//
 	// @zasm_var GAMEGSWITCH
 	internal int GlobalStates[];
@@ -776,22 +776,22 @@ class Game {
 	// @zasm_var GAMEASUBYOFF
 	internal const int ActiveSubscreenY;
 
-	// Returns the total number of active subscreens
+	// Returns the total number of active subscreens.
 	//
 	// @zasm_var GAMENUMASUB
 	internal int NumActiveSubscreens;
 
-	// Returns the total number of passive subscreens
+	// Returns the total number of passive subscreens.
 	//
 	// @zasm_var GAMENUMPSUB
 	internal int NumPassiveSubscreens;
 
-	// Returns the total number of overlay subscreens
+	// Returns the total number of overlay subscreens.
 	//
 	// @zasm_var GAMENUMOSUB
 	internal int NumOverlaySubscreens;
 
-	// Returns the total number of overlay subscreens
+	// Returns the total number of overlay subscreens.
 	//
 	// @versionadded 3.0
 	// @zasm_var GAMENUMMSUB
@@ -822,7 +822,7 @@ class Game {
 	// @zasm_var BUTTONHELD
 	internal bool ButtonHeld[];
 
-	// Set or get the Level Palette for each DMap
+	// Set or get the Level Palette for each DMap.
 	//
 	// @deprecated Use [dmapdata::Palette] instead!
 	// @zasm_var DMAPLEVELPAL
@@ -1352,7 +1352,7 @@ class Game {
 	// Loads a [bottledata] ref for bottledata number [id] to a [bottledata]
 	// typed pointer.
 	//
-	// Range 1-64
+	// Range 1-64.
 	//
 	// @zasm
 	//   POP D2
@@ -1363,7 +1363,7 @@ class Game {
 	// Loads a [bottleshopdata] ref for bottleshopdata number [id] to a
 	// 'bottleshopdata' typed pointer.
 	//
-	// Range 0-255
+	// Range 0-255.
 	//
 	// @zasm
 	//   POP D2
@@ -1374,7 +1374,7 @@ class Game {
 	// Loads a [save_menu] ref for save_menu number [id] to a
 	// 'save_menu' typed pointer.
 	//
-	// Range 1-32
+	// Range 1-32.
 	//
 	// @versionadded 3.0
 	// @zasm

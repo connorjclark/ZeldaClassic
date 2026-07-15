@@ -121,7 +121,7 @@ class dmapdata {
 	// @zasm_var DMAPDATACOMPASS
 	internal int Compass;
 
-	// The level palette to use for this DMap
+	// The level palette to use for this DMap.
 	//
 	// @zasm_var DMAPDATAPALETTE
 	internal int Palette;

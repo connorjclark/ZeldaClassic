@@ -31,7 +31,7 @@ enum ComboTriggerFlag
 	TRIGFLAG_SHUTTER, //Other->'Shutter->' - Triggered by 'Shutter->'
 	TRIGFLAG_CTYPE_EFFECTS, //Effects->'->ComboType Effects' - On trigger, cause the combo's type-related effects to occur. (ex: opening a chest)
 	// Don't allow the combo to trigger via it's normal trigger methods (ex: bush via slashing)
-	// Changing this for any trigger changes it for the whole combo
+	// Changing this for any trigger changes it for the whole combo.
 	//
 	// @deprecated Use [combodata::OnlyGenTriggers] instead!
 	TRIGFLAG_ONLY_GENTRIG,
@@ -123,11 +123,11 @@ enum ComboTriggerFlag
 	TRIGFLAG_REFARROW, //Weapons->LWeapons->Refl. Arrow - Triggered by Reflected Arrow LWeapons
 	TRIGFLAG_REFFIRE, //Weapons->LWeapons->Refl. Fire - Triggered by Reflected Fire LWeapons
 	TRIGFLAG_REFFIRE2, //Weapons->LWeapons->Refl. Fire 2 - Triggered by Reflected Fire 2 LWeapons
-	// Effects->Toggle Darkness - Toggle the screen being a dark room
+	// Effects->Toggle Darkness - Toggle the screen being a dark room.
 	//
 	// @versionadded 3.0
 	TRIGFLAG_TOGGLE_DARKNESS,
-	// Conditions->Req. Darkness - Can only trigger if the screen is a dark room
+	// Conditions->Req. Darkness - Can only trigger if the screen is a dark room.
 	//
 	// @versionadded 3.0
 	TRIGFLAG_REQ_DARKNESS,
@@ -135,12 +135,12 @@ enum ComboTriggerFlag
 	//
 	// @versionadded 3.0
 	TRIGFLAG_REQ_NO_DARKNESS,
-	// Counters/Items->Require All - Require all the specified LItems to trigger the combo
+	// Counters/Items->Require All - Require all the specified LItems to trigger the combo.
 	//
 	// @versionadded 3.0
 	TRIGFLAG_LITEM_REQUIRE,
 	// Counters/Items->Require Not All - Require not all (some is ok) of the specified LItems to
-	// trigger the combo
+	// trigger the combo.
 	//
 	// @versionadded 3.0
 	TRIGFLAG_LITEM_INV_REQUIRE,
@@ -159,11 +159,11 @@ enum ComboTriggerFlag
 	// @versionadded 3.0
 	TRIGFLAG_TINT_CLEAR,
 	TRIGFLAG_ONLY_GROUNDED_WEAPONS, //Weapons->Other->'Only Grounded Weapons' - weapons with Z > 0 won't trigger the combo
-	// Counter/Items->'Apply Discount' - Wealth Medal items discount the counter cost
+	// Counter/Items->'Apply Discount' - Wealth Medal items discount the counter cost.
 	//
 	// @versionadded 3.0
 	TRIGFLAG_COUNTER_WEALTH_MEDAL,
-	// Triggers when screen/region loads, after levelstates and exstates are applied
+	// Triggers when screen/region loads, after levelstates and exstates are applied.
 	//
 	// @versionadded 3.0
 	TRIGFLAG_SCREEN_LOAD,
@@ -277,12 +277,12 @@ enum ComboTriggerFlag
 	TRIGFLAG_HERO_FORCE_VY,
 	// Changes
 	// [TRIGFLAG_IGNITE_WEAPONS_ANY],[TRIGFLAG_IGNITE_WEAPONS_STRONG],[TRIGFLAG_IGNITE_WEAPONS_MAGIC],[TRIGFLAG_IGNITE_WEAPONS_DIVINE]
-	// to 'Unignite' the weapon instead
+	// to 'Unignite' the weapon instead.
 	//
 	// @versionadded 3.0
 	TRIGFLAG_UNIGNITE_WEAPONS,
 	// Makes triggers below this trigger on the same combo with the same cause NOT be triggered by
-	// this cause
+	// this cause.
 	//
 	// @versionadded 3.0
 	TRIGFLAG_CANCEL_TRIGGER,
@@ -296,11 +296,12 @@ enum ComboTriggerFlag
 	//
 	// @versionadded 3.0
 	TRIGFLAG_REVERT_GRAVITY,
-	// Triggers when a pushblock is about to click into place replacing this combo
+	// Triggers when a pushblock is about to click into place replacing this combo.
 	//
 	// @versionadded 3.0
 	TRIGFLAG_BLOCK_TRIGGER_SAME_LAYER,
-	// Triggers when a pushblock is about to click into place at this combo's position, on any layer
+	// Triggers when a pushblock is about to click into place at this combo's position, on any
+	// layer.
 	//
 	// @versionadded 3.0
 	TRIGFLAG_BLOCK_TRIGGER_ANY_LAYER,
@@ -338,7 +339,7 @@ enum ComboTriggerFlag
 	//
 	// @versionadded 3.0
 	TRIGFLAG_CSET_CHANGE_ABSOLUTE,
-	// Triggers when the player swims in it
+	// Triggers when the player swims in it.
 	//
 	// @versionadded 3.0
 	TRIGFLAG_SWIMTRIG,
@@ -360,7 +361,7 @@ enum ComboTriggerFlag
 	//
 	// @versionadded 3.0
 	TRIGFLAG_SCREENUNLOAD,
-	// Proximity respects player solidity hitbox size
+	// Proximity respects player solidity hitbox size.
 	//
 	// @versionadded 3.0
 	TRIGFLAG_PROX_USE_SOL_HITBOX,
@@ -546,7 +547,7 @@ class combotrigger {
 	// @zasm_var CMBTRIGCTRAMNT
 	internal int CounterAmount;
 
-	// The combo's cooldown between triggers
+	// The combo's cooldown between triggers.
 	//
 	// @zasm_var CMBTRIGCOOLDOWN
 	internal int Cooldown;
@@ -589,7 +590,7 @@ class combotrigger {
 	// @zasm_var CMBTRIGPOSSTATE
 	internal int ComboPosState;
 
-	// If > -1, the direction of ExDoor that the combo is linked to
+	// If > -1, the direction of ExDoor that the combo is linked to.
 	//
 	// @zasm_var CMBTRIGEXDOORDIR
 	internal int ExDoorDir;
@@ -674,60 +675,60 @@ class combotrigger {
 	internal int DMapLvl;
 
 	// Which of the 32 level states for the [DMapLvl] are required to be ON for this trigger to
-	// activate
+	// activate.
 	//
 	// @length 32
 	// @zasm_var CMBTRIGREQLVLSTATE
 	internal bool ReqLevelState[];
 
 	// Which of the 32 level states for the [DMapLvl] are required to be OFF for this trigger to
-	// activate
+	// activate.
 	//
 	// @length 32
 	// @zasm_var CMBTRIGUNREQLVLSTATE
 	internal bool UnreqLevelState[];
 
-	// Which of the 256 global states are required to be ON for this trigger to activate
+	// Which of the 256 global states are required to be ON for this trigger to activate.
 	//
 	// @length 256
 	// @zasm_var CMBTRIGREQGLOBALSTATE
 	internal bool ReqGlobalState[];
 
-	// Which of the 256 global states are required to be OFF for this trigger to activate
+	// Which of the 256 global states are required to be OFF for this trigger to activate.
 	//
 	// @length 256
 	// @zasm_var CMBTRIGUNREQGLOBALSTATE
 	internal bool UnreqGlobalState[];
 
 	// Which of the screen states for this combo's screen are required to be ON for this trigger to
-	// activate
+	// activate.
 	//
 	// @index [enum ScreenState]
 	// @zasm_var CMBTRIGREQSCRSTATE
 	internal bool ReqScreenState[];
 
 	// Which of the screen states for this combo's screen are required to be OFF for this trigger to
-	// activate
+	// activate.
 	//
 	// @index [enum ScreenState]
 	// @zasm_var CMBTRIGUNREQSCRSTATE
 	internal bool UnreqScreenState[];
 
 	// Which of the 32 screen exstates for this combo's screen are required to be ON for this
-	// trigger to activate
+	// trigger to activate.
 	//
 	// @length 32
 	// @zasm_var CMBTRIGREQSCREXSTATE
 	internal bool ReqScreenExState[];
 
 	// Which of the 32 screen exstates for this combo's screen are required to be OFF for this
-	// trigger to activate
+	// trigger to activate.
 	//
 	// @length 32
 	// @zasm_var CMBTRIGUNREQSCREXSTATE
 	internal bool UnreqScreenExState[];
 
-	// Get if a specified exdoor state is required to be ON for this trigger to activate
+	// Get if a specified exdoor state is required to be ON for this trigger to activate.
 	//
 	// @zasm
 	//   PEEKATV REFCOMBOTRIGGER 0.0002
@@ -735,7 +736,7 @@ class combotrigger {
 	//   POPARGS D5 0.0003
 	internal int GetReqExDoor(int dir, int index);
 
-	// Set if a specified exdoor state is required to be ON for this trigger to activate
+	// Set if a specified exdoor state is required to be ON for this trigger to activate.
 	//
 	// @zasm
 	//   POP D2
@@ -744,7 +745,7 @@ class combotrigger {
 	//   POPARGS D5 0.0003
 	internal void SetReqExDoor(int dir, int index, bool state);
 
-	// Get if a specified exdoor state is required to be OFF for this trigger to activate
+	// Get if a specified exdoor state is required to be OFF for this trigger to activate.
 	//
 	// @zasm
 	//   PEEKATV REFCOMBOTRIGGER 0.0002
@@ -752,7 +753,7 @@ class combotrigger {
 	//   POPARGS D5 0.0003
 	internal int GetUnreqExDoor(int dir, int index);
 
-	// Set if a specified exdoor state is required to be OFF for this trigger to activate
+	// Set if a specified exdoor state is required to be OFF for this trigger to activate.
 	//
 	// @zasm
 	//   POP D2

@@ -352,7 +352,7 @@ class hero {
 	// -2 through -99 reserved for potential future engine use
 	// If <-100, the effect will last until script-modified
 	//
-	// If >0, will tick down each frame
+	// If >0, will tick down each frame.
 	//
 	// @zasm_var HEROBUNNY
 	internal int BunnyClk;
@@ -381,7 +381,7 @@ class hero {
 	// Setting to 'false' will let go of the ladder, and setting 'true' will
 	// grab the ladder
 	//
-	// While 'true', gravity does not affect the hero
+	// While 'true', gravity does not affect the hero.
 	//
 	// @zasm_var LINKCLIMBING
 	internal bool Climbing;
@@ -393,12 +393,12 @@ class hero {
 	// the ground.
 	//
 	// Used by Roc's Feather items to determine how many extra jumps the hero
-	// has left
+	// has left.
 	//
 	// @zasm_var HEROJUMPCOUNT
 	internal int JumpCount;
 
-	// Returns the direction that the Hero is being pulled in by a pit
+	// Returns the direction that the Hero is being pulled in by a pit.
 	//
 	// @zasm_var HEROPULLDIR
 	internal const int PitPullDir;
@@ -408,7 +408,7 @@ class hero {
 	// The pit will only pull the hero on frames where 'PitPullTimer %
 	// PitSensitivity == 0'
 	//
-	// The Pit Sensitivity is an attribyte on the pit combo
+	// The Pit Sensitivity is an attribyte on the pit combo.
 	//
 	// @zasm_var HEROPULLCLK
 	internal int PitPullTimer;
@@ -571,7 +571,7 @@ class hero {
 	// - 0 = not swinging hammer
 	// - 1 = hammer above head
 	// - 2 = hammer at angle
-	// - 3 = hammer hit the ground
+	// - 3 = hammer hit the ground.
 	//
 	// @zasm_var HEROHAMMERSTATE
 	internal int HammerState;
