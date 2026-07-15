@@ -15,14 +15,14 @@
 //   rewind) affects the next input operations, but output operations move the position back to
 //   the end of file. The file is created if it does not exist.
 //
-// The letter "b" can be added to the end of any of these (but before the "+" for update modes)
-//     to specify a binary file mode. Otherwise, the file opens in text mode.
+// The letter "b" can be added to the end of any of these (but before the "+" for update modes) to
+// specify a binary file mode. Otherwise, the file opens in text mode.
 //
-// Text files are files containing sequences of lines of text. Depending on the environment
-//     where the application runs, some special character conversion may occur in input/output
-//     operations in text mode to adapt them to a system-specific text file format. Although
-//     on some environments no conversions occur and both text files and binary files are
-//     treated the same way, using the appropriate mode improves portability.
+// Text files are files containing sequences of lines of text. Depending on the environment where
+// the application runs, some special character conversion may occur in input/output operations in
+// text mode to adapt them to a system-specific text file format. Although on some environments no
+// conversions occur and both text files and binary files are treated the same way, using the
+// appropriate mode improves portability.
 //
 // @zasm_ref REFFILE
 class file {

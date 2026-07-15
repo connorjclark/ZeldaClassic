@@ -259,11 +259,15 @@ class Formatter:
             message = None
             if not all(fits(line) for line in lines):
                 message = f'prose exceeds {COLUMN_LIMIT} columns'
-            elif marker and any(
+            elif any(
                 len(c) - len(c.lstrip()) != len(cont_prefix) - len(f'{indent}//')
                 for c in map(comment_content, lines[1:])
             ):
-                message = 'list item continuation not aligned with item text'
+                message = (
+                    'list item continuation not aligned with item text'
+                    if marker
+                    else 'paragraph continuation has stray indentation'
+                )
             if message:
                 words = ' '.join(
                     comment_content(line).strip() for line in lines

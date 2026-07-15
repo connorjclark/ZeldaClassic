@@ -1066,9 +1066,8 @@ class npc {
 	// @zasm_var NPCTYPE
 	internal int Family;
 
-	// The 'summoner' of this enemy.
-	// If the summoner is not [NULL], and has [NPCF_KILL_SUMMONED_ENEMIES],
-	//   then when the summoner dies, this enemy will also die.
+	// The 'summoner' of this enemy. If the summoner is not [NULL], and has
+	// [NPCF_KILL_SUMMONED_ENEMIES], then when the summoner dies, this enemy will also die.
 	//
 	// @versionadded 3.0
 	// @zasm_var NPC_SUMMONER_PARENT

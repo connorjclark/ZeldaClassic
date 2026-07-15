@@ -450,8 +450,8 @@ class combotrigger {
 	// @zasm_var CMBTRIGWPNLEVEL
 	internal int WeaponLevel;
 
-	// If set to non-0, represents an item that must be owned (or must NOT
-	//   be owned, if [TRIGFLAG_INVERT_ITEMREQ] is set).
+	// If set to non-0, represents an item that must be owned (or must NOT be owned, if
+	// [TRIGFLAG_INVERT_ITEMREQ] is set).
 	//
 	// If [TRIGFLAG_CONSUME_ITEMREQ] is set, triggering the combo will consume this item,
 	// removing it from the player's inventory.
@@ -881,8 +881,8 @@ class combotrigger {
 	// @zasm_var CMBTRIGGERPROMPTCS
 	internal int PromptCSet;
 
-	// The combo ID to be displayed when in range to trigger a [Button],
-	//  but the trigger conditions fail.
+	// The combo ID to be displayed when in range to trigger a [Button], but the trigger conditions
+	// fail.
 	//
 	// @zasm_var CMBTRIGGERFAILPROMPTCID
 	internal int FailPromptCombo;

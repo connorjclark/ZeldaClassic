@@ -3772,80 +3772,80 @@ RETURNFUNC; Func[int file::ReadBytes(char32[], int, int)] Body End              
 POP REFGENERICDATA; Func[bool genericdata::RunFrozen()] Body Start              | 3743 resources/include/bindings/genericdata.zh:71
 RUNGENFRZSCR D2                                                                 | 3744 resources/include/bindings/genericdata.zh:71
 RETURNFUNC; Func[bool genericdata::RunFrozen()] Body End                        | 3745 resources/include/bindings/genericdata.zh:71
-POP D2; Func[void hero::Warp(int, int)] Body Start                              | 3746 resources/include/bindings/hero.zh:745
-POP D3                                                                          | 3747 resources/include/bindings/hero.zh:745
-WARPR D3 D2                                                                     | 3748 resources/include/bindings/hero.zh:745
-RETURNFUNC; Func[void hero::Warp(int, int)] Body End                            | 3749 resources/include/bindings/hero.zh:745
-POP D2; Func[void hero::WarpEx(int[])] Body Start                               | 3750 resources/include/bindings/hero.zh:769
-LINKWARPEXR D2                                                                  | 3751 resources/include/bindings/hero.zh:769
-RETURNFUNC; Func[void hero::WarpEx(int[])] Body End                             | 3752 resources/include/bindings/hero.zh:769
-WARPEX 9; Func[void hero::WarpEx(WarpType, int, int, int, int, WarpEffect, int, WarpBitflags, int)] Body Start | 3753 resources/include/bindings/hero.zh:783
-POPARGS D5 0.0009                                                               | 3754 resources/include/bindings/hero.zh:783
-RETURNFUNC; Func[void hero::WarpEx(WarpType, int, int, int, int, WarpEffect, int, WarpBitflags, int)] Body End | 3755 resources/include/bindings/hero.zh:783
-POP D2; Func[void hero::Explode(int)] Body Start                                | 3756 resources/include/bindings/hero.zh:790
-LINKEXPLODER D2                                                                 | 3757 resources/include/bindings/hero.zh:790
-RETURNFUNC; Func[void hero::Explode(int)] Body End                              | 3758 resources/include/bindings/hero.zh:790
-POP D2; Func[void hero::PitWarp(int, int)] Body Start                           | 3759 resources/include/bindings/hero.zh:796
-POP D3                                                                          | 3760 resources/include/bindings/hero.zh:796
-PITWARPR D3 D2                                                                  | 3761 resources/include/bindings/hero.zh:796
-RETURNFUNC; Func[void hero::PitWarp(int, int)] Body End                         | 3762 resources/include/bindings/hero.zh:796
-POP D2; Func[void hero::SelectAWeapon(int)] Body Start                          | 3763 resources/include/bindings/hero.zh:808
-SELECTAWPNR D2                                                                  | 3764 resources/include/bindings/hero.zh:808
-RETURNFUNC; Func[void hero::SelectAWeapon(int)] Body End                        | 3765 resources/include/bindings/hero.zh:808
-POP D2; Func[void hero::SelectBWeapon(int)] Body Start                          | 3766 resources/include/bindings/hero.zh:817
-SELECTBWPNR D2                                                                  | 3767 resources/include/bindings/hero.zh:817
-RETURNFUNC; Func[void hero::SelectBWeapon(int)] Body End                        | 3768 resources/include/bindings/hero.zh:817
-POP D2; Func[void hero::SelectXWeapon(int)] Body Start                          | 3769 resources/include/bindings/hero.zh:829
-SELECTXWPNR D2                                                                  | 3770 resources/include/bindings/hero.zh:829
-RETURNFUNC; Func[void hero::SelectXWeapon(int)] Body End                        | 3771 resources/include/bindings/hero.zh:829
-POP D2; Func[void hero::SelectYWeapon(int)] Body Start                          | 3772 resources/include/bindings/hero.zh:841
-SELECTYWPNR D2                                                                  | 3773 resources/include/bindings/hero.zh:841
-RETURNFUNC; Func[void hero::SelectYWeapon(int)] Body End                        | 3774 resources/include/bindings/hero.zh:841
-POP D3; Func[bool hero::SwitchCombo(int, int)] Body Start                       | 3775 resources/include/bindings/hero.zh:852
-POP D2                                                                          | 3776 resources/include/bindings/hero.zh:852
-SWITCHCMB D2 D3                                                                 | 3777 resources/include/bindings/hero.zh:852
-RETURNFUNC; Func[bool hero::SwitchCombo(int, int)] Body End                     | 3778 resources/include/bindings/hero.zh:852
-POP D2; Func[void hero::Kill(bool)] Body Start                                  | 3779 resources/include/bindings/hero.zh:866
-KILLPLAYER D2                                                                   | 3780 resources/include/bindings/hero.zh:866
-RETURNFUNC; Func[void hero::Kill(bool)] Body End                                | 3781 resources/include/bindings/hero.zh:866
-HEROMOVEXY; Func[bool hero::MoveXY(int, int, bool, bool, bool)] Body Start      | 3782 resources/include/bindings/hero.zh:889
-POPARGS D5 0.0005                                                               | 3783 resources/include/bindings/hero.zh:889
-RETURNFUNC; Func[bool hero::MoveXY(int, int, bool, bool, bool)] Body End        | 3784 resources/include/bindings/hero.zh:889
-HEROCANMOVEXY; Func[bool hero::CanMoveXY(int, int, bool, bool, bool)] Body Start | 3785 resources/include/bindings/hero.zh:899
-POPARGS D5 0.0005                                                               | 3786 resources/include/bindings/hero.zh:899
-RETURNFUNC; Func[bool hero::CanMoveXY(int, int, bool, bool, bool)] Body End     | 3787 resources/include/bindings/hero.zh:899
-HEROMOVEATANGLE; Func[bool hero::MoveAtAngle(int, int, bool, bool, bool)] Body Start | 3788 resources/include/bindings/hero.zh:908
-POPARGS D5 0.0005                                                               | 3789 resources/include/bindings/hero.zh:908
-RETURNFUNC; Func[bool hero::MoveAtAngle(int, int, bool, bool, bool)] Body End   | 3790 resources/include/bindings/hero.zh:908
-HEROCANMOVEATANGLE; Func[bool hero::CanMoveAtAngle(int, int, bool, bool, bool)] Body Start | 3791 resources/include/bindings/hero.zh:919
-POPARGS D5 0.0005                                                               | 3792 resources/include/bindings/hero.zh:919
-RETURNFUNC; Func[bool hero::CanMoveAtAngle(int, int, bool, bool, bool)] Body End | 3793 resources/include/bindings/hero.zh:919
-HEROMOVE; Func[bool hero::Move(int, int, bool, bool, bool)] Body Start          | 3794 resources/include/bindings/hero.zh:929
-POPARGS D5 0.0005                                                               | 3795 resources/include/bindings/hero.zh:929
-RETURNFUNC; Func[bool hero::Move(int, int, bool, bool, bool)] Body End          | 3796 resources/include/bindings/hero.zh:929
-HEROCANMOVE; Func[bool hero::CanMove(int, int, bool, bool, bool)] Body Start    | 3797 resources/include/bindings/hero.zh:938
-POPARGS D5 0.0005                                                               | 3798 resources/include/bindings/hero.zh:938
-RETURNFUNC; Func[bool hero::CanMove(int, int, bool, bool, bool)] Body End       | 3799 resources/include/bindings/hero.zh:938
-HEROLIFTRELEASE; Func[lweapon hero::ReleaseLiftWeapon()] Body Start             | 3800 resources/include/bindings/hero.zh:946
-RETURNFUNC; Func[lweapon hero::ReleaseLiftWeapon()] Body End                    | 3801 resources/include/bindings/hero.zh:946
-HEROLIFTGRAB; Func[void hero::LiftWeapon(lweapon, int, int)] Body Start         | 3802 resources/include/bindings/hero.zh:955
-POPARGS D5 0.0003                                                               | 3803 resources/include/bindings/hero.zh:955
-RETURNFUNC; Func[void hero::LiftWeapon(lweapon, int, int)] Body End             | 3804 resources/include/bindings/hero.zh:955
-HEROISFLICKERFRAME; Func[bool hero::isFlickerFrame()] Body Start                | 3805 resources/include/bindings/hero.zh:968
-RETURNFUNC; Func[bool hero::isFlickerFrame()] Body End                          | 3806 resources/include/bindings/hero.zh:968
-POP D6; Func[void hero::SetItemSlot(int, int, int)] Body Start                  | 3807 resources/include/bindings/hero.zh:979
-POP D1                                                                          | 3808 resources/include/bindings/hero.zh:979
-POP D0                                                                          | 3809 resources/include/bindings/hero.zh:979
-SETR SETITEMSLOT D6                                                             | 3810 resources/include/bindings/hero.zh:979
-RETURNFUNC; Func[void hero::SetItemSlot(int, int, int)] Body End                | 3811 resources/include/bindings/hero.zh:979
-POP D1; Func[int hero::GetOriginalTile(int, int)] Body Start                    | 3812 resources/include/bindings/hero.zh:985
-POP D0                                                                          | 3813 resources/include/bindings/hero.zh:985
-SETR D2 LINKOTILE                                                               | 3814 resources/include/bindings/hero.zh:985
-RETURNFUNC; Func[int hero::GetOriginalTile(int, int)] Body End                  | 3815 resources/include/bindings/hero.zh:985
-POP D1; Func[int hero::GetOriginalFlip(int, int)] Body Start                    | 3816 resources/include/bindings/hero.zh:991
-POP D0                                                                          | 3817 resources/include/bindings/hero.zh:991
-SETR D2 LINKOFLIP                                                               | 3818 resources/include/bindings/hero.zh:991
-RETURNFUNC; Func[int hero::GetOriginalFlip(int, int)] Body End                  | 3819 resources/include/bindings/hero.zh:991
+POP D2; Func[void hero::Warp(int, int)] Body Start                              | 3746 resources/include/bindings/hero.zh:744
+POP D3                                                                          | 3747 resources/include/bindings/hero.zh:744
+WARPR D3 D2                                                                     | 3748 resources/include/bindings/hero.zh:744
+RETURNFUNC; Func[void hero::Warp(int, int)] Body End                            | 3749 resources/include/bindings/hero.zh:744
+POP D2; Func[void hero::WarpEx(int[])] Body Start                               | 3750 resources/include/bindings/hero.zh:768
+LINKWARPEXR D2                                                                  | 3751 resources/include/bindings/hero.zh:768
+RETURNFUNC; Func[void hero::WarpEx(int[])] Body End                             | 3752 resources/include/bindings/hero.zh:768
+WARPEX 9; Func[void hero::WarpEx(WarpType, int, int, int, int, WarpEffect, int, WarpBitflags, int)] Body Start | 3753 resources/include/bindings/hero.zh:782
+POPARGS D5 0.0009                                                               | 3754 resources/include/bindings/hero.zh:782
+RETURNFUNC; Func[void hero::WarpEx(WarpType, int, int, int, int, WarpEffect, int, WarpBitflags, int)] Body End | 3755 resources/include/bindings/hero.zh:782
+POP D2; Func[void hero::Explode(int)] Body Start                                | 3756 resources/include/bindings/hero.zh:789
+LINKEXPLODER D2                                                                 | 3757 resources/include/bindings/hero.zh:789
+RETURNFUNC; Func[void hero::Explode(int)] Body End                              | 3758 resources/include/bindings/hero.zh:789
+POP D2; Func[void hero::PitWarp(int, int)] Body Start                           | 3759 resources/include/bindings/hero.zh:795
+POP D3                                                                          | 3760 resources/include/bindings/hero.zh:795
+PITWARPR D3 D2                                                                  | 3761 resources/include/bindings/hero.zh:795
+RETURNFUNC; Func[void hero::PitWarp(int, int)] Body End                         | 3762 resources/include/bindings/hero.zh:795
+POP D2; Func[void hero::SelectAWeapon(int)] Body Start                          | 3763 resources/include/bindings/hero.zh:807
+SELECTAWPNR D2                                                                  | 3764 resources/include/bindings/hero.zh:807
+RETURNFUNC; Func[void hero::SelectAWeapon(int)] Body End                        | 3765 resources/include/bindings/hero.zh:807
+POP D2; Func[void hero::SelectBWeapon(int)] Body Start                          | 3766 resources/include/bindings/hero.zh:816
+SELECTBWPNR D2                                                                  | 3767 resources/include/bindings/hero.zh:816
+RETURNFUNC; Func[void hero::SelectBWeapon(int)] Body End                        | 3768 resources/include/bindings/hero.zh:816
+POP D2; Func[void hero::SelectXWeapon(int)] Body Start                          | 3769 resources/include/bindings/hero.zh:828
+SELECTXWPNR D2                                                                  | 3770 resources/include/bindings/hero.zh:828
+RETURNFUNC; Func[void hero::SelectXWeapon(int)] Body End                        | 3771 resources/include/bindings/hero.zh:828
+POP D2; Func[void hero::SelectYWeapon(int)] Body Start                          | 3772 resources/include/bindings/hero.zh:840
+SELECTYWPNR D2                                                                  | 3773 resources/include/bindings/hero.zh:840
+RETURNFUNC; Func[void hero::SelectYWeapon(int)] Body End                        | 3774 resources/include/bindings/hero.zh:840
+POP D3; Func[bool hero::SwitchCombo(int, int)] Body Start                       | 3775 resources/include/bindings/hero.zh:851
+POP D2                                                                          | 3776 resources/include/bindings/hero.zh:851
+SWITCHCMB D2 D3                                                                 | 3777 resources/include/bindings/hero.zh:851
+RETURNFUNC; Func[bool hero::SwitchCombo(int, int)] Body End                     | 3778 resources/include/bindings/hero.zh:851
+POP D2; Func[void hero::Kill(bool)] Body Start                                  | 3779 resources/include/bindings/hero.zh:865
+KILLPLAYER D2                                                                   | 3780 resources/include/bindings/hero.zh:865
+RETURNFUNC; Func[void hero::Kill(bool)] Body End                                | 3781 resources/include/bindings/hero.zh:865
+HEROMOVEXY; Func[bool hero::MoveXY(int, int, bool, bool, bool)] Body Start      | 3782 resources/include/bindings/hero.zh:888
+POPARGS D5 0.0005                                                               | 3783 resources/include/bindings/hero.zh:888
+RETURNFUNC; Func[bool hero::MoveXY(int, int, bool, bool, bool)] Body End        | 3784 resources/include/bindings/hero.zh:888
+HEROCANMOVEXY; Func[bool hero::CanMoveXY(int, int, bool, bool, bool)] Body Start | 3785 resources/include/bindings/hero.zh:898
+POPARGS D5 0.0005                                                               | 3786 resources/include/bindings/hero.zh:898
+RETURNFUNC; Func[bool hero::CanMoveXY(int, int, bool, bool, bool)] Body End     | 3787 resources/include/bindings/hero.zh:898
+HEROMOVEATANGLE; Func[bool hero::MoveAtAngle(int, int, bool, bool, bool)] Body Start | 3788 resources/include/bindings/hero.zh:907
+POPARGS D5 0.0005                                                               | 3789 resources/include/bindings/hero.zh:907
+RETURNFUNC; Func[bool hero::MoveAtAngle(int, int, bool, bool, bool)] Body End   | 3790 resources/include/bindings/hero.zh:907
+HEROCANMOVEATANGLE; Func[bool hero::CanMoveAtAngle(int, int, bool, bool, bool)] Body Start | 3791 resources/include/bindings/hero.zh:918
+POPARGS D5 0.0005                                                               | 3792 resources/include/bindings/hero.zh:918
+RETURNFUNC; Func[bool hero::CanMoveAtAngle(int, int, bool, bool, bool)] Body End | 3793 resources/include/bindings/hero.zh:918
+HEROMOVE; Func[bool hero::Move(int, int, bool, bool, bool)] Body Start          | 3794 resources/include/bindings/hero.zh:928
+POPARGS D5 0.0005                                                               | 3795 resources/include/bindings/hero.zh:928
+RETURNFUNC; Func[bool hero::Move(int, int, bool, bool, bool)] Body End          | 3796 resources/include/bindings/hero.zh:928
+HEROCANMOVE; Func[bool hero::CanMove(int, int, bool, bool, bool)] Body Start    | 3797 resources/include/bindings/hero.zh:937
+POPARGS D5 0.0005                                                               | 3798 resources/include/bindings/hero.zh:937
+RETURNFUNC; Func[bool hero::CanMove(int, int, bool, bool, bool)] Body End       | 3799 resources/include/bindings/hero.zh:937
+HEROLIFTRELEASE; Func[lweapon hero::ReleaseLiftWeapon()] Body Start             | 3800 resources/include/bindings/hero.zh:945
+RETURNFUNC; Func[lweapon hero::ReleaseLiftWeapon()] Body End                    | 3801 resources/include/bindings/hero.zh:945
+HEROLIFTGRAB; Func[void hero::LiftWeapon(lweapon, int, int)] Body Start         | 3802 resources/include/bindings/hero.zh:954
+POPARGS D5 0.0003                                                               | 3803 resources/include/bindings/hero.zh:954
+RETURNFUNC; Func[void hero::LiftWeapon(lweapon, int, int)] Body End             | 3804 resources/include/bindings/hero.zh:954
+HEROISFLICKERFRAME; Func[bool hero::isFlickerFrame()] Body Start                | 3805 resources/include/bindings/hero.zh:967
+RETURNFUNC; Func[bool hero::isFlickerFrame()] Body End                          | 3806 resources/include/bindings/hero.zh:967
+POP D6; Func[void hero::SetItemSlot(int, int, int)] Body Start                  | 3807 resources/include/bindings/hero.zh:978
+POP D1                                                                          | 3808 resources/include/bindings/hero.zh:978
+POP D0                                                                          | 3809 resources/include/bindings/hero.zh:978
+SETR SETITEMSLOT D6                                                             | 3810 resources/include/bindings/hero.zh:978
+RETURNFUNC; Func[void hero::SetItemSlot(int, int, int)] Body End                | 3811 resources/include/bindings/hero.zh:978
+POP D1; Func[int hero::GetOriginalTile(int, int)] Body Start                    | 3812 resources/include/bindings/hero.zh:984
+POP D0                                                                          | 3813 resources/include/bindings/hero.zh:984
+SETR D2 LINKOTILE                                                               | 3814 resources/include/bindings/hero.zh:984
+RETURNFUNC; Func[int hero::GetOriginalTile(int, int)] Body End                  | 3815 resources/include/bindings/hero.zh:984
+POP D1; Func[int hero::GetOriginalFlip(int, int)] Body Start                    | 3816 resources/include/bindings/hero.zh:990
+POP D0                                                                          | 3817 resources/include/bindings/hero.zh:990
+SETR D2 LINKOFLIP                                                               | 3818 resources/include/bindings/hero.zh:990
+RETURNFUNC; Func[int hero::GetOriginalFlip(int, int)] Body End                  | 3819 resources/include/bindings/hero.zh:990
 POP D2; Func[void itemdata::GetName(char32[])] Body Start                       | 3820 resources/include/bindings/itemdata.zh:964
 POP REFITEMDATA                                                                 | 3821 resources/include/bindings/itemdata.zh:964
 ITEMNAME D2                                                                     | 3822 resources/include/bindings/itemdata.zh:964
@@ -4134,15 +4134,15 @@ RETURNFUNC; Func[bool npc::CanPlace(int, int, int, bool, int, int)] Body End    
 POP REFNPC; Func[bool npc::isFlickerFrame()] Body Start                         | 4105 resources/include/bindings/npc.zh:1062
 NPCISFLICKERFRAME                                                               | 4106 resources/include/bindings/npc.zh:1062
 RETURNFUNC; Func[bool npc::isFlickerFrame()] Body End                           | 4107 resources/include/bindings/npc.zh:1062
-POP D2; Func[npc npc::SummonMinion(int, int)] Body Start                        | 4108 resources/include/bindings/npc.zh:1088
-POP D3                                                                          | 4109 resources/include/bindings/npc.zh:1088
-POP REFNPC                                                                      | 4110 resources/include/bindings/npc.zh:1088
-NPC_SUMMON_MINION D2 D3                                                         | 4111 resources/include/bindings/npc.zh:1088
-RETURNFUNC; Func[npc npc::SummonMinion(int, int)] Body End                      | 4112 resources/include/bindings/npc.zh:1088
-POP D2; Func[npc npc::SummonMinionFromLayer(int)] Body Start                    | 4113 resources/include/bindings/npc.zh:1100
-POP REFNPC                                                                      | 4114 resources/include/bindings/npc.zh:1100
-NPC_SUMMON_MINION_LAYER D2                                                      | 4115 resources/include/bindings/npc.zh:1100
-RETURNFUNC; Func[npc npc::SummonMinionFromLayer(int)] Body End                  | 4116 resources/include/bindings/npc.zh:1100
+POP D2; Func[npc npc::SummonMinion(int, int)] Body Start                        | 4108 resources/include/bindings/npc.zh:1087
+POP D3                                                                          | 4109 resources/include/bindings/npc.zh:1087
+POP REFNPC                                                                      | 4110 resources/include/bindings/npc.zh:1087
+NPC_SUMMON_MINION D2 D3                                                         | 4111 resources/include/bindings/npc.zh:1087
+RETURNFUNC; Func[npc npc::SummonMinion(int, int)] Body End                      | 4112 resources/include/bindings/npc.zh:1087
+POP D2; Func[npc npc::SummonMinionFromLayer(int)] Body Start                    | 4113 resources/include/bindings/npc.zh:1099
+POP REFNPC                                                                      | 4114 resources/include/bindings/npc.zh:1099
+NPC_SUMMON_MINION_LAYER D2                                                      | 4115 resources/include/bindings/npc.zh:1099
+RETURNFUNC; Func[npc npc::SummonMinionFromLayer(int)] Body End                  | 4116 resources/include/bindings/npc.zh:1099
 POP D2; Func[void npcdata::GetName(char32[])] Body Start                        | 4117 resources/include/bindings/npcdata.zh:542
 POP REFNPCDATA                                                                  | 4118 resources/include/bindings/npcdata.zh:542
 NPCDATAGETNAME D2                                                               | 4119 resources/include/bindings/npcdata.zh:542
