@@ -39,7 +39,7 @@ void SetRegion(int map, int origin_screen, int width, int height, int region_id)
 // Access with `Region->`.
 //
 // @tutorial /tutorials/z3_user_guide
-// @versionadded 2.55.9 Added for compatability. Variables never vary (besides [Region->OriginScreenIndex])
+// @versionadded 2.55.9 Added for compatibility. Variables never vary (besides [Region->OriginScreenIndex])
 // @versionchanged 3.0 Fully implemented
 class Region {
 	// @delete

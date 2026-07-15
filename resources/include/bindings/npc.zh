@@ -522,7 +522,7 @@ class npc {
 
 	// Returns a direction constant if the npc is being knocked back.
 	//
-	// Returns -1 if the npc is not being knockd back.
+	// Returns -1 if the npc is not being knocked back.
 	//
 	// Writing to this has no effect, and is ignored.
 	//
@@ -684,7 +684,7 @@ class npc {
 	//
 	// This is automatically called for most engine npc types
 	//
-	// Calling this from npc types such as 'Other' will allow them to recieve
+	// Calling this from npc types such as 'Other' will allow them to receive
 	// knockback
 	//
 	// This is called as a part of scripted walking functions, such as
@@ -915,7 +915,7 @@ class npc {
 
 	// Similar to Screen->CreateNPC(), except:
 	//
-	// - It uses an arry literal for its args, with varying size:
+	// - It uses an array literal for its args, with varying size:
 	//   a) {id}
 	//   b) {id, x, y}
 	// - It works based on an existing pointer

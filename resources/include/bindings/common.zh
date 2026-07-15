@@ -432,7 +432,7 @@ enum SpriteID
 	SP_DINSFIRE_RISE               = 38, // Din's Fire (Rising).
 	SP_DINSFIRE_TRAIL_FALL         = 41, // Din's Fire (Trail, Falling).
 	SP_DINSFIRE_TRAIL_RISE         = 40, // Din's Fire (Trail, Rising).
-	SP_BOMB_ENEMY_EXPLOSION        = 78, // Normal Bomb Exploion (Enemy).
+	SP_BOMB_ENEMY_EXPLOSION        = 78, // Normal Bomb Explosion (Enemy).
 	SP_SBOMB_ENEMY_EXPLOSION       = 79, // Super Bomb Explosion (Enemy).
 	SP_BOMB_EXPLOSION              = 9,  // Normal Bomb Explosion.
 	SP_SBOMB_EXPLOSION             = 75, // Super Bomb Explosion.
@@ -500,7 +500,7 @@ enum SpriteID
 	SP_SWORD4                      = 3,  // Master Sword.
 	SP_SLASH4                      = 49, // Master Sword Slash.
 	SP_WAND                        = 15, // Wand Object.
-	SP_WHIRL                       = 13, // Whiste Whirlwind.
+	SP_WHIRL                       = 13, // Whistle Whirlwind.
 	SP_WIND                        = 36, // Wind Magic (Enemy).
 };
 
@@ -549,7 +549,7 @@ enum FontType
 	FONT_C64                       = 36,
 	FONT_C64_HIRES                 = 37,
 	FONT_CGA                       = 38,
-	FONT_COCO                      = 39,  // Invrse chars for upper.
+	FONT_COCO                      = 39,  // Inverse chars for upper.
 	FONT_COCO2                     = 40,  // Upper and lower.
 	FONT_COUPE                     = 41,
 	FONT_CPC                       = 42,  // Amstrad.
@@ -840,7 +840,7 @@ enum BlitModeBitflags
 {
 	BITDX_NORMAL                   = 0,
 	BITDX_TRANS                    = 1, // Translucent.
-	BITDX_PIVOT                    = 2, // THe sprite will rotate at a specific point, instead of its center.
+	BITDX_PIVOT                    = 2, // The sprite will rotate at a specific point, instead of its center.
 	BITDX_VFLIP                    = 4, // Vertical Flip.
 	BITDX_HFLIP                    = 8, // Horizontal Flip.
 };
@@ -984,7 +984,7 @@ enum SpecialDrawLayer
 	// Enemies 'grabbing' the [Hero], or with a higher Z than the [Hero]
 	// Does not work if 'Classic Draw Order' is disabled.
 	SPLAYER_NPC_ABOVEPLAYER_DRAW,
-	// Flying enemies, or enemies in the Z axis (amount required QR dependant)
+	// Flying enemies, or enemies in the Z axis (amount required QR dependent)
 	// Does not work if 'Classic Draw Order' is disabled.
 	SPLAYER_NPC_AIRBORNE_DRAW,
 	// Itemsprites

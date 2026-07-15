@@ -2079,7 +2079,7 @@ enum //Special hardcoded draw layers
 	// Enemies 'grabbing' the [Hero], or with a higher Z than the [Hero]
 	// Does not work if 'Classic Draw Order' is disabled.
 	SPLAYER_NPC_ABOVEPLAYER_DRAW,
-	// Flying enemies, or enemies in the Z axis (amount required QR dependant)
+	// Flying enemies, or enemies in the Z axis (amount required QR dependent)
 	// Does not work if 'Classic Draw Order' is disabled.
 	SPLAYER_NPC_AIRBORNE_DRAW,
 	// Itemsprites

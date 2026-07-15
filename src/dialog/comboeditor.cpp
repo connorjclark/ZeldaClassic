@@ -389,7 +389,7 @@ std::string getComboTypeHelpText(int32_t id)
 		case cCHEST: case cLOCKEDCHEST: case cBOSSCHEST:
 			typehelp = "If no button is assigned, the chest opens when pushed against from a valid side. If buttons are assigned,"
 				" then when the button is pressed while facing the chest from a valid side.\n"
-				"When the chest is opened, if it has the 'Armos/Chest->Item' combo flag, the Hero will recieve the contained item, and the combo will advance to the next combo.";
+				"When the chest is opened, if it has the 'Armos/Chest->Item' combo flag, the Hero will receive the contained item, and the combo will advance to the next combo.";
 			if(id==cLOCKEDCHEST)
 				typehelp += "\nRequires a key to open.";
 			else if(id==cBOSSCHEST)
@@ -542,7 +542,7 @@ std::string getMapFlagHelpText(int32_t id)
 			flaghelp = "Place at intersections of Raft flag paths to define points where the Hero may change directions. Change directions by holding down a directional key.";
 			break;
 		case mfDIVE_ITEM:
-			flaghelp = "When the Hero dives on a flagged water-type combo they will recieve the screen's Special Item. Requires the 'Special Item' Room Type.";
+			flaghelp = "When the Hero dives on a flagged water-type combo they will receive the screen's Special Item. Requires the 'Special Item' Room Type.";
 			break;
 		case mfLENSMARKER:
 			flaghelp = "Combos with this flag will flash white when viewed with the Lens of Truth item.";

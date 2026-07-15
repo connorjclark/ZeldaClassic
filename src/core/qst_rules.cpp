@@ -231,7 +231,7 @@ int32_t readrules(PACKFILE *f, zquestheader *Header)
 	{
 		// qr_OFFSETEWPNCOLLISIONFIX
 		// All 'official' quests need this disabled.
-		// All 2.10 and lower quests need this enabled to preseve compatability.
+		// All 2.10 and lower quests need this enabled to preserve compatibility.
 		// All 2.11 - 2.5.1 quests should have it set also, due to a bug in about half of all the betas.
 
 		//~Gleeok

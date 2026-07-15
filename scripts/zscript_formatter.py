@@ -35,6 +35,59 @@ LIST_ITEM_RE = re.compile(r'\s*(?:[-*+]|\d+[.)])\s')
 # Prose in comments is wrapped to this column (with tabs counted as 4).
 COLUMN_LIMIT = 100
 
+# Misspelling -> correction, matched on word boundaries. Lowercase entries also
+# match their capitalized form.
+TYPO_FIXES = {
+    'accidently': 'accidentally',
+    'arry': 'array',
+    'begining': 'beginning',
+    'compatability': 'compatibility',
+    'coorindate': 'coordinate',
+    'customizeable': 'customizable',
+    'definately': 'definitely',
+    'dependant': 'dependent',
+    "enem's": "enemy's",
+    'enountered': 'encountered',
+    'exploion': 'explosion',
+    'invrse': 'inverse',
+    'knockd': 'knocked',
+    'neccessary': 'necessary',
+    'occured': 'occurred',
+    'occuring': 'occurring',
+    'overrided': 'overridden',
+    'positon': 'position',
+    'psuedo': 'pseudo',
+    'recieve': 'receive',
+    'recieved': 'received',
+    'recieves': 'receives',
+    'richochet': 'ricochet',
+    'richocheting': 'ricocheting',
+    'seperate': 'separate',
+    'seperated': 'separated',
+    'specificed': 'specified',
+    'subscren': 'subscreen',
+    'subscrens': 'subscreens',
+    'teh': 'the',
+    'THe': 'The',
+    'thier': 'their',
+    'unneccesary': 'unnecessary',
+    'untill': 'until',
+    'whiste': 'whistle',
+    'wich': 'which',
+    'wierd': 'weird',
+    "you'e": "you're",
+}
+TYPO_FIXES.update(
+    {
+        typo.capitalize(): fix.capitalize()
+        for typo, fix in TYPO_FIXES.items()
+        if typo[0].islower()
+    }
+)
+TYPO_RE = re.compile(
+    r'\b(' + '|'.join(re.escape(t) for t in sorted(TYPO_FIXES, key=len, reverse=True)) + r')\b'
+)
+
 # Anything else is reported as a typo. If a new tag is introduced, add it here.
 KNOWN_TAGS = {
     'alias',
@@ -156,6 +209,7 @@ class Formatter:
         for _ in range(10):
             before = list(self.lines)
             self.strip_trailing_whitespace()
+            self.fix_typos()
             self.add_missing_comment_spaces()
             self.collapse_blank_lines()
             self.merge_split_doc_comments()
@@ -172,6 +226,18 @@ class Formatter:
             if stripped != line:
                 self.issue(i, 'trailing whitespace')
                 self.lines[i] = stripped
+
+    def fix_typos(self):
+        for i, line in enumerate(self.lines):
+            index = line.find('//')
+            if index == -1:
+                continue
+            comment = line[index:]
+            fixed = TYPO_RE.sub(lambda m: TYPO_FIXES[m.group(0)], comment)
+            if fixed != comment:
+                for m in TYPO_RE.finditer(comment):
+                    self.issue(i, f"typo: '{m.group(0)}' -> '{TYPO_FIXES[m.group(0)]}'")
+                self.lines[i] = line[:index] + fixed
 
     def add_missing_comment_spaces(self):
         for i, line in enumerate(self.lines):

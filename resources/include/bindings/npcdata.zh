@@ -318,7 +318,7 @@ class npcdata {
 	// @zasm_var NPCDATAHALT
 	internal int Haltrate;
 
-	// The enem's step speed.
+	// The enemy's step speed.
 	//
 	// @zasm_var NPCDATASTEP
 	internal int Step;

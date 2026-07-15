@@ -117,7 +117,7 @@ enum ComboTriggerFlag
 	TRIGFLAG_TGROUP_CONTRIB, //States/Spawning->Contributes To TrigGroup - This combo contributes to its' TrigGroup
 	TRIGFLAG_TGROUP_LESS, //States/Spawning->'TrigGroup Less->' - When the number of combos that contribute to this combo's Trigger Group is LESS than the Trigger Group Val, trigger this combo.
 	TRIGFLAG_TGROUP_GREATER, //States/Spawning->'TrigGroup Greater->' - When the number of combos that contribute to this combo's Trigger Group is GREATER than the Trigger Group Val, trigger this combo.
-	TRIGFLAG_TRIG_PUSHED, //Other->'Pushed->' - Triggers when this combo, as a pushblock, settles into a new positon.
+	TRIGFLAG_TRIG_PUSHED, //Other->'Pushed->' - Triggers when this combo, as a pushblock, settles into a new position.
 	TRIGFLAG_TRIG_DIVE, //Other->'Dive->' - Triggers when the [Hero] dives on this combo.
 	TRIGFLAG_TRIG_DIVE_SENS, //Other->'Dive-> (Sensitive)' - Triggers when the [Hero] dives on this combo. More sensitive hitbox than [TRIGFLAG_TRIG_DIVE]
 	TRIGFLAG_REFARROW, //Weapons->LWeapons->Refl. Arrow - Triggered by Reflected Arrow LWeapons

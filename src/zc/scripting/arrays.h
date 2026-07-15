@@ -23,7 +23,7 @@
 #include <vector>
 
 // Avoid including ffscript.h b/c it causes circular includes, errors on windows.
-// TODO: move all these to seperate files in `zc/scripting/types`, so this file doesn't need to rely on ffscript.cpp.
+// TODO: move all these to separate files in `zc/scripting/types`, so this file doesn't need to rely on ffscript.cpp.
 
 struct dmap;
 class enemy;

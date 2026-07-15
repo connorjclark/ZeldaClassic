@@ -241,7 +241,7 @@ namespace ZScript
 		// Mark as having failed.
 		void fail() {failure = true;}
 	
-		// Used to signal that a compile error has occured.
+		// Used to signal that a compile error has occurred.
 		void handleError(CompileError const& error, std::string const* inf = nullptr) /*override*/;
 		bool hasError() const /*override*/ {return failure;}
 

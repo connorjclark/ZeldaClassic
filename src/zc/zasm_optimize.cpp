@@ -1096,9 +1096,9 @@ static void simulate(OptContext& ctx, SimulationState& state)
 		{
 			auto value = IS_GENERIC_REG(arg1) ? state.d[arg1] : reg(arg1);
 			// Registers whose value depends on the value of other registers (like indexing into an array
-			// based on D0/D1) should be represented as unknown on the stack, because their dependant
+			// based on D0/D1) should be represented as unknown on the stack, because their dependent
 			// registers are assumed to be invalidated soon. Theoretically they could be tracked too, as they often
-			// aren't modified. Would need to invalidate the stack value on a write to any dependant register.
+			// aren't modified. Would need to invalidate the stack value on a write to any dependent register.
 			if (value.is_register() && has_register_dependency(value.data))
 				value = {ValueType::Unknown};
 			state.stack.push_back(value);

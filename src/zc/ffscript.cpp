@@ -13545,7 +13545,7 @@ int32_t ffscript_engine(const bool preload)
 
 	if (!FFCore.system_suspend[susptFFCSCRIPTS])
 	{
-		//intentional it's for compatability
+		//intentional its for compatibility
 		if (FFCore.getQuestHeaderInfo(vZelda) >= 0x255 && get_qr(qr_ZS_OLD_SUSPEND_FFC))
 		{
 			for_every_base_screen_in_region([&](mapscr* scr, unsigned int, unsigned int) {

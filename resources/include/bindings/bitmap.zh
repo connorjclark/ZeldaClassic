@@ -309,10 +309,10 @@ class bitmap {
 	//
 	// ```
 	// const int BITDX_NORMAL = 0;
-	// const int BITDX_TRANS = 0x01; //Translucent
-	// const int BITDX_PIVOT = 0x02; //THe sprite will rotate at a specific
-	// point, instead of its center. const int BITDX_HFLIP = 0x04; //Horizontal
-	// Flip const int BITDX_VFLIP = 0x08; //Vertical Flip.
+	// const int BITDX_TRANS = 0x01; // Translucent
+	// const int BITDX_PIVOT = 0x02; // The sprite will rotate at a specific
+	// point, instead of its center. const int BITDX_HFLIP = 0x04; // Horizontal
+	// Flip const int BITDX_VFLIP = 0x08; // Vertical Flip.
 	// ```
 	//
 	// @param cx, cy - if non-zero, the pivot point to center the rotation around.
@@ -344,10 +344,10 @@ class bitmap {
 	//
 	// ```
 	// const int BITDX_NORMAL = 0;
-	// const int BITDX_TRANS = 0x01; //Translucent
-	// const int BITDX_PIVOT = 0x02; //THe sprite will rotate at a specific
-	// point, instead of its center. const int BITDX_HFLIP = 0x04; //Horizontal
-	// Flip const int BITDX_VFLIP = 0x08; //Vertical Flip.
+	// const int BITDX_TRANS = 0x01; // Translucent
+	// const int BITDX_PIVOT = 0x02; // The sprite will rotate at a specific
+	// point, instead of its center. const int BITDX_HFLIP = 0x04; // Horizontal
+	// Flip const int BITDX_VFLIP = 0x08; // Vertical Flip.
 	// ```
 	//
 	// @alias RevBlit
@@ -369,10 +369,10 @@ class bitmap {
 	//
 	// ```
 	// const int BITDX_NORMAL = 0;
-	// const int BITDX_TRANS = 0x01; //Translucent
-	// const int BITDX_PIVOT = 0x02; //THe sprite will rotate at a specific
-	// point, instead of its center. const int BITDX_HFLIP = 0x04; //Horizontal
-	// Flip const int BITDX_VFLIP = 0x08; //Vertical Flip.
+	// const int BITDX_TRANS = 0x01; // Translucent
+	// const int BITDX_PIVOT = 0x02; // The sprite will rotate at a specific
+	// point, instead of its center. const int BITDX_HFLIP = 0x04; // Horizontal
+	// Flip const int BITDX_VFLIP = 0x08; // Vertical Flip.
 	// ```
 	//
 	// @param cx, cy - if non-zero, the pivot point to center the rotation around.
@@ -393,10 +393,10 @@ class bitmap {
 	//
 	// ```
 	// const int BITDX_NORMAL = 0;
-	// const int BITDX_TRANS = 0x01; //Translucent
-	// const int BITDX_PIVOT = 0x02; //THe sprite will rotate at a specific
-	// point, instead of its center. const int BITDX_HFLIP = 0x04; //Horizontal
-	// Flip const int BITDX_VFLIP = 0x08; //Vertical Flip.
+	// const int BITDX_TRANS = 0x01; // Translucent
+	// const int BITDX_PIVOT = 0x02; // The sprite will rotate at a specific
+	// point, instead of its center. const int BITDX_HFLIP = 0x04; // Horizontal
+	// Flip const int BITDX_VFLIP = 0x08; // Vertical Flip.
 	// ```
 	//
 	// @param cx, cy - if non-zero, the pivot point to center the rotation around.

@@ -52,7 +52,7 @@ enum DrawOrigin
 	DRAW_ORIGIN_SPRITE = 6L,
 };
 
-// Polygon rendering modes. Use with Screen->"Psuedo 3D" or "*3D" drawing functions. ie; Polygon,
+// Polygon rendering modes. Use with Screen->"Pseudo 3D" or "*3D" drawing functions. ie; Polygon,
 // Quad, or Triangle For more detail on these polygon rendering modes, see
 // https://github.com/ZQuestClassic/ZQuestClassic/blob/main/third_party/allegro_legacy/docs/src/allegro._tx#L7808.
 enum PolygonRenderMode
@@ -1503,7 +1503,7 @@ class screendata {
 	// ```
 	// const int BITDX_NORMAL = 0;
 	// const int BITDX_TRANS = 0x01; //Translucent
-	// const int BITDX_PIVOT = 0x02; //THe sprite will rotate at a specific
+	// const int BITDX_PIVOT = 0x02; //The sprite will rotate at a specific
 	// point, instead of its center. const int BITDX_HFLIP = 0x04; //Horizontal
 	// Flip const int BITDX_VFLIP = 0x08; //Vertical Flip.
 	// ```
@@ -1533,7 +1533,7 @@ class screendata {
 	// ```
 	// const int BITDX_NORMAL = 0;
 	// const int BITDX_TRANS = 0x01; //Translucent
-	// const int BITDX_PIVOT = 0x02; //THe sprite will rotate at a specific
+	// const int BITDX_PIVOT = 0x02; //The sprite will rotate at a specific
 	// point, instead of its center. const int BITDX_HFLIP = 0x04; //Horizontal
 	// Flip const int BITDX_VFLIP = 0x08; //Vertical Flip.
 	// ```

@@ -1270,7 +1270,7 @@ bool trigger_armos_grave(const combined_handle_t& handle, int32_t trigdir)
 					{
 						id2 = i;
 
-						// This is mostly for backwards-compatability
+						// This is mostly for backwards-compatibility
 						if (guysbuf[i].type == eeWALK && guysbuf[i].attributes[8] == e9tARMOS)
 						{
 							eclk = 0;
@@ -1478,7 +1478,7 @@ bool trigger_armos_grave(const combined_handle_t& handle, int32_t trigdir)
 					if (guysbuf[i].flags & guy_ghini)
 					{
 						id2 = i;
-						eclk = 0; // This is mostly for backwards-compatability
+						eclk = 0; // This is mostly for backwards-compatibility
 						break;
 					}
 				}

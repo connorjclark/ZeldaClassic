@@ -28204,7 +28204,7 @@ struct nearby_scrolling_screens_t
 };
 
 // Returns all the screens (old and new region) that need to be rendered during scrolling, along
-// with thier draw offsets.
+// with their draw offsets.
 // Note: The destination screen is Hero.current_screen, the starting screen is scrolling_hero_screen.
 // old_viewport_start: the viewport in the old region at start of scrolling
 // new_viewport_final: the viewport in the new region at end of scrolling
@@ -31257,7 +31257,7 @@ bool HeroClass::checkitems(int32_t index)
 			//This means that this section of code is no longer a bunch of eggshells, cause none of these overcomplicated compats actually solved shit lmao - Dimi
 			
 			/*
-			// WARNING - Item pickups are very volatile due to crazy compatability hacks, eg., supporting
+			// WARNING - Item pickups are very volatile due to crazy compatibility hacks, eg., supporting
 			// broken behavior from early ZC versions. If you change things here please comment on its purpose.
 
 			// some old quests need picking up a screen item to also disable the BELOW flag (for hunger rooms, etc)

@@ -629,7 +629,7 @@ class itemdata {
 	// @zasm_var IDATASPRITE
 	internal int Sprites[];
 
-	// The overrided weapon type that the weapon will act like.
+	// The overridden weapon type that the weapon will act like.
 	//
 	// @deprecated use [WeaponData] / [weapondata::Weapon] instead!
 	// @zasm_var IDATAUSEWPN

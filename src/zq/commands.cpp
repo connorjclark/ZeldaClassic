@@ -78,7 +78,7 @@ static void do_uncompress_qst_command(const char* input_filename, const char* ou
 
 // Copy a quest file by loading and resaving, exactly like if the user did it in the UI.
 // Note there could be changes introduced in the loading or saving functions. These are
-// typically for compatability, but could possibly be a source of bugs.
+// typically for compatibility, but could possibly be a source of bugs.
 static void do_copy_qst_command(const char* input_filename, const char* output_filename)
 {
 	set_headless_mode();

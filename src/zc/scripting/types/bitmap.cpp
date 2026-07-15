@@ -34,7 +34,7 @@ user_bitmap* checkBitmap(int32_t ref, bool req_valid, bool skipError)
 		case rtBMP4:
 		case rtBMP5:
 		case rtBMP6:
-			zprint2("Internal error: 'checkBitmap()' recieved ref pointing to system bitmap!\n");
+			zprint2("Internal error: 'checkBitmap()' received ref pointing to system bitmap!\n");
 			zprint2("Please report this as a bug!\n");
 
 			if(skipError) return NULL;

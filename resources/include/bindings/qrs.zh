@@ -263,13 +263,13 @@ enum QR
 
 	// 'Constant Traps Can Pass Through Enemies'
 	//
-	// Normally, Constant Traps have collision with enemies, and will richochet and come back when
+	// Normally, Constant Traps have collision with enemies, and will ricochet and come back when
 	// they hit any enemy, including other traps. Enabling this rule disables this behavior.
 	qr_PHANTOMPLACEDTRAPS,
 
 	// 'Messages Can Be Sped Up With The A Button'
 	//
-	// If enabled, holding the A button will prevent any message delay from occuring, displaying 60
+	// If enabled, holding the A button will prevent any message delay from occurring, displaying 60
 	// characters per second.
 	qr_ALLOWFASTMSG,
 	qr_LINKEDCOMBOS, // @deprecated
@@ -603,7 +603,7 @@ enum QR
 	//
 	// If enabled, more things use unique sounds. Summoning enemies use the Summon SFX instead of
 	// the Fire SFX, Fireballs and Rock Weapons have firing sounds, Traps make a sound when
-	// richocheting, Hammer makes a splash sound when pounding water, bushes/flowers/tall grass make
+	// ricocheting, Hammer makes a splash sound when pounding water, bushes/flowers/tall grass make
 	// a sound when cut, Hammer posts make a sound when pounded, the Lens of Truth play a sound when
 	// both used and unused, Push Blocks make a sound when pushed, Whistle Whirlwinds make a
 	// continuous sound when onscreen, Boomerangs make a continuous sound when onscreen, and all 3
@@ -616,7 +616,7 @@ enum QR
 	// 'Can Use Items/Weapons on Edge of Screen'
 	//
 	// If enabled, you can use items when in doorways or on screen edges. Normally, you can only use
-	// items when facing in a direction perpendicular to the screen edge you'e close to when you're
+	// items when facing in a direction perpendicular to the screen edge you're close to when you're
 	// within 2 tiles of the screen edge, and you can't use items at all when in the corner of the
 	// screen. Enabling this will disable this behavior and allow you to use items and weapons on
 	// the screen edge.
@@ -1317,7 +1317,7 @@ enum QR
 	//
 	// Disables the transition state when entering/exiting walkable water where the Hero walks for a
 	// few frames without any Hero control. This transition state, also known as LA_HOPPING, is a
-	// major source of frustration among players not just for an unneccesary loss of control, but
+	// major source of frustration among players not just for an unnecessary loss of control, but
 	// also because it has a frequent habit of glitching you through walls without your control and
 	// softlocking you. Note that LA_HOPPING is still enabled in certain necessary cases, such as
 	// when entering or exiting solid water.
@@ -1474,7 +1474,7 @@ enum QR
 	// 'New Dark Rooms'
 	//
 	// If enabled, Dark Rooms behave less like Z1 and more like LttP/Minish Cap, having light
-	// circles around torches and giving a customizeable spotlight around the Hero. If disabled,
+	// circles around torches and giving a customizable spotlight around the Hero. If disabled,
 	// Z1-styled dark rooms are used, which only darken the screen until lit up with a candle.
 	qr_NEW_DARKROOM,
 
@@ -2804,7 +2804,7 @@ enum QR
 
 	// 'Active/Map Subscreens Always 168 Tall'
 	//
-	// If enabled, Active/Map subscrens will be 168 pixels tall, regardless of the 'Hide Bottom 8
+	// If enabled, Active/Map subscreens will be 168 pixels tall, regardless of the 'Hide Bottom 8
 	// Pixels' rule. The extra space will be filled with black.
 	//
 	// Otherwise, the Active/Map subscreen will match the height based on the 'Hide Bottom 8 Pixels'

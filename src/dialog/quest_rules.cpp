@@ -408,7 +408,7 @@ static GUI::ListData comboRulesList
 		" water where the Hero walks for a few frames without any"
 		" Hero control. This transition state, also known as LA_HOPPING,"
 		" is a major source of frustration among players not just for an"
-		" unneccesary loss of control, but also because it has a frequent"
+		" unnecessary loss of control, but also because it has a frequent"
 		" habit of glitching you through walls without your control and"
 		" softlocking you. Note that LA_HOPPING is still enabled in certain"
 		" necessary cases, such as when entering or exiting solid water."},
@@ -1063,7 +1063,7 @@ static GUI::ListData compatRulesList
 	{ "Only 'Visit' Screens On Mappable DMaps", qr_ONLY_MARK_SCREENS_VISITED_IF_MAP_VIEWABLE,
 		"If enabled, screens only have their 'Visited' state set if the current dmap has the flag to allow viewing the map checked." },
 	{ "Active/Map Subscreens Always 168 Tall", qr_ACTIVE_SUB_IGNORE_8PX,
-		"If enabled, Active/Map subscrens will be 168 pixels tall, regardless of the 'Hide Bottom 8 Pixels' rule. The extra space will be filled with black."
+		"If enabled, Active/Map subscreens will be 168 pixels tall, regardless of the 'Hide Bottom 8 Pixels' rule. The extra space will be filled with black."
 		"\nOtherwise, the Active/Map subscreen will match the height based on the 'Hide Bottom 8 Pixels' setting."},
 	{ "Buggy Wind w/ multiple on-screen", qr_BUGGY_MULTIPLE_WIND,
 		"If multiple wind lweapons are on screen and the player is in one, the player will lose track"
@@ -1201,7 +1201,7 @@ static GUI::ListData enemiesRulesList
 		" solid object. If disabled, they will arbitrarily stop at the"
 		" middle of the screen either vertically or horizontally."},
 	{ "Constant Traps Can Pass Through Enemies", qr_PHANTOMPLACEDTRAPS,
-		"Normally, Constant Traps have collision with enemies, and will richochet"
+		"Normally, Constant Traps have collision with enemies, and will ricochet"
 		" and come back when they hit any enemy, including other traps. Enabling"
 		" this rule disables this behavior."},
 	{ "Flying Enemies Can Spawn on Solid Combos", qr_WALLFLIERS,
@@ -1349,7 +1349,7 @@ static GUI::ListData itemRulesList
 static GUI::ListData miscRulesList
 {
 	{ "Messages Can Be Sped Up With The A Button", qr_ALLOWFASTMSG,
-		"If enabled, holding the A button will prevent any message delay from occuring, displaying"
+		"If enabled, holding the A button will prevent any message delay from occurring, displaying"
 		" 60 characters per second."},
 	{ "Messages Can Be Bypassed With The B Button", qr_ALLOWMSGBYPASS,
 		"If enabled, pressing B during a message will cause the rest of the message to be displayed"
@@ -1372,7 +1372,7 @@ static GUI::ListData miscRulesList
 	{ "More Sound Effects", qr_MORESOUNDS,
 		"If enabled, more things use unique sounds. Summoning enemies use the Summon"
 		" SFX instead of the Fire SFX, Fireballs and Rock Weapons have firing sounds,"
-		" Traps make a sound when richocheting, Hammer makes a splash sound when pounding"
+		" Traps make a sound when ricocheting, Hammer makes a splash sound when pounding"
 		" water, bushes/flowers/tall grass make a sound when cut, Hammer posts make"
 		" a sound when pounded, the Lens of Truth play a sound when both used and unused,"
 		" Push Blocks make a sound when pushed, Whistle Whirlwinds make a continuous sound when"
@@ -1466,7 +1466,7 @@ static GUI::ListData miscRulesList
 	{ "Carryables Can't Leave Screen", qr_CARRYABLE_NO_ACROSS_SCREEN,
 		"If enabled, leaving a screen while carrying something with a Lift Glove will delete the carried object."},
 	{ "New Dark Rooms", qr_NEW_DARKROOM,
-		"If enabled, Dark Rooms behave less like Z1 and more like LttP/Minish Cap, having light circles around torches and giving a customizeable"
+		"If enabled, Dark Rooms behave less like Z1 and more like LttP/Minish Cap, having light circles around torches and giving a customizable"
 		" spotlight around the Hero. If disabled, Z1-styled dark rooms are used, which only darken the screen until lit up with a candle."},
 	{ "New Darkness Draws Under Layer 7", qr_NEWDARK_L6,
 		"If enabled, the new dark rooms will draw under layer 7, allowing scripts to draw over dark rooms by drawing to Layer 7."
@@ -1504,7 +1504,7 @@ static GUI::ListData nesfixesRulesList
 		" damage from these enemies if they spawn from graves or armos and the Hero activates them from the south."},
 	{ "Can Use Items/Weapons on Edge of Screen", qr_ITEMSONEDGES,
 		"If enabled, you can use items when in doorways or on screen edges. Normally, you can only use items when facing in a"
-		" direction perpendicular to the screen edge you'e close to when you're within 2 tiles of the screen edge, and you can't"
+		" direction perpendicular to the screen edge you're close to when you're within 2 tiles of the screen edge, and you can't"
 		" use items at all when in the corner of the screen. Enabling this will disable this behavior and allow you to use items"
 		" and weapons on the screen edge."},
 	{ "Fix Hero's Position in Dungeons", qr_HERODUNGEONPOSFIX,

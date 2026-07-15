@@ -45,7 +45,7 @@ class file {
 	// @zasm_var FILEEOF
 	internal const int EOF;
 
-	// Returns 0 if the file has not enountered an error.
+	// Returns 0 if the file has not encountered an error.
 	//
 	// @zasm_var FILEERR
 	internal const int Error;

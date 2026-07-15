@@ -52,9 +52,9 @@ enum ScrollingIndex
 	SCROLL_NEW_VIEWPORT_WIDTH, SCROLL_NEW_VIEWPORT_HEIGHT,
 	// The initial viewport size.
 	SCROLL_OLD_VIEWPORT_WIDTH, SCROLL_OLD_VIEWPORT_HEIGHT,
-	// The final viewport position, in the new region coorindate system.
+	// The final viewport position, in the new region coordinate system.
 	SCROLL_NEW_VIEWPORT_X, SCROLL_NEW_VIEWPORT_Y,
-	// The initial viewport position, in the old region coorindate system.
+	// The initial viewport position, in the old region coordinate system.
 	SCROLL_OLD_VIEWPORT_X, SCROLL_OLD_VIEWPORT_Y
 };
 
@@ -1215,7 +1215,7 @@ class Game {
 	// layers of the screen. Modifications to these pointers are reset when the
 	// screen changes.
 	//
-	// The entire [Region] at the specificed layer may be accessed by the combo array
+	// The entire [Region] at the specified layer may be accessed by the combo array
 	// variables of this [mapdata], but other variables read from just the top-left origin
 	// screen.
 	//
@@ -1249,7 +1249,7 @@ class Game {
 	// used during scrolling, for drawing the screen you just came from during the scrolling
 	// animation.
 	//
-	// The entire scrolling [Region] at the specificed layer may be accessed by the combo array
+	// The entire scrolling [Region] at the specified layer may be accessed by the combo array
 	// variables of this [mapdata], but other variables read from just the top-left origin
 	// screen.
 	//
@@ -1491,7 +1491,7 @@ class Game {
 	// Loads the [subscreendata] pointer for the specified
 	// overlay subscreen.
 	//
-	// Use id `-1` to load the current overlay subscren.
+	// Use id `-1` to load the current overlay subscreen.
 	//
 	// @zasm
 	//   POP D2
