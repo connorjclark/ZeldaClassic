@@ -224,7 +224,7 @@ enum ItemType {
 
 	// 89-255 free use
 
-	// These item classes create a projectile of the 
+	// These item classes create a projectile of the
 	// type LW_CUSTOM/LW_SCRIPT, 01 to 10
 	IC_WPN_CUSTOM_01           = 256,
 	IC_WPN_SCRIPT_01           = 256,
@@ -263,23 +263,28 @@ enum ItemType {
 	IC_REFILL                  = 278,
 	IC_LIFTGLOVE               = 279,
 	// Modifies the player's gravity
+	//
 	// @versionadded 3.0
 	IC_GRAVITY_BOOTS           = 280,
 	// Modifies the player's gravity while holding Up in Sideview
+	//
 	// @versionadded 3.0
 	IC_GRAVITY_UP_BOOTS        = 281,
 	// Modifies the player's gravity while holding Down in Sideview
+	//
 	// @versionadded 3.0
 	IC_GRAVITY_DOWN_BOOTS      = 282,
 	// Modifies item cooldowns of other items
+	//
 	// @versionadded 3.0
 	IC_COOLDOWN_RING           = 283,
 	// Items of this type will immediately transform into one or more
 	// specified enemies.
+	//
 	// @versionadded 3.0
 	IC_ENEMY_AMBUSH            = 284,
 
-	//Itemclasses not less than this are reserved for future engine itemclasses
+	// Itemclasses not less than this are reserved for future engine itemclasses
 	IC_MAXUSABLE               = 285,
 
 	IC_MAX                     = 512 //Last of enum. All itemclasses are < this.
@@ -306,7 +311,9 @@ enum ItemPickupBitflags
 	IP_ALWAYSGRAB                  = 0x2000, // Item is always able to be picked up (ex. brang/hshot/arrows/melee weapons).
 };
 
-// Used with [itemdata::Attributes], [itemdata::LAttributes] - index 0 is blocking, index 1 is reflecting.
+// Used with [itemdata::Attributes], [itemdata::LAttributes] - index 0 is blocking, index 1 is
+// reflecting.
+//
 // @deprecated Use [BlockBitflags] instead!
 enum BlockBitflagsInt
 {
@@ -382,7 +389,7 @@ enum ItemScriptRunMode
 };
 
 // Metadata for a specific item type (not an instance of one).
-// 
+//
 // Load with [Game->LoadItemData].
 //
 // @zasm_ref REFITEMDATA
@@ -490,7 +497,6 @@ class itemdata {
 	// The bitflags associated with the pickup string.
 	//
 	// @value [enum PickupStringBitflags]
-
 	// @zasm_var IDATAPFLAGS
 	internal int PickupStringFlags;
 
@@ -533,7 +539,6 @@ class itemdata {
 	// Misc bitflags for the item graphics.
 	//
 	// @value [enum ItemMiscBitflags]
-
 	// @zasm_var IDATAMISC
 	internal int MiscFlags;
 
@@ -595,9 +600,9 @@ class itemdata {
 
 	// The item's Attributes.
 	//
+	// @length 10
 	// @index 0: block, 1: reflect
 	// @value 0: [BlockBitflags], 1: [BlockBitflags]
-	// @length 10
 	// @zasm_var IDATAATTRIB
 	internal untyped Attributes[];
 
@@ -606,9 +611,9 @@ class itemdata {
 	// An editor value of `1` will read as `1L`, or `0.0001`. This allows all
 	// values to "fit".
 	//
+	// @length 10
 	// @index 0: block, 1: reflect
 	// @value 0: [BlockBitflags], 1: [BlockBitflags]
-	// @length 10
 	// @zasm_var IDATAATTRIB_L
 	internal long LAttributes[];
 
@@ -744,14 +749,14 @@ class itemdata {
 	// @value [enum ItemPickupBitflags]
 	// @zasm_var IDATAPICKUP
 	internal int Pickup;
-	
+
 	// The Level Items that will be granted when the item is collected. See [PickupLItemLevel].
 	//
 	// @value [enum LevelItemBitflags]
 	// @versionadded 3.0
 	// @zasm_var IDATAPICKUPLITEMS
 	internal int PickupLItems;
-	
+
 	// The Level that [PickupLItems] will be granted for when the item is collected.
 	//
 	// @value -1 for 'current level', otherwise number of a specific 'level' (-1 <= x < [NUM_LEVELS])
@@ -769,8 +774,8 @@ class itemdata {
 	// Bitflags representing all the checkboxes for which sizes to
 	// apply from the itemdata, for any [lweapon] created by this item.
 	//
-	// @value [enum SizeOverrideBitflags]
 	// @deprecated use [WeaponData] / [weapondata::SizeFlags] instead!
+	// @value [enum SizeOverrideBitflags]
 	// @zasm_var IDATAOVERRIDEFLWEAP
 	internal int WeaponSizeFlags;
 
@@ -831,15 +836,15 @@ class itemdata {
 	// The sprites used for making the weapon change appearance when lit on
 	// fire.
 	//
-	// @index [enum ItemBurnIndex]
 	// @deprecated use [WeaponData] / [weapondata::BurnSprites] instead!
+	// @index [enum ItemBurnIndex]
 	// @zasm_var IDATABURNINGSPR
 	internal int BurnSprites[];
 
 	// The burning light radii from `Graphics->Sprites->Burning`.
 	//
-	// @index [enum ItemBurnIndex]
 	// @deprecated use [WeaponData] / [weapondata::BurnLightRadius] instead!
+	// @index [enum ItemBurnIndex]
 	// @zasm_var IDATABURNINGLIGHTRAD
 	internal int BurnLightRadius[];
 
@@ -933,19 +938,19 @@ class itemdata {
 	//
 	// @zasm_var IDATAMISCD
 	internal untyped WeaponMisc[];
-	
+
 	// The [itemsprite]'s default movement flags.
 	//
 	// @value [enum MoveFlag]
 	// @versionadded 3.0
 	// @zasm_var IDATAMOVEFLAGS
 	internal bool MoveFlags[];
-	
+
 	// The fired [lweapon]'s default movement flags.
 	// Does not apply to some weapon types (ex. Sword, Hammer, Wand)
 	//
-	// @value [enum MoveFlag]
 	// @deprecated use [WeaponData] / [weapondata::MoveFlags] instead!
+	// @value [enum MoveFlag]
 	// @versionadded 3.0
 	// @zasm_var IDATAWMOVEFLAGS
 	internal bool WeaponMoveFlags[];
@@ -997,8 +1002,9 @@ class itemdata {
 	// @value [enum ItemType]
 	// @zasm_var IDATATYPE
 	internal int Family;
-	
+
 	// The [weapondata] for this item's weapon.
+	//
 	// @versionadded 3.0
 	// @zasm_var IDATA_WEAPONDATA
 	internal const weapondata WeaponData;

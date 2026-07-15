@@ -19,6 +19,7 @@ def run(path: Path, *args):
 
 
 # run(script_dir / 'test_jit.py')
+run(script_dir.parent / 'scripts/zscript_formatter.py')
 run(script_dir / 'test_optimize_zasm.py')
 run(script_dir / 'test_optimize_zasm_unit.py')
 run(script_dir / 'test_zscript.py', '--', '-k', 'test_zscript_compiler_expected_zasm')

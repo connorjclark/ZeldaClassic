@@ -1,16 +1,15 @@
 // Valid modes (details taken from http://www.cplusplus.com/reference/cstdio/fopen/):
 //
 // - "r" (read): Open file for input operations. The file must exist.
-// - "w" (write): Create an empty file for output operations. If a file with the same name
-//    already exists, its contents are discarded and the file is treated as a new empty file.
-// - "a" (append): Open file for output at the end of a file. Output operations always write
-//    data at the end of the file, expanding it. Repositioning operations ('Seek()', 'Rewind()')
-//    are ignored. The file is created if it does not exist.
-// - "r+" (read/update): Open a file for update (both for input and output). The file must
-//    exist.
-// - "w+" (write/update): Create an empty file and open it for update (both for input and
-//    output). If a file with the same name already exists its contents are discarded and the file
-//    is treated as a new empty file.
+// - "w" (write): Create an empty file for output operations. If a file with the same name already
+//   exists, its contents are discarded and the file is treated as a new empty file.
+// - "a" (append): Open file for output at the end of a file. Output operations always write data at
+//   the end of the file, expanding it. Repositioning operations ('Seek()', 'Rewind()') are ignored.
+//   The file is created if it does not exist.
+// - "r+" (read/update): Open a file for update (both for input and output). The file must exist.
+// - "w+" (write/update): Create an empty file and open it for update (both for input and output).
+//   If a file with the same name already exists its contents are discarded and the file is treated
+//   as a new empty file.
 // - "a+" (append/update): Open a file for update (both for input and output) with all output
 //   operations writing data at the end of the file. Repositioning operations (fseek, fsetpos,
 //   rewind) affects the next input operations, but output operations move the position back to
@@ -74,8 +73,8 @@ class file {
 	// If the file pointer is not allocated, this will allocate it. Also closes
 	// any file that is already open on the pointer.
 	//
-	// @param mode - See [file] for details.
 	// @deprecated Use `new file(path, mode)` instead.
+	// @param mode - See [file] for details.
 	// @reassign_ptr
 	// @zasm
 	//   POP D3

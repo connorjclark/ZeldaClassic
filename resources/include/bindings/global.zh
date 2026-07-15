@@ -419,7 +419,7 @@ internal void OwnObject(untyped obj);
 // Takes an [#zslang_classes|Object] parameter. Globalizes the object, and
 // clears any script ownership over it. The object will be saved to the
 // save file, and won't be deleted.
-// 
+//
 // Objects that are stored in global variables (or other global objects)
 // are also considered to be global.
 //
@@ -764,8 +764,8 @@ internal constexpr int RadToDeg(int radians);
 
 // Returns the [radians] value, wrapped between [-PI,PI)
 //
-// @deprecated_alias WrapAngle
 // @alias WrapRad
+// @deprecated_alias WrapAngle
 // @versionadded 3.0
 // @zasm
 //   POP D2

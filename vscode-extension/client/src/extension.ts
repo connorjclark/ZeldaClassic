@@ -1,3 +1,4 @@
+import * as fs from 'fs';
 import * as path from 'path';
 import { ExtensionContext } from 'vscode';
 import * as vscode from 'vscode';
@@ -5,6 +6,50 @@ import * as childProcess from 'child_process';
 import {promisify} from 'util';
 
 const execFile = promisify(childProcess.execFile);
+
+/**
+ * The doc comments in the engine's binding headers have their own formatter.
+ * Returns its path if the document is a binding header inside a ZQuest Classic
+ * checkout, otherwise undefined.
+ */
+function findBindingsFormatter(document: vscode.TextDocument): string | undefined {
+	if (document.uri.scheme !== 'file' || !document.uri.fsPath.endsWith('.zh'))
+		return;
+
+	const bindingsDir = path.join('resources', 'include', 'bindings');
+	const dir = path.dirname(document.uri.fsPath);
+	if (!dir.endsWith(bindingsDir))
+		return;
+
+	const rootDir = dir.slice(0, -bindingsDir.length);
+	const formatterPath = path.join(rootDir, 'scripts', 'zscript_formatter.py');
+	return fs.existsSync(formatterPath) ? formatterPath : undefined;
+}
+
+async function formatBindingsDocument(document: vscode.TextDocument, formatterPath: string): Promise<vscode.TextEdit[]> {
+	try {
+		const text = document.getText();
+		const python = process.platform === 'win32' ? 'python' : 'python3';
+		const output = await new Promise<string>((resolve, reject) => {
+			const cp = childProcess.execFile(python, [formatterPath, '--stdin'], {maxBuffer: 100 * 1024 * 1024}, (err, stdout) => {
+				if (err)
+					return reject(err);
+
+				resolve(stdout);
+			});
+			cp.stdin.write(text);
+			cp.stdin.end();
+		});
+		if (output && text !== output) {
+			const r = new vscode.Range(document.lineAt(0).range.start, document.lineAt(document.lineCount - 1).range.end);
+			return [vscode.TextEdit.replace(r, output)];
+		}
+	} catch (e) {
+		vscode.window.showErrorMessage(`Error while attempting to format bindings:\n${e.message}`);
+		console.log(e);
+	}
+	return [];
+}
 
 import {
 	LanguageClient,
@@ -16,9 +61,21 @@ import {
 let client: LanguageClient;
 
 export function activate(context: ExtensionContext) {
+	// Keep the engine's binding headers formatted, without requiring any
+	// configuration.
+	context.subscriptions.push(vscode.workspace.onWillSaveTextDocument(e => {
+		const formatterPath = findBindingsFormatter(e.document);
+		if (formatterPath)
+			e.waitUntil(formatBindingsDocument(e.document, formatterPath));
+	}));
+
 	vscode.languages.registerDocumentFormattingEditProvider('zscript', {
         async provideDocumentFormattingEdits(document: vscode.TextDocument): Promise<vscode.TextEdit[]> {
 			// const settings = vscode.workspace.getConfiguration('zscript', document.uri);
+
+			const formatterPath = findBindingsFormatter(document);
+			if (formatterPath)
+				return await formatBindingsDocument(document, formatterPath);
 
 			try {
 				const text = document.getText();

@@ -10,6 +10,7 @@ enum MessageFlag
 	MSGFLAG_TRANS_BG,     // If the background should be translucent
 	MSGFLAG_TRANS_FG,     // If the text should be translucent
 	// If the string should ignore 'Messages Freeze All Action'.
+	//
 	// @versionadded 3.0
 	MSGFLAG_NOFREEZE,
 };
@@ -23,7 +24,7 @@ enum MessageSegmentType
 };
 
 // For accessing and editing message strings (`Quests > Strings`).
-// 
+//
 // Load with [Game->LoadMessageData].
 //
 // @tutorial /tutorials/scc
@@ -51,7 +52,6 @@ class messagedata {
 	// The font to display the message in.
 	//
 	// @value [enum Font]
-
 	// @zasm_var MESSAGEDATAFONT
 	internal int Font;
 
@@ -180,7 +180,9 @@ class messagedata {
 	// The data returned in the array is formatted like this:
 	//
 	// 1. segment type: [MessageSegmentType]
-	// 2. For text literals, there are two more values: start position in raw string, length. For commands, there are a varying number of values: start position, length, command code, # of args, ...args
+	// 2. For text literals, there are two more values: start position in raw string, length. For
+	//    commands, there are a varying number of values: start position, length, command code, # of
+	//    args, ...args
 	//
 	// For example, the string "Hello \TextColor\1\2\ World" returns 3 segments:
 	//

@@ -10,7 +10,7 @@ enum GenericScriptStateIndex
 };
 
 // Represents a generic script.
-// 
+//
 // Load with [Game->LoadGenericData].
 //
 // @zasm_ref REFGENERICDATA

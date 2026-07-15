@@ -128,7 +128,8 @@ enum WeaponFlag
 	//
 	// @versionadded 3.0
 	WFLAG_NO_COLL_WHEN_STILL,
-	// The weapon will not trigger [WFLAG_STOP_ON_SOLID] or [WFLAG_BREAKS_ON_SOLID]. This flag is automatically unset when the weapon is NOT touching any solids.
+	// The weapon will not trigger [WFLAG_STOP_ON_SOLID] or [WFLAG_BREAKS_ON_SOLID]. This flag is
+	// automatically unset when the weapon is NOT touching any solids.
 	//
 	// @versionadded 3.0
 	WFLAG_TEMP_IGNORE_SOLID,
@@ -157,19 +158,19 @@ enum WeaponSpriteIndex
 enum ShadowType
 {
 	SHD_NORMAL, //No Shadow
-	//These draw ONLY a shadow, no actual text
+	// These draw ONLY a shadow, no actual text
 	SHD_SHADOW,
 	SHD_SHADOWU,
 	SHD_OUTLINE8,
 	SHD_OUTLINEPLUS,
 	SHD_OUTLINEX,
-	//These draw a shadow behind the actual text
+	// These draw a shadow behind the actual text
 	SHD_SHADOWED,
 	SHD_SHADOWEDU,
 	SHD_OUTLINED8,
 	SHD_OUTLINEDPLUS,
 	SHD_OUTLINEDX,
-	//Max number; not an actual value to use
+	// Max number; not an actual value to use
 	SHD_MAX
 };
 
@@ -197,7 +198,7 @@ enum TransformationType
 	ROT_CCW_FLIP    = 6,
 	ROT_CCW         = 7,
 	ROT_ACW_FLIP    = 6, // Anticlockwise
-	ROT_ACW         = 7 
+	ROT_ACW         = 7
 };
 
 enum ComboType
@@ -818,12 +819,15 @@ enum ComboFlag
 	CF_ALL_ENEMIES_SPAWN           = 164, // All Enemies Spawn.
 	CF_SECRETS_NEXT                = 165, // Secrets->Next.
 	// No Mirror
+	//
 	// @versionadded 3.0
 	CF_NO_MIRROR                   = 166,
 	// Unsafe Ground (Sensitive)
+	//
 	// @versionadded 3.0
 	CF_UNSAFE_GROUND_SENS          = 167,
 	// Unsafe Ground
+	//
 	// @versionadded 3.0
 	CF_UNSAFE_GROUND               = 168,
 };
@@ -898,6 +902,7 @@ enum ComboLiftFlag
 	LF_BREAKONSOLID,
 	// If this combo is part of a larger liftable object, as
 	// defined via [combodata::LargeComboDirs].
+	//
 	// @versionadded 3.0
 	LF_LARGE_LIFTABLE,
 };
@@ -967,8 +972,8 @@ enum SpecialDrawLayer
 	// Lweapons with 'Behind = false'.
 	// Does not work if 'Classic Draw Order' is disabled.
 	SPLAYER_LWEAP_FRONT_DRAW,
-	// Lweapons with (Z+FakeZ) > Init Data 'Jump Layer Height', IF the [Hero] is also above this height.
-	// Does not work if 'Classic Draw Order' is disabled.
+	// Lweapons with (Z+FakeZ) > Init Data 'Jump Layer Height', IF the [Hero] is also above this
+	// height. Does not work if 'Classic Draw Order' is disabled.
 	SPLAYER_LWEAP_ABOVE_DRAW,
 	// Hookshot chain links. This may draw multiple times per frame.
 	// Does not work if 'Classic Draw Order' is disabled.
@@ -1001,20 +1006,23 @@ enum SpecialDrawLayer
 	SPLAYER_LENS_UNDER_2, //Lens drawing secrets/revealing things
 	SPLAYER_LENS_OVER, //Lens drawing blackness to cover most of the screen
 	// Just underneath the [Hero]'s draw
+	//
 	// @versionadded 3.0
 	SPLAYER_UNDER_PLAYER_DRAW,
 	// Just over the [Hero->LiftedWeapon], regardless of if there is one or not.
 	// This is slightly after the Hero's draw, but before the Prompt Combo is drawn.
+	//
 	// @versionadded 3.0
 	SPLAYER_OVER_LIFT_WEAPON,
 	// Just over the Hero's overhead prompt combo, regardless of if there is one or not.
 	// This is just after the Hero's draw and the [Hero->LiftedWeapon] is drawn.
+	//
 	// @versionadded 3.0
 	SPLAYER_OVER_PROMPT_COMBO,
 };
 
-// Used with [itemdata::SizeFlags], [itemdata::WeaponSizeFlags], [npcdata::SizeFlags].
-// These correspond to the "Enabled" checkboxes in the Graphics->Size tab in the Item and Enemy Editors.
+// Used with [itemdata::SizeFlags], [itemdata::WeaponSizeFlags], [npcdata::SizeFlags]. These
+// correspond to the "Enabled" checkboxes in the Graphics->Size tab in the Item and Enemy Editors.
 @Bitflags("int")
 enum SizeOverrideBitflags
 {
@@ -1032,6 +1040,7 @@ enum SizeOverrideBitflags
 };
 
 // Constants indicating the 4 corners of a tile.
+//
 // @versionadded 3.0
 enum CornerIndex
 {

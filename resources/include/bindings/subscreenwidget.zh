@@ -22,9 +22,11 @@ enum ConditionType
 	NUM_CONDTY
 };
 
-// An individual widget on an engine subscreen. What variables are available depends on the [subscreenwidget::Type].
-// 
-// Load with [subscreenpage::Widgets], [subscreenpage::GetWidget], [subscreenpage::FindWidget], or [subscreenpage::CreateWidget]
+// An individual widget on an engine subscreen. What variables are available depends on the
+// [subscreenwidget::Type].
+//
+// Load with [subscreenpage::Widgets], [subscreenpage::GetWidget], [subscreenpage::FindWidget], or
+// [subscreenpage::CreateWidget]
 //
 // @zasm_ref REFSUBSCREENWIDG
 class subscreenwidget {
@@ -34,7 +36,6 @@ class subscreenwidget {
 	// The widget's type.
 	//
 	// @value [enum SubscreenWidgetType]
-
 	// @zasm_var SUBWIDGTYPE
 	internal const int Type;
 
@@ -156,7 +157,6 @@ class subscreenwidget {
 	// These are usually applicable regardless of widget type.
 	//
 	// @index [enum SubscreenWidgetGenFlag]
-	//
 	// @zasm_var SUBWIDGGENFLAG
 	internal bool GenFlags[];
 
@@ -170,7 +170,6 @@ class subscreenwidget {
 	// Any items set true here must be owned for the widget to be active/visible.
 	//
 	// @index [enum ItemID]
-	//
 	// @versionadded 3.0
 	// @zasm_var SUBWIDGREQOWNITEMS
 	internal bool RequiredOwnedItems[];
@@ -178,65 +177,60 @@ class subscreenwidget {
 	// Any items set true here must NOT be owned for the widget to be active/visible.
 	//
 	// @index [enum ItemID]
-	//
 	// @versionadded 3.0
 	// @zasm_var SUBWIDGREQUNOWNITEMS
 	internal bool RequiredUnownedItems[];
-	
+
 	// The current dmap's [dmapdata::Floor] must be true in this array (or every index of
 	// this array must be false) for the widget to be active/visible.
 	//
 	// @length 256
-	//
 	// @versionadded 3.0
 	// @zasm_var SUBWIDGREQ_DMAP_FLOOR
 	internal bool RequiredDMapFloors[];
-	
+
 	// The current dmap's [dmapdata::Level] must be true in this array (or every index of
 	// this array must be false) for the widget to be active/visible.
 	//
 	// @length [NUM_LEVELS]
-	//
 	// @versionadded 3.0
 	// @zasm_var SUBWIDGREQ_DMAP_LEVEL
 	internal bool RequiredDMapLevels[];
-	
+
 	// The current dmap's [dmapdata::ID] must be true in this array (or every index of
 	// this array must be false) for the widget to be active/visible.
 	//
 	// @length [MAX_DMAPS]
-	//
 	// @versionadded 3.0
 	// @zasm_var SUBWIDGREQ_DMAP
 	internal bool RequiredDMaps[];
-	
+
 	// The current map's index must be true in this array (or every index of
 	// this array must be false) for the widget to be active/visible.
 	//
 	// @length [Game->MapCount]
-	//
 	// @versionadded 3.0
 	// @zasm_var SUBWIDGREQ_MAP
 	internal bool RequiredMaps[];
-	
+
 	// The current screen's index must be true in this array (or every index of
 	// this array must be false) for the widget to be active/visible.
 	//
 	// @length 128
-	//
 	// @versionadded 3.0
 	// @zasm_var SUBWIDGREQ_SCREEN
 	internal bool RequiredScreens[];
-	
+
 	// The counter this widget requires to be active/visible.
 	// Must relate to the [RequiredCounterValue] based on the [RequiredCounterCond].
 	// - If [CR_NONE], no requirement will be checked.
-	// - If [SUBW_GENFL_REQ_COUNTER_PERC] is set, then the percentage this counter is full will be compared
-	// - Otherwise, if [SUBW_GENFL_REQ_COUNTER_MAX] is set, then the max value of this counter will be compared
+	// - If [SUBW_GENFL_REQ_COUNTER_PERC] is set, then the percentage this counter is full will be
+	//   compared
+	// - Otherwise, if [SUBW_GENFL_REQ_COUNTER_MAX] is set, then the max value of this counter will
+	//   be compared
 	// - Otherwise, this counter's value will be compared
 	//
 	// @value [enum CounterIndex]
-	//
 	// @versionadded 3.0
 	// @zasm_var SUBWIDGREQCOUNTER
 	internal int RequiredCounter;
@@ -246,7 +240,6 @@ class subscreenwidget {
 	// If [CONDTY_NONE], no requirement will be checked.
 	//
 	// @value [enum ConditionType]
-	//
 	// @versionadded 3.0
 	// @zasm_var SUBWIDGREQCOUNTERCOND
 	internal int RequiredCounterCond;
@@ -258,11 +251,10 @@ class subscreenwidget {
 	// @zasm_var SUBWIDGREQCOUNTERVAL
 	internal int RequiredCounterValue;
 
-	// The Level Items that are required to be owned (or unowned, if [SUBW_GENFL_REQ_INVERT_LITEM] is set)
-	// If [SUBW_GENFL_REQ_ANY_LITEM] is set, any state is required instead of every state.
+	// The Level Items that are required to be owned (or unowned, if [SUBW_GENFL_REQ_INVERT_LITEM]
+	// is set) If [SUBW_GENFL_REQ_ANY_LITEM] is set, any state is required instead of every state.
 	//
 	// @value [enum LevelItemBitflags]
-	//
 	// @versionadded 3.0
 	// @zasm_var SUBWIDGREQLITEMS
 	internal int RequiredLItems;
@@ -273,53 +265,53 @@ class subscreenwidget {
 	// @versionadded 3.0
 	// @zasm_var SUBWIDGREQLITEMLEVEL
 	internal int RequiredLItemLevel;
-	
-	// The Level States that are required to be set (or unset, if [SUBW_GENFL_REQ_INVERT_LSTATE] is set)
-	// If [SUBW_GENFL_REQ_ANY_LSTATE] is set, any state is required instead of every state.
+
+	// The Level States that are required to be set (or unset, if [SUBW_GENFL_REQ_INVERT_LSTATE] is
+	// set) If [SUBW_GENFL_REQ_ANY_LSTATE] is set, any state is required instead of every state.
 	//
 	// @index 0-31
-	//
 	// @versionadded 3.0
 	// @zasm_var SUBWIDGREQ_LEVEL_STATE
 	internal bool RequiredLStates[];
-	
+
 	// The Level that [RequiredLStates] are checked for. If set to '-1', uses the
 	// current level.
 	//
 	// @versionadded 3.0
 	// @zasm_var SUBWIDGREQ_LEVEL_STATE_LEVEL
 	internal int RequiredLStateLevel;
-	
+
 	// The Map to require screen states or exstates for.
 	//
 	// @versionadded 3.0
 	// @zasm_var SUBWIDGREQ_SCRSTATE_MAP
 	internal int RequiredScreenStateMap;
-	
-	// The Map to require screen states or exstates for. If '-1', uses the current map+screen, ignoring [RequiredScreenStateMap].
+
+	// The Map to require screen states or exstates for. If '-1', uses the current map+screen,
+	// ignoring [RequiredScreenStateMap].
 	//
 	// @versionadded 3.0
 	// @zasm_var SUBWIDGREQ_SCRSTATE_SCREEN
 	internal int RequiredScreenStateScreen;
-	
-	// The Screen States that are required to be set (or unset, if [SUBW_GENFL_REQ_INVERT_SCRSTATE] is set)
-	// If [SUBW_GENFL_REQ_ANY_SCRSTATE] is set, any state is required instead of every state.
+
+	// The Screen States that are required to be set (or unset, if [SUBW_GENFL_REQ_INVERT_SCRSTATE]
+	// is set) If [SUBW_GENFL_REQ_ANY_SCRSTATE] is set, any state is required instead of every
+	// state.
 	//
 	// @index [enum ScreenState]
-	//
 	// @versionadded 3.0
 	// @zasm_var SUBWIDGREQ_SCRSTATE_STATE
 	internal bool RequiredScreenStates[];
-	
-	// The Screen ExStates that are required to be set (or unset, if [SUBW_GENFL_REQ_INVERT_SCRSTATE] is set)
-	// If [SUBW_GENFL_REQ_ANY_SCRSTATE] is set, any state is required instead of every state.
+
+	// The Screen ExStates that are required to be set (or unset, if
+	// [SUBW_GENFL_REQ_INVERT_SCRSTATE] is set) If [SUBW_GENFL_REQ_ANY_SCRSTATE] is set, any state
+	// is required instead of every state.
 	//
 	// @index 0-31
-	//
 	// @versionadded 3.0
 	// @zasm_var SUBWIDGREQ_SCRSTATE_EXSTATE
 	internal bool RequiredScreenExStates[];
-	
+
 	// If set to 'true', the widget will not be active/visible.
 	//
 	// @versionadded 3.0
@@ -538,7 +530,6 @@ class subscreenwidget {
 	// - [SUBWIDG_ITEMCOOLDOWNTEXT]
 	//
 	// @value [enum Font]
-
 	// @zasm_var SUBWIDGTY_FONT
 	internal int Font;
 
@@ -554,7 +545,6 @@ class subscreenwidget {
 	// - [SUBWIDG_ITEMCOOLDOWNTEXT]
 	//
 	// @value [enum TextAlignment]
-
 	// @zasm_var SUBWIDGTY_ALIGN
 	internal int Align;
 
@@ -571,7 +561,6 @@ class subscreenwidget {
 	// - [SUBWIDG_ITEMCOOLDOWNTEXT]
 	//
 	// @value [enum ShadowType]
-
 	// @zasm_var SUBWIDGTY_SHADOWTY
 	internal int ShadowType;
 
@@ -676,7 +665,6 @@ class subscreenwidget {
 	// - [SUBWIDG_ITEMCOOLDOWNTEXT]
 	//
 	// @value [enum SubscreenItemButton]
-
 	// @zasm_var SUBWIDGTY_BUTTON
 	internal int Button;
 
@@ -684,7 +672,6 @@ class subscreenwidget {
 	//
 	// @length [SUBWIDG_COUNTER] - 3 values, [SUBWIDG_MISCGAUGE] - 1 value, [SUBWIDG_COUNTERPERCBAR] - 1 value
 	// @value [enum CounterIndex]
-
 	// @zasm_var SUBWIDGTY_COUNTERS
 	internal int Counter[];
 
@@ -1078,8 +1065,8 @@ class subscreenwidget {
 	//   SUBWIDG_TY_SETTEXT D2
 	internal void SetText(char32[] str);
 
-	// Checks the requirements / conditions of this widget.
-	// See [RequiredOwnedItems], [RequiredUnownedItems], [RequiredCounter], [RequiredLItems], [ScriptDisabled]
+	// Checks the requirements / conditions of this widget. See [RequiredOwnedItems],
+	// [RequiredUnownedItems], [RequiredCounter], [RequiredLItems], [ScriptDisabled]
 	//
 	// @versionadded 3.0
 	// @zasm
@@ -1087,7 +1074,8 @@ class subscreenwidget {
 	//   SUBWIDG_CHECK_CONDITIONS D2
 	internal bool CheckConditions();
 
-	// Checks that the widget is visible- meaning, it both passes [CheckConditions] and [VisibleFlags].
+	// Checks that the widget is visible- meaning, it both passes [CheckConditions] and
+	// [VisibleFlags].
 	//
 	// @versionadded 3.0
 	// @zasm

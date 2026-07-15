@@ -1,6 +1,7 @@
 import argparse
 import os
 import run_target
+import subprocess
 import sys
 
 from pathlib import Path
@@ -33,6 +34,9 @@ def output_qr_enum_file():
         '-q',
         '-headless',
     ], build_folder)
+    subprocess.check_call(
+        [sys.executable, script_dir / 'zscript_formatter.py', '--fix', dest_file]
+    )
 
 if __name__ == '__main__':
     output_qr_enum_file()

@@ -185,6 +185,7 @@ enum NPCFlags
 	NPCF_SPAWNFLICKER, // Flicker in when spawning
 	NPCF_SPAWNINSTANT, // Spawn instantly
 	// No Contact Damage
+	//
 	// @versionadded 3.0
 	NPCF_NO_CONTACT_DAMAGE = 7,
 	// some unused indexes
@@ -215,6 +216,7 @@ enum NPCFlags
 	NPCF_IGNORE_KILL_ALL, // Ignores kill all enemies
 	// When dying, kills all summoned enemies.
 	// Summoner is determined by [npc::ParentSummoner] on the summoned enemies.
+	//
 	// @versionadded 3.0
 	NPCF_KILL_SUMMONED_ENEMIES,
 	NPCF_MAX
@@ -261,7 +263,7 @@ enum BossPal
 // "special" walk flags.
 enum NPCWalkType
 {
-	SPW_NONE, SPW_DOOR, SPW_CLIPRIGHT, SPW_FLOATER, SPW_TRAP, SPW_HALFSTEP, 
+	SPW_NONE, SPW_DOOR, SPW_CLIPRIGHT, SPW_FLOATER, SPW_TRAP, SPW_HALFSTEP,
 	SPW_WATER, SPW_WIZZROBE, SPW_CLIPBOTTOMRIGHT
 };
 
@@ -272,8 +274,8 @@ enum NPCMoveStatus
 
 // Load with [Screen->NPCs], [Screen->LoadNPC], [eweapon::Parent], [Screen->CreateNPC]
 //
-// @zasm_ref REFNPC
 // @extends sprite
+// @zasm_ref REFNPC
 class npc {
 	// @delete
 	internal npc();
@@ -310,7 +312,6 @@ class npc {
 	// The death effect for the npc.
 	//
 	// @value [enum NPCFade]
-
 	// @zasm_var NPCFADING
 	internal int Fading;
 
@@ -377,7 +378,6 @@ class npc {
 	internal int Dropset;
 
 	// @value [enum BossPal]
-
 	// @zasm_var NPCBOSSPAL
 	internal int BossPal;
 
@@ -403,8 +403,9 @@ class npc {
 	// @value [enum NPCMiscBitflags]
 	// @zasm_var NPCMFLAGS
 	internal int MiscFlags;
-	
+
 	// The flags of the enemy.
+	//
 	// @index [enum NPCFlags]
 	// @versionadded 3.0
 	// @zasm_var NPCFLAGS
@@ -427,9 +428,9 @@ class npc {
 
 	// The defense categories for the npc.
 	//
+	// @length [MAX_DEFENSE]
 	// @index [enum NPCDefenseIndex]
 	// @value [enum NPCDefenseType]
-	// @length [MAX_DEFENSE]
 	// @zasm_var NPCDEFENSED
 	internal int Defense[];
 
@@ -632,7 +633,7 @@ class npc {
 	//   POP D2
 	//   ISVALIDNPC D2
 	internal bool isValid();
-	
+
 	// Creates an explosion particle effect in mode 0, 1, or 2 of the sprite.
 	//
 	// @zasm
@@ -928,8 +929,8 @@ class npc {
 	// n->Create({NPC_ARMOS, 100, 50}));
 	// ```
 	//
-	// @see [NPCID]
 	// @reassign_ptr
+	// @see [NPCID]
 	// @zasm
 	//   POP D2
 	//   POP REFNPC
@@ -1064,7 +1065,7 @@ class npc {
 	// @value [enum NPCType]
 	// @zasm_var NPCTYPE
 	internal int Family;
-	
+
 	// The 'summoner' of this enemy.
 	// If the summoner is not [NULL], and has [NPCF_KILL_SUMMONED_ENEMIES],
 	//   then when the summoner dies, this enemy will also die.
@@ -1072,7 +1073,7 @@ class npc {
 	// @versionadded 3.0
 	// @zasm_var NPC_SUMMONER_PARENT
 	internal npc ParentSummoner;
-	
+
 	// Summons a minion enemy with the specified npc_id.
 	// Enemy is summoned at this enemy's position.
 	// Fails if too many enemies already exist, based on the specified summon_limit.
@@ -1085,7 +1086,7 @@ class npc {
 	//   POP REFNPC
 	//   NPC_SUMMON_MINION D2 D3
 	internal npc SummonMinion(int npc_id, int summon_limit);
-	
+
 	// Summons a minion enemy randomly from the enemy list of the screens set as layers > 0.
 	// Enemy is summoned at a random position.
 	// Fails if too many enemies already exist, based on the specified summon_limit.
@@ -1097,8 +1098,9 @@ class npc {
 	//   POP REFNPC
 	//   NPC_SUMMON_MINION_LAYER D2
 	internal npc SummonMinionFromLayer(int summon_limit);
-	
+
 	// The [weapondata] for this enemy's weapon.
+	//
 	// @versionadded 3.0
 	// @zasm_var NPC_WEAPONDATA
 	internal const weapondata WeaponData;

@@ -1,10 +1,10 @@
 enum ColorSpace
 {
 	CSPACE_RGB,
-	CSPACE_CMYK, 
-	CSPACE_HSV, CSPACE_HSV_CW, CSPACE_HSV_CCW, 
-	CSPACE_HSL, CSPACE_HSL_CW, CSPACE_HSL_CCW, 
-	CSPACE_LAB, 
+	CSPACE_CMYK,
+	CSPACE_HSV, CSPACE_HSV_CW, CSPACE_HSV_CCW,
+	CSPACE_HSL, CSPACE_HSL_CW, CSPACE_HSL_CCW,
+	CSPACE_LAB,
 	CSPACE_LCH, CSPACE_LCH_CW, CSPACE_LCH_CCW,
 	CSPACE_NUMCSPACE
 };
@@ -117,7 +117,8 @@ class Graphics {
 
 	// Takes an (r,g,b) ranging 0 <= n <= 255.
 	//
-	// 0 <= n <= 63 if compat QR "Scripts use 6-bit color (0-63) instead of 8-bit (0-255)" is enabled.
+	// 0 <= n <= 63 if compat QR "Scripts use 6-bit color (0-63) instead of 8-bit (0-255)" is
+	// enabled.
 	//
 	// @zasm
 	//   CREATERGB

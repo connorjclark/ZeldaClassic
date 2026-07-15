@@ -54,6 +54,7 @@ enum HeroSliding
 };
 
 // Used with [Hero->HammerPos]
+//
 // @versionadded 3.0
 enum HammerPosition
 {
@@ -120,6 +121,7 @@ enum WarpBitflags
 };
 
 // Mouse button bitflags, used with [Hero->InputMouseB].
+//
 // @deprecated Use [MouseIndex] and [Input->Mouse] instead!
 @Bitflags("int")
 enum MouseButtonBitflags
@@ -160,7 +162,6 @@ class hero {
 	internal int MaxMP;
 
 	// @value [enum HeroAction]
-
 	// @zasm_var LINKACTION
 	internal int Action;
 
@@ -171,15 +172,16 @@ class hero {
 
 	// @zasm_var LINKHELD
 	internal int HeldItem;
-	
+
 	// An array of items. Each index is 'true' if the player 'Owns' the item - which is generally
 	//   only possible for items marked as [itemdata::EquipmentItem|Equipment Items].
 	//
 	// @index [enum ItemID]
 	// @zasm_var LINKITEMD
 	internal bool Item[];
-	
-	// An array of item cooldowns for each item. If > 0, the engine will tick the cooldown down each frame.
+
+	// An array of item cooldowns for each item. If > 0, the engine will tick the cooldown down each
+	// frame.
 	//   If non-zero, the item cannot be used.
 	//
 	// @index [enum ItemID]
@@ -215,7 +217,7 @@ class hero {
 	//
 	// @zasm_var HEROSTEPRATE
 	internal int Step;
-	
+
 	// This amount will be added to [Step] this frame.
 	// Resets to 0 each frame after the Hero's movement.
 	//
@@ -247,6 +249,7 @@ class hero {
 	internal int HealthBeep;
 
 	// If the player is invisible or not.
+	//
 	// @deprecated Use [InvisibleTimer] instead!
 	// @zasm_var LINKINVIS
 	internal bool Invisible;
@@ -450,7 +453,7 @@ class hero {
 	// @versionadded 3.0
 	// @zasm_var HEROFORCEDRESPAWN
 	internal bool ForcedHazardRespawn;
-	
+
 	// The Hazard Respawn X-coordinate, where the Hero will respawn upon drowning or such.
 	//
 	// The engine may overwrite this value upon changing screens or standing on
@@ -542,13 +545,13 @@ class hero {
 	// @zasm_var HEROCOYOTETIME
 	internal int CoyoteTime;
 
-	// The [lweapon] currently held by the player. Overwriting this directly will delete any [lweapon] previously held.
-	// If an [lweapon] script lifts itself, this also functions as a [Waitframe].
-	// LWeapons do not run their scripts while in the player's hands.
+	// The [lweapon] currently held by the player. Overwriting this directly will delete any
+	// [lweapon] previously held. If an [lweapon] script lifts itself, this also functions as a
+	// [Waitframe]. LWeapons do not run their scripts while in the player's hands.
 	//
 	// @zasm_var HEROLIFTEDWPN
 	internal lweapon LiftedWeapon;
-	
+
 	// The time the current lift operation takes. Starts at the same value as [LiftMaxTimer],
 	// then ticks down each frame the lift continues.
 	//
@@ -556,6 +559,7 @@ class hero {
 	internal int LiftTimer;
 
 	// The total time the current lift operation takes.
+	//
 	// @zasm_var HEROLIFTMAXTIMER
 	internal int LiftMaxTimer;
 
@@ -619,7 +623,6 @@ class hero {
 	internal const int FlashingCSet;
 
 	// @value [enum HeroSliding]
-
 	// @versionadded 3.0
 	// @zasm_var HEROSLIDING
 	internal const int Sliding;
@@ -690,31 +693,31 @@ class hero {
 
 	// @zasm_var HEROTOTALDYOFFS
 	internal const int TotalDYOffset;
-	
+
 	// X-offset for the player's item collection hitbox.
 	//
 	// @versionadded 3.0
 	// @zasm_var HERO_ITEMBOX_XOFF
 	internal int ItemBoxXOffset;
-	
+
 	// Y-offset for the player's item collection hitbox.
 	//
 	// @versionadded 3.0
 	// @zasm_var HERO_ITEMBOX_YOFF
 	internal int ItemBoxYOffset;
-	
+
 	// Width of the player's item collection hitbox.
 	//
 	// @versionadded 3.0
 	// @zasm_var HERO_ITEMBOX_WIDTH
 	internal int ItemBoxWidth;
-	
+
 	// Height of the player's item collection hitbox.
 	//
 	// @versionadded 3.0
 	// @zasm_var HERO_ITEMBOX_HEIGHT
 	internal int ItemBoxHeight;
-	
+
 	// The position the Hammer is currently being held in.
 	//
 	// @value [enum HammerPosition]
@@ -751,7 +754,8 @@ class hero {
 	// - 'type' is a [WarpType].
 	// - 'dmap'/'screen' are the destination.
 	// - 'x'/'y' are the exact position to spawn at.
-	// -  - Alternatively, if 'x < 0', 'y' is a [WarpIndex], specifying which blue warp square to spawn at.
+	// - - Alternatively, if 'x < 0', 'y' is a [WarpIndex], specifying which blue warp square to
+	//   spawn at.
 	// -  - Alternatively, if 'x < 0' and 'y < 0', acts as a pitwarp.
 	// - 'effect' is a [WarpEffect].
 	// - 'sound' is an SFX to play.
@@ -763,7 +767,7 @@ class hero {
 	//   POP D2
 	//   LINKWARPEXR D2
 	internal void WarpEx(int[] ptr);
-	
+
 	// Warps the player, with many options.
 	//
 	// @param type, effect, flags: configure various settings of the warp
@@ -940,9 +944,9 @@ class hero {
 	// @zasm
 	//   HEROLIFTRELEASE
 	internal lweapon ReleaseLiftWeapon();
-	
-	// Causes the player to lift the specified [lweapon] in the same way they lift combos with the Lift Glove.
-	// If an [lweapon] script lifts itself, this also functions as a [Waitframe].
+
+	// Causes the player to lift the specified [lweapon] in the same way they lift combos with the
+	// Lift Glove. If an [lweapon] script lifts itself, this also functions as a [Waitframe].
 	// LWeapons do not run their scripts while in the player's hands.
 	//
 	// @zasm
@@ -1108,7 +1112,6 @@ class hero {
 
 	// @deprecated_future Use [Input->Mouse] instead!
 	// @value [enum MouseButtonBitflags]
-
 	// @zasm_var INPUTMOUSEB
 	internal int InputMouseB;
 

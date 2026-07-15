@@ -6,7 +6,7 @@ enum //Subscreen Types
 	SSTYPE_MAX
 };
 
-//Subscreen Flags
+// Subscreen Flags
 enum
 {
 	SSFL_ACTIVE_NOPAGEWRAP,
@@ -30,7 +30,7 @@ enum //Transition Types
 	TRANS_TY_MAX
 };
 
-//Transition arguments
+// Transition arguments
 enum
 {
 	TRANS_INSTANT_ARG_MAX
@@ -55,7 +55,6 @@ enum TransitionFlag
 	TRANSFLAG_NO_HIDE_SELECTOR,
 	TRANSFLAG_MAX
 };
-
 
 enum SubscreenWidgetType
 {
@@ -119,11 +118,13 @@ enum SubscreenWidgetGenFlag
 	//
 	// @versionadded 3.0
 	SUBW_GENFL_REQ_COUNTER_MAX,
-	// If the counter requirement should use the "percentage of max" of the counter, instead of it's plain value (overrides [SUBW_GENFL_REQ_COUNTER_MAX])
+	// If the counter requirement should use the "percentage of max" of the counter, instead of it's
+	// plain value (overrides [SUBW_GENFL_REQ_COUNTER_MAX])
 	//
 	// @versionadded 3.0
 	SUBW_GENFL_REQ_COUNTER_PERC,
-	// If the level item requirement should require *not having any of the LItems*, instead of having all of the level items
+	// If the level item requirement should require *not having any of the LItems*, instead of
+	// having all of the level items
 	//
 	// @versionadded 3.0
 	SUBW_GENFL_REQ_INVERT_LITEM,
@@ -131,27 +132,33 @@ enum SubscreenWidgetGenFlag
 	//
 	// @versionadded 3.0
 	SUBW_GENFL_PGGOTO_SWAPMAPSUBSCR,
-	// If the screen state/exstate requirements should require *not having any states* instead of having all states.
+	// If the screen state/exstate requirements should require *not having any states* instead of
+	// having all states.
 	//
 	// @versionadded 3.0
 	SUBW_GENFL_REQ_INVERT_SCRSTATE,
-	// If the 'required items' requirement should be satisfied by any one of the items, instead of needing them all.
+	// If the 'required items' requirement should be satisfied by any one of the items, instead of
+	// needing them all.
 	//
 	// @versionadded 3.0
 	SUBW_GENFL_REQ_ANY_ITEM,
-	// If the level item requirement should be satisified with any level item, instead of needing them all.
+	// If the level item requirement should be satisified with any level item, instead of needing
+	// them all.
 	//
 	// @versionadded 3.0
 	SUBW_GENFL_REQ_ANY_LITEM,
-	// If the screen state/exstate requirements should be satisfied with any of the states, instead of needing them all.
+	// If the screen state/exstate requirements should be satisfied with any of the states, instead
+	// of needing them all.
 	//
 	// @versionadded 3.0
 	SUBW_GENFL_REQ_ANY_SCRSTATE,
-	// If the level state requirement should require *not having any of the lavel states*, instead of having all the level states.
+	// If the level state requirement should require *not having any of the lavel states*, instead
+	// of having all the level states.
 	//
 	// @versionadded 3.0
 	SUBW_GENFL_REQ_INVERT_LSTATE,
-	// If the level state requirement should be satisified with any level state, instead of needing them all.
+	// If the level state requirement should be satisified with any level state, instead of needing
+	// them all.
 	//
 	// @versionadded 3.0
 	SUBW_GENFL_REQ_ANY_LSTATE,
@@ -219,6 +226,7 @@ enum //Special Subscreen Color Values
 	SUB_COLOR_MSGTXT      = -33,
 	SUB_COLOR_TRANSPARENT = -34,
 	// Uses a default color value specific to the widget + color type.
+	//
 	// @versionadded 3.0
 	SUB_COLOR_DEFAULT     = -35,
 	SUB_COLOR_MIN         = -36
@@ -421,9 +429,9 @@ enum // Flags for SUBWIDG_COUNTERPERCBAR
 	SUBW_COUNTERPERCBAR_NUMFLAGS
 };
 
-// Data for a specific subscreen. Use to read and modify engine subscreens.
-// Load for a subscreen of a specified type, via [Game->LoadASubData], [Game->LoadPSubData], [Game->LoadOSubData], or [Game->LoadMSubData]
-// Also loadable via [subscreenpage::SubData]
+// Data for a specific subscreen. Use to read and modify engine subscreens. Load for a subscreen of
+// a specified type, via [Game->LoadASubData], [Game->LoadPSubData], [Game->LoadOSubData], or
+// [Game->LoadMSubData] Also loadable via [subscreenpage::SubData]
 //
 // @zasm_ref REFSUBSCREENDATA
 class subscreendata {
@@ -706,7 +714,7 @@ class subscreendata {
 	//   SUBDATA_SWAP_PAGES
 	//   POPARGS D5 0.0003
 	internal void SwapPages(int index1, int index2);
-	
+
 	// Opens the specified subscreen (at the next moment possible).
 	// Only works on Active / Map subscreens.
 	//
@@ -715,7 +723,7 @@ class subscreendata {
 	//   POP REFSUBSCREENDATA
 	//   SUBDATA_OPEN
 	internal void Open();
-	
+
 	// Closes the subscreen. Only works on the Active / Map subscreen
 	// that is currently running during a subscreendata script (i.e.
 	// 'this->Close()')

@@ -21,7 +21,7 @@ enum DMapFlag
 	DMFS_VIEWMAP,             //View overworld map by pressing 'Map'
 	DMFS_DMAPMAP,             //...But only show screens marked in minimap
 	DMFS_MINIMAPCOLORFIX,     //Use minimap foreground color 2
-	DMFS_MINIMAPCOLOURFIX = DMFS_MINIMAPCOLORFIX,    //Use minimap foreground color 2
+	DMFS_MINIMAPCOLOURFIX = DMFS_MINIMAPCOLORFIX, //Use minimap foreground color 2
 	DMFS_SCRIPT1,             //DMap Script Flag 1
 	DMFS_SCRIPT2,             //DMap Script Flag 2
 	DMFS_SCRIPT3,             //DMap Script Flag 3
@@ -33,11 +33,13 @@ enum DMapFlag
 	DMFS_TRUECELLARENEMIES,   //True Cellar Enemies
 	DMFS_BUNNY,               //Become Bunny with no Pearl
 	DMFS_MIRRORCONTINUE,      //Mirror Continues instead of Warping
-	// If checked, the viewport extends into the part of the screen normally occupied by the passive subscreen.
+	// If checked, the viewport extends into the part of the screen normally occupied by the passive
+	// subscreen.
 	//
 	// @versionadded 3.0
 	DMFS_EXTENDEDVIEWPORT,
-	// use dmap-specific [dmapdata::GravityStrength|Gravity Strength] and [dmapdata::TerminalVelocity|Terminal Velocity]
+	// use dmap-specific [dmapdata::GravityStrength|Gravity Strength] and
+	// [dmapdata::TerminalVelocity|Terminal Velocity]
 	//
 	// @versionadded 3.0
 	DMFS_CUSTOM_GRAVITY,
@@ -45,6 +47,7 @@ enum DMapFlag
 };
 
 // Used with [Game->DMapFlags] and [dmapdata::Flags].
+//
 // @deprecated Use [DMapFlag] and [dmapdata::Flagset] instead!
 @Bitflags("int")
 enum DMapBitflags
@@ -129,7 +132,7 @@ class dmapdata {
 	// @versionadded 3.0
 	// @zasm_var DMAPDATA_MUSIC
 	internal musicdata Music;
-	
+
 	// The MIDI set to play on this dmap.
 	//
 	// @deprecated Use [Music] / [musicdata::MIDI] instead!
@@ -142,7 +145,6 @@ class dmapdata {
 	internal int Continue;
 
 	// @value [enum DMapType]
-
 	// @zasm_var DMAPDATATYPE
 	internal int Type;
 
@@ -228,7 +230,7 @@ class dmapdata {
 	// @index [enum DMapFlag]
 	// @zasm_var DMAPDATAFLAGARR
 	internal bool Flagset[];
-	
+
 	// If [DMFS_CUSTOM_GRAVITY] is set, this gravity applies on the dmap.
 	//
 	// @versionadded 3.0
@@ -293,7 +295,6 @@ class dmapdata {
 	//
 	// @deprecated_future Use [Flagset] instead!
 	// @value [enum DMapBitflags]
-
 	// @zasm_var DMAPDATAFLAGS
 	internal int Flags;
 

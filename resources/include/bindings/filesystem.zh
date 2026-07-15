@@ -50,7 +50,6 @@ class FileSystem {
 	// Opens the directory pointed to by 'path'.
 	//
 	// @versionchanged 3.0 You can use `new directory(filepath)` instead.
-	//
 	// @zasm
 	//   POP D2
 	//   LOADDIRECTORYR D2

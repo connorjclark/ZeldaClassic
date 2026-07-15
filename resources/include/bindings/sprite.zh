@@ -44,7 +44,8 @@ class sprite {
 	// @delete
 	internal sprite();
 
-	// The screen index this sprite was created on. Does not update as the sprite moves around a region.
+	// The screen index this sprite was created on. Does not update as the sprite moves around a
+	// region.
 	//
 	// [Hero]: This is equal to the origin screen of the region, and cannot be modified.
 	// [ffc]: This is the screen the FFC belongs to, and cannot be modified.
@@ -117,7 +118,6 @@ class sprite {
 	// to determine movement, shield deflection and such.
 	//
 	// @value [enum Direction]
-
 	// @zasm_var SPRITE_DIR
 	internal int Dir;
 
@@ -154,7 +154,8 @@ class sprite {
 	// @zasm_var SPRITE_EXTEND
 	internal int Extend;
 
-	// The width of the sprite's graphic, in tiles. Visual only. The upper-left corner is the first tile.
+	// The width of the sprite's graphic, in tiles. Visual only. The upper-left corner is the first
+	// tile.
 	//
 	// Must set [Extend] to 3 to use (except for [fcc]).
 	//
@@ -165,7 +166,8 @@ class sprite {
 	// @zasm_var SPRITE_TILE_W
 	internal int TileWidth;
 
-	// The height of the sprite's graphic, in tiles. Visual only. The upper-left corner is the first tile.
+	// The height of the sprite's graphic, in tiles. Visual only. The upper-left corner is the first
+	// tile.
 	//
 	// Must set [Extend] to 3 to use (except for [fcc]).
 	//
@@ -198,7 +200,6 @@ class sprite {
 	// The drawing style to use.
 	//
 	// @value [enum DrawStyle]
-
 	// @zasm_var SPRITE_DRAW_STYLE
 	internal int DrawStyle;
 
@@ -219,22 +220,22 @@ class sprite {
 	//
 	// @zasm_var SPRITE_GRAVITY
 	internal bool Gravity;
-	
+
 	// The current strength of gravity on this sprite.
 	//
 	// @zasm_var SPRITE_GRAVITY_STRENGTH
 	internal const int GravityStrength;
-	
+
 	// The current terminal velocity of this sprite.
 	//
 	// @zasm_var SPRITE_TERMINAL_VELOCITY
 	internal const int TerminalVelocity;
-	
+
 	// If non-zero, overrides the current [GravityStrength].
 	//
 	// @zasm_var SPRITE_CUSTOM_GRAVITY_STRENGTH
 	internal int CustomGravityStrength;
-	
+
 	// If non-zero, overrides the current [TerminalVelocity].
 	//
 	// @zasm_var SPRITE_CUSTOM_TERMINAL_VELOCITY
@@ -330,7 +331,7 @@ class sprite {
 	//
 	// @zasm_var SPRITE_LIGHT_OFFSET
 	internal int LightOffset;
-	
+
 	// The sprite has no collision for this many frames.
 	// If < 0, does not run out.
 	//
@@ -379,15 +380,16 @@ class sprite {
 	// @zasm_var SPRITE_SHADOW_YOFS
 	internal int ShadowYOffset;
 
-	// How far (in pixels) past the viewport edge this sprite's engine logic runs before it is suspended.
-	// Only active in scrolling regions. Considers both visual tile size and hitbox ([HitWidth], [HitHeight]).
+	// How far (in pixels) past the viewport edge this sprite's engine logic runs before it is
+	// suspended. Only active in scrolling regions. Considers both visual tile size and hitbox
+	// ([HitWidth], [HitHeight]).
 	//
 	// Disabled if 0 (the sprite is never suspended).
 	//
 	// [Hero]: Does not apply.
 	//
-	// @versionadded 3.0
 	// @default 48 for eweapons and npcs, 0 for all other sprites
+	// @versionadded 3.0
 	// @zasm_var SPRITE_VIEWPORT_SUSPEND_RANGE
 	internal int ViewportSuspendRange;
 
@@ -412,8 +414,8 @@ class sprite {
 	// [Hero]: Does not apply.
 	// [ffc]: Does not apply for changers or stationary FFCs.
 	//
-	// @versionadded 3.0
 	// @default 0
+	// @versionadded 3.0
 	// @zasm_var SPRITE_VIEWPORT_DESPAWN_RANGE
 	internal int ViewportDespawnRange;
 

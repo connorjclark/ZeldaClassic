@@ -1,0 +1,5 @@
+// The first value.
+//
+// @deprecated Use something else instead!
+// @zasm_var TEST_FOO
+internal int Foo;

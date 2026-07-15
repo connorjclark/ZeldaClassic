@@ -448,4 +448,29 @@ suite('ZScript extension', function () {
 			expect(hasEnumMember).toBe(true);
 		});
 	});
+
+	suite('Bindings formatter', () => {
+		test('formats engine binding headers on save', async () => {
+			const uri = getDocUri('resources/include/bindings/format_test.zh');
+			await setTestContent(uri, [
+				'// The first value.',
+				'// @zasm_var TEST_FOO',
+				'// @deprecated Use something else instead!',
+				'internal int Foo;',
+				'',
+			].join('\n'));
+
+			const doc = await vscode.workspace.openTextDocument(uri);
+			assert.ok(await doc.save());
+
+			assert.strictEqual(doc.getText(), [
+				'// The first value.',
+				'//',
+				'// @deprecated Use something else instead!',
+				'// @zasm_var TEST_FOO',
+				'internal int Foo;',
+				'',
+			].join('\n'));
+		});
+	});
 });

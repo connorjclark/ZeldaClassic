@@ -16,25 +16,32 @@ enum FFCFlag
 	FFCF_IMPRECISIONCHANGER        = 12, // The FFC is affected by changers if it is within 1px on both axis, not subpixel alignment.
 	FFCF_LENSINVIS                 = 13, // Not visible to the lens of truth.
 	// Acts as a 'Platform'
+	//
 	// @versionadded 3.0
 	FFCF_PLATFORM                  = 14,
 	// Solidity only if the FFC's combo has some solid part
+	//
 	// @versionadded 3.0
 	FFCF_SOLID_IF_COMBO_SOLID      = 15,
-	
+
 	// Changer: Become This Combo+CSet
+	//
 	// @versionadded 3.0
 	FFCF_CHANGE_COMBO              = 27,
 	// Changer: Become Previous Combo
+	//
 	// @versionadded 3.0
 	FFCF_PREV_COMBO                = 28,
 	// Changer: Become Next Combo
+	//
 	// @versionadded 3.0
 	FFCF_NEXT_COMBO                = 29,
 	// Changer: Swap w/ Prev FFC
+	//
 	// @versionadded 3.0
 	FFCF_PREV_FFC                  = 30,
 	// Changer: Swap w/ Next FFC
+	//
 	// @versionadded 3.0
 	FFCF_NEXT_FFC                  = 31,
 };
@@ -51,8 +58,8 @@ internal const int MAX_FFC;
 //
 // Load with [Screen->LoadFFC].
 //
-// @zasm_ref REFFFC
 // @extends sprite
+// @zasm_ref REFFFC
 class ffc {
 	// @delete
 	internal ffc();
@@ -74,7 +81,7 @@ class ffc {
 	//
 	// @zasm_var FFCID
 	internal const int ID;
-	
+
 	// The FFC's index within the current screen (0-indexed).
 	//
 	// @versionadded 3.0
@@ -121,13 +128,13 @@ class ffc {
 	//
 	// @zasm_var YD2
 	internal int Ay;
-	
+
 	// Flags for the FFC.
 	//
 	// @index [enum FFCFlag]
 	// @zasm_var FFFLAGSD
 	internal bool Flags[];
-	
+
 	// The position-specific states for this ffc.
 	//
 	// @length 8
@@ -164,7 +171,7 @@ class ffc {
 
 	// @zasm_var FFCLASTCHANGERY
 	internal int LastChangerY;
-	
+
 	// Attempts to trigger the ffc's combo with it's trigger number 'trig_index'.
 	// Returns true on success, false on failure.
 	//

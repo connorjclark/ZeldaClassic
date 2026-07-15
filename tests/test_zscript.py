@@ -207,6 +207,11 @@ class TestZScript(ZCTestCase):
             [sys.executable, root_dir / 'scripts/lint_zscript_versions.py']
         )
 
+    def test_zscript_bindings_formatted(self):
+        subprocess.check_call(
+            [sys.executable, root_dir / 'scripts/zscript_formatter.py']
+        )
+
 
 if __name__ == '__main__':
     sys.argv[1:] = args.unittest_args

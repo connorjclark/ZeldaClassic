@@ -63,7 +63,7 @@ class websocket {
 	//   POP REFWEBSOCKET
 	//   WEBSOCKET_RECEIVE D2
 	internal untyped[] Receive();
-	
+
 	// DEPRECATED: This no longer does anything - objects are freed
 	// automatically now.
 	//

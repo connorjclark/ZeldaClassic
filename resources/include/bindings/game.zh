@@ -26,13 +26,13 @@ enum ScrollingIndex
 {
 	// The scrolling [Direction]. -1 if not scrolling.
 	SCROLL_DIR,
-	// The offset for the new screen, relative to the current viewport. 
+	// The offset for the new screen, relative to the current viewport.
 	SCROLL_NX, SCROLL_NY,
 	// The offset for the old screen, relative to the current viewport.
 	SCROLL_OX, SCROLL_OY,
-	// The offset for the new region's origin screen, relative to the current viewport. 
+	// The offset for the new region's origin screen, relative to the current viewport.
 	SCROLL_NRX, SCROLL_NRY,
-	// The offset for the old region's origin screen, relative to the current viewport. 
+	// The offset for the old region's origin screen, relative to the current viewport.
 	SCROLL_ORX, SCROLL_ORY,
 	// The delta between the new and old regions.
 	SCROLL_NEW_REGION_DELTA_X, SCROLL_NEW_REGION_DELTA_Y,
@@ -287,7 +287,7 @@ enum SuspendType
 	susptCOMBOANIM,
 
 	// Main Sprite animation by type
-	susptGUYS, susptLWEAPONS, susptEWEAPONS, susptITEMS, susptLINK, 
+	susptGUYS, susptLWEAPONS, susptEWEAPONS, susptITEMS, susptLINK,
 
 	// FFC (e.g. movement, changers, but not scripts)
 	susptUPDATEFFC,
@@ -320,7 +320,8 @@ enum EventDataIndex_HeroHit //[Game->EventData] indexes for [GENSCR_EVENT_HERO_H
 	GENEV_HEROHIT_DAMAGE, //Damage to be taken
 	GENEV_HEROHIT_HITDIR, //[Direction] to be knocked in
 	GENEV_HEROHIT_NULLIFY, //Bool: to nullify the hit, or not
-	//Bool: if [IC_NAYRUSLOVE] or [IC_CBYRNA] will nullify the damage, or not.
+	// Bool: if [IC_NAYRUSLOVE] or [IC_CBYRNA] will nullify the damage, or not.
+	//
 	// @versionadded 2.55.15
 	GENEV_HEROHIT_INVINCIBLE,
 	GENEV_HEROHIT_IFRAMES, //Number of IFrames to have after hit, if not nullified
@@ -328,7 +329,8 @@ enum EventDataIndex_HeroHit //[Game->EventData] indexes for [GENSCR_EVENT_HERO_H
 	GENEV_HEROHIT_HITOBJ, //The pointer to that object
 	GENEV_HEROHIT_HITTYPE2, //A second type of object ([ObjectType], can be [OBJTYPE_NONE])
 	GENEV_HEROHIT_HITOBJ2, //The pointer to the second object
-	//Bool: if [IC_NAYRUSLOVE] or [IC_CBYRNA] will nullify the knockback, or not.
+	// Bool: if [IC_NAYRUSLOVE] or [IC_CBYRNA] will nullify the knockback, or not.
+	//
 	// @versionadded 2.55.15
 	GENEV_HEROHIT_INVINCIBLE_KB,
 	GENEV_HEROHIT_NAYRUON = GENEV_HEROHIT_INVINCIBLE
@@ -347,9 +349,9 @@ enum EventDataIndex_CollectItem //[Game->EventData] indexes for [GENSCR_EVENT_CO
 enum EventDataIndex_EnemyDropItem1 //[Game->EventData] indexes for [GENSCR_EVENT_ENEMY_DROP_ITEM_1]
 {
 	GENEV_EDI1_NPC, //the [npc] pointer
-	//the chosen item ID
-	//If set to `-2`, the dropset will be rolled automatically.
-	//If set to `-1`, no item will be dropped.
+	// the chosen item ID
+	// If set to `-2`, the dropset will be rolled automatically.
+	// If set to `-1`, no item will be dropped.
 	GENEV_EDI1_ITEMID,
 	GENEV_EDI1_DROPSET //the dropset the ID was chosen from
 };
@@ -378,7 +380,7 @@ enum EventDataIndex_PlayerFallDrown //[Game->EventData] indexes for [GENSCR_EVEN
 	GENEV_PLAYER_FALLDROWN_COMBO //The combo ID the [Hero] is falling/drowning into.
 };
 
-//constants for [GENEV_ITEMCOL_TYPE] index of [Game->EventData]
+// constants for [GENEV_ITEMCOL_TYPE] index of [Game->EventData]
 enum ItemCollectEventType
 {
 	GENEVT_ICTYPE_COLLECT, //Hero collected the item
@@ -469,7 +471,7 @@ class Game {
 	// @versionadded 3.0
 	// @zasm_var GAME_SAVEMENU_F6
 	internal int SaveMenuF6;
-	
+
 	// The [save_menu] ID used when dying. If 0, the default game over menu will be used.
 	//
 	// @versionadded 3.0
@@ -549,7 +551,6 @@ class Game {
 	// Contains a bitflags of the "Level Items".
 	//
 	// @value [enum LevelItemBitflags]
-
 	// @zasm_var GAMELITEMSD
 	internal int LItems[];
 
@@ -557,7 +558,7 @@ class Game {
 	//
 	// @zasm_var GAMELKEYSD
 	internal int LKeys[];
-	
+
 	// @deprecated Use [Game->LevelStates] instead!
 	// @zasm_var GAMELSWITCH
 	internal long LSwitches[];
@@ -565,7 +566,7 @@ class Game {
 	// @deprecated Use [Game->GlobalStates] instead!
 	// @zasm_var GAMEGSWITCH
 	internal int GSwitch[];
-	
+
 	// The level-specific switch states for each level. Each level has a single
 	// `long`, representing 32 bitwise states. Ex:
 	// `(Game->LevelStates[Game->CurLevel] & (1Lb << (5)))` will get the switch
@@ -683,16 +684,17 @@ class Game {
 	// Drawing during scrolling requires taking into account that the viewport and coordinate
 	// systems are shifting. To anchor draw calls to a particular point, such as the screen
 	// being scrolled to, the old way looks like this:
-	//```
+	// ```
 	//    Screen->DrawTile(x + Game->Scrolling[SCROLL_NX], y + Game->Scrolling[SCROLL_NY], ...)
-	//```
+	// ```
 	// The above draws a tile at (`x, y`) relative to the new screen.
 	//
 	// This is deprecated by [Screen->DrawOrigin]. The new way to do the same is:
-	//```
+	// ```
 	//    Screen->DrawOrigin = DRAW_ORIGIN_WORLD; // This is the default in a scrolling region.
 	//    Screen->DrawTile(x, y, ...)
-	//```
+	// ```
+	//
 	// @index [enum ScrollingIndex]
 	// @zasm_var GAMESCROLLING
 	internal const int Scrolling[];
@@ -721,7 +723,6 @@ class Game {
 	// [ZCM_BLANK] is the default, and it resets on visiting the title screen.
 	//
 	// @value [enum MouseCursor]
-
 	// @zasm_var GAMEMOUSECURSOR
 	internal int MouseCursor;
 
@@ -1225,7 +1226,7 @@ class Game {
 
 	// Same as [LoadTempScreen], but for the specific [screen], which must be within the
 	// current [Region].
-	// 
+	//
 	// If the given screen is not valid, then the return value of this function is falsy.
 	//
 	// @zasm
@@ -1619,10 +1620,12 @@ class Game {
 	//   SETCMP SCREENSTATEDD !=
 	internal void SetScreenState(int map, int screen, int flag, bool value);
 
-	// Reads the canonical screen. If the screen is currently active (including as a layer), the temporary screen is read instead.
+	// Reads the canonical screen. If the screen is currently active (including as a layer), the
+	// temporary screen is read instead.
 	//
-	// Note: since Regions came after this was deprecated, only the top-left screen may be considered "active" for purposes of this function.
-	//       Referencing any other screen in the current region will access the canonical screen instead.
+	// Note: since Regions came after this was deprecated, only the top-left screen may be
+	// considered "active" for purposes of this function. Referencing any other screen in the
+	// current region will access the canonical screen instead.
 	//
 	// @deprecated Use [mapdata::ComboD]' instead!
 	// @zasm
@@ -1632,10 +1635,12 @@ class Game {
 	//   SETR D2 COMBODDM
 	internal int GetComboData(int map, int screen, int pos);
 
-	// Updates the canonical screen. If the screen is currently active, the temporary screen is also updated.
+	// Updates the canonical screen. If the screen is currently active, the temporary screen is also
+	// updated.
 	//
-	// Note: since Regions came after this was deprecated, only the top-left screen may be considered "active" for purposes of this function.
-	//       Referencing any other screen in the current region will access the canonical screen instead.
+	// Note: since Regions came after this was deprecated, only the top-left screen may be
+	// considered "active" for purposes of this function. Referencing any other screen in the
+	// current region will access the canonical screen instead.
 	//
 	// @deprecated Use [mapdata::ComboD] instead!
 	// @zasm
@@ -1646,10 +1651,12 @@ class Game {
 	//   SETR COMBODDM D3
 	internal void SetComboData(int map, int screen, int pos, int value);
 
-	// Reads the canonical screen. If the screen is currently active (including as a layer), the temporary screen is read instead.
+	// Reads the canonical screen. If the screen is currently active (including as a layer), the
+	// temporary screen is read instead.
 	//
-	// Note: since Regions came after this was deprecated, only the top-left screen may be considered "active" for purposes of this function.
-	//       Referencing any other screen in the current region will access the canonical screen instead.
+	// Note: since Regions came after this was deprecated, only the top-left screen may be
+	// considered "active" for purposes of this function. Referencing any other screen in the
+	// current region will access the canonical screen instead.
 	//
 	// @deprecated Use [mapdata::ComboC] instead!
 	// @zasm
@@ -1659,10 +1666,12 @@ class Game {
 	//   SETR D2 COMBOCDM
 	internal int GetComboCSet(int map, int screen, int pos);
 
-	// Updates the canonical screen. If the screen is currently active, the temporary screen is also updated.
+	// Updates the canonical screen. If the screen is currently active, the temporary screen is also
+	// updated.
 	//
-	// Note: since Regions came after this was deprecated, only the top-left screen may be considered "active" for purposes of this function.
-	//       Referencing any other screen in the current region will access the canonical screen instead.
+	// Note: since Regions came after this was deprecated, only the top-left screen may be
+	// considered "active" for purposes of this function. Referencing any other screen in the
+	// current region will access the canonical screen instead.
 	//
 	// @deprecated Use [mapdata::ComboC] instead!
 	// @zasm
@@ -1673,10 +1682,12 @@ class Game {
 	//   SETR COMBOCDM D3
 	internal void SetComboCSet(int map, int screen, int pos, int value);
 
-	// Reads the canonical screen. If the screen is currently active (including as a layer), the temporary screen is read instead.
+	// Reads the canonical screen. If the screen is currently active (including as a layer), the
+	// temporary screen is read instead.
 	//
-	// Note: since Regions came after this was deprecated, only the top-left screen may be considered "active" for purposes of this function.
-	//       Referencing any other screen in the current region will access the canonical screen instead.
+	// Note: since Regions came after this was deprecated, only the top-left screen may be
+	// considered "active" for purposes of this function. Referencing any other screen in the
+	// current region will access the canonical screen instead.
 	//
 	// @deprecated Use [mapdata::ComboF] instead!
 	// @zasm
@@ -1686,10 +1697,12 @@ class Game {
 	//   SETR D2 COMBOFDM
 	internal int GetComboFlag(int map, int screen, int pos);
 
-	// Updates the canonical screen. If the screen is currently active, the temporary screen is also updated.
+	// Updates the canonical screen. If the screen is currently active, the temporary screen is also
+	// updated.
 	//
-	// Note: since Regions came after this was deprecated, only the top-left screen may be considered "active" for purposes of this function.
-	//       Referencing any other screen in the current region will access the canonical screen instead.
+	// Note: since Regions came after this was deprecated, only the top-left screen may be
+	// considered "active" for purposes of this function. Referencing any other screen in the
+	// current region will access the canonical screen instead.
 	//
 	// @deprecated Use [mapdata::ComboF] instead!
 	// @zasm
@@ -1700,10 +1713,12 @@ class Game {
 	//   SETR COMBOFDM D3
 	internal void SetComboFlag(int map, int screen, int pos, int value);
 
-	// Reads the canonical screen. If the screen is currently active (including as a layer), the temporary screen is read instead.
+	// Reads the canonical screen. If the screen is currently active (including as a layer), the
+	// temporary screen is read instead.
 	//
-	// Note: since Regions came after this was deprecated, only the top-left screen may be considered "active" for purposes of this function.
-	//       Referencing any other screen in the current region will access the canonical screen instead.
+	// Note: since Regions came after this was deprecated, only the top-left screen may be
+	// considered "active" for purposes of this function. Referencing any other screen in the
+	// current region will access the canonical screen instead.
 	//
 	// @deprecated Use [mapdata::ComboT] instead!
 	// @zasm
@@ -1715,8 +1730,9 @@ class Game {
 
 	// Updates the combo type at the position in the canonical screen.
 	//
-	// Note: since Regions came after this was deprecated, only the top-left screen may be considered "active" for purposes of this function.
-	//       Referencing any other screen in the current region will access the canonical screen instead.
+	// Note: since Regions came after this was deprecated, only the top-left screen may be
+	// considered "active" for purposes of this function. Referencing any other screen in the
+	// current region will access the canonical screen instead.
 	//
 	// @deprecated Use [mapdata::ComboT] instead!
 	// @zasm
@@ -1727,10 +1743,12 @@ class Game {
 	//   SETR COMBOTDM D3
 	internal void SetComboType(int map, int screen, int pos, int value);
 
-	// Reads the canonical screen. If the screen is currently active (including as a layer), the temporary screen is read instead.
+	// Reads the canonical screen. If the screen is currently active (including as a layer), the
+	// temporary screen is read instead.
 	//
-	// Note: since Regions came after this was deprecated, only the top-left screen may be considered "active" for purposes of this function.
-	//       Referencing any other screen in the current region will access the canonical screen instead.
+	// Note: since Regions came after this was deprecated, only the top-left screen may be
+	// considered "active" for purposes of this function. Referencing any other screen in the
+	// current region will access the canonical screen instead.
 	//
 	// @deprecated Use [mapdata::ComboI] instead!
 	// @zasm
@@ -1751,10 +1769,12 @@ class Game {
 	//   SETR COMBOIDM D3
 	internal void SetComboInherentFlag(int map, int screen, int pos, int value);
 
-	// Reads the canonical screen. If the screen is currently active (including as a layer), the temporary screen is read instead.
+	// Reads the canonical screen. If the screen is currently active (including as a layer), the
+	// temporary screen is read instead.
 	//
-	// Note: since Regions came after this was deprecated, only the top-left screen may be considered "active" for purposes of this function.
-	//       Referencing any other screen in the current region will access the canonical screen instead.
+	// Note: since Regions came after this was deprecated, only the top-left screen may be
+	// considered "active" for purposes of this function. Referencing any other screen in the
+	// current region will access the canonical screen instead.
 	//
 	// @deprecated Use [mapdata::ComboS] instead!
 	// @zasm

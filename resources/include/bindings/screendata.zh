@@ -21,9 +21,9 @@ enum DrawOrigin
 	// When in a scrolling region (or scrolling to/from one), this is equal to [DRAW_ORIGIN_REGION].
 	// Otherwise, this is equal to [DRAW_ORIGIN_PLAYING_FIELD].
 	DRAW_ORIGIN_DEFAULT = 0L,
-	// The origin `(0, 0)` is the top-left pixel of the playing field (where screen combos are drawn).
-	// Normally, this is just below the passive subscreen. But in extended height mode,
-	// this is the top-left pixel of the screen and so is equivalent to [DRAW_ORIGIN_SCREEN].
+	// The origin `(0, 0)` is the top-left pixel of the playing field (where screen combos are
+	// drawn). Normally, this is just below the passive subscreen. But in extended height mode, this
+	// is the top-left pixel of the screen and so is equivalent to [DRAW_ORIGIN_SCREEN].
 	//
 	// Use this to draw overlay effects across the playing field.
 	DRAW_ORIGIN_PLAYING_FIELD = 1L,
@@ -52,8 +52,9 @@ enum DrawOrigin
 	DRAW_ORIGIN_SPRITE = 6L,
 };
 
-// Polygon rendering modes. Use with Screen->"Psuedo 3D" or "*3D" drawing functions. ie; Polygon, Quad, or Triangle
-// For more detail on these polygon rendering modes, see https://github.com/ZQuestClassic/ZQuestClassic/blob/main/third_party/allegro_legacy/docs/src/allegro._tx#L7808.
+// Polygon rendering modes. Use with Screen->"Psuedo 3D" or "*3D" drawing functions. ie; Polygon,
+// Quad, or Triangle For more detail on these polygon rendering modes, see
+// https://github.com/ZQuestClassic/ZQuestClassic/blob/main/third_party/allegro_legacy/docs/src/allegro._tx#L7808.
 enum PolygonRenderMode
 {
 	PT_FLAT                        = 0,  // Single color shading.
@@ -148,7 +149,7 @@ enum ScreenFlag
 	SFL_SAVE_ON_ENTRY = 31, // Save game on entry.
 	SFL_CONTINUE_HERE = 43,
 	SFL_SAVE_CONTINUE_HERE = 30, // Save Point->Continue. When saving at a 'Save' combo on this screen, set this as the continue screen.
-	SFL_NO_CONTINUE_HERE = 44, // No continue Here after warp. 
+	SFL_NO_CONTINUE_HERE = 44, // No continue Here after warp.
 
 	// FFC
 	SFL_FFC_WRAP = 47, // FFCs wrap around screen.
@@ -190,10 +191,11 @@ enum ScreenFlag
 	SFL_SCRIPT_3 = 58,
 	SFL_SCRIPT_4 = 59,
 	SFL_SCRIPT_5 = 60,
-	
+
 	// Gravity
 	//
-	// use screen-specific [screendata::GravityStrength|Gravity Strength] and [screendata::TerminalVelocity|Terminal Velocity]
+	// use screen-specific [screendata::GravityStrength|Gravity Strength] and
+	// [screendata::TerminalVelocity|Terminal Velocity]
 	//
 	// @versionadded 3.0
 	SFL_CUSTOM_GRAV = 74,
@@ -201,6 +203,7 @@ enum ScreenFlag
 
 // Screen Flag groups, used with [Screen->Flags].
 // See Screen Data dialog for what flags are contained in each group.
+//
 // @deprecated
 enum ScreenFlagGroup
 {
@@ -223,7 +226,7 @@ enum ScreenFlagRoomType
 	SFR_INTERIOR,
 	SFR_DUNGEON,
 	SFR_SIDEVIEW,
-	
+
 	SFR_LAST
 };
 
@@ -236,10 +239,10 @@ enum ScreenFlagView
 	SFV_NOOFFSET,  //'...but don't offset'
 	SFV_LAYER2BG,  //Layer 2 is Background
 	SFV_LAYER3BG,
-	SFV_DARKROOM, 
-	SFV_DARK_DITHER, 
-	SFV_DARK_TRANS, 
-	
+	SFV_DARKROOM,
+	SFV_DARK_DITHER,
+	SFV_DARK_TRANS,
+
 	SFV_LAST
 };
 
@@ -249,8 +252,8 @@ enum ScreenFlagSecrets
 	SFS_BLOCKSHUT, //Block->Shutters
 	SFS_TEMPSECRETS, //Secrets are temporary.
 	SFS_TRIGPERM,  //All Triggers->Perm Secret
-	SFS_ALLTRIGFLAGS,  //All triggers->16-31
-	
+	SFS_ALLTRIGFLAGS, //All triggers->16-31
+
 	SFS_LAST
 };
 
@@ -260,8 +263,8 @@ enum ScreenFlagWarp
 	SFW_AUTODIRECT, //Auto Warps are Direct
 	SFW_SENDSIRECT, //Sensitive Warps are direct.
 	SFW_MAZEPATHS,  //Use maze Path
-	SFW_MAZEOVERRIDE,  //maze Overrides Sidewarps
-	SFW_SPRITECARRY, //Sprites carry over. 
+	SFW_MAZEOVERRIDE, //maze Overrides Sidewarps
+	SFW_SPRITECARRY, //Sprites carry over.
 	SFW_DISABLE_MIRROR, //Disable Magic Mirror
 	// Maze Can Get Lost
 	//
@@ -271,32 +274,32 @@ enum ScreenFlagWarp
 	//
 	// @versionadded 3.0
 	SFW_MAZE_LOOPY,
-	
+
 	SFW_LAST
 };
 
 // @deprecated
 enum ScreenFlagItems
 {
-	SFI_HOLDUP, //Hold up item.
-	SFI_FALLS, //Falls from ceiling
-	SFI_SECRETSITEM,  //Secret reveals item
+	SFI_HOLDUP,      //Hold up item.
+	SFI_FALLS,       //Falls from ceiling
+	SFI_SECRETSITEM, //Secret reveals item
 	SFI_ITEMSECRET,  //Item triggers secrets
 	SFI_ITEMSECRETPERM, //Item triggering secrets is permanent
 	SFI_ITEMRETURNS, //Regular item always returns
 	SFI_SPECIALITEMRETURNS, //Special item always returns
-	
+
 	SFI_LAST
 };
 
 // @deprecated
 enum ScreenFlagCombos
 {
-	SFC_MIDAIR, //Combos affect midair Hero.
-	SFC_CYCLEINIT, //Cycle combos on screen init.
-	SFC_IGNOREBOOTS,  //Damage combos ignore boots. 
+	SFC_MIDAIR,       //Combos affect midair Hero.
+	SFC_CYCLEINIT,    //Cycle combos on screen init.
+	SFC_IGNOREBOOTS,  //Damage combos ignore boots.
 	SFC_TOGGLERINGS,  //Toggle 'Rings Affect Combos'
-	
+
 	SFC_LAST
 };
 
@@ -305,18 +308,18 @@ enum ScreenFlagSave
 {
 	SFSV_SAVECONTHERE, //Save Point->Continue here.
 	SFSV_SAVEONENTRY, //Save game on entry.
-	SFSV_CONTHERE,  //Continue here.
-	SFSV_NOCONTINUEWARP,  //No continue Here after warp. 
-	
+	SFSV_CONTHERE, //Continue here.
+	SFSV_NOCONTINUEWARP, //No continue Here after warp.
+
 	SFSV_LAST
 };
 
 // @deprecated
 enum ScreenFlagFFC
 {
-	SFF_WRAP,   //Freeform Combos Wrap Around
-	SFF_NOCARRYOVER, //No FFC carry over. 
-	
+	SFF_WRAP, //Freeform Combos Wrap Around
+	SFF_NOCARRYOVER, //No FFC carry over.
+
 	SFF_LAST
 };
 
@@ -324,9 +327,9 @@ enum ScreenFlagFFC
 enum ScreenFlagMisc
 {
 	SFM_ALLOW_LADDER,   //Toggle 'Allow Ladder'
-	SFM_NO_DIVING,      //Toggle 'No Diving' 
-	SFM_SCRIPT1,         //General use 1 (Scripts)
-	SFM_SCRIPT2,         //General use 2 (Scripts)
+	SFM_NO_DIVING,      //Toggle 'No Diving'
+	SFM_SCRIPT1,        //General use 1 (Scripts)
+	SFM_SCRIPT2,        //General use 2 (Scripts)
 	SFM_SCRIPT3,        //General use 3 (Scripts)
 	SFM_SCRIPT4,        //General use 4 (Scripts)
 	SFM_SCRIPT5,        //General use 5 (Scripts)
@@ -339,12 +342,13 @@ enum ScreenFlagWhistle
 {
 	SFWH_STAIRS = 0, //Whistle->Stairs
 	SFWH_PALCHANGE, //Whistle->Palette Change
-	SFWH_DRYLAKE,  //Whistle->Dry lake
-	
+	SFWH_DRYLAKE, //Whistle->Dry lake
+
 	SFWH_LAST
 };
 
 // Screen enemy flag groups. Used with [Screen->EFlags].
+//
 // @deprecated
 enum ScreenEnemyFlagGroup
 {
@@ -354,6 +358,7 @@ enum ScreenEnemyFlagGroup
 };
 
 // See [ScreenEnemyFlagGroup].
+//
 // @deprecated
 enum ScreenEnemyFlagSpawn
 {
@@ -362,11 +367,12 @@ enum ScreenEnemyFlagSpawn
 	SEFSP_MIDDLETRAP,
 	SEFSP_ROCK,
 	SEFSP_SHOOTER,
-	
+
 	SEFSP_LAST
 };
 
 // See [ScreenEnemyFlagGroup].
+//
 // @deprecated
 enum ScreenEnemyFlagList1
 {
@@ -375,11 +381,12 @@ enum ScreenEnemyFlagList1
 	SEFL1_INVIS,
 	SEFL1_BOSS,
 	SEFL1_TRAPS_IGNORE_SOLID,
-	
+
 	SEFL1_LAST
 };
 
 // See [ScreenEnemyFlagGroup].
+//
 // @deprecated
 enum ScreenEnemyFlagList2
 {
@@ -388,7 +395,7 @@ enum ScreenEnemyFlagList2
 	SEFL2_ENEMEIS_SECRET,
 	SEFL2_ENEMIES_SECRET_PERM,
 	SEFL2_CHAIN_ENEMIES_TRIGGERS,
-	
+
 	SEFL2_LAST
 };
 
@@ -436,7 +443,8 @@ class screendata {
 	// However, many script types use a more relevant screen instead. For example:
 	//
 	// - screendata scripts use the screen they are assigned to
-	// - ffc, npc, eweapon, lweapon, itemsprite, combo - all use the screen they were spawned on ([sprite::SpawnScreen])
+	// - ffc, npc, eweapon, lweapon, itemsprite, combo - all use the screen they were spawned on
+	//   ([sprite::SpawnScreen])
 	// - player - uses [Game->HeroScreen], which updates as the player moves around
 	//
 	// @versionadded 2.55.9 equivalent to [Game->CurScreen]
@@ -447,14 +455,14 @@ class screendata {
 	//
 	// @zasm_var SDD
 	internal untyped D[];
-	
+
 	// The [combodata] of each of the [NUM_COMBO_POS] combo positions on the screen.
 	// Read-only, modify by editing the [ComboD] ID.
 	//
 	// @versionadded 3.0
 	// @zasm_var COMBODATAD
 	internal const combodata ComboData[];
-	
+
 	// The combo ID of each of the [NUM_COMBO_POS] combo positions on the screen.
 	//
 	// @zasm_var COMBODD
@@ -511,9 +519,9 @@ class screendata {
 	//
 	// @zasm_var SCREENEXSTATED
 	internal bool ExState[];
-	
-	// The position-specific states for each of the [NUM_COMBO_POS] combo positions.
-	// The 8 states for each position are stored using binary / bitwise, with each bit being (1 << index).
+
+	// The position-specific states for each of the [NUM_COMBO_POS] combo positions. The 8 states
+	// for each position are stored using binary / bitwise, with each bit being (1 << index).
 	//
 	// @versionadded 3.0
 	// @zasm_var SCREENCOMBOPOSSTATE
@@ -549,7 +557,6 @@ class screendata {
 	// system, and should be used instead of this.
 	//
 	// @value [enum RenderTarget]
-
 	// @zasm_var GETRENDERTARGET
 	internal const int GetRenderTarget;
 
@@ -584,8 +591,8 @@ class screendata {
 	//
 	// This only refers to the screen denoted by [Index].
 	//
-	// @versionadded 2.55.10
 	// @index [enum ScreenFlag]
+	// @versionadded 2.55.10
 	// @zasm_var SCREEN_FLAG
 	internal bool Flag[];
 
@@ -828,21 +835,21 @@ class screendata {
 	//
 	// @zasm_var SCREENDATACSENSITIVE
 	internal int CSensitive;
-	
+
 	// Which parts of the screen state that won't reset via 'Reset Room' combos.
 	//
 	// @index [enum ScreenState]
 	// @versionadded 3.0
 	// @zasm_var SCREENDATANORESETARR
 	internal bool NoResetState[];
-	
+
 	// Which parts of the screen state that won't reset via 'Reset Room' combos.
 	//
 	// @deprecated Use [NoResetState] instead!
 	// @value [enum NoResetBitflags]
 	// @zasm_var SCREENDATANORESET
 	internal int NoReset;
-	
+
 	// For screen state carryovers, which parts of the screen state that won't carry over to the
 	// target screen.
 	//
@@ -858,13 +865,13 @@ class screendata {
 	// @value [enum NoCarryBitflags]
 	// @zasm_var SCREENDATANOCARRY
 	internal int NoCarry;
-	
+
 	// Which of the 32 ExStates should be carried over to the target screen
 	//
 	// @versionadded 3.0
 	// @zasm_var SCREENDATAEXCARRY
 	internal bool ExStateCarry[];
-	
+
 	// Which of the 32 ExStates should be reset by 'Reset Room' combos
 	//
 	// @versionadded 3.0
@@ -956,7 +963,6 @@ class screendata {
 	//
 	// @index [enum SecretComboIndex]
 	// @value [enum ComboFlag]
-
 	// @zasm_var SCREENDATASECRETFLAG
 	internal int SecretFlags[];
 
@@ -988,7 +994,7 @@ class screendata {
 	// @versionadded 3.0
 	// @zasm_var SCREENDATA_MUSIC
 	internal musicdata Music;
-	
+
 	// The MIDI that plays on this screen.
 	//
 	// @deprecated Use [Music] / [musicdata::MIDI] instead!
@@ -1344,7 +1350,7 @@ class screendata {
 	internal void DrawInteger(int layer, int x, int y, int font, int color,
 							  int bg_color, int width, int height, int value,
 							  int num_decimal_places = 0, int opacity = OP_OPAQUE);
-	
+
 	// Draws a tile block of 'block_w' x 'block_h', where the top-left tile is 'tile',
 	// with the specified drawing parameters. 'transparency' determines if color 0
 	// should be transparent or actually drawn.
@@ -1358,7 +1364,7 @@ class screendata {
 						   int block_h, int cset, int xscale = -1, int yscale = -1,
 						   int rx = 0, int ry = 0, int rot_degrees = 0,
 						   int flip = 0, bool transparency = true, int opacity = OP_OPAQUE);
-	
+
 	// Draws a quarter-tile portion of the specified tile with the
 	// specified drawing parameters.
 	//
@@ -1461,7 +1467,7 @@ class screendata {
 	//   POPARGS D5 0.0006
 	internal void DrawScreen(int layer, int map, int screen, int x, int y,
 							 int rotation = 0);
-	
+
 	// Draws the specified mapdata to the screen.
 	// Only draws the mapdata provided, not layerscreens of that mapdata.
 	// When using a temp mapdata that contains the combos for an entire region,
@@ -1519,7 +1525,7 @@ class screendata {
 					   int source_w, int source_h, int dest_x, int dest_y,
 					   int dest_w, int dest_h, int rotation = 0, int cx = 0,
 					   int cy = 0, int mode = 0, int lit = 0, bool mask = true);
-	
+
 	// As 'TileBlit', but uses the current tile of a specified combo.
 	//
 	// Blit supports multiple MODES, OR'd together as a bitmask:
@@ -1749,7 +1755,7 @@ class screendata {
 	// @zasm
 	//   CREATEPORTAL
 	internal portal CreatePortal();
-	
+
 	// Draws a square light to the engine darkroom bitmap, centered on 'cx,cy'.
 	// Any of the args that defaults to -1, if passed as -1, will use the default
 	// value from `Game->Generic[]` associated.

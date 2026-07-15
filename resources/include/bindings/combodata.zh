@@ -28,12 +28,15 @@ enum AnimationBitflags
 	// 'Toggle Transparency'
 	AF_TRANSPARENT                 = 0x08,
 	// 'Cycle To Screen Undercombo'
+	//
 	// @versionadded 3.0
 	AF_CYCLEUNDERCOMBO             = 0x10,
 	// 'Only Visible In Editor'
+	//
 	// @versionadded 3.0
 	AF_EDITOR_ONLY                 = 0x20,
 	// 'Overhead'
+	//
 	// @versionadded 3.0
 	AF_OVERHEAD                    = 0x40,
 };
@@ -143,7 +146,6 @@ class combodata {
 	// The solidity bitmask of the combo (same as [Screen->ComboS]).
 	//
 	// @value [enum ComboSolidityBitflags]
-
 	// @zasm_var COMBODWALK
 	internal int Walk;
 
@@ -153,7 +155,6 @@ class combodata {
 	internal int Effect;
 
 	// @value [enum ComboType]
-
 	// @zasm_var COMBODTYPE
 	internal int Type;
 
@@ -184,8 +185,8 @@ class combodata {
 	// @zasm_var COMBODNEXTD
 	internal int NextData;
 
-	// If the [AnimFlags] `AF_CYCLENOCSET` and `AF_CYCLEUNDERCOMBO` are NOT set, the combo will change to
-	// this cset when it cycles.
+	// If the [AnimFlags] `AF_CYCLENOCSET` and `AF_CYCLEUNDERCOMBO` are NOT set, the combo will
+	// change to this cset when it cycles.
 	//
 	// @zasm_var COMBODNEXTC
 	internal int NextCSet;
@@ -193,7 +194,6 @@ class combodata {
 	// The inherent flag of the combo.
 	//
 	// @value [enum ComboFlag]
-
 	// @zasm_var COMBODFLAG
 	internal int Flag;
 
@@ -211,7 +211,6 @@ class combodata {
 	// The combo's animation flags.
 	//
 	// @value [enum AnimationBitflags]
-
 	// @zasm_var COMBODANIMFLAGS
 	internal int AnimFlags;
 
@@ -253,8 +252,8 @@ class combodata {
 	// has the opposite direction set, the combos will be connected for features that use
 	// large combos.
 	//
-	// @index [enum Direction]
 	// @length 4
+	// @index [enum Direction]
 	// @versionadded 3.0
 	// @zasm_var COMBOD_LARGECOMBO_DIRS
 	internal bool LargeComboDirs[];
@@ -337,18 +336,18 @@ class combodata {
 	//
 	// @zasm_var COMBODLIFTTIME
 	internal int LiftTime;
-	
+
 	// The radius of light that will be emitted by the lifted weapon.
 	//
-	// @versionadded 3.0
 	// @deprecated use [LiftWeaponData] / [weapondata::BurnLightRadius] instead!
+	// @versionadded 3.0
 	// @zasm_var COMBODLIFTLIGHTRAD
 	internal int LiftLightRadius;
-	
+
 	// The [LightShape] the lifted weapon will use, if light is emitted.
 	//
-	// @versionadded 3.0
 	// @deprecated use [LiftWeaponData] / [weapondata::LightShape] instead!
+	// @versionadded 3.0
 	// @zasm_var COMBODLIFTLIGHTSHAPE
 	internal int LiftLightShape;
 
@@ -367,39 +366,40 @@ class combodata {
 
 	// @zasm_var COMBODNEXTTIMER
 	internal int NextTimer;
-	
+
 	// The combo's triggers.
 	//
 	// @versionadded 3.0
 	// @zasm_var COMBODTRIGGERS
 	internal const combotrigger Triggers[];
-	
+
 	// The number of triggers the combo has. Writing to this instantly resizes [Triggers].
 	//
 	// @versionadded 3.0
 	// @zasm_var COMBODNUMTRIGGERS
 	internal int NumTriggers;
-	
-	// If true, don't allow the combo to trigger via it's normal trigger methods (ex: bush via slashing)
+
+	// If true, don't allow the combo to trigger via it's normal trigger methods (ex: bush via
+	// slashing)
 	//
 	// @versionadded 3.0
 	// @zasm_var COMBODONLYGEN
 	internal bool OnlyGenTriggers;
-	
-	// The Z-height of the combo for [GENFLAG_WALK_ON_TOP]. A value of '0' represents infinite height.
+
+	// The Z-height of the combo for [GENFLAG_WALK_ON_TOP]. A value of '0' represents infinite
+	// height.
 	//
 	// @versionadded 3.0
 	// @zasm_var COMBOD_Z_HEIGHT
 	internal int ZHeight;
-	
-	// The amount below the [ZHeight] that can still reach it to walk atop it via [GENFLAG_WALK_ON_TOP].
-	// Designed for 'walking up stairs' type effects.
-	// Can't be negative.
+
+	// The amount below the [ZHeight] that can still reach it to walk atop it via
+	// [GENFLAG_WALK_ON_TOP]. Designed for 'walking up stairs' type effects. Can't be negative.
 	//
 	// @versionadded 3.0
 	// @zasm_var COMBOD_Z_STEP_HEIGHT
 	internal int ZStepHeight;
-	
+
 	// If >0 and the player is diving with flippers of at least this level,
 	// the player will ignore the solidity of this combo.
 	//
@@ -426,7 +426,7 @@ class combodata {
 	// @deprecated Use [Triggers] / [combotrigger::Flags] instead!
 	// @zasm_var COMBODTRIGGERFLAGS
 	internal int TriggerFlags[];
-	
+
 	// @deprecated Use [Triggers] / [combotrigger::Button] instead!
 	// @zasm_var COMBODTRIGGERBUTTON
 	internal bool TrigButton[];
@@ -475,8 +475,7 @@ class combodata {
 	//
 	// Related:
 	// - `TriggerFlags[TRIGFLAG_LIGHTON]` (trigger when hit by matching light)
-	// - `TriggerFlags[TRIGFLAG_LIGHTOFF]` (trigger when NOT hit by matching
-	// light)
+	// - `TriggerFlags[TRIGFLAG_LIGHTOFF]` (trigger when NOT hit by matching light)
 	//
 	// @deprecated Use [Triggers] / [combotrigger::LightBeam] instead!
 	// @zasm_var COMBODTRIGGERLIGHTBEAM
@@ -505,10 +504,11 @@ class combodata {
 
 	// The item pickup bitflags for the spawned item.
 	//
-	// Only these bitflags are used: [IP_HOLDUP], [IP_TIMEOUT], [IP_TRIGGERSECRETS], and [IP_ALWAYSGRAB].
+	// Only these bitflags are used: [IP_HOLDUP], [IP_TIMEOUT], [IP_TRIGGERSECRETS], and
+	// [IP_ALWAYSGRAB].
 	//
-	// @value [enum ItemPickupBitflags]
 	// @deprecated Use [Triggers] / [combotrigger::SpawnItemPickup] instead!
+	// @value [enum ItemPickupBitflags]
 	// @zasm_var COMBODTRIGITEMPICKUP
 	internal int TrigSpawnItemPickup;
 
@@ -715,13 +715,15 @@ class combodata {
 	// @versionadded 3.0
 	// @zasm_var COMBODTRIGPUSHTIME
 	internal int TrigPushTime;
-	
+
 	// The [weapondata] for this combo's lift weapon.
+	//
 	// @versionadded 3.0
 	// @zasm_var COMBODATA_LIFT_WEAPONDATA
 	internal const weapondata LiftWeaponData;
-	
+
 	// The [weapondata] for this combo's misc weapon.
+	//
 	// @versionadded 3.0
 	// @zasm_var COMBODATA_MISC_WEAPONDATA
 	internal const weapondata MiscWeaponData;

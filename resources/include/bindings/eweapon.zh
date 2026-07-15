@@ -29,11 +29,11 @@ enum EWeaponType
 };
 
 // Weapons active on the screen from enemies.
-// 
+//
 // Load with [Screen->EWeapons], [Screen->LoadEWeapon], or [Screen->CreateEWeapon].
 //
-// @zasm_ref REFEWPN
 // @extends sprite
+// @zasm_ref REFEWPN
 class eweapon {
 	// @delete
 	internal eweapon();
@@ -103,7 +103,6 @@ class eweapon {
 	internal int FlashCSet;
 
 	// @value [enum WeaponDeadState]
-
 	// @zasm_var EWPNDEAD
 	internal int DeadState;
 
@@ -165,7 +164,6 @@ class eweapon {
 	// Unblockable bitflags.
 	//
 	// @value [enum UnblockableBitflags]
-
 	// @zasm_var EWPNUNBL
 	internal int Unblockable;
 
@@ -181,7 +179,7 @@ class eweapon {
 	// @versionadded 3.0
 	// @zasm_var EWPN_BOUNCE_MULT
 	internal int BounceMult;
-	
+
 	// When the weapon lands from the air, it bounces based on [BounceMult],
 	// adding this value in px/frame after the multiplier.
 	// Using a negative value will dampen the bounce, and is recommended to prevent
@@ -190,7 +188,7 @@ class eweapon {
 	// @versionadded 3.0
 	// @zasm_var EWPN_BOUNCE_ADD
 	internal int BounceAdd;
-	
+
 	// Set to true, this prevents the weapon from triggering any Combo Triggers.
 	// Also affects some melee weapon checks (ex. slash/pound combos).
 	//

@@ -194,7 +194,6 @@ enum KeyModifierBitflags
 	KB_ACCENT4_FLAG    = 0x8000,
 };
 
-
 // Contains variables related to button, mouse, and keyboard input.
 //
 // Access with `Input->`.
@@ -234,14 +233,12 @@ class Input {
 	//
 	// @index [enum Button]
 	// @value [enum KeyCode]
-
 	// @zasm_var KEYBINDINGS
 	internal const int KeyBindings[];
 
 	// The state of the modifier keys.
 	//
 	// @value [enum KeyModifierBitflags]
-
 	// @zasm_var KEYMODIFIERS
 	internal int ModifierKeys;
 

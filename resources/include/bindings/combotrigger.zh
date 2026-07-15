@@ -139,15 +139,18 @@ enum ComboTriggerFlag
 	//
 	// @versionadded 3.0
 	TRIGFLAG_LITEM_REQUIRE,
-	// Counters/Items->Require Not All - Require not all (some is ok) of the specified LItems to trigger the combo
+	// Counters/Items->Require Not All - Require not all (some is ok) of the specified LItems to
+	// trigger the combo
 	//
 	// @versionadded 3.0
 	TRIGFLAG_LITEM_INV_REQUIRE,
-	// Counters/Items->'->Set' - Grants the specified LItems. If [TRIGFLAG_LITEM_UNSET] is also on, toggles them instead.
+	// Counters/Items->'->Set' - Grants the specified LItems. If [TRIGFLAG_LITEM_UNSET] is also on,
+	// toggles them instead.
 	//
 	// @versionadded 3.0
 	TRIGFLAG_LITEM_SET,
-	// Counters/Items->'->Unset' - Removes the specified LItems. If [TRIGFLAG_LITEM_SET] is also on, toggles them instead.
+	// Counters/Items->'->Unset' - Removes the specified LItems. If [TRIGFLAG_LITEM_SET] is also on,
+	// toggles them instead.
 	//
 	// @versionadded 3.0
 	TRIGFLAG_LITEM_UNSET,
@@ -176,7 +179,8 @@ enum ComboTriggerFlag
 	//
 	// @versionadded 3.0
 	TRIGFLAG_REQ_HERO_STANDING,
-	// Can only trigger if the [Hero] is NOT standing on ground. (Counts standing in sideview as well)
+	// Can only trigger if the [Hero] is NOT standing on ground. (Counts standing in sideview as
+	// well)
 	//
 	// @versionadded 3.0
 	TRIGFLAG_REQ_HERO_NOT_STANDING,
@@ -192,7 +196,8 @@ enum ComboTriggerFlag
 	//
 	// @versionadded 3.0
 	TRIGFLAG_COUNTER_PERCENT,
-	// Makes [combotrigger->Copycat] not trigger this combo; it will only be used as an effect when another cause triggers this combo.
+	// Makes [combotrigger->Copycat] not trigger this combo; it will only be used as an effect when
+	// another cause triggers this combo.
 	//
 	// @versionadded 3.0
 	TRIGFLAG_NO_COPYCAT_CAUSE,
@@ -244,7 +249,8 @@ enum ComboTriggerFlag
 	//
 	// @versionadded 3.0
 	TRIGFLAG_HERO_X_LE,
-	// [TRIGFLAG_HERO_X_GE] / [TRIGFLAG_HERO_X_LE] use '[combotrigger->ReqHeroX]' relative to the combo's position. For FFCs, uses a position based on the center of the hitbox.
+	// [TRIGFLAG_HERO_X_GE] / [TRIGFLAG_HERO_X_LE] use '[combotrigger->ReqHeroX]' relative to the
+	// combo's position. For FFCs, uses a position based on the center of the hitbox.
 	//
 	// @versionadded 3.0
 	TRIGFLAG_HERO_X_RELATIVE,
@@ -256,7 +262,8 @@ enum ComboTriggerFlag
 	//
 	// @versionadded 3.0
 	TRIGFLAG_HERO_Y_LE,
-	// [TRIGFLAG_HERO_Y_GE] / [TRIGFLAG_HERO_Y_LE] use '[combotrigger->ReqHeroY]' relative to the combo's position. For FFCs, uses a position based on the center of the hitbox.
+	// [TRIGFLAG_HERO_Y_GE] / [TRIGFLAG_HERO_Y_LE] use '[combotrigger->ReqHeroY]' relative to the
+	// combo's position. For FFCs, uses a position based on the center of the hitbox.
 	//
 	// @versionadded 3.0
 	TRIGFLAG_HERO_Y_RELATIVE,
@@ -268,19 +275,24 @@ enum ComboTriggerFlag
 	//
 	// @versionadded 3.0
 	TRIGFLAG_HERO_FORCE_VY,
-	// Changes [TRIGFLAG_IGNITE_WEAPONS_ANY],[TRIGFLAG_IGNITE_WEAPONS_STRONG],[TRIGFLAG_IGNITE_WEAPONS_MAGIC],[TRIGFLAG_IGNITE_WEAPONS_DIVINE] to 'Unignite' the weapon instead
+	// Changes
+	// [TRIGFLAG_IGNITE_WEAPONS_ANY],[TRIGFLAG_IGNITE_WEAPONS_STRONG],[TRIGFLAG_IGNITE_WEAPONS_MAGIC],[TRIGFLAG_IGNITE_WEAPONS_DIVINE]
+	// to 'Unignite' the weapon instead
 	//
 	// @versionadded 3.0
 	TRIGFLAG_UNIGNITE_WEAPONS,
-	// Makes triggers below this trigger on the same combo with the same cause NOT be triggered by this cause
+	// Makes triggers below this trigger on the same combo with the same cause NOT be triggered by
+	// this cause
 	//
 	// @versionadded 3.0
 	TRIGFLAG_CANCEL_TRIGGER,
-	// When triggered, sets [Screen->GravityStrength] and [Screen->TerminalVelocity] to [combotrigger->GravityStrength] and [combotrigger->TerminalVelocity] respectively.
+	// When triggered, sets [Screen->GravityStrength] and [Screen->TerminalVelocity] to
+	// [combotrigger->GravityStrength] and [combotrigger->TerminalVelocity] respectively.
 	//
 	// @versionadded 3.0
 	TRIGFLAG_SET_GRAVITY,
-	// When triggered, resets [Screen->GravityStrength] and [Screen->TerminalVelocity] to the original values of the screen.
+	// When triggered, resets [Screen->GravityStrength] and [Screen->TerminalVelocity] to the
+	// original values of the screen.
 	//
 	// @versionadded 3.0
 	TRIGFLAG_REVERT_GRAVITY,
@@ -316,11 +328,13 @@ enum ComboTriggerFlag
 	//
 	// @versionadded 3.0
 	TRIGFLAG_SFX_KILL,
-	// If true, the [combotrigger->ComboChange] will be an exact combo ID to change to, instead of a relative value.
+	// If true, the [combotrigger->ComboChange] will be an exact combo ID to change to, instead of a
+	// relative value.
 	//
 	// @versionadded 3.0
 	TRIGFLAG_CMB_CHANGE_ABSOLUTE,
-	// If true, the [combotrigger->CSetChange] will be an exact combo ID to change to, instead of a relative value.
+	// If true, the [combotrigger->CSetChange] will be an exact combo ID to change to, instead of a
+	// relative value.
 	//
 	// @versionadded 3.0
 	TRIGFLAG_CSET_CHANGE_ABSOLUTE,
@@ -416,36 +430,37 @@ enum ComboTriggerFlag
 class combotrigger {
 	// @delete
 	internal combotrigger();
-	
+
 	// The flags of this trigger.
 	//
 	// @index [enum ComboTriggerFlag]
 	// @zasm_var CMBTRIGFLAGS
 	internal bool Flags[];
-	
+
 	// Array of 8 buttons that can trigger the combo when pressed
 	// (while the player is standing close to and facing the combo)
 	//
 	// @index [enum InteractButton]
 	// @zasm_var CMBTRIGBUTTON
 	internal bool Button[];
-	
+
 	// Used as a minimum (or maximum, if [TRIGFLAG_INVERT_MIN_MAX] is set) level
 	// for any weapon-based triggers.
 	//
 	// @zasm_var CMBTRIGWPNLEVEL
 	internal int WeaponLevel;
-	
+
 	// If set to non-0, represents an item that must be owned (or must NOT
 	//   be owned, if [TRIGFLAG_INVERT_ITEMREQ] is set).
 	//
 	// If [TRIGFLAG_CONSUME_ITEMREQ] is set, triggering the combo will consume this item,
 	// removing it from the player's inventory.
-	// 
+	//
 	// @zasm_var CMBTRIGREQITEM
 	internal int ReqItem;
-	
+
 	// Timer. The combo triggers every this many frames if >0.
+	//
 	// @zasm_var CMBTRIGTIMER
 	internal int Timer;
 
@@ -453,20 +468,20 @@ class combotrigger {
 	//
 	// @zasm_var CMBTRIGSFX
 	internal int SFX;
-	
+
 	// The Pan to use for the [SFX]. -1 will pan based on the combo's position,
 	// values 0-255 will specify a specific pan. 128 is centered.
 	//
 	// @value -1 <= N <= 255
 	// @zasm_var CMBTRIGGER_SFX_PAN
 	internal int SFXPan;
-	
+
 	// The volume to use for the [SFX], as a percentage of the base volume.
 	//
 	// @value 0 <= N <= 255
 	// @zasm_var CMBTRIGGER_SFX_VOLUME
 	internal int SFXVolume;
-	
+
 	// The frequency to use for the [SFX]. -1 will use the default for the SFX,
 	// otherwise this value will be used in Hz.
 	//
@@ -492,7 +507,7 @@ class combotrigger {
 	//
 	// @zasm_var CMBTRIGCSETCHANGE
 	internal int CSetChange;
-	
+
 	// The player proximity requirement. If >0, when the combo is triggered,
 	// the trigger will be canceled if the player is not within this distance in pixels.
 	//
@@ -508,25 +523,26 @@ class combotrigger {
 	//
 	// Related:
 	// - [TRIGFLAG_LIGHTON] (trigger when hit by matching light)
-	// - [TRIGFLAG_LIGHTOFF] (trigger when NOT hit by matching
-	// light)
+	// - [TRIGFLAG_LIGHTOFF] (trigger when NOT hit by matching light)
 	//
 	// @zasm_var CMBTRIGLIGHTBEAM
 	internal int LightBeam;
-	
+
 	// The counter used by this trigger.
 	//
-	// With [TRIGFLAG_COUNTER_GE], cancels the trigger if the counter is < the [CounterAmount].
-	// With [TRIGFLAG_COUNTER_LT], cancels the trigger if the counter is >= the [CounterAmount].
-	// With [TRIGFLAG_COUNTER_EAT], consumes the [CounterAmount] from the counter when triggered.
-	// With [TRIGFLAG_COUNTER_PERCENT], the [CounterAmount] is treated as a percentage of the max of this counter.
-	// ...and with [TRIGFLAG_COUNTER_NOT_ONLY_TRIG_EAT], the consumed amount consumes even if the combo
-	// fails to trigger (ex. via failing a conditional)
+	// - With [TRIGFLAG_COUNTER_GE], cancels the trigger if the counter is < the [CounterAmount].
+	// - With [TRIGFLAG_COUNTER_LT], cancels the trigger if the counter is >= the [CounterAmount].
+	// - With [TRIGFLAG_COUNTER_EAT], consumes the [CounterAmount] from the counter when triggered.
+	// - With [TRIGFLAG_COUNTER_PERCENT], the [CounterAmount] is treated as a percentage of the max
+	//   of this counter.
+	// - ...and with [TRIGFLAG_COUNTER_NOT_ONLY_TRIG_EAT], the consumed amount consumes even if the
+	//   combo fails to trigger (ex. via failing a conditional)
 	//
 	// @zasm_var CMBTRIGCTR
 	internal int Counter;
-	
+
 	// The counter amount used by this trigger. See [Counter].
+	//
 	// @zasm_var CMBTRIGCTRAMNT
 	internal int CounterAmount;
 
@@ -551,10 +567,10 @@ class combotrigger {
 
 	// The item pickup bitflags for the spawned item.
 	//
-	// Only these bitflags are used: [IP_HOLDUP], [IP_TIMEOUT], [IP_TRIGGERSECRETS], and [IP_ALWAYSGRAB].
+	// Only these bitflags are used: [IP_HOLDUP], [IP_TIMEOUT], [IP_TRIGGERSECRETS], and
+	// [IP_ALWAYSGRAB].
 	//
 	// @value [enum ItemPickupBitflags]
-
 	// @zasm_var CMBTRIGITEMPICKUP
 	internal int SpawnItemPickup;
 
@@ -562,7 +578,7 @@ class combotrigger {
 	//
 	// @zasm_var CMBTRIGEXSTATE
 	internal int ExState;
-	
+
 	// 0-7. Used by [TRIGFLAG_COMBOPOSSTATE_CAUSE], [TRIGFLAG_COMBOPOSSTATE_REQ],
 	// [TRIGFLAG_COMBOPOSSTATE_UNREQ], [TRIGFLAG_COMBOPOSSTATE_SET],
 	// and [TRIGFLAG_COMBOPOSSTATE_UNSET].
@@ -656,55 +672,61 @@ class combotrigger {
 	//
 	// @zasm_var CMBTRIGDMAPLVL
 	internal int DMapLvl;
-	
-	// Which of the 32 level states for the [DMapLvl] are required to be ON for this trigger to activate
+
+	// Which of the 32 level states for the [DMapLvl] are required to be ON for this trigger to
+	// activate
 	//
 	// @length 32
 	// @zasm_var CMBTRIGREQLVLSTATE
 	internal bool ReqLevelState[];
-	
-	// Which of the 32 level states for the [DMapLvl] are required to be OFF for this trigger to activate
+
+	// Which of the 32 level states for the [DMapLvl] are required to be OFF for this trigger to
+	// activate
 	//
 	// @length 32
 	// @zasm_var CMBTRIGUNREQLVLSTATE
 	internal bool UnreqLevelState[];
-	
+
 	// Which of the 256 global states are required to be ON for this trigger to activate
 	//
 	// @length 256
 	// @zasm_var CMBTRIGREQGLOBALSTATE
 	internal bool ReqGlobalState[];
-	
+
 	// Which of the 256 global states are required to be OFF for this trigger to activate
 	//
 	// @length 256
 	// @zasm_var CMBTRIGUNREQGLOBALSTATE
 	internal bool UnreqGlobalState[];
-	
-	// Which of the screen states for this combo's screen are required to be ON for this trigger to activate
+
+	// Which of the screen states for this combo's screen are required to be ON for this trigger to
+	// activate
 	//
 	// @index [enum ScreenState]
 	// @zasm_var CMBTRIGREQSCRSTATE
 	internal bool ReqScreenState[];
-	
-	// Which of the screen states for this combo's screen are required to be OFF for this trigger to activate
+
+	// Which of the screen states for this combo's screen are required to be OFF for this trigger to
+	// activate
 	//
 	// @index [enum ScreenState]
 	// @zasm_var CMBTRIGUNREQSCRSTATE
 	internal bool UnreqScreenState[];
-	
-	// Which of the 32 screen exstates for this combo's screen are required to be ON for this trigger to activate
+
+	// Which of the 32 screen exstates for this combo's screen are required to be ON for this
+	// trigger to activate
 	//
 	// @length 32
 	// @zasm_var CMBTRIGREQSCREXSTATE
 	internal bool ReqScreenExState[];
-	
-	// Which of the 32 screen exstates for this combo's screen are required to be OFF for this trigger to activate
+
+	// Which of the 32 screen exstates for this combo's screen are required to be OFF for this
+	// trigger to activate
 	//
 	// @length 32
 	// @zasm_var CMBTRIGUNREQSCREXSTATE
 	internal bool UnreqScreenExState[];
-	
+
 	// Get if a specified exdoor state is required to be ON for this trigger to activate
 	//
 	// @zasm
@@ -712,7 +734,7 @@ class combotrigger {
 	//   SETR D2 CMBTRIG_REQ_SCREXDOOR
 	//   POPARGS D5 0.0003
 	internal int GetReqExDoor(int dir, int index);
-	
+
 	// Set if a specified exdoor state is required to be ON for this trigger to activate
 	//
 	// @zasm
@@ -721,7 +743,7 @@ class combotrigger {
 	//   SETR CMBTRIG_REQ_SCREXDOOR D2
 	//   POPARGS D5 0.0003
 	internal void SetReqExDoor(int dir, int index, bool state);
-	
+
 	// Get if a specified exdoor state is required to be OFF for this trigger to activate
 	//
 	// @zasm
@@ -729,7 +751,7 @@ class combotrigger {
 	//   SETR D2 CMBTRIG_UNREQ_SCREXDOOR
 	//   POPARGS D5 0.0003
 	internal int GetUnreqExDoor(int dir, int index);
-	
+
 	// Set if a specified exdoor state is required to be OFF for this trigger to activate
 	//
 	// @zasm
@@ -739,16 +761,16 @@ class combotrigger {
 	//   POPARGS D5 0.0003
 	internal void SetUnreqExDoor(int dir, int index, bool state);
 
-	// The 'Map' used by [ReqScreenState], [UnreqScreenState], [ReqScreenExState], [UnreqScreenExState],
-	// [GetReqExDoor], [SetReqExDoor], [GetUnreqExDoor], [SetUnreqExDoor].
+	// The 'Map' used by [ReqScreenState], [UnreqScreenState], [ReqScreenExState],
+	// [UnreqScreenExState], [GetReqExDoor], [SetReqExDoor], [GetUnreqExDoor], [SetUnreqExDoor].
 	//
 	// 0 represents the 'current map + screen', otherwise a valid map indicates that map.
 	//
 	// @zasm_var CMBTRIGREQSTATEMAP
 	internal int StateMap;
 
-	// The 'Screen' used by [ReqScreenState], [UnreqScreenState], [ReqScreenExState], [UnreqScreenExState],
-	// [GetReqExDoor], [SetReqExDoor], [GetUnreqExDoor], [SetUnreqExDoor].
+	// The 'Screen' used by [ReqScreenState], [UnreqScreenState], [ReqScreenExState],
+	// [UnreqScreenExState], [GetReqExDoor], [SetReqExDoor], [GetUnreqExDoor], [SetUnreqExDoor].
 	//
 	// If [StateMap] is 0, this value is ignored (the 'current map + screen' is used).
 	// Otherwise, this screen on the [StateMap] will be used.
@@ -763,7 +785,7 @@ class combotrigger {
 	//
 	// @zasm_var CMBTRIG_PLAY_MUSIC
 	internal musicdata PlayMusic;
-	
+
 	// When triggered, if > -1, sets [Audio->MusicRefresh] to this value.
 	// '-1' as a value indicates not to change [Audio->MusicRefresh].
 	// See [MusicRefreshMode] for other values.
@@ -792,7 +814,8 @@ class combotrigger {
 	// @zasm_var CMBTRIGTINTB
 	internal int TintB;
 
-	// The level palette to change to when triggered. -1 for none, -2 for "editor palette of current screen"
+	// The level palette to change to when triggered. -1 for none, -2 for "editor palette of current
+	// screen"
 	//
 	// @zasm_var CMBTRIGLVLPAL
 	internal int LvlPal;
@@ -847,137 +870,137 @@ class combotrigger {
 	//
 	// @zasm_var CMBTRIGPUSHTIME
 	internal int PushTime;
-	
+
 	// The combo ID to be displayed when in range to trigger a [Button].
 	//
 	// @zasm_var CMBTRIGGERPROMPTCID
 	internal int PromptCombo;
-	
+
 	// The CSet for the [PromptCombo].
 	//
 	// @zasm_var CMBTRIGGERPROMPTCS
 	internal int PromptCSet;
-	
+
 	// The combo ID to be displayed when in range to trigger a [Button],
 	//  but the trigger conditions fail.
 	//
 	// @zasm_var CMBTRIGGERFAILPROMPTCID
 	internal int FailPromptCombo;
-	
+
 	// The CSet for the [FailPromptCombo].
 	//
 	// @zasm_var CMBTRIGGERFAILPROMPTCS
 	internal int FailPromptCSet;
-	
+
 	// The X position for the [PromptCombo]/[FailPromptCombo].
 	//
 	// @zasm_var CMBTRIGGERPROMPTX
 	internal int PromptX;
-	
+
 	// The Y position for the [PromptCombo]/[FailPromptCombo].
 	//
 	// @zasm_var CMBTRIGGERPROMPTY
 	internal int PromptY;
-	
+
 	// The message string to play when the combo is triggered.
 	//
 	// @zasm_var CMBTRIGGERTRIGSTR
 	internal int TriggerString;
-	
+
 	// The message string to play when the combo is triggered, but the trigger conditions fail.
 	//
 	// @zasm_var CMBTRIGGERFAILSTR
 	internal int FailString;
-	
+
 	// The [Hero->Jump] value is set to this value (if non-zero) when triggered.
 	//
 	// @zasm_var CMBTRIGGERPLAYERBOUNCE
 	internal int HeroBounce;
-	
+
 	// Add this value to [Hero->X].
 	// Also used with [TRIGFLAG_SET_HERO_X_ABSOLUTE] and [TRIGFLAG_SET_HERO_X_RELATIVE_CMB].
 	//
 	// @zasm_var CMBTRIGGERDESTHEROX
 	internal int DestHeroX;
-	
+
 	// Add this value to [Hero->Y].
 	// Also used with [TRIGFLAG_SET_HERO_Y_ABSOLUTE] and [TRIGFLAG_SET_HERO_Y_RELATIVE_CMB].
 	//
 	// @zasm_var CMBTRIGGERDESTHEROY
 	internal int DestHeroY;
-	
+
 	// Add this value to [Hero->Z].
 	// Also used with [TRIGFLAG_SET_HERO_Z_ABSOLUTE].
 	//
 	// @zasm_var CMBTRIGGERDESTHEROZ
 	internal int DestHeroZ;
-	
+
 	// If > -1, set [Hero->Dir] to this value.
 	//
 	// @zasm_var CMBTRIGGERFORCEPLAYERDIR
 	internal int ForceHeroDir;
-	
+
 	// Only used by [TRIGFLAG_HERO_X_GE] / [TRIGFLAG_HERO_X_LE].
 	// Related: [TRIGFLAG_HERO_X_RELATIVE]
 	//
 	// @zasm_var CMBTRIGGERREQPLAYERX
 	internal int ReqHeroX;
-	
+
 	// Only used by [TRIGFLAG_HERO_Y_GE] / [TRIGFLAG_HERO_Y_LE].
 	// Related: [TRIGFLAG_HERO_Y_RELATIVE]
 	//
 	// @zasm_var CMBTRIGGERREQPLAYERY
 	internal int ReqHeroY;
-	
+
 	// Requires that [Hero->Z] is >= this value to trigger.
 	//
 	// If [TRIGFLAG_INVERT_HERO_Z] is set, requires that [Hero->Z] is < this instead.
 	//
 	// @zasm_var CMBTRIGGERREQPLAYERZ
 	internal int ReqHeroZ;
-	
+
 	// Only used by [TRIGFLAG_HERO_JUMP_GE] / [TRIGFLAG_HERO_JUMP_LE].
 	//
 	// @zasm_var CMBTRIGGERREQPLAYERJUMP
 	internal int ReqHeroJump;
-	
+
 	// If any index is true, the [Hero->Dir] must match a true index for the combo to trigger.
 	//
 	// @index [enum Direction]
 	// @zasm_var CMBTRIGGERREQPLAYERDIR
 	internal bool ReqHeroDir[];
-	
+
 	// If >-1, sets [Hero->ScriptIceCombo] to this value.
 	//
 	// @zasm_var CMBTRIGGERICECOMBO
 	internal int ForceIceCombo;
-	
+
 	// Sets [Hero->IceVx] to this value if [TRIGFLAG_HERO_FORCE_VX] is set;
 	//
 	// @zasm_var CMBTRIGGERICEVX
 	internal int ForceIceVx;
-	
+
 	// Sets [Hero->IceVy] to this value if [TRIGFLAG_HERO_FORCE_VY] is set;
 	//
 	// @zasm_var CMBTRIGGERICEVY
 	internal int ForceIceVy;
-	
+
 	// Sets [Screen->GravityStrength] to this value if [TRIGFLAG_SET_GRAVITY] is set;
 	//
 	// @zasm_var CMBTRIGGER_GRAVITY
 	internal int GravityStrength;
-	
+
 	// Sets [Screen->TerminalVelocity] to this value if [TRIGFLAG_SET_GRAVITY] is set;
 	//
 	// @zasm_var CMBTRIGGER_TERMINAL_VELOCITY
 	internal int TerminalVelocity;
-	
+
 	// The margins away from the screen added to the viewport when calculating
 	// [TRIGFLAG_VIEWPORT_REQ_ONSCREEN] and [TRIGFLAG_VIEWPORT_REQ_OFFSCREEN].
 	//
 	// @zasm_var CMBTRIGGER_VIEWPORT_RANGE
 	internal int ViewportRange;
-	
+
 	// There is an N in [ChanceDenominator] chance of the combo triggering.
 	// Default '1 in 1' means no chance involved.
 	// A 0 numerator means the combo won't ever trigger.
@@ -985,14 +1008,14 @@ class combotrigger {
 	// @value 0 to [MAX_INT]
 	// @zasm_var CMBTRIGGER_CHANCE_NUMERATOR
 	internal int ChanceNumerator;
-	
+
 	// There is a [ChanceNumerator] in N chance of the combo triggering.
 	// Default '1 in 1' means no chance involved.
 	//
 	// @value 1 to [MAX_INT]
 	// @zasm_var CMBTRIGGER_CHANCE_NUMERATOR
 	internal int ChanceDenominator;
-	
+
 	// Gets the label for this trigger.
 	//
 	// If the buffer provided is too small, it will *automatically be resized to

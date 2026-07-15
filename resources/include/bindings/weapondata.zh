@@ -1,4 +1,5 @@
 // Flags for [weapondata::MiscFlags]
+//
 // @versionadded 3.0
 enum WeapDataFlag
 {
@@ -21,58 +22,58 @@ class weapondata {
 	// @zasm
 	//   CREATEWEAPDATA
 	internal weapondata();
-	
+
 	// If the weapondata is valid or not.
 	// A weapondata could become invalid if, for example, it was from
 	// [npc::WeaponData], but the source npc died.
 	//
 	// @zasm_var WEAPDATA_VALID
 	internal const bool Valid;
-	
+
 	// Flags related to the weapondata.
 	//
 	// @index [enum WeapDataFlag]
 	// @zasm_var WEAPDATA_MISC_FLAGS
 	internal bool MiscFlags[];
-	
+
 	// Flags related to movement.
 	//
 	// @index [enum MoveFlag]
 	// @zasm_var WEAPDATA_MOVE_FLAGS
 	internal bool MoveFlags[];
-	
+
 	// Weapon flags.
 	//
 	// @index [enum WeaponFlag]
 	// @zasm_var WEAPDATA_WEAP_FLAGS
 	internal bool Flags[];
-	
+
 	// Sprites used based on burn level, if [Flags] has [WFLAG_UPDATE_BURNSPR].
 	//
 	// @index [enum ItemBurnIndex]
 	// @zasm_var WEAPDATA_BURN_SPRITES
 	internal int BurnSprites[];
-	
+
 	// If [Flags] has [WFLAG_UPDATE_BURNSPR], Light Radius used is based on burn level,
 	// Otherwise, if [MiscFlags] has [WDATA_GLOW_RAD], index 0 of this array will be applied.
 	//
 	// @index [enum ItemBurnIndex]
 	// @zasm_var WEAPDATA_BURN_LIGHTRAD
 	internal int BurnLightRadius[];
-	
+
 	// If [Flags] has [WFLAG_UPDATE_BURNSPR], Light Offset used is based on burn level,
 	// Otherwise, if [MiscFlags] has [WDATA_GLOW_RAD], index 0 of this array will be applied.
 	//
 	// @index [enum ItemBurnIndex]
 	// @zasm_var WEAPDATA_BURN_LIGHTOFFSET
 	internal int BurnLightOffset[];
-	
+
 	// The shape of light.
 	//
 	// @value [enum LightShape]
 	// @zasm_var WEAPDATA_LIGHT_SHAPE
 	internal int LightShape;
-	
+
 	// Bitflags representing all the checkboxes for which sizes to
 	// apply from the weapondata.
 	//
@@ -89,7 +90,7 @@ class weapondata {
 	//
 	// @zasm_var WEAPDATA_HIT_OFFSET_Y
 	internal int HitYOffset;
-	
+
 	// The width of the hitbox, in pixels.
 	//
 	// @zasm_var WEAPDATA_HIT_WIDTH
@@ -104,7 +105,7 @@ class weapondata {
 	//
 	// @zasm_var WEAPDATA_HIT_ZHEIGHT
 	internal int HitZHeight;
-	
+
 	// The visual offset, in pixels.
 	//
 	// @zasm_var WEAPDATA_X_OFFSET
@@ -118,6 +119,7 @@ class weapondata {
 	// The width of the graphic, in tiles. Visual only. The upper-left corner is the first tile.
 	//
 	// Max value is 20.
+	//
 	// @zasm_var WEAPDATA_TILE_W
 	internal int TileWidth;
 
@@ -127,20 +129,20 @@ class weapondata {
 	//
 	// @zasm_var WEAPDATA_TILE_H
 	internal int TileHeight;
-	
+
 	// The step speed, in 100*pixels/second.
 	// Only applies if [WDATA_SET_STEP] is set in [MiscFlags].
 	//
 	// @zasm_var WEAPDATA_STEP
 	internal int Step;
-	
+
 	// When the weapon lands from the air, it bounces based on this multiplier of it's
 	// downward velocity, and [BounceAdd].
 	// Must be >= 0.
 	//
 	// @zasm_var WEAPDATA_BOUNCE_MULT
 	internal int BounceMult;
-	
+
 	// When the weapon lands from the air, it bounces based on [BounceMult],
 	// adding this value in px/frame after the multiplier.
 	// Using a negative value will dampen the bounce, and is recommended to prevent
@@ -148,7 +150,7 @@ class weapondata {
 	//
 	// @zasm_var WEAPDATA_BOUNCE_ADD
 	internal int BounceAdd;
-	
+
 	// Unblockable bitflags.
 	//
 	// @value [enum UnblockableBitflags]
@@ -160,7 +162,7 @@ class weapondata {
 	//
 	// @zasm_var WEAPDATA_TIMEOUT
 	internal int Timeout;
-	
+
 	// The [lweapon::Weapon] property for this weapon.
 	//
 	// @zasm_var WEAPDATA_USEWEAPON
@@ -176,7 +178,7 @@ class weapondata {
 	//
 	// @zasm_var WEAPDATA_USEDEFENCE
 	internal int Defense;
-	
+
 	// The required Lift Glove level to lift the weapon.
 	// If 0, the weapon cannot be lifted.
 	// If >0, the weapon can be lifted by gloves >= this level.
@@ -198,12 +200,12 @@ class weapondata {
 	//
 	// @zasm_var WEAPDATA_SCRIPT
 	internal int Script;
-	
+
 	// The 8 InitD[] arguments for the weapon script.
 	//
 	// @zasm_var WEAPDATA_INITD
 	internal untyped InitD[];
-	
+
 	// If < 0, the weapon behaves as normal. If == 0, the weapon pierces infinitely.
 	// If > 0, each time the weapon hits an enemy or the player, counts down by 1.
 	// When counting down from '1' to '0', the weapon dies.
@@ -213,17 +215,17 @@ class weapondata {
 	//
 	// @zasm_var WEAPDATA_PIERCE
 	internal int PierceCount;
-	
+
 	// The [sprite::ViewportSuspendRange] for the weapon.
 	//
 	// @zasm_var WEAPDATA_VIEWPORT_SUSPEND_RANGE
 	internal int ViewportSuspendRange;
-	
+
 	// The [sprite::ViewportDespawnRange] for the weapon.
 	//
 	// @zasm_var WEAPDATA_VIEWPORT_DESPAWN_RANGE
 	internal int ViewportDespawnRange;
-	
+
 	// Copies this weapondata to the target.
 	//
 	// @zasm
@@ -231,7 +233,7 @@ class weapondata {
 	//   POP REFWEAPDATA
 	//   WEAPDATA_COPY D2
 	internal void CopyTo(weapondata target);
-	
+
 	// Applies the weapondata settings to the specified lweapon.
 	//
 	// @zasm
@@ -239,7 +241,7 @@ class weapondata {
 	//   POP REFWEAPDATA
 	//   WEAPDATA_APPLY D2
 	internal void ApplyTo(lweapon weap);
-	
+
 	// Applies the weapondata settings to the specified eweapon.
 	//
 	// @zasm
