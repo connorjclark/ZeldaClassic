@@ -36,7 +36,9 @@ if(WANT_VENDORED_ZLIB)
 	set(ZLIB_INCLUDE_DIRS "${ZLIB_INCLUDE_DIR}" CACHE STRING "" FORCE)
 	add_library(ZLIB::ZLIB ALIAS zlib)
 else()
-	find_package(ZLIB REQUIRED)
+	# GLOBAL: imported targets are directory-scoped by default, and this runs in
+	# the third_party directory while consumers live at the root scope.
+	find_package(ZLIB REQUIRED GLOBAL)
 endif()
 
 if(WANT_VENDORED_LIBPNG)
@@ -98,7 +100,7 @@ if(WANT_VENDORED_LIBPNG)
 	set(PNG_INCLUDE_DIRS "${CMAKE_CURRENT_SOURCE_DIR}/libpng/src;${CMAKE_CURRENT_BINARY_DIR}" CACHE STRING "" FORCE)
 	set(PNG_PNG_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/libpng/src" CACHE STRING "" FORCE)
 else()
-	find_package(PNG REQUIRED)
+	find_package(PNG REQUIRED GLOBAL)
 endif()
 
 if(WANT_VENDORED_DUMB)
@@ -206,6 +208,16 @@ if(WANT_VENDORED_DUMB)
 	set(DUMB_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/dumb/include" CACHE STRING "" FORCE)
 	set(DUMB_INCLUDE_DIRS "${DUMB_INCLUDE_DIR}" CACHE STRING "" FORCE)
 	set(SUPPORT_DUMB 1 CACHE INTERNAL "Force dumb support in Allegro")
+else()
+	# Allegro locates system DUMB itself (via its bundled FindDUMB module). This
+	# fails early at configure time, and seeds the cache variables that module
+	# reads so both agree on the same library. Note the vendored copy is DUMB
+	# 2.x - a system 0.9.x will be rejected by Allegro's own version check.
+	find_path(DUMB_INCLUDE_DIR dumb.h)
+	find_library(DUMB_LIBRARY NAMES dumb libdumb)
+	if(NOT DUMB_INCLUDE_DIR OR NOT DUMB_LIBRARY)
+		message(FATAL_ERROR "WANT_VENDORED_DUMB is OFF, but a system DUMB library was not found")
+	endif()
 endif()
 
 if(WANT_VENDORED_LIBJPEG_TURBO)
@@ -294,7 +306,7 @@ if(WANT_VENDORED_LIBJPEG_TURBO)
 		libjpeg-turbo/src/wrapper/jutils-8.c
 	)
 	target_include_directories(libjpeg_turbo PUBLIC
-		$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/libjpeg_turbo/src>
+		$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/libjpeg-turbo/src>
 		$<INSTALL_INTERFACE:include/libjpeg>
 	)
 	set_target_properties(libjpeg_turbo PROPERTIES POSITION_INDEPENDENT_CODE ON)
@@ -306,45 +318,40 @@ if(WANT_VENDORED_LIBJPEG_TURBO)
 	set(JPEG_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/libjpeg-turbo/src" PARENT_SCOPE)
 	set(JPEG_INCLUDE_DIRS "${JPEG_INCLUDE_DIR}" PARENT_SCOPE)
 	set(SUPPORT_JPEG 1 CACHE INTERNAL "Force jpeg support in Allegro")
-endif()
-
-if(WANT_VENDORED_IMGUI)
-	add_library(imgui STATIC
-		imgui/src/imgui.cpp
-		imgui/src/imgui_draw.cpp
-		imgui/src/imgui_widgets.cpp
-		imgui/src/imgui_tables.cpp
-		imgui/src/backends/imgui_impl_allegro5.cpp
-	)
-	target_include_directories(imgui PUBLIC
-		$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/imgui/src>
-		$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/imgui/src/backends>
-		$<INSTALL_INTERFACE:include/imgui>
-	)
-	target_link_libraries(imgui PRIVATE allegro_headers)
-	set_target_properties(imgui PROPERTIES POSITION_INDEPENDENT_CODE ON)
-
-	set(IMGUI_FOUND TRUE PARENT_SCOPE)
-	set(IMGUI_LIBRARIES imgui PARENT_SCOPE)
-	set(IMGUI_LIBRARY imgui PARENT_SCOPE)
-	set(IMGUI_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/imgui/src" PARENT_SCOPE)
-	set(IMGUI_INCLUDE_DIRS "${JPEG_INCLUDE_DIR}" PARENT_SCOPE)
-
-	# find_package(Freetype)
-	# if(Freetype_FOUND)
-	# 	target_link_libraries(imgui PRIVATE Freetype::Freetype)
-	# 	target_compile_definitions(imgui PRIVATE IMGUI_ENABLE_FREETYPE)
-	# 	target_sources(imgui PRIVATE imgui/src/misc/freetype/imgui_freetype.cpp)
-	# 	message(STATUS "Freetype found and enabled for ImGui.")
-	# else()
-	# 	message(WARNING "Freetype not found - disabling improved text rendering for debugger")
-	# 	if(NOT EMSCRIPTEN AND (DEFINED ENV{CI} OR ZC_OFFICIAL))
-	# 		message(FATAL_ERROR "Freetype not found")
-	# 	endif()
-	# endif()
 else()
-	find_package(imgui REQUIRED)
+	# Fail early; Allegro's own find_package(JPEG) will reuse these results.
+	find_package(JPEG REQUIRED)
 endif()
+
+# imgui is always vendored: it has no stable API, and both the Allegro 5
+# backend and ImGuiColorTextEdit below are pinned to this exact copy.
+add_library(imgui STATIC
+	imgui/src/imgui.cpp
+	imgui/src/imgui_draw.cpp
+	imgui/src/imgui_widgets.cpp
+	imgui/src/imgui_tables.cpp
+	imgui/src/backends/imgui_impl_allegro5.cpp
+)
+target_include_directories(imgui PUBLIC
+	$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/imgui/src>
+	$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/imgui/src/backends>
+	$<INSTALL_INTERFACE:include/imgui>
+)
+target_link_libraries(imgui PRIVATE allegro_headers)
+set_target_properties(imgui PROPERTIES POSITION_INDEPENDENT_CODE ON)
+
+# find_package(Freetype)
+# if(Freetype_FOUND)
+# 	target_link_libraries(imgui PRIVATE Freetype::Freetype)
+# 	target_compile_definitions(imgui PRIVATE IMGUI_ENABLE_FREETYPE)
+# 	target_sources(imgui PRIVATE imgui/src/misc/freetype/imgui_freetype.cpp)
+# 	message(STATUS "Freetype found and enabled for ImGui.")
+# else()
+# 	message(WARNING "Freetype not found - disabling improved text rendering for debugger")
+# 	if(NOT EMSCRIPTEN AND (DEFINED ENV{CI} OR ZC_OFFICIAL))
+# 		message(FATAL_ERROR "Freetype not found")
+# 	endif()
+# endif()
 
 if(WANT_VENDORED_LIBOGG)
 	add_library(ogg STATIC
@@ -365,7 +372,14 @@ if(WANT_VENDORED_LIBOGG)
 	set(OGG_INCLUDE_DIRS "${OGG_INCLUDE_DIR}" CACHE STRING "" FORCE)
 	add_library(OGG::OGG ALIAS ogg)
 else()
-	find_package(OGG REQUIRED)
+	# Allegro locates system libogg itself (via its bundled FindOgg module).
+	# This fails early at configure time, and seeds the cache variables that
+	# module reads so both agree on the same library.
+	find_path(OGG_INCLUDE_DIR ogg/ogg.h)
+	find_library(OGG_LIBRARY NAMES ogg libogg)
+	if(NOT OGG_INCLUDE_DIR OR NOT OGG_LIBRARY)
+		message(FATAL_ERROR "WANT_VENDORED_LIBOGG is OFF, but a system libogg was not found")
+	endif()
 endif()
 
 if(WANT_VENDORED_LIBVORBIS)
@@ -409,7 +423,15 @@ if(WANT_VENDORED_LIBVORBIS)
 	add_library(Vorbis::vorbisfile ALIAS vorbis)
 	set(SUPPORT_VORBIS 1 CACHE INTERNAL "Force vorbis support in Allegro")
 else()
-	find_package(VORBIS REQUIRED)
+	# Allegro locates system libvorbis itself (via its bundled FindVorbis
+	# module). This fails early at configure time, and seeds the cache
+	# variables that module reads so both agree on the same library.
+	find_path(VORBIS_INCLUDE_DIR vorbis/vorbisfile.h)
+	find_library(VORBIS_LIBRARY NAMES vorbis libvorbis)
+	find_library(VORBISFILE_LIBRARY NAMES vorbisfile libvorbisfile)
+	if(NOT VORBIS_INCLUDE_DIR OR NOT VORBIS_LIBRARY OR NOT VORBISFILE_LIBRARY)
+		message(FATAL_ERROR "WANT_VENDORED_LIBVORBIS is OFF, but a system libvorbis was not found")
+	endif()
 endif()
 
 # Remove once generally available in all compilers for c++ 20.
@@ -428,7 +450,7 @@ if(WANT_VENDORED_JSON)
 	)
 	add_library(nlohmann_json::nlohmann_json ALIAS json)
 else()
-	find_package(nlohmann_json REQUIRED)
+	find_package(nlohmann_json REQUIRED GLOBAL)
 endif()
 
 add_library(imgui_color_text_edit STATIC

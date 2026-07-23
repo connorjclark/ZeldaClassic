@@ -220,6 +220,24 @@ Now, build with cmake as normal. Note the output of the above script:
 > be sure to start a local webserver:
 >   node scripts/webserver.mjs
 
+# Vendored vs. system libraries
+
+By default, several third-party libraries are built from sources vendored in the `third_party` folder. Packagers who prefer to link against OS/package-manager provided libraries can opt out per-library with these CMake options:
+
+- `WANT_VENDORED_ZLIB`
+- `WANT_VENDORED_LIBPNG`
+- `WANT_VENDORED_LIBJPEG_TURBO`
+- `WANT_VENDORED_LIBOGG`
+- `WANT_VENDORED_LIBVORBIS`
+- `WANT_VENDORED_DUMB` (the system library must be DUMB 2.x)
+- `WANT_VENDORED_JSON` (nlohmann_json)
+
+For example: `cmake -B build -S . -DWANT_VENDORED_ZLIB=OFF`.
+
+Note: when a library is vendored, the build force-caches its `find_package` results, so use a **fresh build folder** whenever flipping one of these options.
+
+The remaining dependencies are downloaded at configure time with CMake's `FetchContent`, pinned to exact commits. Some of these (allegro5, asmjit) are forks with required changes, so system versions of them cannot be used. For offline or reproducible builds, you can point any of them at a pre-downloaded source tree with `FETCHCONTENT_SOURCE_DIR_<NAME>`, e.g. `-DFETCHCONTENT_SOURCE_DIR_ALLEGRO5=/path/to/allegro5`.
+
 # ccache
 
 `ccache` can be used to cache build results, which makes switching between branches and re-building much faster.

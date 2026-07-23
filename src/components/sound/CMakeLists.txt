@@ -8,7 +8,7 @@ set(GME_YM2612_EMU "Nuked" CACHE STRING "Which YM2612 emulator to use: \"Nuked\"
 FetchContent_MakeAvailable(gme_external)
 add_library(gme_headers INTERFACE)
 target_include_directories(gme_headers INTERFACE ${gme_external_SOURCE_DIR}/gme)
-target_link_libraries(gme_headers INTERFACE ${ZLIB_LIBRARIES})
+target_link_libraries(gme_headers INTERFACE ZLIB::ZLIB)
 target_compile_definitions(gme_headers INTERFACE -DVGM_YM2612_NUKED)
 
 set(INSTALL_TARGETS "${ZC_INSTALL_TARGETS}")
