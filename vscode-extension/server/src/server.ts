@@ -714,11 +714,7 @@ connection.onDocumentHighlight(
 	});
 
 async function resolvePosition(doc: TextDocument, pos: Position) {
-	const result = docJobResults.get(doc.uri);
-	if (!result)
-		return null;
-
-	const { metadata } = result;
+	const metadata = await getOrWaitForScriptMetadata(doc);
 	if (!metadata)
 		return null;
 
