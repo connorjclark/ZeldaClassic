@@ -118,7 +118,14 @@ std::pair<int, int> RenderTreeItem::world_to_local(int x, int y)
 		transform_matrix_inverse = transform_matrix.inverse();
 		transform_inverse_dirty = false;
 	}
-	return transform_matrix_inverse.apply(x, y);
+	auto [lx, ly] = transform_matrix_inverse.apply(x, y);
+	if (uv_warp && width > 0 && height > 0)
+	{
+		auto [u, v] = uv_warp((lx + 0.5) / width, (ly + 0.5) / height);
+		lx = (int)std::floor(u * width);
+		ly = (int)std::floor(v * height);
+	}
+	return {lx, ly};
 }
 std::pair<int, int> RenderTreeItem::local_to_world(int x, int y)
 {
@@ -449,6 +456,13 @@ static void render_tree_draw_item(RenderTreeItem* rti, bool do_a4_only)
 		auto [x1, y1] = matrix.apply(w, h);
 		int tw = x1 - x0;
 		int th = y1 - y0;
+		bool shader_active = false;
+		if (rti->shader)
+		{
+			shader_active = al_use_shader(rti->shader);
+			if (shader_active && rti->shader_prepare)
+				rti->shader_prepare(rti, tw, th);
+		}
 		if (rti->tint)
 		{
 			al_draw_tinted_scaled_bitmap(rti->bitmap, *rti->tint, 0, 0, w, h, x0, y0, tw, th, 0);
@@ -457,6 +471,8 @@ static void render_tree_draw_item(RenderTreeItem* rti, bool do_a4_only)
 		{
 			al_draw_scaled_bitmap(rti->bitmap, 0, 0, w, h, x0, y0, tw, th, 0);
 		}
+		if (shader_active)
+			al_use_shader(nullptr);
 	}
 
 	for (auto rti_child : rti->get_children())

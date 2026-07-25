@@ -3965,6 +3965,10 @@ static void init_display()
 	zq_screen_w = 640;
 	zq_screen_h = 480;
 
+	// Shader support, for the CRT display filters. Allegro still installs its default
+	// shaders with this flag, so all other drawing is unaffected.
+	all_set_display_flags(all_get_display_flags() | ALLEGRO_PROGRAMMABLE_PIPELINE);
+
 	zalleg_create_window(window_title, gfx_mode, zq_screen_w, zq_screen_h, saved_window_width, saved_window_height);
 
 #ifndef __EMSCRIPTEN__
