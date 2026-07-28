@@ -7868,37 +7868,12 @@ waves2:
 	}
 }
 
-int32_t enemy::wpnsfx(int32_t wpn)
+int32_t enemy::wpnsfx(int32_t)
 {
-	switch (wpn)
-	{
-		case wScript1:
-		case wScript2:
-		case wScript3:
-		case wScript4:
-		case wScript5:
-		case wScript6:
-		case wScript7:
-		case wScript8:
-		case wScript9:
-		case wScript10: //sure why not
-		case ewFireTrail:
-		case ewFlame:
-		case ewFlame2Trail:
-		case ewFlame2:
-		case ewWind:
-		case ewMagic:
-		case ewIce:
-			return firesfx;
-
-		case ewRock:
-		case ewFireball2:
-		case ewFireball:
-			if (get_qr(qr_MORESOUNDS)) return firesfx;
-			break;
-	}
-
-	return 0;
+	// This used to only return firesfx for some weapon types (and for
+	// fireballs/rocks, only with qr_MORESOUNDS). Old quests are normalized
+	// on load to keep sounding the same - see guy_silence_unplayed_firesfx.
+	return firesfx;
 }
 
 int32_t enemy::run_script(int32_t mode)

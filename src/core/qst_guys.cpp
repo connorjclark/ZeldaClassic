@@ -113,6 +113,49 @@ void guy_update_firesfx(guydata& tempguy)
 	}
 }
 
+// Before guy version 59, the fire sound only actually played for some weapon
+// types (see the old `enemy::wpnsfx`). Now that it plays for every weapon
+// type, zero it wherever the old engine kept quiet, so old quests (and the
+// values auto-seeded by `guy_update_firesfx`) still sound the same.
+void guy_silence_unplayed_firesfx(guydata& tempguy)
+{
+	// Wizzrobes play the fire sound directly, for any weapon type.
+	if (tempguy.type == eeWIZZ)
+		return;
+	// As do summoning enemies.
+	if ((tempguy.type == eeWALK || tempguy.type == eePROJECTILE) && (tempguy.attributes[0] == e1tSUMMON || tempguy.attributes[0] == e1tSUMMONLAYER))
+		return;
+	switch (tempguy.weapon)
+	{
+	case wScript1:
+	case wScript2:
+	case wScript3:
+	case wScript4:
+	case wScript5:
+	case wScript6:
+	case wScript7:
+	case wScript8:
+	case wScript9:
+	case wScript10:
+	case ewFireTrail:
+	case ewFlame:
+	case ewFlame2Trail:
+	case ewFlame2:
+	case ewWind:
+	case ewMagic:
+	case ewIce:
+		// Always played.
+		return;
+	case ewRock:
+	case ewFireball2:
+	case ewFireball:
+		if (get_qr(qr_MORESOUNDS))
+			return;
+		break;
+	}
+	tempguy.firesfx = 0;
+}
+
 void guy_update_weaponflags(guydata& tempguy)
 {
 	tempguy.weap_data.unblockable = 0;
@@ -501,6 +544,7 @@ void init_guys(int32_t guyversion)
         }
 
         guy_update_firesfx(guysbuf[i]);
+		guy_silence_unplayed_firesfx(guysbuf[i]);
 		guy_update_weaponflags(guysbuf[i]);
 		guy_update_weaponspecialsfx(guysbuf[i]);
     }
@@ -1801,6 +1845,10 @@ int32_t readguy_single(PACKFILE *f, word guyversion, word guy_cversion, zquesthe
 	if (guyversion < 51) //reimport the firesfx, zoria ducked up.
 	{
 		guy_update_firesfx(tempguy);
+	}
+	if (guyversion < 59) //the fire sound now plays for every weapon type
+	{
+		guy_silence_unplayed_firesfx(tempguy);
 	}
 	if (guyversion < 52)
 	{
