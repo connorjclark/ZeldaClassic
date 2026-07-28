@@ -4340,6 +4340,7 @@ void blackscr(int32_t fcnt,bool showsubscr)
 
 void openscreen(int32_t shape)
 {
+	reset_camera_follow();
 	update_viewport();
 	is_opening_screen = true;
 	reset_pal_cycling();
