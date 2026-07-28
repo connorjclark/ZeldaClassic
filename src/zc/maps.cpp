@@ -60,16 +60,24 @@ extern std::set<rpos_t> lens_pushblocks_hidden;
 viewport_t viewport;
 static int viewport_sprite_uid;
 ViewportMode viewport_mode;
-// The persistent focus point of the follow camera, in world coordinates. When neither a script
-// (ViewportMode::Script) nor a camera effect controls the viewport, `update_viewport` derives the
-// viewport from this point rather than reading the target sprite directly. For now the focus is
-// always locked exactly to the target's center, which makes this equivalent to the old behavior;
-// follow behaviors (deadzone, lookahead, smoothing) will apply between the target and this point.
+// The follow camera: what drives the viewport when neither a script (ViewportMode::Script) nor a
+// camera effect controls it. Each frame the pipeline is target center -> focus (pushed only as
+// far as the deadzone box around the target requires) -> viewport (calculate_viewport clamps the
+// focus to the region). With a zero-size deadzone the focus equals the target center: the
+// classic locked camera.
 struct CameraFollowState
 {
+	// The persistent focus point, in world coordinates. Persistent because the deadzone only
+	// moves it when the target pushes against the box's edge.
 	zfix x, y;
 };
 static CameraFollowState camera_follow;
+// Script overrides for the camera deadzone box size (unset = use zinit's value). zinit is read
+// live rather than snapshotted because game-start init runs before the quest is loaded. Set
+// via Viewport->DeadzoneWidth/DeadzoneHeight; overrides reset at game start and on continue,
+// but not by scrolling (unlike Viewport->Mode/Target). The getters clamp, so these may hold
+// anything.
+static std::optional<int> camera_deadzone_w_override, camera_deadzone_h_override;
 int world_w, world_h;
 int region_scr_dx, region_scr_dy;
 int region_scr_count;
@@ -86,6 +94,8 @@ void maps_init_game_vars()
 	viewport_mode = ViewportMode::CenterAndBound;
 	viewport_sprite_uid = 1;
 	camera_follow = {};
+	camera_deadzone_w_override.reset();
+	camera_deadzone_h_override.reset();
 	currscr_for_passive_subscr = -1;
 	scrolling_maze_last_solved_screen = 0;
 	maze_state = {};
@@ -424,13 +434,6 @@ void set_viewport_sprite(sprite* spr)
 	viewport_sprite_uid = spr->uid;
 }
 
-// True when no follow behaviors are configured, meaning the camera focus is locked exactly to
-// the target sprite's center.
-static bool camera_follow_is_locked()
-{
-	return true;
-}
-
 // Snap the camera focus to the target sprite's center. Call whenever the target is repositioned
 // discontinuously (warps, screen entry, script teleports, target changes) — the follow camera
 // should never ease across such a jump.
@@ -439,6 +442,44 @@ void reset_camera_follow()
 	sprite* spr = get_viewport_sprite();
 	camera_follow.x = spr->x + spr->txsz*16/2;
 	camera_follow.y = spr->y + spr->tysz*16/2;
+}
+
+int get_camera_deadzone_width()
+{
+	int width = camera_deadzone_w_override.value_or(zinit.viewport_deadzone_w);
+	return vbound(width, 0, 2*CAMERA_FOLLOW_MAX_OFFSET_X);
+}
+
+int get_camera_deadzone_height()
+{
+	int height = camera_deadzone_h_override.value_or(zinit.viewport_deadzone_h);
+	return vbound(height, 0, 2*CAMERA_FOLLOW_MAX_OFFSET_Y);
+}
+
+// For both of these, std::nullopt clears the override, returning to zinit's value.
+void set_camera_deadzone_width(std::optional<int> width)
+{
+	camera_deadzone_w_override = width;
+}
+
+void set_camera_deadzone_height(std::optional<int> height)
+{
+	camera_deadzone_h_override = height;
+}
+
+// Push the camera focus the minimal amount needed to keep the target's center inside the
+// deadzone box. Position-based and idempotent (unlike time-based easing, which belongs in
+// tick_camera_follow), so ad-hoc update_viewport calls apply it safely. A zero-size box
+// degenerates to focus == target: the classic locked camera.
+static void apply_camera_follow()
+{
+	sprite* spr = get_viewport_sprite();
+	zfix tx = spr->x + spr->txsz*16/2;
+	zfix ty = spr->y + spr->tysz*16/2;
+	int deadzone_w = get_camera_deadzone_width();
+	int deadzone_h = get_camera_deadzone_height();
+	camera_follow.x = vbound(camera_follow.x, tx - deadzone_w/2, tx + deadzone_w/2);
+	camera_follow.y = vbound(camera_follow.y, ty - deadzone_h/2, ty + deadzone_h/2);
 }
 
 static std::optional<CameraEffect> active_camera_effect;
@@ -492,13 +533,14 @@ static CameraEffectResult apply_camera_effect(CameraEffect& effect)
 		effect.start_x = state.x;
 		effect.start_y = state.y;
 
-		// Calculate where the target is right now.
-		// Technically not always the hero, if scripts have modified the target.
+		// Return to where the follow camera will resume from once the effect ends: its focus
+		// (kept within the deadzone around the target), not the target's raw center, which can
+		// sit up to half a deadzone away from it. apply_camera_follow is idempotent, so running
+		// it here just does early what tick_camera_follow would do on the hand-back frame.
+		// Technically the target is not always the hero, if scripts have modified it.
 		auto temp_viewport = viewport;
-		sprite* spr = get_viewport_sprite();
-		int target_x = spr->x + spr->txsz*16/2;
-		int target_y = spr->y + spr->tysz*16/2;
-		calculate_viewport(temp_viewport, cur_dmap, cur_screen, world_w, world_h, target_x, target_y);
+		apply_camera_follow();
+		calculate_viewport(temp_viewport, cur_dmap, cur_screen, world_w, world_h, camera_follow.x, camera_follow.y);
 
 		zfix return_dest_x = temp_viewport.x + temp_viewport.w/2;
 		zfix return_dest_y = temp_viewport.y + temp_viewport.h/2;
@@ -697,9 +739,8 @@ void tick_camera_effect()
 // viewport in that case).
 void tick_camera_follow()
 {
-	// Follow behaviors (deadzone, lookahead, smoothing) will advance `camera_follow` toward the
-	// target here. A locked camera has no per-frame state to advance — update_viewport snaps the
-	// focus itself.
+	// Time-based follow behaviors (lookahead, smoothing) will advance `camera_follow` here.
+	// The deadzone is position-based, so it lives in apply_camera_follow/update_viewport.
 	update_viewport();
 }
 
@@ -718,11 +759,7 @@ void update_viewport()
 		return;
 	}
 
-	// While the camera is locked to its target, ad-hoc calls (warps, script moves of the hero,
-	// etc.) must see the viewport snap immediately, as it always has.
-	if (camera_follow_is_locked())
-		reset_camera_follow();
-
+	apply_camera_follow();
 	calculate_viewport(viewport, cur_dmap, cur_screen, world_w, world_h, camera_follow.x, camera_follow.y);
 }
 

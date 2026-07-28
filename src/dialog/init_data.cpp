@@ -753,7 +753,19 @@ std::shared_ptr<GUI::Widget> InitDataDialog::view()
 								),
 								INFOBTN("In what way screens should be marked as visited."
 									"\nFull: Every screen in a region is mapped upon entry"
-									"\nPhysical: Only screens the Hero steps into are mapped")
+									"\nPhysical: Only screens the Hero steps into are mapped"),
+								VAL_FIELD(byte,"Camera Deadzone Width:",0,240,viewport_deadzone_w,false),
+								INFOBTN("While the player (or other camera target) stays within a box of this width"
+									" centered on the camera, the camera does not move horizontally. Once they push"
+									" past the box's edge, the camera moves just enough to keep them on it."
+									"\n\nOnly observable in scrolling regions. Scripts can change this at runtime"
+									" via Viewport->DeadzoneWidth."),
+								VAL_FIELD(byte,"Camera Deadzone Height:",0,160,viewport_deadzone_h,false),
+								INFOBTN("While the player (or other camera target) stays within a box of this height"
+									" centered on the camera, the camera does not move vertically. Once they push"
+									" past the box's edge, the camera moves just enough to keep them on it."
+									"\n\nOnly observable in scrolling regions. Scripts can change this at runtime"
+									" via Viewport->DeadzoneHeight.")
 							)
 						)
 					))
