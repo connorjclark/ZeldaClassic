@@ -273,6 +273,8 @@ std::optional<CameraEffect> get_active_camera_effect();
 bool has_active_camera_effect();
 void clear_camera_effect();
 void tick_camera_effect();
+void tick_camera_follow();
+void reset_camera_follow();
 void update_viewport();
 mapscr* determine_hero_screen_from_coords();
 bool edge_of_region(direction dir);
