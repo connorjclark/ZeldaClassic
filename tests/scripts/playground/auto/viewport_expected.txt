@@ -17,9 +17,9 @@ stdout:
   "success": true,
   "diagnostics": [],
   "metadata": {
-    "currentFileSymbols": 29,
-    "symbols": 107,
-    "identifiers": 353,
+    "currentFileSymbols": 32,
+    "symbols": 116,
+    "identifiers": 467,
     "elided": true
   }
 }
@@ -78,7 +78,7 @@ COMPAREV D2 0
 GOTOCMP 53 ==; Test 'while'
 WAITFRAME; InlineFunc[void Waitframe()] Body AND while() #2 Body
 GOTO 45; while() #2 End
-CALLFUNC 0.0890; UsrFunc[void End()] Call AND [Opt:NeverRet]
+CALLFUNC 0.1180; UsrFunc[void End()] Call AND [Opt:NeverRet]
 REF_REMOVE 0.0002; [Opt:NeverRet] AND void run() Body End
 PUSHARGSV 0 0.0004; void run() Body Start
 SETR D4 SP2
@@ -379,7 +379,7 @@ PUSHARGSV 0 0.0011; void run() Body Start
 SETR D4 SP2
 PUSHR D4
 PUSHV 0; UsrFunc[void Init(int)] Params
-CALLFUNC 0.0868; UsrFunc[void Init(int)] Call
+CALLFUNC 0.1158; UsrFunc[void Init(int)] Call
 POP D4
 STOREV 0 0.0010
 SETV D2 5; InlineFunc[dmapdata Game::LoadDMapData(int)] Params
@@ -389,19 +389,19 @@ PUSHR D2
 POP REFDMAPDATA
 SETR D2 DMAPDATAMAP
 STORE D2 0.0009
-STOREV 0 0.0008; for() #138 setup
-LOAD D2 0.0008; for() #138 LoopTest
+STOREV 0 0.0008; for() #139 setup
+LOAD D2 0.0008; for() #139 LoopTest
 COMPAREV D2 4
 SETCMP D2 I<
 COMPAREV D2 0
-GOTOCMP 406 ==; for() #138 TestFail?
-STOREV 0 0.0007; for() #139 setup AND for() #138 Body Start
-LOAD D2 0.0007; for() #139 LoopTest
+GOTOCMP 406 ==; for() #139 TestFail?
+STOREV 0 0.0007; for() #140 setup AND for() #139 Body Start
+LOAD D2 0.0007; for() #140 LoopTest
 COMPAREV D2 4
 SETCMP D2 I<
 COMPAREV D2 0
-GOTOCMP 401 ==; for() #139 TestFail?
-LOAD D2 0.0009; InlineFunc[mapdata Game::LoadMapData(int, int)] Params Start AND for() #139 Body Start
+GOTOCMP 401 ==; for() #140 TestFail?
+LOAD D2 0.0009; InlineFunc[mapdata Game::LoadMapData(int, int)] Params Start AND for() #140 Body Start
 PUSHR D2
 LOAD D2 0.0010
 PUSHR D2
@@ -420,23 +420,23 @@ STORE D2 0.0006
 PUSHR D4
 LOAD D2 0.0006; UsrFunc[void fillScreen(mapdata)] Params Start
 PUSHR D2; UsrFunc[void fillScreen(mapdata)] Params End
-CALLFUNC 0.0805; UsrFunc[void fillScreen(mapdata)] Call
-POP D4; for() #139 Body End
-LOAD D2 0.0007; for() #139 LoopIncrement
+CALLFUNC 0.1071; UsrFunc[void fillScreen(mapdata)] Call
+POP D4; for() #140 Body End
+LOAD D2 0.0007; for() #140 LoopIncrement
 ADDV D2 1
 STORE D2 0.0007
-GOTO 371; for() #139 End
-NOP; for() #138 Body End
-LOAD D2 0.0008; for() #138 LoopIncrement
+GOTO 371; for() #140 End
+NOP; for() #139 Body End
+LOAD D2 0.0008; for() #139 LoopIncrement
 ADDV D2 1
 STORE D2 0.0008
-GOTO 365; for() #138 End
+GOTO 365; for() #139 End
 NOP
 PUSHR D4
 LOAD D2 0.0010; UsrFunc[void loadRegion(int, int)] Params Start
 PUSHR D2
 PUSHV 4; UsrFunc[void loadRegion(int, int)] Params End
-CALLFUNC 0.0975; UsrFunc[void loadRegion(int, int)] Call
+CALLFUNC 0.1265; UsrFunc[void loadRegion(int, int)] Call
 POP D4
 PUSHV 5; InlineFunc[void hero::Warp(int, int)] Params Start
 SETV D2 18; InlineFunc[void hero::Warp(int, int)] Params End
@@ -450,13 +450,13 @@ SETR VIEWPORT_MODE D2
 STOREV 20 0.0008
 STOREV 0 0.0007
 STOREV 5 0.0006
-STOREV 0 0.0005; for() #140 setup
-LOAD D2 0.0005; for() #140 LoopTest
+STOREV 0 0.0005; for() #141 setup
+LOAD D2 0.0005; for() #141 LoopTest
 COMPAREV D2 180
 SETCMP D2 I<
 COMPAREV D2 0
-GOTOCMP 507 ==; for() #140 TestFail?
-SETV D2 0.0001; for() #140 Body Start
+GOTOCMP 507 ==; for() #141 TestFail?
+SETV D2 0.0001; for() #141 Body Start
 PUSHR D2
 POP REFSPRITE
 SETR D2 SPRITE_X
@@ -527,11 +527,11 @@ SUBV D2 360
 STORE D2 0.0007; if() #397 Body End
 NOP; if() #111 Else End
 NOP
-WAITFRAME; InlineFunc[void Waitframe()] Body AND for() #140 Body End
-LOAD D2 0.0005; for() #140 LoopIncrement
+WAITFRAME; InlineFunc[void Waitframe()] Body AND for() #141 Body End
+LOAD D2 0.0005; for() #141 LoopIncrement
 ADDV D2 1
 STORE D2 0.0005
-GOTO 426; for() #140 End
+GOTO 426; for() #141 End
 NOP
 SETV D2 0
 PUSHR D2
@@ -595,13 +595,13 @@ SETV D2 30; InlineFunc[void Waitframes(int)] Params
 WAITFRAMESR D2; InlineFunc[void Waitframes(int)] Body
 PUSHR D4
 PUSHV 5; UsrFunc[void press(int)] Params
-CALLFUNC 0.0854; UsrFunc[void press(int)] Call
+CALLFUNC 0.1144; UsrFunc[void press(int)] Call
 POP D4
 SETV D2 30; InlineFunc[void Waitframes(int)] Params
 WAITFRAMESR D2; InlineFunc[void Waitframes(int)] Body
 PUSHR D4
 PUSHV 4; UsrFunc[void press(int)] Params
-CALLFUNC 0.0854; UsrFunc[void press(int)] Call
+CALLFUNC 0.1144; UsrFunc[void press(int)] Call
 POP D4
 SETV D2 60; InlineFunc[void Waitframes(int)] Params
 WAITFRAMESR D2; InlineFunc[void Waitframes(int)] Body
@@ -618,13 +618,13 @@ SETV D2 30; InlineFunc[void Waitframes(int)] Params
 WAITFRAMESR D2; InlineFunc[void Waitframes(int)] Body
 PUSHR D4
 PUSHV 5; UsrFunc[void press(int)] Params
-CALLFUNC 0.0854; UsrFunc[void press(int)] Call
+CALLFUNC 0.1144; UsrFunc[void press(int)] Call
 POP D4
 SETV D2 60; InlineFunc[void Waitframes(int)] Params
 WAITFRAMESR D2; InlineFunc[void Waitframes(int)] Body
 PUSHR D4
 PUSHV 4; UsrFunc[void press(int)] Params
-CALLFUNC 0.0854; UsrFunc[void press(int)] Call
+CALLFUNC 0.1144; UsrFunc[void press(int)] Call
 POP D4
 SETV D2 60; InlineFunc[void Waitframes(int)] Params
 WAITFRAMESR D2; InlineFunc[void Waitframes(int)] Body
@@ -641,13 +641,13 @@ SETV D2 30; InlineFunc[void Waitframes(int)] Params
 WAITFRAMESR D2; InlineFunc[void Waitframes(int)] Body
 PUSHR D4
 PUSHV 5; UsrFunc[void press(int)] Params
-CALLFUNC 0.0854; UsrFunc[void press(int)] Call
+CALLFUNC 0.1144; UsrFunc[void press(int)] Call
 POP D4
 SETV D2 30; InlineFunc[void Waitframes(int)] Params
 WAITFRAMESR D2; InlineFunc[void Waitframes(int)] Body
 PUSHR D4
 PUSHV 4; UsrFunc[void press(int)] Params
-CALLFUNC 0.0854; UsrFunc[void press(int)] Call
+CALLFUNC 0.1144; UsrFunc[void press(int)] Call
 POP D4
 SETV D2 60; InlineFunc[void Waitframes(int)] Params
 WAITFRAMESR D2; InlineFunc[void Waitframes(int)] Body
@@ -682,7 +682,7 @@ SETR DISABLEBUTTON D2
 PUSHR D4
 PUSHR VIEWPORT_DEADZONE_WIDTH; UsrFunc[void AssertEqual(int, int)] Params Start
 PUSHV 0; UsrFunc[void AssertEqual(int, int)] Params End
-CALLFUNC 0.0897; UsrFunc[void AssertEqual(int, int)] Call
+CALLFUNC 0.1187; UsrFunc[void AssertEqual(int, int)] Call
 POP D4
 SETV D2 64
 PUSHR D2
@@ -702,21 +702,21 @@ PUSHR D2
 POP REFSPRITE
 SETR D2 SPRITE_X
 STORE D2 0.0003
-STOREV 0 0.0002; for() #141 setup
-LOAD D2 0.0002; for() #141 LoopTest
+STOREV 0 0.0002; for() #142 setup
+LOAD D2 0.0002; for() #142 LoopTest
 COMPAREV D2 12
 SETCMP D2 I<
 COMPAREV D2 0
-GOTOCMP 692 ==; for() #141 TestFail?
-PUSHR D4; for() #141 Body Start
+GOTOCMP 692 ==; for() #142 TestFail?
+PUSHR D4; for() #142 Body Start
 PUSHV 3; UsrFunc[void press(int)] Params
-CALLFUNC 0.0854; UsrFunc[void press(int)] Call
+CALLFUNC 0.1144; UsrFunc[void press(int)] Call
 POP D4
-WAITFRAME; InlineFunc[void Waitframe()] Body AND for() #141 Body End
-LOAD D2 0.0002; for() #141 LoopIncrement
+WAITFRAME; InlineFunc[void Waitframe()] Body AND for() #142 Body End
+LOAD D2 0.0002; for() #142 LoopIncrement
 ADDV D2 1
 STORE D2 0.0002
-GOTO 678; for() #141 End
+GOTO 678; for() #142 End
 NOP
 PUSHR D4
 SETV D2 0.0001; UsrFunc[void AssertEqual(bool, bool, char32[])] Params Start
@@ -733,7 +733,7 @@ PUSHV 1
 ALLOCATEMEMV D2 17 0
 WRITEPODSTRING D2 "hero didn't walk"
 PUSHR D2; UsrFunc[void AssertEqual(bool, bool, char32[])] Params End
-CALLFUNC 0.0919; UsrFunc[void AssertEqual(bool, bool, char32[])] Call
+CALLFUNC 0.1209; UsrFunc[void AssertEqual(bool, bool, char32[])] Call
 PEEK D4
 PUSHR VIEWPORT_X; UsrFunc[void AssertEqual(int, int, char32[])] Params Start
 LOAD D2 0.0005
@@ -741,7 +741,7 @@ PUSHR D2
 ALLOCATEMEMV D2 29 0
 WRITEPODSTRING D2 "camera moved inside deadzone"
 PUSHR D2; UsrFunc[void AssertEqual(int, int, char32[])] Params End
-CALLFUNC 0.0947; UsrFunc[void AssertEqual(int, int, char32[])] Call
+CALLFUNC 0.1237; UsrFunc[void AssertEqual(int, int, char32[])] Call
 PEEK D4
 PUSHR VIEWPORT_Y; UsrFunc[void AssertEqual(int, int, char32[])] Params Start
 LOAD D2 0.0004
@@ -749,23 +749,23 @@ PUSHR D2
 ALLOCATEMEMV D2 29 0
 WRITEPODSTRING D2 "camera moved inside deadzone"
 PUSHR D2; UsrFunc[void AssertEqual(int, int, char32[])] Params End
-CALLFUNC 0.0947; UsrFunc[void AssertEqual(int, int, char32[])] Call
+CALLFUNC 0.1237; UsrFunc[void AssertEqual(int, int, char32[])] Call
 POP D4
-STOREV 0 0.0002; for() #142 setup
-LOAD D2 0.0002; for() #142 LoopTest
+STOREV 0 0.0002; for() #143 setup
+LOAD D2 0.0002; for() #143 LoopTest
 COMPAREV D2 60
 SETCMP D2 I<
 COMPAREV D2 0
-GOTOCMP 741 ==; for() #142 TestFail?
-PUSHR D4; for() #142 Body Start
+GOTOCMP 741 ==; for() #143 TestFail?
+PUSHR D4; for() #143 Body Start
 PUSHV 3; UsrFunc[void press(int)] Params
-CALLFUNC 0.0854; UsrFunc[void press(int)] Call
+CALLFUNC 0.1144; UsrFunc[void press(int)] Call
 POP D4
-WAITFRAME; InlineFunc[void Waitframe()] Body AND for() #142 Body End
-LOAD D2 0.0002; for() #142 LoopIncrement
+WAITFRAME; InlineFunc[void Waitframe()] Body AND for() #143 Body End
+LOAD D2 0.0002; for() #143 LoopIncrement
 ADDV D2 1
 STORE D2 0.0002
-GOTO 727; for() #142 End
+GOTO 727; for() #143 End
 NOP
 SETR D2 VIEWPORT_X
 PUSHR D2
@@ -791,25 +791,25 @@ PUSHR D2
 ALLOCATEMEMV D2 33 0
 WRITEPODSTRING D2 "hero not pinned to deadzone edge"
 PUSHR D2; UsrFunc[void AssertEqual(int, int, char32[])] Params End
-CALLFUNC 0.0947; UsrFunc[void AssertEqual(int, int, char32[])] Call
+CALLFUNC 0.1237; UsrFunc[void AssertEqual(int, int, char32[])] Call
 POP D4
 SETR D2 VIEWPORT_X
 STORE D2 0.0001
-STOREV 0 0; for() #143 setup
-LOAD D2 0; for() #143 LoopTest
+STOREV 0 0; for() #144 setup
+LOAD D2 0; for() #144 LoopTest
 COMPAREV D2 12
 SETCMP D2 I<
 COMPAREV D2 0
-GOTOCMP 785 ==; for() #143 TestFail?
-PUSHR D4; for() #143 Body Start
+GOTOCMP 785 ==; for() #144 TestFail?
+PUSHR D4; for() #144 Body Start
 PUSHV 2; UsrFunc[void press(int)] Params
-CALLFUNC 0.0854; UsrFunc[void press(int)] Call
+CALLFUNC 0.1144; UsrFunc[void press(int)] Call
 POP D4
-WAITFRAME; InlineFunc[void Waitframe()] Body AND for() #143 Body End
-LOAD D2 0; for() #143 LoopIncrement
+WAITFRAME; InlineFunc[void Waitframe()] Body AND for() #144 Body End
+LOAD D2 0; for() #144 LoopIncrement
 ADDV D2 1
 STORE D2 0
-GOTO 771; for() #143 End
+GOTO 771; for() #144 End
 NOP
 PUSHR D4
 PUSHR VIEWPORT_X; UsrFunc[void AssertEqual(int, int, char32[])] Params Start
@@ -818,7 +818,7 @@ PUSHR D2
 ALLOCATEMEMV D2 50 0
 WRITEPODSTRING D2 "camera should idle while re-crossing the deadzone"
 PUSHR D2; UsrFunc[void AssertEqual(int, int, char32[])] Params End
-CALLFUNC 0.0947; UsrFunc[void AssertEqual(int, int, char32[])] Call
+CALLFUNC 0.1237; UsrFunc[void AssertEqual(int, int, char32[])] Call
 POP D4
 SETV D2 0
 PUSHR D2
@@ -829,7 +829,273 @@ PUSHR D2
 POP D2
 SETR VIEWPORT_DEADZONE_HEIGHT D2
 WAITFRAME; InlineFunc[void Waitframe()] Body
-CALLFUNC 0.0890; UsrFunc[void End()] Call AND [Opt:NeverRet] AND [Opt:NeverRet] AND void run() Body End
+PUSHR D4
+PUSHR VIEWPORT_LOOKAHEAD; UsrFunc[void AssertEqual(int, int)] Params Start
+PUSHV 0; UsrFunc[void AssertEqual(int, int)] Params End
+CALLFUNC 0.1187; UsrFunc[void AssertEqual(int, int)] Call
+PEEK D4
+PUSHR VIEWPORT_LOOKAHEAD_SPEED; UsrFunc[void AssertEqual(int, int)] Params Start
+PUSHV 1; UsrFunc[void AssertEqual(int, int)] Params End
+CALLFUNC 0.1187; UsrFunc[void AssertEqual(int, int)] Call
+POP D4
+SETV D2 600
+PUSHR D2
+SETV D2 0.0001
+POP D3
+PUSHR D2
+PUSHR D3
+POP D2
+POP REFSPRITE
+SETR SPRITE_X D2
+SETV D2 350
+PUSHR D2
+SETV D2 0.0001
+POP D3
+PUSHR D2
+PUSHR D3
+POP D2
+POP REFSPRITE
+SETR SPRITE_Y D2
+SETV D2 40
+PUSHR D2
+POP D2
+SETR VIEWPORT_LOOKAHEAD D2
+SETV D2 2
+PUSHR D2
+POP D2
+SETR VIEWPORT_LOOKAHEAD_SPEED D2
+WAITFRAME; InlineFunc[void Waitframe()] Body
+PUSHR D4
+PUSHV 3; UsrFunc[void walk(int, int)] Params Start
+PUSHV 30; UsrFunc[void walk(int, int)] Params End
+CALLFUNC 0.1120; UsrFunc[void walk(int, int)] Call
+PEEK D4
+SETR D2 VIEWPORT_X; UsrFunc[void AssertEqual(int, int, char32[])] Params Start
+PUSHR D2
+SETR D2 VIEWPORT_WIDTH
+DIVV D2 2
+POP D3
+ADDR D2 D3
+PUSHR D2
+SETV D2 0.0001; InlineFunc[int Floor(int)] Params Start
+PUSHR D2
+POP REFSPRITE
+SETR D2 SPRITE_X; InlineFunc[int Floor(int)] Params End
+FLOOR D2; InlineFunc[int Floor(int)] Body
+ADDV D2 8
+ADDV D2 40
+PUSHR D2
+ALLOCATEMEMV D2 37 0
+WRITEPODSTRING D2 "camera should lead ahead of movement"
+PUSHR D2; UsrFunc[void AssertEqual(int, int, char32[])] Params End
+CALLFUNC 0.1237; UsrFunc[void AssertEqual(int, int, char32[])] Call
+POP D4
+SETV D2 2
+PUSHR D2
+SETV D2 0.0001
+POP D3
+PUSHR D2
+PUSHR D3
+POP D2
+POP REFSPRITE
+SETR SPRITE_DIR D2
+SETV D2 20; InlineFunc[void Waitframes(int)] Params
+WAITFRAMESR D2; InlineFunc[void Waitframes(int)] Body
+PUSHR D4
+SETR D2 VIEWPORT_X; UsrFunc[void AssertEqual(int, int, char32[])] Params Start
+PUSHR D2
+SETR D2 VIEWPORT_WIDTH
+DIVV D2 2
+POP D3
+ADDR D2 D3
+PUSHR D2
+SETV D2 0.0001; InlineFunc[int Floor(int)] Params Start
+PUSHR D2
+POP REFSPRITE
+SETR D2 SPRITE_X; InlineFunc[int Floor(int)] Params End
+FLOOR D2; InlineFunc[int Floor(int)] Body
+ADDV D2 8
+ADDV D2 40
+PUSHR D2
+ALLOCATEMEMV D2 33 0
+WRITEPODSTRING D2 "lookahead should hold while idle"
+PUSHR D2; UsrFunc[void AssertEqual(int, int, char32[])] Params End
+CALLFUNC 0.1237; UsrFunc[void AssertEqual(int, int, char32[])] Call
+PEEK D4
+PUSHV 2; UsrFunc[void walk(int, int)] Params Start
+PUSHV 10; UsrFunc[void walk(int, int)] Params End
+CALLFUNC 0.1120; UsrFunc[void walk(int, int)] Call
+POP D4
+SETR D2 VIEWPORT_X
+PUSHR D2
+SETR D2 VIEWPORT_WIDTH
+DIVV D2 2
+POP D3
+ADDR D2 D3
+STORE D2 0
+PUSHR D4
+LOAD D2 0; UsrFunc[void AssertEqual(bool, bool, char32[])] Params Start
+PUSHR D2
+SETV D2 0.0001; InlineFunc[int Floor(int)] Params Start
+PUSHR D2
+POP REFSPRITE
+SETR D2 SPRITE_X; InlineFunc[int Floor(int)] Params End
+FLOOR D2; InlineFunc[int Floor(int)] Body
+ADDV D2 8
+SUBV D2 40
+POP D3
+COMPARER D3 D2
+GOTOCMP 935 <=
+LOAD D2 0
+PUSHR D2
+SETV D2 0.0001; InlineFunc[int Floor(int)] Params Start
+PUSHR D2
+POP REFSPRITE
+SETR D2 SPRITE_X; InlineFunc[int Floor(int)] Params End
+FLOOR D2; InlineFunc[int Floor(int)] Body
+ADDV D2 8
+ADDV D2 40
+POP D3
+COMPARER D3 D2
+GOTOCMP 935 >=
+SETV D2 1
+GOTO 936
+SETV D2 0
+PUSHR D2
+PUSHV 1
+ALLOCATEMEMV D2 33 0
+WRITEPODSTRING D2 "lookahead should shift gradually"
+PUSHR D2; UsrFunc[void AssertEqual(bool, bool, char32[])] Params End
+CALLFUNC 0.1209; UsrFunc[void AssertEqual(bool, bool, char32[])] Call
+PEEK D4
+PUSHV 2; UsrFunc[void walk(int, int)] Params Start
+PUSHV 30; UsrFunc[void walk(int, int)] Params End
+CALLFUNC 0.1120; UsrFunc[void walk(int, int)] Call
+PEEK D4
+SETR D2 VIEWPORT_X; UsrFunc[void AssertEqual(int, int, char32[])] Params Start
+PUSHR D2
+SETR D2 VIEWPORT_WIDTH
+DIVV D2 2
+POP D3
+ADDR D2 D3
+PUSHR D2
+SETV D2 0.0001; InlineFunc[int Floor(int)] Params Start
+PUSHR D2
+POP REFSPRITE
+SETR D2 SPRITE_X; InlineFunc[int Floor(int)] Params End
+FLOOR D2; InlineFunc[int Floor(int)] Body
+ADDV D2 8
+SUBV D2 40
+PUSHR D2
+ALLOCATEMEMV D2 37 0
+WRITEPODSTRING D2 "camera should lead ahead of movement"
+PUSHR D2; UsrFunc[void AssertEqual(int, int, char32[])] Params End
+CALLFUNC 0.1237; UsrFunc[void AssertEqual(int, int, char32[])] Call
+POP D4
+SETV D2 -40
+PUSHR D2
+POP D2
+SETR VIEWPORT_LOOKAHEAD D2
+PUSHR D4
+PUSHV 2; UsrFunc[void walk(int, int)] Params Start
+PUSHV 40; UsrFunc[void walk(int, int)] Params End
+CALLFUNC 0.1120; UsrFunc[void walk(int, int)] Call
+PEEK D4
+SETR D2 VIEWPORT_X; UsrFunc[void AssertEqual(int, int, char32[])] Params Start
+PUSHR D2
+SETR D2 VIEWPORT_WIDTH
+DIVV D2 2
+POP D3
+ADDR D2 D3
+PUSHR D2
+SETV D2 0.0001; InlineFunc[int Floor(int)] Params Start
+PUSHR D2
+POP REFSPRITE
+SETR D2 SPRITE_X; InlineFunc[int Floor(int)] Params End
+FLOOR D2; InlineFunc[int Floor(int)] Body
+ADDV D2 8
+ADDV D2 40
+PUSHR D2
+ALLOCATEMEMV D2 36 0
+WRITEPODSTRING D2 "camera should trail behind movement"
+PUSHR D2; UsrFunc[void AssertEqual(int, int, char32[])] Params End
+CALLFUNC 0.1237; UsrFunc[void AssertEqual(int, int, char32[])] Call
+POP D4
+SETV D2 40
+PUSHR D2
+POP D2
+SETR VIEWPORT_LOOKAHEAD D2
+PUSHR D4
+PUSHV 0; UsrFunc[void walk(int, int)] Params Start
+PUSHV 40; UsrFunc[void walk(int, int)] Params End
+CALLFUNC 0.1120; UsrFunc[void walk(int, int)] Call
+PEEK D4
+SETR D2 VIEWPORT_X; UsrFunc[void AssertEqual(int, int, char32[])] Params Start
+PUSHR D2
+SETR D2 VIEWPORT_WIDTH
+DIVV D2 2
+POP D3
+ADDR D2 D3
+PUSHR D2
+SETV D2 0.0001; InlineFunc[int Floor(int)] Params Start
+PUSHR D2
+POP REFSPRITE
+SETR D2 SPRITE_X; InlineFunc[int Floor(int)] Params End
+FLOOR D2; InlineFunc[int Floor(int)] Body
+ADDV D2 8
+PUSHR D2
+ALLOCATEMEMV D2 49 0
+WRITEPODSTRING D2 "horizontal offset should ease out when moving up"
+PUSHR D2; UsrFunc[void AssertEqual(int, int, char32[])] Params End
+CALLFUNC 0.1237; UsrFunc[void AssertEqual(int, int, char32[])] Call
+PEEK D4
+SETR D2 VIEWPORT_Y; UsrFunc[void AssertEqual(int, int, char32[])] Params Start
+PUSHR D2
+SETR D2 VIEWPORT_HEIGHT
+DIVV D2 2
+POP D3
+ADDR D2 D3
+PUSHR D2
+SETV D2 0.0001; InlineFunc[int Floor(int)] Params Start
+PUSHR D2
+POP REFSPRITE
+SETR D2 SPRITE_Y; InlineFunc[int Floor(int)] Params End
+FLOOR D2; InlineFunc[int Floor(int)] Body
+ADDV D2 8
+SUBV D2 40
+PUSHR D2
+ALLOCATEMEMV D2 30 0
+WRITEPODSTRING D2 "camera should lead vertically"
+PUSHR D2; UsrFunc[void AssertEqual(int, int, char32[])] Params End
+CALLFUNC 0.1237; UsrFunc[void AssertEqual(int, int, char32[])] Call
+POP D4
+SETV D2 0
+PUSHR D2
+POP D2
+SETR VIEWPORT_LOOKAHEAD D2
+SETV D2 30; InlineFunc[void Waitframes(int)] Params
+WAITFRAMESR D2; InlineFunc[void Waitframes(int)] Body
+PUSHR D4
+SETR D2 VIEWPORT_Y; UsrFunc[void AssertEqual(int, int, char32[])] Params Start
+PUSHR D2
+SETR D2 VIEWPORT_HEIGHT
+DIVV D2 2
+POP D3
+ADDR D2 D3
+PUSHR D2
+SETV D2 0.0001; InlineFunc[int Floor(int)] Params Start
+PUSHR D2
+POP REFSPRITE
+SETR D2 SPRITE_Y; InlineFunc[int Floor(int)] Params End
+FLOOR D2; InlineFunc[int Floor(int)] Body
+ADDV D2 8
+PUSHR D2
+ALLOCATEMEMV D2 40 0
+WRITEPODSTRING D2 "lookahead should ease out when disabled"
+PUSHR D2; UsrFunc[void AssertEqual(int, int, char32[])] Params End
+CALLFUNC 0.1237; UsrFunc[void AssertEqual(int, int, char32[])] Call
+POP D4
+CALLFUNC 0.1180; UsrFunc[void End()] Call AND [Opt:NeverRet] AND [Opt:NeverRet] AND void run() Body End
 PUSHARGSV 0 0.0002; Func[void fillScreen(mapdata)] Body Start
 SETR D4 SP2
 STOREV 0 0.0001; for() #112 setup
@@ -837,13 +1103,13 @@ LOAD D2 0.0001; for() #112 LoopTest
 COMPAREV D2 16
 SETCMP D2 I<
 COMPAREV D2 0
-GOTOCMP 851 ==; for() #112 TestFail?
+GOTOCMP 1117 ==; for() #112 TestFail?
 STOREV 0 0; for() #113 setup AND for() #112 Body Start
 LOAD D2 0; for() #113 LoopTest
 COMPAREV D2 11
 SETCMP D2 I<
 COMPAREV D2 0
-GOTOCMP 846 ==; for() #113 TestFail?
+GOTOCMP 1112 ==; for() #113 TestFail?
 LOAD D2 0.0001; for() #113 Body Start
 PUSHR D2
 LOAD D2 0
@@ -870,15 +1136,39 @@ SETR MAPDATACOMBODD D2; for() #113 Body End
 LOAD D2 0; for() #113 LoopIncrement
 ADDV D2 1
 STORE D2 0
-GOTO 814; for() #113 End
+GOTO 1080; for() #113 End
 NOP; for() #112 Body End
 LOAD D2 0.0001; for() #112 LoopIncrement
 ADDV D2 1
 STORE D2 0.0001
-GOTO 808; for() #112 End
+GOTO 1074; for() #112 End
 NOP
 POPARGS D5 0.0003
 RETURNFUNC; Func[void fillScreen(mapdata)] Body End
+PUSHV 0; Func[void walk(int, int)] Body Start
+SETR D4 SP2
+STOREV 0 0; for() #130 setup
+LOAD D2 0; for() #130 LoopTest
+PUSHR D2
+LOAD D2 0.0001
+POP D3
+COMPARER D3 D2
+SETCMP D2 I<
+COMPAREV D2 0
+GOTOCMP 1141 ==; for() #130 TestFail?
+PUSHR D4; for() #130 Body Start
+LOAD D2 0.0002; UsrFunc[void press(int)] Params Start
+PUSHR D2; UsrFunc[void press(int)] Params End
+CALLFUNC 0.1144; UsrFunc[void press(int)] Call
+POP D4
+WAITFRAME; InlineFunc[void Waitframe()] Body AND for() #130 Body End
+LOAD D2 0; for() #130 LoopIncrement
+ADDV D2 1
+STORE D2 0
+GOTO 1123; for() #130 End
+NOP
+POPARGS D5 0.0003
+RETURNFUNC; Func[void walk(int, int)] Body End
 SETR D4 SP2; Func[void press(int)] Body Start
 PUSHV 5; InlineFunc[void WaitTo(ScriptTiming, bool)] Params Start
 SETV D3 0; InlineFunc[void WaitTo(ScriptTiming, bool)] Params End
@@ -906,7 +1196,7 @@ LOAD D2 0; if() #388 Test
 COMPAREV D2 0
 SETCMP D2 I!=
 COMPAREV D2 0
-GOTOCMP 887 ==; Test 'if'
+GOTOCMP 1177 ==; Test 'if'
 PUSHV 5; InlineFunc[void hero::Warp(int, int)] Params Start AND if() #388 Body Start
 LOAD D2 0; InlineFunc[void hero::Warp(int, int)] Params End
 POP D3; InlineFunc[void hero::Warp(int, int)] Body Start
@@ -930,7 +1220,7 @@ POP D3
 COMPARER D3 D2
 SETCMP D2 I!=
 COMPAREV D2 0
-GOTOCMP 916 ==; Test 'if'
+GOTOCMP 1206 ==; Test 'if'
 ALLOCATEMEMV D2 49 0; InlineFunc[void printf(char32[], ...untyped[])] Params Start AND if() #398 Body Start
 WRITEPODSTRING D2 "[Test] failed assertion: expected %d but got %d\n"
 PUSHR D2
@@ -954,7 +1244,7 @@ POP D3
 COMPARER D3 D2
 SETCMP D2 BI!=
 COMPAREV D2 0
-GOTOCMP 943 ==; Test 'if'
+GOTOCMP 1233 ==; Test 'if'
 ALLOCATEMEMV D2 53 0; InlineFunc[void printf(char32[], ...untyped[])] Params Start AND if() #399 Body Start
 WRITEPODSTRING D2 "[Test] failed assertion: expected %d but got %d. %s\n"
 PUSHR D2
@@ -982,7 +1272,7 @@ POP D3
 COMPARER D3 D2
 SETCMP D2 I!=
 COMPAREV D2 0
-GOTOCMP 971 ==; Test 'if'
+GOTOCMP 1261 ==; Test 'if'
 ALLOCATEMEMV D2 53 0; InlineFunc[void printf(char32[], ...untyped[])] Params Start AND if() #400 Body Start
 WRITEPODSTRING D2 "[Test] failed assertion: expected %d but got %d. %s\n"
 PUSHR D2
@@ -1009,25 +1299,25 @@ PUSHR D2
 POP REFDMAPDATA
 SETR D2 DMAPDATAMAP
 STORE D2 0.0003
-STOREV 0 0.0002; for() #136 setup
-LOAD D2 0.0002; for() #136 LoopTest
+STOREV 0 0.0002; for() #137 setup
+LOAD D2 0.0002; for() #137 LoopTest
 PUSHR D2
 LOAD D2 0.0004
 POP D3
 COMPARER D3 D2
 SETCMP D2 I<
 COMPAREV D2 0
-GOTOCMP 1045 ==; for() #136 TestFail?
-STOREV 0 0.0001; for() #137 setup AND for() #136 Body Start
-LOAD D2 0.0001; for() #137 LoopTest
+GOTOCMP 1335 ==; for() #137 TestFail?
+STOREV 0 0.0001; for() #138 setup AND for() #137 Body Start
+LOAD D2 0.0001; for() #138 LoopTest
 PUSHR D2
 LOAD D2 0.0004
 POP D3
 COMPARER D3 D2
 SETCMP D2 I<
 COMPAREV D2 0
-GOTOCMP 1040 ==; for() #137 TestFail?
-LOAD D2 0.0003; InlineFunc[mapdata Game::LoadMapData(int, int)] Params Start AND for() #137 Body Start
+GOTOCMP 1330 ==; for() #138 TestFail?
+LOAD D2 0.0003; InlineFunc[mapdata Game::LoadMapData(int, int)] Params Start AND for() #138 Body Start
 PUSHR D2
 LOAD D2 0.0005
 PUSHR D2
@@ -1060,16 +1350,16 @@ PUSHR D2
 PUSHR D3
 POP D2
 POP REFMAPDATA
-SETR MAPDATAREGIONID D2; for() #137 Body End
-LOAD D2 0.0001; for() #137 LoopIncrement
+SETR MAPDATAREGIONID D2; for() #138 Body End
+LOAD D2 0.0001; for() #138 LoopIncrement
 ADDV D2 1
 STORE D2 0.0001
-GOTO 994; for() #137 End
-NOP; for() #136 Body End
-LOAD D2 0.0002; for() #136 LoopIncrement
+GOTO 1284; for() #138 End
+NOP; for() #137 Body End
+LOAD D2 0.0002; for() #137 LoopIncrement
 ADDV D2 1
 STORE D2 0.0002
-GOTO 985; for() #136 End
+GOTO 1275; for() #137 End
 NOP
 PUSHV 5; InlineFunc[void hero::Warp(int, int)] Params Start
 LOAD D2 0.0005; InlineFunc[void hero::Warp(int, int)] Params End

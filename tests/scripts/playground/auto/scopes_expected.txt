@@ -13091,6 +13091,8 @@ debug data:
       - int DeadzoneHeight @ Reg[VIEWPORT_DEADZONE_HEIGHT]
       - int DeadzoneWidth @ Reg[VIEWPORT_DEADZONE_WIDTH]
       - const int Height @ Reg[VIEWPORT_HEIGHT]
+      - int Lookahead @ Reg[VIEWPORT_LOOKAHEAD]
+      - int LookaheadSpeed @ Reg[VIEWPORT_LOOKAHEAD_SPEED]
       - ViewportMode Mode @ Reg[VIEWPORT_MODE]
       - sprite Target @ Reg[VIEWPORT_TARGET]
       - const int Width @ Reg[VIEWPORT_WIDTH]

@@ -275,19 +275,24 @@ void clear_camera_effect();
 void tick_camera_effect();
 // The farthest the follow camera's focus may sit from the target's center on each axis: half
 // the viewport minus half a hero, since the target's center can get no closer than 8px to a
-// region edge. As long as the follow camera's displacement (half the deadzone) stays within
-// this, the viewport is flush against a region edge whenever the target stands on one, which
-// is the only place a scroll can start - so scrolling geometry never depends on the follow
-// settings. Uses the base viewport height even in extended-height mode, which is merely
-// conservative there.
+// region edge. As long as the total displacement (half the deadzone plus the lookahead
+// offset) stays within this, the viewport is flush against a region edge whenever the target
+// stands on one, which is the only place a scroll can start - so scrolling geometry never
+// depends on the follow settings. Uses the base viewport height even in extended-height mode,
+// which is merely conservative there.
 constexpr int CAMERA_FOLLOW_MAX_OFFSET_X = 256/2 - 8;
 constexpr int CAMERA_FOLLOW_MAX_OFFSET_Y = 176/2 - 8;
 void tick_camera_follow();
-void reset_camera_follow();
+void reset_camera_follow(bool keep_lookahead = false);
+std::pair<zfix, zfix> get_camera_lookahead_offset();
 int get_camera_deadzone_width();
 int get_camera_deadzone_height();
 void set_camera_deadzone_width(std::optional<int> width);
 void set_camera_deadzone_height(std::optional<int> height);
+int get_camera_lookahead();
+int get_camera_lookahead_speed();
+void set_camera_lookahead(std::optional<int> lookahead);
+void set_camera_lookahead_speed(std::optional<int> speed);
 void update_viewport();
 mapscr* determine_hero_screen_from_coords();
 bool edge_of_region(direction dir);

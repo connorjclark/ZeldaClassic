@@ -1424,6 +1424,8 @@ constexpr EngineSubsystem getEngineSubsystemForRegister(int reg)
 
 		case VIEWPORT_DEADZONE_HEIGHT:
 		case VIEWPORT_DEADZONE_WIDTH:
+		case VIEWPORT_LOOKAHEAD:
+		case VIEWPORT_LOOKAHEAD_SPEED:
 		case VIEWPORT_HEIGHT:
 		case VIEWPORT_MODE:
 		case VIEWPORT_TARGET:

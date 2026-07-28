@@ -376,6 +376,8 @@ const char* scripting_get_zasm_register_context_string(int reg)
 		case VIEWPORT_DEADZONE_HEIGHT: return "Viewport->DeadzoneHeight";
 		case VIEWPORT_DEADZONE_WIDTH: return "Viewport->DeadzoneWidth";
 		case VIEWPORT_HEIGHT: return "Viewport->Height";
+		case VIEWPORT_LOOKAHEAD: return "Viewport->Lookahead";
+		case VIEWPORT_LOOKAHEAD_SPEED: return "Viewport->LookaheadSpeed";
 		case VIEWPORT_MODE: return "Viewport->Mode";
 		case VIEWPORT_TARGET: return "Viewport->Target";
 		case VIEWPORT_WIDTH: return "Viewport->Width";

@@ -1718,6 +1718,13 @@ int32_t readinitdata(PACKFILE *f, zquestheader *Header)
 			if (!p_getc(&temp_zinit.viewport_deadzone_h, f))
 				return qe_invalid;
 		}
+		if (s_version >= 52)
+		{
+			if (!p_getc(&temp_zinit.viewport_lookahead, f))
+				return qe_invalid;
+			if (!p_getc(&temp_zinit.viewport_lookahead_speed, f))
+				return qe_invalid;
+		}
 	}
 	
 	if(s_version < 46)

@@ -756,16 +756,33 @@ std::shared_ptr<GUI::Widget> InitDataDialog::view()
 									"\nPhysical: Only screens the Hero steps into are mapped"),
 								VAL_FIELD(byte,"Camera Deadzone Width:",0,240,viewport_deadzone_w,false),
 								INFOBTN("While the player (or other camera target) stays within a box of this width"
-									" centered on the camera, the camera does not move horizontally. Once they push"
-									" past the box's edge, the camera moves just enough to keep them on it."
+									" centered on the camera's aim point, the camera does not move horizontally. Once"
+									" they push past the box's edge, the camera moves just enough to keep them on it."
 									"\n\nOnly observable in scrolling regions. Scripts can change this at runtime"
 									" via Viewport->DeadzoneWidth."),
 								VAL_FIELD(byte,"Camera Deadzone Height:",0,160,viewport_deadzone_h,false),
 								INFOBTN("While the player (or other camera target) stays within a box of this height"
-									" centered on the camera, the camera does not move vertically. Once they push"
-									" past the box's edge, the camera moves just enough to keep them on it."
+									" centered on the camera's aim point, the camera does not move vertically. Once"
+									" they push past the box's edge, the camera moves just enough to keep them on it."
 									"\n\nOnly observable in scrolling regions. Scripts can change this at runtime"
-									" via Viewport->DeadzoneHeight.")
+									" via Viewport->DeadzoneHeight."),
+								VAL_FIELD(int8_t,"Camera Lookahead:",-120,120,viewport_lookahead,false),
+								INFOBTN("How far the camera aims ahead of the direction the player (or other camera"
+									" target) is moving, in pixels. Positive values lead in front (more frontal view);"
+									" negative values trail behind. The lead applies per axis, so diagonal movement"
+									" leads by this much on both."
+									"\n\nThe offset builds while the target moves, at the Lookahead Speed, and holds"
+									" while they stand still, so the camera never drifts or reacts to turning in"
+									" place. It is capped so the camera can still reach the region edges, dropped by"
+									" warps and camera cutscene effects (rebuilding as the target moves), and carried"
+									" through scroll transitions."
+									"\n\nOnly observable in scrolling regions. Scripts can change this at runtime"
+									" via Viewport->Lookahead."),
+								VAL_FIELD(byte,"Camera Lookahead Speed:",0,240,viewport_lookahead_speed,false),
+								INFOBTN("How fast the camera lookahead offset shifts toward its target distance, in"
+									" pixels per frame (0 freezes it in place). While the target moves, this is"
+									" added to their own speed, so higher values make the camera visibly outrun them."
+									"\n\nScripts can change this at runtime via Viewport->LookaheadSpeed.")
 							)
 						)
 					))

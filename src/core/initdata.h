@@ -87,6 +87,11 @@ struct zinitdata
 	// box (centered on the camera focus), the camera doesn't move. 0 disables (camera locked
 	// to the target). Only observable in scrolling regions.
 	byte viewport_deadzone_w = 0, viewport_deadzone_h = 0;
+	// How far the camera aims ahead of (positive) or behind (negative) the direction the
+	// viewport target faces, in pixels, and how fast that offset shifts in pixels per frame.
+	// Only observable in scrolling regions.
+	int8_t viewport_lookahead = 0;
+	byte viewport_lookahead_speed = 1;
 	
 	word item_spawn_flicker = 32, item_timeout_dur = 512, item_timeout_flicker = 0;
 	byte item_flicker_speed = 2;

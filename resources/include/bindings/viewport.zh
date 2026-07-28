@@ -57,6 +57,41 @@ class Viewport {
 	// @zasm_var VIEWPORT_DEADZONE_HEIGHT
 	internal int DeadzoneHeight;
 
+	// How far the camera aims ahead of the direction the [Target] is moving, in pixels
+	// (-120 to 120). Positive values lead in front of the target (more frontal view);
+	// negative values trail behind it. The lead applies per axis, so diagonal movement
+	// leads by this much on both.
+	//
+	// While the target moves, the offset shifts toward the lead at [LookaheadSpeed] pixels
+	// per frame (easing out on the axis it isn't moving along). While it stands still, the
+	// offset holds, so the camera never drifts or reacts to turning in place. Warps and
+	// camera cutscene effects drop the offset (it rebuilds as the target moves); scroll
+	// transitions carry it. Only observable in scrolling regions.
+	//
+	// The offset the camera actually holds is capped on each axis so the viewport can
+	// still reach the region edges: 120 - [DeadzoneWidth]/2 horizontally, and
+	// 80 - [DeadzoneHeight]/2 vertically.
+	//
+	// Defaults to the value set in the editor's Init Data 'Regions' tab. Writing to this
+	// overrides the Init Data value until the game is restarted or continued; unlike
+	// [DeadzoneWidth], there is no sentinel to clear the override early.
+	//
+	// @versionadded 3.0
+	// @zasm_var VIEWPORT_LOOKAHEAD
+	internal int Lookahead;
+
+	// How fast the [Lookahead] offset shifts, in pixels per frame (0 to 240; 0 freezes
+	// the current offset in place).
+	//
+	// Defaults to the value set in the editor's Init Data 'Regions' tab (1 unless
+	// changed). Writing to this overrides the Init Data value until the game is restarted
+	// or continued; write -1 to clear the override early (reading always returns the
+	// effective value, never -1).
+	//
+	// @versionadded 3.0
+	// @zasm_var VIEWPORT_LOOKAHEAD_SPEED
+	internal int LookaheadSpeed;
+
 	// Unless [Mode] is [VIEW_MODE_SCRIPT], this is updated every frame by the engine.
 	//
 	// @zasm_var VIEWPORT_X

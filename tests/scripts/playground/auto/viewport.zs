@@ -14,6 +14,15 @@ void fillScreen(mapdata scr)
 	}
 }
 
+void walk(int button, int frames)
+{
+	for (int i = 0; i < frames; i++)
+	{
+		press(button);
+		Waitframe();
+	}
+}
+
 lweapon script seeking_arrow
 {
 	void run()
@@ -218,6 +227,52 @@ generic script viewport
 		Viewport->DeadzoneWidth = 0;
 		Viewport->DeadzoneHeight = 0;
 		Waitframe();
+
+		// Lookahead: while the target moves, the camera gradually aims ahead of (positive)
+		// or behind (negative) its direction of travel; while it stands still, the offset
+		// holds.
+		Test::AssertEqual(Viewport->Lookahead, 0);
+		Test::AssertEqual(Viewport->LookaheadSpeed, 1);
+
+		// Stand in the middle of the region so the ±40px aims stay clear of the region
+		// clamp on both axes.
+		Hero->X = 600;
+		Hero->Y = 350;
+		Viewport->Lookahead = 40;
+		Viewport->LookaheadSpeed = 2;
+		Waitframe();
+
+		// Walking right builds a lead in front; it settles after 40/2 = 20 frames of movement.
+		walk(CB_RIGHT, 30);
+		Test::AssertEqual(Viewport->X + Viewport->Width / 2, Floor(Hero->X) + 8 + 40, "camera should lead ahead of movement");
+
+		// Standing still (even turning in place) holds the offset.
+		Hero->Dir = DIR_LEFT;
+		Waitframes(20);
+		Test::AssertEqual(Viewport->X + Viewport->Width / 2, Floor(Hero->X) + 8 + 40, "lookahead should hold while idle");
+
+		// Walking the other way shifts the lead gradually, not instantly.
+		walk(CB_LEFT, 10);
+		int focus = Viewport->X + Viewport->Width / 2;
+		Test::AssertEqual(focus > Floor(Hero->X) + 8 - 40 && focus < Floor(Hero->X) + 8 + 40, true, "lookahead should shift gradually");
+		walk(CB_LEFT, 30);
+		Test::AssertEqual(Viewport->X + Viewport->Width / 2, Floor(Hero->X) + 8 - 40, "camera should lead ahead of movement");
+
+		// Negative lookahead trails behind the direction of travel instead.
+		Viewport->Lookahead = -40;
+		walk(CB_LEFT, 40);
+		Test::AssertEqual(Viewport->X + Viewport->Width / 2, Floor(Hero->X) + 8 + 40, "camera should trail behind movement");
+
+		// The vertical axis works the same way, and the horizontal offset eases out.
+		Viewport->Lookahead = 40;
+		walk(CB_UP, 40);
+		Test::AssertEqual(Viewport->X + Viewport->Width / 2, Floor(Hero->X) + 8, "horizontal offset should ease out when moving up");
+		Test::AssertEqual(Viewport->Y + Viewport->Height / 2, Floor(Hero->Y) + 8 - 40, "camera should lead vertically");
+
+		// Disabling lookahead eases the held offset away even while idle.
+		Viewport->Lookahead = 0;
+		Waitframes(30);
+		Test::AssertEqual(Viewport->Y + Viewport->Height / 2, Floor(Hero->Y) + 8, "lookahead should ease out when disabled");
 
 		Test::End();
 	}

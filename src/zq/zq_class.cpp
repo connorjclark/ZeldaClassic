@@ -13284,6 +13284,10 @@ int32_t writeinitdata(PACKFILE *f, zquestheader *)
 			new_return(90);
 		if (!p_putc(zinit.viewport_deadzone_h, f))
 			new_return(91);
+		if (!p_putc(zinit.viewport_lookahead, f))
+			new_return(92);
+		if (!p_putc(zinit.viewport_lookahead_speed, f))
+			new_return(93);
 
 		if(writecycle==0)
 		{

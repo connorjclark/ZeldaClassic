@@ -48,6 +48,16 @@ int32_t viewport_get_register(int32_t reg)
 			ret = get_camera_deadzone_height() * 10000;
 		}
 		break;
+		case VIEWPORT_LOOKAHEAD:
+		{
+			ret = get_camera_lookahead() * 10000;
+		}
+		break;
+		case VIEWPORT_LOOKAHEAD_SPEED:
+		{
+			ret = get_camera_lookahead_speed() * 10000;
+		}
+		break;
 		case VIEWPORT_X:
 		{
 			ret = viewport.x * 10000;
@@ -66,7 +76,7 @@ int32_t viewport_get_register(int32_t reg)
 	return ret;
 }
 
-// The follow-camera settings take -1 from scripts to clear their override.
+// The unsigned follow-camera settings take -1 from scripts to clear their override.
 static std::optional<int> override_or_clear(int val)
 {
 	return val < 0 ? std::nullopt : std::optional(val);
@@ -133,6 +143,24 @@ void viewport_set_register(int32_t reg, int32_t value)
 
 			set_camera_deadzone_height(override_or_clear(val));
 			update_viewport();
+		}
+		break;
+		case VIEWPORT_LOOKAHEAD:
+		{
+			int val = value / 10000;
+			if (BC::checkBounds(val, -CAMERA_FOLLOW_MAX_OFFSET_X, CAMERA_FOLLOW_MAX_OFFSET_X) != SH::_NoError)
+				break;
+
+			set_camera_lookahead(val);
+		}
+		break;
+		case VIEWPORT_LOOKAHEAD_SPEED:
+		{
+			int val = value / 10000;
+			if (BC::checkBounds(val, -1, 240) != SH::_NoError)
+				break;
+
+			set_camera_lookahead_speed(override_or_clear(val));
 		}
 		break;
 		case VIEWPORT_X:
