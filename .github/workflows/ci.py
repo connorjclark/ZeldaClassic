@@ -546,11 +546,20 @@ def build(ctx: CiContext, args):
         # are pinned to the upstream repo's main branch, which breaks new
         # inputs for any push the upstream doesn't have yet.
         #
-        # Excluded pending investigation of LTO-induced behavior changes
-        # (consistent, reproducible divergences - possibly latent UB):
-        #   - windows win32: replay divergence (triggers, the_deep)
-        #   - mac (intel CI runner): replay divergence (terror_of_necromancy)
-        #   - linux gcc: zscript symbol output changes (vscode extension tests)
+        # Some platforms are excluded because LTO diverges from recorded
+        # replays there. Root cause (not a bug): every compiler builds this
+        # project with fast-math (see the fp flags in CMakeLists.txt), and
+        # LTO's cross-TU inlining unlocks fast-math rewrites that were not
+        # possible before - e.g. on mac x86_64, Distance()'s inlined
+        # `a/10000.0 - b/10000.0` gets reassociated into `(a-b)*1e-4`,
+        # flipping a truncation by one. The recorded replay hashes pin the
+        # old rounding. Observed divergences:
+        #   - windows win32: replays (triggers, the_deep)
+        #   - mac (intel CI runner): replays (terror_of_necromancy)
+        #   - linux gcc: zscript symbol output (vscode extension tests)
+        # The platforms left enabled pass today but are one inlining decision
+        # away from the same fate; if one flips, exclude it too (or pin the
+        # affected TUs to precise fp - see docs/building.md).
         # Coverage (gcov) and sanitizer configs don't mix well with LTO.
         lto_ok = (ctx.is_linux and ctx.compiler == 'clang') or (
             ctx.is_windows and ctx.arch_label == 'x64'

@@ -242,6 +242,14 @@ render-bound replays. Binaries get meaningfully smaller (zplayer −13%, zeditor
 −10%, zlauncher −52%) and clean builds take ~15% longer. Replays pass
 unchanged.
 
+Caveat: this project compiles with fast-math on every compiler (see the fp
+flags near the top of CMakeLists.txt), and LTO's cross-TU inlining can unlock
+fast-math rewrites that change floating-point rounding — which diverges from
+recorded replay hashes on some platforms (win32, mac x86_64, gcc; see
+`use_lto` in .github/workflows/ci.py for the details). If a platform flips,
+either exclude it there or compile the affected translation units with
+`-ffp-model=precise` and re-record the affected replays.
+
 # Vendored vs. system libraries
 
 By default, several third-party libraries are built from sources vendored in the `third_party` folder. Packagers who prefer to link against OS/package-manager provided libraries can opt out per-library with these CMake options:
