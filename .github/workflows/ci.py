@@ -539,14 +539,25 @@ def build(ctx: CiContext, args):
             f"-DWANT_ZC_TESTS={wants_tests}",
         ]
         cmake_config_cmd.extend(extra_config_args)
-        # CI test builds use LTO so it keeps working on every platform;
-        # releases don't (measured a perf wash - see docs/building.md). This
-        # decision lives here rather than as a workflow input because the
-        # reusable workflows are pinned to the upstream repo's main branch,
-        # which breaks new inputs for any push the upstream doesn't have yet.
+        # CI test builds use LTO where the test suite stays green with it, so
+        # it keeps working there; releases don't build with LTO at all
+        # (measured a perf wash - see docs/building.md). This decision lives
+        # here rather than as a workflow input because the reusable workflows
+        # are pinned to the upstream repo's main branch, which breaks new
+        # inputs for any push the upstream doesn't have yet.
+        #
+        # Excluded pending investigation of LTO-induced behavior changes
+        # (consistent, reproducible divergences - possibly latent UB):
+        #   - windows win32: replay divergence (triggers, the_deep)
+        #   - mac (intel CI runner): replay divergence (terror_of_necromancy)
+        #   - linux gcc: zscript symbol output changes (vscode extension tests)
         # Coverage (gcov) and sanitizer configs don't mix well with LTO.
+        lto_ok = (ctx.is_linux and ctx.compiler == 'clang') or (
+            ctx.is_windows and ctx.arch_label == 'x64'
+        )
         use_lto = args.lto or (
             os.environ.get('CI') is not None
+            and lto_ok
             and not args.official
             and ctx.config in ('Release', 'RelWithDebInfo')
         )
