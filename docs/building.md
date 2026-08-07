@@ -220,6 +220,27 @@ Now, build with cmake as normal. Note the output of the above script:
 > be sure to start a local webserver:
 >   node scripts/webserver.mjs
 
+# Link-time optimization (LTO)
+
+Builds do not use LTO by default, on any platform. To try it locally, configure
+a build folder with CMake's IPO flag (with clang this uses ThinLTO,
+`-flto=thin`):
+
+```sh
+cmake -G 'Ninja Multi-Config' -S . -B build-lto -DCMAKE_INTERPROCEDURAL_OPTIMIZATION=TRUE
+cmake --build build-lto --config Release -t zplayer
+```
+
+To compare against a non-LTO build, make a second build folder without the flag
+and point `scripts/measure_performance.py --build_folder` at each in turn.
+
+As measured on an Apple Silicon mac (2026-08, Release, ThinLTO): runtime is a
+wash — total wall time within noise, with a small consistent regression in
+script-engine time (~+8%) and JIT precompile (~+12%), offset by wins on
+render-bound replays. Binaries get meaningfully smaller (zplayer −13%, zeditor
+−10%, zlauncher −52%) and clean builds take ~15% longer. Replays pass
+unchanged.
+
 # Vendored vs. system libraries
 
 By default, several third-party libraries are built from sources vendored in the `third_party` folder. Packagers who prefer to link against OS/package-manager provided libraries can opt out per-library with these CMake options:
