@@ -17,10 +17,6 @@ on:
       cache:
         type: boolean
         default: true
-      lto:
-        type: boolean
-        default: false
-        description: "Build with link-time optimization"
       debug-info:
         type: boolean
         default: false
@@ -147,7 +143,6 @@ jobs:
           ${{ inputs.test-runner && '--test-runner' || '' }}
           ${{ inputs.sentry && '--sentry' || '' }}
           ${{ !inputs.cache && '--no-cache' || '' }}
-          ${{ inputs.lto && '--lto' || '' }}
 
       - name: Package
         run: >

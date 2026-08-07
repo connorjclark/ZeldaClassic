@@ -539,7 +539,18 @@ def build(ctx: CiContext, args):
             f"-DWANT_ZC_TESTS={wants_tests}",
         ]
         cmake_config_cmd.extend(extra_config_args)
-        if args.lto:
+        # CI test builds use LTO so it keeps working on every platform;
+        # releases don't (measured a perf wash - see docs/building.md). This
+        # decision lives here rather than as a workflow input because the
+        # reusable workflows are pinned to the upstream repo's main branch,
+        # which breaks new inputs for any push the upstream doesn't have yet.
+        # Coverage (gcov) and sanitizer configs don't mix well with LTO.
+        use_lto = args.lto or (
+            os.environ.get('CI') is not None
+            and not args.official
+            and ctx.config in ('Release', 'RelWithDebInfo')
+        )
+        if use_lto:
             cmake_config_cmd.append("-DWANT_LTO=TRUE")
         if ctx.is_mac:
             cmake_config_cmd.append(
