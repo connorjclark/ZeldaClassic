@@ -441,6 +441,7 @@ def merge_mac_binaries(primary_dir: Path, secondary_dir: Path):
 
 @command("build", help="Configure and build the project")
 @argument("--no-cache", dest="cache", action="store_false", help="Disable ccache")
+@argument("--lto", action="store_true", help="Build with link-time optimization")
 @argument("--official", action="store_true", help="Mark as an official build")
 @argument("--test-runner", action="store_true", help="Include base_test_runner target")
 @argument("--sentry", action="store_true", help="Build with Sentry support")
@@ -538,6 +539,8 @@ def build(ctx: CiContext, args):
             f"-DWANT_ZC_TESTS={wants_tests}",
         ]
         cmake_config_cmd.extend(extra_config_args)
+        if args.lto:
+            cmake_config_cmd.append("-DWANT_LTO=TRUE")
         if ctx.is_mac:
             cmake_config_cmd.append(
                 f"-DCMAKE_OSX_DEPLOYMENT_TARGET={MAC_DEPLOYMENT_TARGET}"

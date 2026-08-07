@@ -75,6 +75,9 @@ jobs:
       config: ${{ matrix.config }}
       extra-args: ${{ matrix.extra-args }} --prune_test_results
       from-ci-workflow: true
+      # Releases don't build with LTO (measured a perf wash - see
+      # docs/building.md), but keep it working everywhere by testing with it.
+      lto: true
     secrets:
       GH_PAT_ZSCRIPT_DATABASE: ${{ secrets.GH_PAT_ZSCRIPT_DATABASE }}
 

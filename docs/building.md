@@ -222,12 +222,13 @@ Now, build with cmake as normal. Note the output of the above script:
 
 # Link-time optimization (LTO)
 
-Builds do not use LTO by default, on any platform. To try it locally, configure
-a build folder with CMake's IPO flag (with clang this uses ThinLTO,
-`-flto=thin`):
+Builds do not use LTO by default, on any platform, but CI test builds enable it
+so it keeps working everywhere. To try it locally, configure a build folder with
+the `WANT_LTO` option (with clang this uses ThinLTO `-flto=thin`, with MSVC
+`/GL`+`/LTCG`):
 
 ```sh
-cmake -G 'Ninja Multi-Config' -S . -B build-lto -DCMAKE_INTERPROCEDURAL_OPTIMIZATION=TRUE
+cmake -G 'Ninja Multi-Config' -S . -B build-lto -DWANT_LTO=TRUE
 cmake --build build-lto --config Release -t zplayer
 ```
 

@@ -39,6 +39,9 @@ on:
         type: string
       from-ci-workflow:
         type: boolean
+      lto:
+        type: boolean
+        default: false
     secrets:
       GH_PAT_ZSCRIPT_DATABASE:
         required: true
@@ -69,6 +72,7 @@ jobs:
       config: ${{ inputs.config }}
       debug-info: true
       test-runner: true
+      lto: ${{ inputs.lto }}
 
   test:
     needs: build
