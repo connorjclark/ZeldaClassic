@@ -65,6 +65,17 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 if(WANT_LTO)
+	# On Linux, clang's LTO needs a linker that understands LLVM bitcode: the
+	# llvm.org toolchains' gold plugin does not load into the system ld
+	# ("error loading plugin"), but lld (shipped with the same toolchains)
+	# handles LTO natively. Appended to the linker-flags variables rather than
+	# add_link_options so check_ipo_supported's try_compile links with it too.
+	if(CMAKE_SYSTEM_NAME STREQUAL "Linux" AND CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+		foreach(t EXE SHARED MODULE)
+			string(APPEND CMAKE_${t}_LINKER_FLAGS " -fuse-ld=lld")
+		endforeach()
+	endif()
+
 	include(CheckIPOSupported)
 	check_ipo_supported(RESULT lto_supported OUTPUT lto_error)
 	if(NOT lto_supported)
