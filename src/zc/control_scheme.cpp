@@ -50,6 +50,7 @@ std::map<string, control_scheme> control_schemes;
 // The active scheme(s). If 'quest_control_scheme_name' is nullopt, 'global_control_scheme_name' is used.
 string global_control_scheme_name;
 optional<string> quest_control_scheme_name;
+optional<string> gamepad_control_scheme_name; // per-gamepad (GUID) assigned scheme; see poll_gamepad_scheme
 
 string active_control_scheme_name;
 control_scheme const* active_control_scheme = nullptr;
@@ -83,7 +84,8 @@ void refresh_control_scheme()
 		active_control_scheme = &replay_control_scheme;
 		return;
 	}
-	if (!activate_control_scheme(quest_control_scheme_name ? *quest_control_scheme_name : global_control_scheme_name))
+	if (!activate_control_scheme(quest_control_scheme_name ? *quest_control_scheme_name :
+		gamepad_control_scheme_name ? *gamepad_control_scheme_name : global_control_scheme_name))
 	{
 		// If the quest-specific scheme fails, fallback on the global scheme
 		if (!activate_control_scheme(global_control_scheme_name))
@@ -151,6 +153,105 @@ void cleanup_control_schemes() // make sure this cleans up before allegro exits?
 	control_config.destroy();
 }
 
+// ---- Per-gamepad (GUID) scheme assignment ----
+// When the active joystick is a recognized gamepad, a scheme is auto-created
+// for it (named after the controller) and assigned to its GUID; the assignment
+// is remembered as `[Controls] gamepad__<guid>` in zc.cfg. Scheme priority is
+// quest-specific > gamepad > global.
+
+static string joystick_guid_str(ALLEGRO_JOYSTICK* joy)
+{
+	ALLEGRO_JOYSTICK_GUID guid = al_get_joystick_guid(joy);
+	string ret;
+	for (size_t i = 0; i < sizeof(guid.val); i++)
+		ret += fmt::format("{:02x}", guid.val[i]);
+	return ret;
+}
+
+static control_scheme make_gamepad_default_scheme()
+{
+	// Buttons are 1-based (see joybtn); allegro gamepad button N is N+1 here.
+	// The a5_joystick shim appends synthetic buttons after the 11 gamepad
+	// buttons: 12/13 = left/right trigger, 14..17 = dpad up/down/left/right.
+	//
+	// Start from the active scheme so keyboard and cheat bindings carry over;
+	// every gamepad-related field is overwritten with gamepad defaults below.
+	control_scheme scheme = active_control_scheme ? *active_control_scheme : control_scheme();
+	scheme.analog_movement = true;
+	int* b = scheme.btns;
+	b[btnUp] = 14; b[btnDown] = 15; b[btnLeft] = 16; b[btnRight] = 17;
+	b[btnA] = 2;    // east; matches the NES A position
+	b[btnB] = 1;    // south; matches the NES B position
+	b[btnS] = 8;    // start
+	b[btnL] = 5;    // left shoulder
+	b[btnR] = 6;    // right shoulder
+	b[btnP] = 7;    // back/select
+	b[btnEx1] = 3;  // west
+	b[btnEx2] = 4;  // north
+	b[btnEx3] = 12; // left trigger
+	b[btnEx4] = 13; // right trigger
+	scheme.btn_menu = 9; // guide
+	// Move with the left thumb stick; the dpad works via its buttons above.
+	memset(scheme.stick_data, 0, sizeof(scheme.stick_data));
+	for (int stick = 0; stick < control_scheme::num_sticks; stick++)
+		scheme.stick_data[stick][control_scheme::axis_y][control_scheme::data_axis] = 1;
+	for (int axis = 0; axis < control_scheme::num_axes; axis++)
+	{
+		scheme.stick_data[control_scheme::stick_1][axis][control_scheme::data_stick] = ALLEGRO_GAMEPAD_STICK_LEFT_THUMB;
+		scheme.stick_data[control_scheme::stick_2][axis][control_scheme::data_stick] = ALLEGRO_GAMEPAD_STICK_RIGHT_THUMB;
+	}
+	return scheme;
+}
+
+void poll_gamepad_scheme()
+{
+	if (replay_is_replaying())
+		return;
+
+	int index = active_control_scheme ? active_control_scheme->joystick_index : 0;
+	ALLEGRO_JOYSTICK* joy = index < al_get_num_joysticks() ? al_get_joystick(index) : nullptr;
+
+	static string last_guid = "\n"; // impossible value; first call always evaluates
+	string guid = joy ? joystick_guid_str(joy) : "";
+	if (guid == last_guid)
+		return;
+	last_guid = guid;
+
+	optional<string> prev = gamepad_control_scheme_name;
+	gamepad_control_scheme_name = nullopt;
+	if (!guid.empty())
+	{
+		string key = fmt::format("gamepad__{}", guid);
+		const char* assigned = zc_get_config(ctrl_sect, key.c_str(), nullptr);
+		if (assigned && assigned[0] && control_schemes.contains(assigned))
+			gamepad_control_scheme_name = string(assigned);
+		else if (al_get_joystick_type(joy) == ALLEGRO_JOYSTICK_TYPE_GAMEPAD)
+		{
+			// First time seeing this gamepad: give it a scheme named after the
+			// controller, creating one with gamepad defaults if the name is
+			// unused. Schemes carried over from older versions are NOT reused
+			// here even if customized: their button numbers were tuned to the
+			// old raw driver layouts, which the SDL driver renumbered.
+			// (Keyboard bindings do carry over - see
+			// make_gamepad_default_scheme.) The same controller model shares
+			// one scheme, which also keeps a pad's bindings when it switches
+			// between USB and Bluetooth (those get different GUIDs but the
+			// same name).
+			const char* joy_name = al_get_joystick_name(joy);
+			string name = joy_name && joy_name[0] ? joy_name : "Gamepad";
+			if (!control_schemes.contains(name))
+			{
+				control_schemes[name] = make_gamepad_default_scheme();
+				control_schemes[name].save_to_section(name);
+			}
+			zc_set_config(ctrl_sect, key.c_str(), name.c_str());
+			gamepad_control_scheme_name = name;
+		}
+	}
+	if (gamepad_control_scheme_name != prev)
+		refresh_control_scheme();
+}
+
 bool activate_control_scheme(string const& name)
 {
 	if (!control_schemes.contains(name))
@@ -175,6 +276,8 @@ bool delete_control_scheme(string const& name)
 	control_schemes.erase(name);
 	if (quest_control_scheme_name && *quest_control_scheme_name == name)
 		quest_control_scheme_name = nullopt;
+	if (gamepad_control_scheme_name && *gamepad_control_scheme_name == name)
+		gamepad_control_scheme_name = nullopt;
 	if (global_control_scheme_name == name)
 	{
 		string newname = DEFAULT_CONTROL_SCHEME_NAME;
@@ -217,6 +320,8 @@ bool rename_control_scheme(string const& oldname, string const& newname)
 	// convert saved control sets
 	if (quest_control_scheme_name && *quest_control_scheme_name == oldname)
 		quest_control_scheme_name = newname;
+	if (gamepad_control_scheme_name && *gamepad_control_scheme_name == oldname)
+		gamepad_control_scheme_name = newname;
 	if (global_control_scheme_name == oldname)
 		global_control_scheme_name = newname;
 	

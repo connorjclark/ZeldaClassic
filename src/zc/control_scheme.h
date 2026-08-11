@@ -13,6 +13,7 @@ extern std::map<string, control_scheme> control_schemes;
 
 extern std::string global_control_scheme_name;
 extern optional<std::string> quest_control_scheme_name;
+extern optional<std::string> gamepad_control_scheme_name;
 extern std::string active_control_scheme_name;
 extern control_scheme const* active_control_scheme;
 extern control_scheme replay_control_scheme;
@@ -20,6 +21,7 @@ extern control_scheme replay_control_scheme;
 #define DEFAULT_CONTROL_SCHEME_NAME "Default"
 
 void update_quest_control_path(string const& path);
+void poll_gamepad_scheme();
 void refresh_control_scheme();
 void save_schemes();
 void load_control_schemes();
