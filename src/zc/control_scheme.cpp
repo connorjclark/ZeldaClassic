@@ -159,6 +159,8 @@ void cleanup_control_schemes() // make sure this cleans up before allegro exits?
 // is remembered as `[Controls] gamepad__<guid>` in zc.cfg. Scheme priority is
 // quest-specific > gamepad > global.
 
+static string poll_last_guid = "\n"; // impossible value; the first poll always evaluates
+
 static string joystick_guid_str(ALLEGRO_JOYSTICK* joy)
 {
 	ALLEGRO_JOYSTICK_GUID guid = al_get_joystick_guid(joy);
@@ -211,11 +213,10 @@ void poll_gamepad_scheme()
 	int index = active_control_scheme ? active_control_scheme->joystick_index : 0;
 	ALLEGRO_JOYSTICK* joy = index < al_get_num_joysticks() ? al_get_joystick(index) : nullptr;
 
-	static string last_guid = "\n"; // impossible value; first call always evaluates
 	string guid = joy ? joystick_guid_str(joy) : "";
-	if (guid == last_guid)
+	if (guid == poll_last_guid)
 		return;
-	last_guid = guid;
+	poll_last_guid = guid;
 
 	optional<string> prev = gamepad_control_scheme_name;
 	gamepad_control_scheme_name = nullopt;
@@ -250,6 +251,39 @@ void poll_gamepad_scheme()
 	}
 	if (gamepad_control_scheme_name != prev)
 		refresh_control_scheme();
+}
+
+static optional<string> gamepad_assignment_key(int joy_index)
+{
+	if (joy_index < 0 || joy_index >= al_get_num_joysticks())
+		return nullopt;
+	ALLEGRO_JOYSTICK* joy = al_get_joystick(joy_index);
+	if (!joy)
+		return nullopt;
+	return fmt::format("gamepad__{}", joystick_guid_str(joy));
+}
+
+optional<string> get_gamepad_assigned_scheme(int joy_index)
+{
+	auto key = gamepad_assignment_key(joy_index);
+	if (!key)
+		return nullopt;
+	const char* assigned = zc_get_config(ctrl_sect, key->c_str(), nullptr);
+	if (assigned && assigned[0] && control_schemes.contains(assigned))
+		return string(assigned);
+	return nullopt;
+}
+
+void set_gamepad_assigned_scheme(int joy_index, string const& name)
+{
+	auto key = gamepad_assignment_key(joy_index);
+	if (!key)
+		return;
+	// An empty name clears the assignment; the next poll re-assigns
+	// automatically.
+	zc_set_config(ctrl_sect, key->c_str(), name.empty() ? nullptr : name.c_str());
+	poll_last_guid = "\n"; // force re-evaluation
+	poll_gamepad_scheme();
 }
 
 bool activate_control_scheme(string const& name)

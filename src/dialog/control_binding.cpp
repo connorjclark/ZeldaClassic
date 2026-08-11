@@ -104,7 +104,8 @@ void ControlBindingDialog::load_gamepad_labels()
 	for (int q = 0; q < num_u_btn; ++q)
 		u_btn_labels[q]->setText(joybtn_name(local_scheme.joystick_index, ubtns[q]));
 	for (int q = 0; q < control_scheme::num_sticks; ++q)
-		stick_labels[q]->setText(joystick_name(local_scheme.joystick_index, local_scheme.stick_data[q][control_scheme::axis_x][control_scheme::data_stick]));
+		if (stick_labels[q])
+			stick_labels[q]->setText(joystick_name(local_scheme.joystick_index, local_scheme.stick_data[q][control_scheme::axis_x][control_scheme::data_stick]));
 }
 void set_binding_joystick(ALLEGRO_JOYSTICK* stick);
 void ControlBindingDialog::check_joystick()
@@ -225,8 +226,14 @@ std::shared_ptr<GUI::Widget> ControlBindingDialog::view()
 		ALLEGRO_JOYSTICK* joy = al_get_joystick(q);
 		gamepad_list.add(fmt::format("{} ({:03})", joy ? al_get_joystick_name(joy) : "?", q), q);
 	}
+	stick_list.clear();
+	if (local_scheme.joystick_index < num_gamepads)
+		for (int q = 0; q < joy[local_scheme.joystick_index].num_sticks; ++q)
+			stick_list.add(joystick_name(local_scheme.joystick_index, q), q);
 	
 	string title_text = fmt::format("Control Scheme '{}'", scheme_name);
+	if (scheme_name == active_control_scheme_name)
+		title_text += " (Active)";
 	if (read_only)
 		title_text += " (Read-Only)";
 	
@@ -357,23 +364,58 @@ std::shared_ptr<GUI::Widget> ControlBindingDialog::view()
 						" The directional buttons above always work, either way.")
 				)
 			);
+			// With a connected controller the sticks are a known, enumerable
+			// list, so a dropdown beats a bind-by-press flow.
+			bool stick_dropdowns = !gamepad_read_only && stick_list.size() > 0;
 			btnlist->add(Frame(padding = 0_px, fitParent = true, Label(text = "Primary", leftPadding = DEFAULT_PADDING + 0.75_em)));
-			btnlist->add(stick_labels[0] = Label(minwidth = btn_lbl_width, textAlign = 1));
-			if (!gamepad_read_only)
-				btnlist->add(Button(text = "Bind", height = button_height_min,
-					padding = 0_px, type = GUI::Button::type::BIND_JOYSTICK,
-					stick_index_ptr = &local_scheme.joystick_index, bind_name = "Primary",
-					kb_ptr = &local_scheme.stick_data[control_scheme::stick_1][control_scheme::axis_x][control_scheme::data_stick],
-					onClick = message::RELOAD_GAMEPAD));
+			if (stick_dropdowns)
+			{
+				btnlist->add(DropDownList(data = stick_list,
+					fitParent = true,
+					selectedValue = local_scheme.stick_data[control_scheme::stick_1][control_scheme::axis_x][control_scheme::data_stick],
+					onSelectFunc = [&](int32_t val)
+					{
+						if (val < 0) return;
+						for (int axis = 0; axis < control_scheme::num_axes; ++axis)
+							local_scheme.stick_data[control_scheme::stick_1][axis][control_scheme::data_stick] = val;
+					}));
+				btnlist->add(DummyWidget());
+			}
+			else
+			{
+				btnlist->add(stick_labels[0] = Label(minwidth = btn_lbl_width, textAlign = 1));
+				if (!gamepad_read_only)
+					btnlist->add(Button(text = "Bind", height = button_height_min,
+						padding = 0_px, type = GUI::Button::type::BIND_JOYSTICK,
+						stick_index_ptr = &local_scheme.joystick_index, bind_name = "Primary",
+						kb_ptr = &local_scheme.stick_data[control_scheme::stick_1][control_scheme::axis_x][control_scheme::data_stick],
+						onClick = message::RELOAD_GAMEPAD));
+			}
 			btnlist->add(VSeparator(leftPadding = vsep_padding, rightPadding = vsep_padding + 2_px));
 			btnlist->add(Frame(padding = 0_px, fitParent = true, Label(text = "Secondary", leftPadding = DEFAULT_PADDING + 0.75_em)));
-			btnlist->add(stick_labels[1] = Label(minwidth = btn_lbl_width, textAlign = 1));
-			if (!gamepad_read_only)
-				btnlist->add(Button(text = "Bind", height = button_height_min,
-					padding = 0_px, type = GUI::Button::type::BIND_JOYSTICK,
-					stick_index_ptr = &local_scheme.joystick_index, bind_name = "Secondary",
-					kb_ptr = &local_scheme.stick_data[control_scheme::stick_2][control_scheme::axis_x][control_scheme::data_stick],
-					onClick = message::RELOAD_GAMEPAD));
+			if (stick_dropdowns)
+			{
+				btnlist->add(DropDownList(data = stick_list,
+					fitParent = true,
+					selectedValue = local_scheme.stick_data[control_scheme::stick_2][control_scheme::axis_x][control_scheme::data_stick],
+					onSelectFunc = [&](int32_t val)
+					{
+						if (val < 0) return;
+						for (int axis = 0; axis < control_scheme::num_axes; ++axis)
+							local_scheme.stick_data[control_scheme::stick_2][axis][control_scheme::data_stick] = val;
+					}));
+				btnlist->add(DummyWidget());
+			}
+			else
+			{
+				btnlist->add(stick_labels[1] = Label(minwidth = btn_lbl_width, textAlign = 1));
+				if (!gamepad_read_only)
+					btnlist->add(Button(text = "Bind", height = button_height_min,
+						padding = 0_px, type = GUI::Button::type::BIND_JOYSTICK,
+						stick_index_ptr = &local_scheme.joystick_index, bind_name = "Secondary",
+						kb_ptr = &local_scheme.stick_data[control_scheme::stick_2][control_scheme::axis_x][control_scheme::data_stick],
+						onClick = message::RELOAD_GAMEPAD));
+			}
 		}
 	}
 	{ // build cheats
