@@ -327,8 +327,9 @@ if(NOT EMSCRIPTEN)
 	# WANT_SDL2_JOYSTICK below); only joystick-related subsystems are built.
 	# Unlike the native evdev/HID/directinput drivers, SDL keeps working when
 	# Steam Input has grabbed the controller, and it brings SDL's controller
-	# database. Default on Linux/macOS; on Windows it is opt-in via
-	# [joystick] driver = sdl2 (the launcher exposes this).
+	# database. It is the default on Windows, macOS, and Linux; setting
+	# [joystick] driver = native opts back into the OS-native drivers (the
+	# launcher exposes this).
 	FetchContent_Declare(
 	  SDL2
 	  GIT_REPOSITORY https://github.com/libsdl-org/SDL.git
