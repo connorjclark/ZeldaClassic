@@ -170,7 +170,28 @@ static string joystick_guid_str(ALLEGRO_JOYSTICK* joy)
 	return ret;
 }
 
-static control_scheme make_gamepad_default_scheme()
+// From the patched SDL joystick driver (see third_party/allegro5.patch): the
+// joystick's SDL_GameControllerType as an int, or -1 if the joystick is not
+// an SDL game controller (e.g. a native joystick driver is selected).
+extern "C" int _al_sdl_joystick_controller_type(ALLEGRO_JOYSTICK* joy);
+
+// Whether the gamepad's face buttons are labeled A/B/X/Y. PlayStation pads
+// label them with shapes instead. Unrecognized pads are assumed lettered,
+// since most generic PC pads copy the Xbox labels.
+static bool gamepad_has_letter_labels(ALLEGRO_JOYSTICK* joy)
+{
+	switch (_al_sdl_joystick_controller_type(joy))
+	{
+		// Values from SDL_GameControllerType.
+		case 3: // SDL_CONTROLLER_TYPE_PS3
+		case 4: // SDL_CONTROLLER_TYPE_PS4
+		case 7: // SDL_CONTROLLER_TYPE_PS5
+			return false;
+	}
+	return true;
+}
+
+static control_scheme make_gamepad_default_scheme(ALLEGRO_JOYSTICK* joy)
 {
 	// Buttons are 1-based (see joybtn); allegro gamepad button N is N+1 here.
 	// The a5_joystick shim appends synthetic buttons after the 11 gamepad
@@ -182,14 +203,31 @@ static control_scheme make_gamepad_default_scheme()
 	scheme.analog_movement = true;
 	int* b = scheme.btns;
 	b[btnUp] = 14; b[btnDown] = 15; b[btnLeft] = 16; b[btnRight] = 17;
-	b[btnA] = 2;    // east; matches the NES A position
-	b[btnB] = 1;    // south; matches the NES B position
+	// Face buttons: quests hardcode the engine's A/B/X/Y button names into
+	// their subscreens, so when the controller's buttons are labeled with
+	// letters, bind each action to its matching label. SDL reports Nintendo
+	// pads label-wise (see the USE_BUTTON_LABELS hint in the driver), so
+	// binding by label is 1:1 for Xbox and Nintendo alike. Pads without
+	// letter labels get the standard physical layout instead (SNES
+	// positions: A east, B south, X north, Y west).
+	if (gamepad_has_letter_labels(joy))
+	{
+		b[btnA] = 1;    // A
+		b[btnB] = 2;    // B
+		b[btnEx1] = 3;  // X
+		b[btnEx2] = 4;  // Y
+	}
+	else
+	{
+		b[btnA] = 2;    // east
+		b[btnB] = 1;    // south
+		b[btnEx1] = 4;  // north
+		b[btnEx2] = 3;  // west
+	}
 	b[btnS] = 8;    // start
 	b[btnL] = 5;    // left shoulder
 	b[btnR] = 6;    // right shoulder
 	b[btnP] = 7;    // back/select
-	b[btnEx1] = 3;  // west
-	b[btnEx2] = 4;  // north
 	b[btnEx3] = 12; // left trigger
 	b[btnEx4] = 13; // right trigger
 	scheme.btn_menu = 9; // guide
@@ -242,7 +280,7 @@ void poll_gamepad_scheme()
 			string name = joy_name && joy_name[0] ? joy_name : "Gamepad";
 			if (!control_schemes.contains(name))
 			{
-				control_schemes[name] = make_gamepad_default_scheme();
+				control_schemes[name] = make_gamepad_default_scheme(joy);
 				control_schemes[name].save_to_section(name);
 			}
 			zc_set_config(ctrl_sect, key.c_str(), name.c_str());

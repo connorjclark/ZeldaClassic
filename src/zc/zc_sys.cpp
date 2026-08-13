@@ -5967,7 +5967,7 @@ void System()
 		
 		poll_keyboard();
 		poll_joystick();
-	poll_gamepad_scheme();
+		poll_gamepad_scheme();
 		if (menu_pressed(true))
 			running = false;
 
