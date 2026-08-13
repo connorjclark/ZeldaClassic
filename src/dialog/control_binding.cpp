@@ -8,10 +8,24 @@
 #include "zc/cheats.h"
 #include <fmt/format.h>
 
+static size_t tab_pos1 = 0;
+static int32_t scroll_pos[3] = {0};
+
 ControlBindingDialog::ControlBindingDialog(control_scheme& scheme, string const& scheme_name):
 	local_scheme(scheme), dest_scheme(scheme), scheme_name(scheme_name),
 	read_only(scheme_name == DEFAULT_CONTROL_SCHEME_NAME), num_gamepads(0)
-{}
+{
+	// A scheme assigned to a connected gamepad is being edited for that
+	// gamepad, so open on the Gamepad tab rather than the Keyboard one.
+	for (int q = 0; q < al_get_num_joysticks(); ++q)
+	{
+		if (get_gamepad_assigned_scheme(q) == scheme_name)
+		{
+			tab_pos1 = 1;
+			break;
+		}
+	}
+}
 
 // KEYBOARD
 static void load_u_keys(int** arr, control_scheme& scheme)
@@ -208,8 +222,6 @@ static std::string cheatName(Cheat c)
 	}
 }
 
-static size_t tab_pos1 = 0;
-static int32_t scroll_pos[3] = {0};
 std::shared_ptr<GUI::Widget> ControlBindingDialog::view()
 {
 	using namespace GUI::Builder;
