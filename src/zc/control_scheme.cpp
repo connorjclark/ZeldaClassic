@@ -21,6 +21,7 @@
  */
 #include "control_scheme.h"
 #include "zconfig.h"
+#include <cctype>
 #include <fmt/format.h>
 #include "base/util.h"
 #include "zc/replay.h"
@@ -153,20 +154,38 @@ void cleanup_control_schemes() // make sure this cleans up before allegro exits?
 	control_config.destroy();
 }
 
-// ---- Per-gamepad (GUID) scheme assignment ----
+// ---- Per-gamepad scheme assignment ----
 // When the active joystick is a recognized gamepad, a scheme is auto-created
-// for it (named after the controller) and assigned to its GUID; the assignment
-// is remembered as `[Controls] gamepad__<guid>` in zc.cfg. Scheme priority is
+// for it (named after the controller) and assigned to its identity (GUID, or
+// name when the driver reports no GUID); the assignment is remembered as
+// `[Controls] gamepad__<identity>` in zc.cfg. Scheme priority is
 // quest-specific > gamepad > global.
 
-static string poll_last_guid = "\n"; // impossible value; the first poll always evaluates
+static string poll_last_identity = "\n"; // impossible value; the first poll always evaluates
 
-static string joystick_guid_str(ALLEGRO_JOYSTICK* joy)
+// Stable identity for a controller, used in the config key that remembers its
+// scheme assignment. Normally the GUID; some drivers (e.g. allegro's native
+// XInput driver on Windows) report an all-zero GUID, so fall back to the
+// controller name to keep distinct pads distinct.
+static string joystick_identity_str(ALLEGRO_JOYSTICK* joy)
 {
 	ALLEGRO_JOYSTICK_GUID guid = al_get_joystick_guid(joy);
-	string ret;
+	bool guid_is_zero = true;
 	for (size_t i = 0; i < sizeof(guid.val); i++)
-		ret += fmt::format("{:02x}", guid.val[i]);
+		if (guid.val[i]) guid_is_zero = false;
+	if (!guid_is_zero)
+	{
+		string ret;
+		for (size_t i = 0; i < sizeof(guid.val); i++)
+			ret += fmt::format("{:02x}", guid.val[i]);
+		return ret;
+	}
+	const char* name = al_get_joystick_name(joy);
+	string ret = name && name[0] ? name : "unknown";
+	// The name becomes part of a config key, so keep it to safe characters.
+	for (char& c : ret)
+		if (!isalnum((unsigned char)c))
+			c = '_';
 	return ret;
 }
 
@@ -251,16 +270,16 @@ void poll_gamepad_scheme()
 	int index = active_control_scheme ? active_control_scheme->joystick_index : 0;
 	ALLEGRO_JOYSTICK* joy = index < al_get_num_joysticks() ? al_get_joystick(index) : nullptr;
 
-	string guid = joy ? joystick_guid_str(joy) : "";
-	if (guid == poll_last_guid)
+	string identity = joy ? joystick_identity_str(joy) : "";
+	if (identity == poll_last_identity)
 		return;
-	poll_last_guid = guid;
+	poll_last_identity = identity;
 
 	optional<string> prev = gamepad_control_scheme_name;
 	gamepad_control_scheme_name = nullopt;
-	if (!guid.empty())
+	if (!identity.empty())
 	{
-		string key = fmt::format("gamepad__{}", guid);
+		string key = fmt::format("gamepad__{}", identity);
 		const char* assigned = zc_get_config(ctrl_sect, key.c_str(), nullptr);
 		if (assigned && assigned[0] && control_schemes.contains(assigned))
 			gamepad_control_scheme_name = string(assigned);
@@ -298,7 +317,7 @@ static optional<string> gamepad_assignment_key(int joy_index)
 	ALLEGRO_JOYSTICK* joy = al_get_joystick(joy_index);
 	if (!joy)
 		return nullopt;
-	return fmt::format("gamepad__{}", joystick_guid_str(joy));
+	return fmt::format("gamepad__{}", joystick_identity_str(joy));
 }
 
 optional<string> get_gamepad_assigned_scheme(int joy_index)
@@ -320,7 +339,7 @@ void set_gamepad_assigned_scheme(int joy_index, string const& name)
 	// An empty name clears the assignment; the next poll re-assigns
 	// automatically.
 	zc_set_config(ctrl_sect, key->c_str(), name.empty() ? nullptr : name.c_str());
-	poll_last_guid = "\n"; // force re-evaluation
+	poll_last_identity = "\n"; // force re-evaluation
 	poll_gamepad_scheme();
 }
 
