@@ -203,7 +203,7 @@ index b79081cbc..68a9d37f7 100644
        vt->get_display_mode = _al_osx_get_display_mode;
        vt->shutdown_system = osx_sys_exit;
 diff --git a/src/sdl/sdl_joystick.c b/src/sdl/sdl_joystick.c
-index 80633cb54..815bc4497 100644
+index 80633cb54..7fdda9693 100644
 --- a/src/sdl/sdl_joystick.c
 +++ b/src/sdl/sdl_joystick.c
 @@ -15,10 +15,25 @@
@@ -383,7 +383,7 @@ index 80633cb54..815bc4497 100644
  
  #define BUTTON(x) ((x) * 32767)
  #define AXIS(x) ((x) / 32768.0)
-@@ -418,28 +467,148 @@ static void sdl_get_joystick_state(ALLEGRO_JOYSTICK *joy,
+@@ -418,28 +467,156 @@ static void sdl_get_joystick_state(ALLEGRO_JOYSTICK *joy,
  #undef AXIS
  #undef BUTTON
  
@@ -434,13 +434,21 @@ index 80633cb54..815bc4497 100644
 +{
 +   int ret = -1;
 +   joysticks_lock();
-+   ALLEGRO_JOYSTICK_SDL *joy_sdl = get_joystick_from_allegro(joy);
-+   if (joy_sdl && joy_sdl->sdl_gc)
-+      ret = (int)SDL_GameControllerGetType(joy_sdl->sdl_gc);
++   /* Not get_joystick_from_allegro: when a native driver is selected this
++    * driver's joystick list is empty, and that lookup asserts on a miss.
++    */
++   for (int i = 0; i < (int)_al_vector_size(&joysticks); i++) {
++      ALLEGRO_JOYSTICK_SDL *joy_sdl = *(ALLEGRO_JOYSTICK_SDL **)_al_vector_ref(&joysticks, i);
++      if (&joy_sdl->allegro == joy) {
++         if (joy_sdl->sdl_gc)
++            ret = (int)SDL_GameControllerGetType(joy_sdl->sdl_gc);
++         break;
++      }
++   }
 +   joysticks_unlock();
 +   return ret;
-+}
-+
+ }
+ 
 +#ifdef SDL2_JOYSTICK_STANDALONE
 +
 +/* Feed mapping lines the user gave to al_set_joystick_mappings into SDL,
@@ -485,8 +493,8 @@ index 80633cb54..815bc4497 100644
 +      SDL_FlushEvents(SDL_FIRSTEVENT, SDL_LASTEVENT);
 +      al_rest(0.004);
 +   }
- }
- 
++}
++
 +static bool sdl_init_joystick_standalone(void)
 +{
 +   /* ZC and other Allegro apps handle these themselves. */
@@ -540,7 +548,7 @@ index 80633cb54..815bc4497 100644
  ALLEGRO_JOYSTICK_DRIVER *_al_sdl_joystick_driver(void)
  {
     if (vt)
-@@ -450,8 +619,13 @@ ALLEGRO_JOYSTICK_DRIVER *_al_sdl_joystick_driver(void)
+@@ -450,8 +627,13 @@ ALLEGRO_JOYSTICK_DRIVER *_al_sdl_joystick_driver(void)
     vt->joydrv_name = "SDL2 Joystick";
     vt->joydrv_desc = "SDL2 Joystick";
     vt->joydrv_ascii_name = "SDL2 Joystick";
