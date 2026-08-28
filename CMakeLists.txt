@@ -335,6 +335,7 @@ if(NOT EMSCRIPTEN)
 	  GIT_REPOSITORY https://github.com/libsdl-org/SDL.git
 	  GIT_TAG        release-2.32.10
 	  GIT_SHALLOW    TRUE
+	  PATCH_COMMAND  git restore . && git apply ${CMAKE_SOURCE_DIR}/third_party/sdl2.patch
 	  EXCLUDE_FROM_ALL
 	)
 	set(SDL_SHARED OFF CACHE BOOL "" FORCE)

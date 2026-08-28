@@ -1,0 +1,20 @@
+diff --git a/src/joystick/windows/SDL_dinputjoystick.c b/src/joystick/windows/SDL_dinputjoystick.c
+index 73c26051..e99dba07 100644
+--- a/src/joystick/windows/SDL_dinputjoystick.c
++++ b/src/joystick/windows/SDL_dinputjoystick.c
+@@ -764,10 +764,13 @@ int SDL_DINPUT_JoystickOpen(SDL_Joystick *joystick, JoyStick_DeviceData *joystic
+     }
+ 
+     /* Acquire shared access. Exclusive access is required for forces,
+-     * though. */
++     * though. In a build without the Windows video driver there is no helper
++     * window, and exclusive mode requires a valid window handle; DirectInput
++     * only allows a NULL window with non-exclusive background mode, so use
++     * that (giving up force feedback) rather than failing the open. */
+     result =
+         IDirectInputDevice8_SetCooperativeLevel(joystick->hwdata->InputDevice, SDL_HelperWindow,
+-                                                DISCL_EXCLUSIVE |
++                                                (SDL_HelperWindow ? DISCL_EXCLUSIVE : DISCL_NONEXCLUSIVE) |
+                                                     DISCL_BACKGROUND);
+     if (FAILED(result)) {
+         return SetDIerror("IDirectInputDevice8::SetCooperativeLevel", result);
