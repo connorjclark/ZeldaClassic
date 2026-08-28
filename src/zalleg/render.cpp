@@ -901,7 +901,11 @@ bool render_get_debug()
 }
 
 void RenderTreeItem::prepare() {}
-void RenderTreeItem::render(bool) {}
+void RenderTreeItem::render(bool bitmap_resized)
+{
+	if (render_cb)
+		render_cb(this, bitmap_resized);
+}
 
 LegacyBitmapRTI::LegacyBitmapRTI(std::string name, RenderTreeItem* parent) : RenderTreeItem(name, parent) {}
 
@@ -1324,15 +1328,18 @@ RenderTreeItem* add_dlg_layer(int x, int y, int w, int h)
 	if(w<0) w = screen->w-x;
 	if(h<0) h = screen->h-y;
 	set_bitmap_create_flags(true);
-	
-	LegacyBitmapRTI* rti = new LegacyBitmapRTI("dlg");
+
+	RenderTreeItem* rti = new RenderTreeItem("dlg");
 	rti->bitmap = al_create_bitmap(w,h);
 	rti->set_size(w, h);
 	clear_a5_bmp(rti->bitmap);
 	rti->set_transform({.x = (float)x, .y = (float)y});
-	rti->a4_bitmap = nullptr;
 	rti->visible = true;
 	rti->owned = true;
+	// Not dirty: the draw pass clears and re-renders a dirty item's bitmap, which would
+	// erase content that imperative callers have already drawn into it. render_cb users
+	// mark dirty themselves whenever their source data changes.
+	rti->dirty = false;
 	active_dlg_rti->add_child(rti);
 
 	al_set_new_bitmap_flags(0);
