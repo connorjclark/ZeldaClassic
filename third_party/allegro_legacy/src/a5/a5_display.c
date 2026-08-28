@@ -203,6 +203,17 @@ static void _a5_destroy_screen(void)
   _a5_display = NULL;
 }
 
+// local edit
+// Bumped whenever something outside normal drawing may change what previously
+// rendered/presented frames look like: palette changes, and display events that
+// can invalidate textures or the window surface. Lets callers cache converted
+// bitmaps / skip redraws safely.
+static uint32_t _a5_render_generation = 1;
+uint32_t all_get_render_generation(void)
+{
+  return _a5_render_generation;
+}
+
 void all_process_display_events()
 {
   // local edit
@@ -212,6 +223,17 @@ void all_process_display_events()
   while (!al_is_event_queue_empty(_a5_display_thread_event_queue))
   {
     al_get_next_event(_a5_display_thread_event_queue, &event);
+    // local edit
+    switch(event.type)
+    {
+      case ALLEGRO_EVENT_DISPLAY_HALT_DRAWING:
+      case ALLEGRO_EVENT_DISPLAY_RESUME_DRAWING:
+      case ALLEGRO_EVENT_DISPLAY_RESIZE:
+      case ALLEGRO_EVENT_DISPLAY_SWITCH_IN:
+      case ALLEGRO_EVENT_DISPLAY_EXPOSE:
+        _a5_render_generation++;
+        break;
+    }
     switch(event.type)
     {
       case ALLEGRO_EVENT_DISPLAY_HALT_DRAWING:
@@ -491,6 +513,8 @@ static void a5_palette_from_a4_palette(const PALETTE a4_palette, ALLEGRO_COLOR *
 static void a5_display_set_palette(const struct RGB * palette, int from, int to, int vsync)
 {
     a5_palette_from_a4_palette(palette, _a5_screen_palette, from, to);
+    // local edit
+    _a5_render_generation++;
 }
 
 static void a5_display_move_mouse(int x, int y)
