@@ -193,7 +193,7 @@ index b79081cbc..68a9d37f7 100644
  ALLEGRO_SYSTEM_INTERFACE *_al_system_osx_driver(void)
  {
     static ALLEGRO_SYSTEM_INTERFACE* vt = NULL;
-@@ -575,7 +589,7 @@ static void osx_thread_exit(ALLEGRO_THREAD *thread)
+@@ -575,7 +589,7 @@ ALLEGRO_SYSTEM_INTERFACE *_al_system_osx_driver(void)
        vt->get_display_driver = _al_osx_get_display_driver;
        vt->get_keyboard_driver = _al_osx_get_keyboard_driver;
        vt->get_mouse_driver = _al_osx_get_mouse_driver;
@@ -203,7 +203,7 @@ index b79081cbc..68a9d37f7 100644
        vt->get_display_mode = _al_osx_get_display_mode;
        vt->shutdown_system = osx_sys_exit;
 diff --git a/src/sdl/sdl_joystick.c b/src/sdl/sdl_joystick.c
-index 80633cb54..ef54226fa 100644
+index 80633cb54..815bc4497 100644
 --- a/src/sdl/sdl_joystick.c
 +++ b/src/sdl/sdl_joystick.c
 @@ -15,10 +15,25 @@
@@ -383,7 +383,7 @@ index 80633cb54..ef54226fa 100644
  
  #define BUTTON(x) ((x) * 32767)
  #define AXIS(x) ((x) / 32768.0)
-@@ -418,28 +467,139 @@ static void sdl_get_joystick_state(ALLEGRO_JOYSTICK *joy,
+@@ -418,28 +467,148 @@ static void sdl_get_joystick_state(ALLEGRO_JOYSTICK *joy,
  #undef AXIS
  #undef BUTTON
  
@@ -491,6 +491,15 @@ index 80633cb54..ef54226fa 100644
 +{
 +   /* ZC and other Allegro apps handle these themselves. */
 +   SDL_SetHint(SDL_HINT_NO_SIGNAL_HANDLERS, "1");
++   /* On Windows, SDL's RawInput backend (which claims Xbox controllers)
++    * receives its input as WM_INPUT messages on a message window owned by
++    * the thread that initializes the joystick subsystem. That is the app's
++    * main thread, which in an Allegro app never pumps Win32 messages, so no
++    * input would ever arrive. This hint makes SDL create its own internal
++    * thread that owns the message window and pumps it. No effect on other
++    * platforms.
++    */
++   SDL_SetHint(SDL_HINT_JOYSTICK_THREAD, "1");
 +   /* There is no SDL window, so never gate joystick input on focus. */
 +   SDL_SetHint(SDL_HINT_JOYSTICK_ALLOW_BACKGROUND_EVENTS, "1");
 +   /* Report Nintendo-style pads by their button labels (A/B and X/Y swapped
@@ -531,7 +540,7 @@ index 80633cb54..ef54226fa 100644
  ALLEGRO_JOYSTICK_DRIVER *_al_sdl_joystick_driver(void)
  {
     if (vt)
-@@ -450,8 +610,13 @@ ALLEGRO_JOYSTICK_DRIVER *_al_sdl_joystick_driver(void)
+@@ -450,8 +619,13 @@ ALLEGRO_JOYSTICK_DRIVER *_al_sdl_joystick_driver(void)
     vt->joydrv_name = "SDL2 Joystick";
     vt->joydrv_desc = "SDL2 Joystick";
     vt->joydrv_ascii_name = "SDL2 Joystick";
