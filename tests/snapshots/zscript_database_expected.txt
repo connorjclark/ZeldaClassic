@@ -1,4 +1,4 @@
-638 / 785 (81%) passed
+691 / 839 (82%) passed
 
 Failures:
 	00026-deku-leaf/script.zs
@@ -18,9 +18,9 @@ Failures:
 	00170-the-river-of-destiny-custom-maps/MapImport.z
 	00175-scripted-traps/script.zs
 	00188-solid-ffc/script.zs
-	00196-links-awakening-alpha/LinksAwakening_0.63_Dist.z
-	00196-links-awakening-alpha/ffcscript_LA.zh
-	00196-links-awakening-alpha/stdExtra.zh
+	00196-links-awakening-alpha-0-63/LinksAwakening_0.63_Dist.z
+	00196-links-awakening-alpha-0-63/ffcscript_LA.zh
+	00196-links-awakening-alpha-0-63/stdExtra.zh
 	00215-pot-script/script.zs
 	00228-hurteffects-zh-link-knockback-sound-etc/HurtEffects.zh
 	00228-hurteffects-zh-link-knockback-sound-etc/HurtEffects_v1.1.zh
@@ -89,10 +89,9 @@ Failures:
 	00246-ghost-zh/header/ghost_zh/2.8/ghost2_scripts.zs
 	00246-ghost-zh/header/ghost_zh/2.8/ghost2_update.zh
 	00252-monty-hall-minigame/script.zs
-	00254-zelda-style-chest-minigame/ChestGame/FFC_ChestGame_v0.4.4.zs
+	00254-zelda-3-style-chest-minigame/ChestGame/FFC_ChestGame_v0.4.4.zs
 	00255-swindle-haggle/script.zs
 	00266-advanced-gameboy-style-shields/script.zs
-	00282--old-oracle-minecarts/script.zs
 	00296-moosh-npc-dialogue-branch-add-on/DialogueBranch.zs
 	00310-newbie-item/script.zs
 	00313-la-hatrobe/Hatrobe.z
@@ -105,21 +104,20 @@ Failures:
 	00332-lweapons-zh/lw_medallions.zs
 	00332-lweapons-zh/lw_movement.zs
 	00332-lweapons-zh/lw_other.zs
+	00332-lweapons-zh/lw_pegasus.zs
 	00332-lweapons-zh/lw_scripts.zs
 	00332-lweapons-zh/lw_somaria.zs
 	00332-lweapons-zh/lw_update.zs
 	00332-lweapons-zh/lweapons.zh
-	00336-splitting-segmented-worm/SegmentWorm.zs
-	00337-emilymisc-zh/EmilyMisc.zh
-	00339-day-night-cycle-tint-zh/DayNight.zs
+	00336-splitting-segmented-worm-2-55/SegmentWorm.zs
+	00337-emilymisc-zh-2-55/EmilyMisc.zh
+	00339-day-night-cycle-2-55-tint-zh/DayNight.zs
 	00360-ffc-shop/FFCShop/2.53 Version/FFCShop.zs
 	00360-ffc-shop/FFCShop/2.55 Version/FFCShop.zs
 	00360-ffc-shop/FFCShop/2.55 Version/v1.03/FFCShop.zs
 	00361-simpletangohandler/SimpleTangoHandler/2.53 Version/customTango.zh
 	00361-simpletangohandler/SimpleTangoHandler/2.55 Version/customTango.zh
 	00363-thanos-snap-infinity-gauntlet/ThanosSnap.zs
-	00366-templinkstate-zh/TempLinkState.zh
-	00374-dodge-roll-action/script.zs
 	00381-better-ladder/script.zs
 	00415-grayswandir-sideview-engine/GSD_sideview/GSD/GSD_sideview_anim.z
 	00415-grayswandir-sideview-engine/GSD_sideview/GSD_extras/GSD_jumping_fireball.z
@@ -127,27 +125,30 @@ Failures:
 	00415-grayswandir-sideview-engine/GSD_sideview/GSD_extras/piranha.z
 	00415-grayswandir-sideview-engine/GSD_sideview/GSD_extras/warppipe.z
 	00419-slab-connection-puzzle/script.zs
-	00431-no-cycle-spinning-tiles/script.zs
+	00423-metroidvania-minimap/MetroidvaniaMinimap2.55.zs
+	00423-metroidvania-minimap/script.zs
+	00431-no-cycle-spinning-tiles-2-55/script.zs
 	00457-magnets-and-iron-beams-puzzle/magnetswitch.z
 	00457-magnets-and-iron-beams-puzzle/script.zs
 	00479-mouse-header-for-debugging/tbt_mouse/tbt_mouse_global.zh
-	00500--monarch-ascendant/MonarchAscendant.zs
+	00500-2-55-monarch-ascendant/MonarchAscendant.zs
 	00520-poker-monsters/NofaKind.z
-	00523-geldarm-z-geldarm/z2geldarm.z
+	00523-geldarm-z2-geldarm/z2geldarm.z
 	00532-status-effects/statusEffects.zs
 	00533-test-play-init-data-backups/script.zs
 	00536-poker-combos/pokercombos.z
 	00536-poker-combos/script.zs
-	00547--new-palette-based-day-night-system/DayNightNew.zs
 	00571-gumzol/gumzol.z
 	00571-gumzol/script.zs
-	00572-ice-physics-slippery/icePhysics.zs
+	00572-ice-physics-slippery-2-55/icePhysics.zs
 	00580-mani-s-script-header/script.zs
 	00589-temporary-no-return-item-drops/TempNoReturnItem.zs
-	00601-chain-chomp/ChainChomp.zs
-	00602--oracle-minecarts/gbminecart255.zs
-	00605-ff-z-styled-line-of-sight-and-constant-traps/Circulum_trap.z
-	00605-ff-z-styled-line-of-sight-and-constant-traps/script.zs
+	00602-2-55-oracle-minecarts/gbminecart2.55.zs
+	00602-2-55-oracle-minecarts/gbminecart3.0.zs
+	00615-data-collection-script/DataCollection.zs
+	00628-converted-global-script-pack/GlobalGeneric_DarkSoulsStatuses.zs
+	00628-converted-global-script-pack/GlobalGeneric_DekuLeaf.zs
+	00628-converted-global-script-pack/Obsoleted/GlobalGeneric_EmptyBottles.zs
 
 === 00026-deku-leaf/script.zs
 Pass 1: Parsing
@@ -2198,7 +2199,7 @@ script.zs Line 272 - Warning S108: Arrays should be explicitly typed - change `i
 Failure!
 Compile finished with exit code '21' (compiled with errors)
 
-=== 00196-links-awakening-alpha/LinksAwakening_0.63_Dist.z
+=== 00196-links-awakening-alpha-0-63/LinksAwakening_0.63_Dist.z
 Pass 1: Parsing
 Pass 2: Preprocessing
 Pass 3: Registration
@@ -2877,7 +2878,7 @@ LinksAwakening_0.63_Dist.z Line 2278 - Error S004: Function debug was already de
 Failure!
 Compile finished with exit code '8' (compiled with errors)
 
-=== 00196-links-awakening-alpha/ffcscript_LA.zh
+=== 00196-links-awakening-alpha-0-63/ffcscript_LA.zh
 Pass 1: Parsing
 Pass 2: Preprocessing
 Pass 3: Registration
@@ -2908,7 +2909,7 @@ ffcscript_LA.zh Line 15 - Error S008: There is already a variable with name FFCS
 Failure!
 Compile finished with exit code '8' (compiled with errors)
 
-=== 00196-links-awakening-alpha/stdExtra.zh
+=== 00196-links-awakening-alpha-0-63/stdExtra.zh
 Pass 1: Parsing
 Pass 2: Preprocessing
 Pass 3: Registration
@@ -7972,7 +7973,7 @@ script.zs Line 56 - Error T021: Function LinkComboCollision(int, int, bool, int)
 Failure!
 Compile finished with exit code '21' (compiled with errors)
 
-=== 00254-zelda-style-chest-minigame/ChestGame/FFC_ChestGame_v0.4.4.zs
+=== 00254-zelda-3-style-chest-minigame/ChestGame/FFC_ChestGame_v0.4.4.zs
 Pass 1: Parsing
 Pass 2: Preprocessing
 Pass 3: Registration
@@ -8041,62 +8042,6 @@ script.zs Line 891 - Error S004: Function reverseDir was already declared with t
 
 Failure!
 Compile finished with exit code '4' (compiled with errors)
-
-=== 00282--old-oracle-minecarts/script.zs
-Pass 1: Parsing
-Pass 2: Preprocessing
-Pass 3: Registration
-Pass 4: Analyzing Code
-script.zs Line 72 - Error T021: Function ScrollingLinkX() has not been declared.
-
-70    if(Link->Action==LA_SCROLLING){
-71        GBCart[GBC_ACTIVEFFC] = -1;
-72        Minecart_Draw(ScrollingLinkX(), ScrollingLinkY(), GBCart[GBC_DIR], true);
-                        ^~~~~~~~~~~~~~
-
-
-script.zs Line 134 - Error T021: Function ScrollingDraws_Init() has not been declared.
-
-132    global script GBMinecart_Slot2{
-133        void run(){
-134            ScrollingDraws_Init();
-               ^~~~~~~~~~~~~~~~~~~
-
-
-script.zs Line 137 - Error T021: Function ScrollingDraws_Update() has not been declared.
-
-135    Minecart_Init();
-136    while(true){
-137        ScrollingDraws_Update();
-           ^~~~~~~~~~~~~~~~~~~~~
-
-
-script.zs Line 291 - Warning S108: Array mismatch for types int[][] and int[]
-
-289    int left[6]  = {0, 1, 0, 1, 0, 1};
-290    int right[6] = {0, 1, 1, 0, 1, 0};
-291    int directions[4] = {up, down, left, right};
-           ^~~~~~~~~~
-
-
-script.zs Line 304 - Warning S108: Arrays should be explicitly typed - change `int` to `int[]`
-
-302    int frontDir = -1;
-303    int d = directions[dir];
-304    if(d[c]==1&&frontDir==-1){
-          ^~~~
-
-
-script.zs Line 311 - Warning S108: Arrays should be explicitly typed - change `int` to `int[]`
-
-309    if(i!=OppositeDir(dir)&&i!=dir){
-310        d = directions[i];
-311        if(d[c]==1){
-              ^~~~
-
-
-Failure!
-Compile finished with exit code '21' (compiled with errors)
 
 === 00296-moosh-npc-dialogue-branch-add-on/DialogueBranch.zs
 Pass 1: Parsing
@@ -10828,67 +10773,91 @@ Pass 1: Parsing
 Pass 2: Preprocessing
 Pass 3: Registration
 Pass 4: Analyzing Code
-lw_deprecated.zs Line 22 - Error T021: Function ComboFIT(int, int, int) has not been declared.
+lw_deprecated.zs Line 23 - Error T021: Function ComboFIT(int, int, int) has not been declared.
 
-20    // Returns true if FFC collides with a combo which has specific placed flag
-21    bool ComboFlagCollision (int loc, int flag, int type,lweapon l){
-22        if (ComboFIT(loc,flag,type)){
+21    // Returns true if FFC collides with a combo which has specific placed flag
+22    bool ComboFlagCollision (int loc, int flag, int type,lweapon l){
+23        if (ComboFIT(loc,flag,type)){
               ^~~~~~~~
 
 
-lw_deprecated.zs Line 523 - Error S009: Variable SPR_BUSH_CUT has not been declared.
+lw_deprecated.zs Line 678 - Error S009: Variable SPR_BUSH_CUT has not been declared.
 
-521    bool playsound = false;
-522    // add sprites to certain types
-523    if(ctype == CT_BUSH || ctype == CT_BUSHNEXT) sprite = SPR_BUSH_CUT;
-                                                             ^~~~~~~~~~~~
-
-
-lw_deprecated.zs Line 554 - Error S009: Variable SPR_BUSH_CUT has not been declared.
-
-552    bool playsound = false;
-553    // add sprites to certain types
-554    if(ctype == CT_BUSH || ctype == CT_BUSHNEXT) sprite = SPR_BUSH_CUT;
-                                                             ^~~~~~~~~~~~
+676    // add sprites to certain types
+677    if(ctype == CT_BUSH || ctype == CT_BUSHNEXT)
+678         sprite = SPR_BUSH_CUT;
+                     ^~~~~~~~~~~~
 
 
-lw_deprecated.zs Line 585 - Error S009: Variable NPC_ITEMSET has not been declared.
+lw_deprecated.zs Line 718 - Error S009: Variable SPR_BUSH_CUT has not been declared.
 
-583    //Handles items generated by slashing combos.
-584    void ItemSetAt(int itemset,int loc){
-585        npc e = Screen->CreateNPC(NPC_ITEMSET);
+716    // add sprites to certain types
+717    if(ctype == CT_BUSH || ctype == CT_BUSHNEXT) 
+718         sprite = SPR_BUSH_CUT;
+                     ^~~~~~~~~~~~
+
+
+lw_deprecated.zs Line 753 - Error S009: Variable NPC_ITEMSET has not been declared.
+
+751    //Handles items generated by slashing combos.
+752    void ItemSetAt(int itemset,int loc){
+753        npc e = Screen->CreateNPC(NPC_ITEMSET);
                                      ^~~~~~~~~~~
 
 
-lw_deprecated.zs Line 586 - Error S009: Variable e has not been declared.
+lw_deprecated.zs Line 754 - Error S009: Variable e has not been declared.
 
-584    void ItemSetAt(int itemset,int loc){
-585        npc e = Screen->CreateNPC(NPC_ITEMSET);
-586        e->ItemSet = itemset;
+752    void ItemSetAt(int itemset,int loc){
+753        npc e = Screen->CreateNPC(NPC_ITEMSET);
+754        e->ItemSet = itemset;
            ^
 
 
-lw_deprecated.zs Line 587 - Error S009: Variable e has not been declared.
+lw_deprecated.zs Line 755 - Error S009: Variable e has not been declared.
 
-585    npc e = Screen->CreateNPC(NPC_ITEMSET);
-586    e->ItemSet = itemset;
-587    if(e->isValid()){
+753    npc e = Screen->CreateNPC(NPC_ITEMSET);
+754    e->ItemSet = itemset;
+755    if(e->isValid()){
           ^
 
 
-lw_deprecated.zs Line 592 - Error S009: Variable e has not been declared.
+lw_deprecated.zs Line 760 - Error S009: Variable e has not been declared.
 
-590        e->CollDetection = false;
-591    }
-592    e->HP = HP_SILENT;
+758        e->CollDetection = false;
+759    }
+760    e->HP = HP_SILENT;
        ^
 
 
-lw_deprecated.zs Line 481 - Warning S108: Arrays should be explicitly typed - change `int` to `int[]`
+lw_deprecated.zs Line 567 - Error S009: Variable BLANK_SCRIPT has not been declared.
 
-479    if(args!=NULL){
-480        for(int j=Min(SizeOfArray(args), 8)-1; j>=0; j--)
-481            theFFC->InitD[j]=args[j];
+565    
+566    if(theFFC->Script!=0){
+567        if(theFFC->Script!=BLANK_SCRIPT)
+                              ^~~~~~~~~~~~
+
+
+lw_deprecated.zs Line 585 - Warning S108: Arrays should be explicitly typed - change `int` to `int[]`
+
+583    if(args!=NULL){
+584        for(int j=Min(SizeOfArray(args), 8)-1; j>=0; j--)
+585            theFFC->InitD[j]=args[j];
+                                ^~~~~~~
+
+
+lw_deprecated.zs Line 607 - Error S009: Variable BLANK_SCRIPT has not been declared.
+
+605    
+606    if(theFFC->Script!=0){
+607        if(theFFC->Script!=BLANK_SCRIPT){
+                              ^~~~~~~~~~~~
+
+
+lw_deprecated.zs Line 627 - Warning S108: Arrays should be explicitly typed - change `int` to `int[]`
+
+625    if(args!=NULL){
+626        for(int j=Min(SizeOfArray(args), 8)-1; j>=0; j--)
+627            theFFC->InitD[j]=args[j];
                                 ^~~~~~~
 
 
@@ -10900,60 +10869,68 @@ Pass 1: Parsing
 Pass 2: Preprocessing
 Pass 3: Registration
 Pass 4: Analyzing Code
-lw_global.zs Line 21 - Error S009: Variable LW_ZH_I_FLAGS has not been declared.
+lw_global.zs Line 23 - Error S009: Variable LW_ZH_I_FLAGS has not been declared.
 
-19    for(int i= Screen->NumLWeapons();i>0;i--){
-20        lweapon wpn = Screen->LoadLWeapon(i);
-21        if((wpn->Misc[LW_ZH_I_FLAGS]&__LWFI_IS_LWZH_LWPN)==0)
+21    for(int i= Screen->NumLWeapons();i>0;i--){
+22        lweapon wpn = Screen->LoadLWeapon(i);
+23        if((wpn->Misc[LW_ZH_I_FLAGS]&__LWFI_IS_LWZH_LWPN)==0)
                         ^~~~~~~~~~~~~
 
 
-lw_global.zs Line 25 - Error S009: Variable LW_ZH_I_FLAGS has not been declared.
+lw_global.zs Line 27 - Error S009: Variable LW_ZH_I_FLAGS has not been declared.
 
-23    int buffer []= "Flags are ";
-24    TraceS(buffer);
-25    Trace(wpn->Misc[LW_ZH_I_FLAGS]);
+25    int buffer []= "Flags are ";
+26    TraceS(buffer);
+27    Trace(wpn->Misc[LW_ZH_I_FLAGS]);
                       ^~~~~~~~~~~~~
 
 
-lw_global.zs Line 28 - Error S009: Variable LW_ZH_I_LIFESPAN_ARG has not been declared.
+lw_global.zs Line 30 - Error S009: Variable LW_ZH_I_LIFESPAN_ARG has not been declared.
 
-26    int buffer2 []= "Lifespan is ";
-27    TraceS(buffer2);
-28    Trace(wpn->Misc[LW_ZH_I_LIFESPAN_ARG]);
+28    int buffer2 []= "Lifespan is ";
+29    TraceS(buffer2);
+30    Trace(wpn->Misc[LW_ZH_I_LIFESPAN_ARG]);
                       ^~~~~~~~~~~~~~~~~~~~
 
 
-lw_global.zs Line 31 - Error S009: Variable LW_ZH_I_MOVEMENT has not been declared.
+lw_global.zs Line 33 - Error S009: Variable LW_ZH_I_MOVEMENT has not been declared.
 
-29    int buffer3 []= "Movement is ";
-30    TraceS(buffer3);
-31    Trace(wpn->Misc[LW_ZH_I_MOVEMENT]);
+31    int buffer3 []= "Movement is ";
+32    TraceS(buffer3);
+33    Trace(wpn->Misc[LW_ZH_I_MOVEMENT]);
                       ^~~~~~~~~~~~~~~~
 
 
-lw_global.zs Line 34 - Error S009: Variable LW_ZH_I_ON_DEATH has not been declared.
+lw_global.zs Line 36 - Error S009: Variable LW_ZH_I_ON_DEATH has not been declared.
 
-32    int buffer4[]= "Death effect is ";
-33    TraceS(buffer4);
-34    Trace(wpn->Misc[LW_ZH_I_ON_DEATH]);
+34    int buffer4[]= "Death effect is ";
+35    TraceS(buffer4);
+36    Trace(wpn->Misc[LW_ZH_I_ON_DEATH]);
                       ^~~~~~~~~~~~~~~~
 
 
-lw_global.zs Line 8 - Error T021: Function UpdateLWZH1() has not been declared.
+lw_global.zs Line 5 - Error T021: Function InitLWZH() has not been declared.
 
-6    //Various commands here.
-7    //Call LWeapon handling, for before waitdraw stuff.
-8    UpdateLWZH1();
-     ^~~~~~~~~~~
+3    global script LW_Active{
+4        void run(){
+5            InitLWZH();
+             ^~~~~~~~
 
 
-lw_global.zs Line 11 - Error T021: Function UpdateLWZH2() has not been declared.
+lw_global.zs Line 11 - Error T021: Function UpdateLWZH() has not been declared.
 
  9    Waitdraw();
 10    //Call LWeapon Handling.
-11    UpdateLWZH2();
-      ^~~~~~~~~~~
+11    UpdateLWZH();
+      ^~~~~~~~~~
+
+
+lw_global.zs Line 13 - Error S009: Variable LW_Vars has not been declared.
+
+11    UpdateLWZH();
+12    //TraceLWeapons();
+13    if(LW_Vars[LIFT_TIMER])
+         ^~~~~~~
 
 
 Failure!
@@ -10982,15 +10959,6 @@ stdWeapons.zh Line 86 - Error P001: Included file '00235-stdweapons-zh/stdWeapon
 85    import "stdWeapons/stdWeaponsMelee.zh"
 86    import "stdWeapons/update.zh"
       ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-
-syntax error, unexpected NEW, expecting SEMICOLON [00332-lweapons-zh/lw_life.zs Line 135 Column 24 'new']
-lw_life.zs Line 9 - Error P001: Included file '00332-lweapons-zh/lw_life.zs' encountered an error.
-
- 7    #include "std.zh"
- 8    #include "00235-stdweapons-zh/stdWeapons.zh"
- 9    #include "00332-lweapons-zh/lw_life.zs"
-      ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
 Failure!
@@ -11067,23 +11035,23 @@ lw_movement.zs Line 20 - Error S009: Variable LWM_FALL has not been declared.
 
 18    wpn->Misc[LW_ZH_I_MOVEMENT_ARG2]=arg2;
 19    //wpn->Misc[LW_ZH_I_FLAGS]|=__LWFI_IS_LWZH_LWPN;
-20    if(type!=LWM_FALL)wpn->Angular = true;
+20    if(type!=LWM_FALL)
                ^~~~~~~~
 
 
-lw_movement.zs Line 21 - Error S009: Variable LWM_THROW has not been declared.
+lw_movement.zs Line 22 - Error S009: Variable LWM_THROW has not been declared.
 
-19    //wpn->Misc[LW_ZH_I_FLAGS]|=__LWFI_IS_LWZH_LWPN;
-20    if(type!=LWM_FALL)wpn->Angular = true;
-21    if(type==LWM_THROW){
+20    if(type!=LWM_FALL)
+21        wpn->Angular = true;
+22    if(type==LWM_THROW){
                ^~~~~~~~~
 
 
-lw_movement.zs Line 80 - Error S009: Variable LW_ZH_I_WORK_3 has not been declared.
+lw_movement.zs Line 85 - Error S009: Variable LW_ZH_I_WORK_3 has not been declared.
 
-78    
-79    void SetLWeaponMovementStyle(lweapon wpn, int style){
-80        wpn->Misc[LW_ZH_I_WORK_3]= style;
+83    
+84    void SetLWeaponMovementStyle(lweapon wpn, int style){
+85        wpn->Misc[LW_ZH_I_WORK_3]= style;
                     ^~~~~~~~~~~~~~
 
 
@@ -11103,6 +11071,94 @@ stdWeapons.zh Line 86 - Error P001: Included file '00235-stdweapons-zh/stdWeapon
 
 Failure!
 Compile finished with exit code '-1' (compiled with warnings)
+
+=== 00332-lweapons-zh/lw_pegasus.zs
+Pass 1: Parsing
+Pass 2: Preprocessing
+Pass 3: Registration
+Pass 4: Analyzing Code
+lw_pegasus.zs Line 400 - Error S009: Variable LWL_TIMER has not been declared.
+
+398    Dust->NumFrames = DustAFrames;
+399    Dust->ASpeed = DustASpeed;
+400    SetLWeaponLifespan(Dust,LWL_TIMER,DustAFrames*DustASpeed);
+                               ^~~~~~~~~
+
+
+lw_pegasus.zs Line 401 - Error S009: Variable LWD_VANISH has not been declared.
+
+399    Dust->ASpeed = DustASpeed;
+400    SetLWeaponLifespan(Dust,LWL_TIMER,DustAFrames*DustASpeed);
+401    SetLWeaponDeathEffect(Dust,LWD_VANISH,0);
+                                  ^~~~~~~~~~
+
+
+lw_pegasus.zs Line 186 - Error S009: Variable SPR_NULL has not been declared.
+
+184         Screen->ComboF[loc] = 0;
+185    lweapon rock = FireLWeapon(LW_SCRIPT1,Link->X+8, Link->Y+8,
+186                                 DegtoRad(0),150, 0,SPR_NULL, 0,0);
+                                                       ^~~~~~~~
+
+
+lw_pegasus.zs Line 187 - Error S009: Variable rock has not been declared.
+
+185    lweapon rock = FireLWeapon(LW_SCRIPT1,Link->X+8, Link->Y+8,
+186                                 DegtoRad(0),150, 0,SPR_NULL, 0,0);
+187    SetLWeaponLifespan(rock,LWL_TIMER,1);
+                          ^~~~
+
+
+lw_pegasus.zs Line 188 - Error S009: Variable rock has not been declared.
+
+186                                 DegtoRad(0),150, 0,SPR_NULL, 0,0);
+187    SetLWeaponLifespan(rock,LWL_TIMER,1);
+188    SetLWeaponDeathEffect(rock,LWD_LOB_DIAGONAL,SPR_ROCK);
+                             ^~~~
+
+
+lw_pegasus.zs Line 261 - Error S009: Variable FLIP_B has not been declared.
+
+259    mysword->Dir = GameVars[PEGASUS_DASH];
+260    if ( mysword->Dir == DIR_DOWN )
+261        mysword->Flip = FLIP_B;
+                           ^~~~~~
+
+
+lw_pegasus.zs Line 274 - Error T021: Function DoDashSlash(int) has not been declared.
+
+272    GameVars[DASH_SWORD_TILE] = mysword->Tile;
+273    GameVars[DASH_SWORD_CSET] = mysword->OriginalCSet;
+274    DoDashSlash(ComboAt(TouchedX()+InFrontX(mysword->Dir,4),
+       ^~~~~~~~~~~
+
+
+lw_pegasus.zs Line 489 - Error T021: Function CreateGraphicAt(int, int, int) has not been declared.
+
+487    //no functionality added for Continuous type combos.
+488    if(playsound){
+489       CreateGraphicAt(sprite,ComboX(loc),ComboY(loc));
+          ^~~~~~~~~~~~~~~
+
+
+lw_pegasus.zs Line 491 - Error T021: Function ItemSetAt(int, int) has not been declared.
+
+489    CreateGraphicAt(sprite,ComboX(loc),ComboY(loc));
+490    Game->PlaySound(SFX_GRASSCUT);
+491    ItemSetAt(itmset,loc);
+       ^~~~~~~~~
+
+
+lw_pegasus.zs Line 71 - Error T021: Function UpdateLWZH() has not been declared.
+
+69        PegasusBoots();
+70    Waitdraw();
+71    UpdateLWZH();
+      ^~~~~~~~~~
+
+
+Failure!
+Compile finished with exit code '9' (compiled with errors)
 
 === 00332-lweapons-zh/lw_scripts.zs
 Pass 1: Parsing
@@ -11173,128 +11229,120 @@ lweapons.zh Line 8 - Error P083: Could not find included file 'headers/ffcscript
      ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
-lweapons.zh Line 11 - Error P083: Could not find included file 'CustomFunctions.zs'. Please check your include paths!
+lweapons.zh Line 59 - Error P083: Could not find included file 'LW_ZH/lw_deprecated.zs'. Please check your include paths!
 
- 9    import "headers/ghost.zh"
-10    import "include/string.zh"
-11    import "CustomFunctions.zs"
-      ^~~~~~~~~~~~~~~~~~~~~~~~~~
-
-
-lweapons.zh Line 13 - Error P083: Could not find included file 'LW_ZH/lw_deprecated.zs'. Please check your include paths!
-
-11    import "CustomFunctions.zs"
-12    
-13    import "LW_ZH/lw_deprecated.zs"
+57    
+58    
+59    import "LW_ZH/lw_deprecated.zs"
       ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
-lweapons.zh Line 14 - Error P083: Could not find included file 'LW_ZH/lw_global.zs'. Please check your include paths!
+lweapons.zh Line 60 - Error P083: Could not find included file 'LW_ZH/lw_global.zs'. Please check your include paths!
 
-12    
-13    import "LW_ZH/lw_deprecated.zs"
-14    import "LW_ZH/lw_global.zs"
+58    
+59    import "LW_ZH/lw_deprecated.zs"
+60    import "LW_ZH/lw_global.zs"
       ^~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
-lweapons.zh Line 15 - Error P083: Could not find included file 'LW_ZH/lw_generic.zs'. Please check your include paths!
+lweapons.zh Line 61 - Error P083: Could not find included file 'LW_ZH/lw_generic.zs'. Please check your include paths!
 
-13    import "LW_ZH/lw_deprecated.zs"
-14    import "LW_ZH/lw_global.zs"
-15    import "LW_ZH/lw_generic.zs"
+59    import "LW_ZH/lw_deprecated.zs"
+60    import "LW_ZH/lw_global.zs"
+61    import "LW_ZH/lw_generic.zs"
       ^~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
-lweapons.zh Line 16 - Error P083: Could not find included file 'LW_ZH/lw_common.zs'. Please check your include paths!
+lweapons.zh Line 62 - Error P083: Could not find included file 'LW_ZH/lw_common.zs'. Please check your include paths!
 
-14    import "LW_ZH/lw_global.zs"
-15    import "LW_ZH/lw_generic.zs"
-16    import "LW_ZH/lw_common.zs"
+60    import "LW_ZH/lw_global.zs"
+61    import "LW_ZH/lw_generic.zs"
+62    import "LW_ZH/lw_common.zs"
       ^~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
-lweapons.zh Line 17 - Error P083: Could not find included file 'LW_ZH/lw_update.zs'. Please check your include paths!
+lweapons.zh Line 63 - Error P083: Could not find included file 'LW_ZH/lw_update.zs'. Please check your include paths!
 
-15    import "LW_ZH/lw_generic.zs"
-16    import "LW_ZH/lw_common.zs"
-17    import "LW_ZH/lw_update.zs"
+61    import "LW_ZH/lw_generic.zs"
+62    import "LW_ZH/lw_common.zs"
+63    import "LW_ZH/lw_update.zs"
       ^~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
-lweapons.zh Line 18 - Error P083: Could not find included file 'LW_ZH/lw_movement.zs'. Please check your include paths!
+lweapons.zh Line 64 - Error P083: Could not find included file 'LW_ZH/lw_movement.zs'. Please check your include paths!
 
-16    import "LW_ZH/lw_common.zs"
-17    import "LW_ZH/lw_update.zs"
-18    import "LW_ZH/lw_movement.zs"
+62    import "LW_ZH/lw_common.zs"
+63    import "LW_ZH/lw_update.zs"
+64    import "LW_ZH/lw_movement.zs"
       ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
-lweapons.zh Line 19 - Error P083: Could not find included file 'LW_ZH/lw_life.zs'. Please check your include paths!
+lweapons.zh Line 65 - Error P083: Could not find included file 'LW_ZH/lw_life.zs'. Please check your include paths!
 
-17    import "LW_ZH/lw_update.zs"
-18    import "LW_ZH/lw_movement.zs"
-19    import "LW_ZH/lw_life.zs"
+63    import "LW_ZH/lw_update.zs"
+64    import "LW_ZH/lw_movement.zs"
+65    import "LW_ZH/lw_life.zs"
       ^~~~~~~~~~~~~~~~~~~~~~~~
 
 
-lweapons.zh Line 20 - Error P083: Could not find included file 'LW_ZH/lw_other.zs'. Please check your include paths!
+lweapons.zh Line 66 - Error P083: Could not find included file 'LW_ZH/lw_other.zs'. Please check your include paths!
 
-18    import "LW_ZH/lw_movement.zs"
-19    import "LW_ZH/lw_life.zs"
-20    import "LW_ZH/lw_other.zs"
+64    import "LW_ZH/lw_movement.zs"
+65    import "LW_ZH/lw_life.zs"
+66    import "LW_ZH/lw_other.zs"
       ^~~~~~~~~~~~~~~~~~~~~~~~~
 
 
-lweapons.zh Line 21 - Error P083: Could not find included file 'LW_ZH/lw_scripts.zs'. Please check your include paths!
+lweapons.zh Line 67 - Error P083: Could not find included file 'LW_ZH/lw_scripts.zs'. Please check your include paths!
 
-19    import "LW_ZH/lw_life.zs"
-20    import "LW_ZH/lw_other.zs"
-21    import "LW_ZH/lw_scripts.zs"
+65    import "LW_ZH/lw_life.zs"
+66    import "LW_ZH/lw_other.zs"
+67    import "LW_ZH/lw_scripts.zs"
       ^~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
-lweapons.zh Line 22 - Error P083: Could not find included file 'LW_ZH/lw_medallions.zs'. Please check your include paths!
+lweapons.zh Line 68 - Error P083: Could not find included file 'LW_ZH/lw_medallions.zs'. Please check your include paths!
 
-20    import "LW_ZH/lw_other.zs"
-21    import "LW_ZH/lw_scripts.zs"
-22    import "LW_ZH/lw_medallions.zs"
+66    import "LW_ZH/lw_other.zs"
+67    import "LW_ZH/lw_scripts.zs"
+68    import "LW_ZH/lw_medallions.zs"
       ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
-lweapons.zh Line 23 - Error P083: Could not find included file 'LW_ZH/lw_hookshots.zs'. Please check your include paths!
+lweapons.zh Line 69 - Error P083: Could not find included file 'LW_ZH/lw_hookshots.zs'. Please check your include paths!
 
-21    import "LW_ZH/lw_scripts.zs"
-22    import "LW_ZH/lw_medallions.zs"
-23    import "LW_ZH/lw_hookshots.zs"
+67    import "LW_ZH/lw_scripts.zs"
+68    import "LW_ZH/lw_medallions.zs"
+69    import "LW_ZH/lw_hookshots.zs"
       ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
-lweapons.zh Line 24 - Error P083: Could not find included file 'LW_ZH/lw_somaria.zs'. Please check your include paths!
+lweapons.zh Line 70 - Error P083: Could not find included file 'LW_ZH/lw_somaria.zs'. Please check your include paths!
 
-22    import "LW_ZH/lw_medallions.zs"
-23    import "LW_ZH/lw_hookshots.zs"
-24    import "LW_ZH/lw_somaria.zs"
+68    import "LW_ZH/lw_medallions.zs"
+69    import "LW_ZH/lw_hookshots.zs"
+70    import "LW_ZH/lw_somaria.zs"
       ^~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
 Failure!
 Compile finished with exit code '-1' (compiled with warnings)
 
-=== 00336-splitting-segmented-worm/SegmentWorm.zs
+=== 00336-splitting-segmented-worm-2-55/SegmentWorm.zs
 Pass 1: Parsing
-syntax error, unexpected LBRACE, expecting COMMA or RPAREN [00336-splitting-segmented-worm/SegmentWorm.zs Line 47 Column 62 '{']
-SegmentWorm.zs Line 7 - Error P001: Included file '00336-splitting-segmented-worm/SegmentWorm.zs' encountered an error.
+syntax error, unexpected LBRACE, expecting COMMA or RPAREN [00336-splitting-segmented-worm-2-55/SegmentWorm.zs Line 47 Column 62 '{']
+SegmentWorm.zs Line 7 - Error P001: Included file '00336-splitting-segmented-worm-2-55/SegmentWorm.zs' encountered an error.
 
 5    
 6    #include "std.zh"
-7    #include "00336-splitting-segmented-worm/SegmentWorm.zs"
-     ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+7    #include "00336-splitting-segmented-worm-2-55/SegmentWorm.zs"
+     ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
 Failure!
 Compile finished with exit code '-1' (compiled with warnings)
 
-=== 00337-emilymisc-zh/EmilyMisc.zh
+=== 00337-emilymisc-zh-2-55/EmilyMisc.zh
 Pass 1: Parsing
 Pass 2: Preprocessing
 Pass 3: Registration
@@ -11310,7 +11358,7 @@ EmilyMisc.zh Line 28 - Error T021: Function Debug->NULL() has not been declared.
 Failure!
 Compile finished with exit code '21' (compiled with errors)
 
-=== 00339-day-night-cycle-tint-zh/DayNight.zs
+=== 00339-day-night-cycle-2-55-tint-zh/DayNight.zs
 Pass 1: Parsing
 DayNight.zs Line 9 - Error P083: Could not find included file 'Tint.zh'. Please check your include paths!
 
@@ -12219,126 +12267,6 @@ ThanosSnap.zs Line 47 - Error T017: Cannot cast from void to untyped.
 Failure!
 Compile finished with exit code '17' (compiled with errors)
 
-=== 00366-templinkstate-zh/TempLinkState.zh
-Pass 1: Parsing
-Pass 2: Preprocessing
-Pass 3: Registration
-Pass 4: Analyzing Code
-TempLinkState.zh Line 69 - Error T021: Function ScrollingLinkX() has not been declared.
-
-67    --_TempLinkState[_TLSI_LTOTIMER];
-68    if(TEMPLINKSTATE_TILE_OVERRIDE_DRAW_DURING_SCROLL&&Link->Action==LA_SCROLLING)
-69        _TempLinkState_DrawLink(ScrollingLinkX(), ScrollingLinkY());
-                                  ^~~~~~~~~~~~~~
-
-
-TempLinkState.zh Line 188 - Error T021: Function ScrollingDraws_Init() has not been declared.
-
-186    global script TempLinkState_Example{
-187        void run(){
-188            ScrollingDraws_Init();
-               ^~~~~~~~~~~~~~~~~~~
-
-
-TempLinkState.zh Line 191 - Error T021: Function ScrollingDraws_Update() has not been declared.
-
-189    TempLinkState_Init();
-190    while(true){
-191        ScrollingDraws_Update();
-           ^~~~~~~~~~~~~~~~~~~~~
-
-
-Failure!
-Compile finished with exit code '21' (compiled with errors)
-
-=== 00374-dodge-roll-action/script.zs
-Pass 1: Parsing
-Pass 2: Preprocessing
-Pass 3: Registration
-Pass 4: Analyzing Code
-script.zs Line 97 - Error T021: Function TempLinkState_UnsetCollDetection() has not been declared.
-
-95    //Make Link invincible during iframes
-96    if(LinkRoll[_LRI_COUNTER]>=LINKROLL_IFRAMES_DELAY&&LinkRoll[_LRI_COUNTER]<LINKROLL_IFRAMES_DELAY+LINKROLL_IFRAMES)
-97        TempLinkState_UnsetCollDetection();
-          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-
-script.zs Line 101 - Error S009: Variable TEMPLINKSTATE_BIG_LINK has not been declared.
-
- 99    int frame;
-100    int frameWidth = 1;
-101    if(TEMPLINKSTATE_BIG_LINK==2)
-          ^~~~~~~~~~~~~~~~~~~~~~
-
-
-script.zs Line 106 - Error T021: Function TempLinkState_SetLinkTileOverride(int) has not been declared.
-
-104    if(AFRAMES_LINKROLL4&&ASPEED_LINKROLL4)
-105        frame = Floor((LinkRoll[_LRI_COUNTER]%(AFRAMES_LINKROLL4*ASPEED_LINKROLL4))/ASPEED_LINKROLL4);
-106    TempLinkState_SetLinkTileOverride(TIL_LINKROLL4+Link->Dir*AFRAMES_LINKROLL4+frame*frameWidth);
-       ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-
-script.zs Line 172 - Error S009: Variable TEMPLINKSTATE_BIG_LINK has not been declared.
-
-170    
-171    int frameWidth = 1;
-172    if(TEMPLINKSTATE_BIG_LINK==2)
-          ^~~~~~~~~~~~~~~~~~~~~~
-
-
-script.zs Line 174 - Error T021: Function TempLinkState_SetLinkTileOverride(int) has not been declared.
-
-172    if(TEMPLINKSTATE_BIG_LINK==2)
-173        frameWidth = 2;
-174    TempLinkState_SetLinkTileOverride(TIL_LINKBONK4+Link->Dir*frameWidth);
-       ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-
-script.zs Line 402 - Error T021: Function ScrollingDraws_Init() has not been declared.
-
-400    void run(){
-401        LinkRoll_Init();
-402        ScrollingDraws_Init();
-           ^~~~~~~~~~~~~~~~~~~
-
-
-script.zs Line 404 - Error T021: Function TempLinkState_Init() has not been declared.
-
-402    ScrollingDraws_Init();
-403    LinkMovement_Init();
-404    TempLinkState_Init();
-       ^~~~~~~~~~~~~~~~~~
-
-
-script.zs Line 407 - Error T021: Function ScrollingDraws_Update() has not been declared.
-
-405    while(true){
-406        LinkRoll_Update();
-407        ScrollingDraws_Update();
-           ^~~~~~~~~~~~~~~~~~~~~
-
-
-script.zs Line 409 - Error T021: Function TempLinkState_Update1() has not been declared.
-
-407    ScrollingDraws_Update();
-408    LinkMovement_Update1();
-409    TempLinkState_Update1();
-       ^~~~~~~~~~~~~~~~~~~~~
-
-
-script.zs Line 414 - Error T021: Function TempLinkState_Update2() has not been declared.
-
-412    
-413    LinkMovement_Update2();
-414    TempLinkState_Update2();
-       ^~~~~~~~~~~~~~~~~~~~~
-
-
-Failure!
-Compile finished with exit code '21' (compiled with errors)
-
 === 00381-better-ladder/script.zs
 Pass 1: Parsing
 script.zs Line 6 - Error P083: Could not find included file 'headers/stdExtra.zh'. Please check your include paths!
@@ -12664,15 +12592,223 @@ script.zs Line 63 - Error S009: Variable FFC_MISC_PUSHBLOCK_IMPULSE has not been
 Failure!
 Compile finished with exit code '9' (compiled with errors)
 
-=== 00431-no-cycle-spinning-tiles/script.zs
+=== 00423-metroidvania-minimap/MetroidvaniaMinimap2.55.zs
 Pass 1: Parsing
-syntax error, unexpected RBRACE, expecting SEMICOLON [00431-no-cycle-spinning-tiles/script.zs Line 231 Column 3 '}']
-script.zs Line 7 - Error P001: Included file '00431-no-cycle-spinning-tiles/script.zs' encountered an error.
+Pass 2: Preprocessing
+Pass 3: Registration
+Pass 4: Analyzing Code
+MetroidvaniaMinimap2.55.zs Line 323 - Warning S108: Arrays should be explicitly typed - change `bitmap` to `bitmap[]`
+
+321    if(LargeMapLayout[_LML_LAYOUTCMB+linkPos]){
+322        if(LargeMapLayout[_LML_BGCMB+linkPos]){
+323            MapLayers[BITMAP_LARGEMAP1]->FastCombo(0, roomX, roomY, LargeMapLayout[_LML_BGCMB+linkPos]+1, LargeMapLayout[_LML_LAYOUTCS+linkPos], 128);
+               ^~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+MetroidvaniaMinimap2.55.zs Line 324 - Warning S108: Arrays should be explicitly typed - change `bitmap` to `bitmap[]`
+
+322    if(LargeMapLayout[_LML_BGCMB+linkPos]){
+323        MapLayers[BITMAP_LARGEMAP1]->FastCombo(0, roomX, roomY, LargeMapLayout[_LML_BGCMB+linkPos]+1, LargeMapLayout[_LML_LAYOUTCS+linkPos], 128);
+324        MapLayers[BITMAP_LARGEMAP1]->FastCombo(0, roomX, roomY, LargeMapLayout[_LML_LAYOUTCMB+linkPos], LargeMapLayout[_LML_LAYOUTCS+linkPos], 128);
+           ^~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+MetroidvaniaMinimap2.55.zs Line 327 - Warning S108: Arrays should be explicitly typed - change `bitmap` to `bitmap[]`
+
+325    }
+326    else{
+327        MapLayers[BITMAP_LARGEMAP1]->FastCombo(0, roomX, roomY, LargeMapLayout[_LML_LAYOUTCMB+linkPos]+1, LargeMapLayout[_LML_LAYOUTCS+linkPos], 128);
+           ^~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+MetroidvaniaMinimap2.55.zs Line 331 - Warning S108: Arrays should be explicitly typed - change `bitmap` to `bitmap[]`
+
+329    }
+330    Screen->SetRenderTarget(RT_SCREEN);
+331    MapLayers[BITMAP_LARGEMAP1]->Blit(MINIMAP_LAYER, RT_SCREEN, x, y, w, h, sx, -56+sy, w, h, 0, 0, 0, BITDX_NORMAL, 0, true);
+       ^~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+MetroidvaniaMinimap2.55.zs Line 332 - Warning S108: Arrays should be explicitly typed - change `bitmap` to `bitmap[]`
+
+330    Screen->SetRenderTarget(RT_SCREEN);
+331    MapLayers[BITMAP_LARGEMAP1]->Blit(MINIMAP_LAYER, RT_SCREEN, x, y, w, h, sx, -56+sy, w, h, 0, 0, 0, BITDX_NORMAL, 0, true);
+332    MapLayers[BITMAP_LARGEMAP2]->Blit(MINIMAP_LAYER, RT_SCREEN, x, y, w, h, sx, -56+sy, w, h, 0, 0, 0, BITDX_NORMAL, 0, true);
+       ^~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+MetroidvaniaMinimap2.55.zs Line 485 - Warning S108: Arrays should be explicitly typed - change `bitmap` to `bitmap[]`
+
+483    y = Floor(i/48)*MINIMAP_SQUARESIZE;
+484    if(LargeMapLayout[_LML_BGCMB+i]){
+485        MapLayers[BITMAP_LARGEMAP1]->FastCombo(0, x, y, LargeMapLayout[_LML_BGCMB+i], LargeMapLayout[_LML_LAYOUTCS+i], 128);
+           ^~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+MetroidvaniaMinimap2.55.zs Line 488 - Warning S108: Arrays should be explicitly typed - change `bitmap` to `bitmap[]`
+
+486        ++LargeMapData[_LMD_DRAWCOUNT];
+487    }
+488    MapLayers[BITMAP_LARGEMAP1]->FastCombo(0, x, y, LargeMapLayout[_LML_LAYOUTCMB+i], LargeMapLayout[_LML_LAYOUTCS+i], 128);
+       ^~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+MetroidvaniaMinimap2.55.zs Line 514 - Warning S108: Arrays should be explicitly typed - change `bitmap` to `bitmap[]`
+
+512    x *= MINIMAP_SQUARESIZE;
+513    y *= MINIMAP_SQUARESIZE;
+514    MapLayers[BITMAP_LARGEMAP1]->Rectangle(0, x+2, y+2, x+MINIMAP_SQUARESIZE-2, y+MINIMAP_SQUARESIZE-2, C_MINIMAP_DEBUG, 1, 0, 0, 0, false, 128);
+       ^~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+MetroidvaniaMinimap2.55.zs Line 529 - Warning S108: Arrays should be explicitly typed - change `bitmap` to `bitmap[]`
+
+527    x = i%48*MINIMAP_SQUARESIZE;
+528    y = Floor(i/48)*MINIMAP_SQUARESIZE;
+529    MapLayers[BITMAP_LARGEMAP2]->FastCombo(0, x, y, LargeMapLayout[_LML_MARKERCMB+i], LargeMapLayout[_LML_MARKERCS+i], 128);
+       ^~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+MetroidvaniaMinimap2.55.zs Line 541 - Warning S108: Arrays should be explicitly typed - change `bitmap` to `bitmap[]`
+
+539    genericdata gd = Game->LoadGenericData(CheckGenericScript("MetroidvaniaMinimap"));
+540    bitmap MapLayers = gd->Data[0];
+541    MapLayers[BITMAP_LARGEMAP1]->Rectangle(0, 0, 0, 511, 511, 0x00, 1, 0, 0, 0, true, 128);
+       ^~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+MetroidvaniaMinimap2.55.zs Line 542 - Warning S108: Arrays should be explicitly typed - change `bitmap` to `bitmap[]`
+
+540    bitmap MapLayers = gd->Data[0];
+541    MapLayers[BITMAP_LARGEMAP1]->Rectangle(0, 0, 0, 511, 511, 0x00, 1, 0, 0, 0, true, 128);
+542    MapLayers[BITMAP_LARGEMAP2]->Rectangle(0, 0, 0, 511, 511, 0x00, 1, 0, 0, 0, true, 128);
+       ^~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+MetroidvaniaMinimap2.55.zs Line 631 - Error T021: Function Minimap_Update(bitmap[]) has not been declared.
+
+629    MiniMap_Init();
+630    while(true){
+631        Minimap_Update(MapLayers);
+           ^~~~~~~~~~~~~~
+
+
+Failure!
+Compile finished with exit code '21' (compiled with errors)
+
+=== 00423-metroidvania-minimap/script.zs
+Pass 1: Parsing
+Pass 2: Preprocessing
+Pass 3: Registration
+Pass 4: Analyzing Code
+script.zs Line 323 - Warning S108: Arrays should be explicitly typed - change `bitmap` to `bitmap[]`
+
+321    if(LargeMapLayout[_LML_LAYOUTCMB+linkPos]){
+322        if(LargeMapLayout[_LML_BGCMB+linkPos]){
+323            MapLayers[BITMAP_LARGEMAP1]->FastCombo(0, roomX, roomY, LargeMapLayout[_LML_BGCMB+linkPos]+1, LargeMapLayout[_LML_LAYOUTCS+linkPos], 128);
+               ^~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+script.zs Line 324 - Warning S108: Arrays should be explicitly typed - change `bitmap` to `bitmap[]`
+
+322    if(LargeMapLayout[_LML_BGCMB+linkPos]){
+323        MapLayers[BITMAP_LARGEMAP1]->FastCombo(0, roomX, roomY, LargeMapLayout[_LML_BGCMB+linkPos]+1, LargeMapLayout[_LML_LAYOUTCS+linkPos], 128);
+324        MapLayers[BITMAP_LARGEMAP1]->FastCombo(0, roomX, roomY, LargeMapLayout[_LML_LAYOUTCMB+linkPos], LargeMapLayout[_LML_LAYOUTCS+linkPos], 128);
+           ^~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+script.zs Line 327 - Warning S108: Arrays should be explicitly typed - change `bitmap` to `bitmap[]`
+
+325    }
+326    else{
+327        MapLayers[BITMAP_LARGEMAP1]->FastCombo(0, roomX, roomY, LargeMapLayout[_LML_LAYOUTCMB+linkPos]+1, LargeMapLayout[_LML_LAYOUTCS+linkPos], 128);
+           ^~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+script.zs Line 331 - Warning S108: Arrays should be explicitly typed - change `bitmap` to `bitmap[]`
+
+329    }
+330    Screen->SetRenderTarget(RT_SCREEN);
+331    MapLayers[BITMAP_LARGEMAP1]->Blit(MINIMAP_LAYER, RT_SCREEN, x, y, w, h, sx, -56+sy, w, h, 0, 0, 0, BITDX_NORMAL, 0, true);
+       ^~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+script.zs Line 332 - Warning S108: Arrays should be explicitly typed - change `bitmap` to `bitmap[]`
+
+330    Screen->SetRenderTarget(RT_SCREEN);
+331    MapLayers[BITMAP_LARGEMAP1]->Blit(MINIMAP_LAYER, RT_SCREEN, x, y, w, h, sx, -56+sy, w, h, 0, 0, 0, BITDX_NORMAL, 0, true);
+332    MapLayers[BITMAP_LARGEMAP2]->Blit(MINIMAP_LAYER, RT_SCREEN, x, y, w, h, sx, -56+sy, w, h, 0, 0, 0, BITDX_NORMAL, 0, true);
+       ^~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+script.zs Line 485 - Warning S108: Arrays should be explicitly typed - change `bitmap` to `bitmap[]`
+
+483    y = Floor(i/48)*MINIMAP_SQUARESIZE;
+484    if(LargeMapLayout[_LML_BGCMB+i]){
+485        MapLayers[BITMAP_LARGEMAP1]->FastCombo(0, x, y, LargeMapLayout[_LML_BGCMB+i], LargeMapLayout[_LML_LAYOUTCS+i], 128);
+           ^~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+script.zs Line 488 - Warning S108: Arrays should be explicitly typed - change `bitmap` to `bitmap[]`
+
+486        ++LargeMapData[_LMD_DRAWCOUNT];
+487    }
+488    MapLayers[BITMAP_LARGEMAP1]->FastCombo(0, x, y, LargeMapLayout[_LML_LAYOUTCMB+i], LargeMapLayout[_LML_LAYOUTCS+i], 128);
+       ^~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+script.zs Line 514 - Warning S108: Arrays should be explicitly typed - change `bitmap` to `bitmap[]`
+
+512    x *= MINIMAP_SQUARESIZE;
+513    y *= MINIMAP_SQUARESIZE;
+514    MapLayers[BITMAP_LARGEMAP1]->Rectangle(0, x+2, y+2, x+MINIMAP_SQUARESIZE-2, y+MINIMAP_SQUARESIZE-2, C_MINIMAP_DEBUG, 1, 0, 0, 0, false, 128);
+       ^~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+script.zs Line 529 - Warning S108: Arrays should be explicitly typed - change `bitmap` to `bitmap[]`
+
+527    x = i%48*MINIMAP_SQUARESIZE;
+528    y = Floor(i/48)*MINIMAP_SQUARESIZE;
+529    MapLayers[BITMAP_LARGEMAP2]->FastCombo(0, x, y, LargeMapLayout[_LML_MARKERCMB+i], LargeMapLayout[_LML_MARKERCS+i], 128);
+       ^~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+script.zs Line 541 - Warning S108: Arrays should be explicitly typed - change `bitmap` to `bitmap[]`
+
+539    genericdata gd = Game->LoadGenericData(CheckGenericScript("MetroidvaniaMinimap"));
+540    bitmap MapLayers = gd->Data[0];
+541    MapLayers[BITMAP_LARGEMAP1]->Rectangle(0, 0, 0, 511, 511, 0x00, 1, 0, 0, 0, true, 128);
+       ^~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+script.zs Line 542 - Warning S108: Arrays should be explicitly typed - change `bitmap` to `bitmap[]`
+
+540    bitmap MapLayers = gd->Data[0];
+541    MapLayers[BITMAP_LARGEMAP1]->Rectangle(0, 0, 0, 511, 511, 0x00, 1, 0, 0, 0, true, 128);
+542    MapLayers[BITMAP_LARGEMAP2]->Rectangle(0, 0, 0, 511, 511, 0x00, 1, 0, 0, 0, true, 128);
+       ^~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+script.zs Line 631 - Error T021: Function Minimap_Update(bitmap[]) has not been declared.
+
+629    MiniMap_Init();
+630    while(true){
+631        Minimap_Update(MapLayers);
+           ^~~~~~~~~~~~~~
+
+
+Failure!
+Compile finished with exit code '21' (compiled with errors)
+
+=== 00431-no-cycle-spinning-tiles-2-55/script.zs
+Pass 1: Parsing
+syntax error, unexpected RBRACE, expecting SEMICOLON [00431-no-cycle-spinning-tiles-2-55/script.zs Line 231 Column 3 '}']
+script.zs Line 7 - Error P001: Included file '00431-no-cycle-spinning-tiles-2-55/script.zs' encountered an error.
 
 5    
 6    #include "std.zh"
-7    #include "00431-no-cycle-spinning-tiles/script.zs"
-     ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+7    #include "00431-no-cycle-spinning-tiles-2-55/script.zs"
+     ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
 Failure!
@@ -12758,73 +12894,25 @@ tbt_mouse_global.zh Line 10 - Error S009: Variable MOUSE_LAYER has not been decl
 Failure!
 Compile finished with exit code '9' (compiled with errors)
 
-=== 00500--monarch-ascendant/MonarchAscendant.zs
+=== 00500-2-55-monarch-ascendant/MonarchAscendant.zs
 Pass 1: Parsing
 Pass 2: Preprocessing
 Pass 3: Registration
 Pass 4: Analyzing Code
-MonarchAscendant.zs Line 11 - Error P073: 'using' found no matches for the namespace NPCAnim.
-
- 9    
-10    npc script MonarchAscendant{
-11        using namespace NPCAnim;
-          ^~~~~~~~~~~~~~~~~~~~~~~
-
-
-MonarchAscendant.zs Line 12 - Error P073: 'using' found no matches for the namespace NPCAnim::Legacy.
-
-10    npc script MonarchAscendant{
-11        using namespace NPCAnim;
-12        using namespace NPCAnim::Legacy;
-          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-
-MonarchAscendant.zs Line 530 - Error P073: 'using' found no matches for the namespace NPCAnim.
-
-528    
-529    npc script MonarchSpawn{
-530        using namespace NPCAnim;
-           ^~~~~~~~~~~~~~~~~~~~~~~
-
-
-MonarchAscendant.zs Line 531 - Error P073: 'using' found no matches for the namespace NPCAnim::Legacy.
-
-529    npc script MonarchSpawn{
-530        using namespace NPCAnim;
-531        using namespace NPCAnim::Legacy;
-           ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-
-MonarchAscendant.zs Line 211 - Error T021: Function PlayAnim(npc, const Animations) has not been declared.
-
-209    this->FakeZ = 0;
-210    Game->PlaySound(SFX_MONARCHSLIDE);
-211    PlayAnim(this, vars[V_VX]<0?LANDINGLEFT:LANDINGRIGHT);
-       ^~~~~~~~
-
-
-MonarchAscendant.zs Line 213 - Error S009: Variable AM_NONE has not been declared.
+MonarchAscendant.zs Line 213 - Error T021: Function CanPlace(npc, int, int, const AnimMoveStyle) has not been declared.
 
 211    PlayAnim(this, vars[V_VX]<0?LANDINGLEFT:LANDINGRIGHT);
 212    for(int i=0; i<48; ++i){
 213        if(!CanPlace(this, this->X, this->Y, AM_NONE)){
-                                                ^~~~~~~
+               ^~~~~~~~
 
 
-MonarchAscendant.zs Line 223 - Error S009: Variable AM_NONE has not been declared.
+MonarchAscendant.zs Line 223 - Error T021: Function MoveXY(npc, int, int, const AnimMoveStyle) has not been declared.
 
 221    for(int i=0; i<32; ++i){
 222        int step2 = Lerp(step, 0, i/31);
 223        MoveXY(this, VectorX(step2, angle), VectorY(step2, angle), AM_NONE);
-                                                                      ^~~~~~~
-
-
-MonarchAscendant.zs Line 226 - Error T021: Function PlayAnim(npc, const Animations) has not been declared.
-
-224        MA_Waitframe(this, vars);
-225    }
-226    PlayAnim(this, WALKING);
-       ^~~~~~~~
+           ^~~~~~
 
 
 MonarchAscendant.zs Line 328 - Warning S108: Arrays should be explicitly typed - change `int` to `int[]`
@@ -12835,228 +12923,28 @@ MonarchAscendant.zs Line 328 - Warning S108: Arrays should be explicitly typed -
                            ^~~~~~~
 
 
-MonarchAscendant.zs Line 256 - Error S009: Variable AM_IGNOREALLOFFSCREEN has not been declared.
+MonarchAscendant.zs Line 256 - Error T021: Function MoveTowardPoint(npc, int, int, int, const AnimMoveStyle) has not been declared.
 
 254    vars[V_LAZYCHASE] = 0;
 255    while(Distance(this->X, this->Y, 112, 16)>1){
 256        MoveTowardPoint(this, 112, 16, 1, AM_IGNOREALLOFFSCREEN);
-                                             ^~~~~~~~~~~~~~~~~~~~~
+           ^~~~~~~~~~~~~~~
 
 
-MonarchAscendant.zs Line 259 - Error T021: Function PlayAnim(npc, const Animations) has not been declared.
-
-257        MA_Waitframe(this, vars);
-258    }
-259    PlayAnim(this, FLYCASTING);
-       ^~~~~~~~
-
-
-MonarchAscendant.zs Line 292 - Error T021: Function PlayAnim(npc, const Animations) has not been declared.
-
-290        MA_Waitframe(this, vars);
-291    }
-292    PlayAnim(this, FLYING);
-       ^~~~~~~~
-
-
-MonarchAscendant.zs Line 189 - Error T021: Function PlayAnim(npc, const Animations) has not been declared.
-
-187    }
-188    void MA_TakeOff(npc this, untyped vars){
-189        PlayAnim(this, FLYING);
-           ^~~~~~~~
-
-
-MonarchAscendant.zs Line 355 - Error S009: Variable AM_IGNOREALLOFFSCREEN has not been declared.
+MonarchAscendant.zs Line 355 - Error T021: Function MoveXY(npc, untyped, untyped, const AnimMoveStyle) has not been declared.
 
 353    vars[V_VX] = Clamp(vars[V_VX]+Sign(vars[V_TX]-this->X)*accel, -1.5, 1.5);
 354    vars[V_VY] = Clamp(vars[V_VY]+Sign(vars[V_TY]-this->Y)*accel, -1.5, 1.5);
 355    MoveXY(this, vars[V_VX], vars[V_VY], AM_IGNOREALLOFFSCREEN);
-                                            ^~~~~~~~~~~~~~~~~~~~~
+       ^~~~~~
 
 
-MonarchAscendant.zs Line 362 - Error T021: Function PlayDeathAnim(npc) has not been declared.
-
-360    }
-361    if(this->HP<=0){
-362        PlayDeathAnim(this);
-           ^~~~~~~~~~~~~
-
-
-MonarchAscendant.zs Line 364 - Error T021: Function UpdateAnims(npc) has not been declared.
-
-362        PlayDeathAnim(this);
-363    }
-364    UpdateAnims(this);
-       ^~~~~~~~~~~
-
-
-MonarchAscendant.zs Line 39 - Error T047: Type AnimHandler has not been declared.
-
-37        
-38    void run(){
-39        AnimHandler aptr = new AnimHandler(this);
-          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-
-MonarchAscendant.zs Line 41 - Error T021: Function SetFakeShadow(const npc, int, int, int, int) has not been declared.
-
-39    AnimHandler aptr = new AnimHandler(this);
-40    
-41    SetFakeShadow(this, this->ShadowSprite, 1, 1, 0);
-      ^~~~~~~~~~~~~
-
-
-MonarchAscendant.zs Line 43 - Error S009: Variable aptr has not been declared.
-
-41    SetFakeShadow(this, this->ShadowSprite, 1, 1, 0);
-42    
-43    AddAnim(aptr, STANDING, 12, 1, 1, ADF_NOLOOP);
-              ^~~~
-
-
-MonarchAscendant.zs Line 44 - Error S009: Variable aptr has not been declared.
-
-42    
-43    AddAnim(aptr, STANDING, 12, 1, 1, ADF_NOLOOP);
-44    AddAnim(aptr, WALKING, 12, 4, 16, 0);
-              ^~~~
-
-
-MonarchAscendant.zs Line 45 - Error S009: Variable aptr has not been declared.
-
-43    AddAnim(aptr, STANDING, 12, 1, 1, ADF_NOLOOP);
-44    AddAnim(aptr, WALKING, 12, 4, 16, 0);
-45    AddAnim(aptr, CASTING, 40, 1, 16, ADF_NOLOOP);
-              ^~~~
-
-
-MonarchAscendant.zs Line 46 - Error S009: Variable aptr has not been declared.
-
-44    AddAnim(aptr, WALKING, 12, 4, 16, 0);
-45    AddAnim(aptr, CASTING, 40, 1, 16, ADF_NOLOOP);
-46    AddAnim(aptr, FLYING, 0, 2, 4, 0);
-              ^~~~
-
-
-MonarchAscendant.zs Line 47 - Error S009: Variable aptr has not been declared.
-
-45    AddAnim(aptr, CASTING, 40, 1, 16, ADF_NOLOOP);
-46    AddAnim(aptr, FLYING, 0, 2, 4, 0);
-47    AddAnim(aptr, FLYCASTING, 4, 2, 4, 0);
-              ^~~~
-
-
-MonarchAscendant.zs Line 48 - Error S009: Variable aptr has not been declared.
-
-46    AddAnim(aptr, FLYING, 0, 2, 4, 0);
-47    AddAnim(aptr, FLYCASTING, 4, 2, 4, 0);
-48    AddAnim(aptr, LANDINGLEFT, 8, 1, 16, ADF_NOLOOP);
-              ^~~~
-
-
-MonarchAscendant.zs Line 49 - Error S009: Variable aptr has not been declared.
-
-47    AddAnim(aptr, FLYCASTING, 4, 2, 4, 0);
-48    AddAnim(aptr, LANDINGLEFT, 8, 1, 16, ADF_NOLOOP);
-49    AddAnim(aptr, LANDINGRIGHT, 10, 1, 16, ADF_NOLOOP);
-              ^~~~
-
-
-MonarchAscendant.zs Line 51 - Error T021: Function SetAnimSpriteHitbox(const npc, int, int, int, int, int, int) has not been declared.
-
-49    AddAnim(aptr, LANDINGRIGHT, 10, 1, 16, ADF_NOLOOP);
-50    
-51    SetAnimSpriteHitbox(this, 2, 2, 4, 4, 6, 6);
-      ^~~~~~~~~~~~~~~~~~~
-
-
-MonarchAscendant.zs Line 52 - Error T021: Function SetAnimMovementHitbox(const npc, int, int, int, int) has not been declared.
-
-50    
-51    SetAnimSpriteHitbox(this, 2, 2, 4, 4, 6, 6);
-52    SetAnimMovementHitbox(this, 4, 4, 16, 6);
-      ^~~~~~~~~~~~~~~~~~~~~
-
-
-MonarchAscendant.zs Line 67 - Error T021: Function PlayAnim(const npc, const Animations) has not been declared.
-
-65    this->X = 112;
-66    this->Y = 16;
-67    PlayAnim(this, STANDING);
-      ^~~~~~~~
-
-
-MonarchAscendant.zs Line 69 - Error T021: Function PlayAnim(const npc, const Animations) has not been declared.
-
-67    PlayAnim(this, STANDING);
-68    MA_Waitframe(this, vars, 32);
-69    PlayAnim(this, CASTING);
-      ^~~~~~~~
-
-
-MonarchAscendant.zs Line 107 - Error T021: Function PlayAnim(const npc, const Animations, bool) has not been declared.
-
-105        MA_Waitframe(this, vars);
-106    }
-107    PlayAnim(this, FLYCASTING, true);
-       ^~~~~~~~
-
-
-MonarchAscendant.zs Line 119 - Error T021: Function PlayAnim(const npc, const Animations, bool) has not been declared.
-
-117    }
-118    MA_Waitframe(this, vars, 16);
-119    PlayAnim(this, FLYING, true);
-       ^~~~~~~~
-
-
-MonarchAscendant.zs Line 136 - Error T021: Function PlayAnim(const npc, const Animations) has not been declared.
-
-134        MA_SuperAttack(this, vars, spawnID, spawnDelay);
-135    MA_Dive(this, vars, Link->X-8, Link->Y-16);
-136    PlayAnim(this, vars[V_VX]<0?LANDINGLEFT:LANDINGRIGHT);
-       ^~~~~~~~
-
-
-MonarchAscendant.zs Line 142 - Error T021: Function PlayAnim(const npc, const Animations) has not been declared.
-
-140        MA_Waitframe(this, vars, 4);
-141    }
-142    PlayAnim(this, WALKING);
-       ^~~~~~~~
-
-
-MonarchAscendant.zs Line 146 - Error T021: Function PlayAnim(const npc, const Animations) has not been declared.
-
-144    for(int i=0; i<300&&vars[V_PHASE2FLAG]!=1; ++i){
-145        if(i>0&&(i%120==0||Rand(180)==0)){
-146            PlayAnim(this, CASTING);
-               ^~~~~~~~
-
-
-MonarchAscendant.zs Line 165 - Error T021: Function PlayAnim(const npc, const Animations) has not been declared.
-
-163    vars[V_LAZYCHASE] = 1;
-164    MA_Dive(this, vars, Link->X-8, 48);
-165    PlayAnim(this, CASTING);
-       ^~~~~~~~
-
-
-MonarchAscendant.zs Line 172 - Error T021: Function PlayAnim(const npc, const Animations) has not been declared.
-
-170        MA_Waitframe(this, vars, 8);
-171    }
-172    PlayAnim(this, WALKING);
-       ^~~~~~~~
-
-
-MonarchAscendant.zs Line 178 - Error S009: Variable AM_NONE has not been declared.
+MonarchAscendant.zs Line 178 - Error T021: Function MoveXY(const npc, int, int, const AnimMoveStyle) has not been declared.
 
 176    }
 177    int angle = Angle(this->X+8, this->Y+16, Link->X, Link->Y);
 178    MoveXY(this, VectorX(0.4, angle), VectorY(0.4, angle), AM_NONE);
-                                                              ^~~~~~~
+       ^~~~~~
 
 
 MonarchAscendant.zs Line 520 - Warning S108: Arrays should be explicitly typed - change `int` to `int[]`
@@ -13131,48 +13019,16 @@ MonarchAscendant.zs Line 525 - Warning S108: Arrays should be explicitly typed -
                  ^~~~~
 
 
-MonarchAscendant.zs Line 537 - Error T047: Type AnimHandler has not been declared.
-
-535    };
-536    
-537    AnimHandler aptr = new AnimHandler(this);
-       ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-
-MonarchAscendant.zs Line 539 - Error S009: Variable aptr has not been declared.
-
-537    AnimHandler aptr = new AnimHandler(this);
-538    
-539    AddAnim(aptr, FLYING, 0, 2, 4, 0);
-               ^~~~
-
-
-MonarchAscendant.zs Line 542 - Error T021: Function Waitframe(const npc) has not been declared.
-
-540        
-541    while(this->InitD[0]==0){
-542        Waitframe(this);
-           ^~~~~~~~~
-
-
-MonarchAscendant.zs Line 567 - Error S009: Variable AM_IGNOREALLOFFSCREEN has not been declared.
+MonarchAscendant.zs Line 567 - Error T021: Function MoveXY(const npc, int, int, const AnimMoveStyle) has not been declared.
 
 565        vY = VectorY(maxStep, angle);
 566    }
 567    MoveXY(this, vX, vY, AM_IGNOREALLOFFSCREEN);
-                            ^~~~~~~~~~~~~~~~~~~~~
-
-
-MonarchAscendant.zs Line 568 - Error T021: Function Waitframe(const npc) has not been declared.
-
-566    }
-567    MoveXY(this, vX, vY, AM_IGNOREALLOFFSCREEN);
-568    Waitframe(this);
-       ^~~~~~~~~
+       ^~~~~~
 
 
 Failure!
-Compile finished with exit code '73' (compiled with errors)
+Compile finished with exit code '21' (compiled with errors)
 
 === 00520-poker-monsters/NofaKind.z
 Pass 1: Parsing
@@ -13214,7 +13070,7 @@ NofaKind.z Line 160 - Error T021: Function GetBestSequence(int[]) has not been d
 Failure!
 Compile finished with exit code '21' (compiled with errors)
 
-=== 00523-geldarm-z-geldarm/z2geldarm.z
+=== 00523-geldarm-z2-geldarm/z2geldarm.z
 Pass 1: Parsing
 Pass 2: Preprocessing
 Pass 3: Registration
@@ -13425,22 +13281,6 @@ script.zs Line 253 - Error T021: Function GetBestSequence(int[]) has not been de
 Failure!
 Compile finished with exit code '21' (compiled with errors)
 
-=== 00547--new-palette-based-day-night-system/DayNightNew.zs
-Pass 1: Parsing
-Pass 2: Preprocessing
-Pass 3: Registration
-Pass 4: Analyzing Code
-DayNightNew.zs Line 331 - Error T017: Cannot cast from DMapDayNight to int.
-
-329    
-330                // If the DMap has day/night data defined
-331                if(DDN[whichDMap]>NULL)
-                      ^~~~~~~~~~~~~~~~~~~
-
-
-Failure!
-Compile finished with exit code '17' (compiled with errors)
-
 === 00571-gumzol/gumzol.z
 Pass 1: Parsing
 Pass 2: Preprocessing
@@ -13601,7 +13441,7 @@ script.zs Line 207 - Error T021: Function IsActive(int) has not been declared.
 Failure!
 Compile finished with exit code '9' (compiled with errors)
 
-=== 00572-ice-physics-slippery/icePhysics.zs
+=== 00572-ice-physics-slippery-2-55/icePhysics.zs
 Pass 1: Parsing
 Pass 2: Preprocessing
 Pass 3: Registration
@@ -13688,313 +13528,9 @@ TempNoReturnItem.zs Line 60 - Error T017: Cannot cast from int to const ItemPick
 Failure!
 Compile finished with exit code '17' (compiled with errors)
 
-=== 00601-chain-chomp/ChainChomp.zs
+=== 00602-2-55-oracle-minecarts/gbminecart2.55.zs
 Pass 1: Parsing
-Pass 2: Preprocessing
-Pass 3: Registration
-Pass 4: Analyzing Code
-ChainChomp.zs Line 6 - Error P073: 'using' found no matches for the namespace NPCAnim.
-
-4    @InitDHelp0("How many chain links the chomp has. This determines its leash distance.")
-5    npc script Chainchomp{
-6        using namespace NPCAnim;
-         ^~~~~~~~~~~~~~~~~~~~~~~
-
-
-ChainChomp.zs Line 122 - Warning S108: Arrays should be explicitly typed - change `int` to `int[]`
-
-120    for(int i=0; i<frames; ++i)
-121    {
-122        int chainX = vars[0];
-                        ^~~~~~~
-
-
-ChainChomp.zs Line 123 - Warning S108: Arrays should be explicitly typed - change `int` to `int[]`
-
-121    {
-122        int chainX = vars[0];
-123        int chainY = vars[1];
-                        ^~~~~~~
-
-
-ChainChomp.zs Line 124 - Warning S108: Arrays should be explicitly typed - change `int` to `int[]`
-
-122    int chainX = vars[0];
-123    int chainY = vars[1];
-124    chainX[0] = this->X;
-       ^~~~~~~~~
-
-
-ChainChomp.zs Line 125 - Warning S108: Arrays should be explicitly typed - change `int` to `int[]`
-
-123    int chainY = vars[1];
-124    chainX[0] = this->X;
-125    chainY[0] = this->Y-this->Z;
-       ^~~~~~~~~
-
-
-ChainChomp.zs Line 127 - Error T021: Function Waitframe(npc) has not been declared.
-
-125    chainY[0] = this->Y-this->Z;
-126    UpdateChain(this, vars);
-127    Waitframe(this);
-       ^~~~~~~~~
-
-
-ChainChomp.zs Line 88 - Error T047: Type AnimHandler has not been declared.
-
-86    }
-87    void UpdateChain(npc this, int vars){
-88        AnimHandler aptr = GetAnimHandler(this);
-          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-
-ChainChomp.zs Line 89 - Error S009: Variable aptr has not been declared.
-
-87    void UpdateChain(npc this, int vars){
-88        AnimHandler aptr = GetAnimHandler(this);
-89        int til = aptr->OriginalTile + 8;
-                    ^~~~
-
-
-ChainChomp.zs Line 92 - Warning S108: Arrays should be explicitly typed - change `int` to `int[]`
-
-90    
-91    int Combo = this->Attributes[10];
-92    int chainX = vars[0];
-                   ^~~~~~~
-
-
-ChainChomp.zs Line 93 - Warning S108: Arrays should be explicitly typed - change `int` to `int[]`
-
-91    int Combo = this->Attributes[10];
-92    int chainX = vars[0];
-93    int chainY = vars[1];
-                   ^~~~~~~
-
-
-ChainChomp.zs Line 94 - Warning S108: Arrays should be explicitly typed - change `int` to `int[]`
-
-92    int chainX = vars[0];
-93    int chainY = vars[1];
-94    int numLinks = vars[2];
-                     ^~~~~~~
-
-
-ChainChomp.zs Line 101 - Warning S108: Arrays should be explicitly typed - change `int` to `int[]`
-
- 99    vX[i] = 0;
-100    vY[i] = 0;
-101    float d1 = Distance(chainX[i], chainY[i], chainX[i+1], chainY[i+1]);
-                           ^~~~~~~~~
-
-
-ChainChomp.zs Line 101 - Warning S108: Arrays should be explicitly typed - change `int` to `int[]`
-
- 99    vX[i] = 0;
-100    vY[i] = 0;
-101    float d1 = Distance(chainX[i], chainY[i], chainX[i+1], chainY[i+1]);
-                                      ^~~~~~~~~
-
-
-ChainChomp.zs Line 101 - Warning S108: Arrays should be explicitly typed - change `int` to `int[]`
-
- 99    vX[i] = 0;
-100    vY[i] = 0;
-101    float d1 = Distance(chainX[i], chainY[i], chainX[i+1], chainY[i+1]);
-                                                 ^~~~~~~~~~~
-
-
-ChainChomp.zs Line 101 - Warning S108: Arrays should be explicitly typed - change `int` to `int[]`
-
- 99    vX[i] = 0;
-100    vY[i] = 0;
-101    float d1 = Distance(chainX[i], chainY[i], chainX[i+1], chainY[i+1]);
-                                                              ^~~~~~~~~~~
-
-
-ChainChomp.zs Line 102 - Warning S108: Arrays should be explicitly typed - change `int` to `int[]`
-
-100    vY[i] = 0;
-101    float d1 = Distance(chainX[i], chainY[i], chainX[i+1], chainY[i+1]);
-102    float a1 = Angle(chainX[i], chainY[i], chainX[i+1], chainY[i+1]);
-                        ^~~~~~~~~
-
-
-ChainChomp.zs Line 102 - Warning S108: Arrays should be explicitly typed - change `int` to `int[]`
-
-100    vY[i] = 0;
-101    float d1 = Distance(chainX[i], chainY[i], chainX[i+1], chainY[i+1]);
-102    float a1 = Angle(chainX[i], chainY[i], chainX[i+1], chainY[i+1]);
-                                   ^~~~~~~~~
-
-
-ChainChomp.zs Line 102 - Warning S108: Arrays should be explicitly typed - change `int` to `int[]`
-
-100    vY[i] = 0;
-101    float d1 = Distance(chainX[i], chainY[i], chainX[i+1], chainY[i+1]);
-102    float a1 = Angle(chainX[i], chainY[i], chainX[i+1], chainY[i+1]);
-                                              ^~~~~~~~~~~
-
-
-ChainChomp.zs Line 102 - Warning S108: Arrays should be explicitly typed - change `int` to `int[]`
-
-100    vY[i] = 0;
-101    float d1 = Distance(chainX[i], chainY[i], chainX[i+1], chainY[i+1]);
-102    float a1 = Angle(chainX[i], chainY[i], chainX[i+1], chainY[i+1]);
-                                                           ^~~~~~~~~~~
-
-
-ChainChomp.zs Line 103 - Warning S108: Arrays should be explicitly typed - change `int` to `int[]`
-
-101    float d1 = Distance(chainX[i], chainY[i], chainX[i+1], chainY[i+1]);
-102    float a1 = Angle(chainX[i], chainY[i], chainX[i+1], chainY[i+1]);
-103    float d2 = Distance(chainX[i], chainY[i], chainX[i-1], chainY[i-1]);
-                           ^~~~~~~~~
-
-
-ChainChomp.zs Line 103 - Warning S108: Arrays should be explicitly typed - change `int` to `int[]`
-
-101    float d1 = Distance(chainX[i], chainY[i], chainX[i+1], chainY[i+1]);
-102    float a1 = Angle(chainX[i], chainY[i], chainX[i+1], chainY[i+1]);
-103    float d2 = Distance(chainX[i], chainY[i], chainX[i-1], chainY[i-1]);
-                                      ^~~~~~~~~
-
-
-ChainChomp.zs Line 103 - Warning S108: Arrays should be explicitly typed - change `int` to `int[]`
-
-101    float d1 = Distance(chainX[i], chainY[i], chainX[i+1], chainY[i+1]);
-102    float a1 = Angle(chainX[i], chainY[i], chainX[i+1], chainY[i+1]);
-103    float d2 = Distance(chainX[i], chainY[i], chainX[i-1], chainY[i-1]);
-                                                 ^~~~~~~~~~~
-
-
-ChainChomp.zs Line 103 - Warning S108: Arrays should be explicitly typed - change `int` to `int[]`
-
-101    float d1 = Distance(chainX[i], chainY[i], chainX[i+1], chainY[i+1]);
-102    float a1 = Angle(chainX[i], chainY[i], chainX[i+1], chainY[i+1]);
-103    float d2 = Distance(chainX[i], chainY[i], chainX[i-1], chainY[i-1]);
-                                                              ^~~~~~~~~~~
-
-
-ChainChomp.zs Line 104 - Warning S108: Arrays should be explicitly typed - change `int` to `int[]`
-
-102    float a1 = Angle(chainX[i], chainY[i], chainX[i+1], chainY[i+1]);
-103    float d2 = Distance(chainX[i], chainY[i], chainX[i-1], chainY[i-1]);
-104    float a2 = Angle(chainX[i], chainY[i], chainX[i-1], chainY[i-1]);
-                        ^~~~~~~~~
-
-
-ChainChomp.zs Line 104 - Warning S108: Arrays should be explicitly typed - change `int` to `int[]`
-
-102    float a1 = Angle(chainX[i], chainY[i], chainX[i+1], chainY[i+1]);
-103    float d2 = Distance(chainX[i], chainY[i], chainX[i-1], chainY[i-1]);
-104    float a2 = Angle(chainX[i], chainY[i], chainX[i-1], chainY[i-1]);
-                                   ^~~~~~~~~
-
-
-ChainChomp.zs Line 104 - Warning S108: Arrays should be explicitly typed - change `int` to `int[]`
-
-102    float a1 = Angle(chainX[i], chainY[i], chainX[i+1], chainY[i+1]);
-103    float d2 = Distance(chainX[i], chainY[i], chainX[i-1], chainY[i-1]);
-104    float a2 = Angle(chainX[i], chainY[i], chainX[i-1], chainY[i-1]);
-                                              ^~~~~~~~~~~
-
-
-ChainChomp.zs Line 104 - Warning S108: Arrays should be explicitly typed - change `int` to `int[]`
-
-102    float a1 = Angle(chainX[i], chainY[i], chainX[i+1], chainY[i+1]);
-103    float d2 = Distance(chainX[i], chainY[i], chainX[i-1], chainY[i-1]);
-104    float a2 = Angle(chainX[i], chainY[i], chainX[i-1], chainY[i-1]);
-                                                           ^~~~~~~~~~~
-
-
-ChainChomp.zs Line 112 - Warning S108: Arrays should be explicitly typed - change `int` to `int[]`
-
-110    
-111    for(int i=1; i<numLinks; i++){
-112        chainX[i] += vX[i];
-           ^~~~~~~~~
-
-
-ChainChomp.zs Line 112 - Warning S108: Arrays should be explicitly typed - change `int` to `int[]`
-
-110    
-111    for(int i=1; i<numLinks; i++){
-112        chainX[i] += vX[i];
-           ^~~~~~~~~
-
-
-ChainChomp.zs Line 113 - Warning S108: Arrays should be explicitly typed - change `int` to `int[]`
-
-111    for(int i=1; i<numLinks; i++){
-112        chainX[i] += vX[i];
-113        chainY[i] += vY[i];
-           ^~~~~~~~~
-
-
-ChainChomp.zs Line 113 - Warning S108: Arrays should be explicitly typed - change `int` to `int[]`
-
-111    for(int i=1; i<numLinks; i++){
-112        chainX[i] += vX[i];
-113        chainY[i] += vY[i];
-           ^~~~~~~~~
-
-
-ChainChomp.zs Line 115 - Warning S108: Arrays should be explicitly typed - change `int` to `int[]`
-
-113    chainY[i] += vY[i];
-114    if(Link->HP>0)
-115        Screen->FastTile(SPLAYER_EWEAP_BEHIND_DRAW, chainX[i], chainY[i], til, this->CSet, OP_OPAQUE);
-                                                       ^~~~~~~~~
-
-
-ChainChomp.zs Line 115 - Warning S108: Arrays should be explicitly typed - change `int` to `int[]`
-
-113    chainY[i] += vY[i];
-114    if(Link->HP>0)
-115        Screen->FastTile(SPLAYER_EWEAP_BEHIND_DRAW, chainX[i], chainY[i], til, this->CSet, OP_OPAQUE);
-                                                                  ^~~~~~~~~
-
-
-ChainChomp.zs Line 115 - Error S009: Variable til has not been declared.
-
-113    chainY[i] += vY[i];
-114    if(Link->HP>0)
-115        Screen->FastTile(SPLAYER_EWEAP_BEHIND_DRAW, chainX[i], chainY[i], til, this->CSet, OP_OPAQUE);
-                                                                             ^~~
-
-
-ChainChomp.zs Line 14 - Error T021: Function Waitspawn(const npc) has not been declared.
-
-12    int maxDist = (numLinks-1) * 8;
-13    
-14    Waitspawn(this);
-      ^~~~~~~~~
-
-
-ChainChomp.zs Line 16 - Error T047: Type AnimHandler has not been declared.
-
-14    Waitspawn(this);
-15    
-16    AnimHandler aptr = new AnimHandler(this);
-      ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-
-ChainChomp.zs Line 17 - Error S009: Variable aptr has not been declared.
-
-15    
-16    AnimHandler aptr = new AnimHandler(this);
-17    aptr->AddAnim(0, 0, 1, 1, ADF_8WAY);
-      ^~~~
-
-
-Failure!
-Compile finished with exit code '73' (compiled with errors)
-
-=== 00602--oracle-minecarts/gbminecart255.zs
-Pass 1: Parsing
-gbminecart255.zs Line 1 - Error P083: Could not find included file 'TempLinkState255.zh'. Please check your include paths!
+gbminecart2.55.zs Line 1 - Error P083: Could not find included file 'TempLinkState255.zh'. Please check your include paths!
 
 1    #include "TempLinkState255.zh"
      ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -14003,51 +13539,158 @@ gbminecart255.zs Line 1 - Error P083: Could not find included file 'TempLinkStat
 Failure!
 Compile finished with exit code '-1' (compiled with warnings)
 
-=== 00605-ff-z-styled-line-of-sight-and-constant-traps/Circulum_trap.z
+=== 00602-2-55-oracle-minecarts/gbminecart3.0.zs
+Pass 1: Parsing
+gbminecart3.0.zs Line 1 - Error P083: Could not find included file 'TempLinkState255.zh'. Please check your include paths!
+
+1    #include "TempLinkState255.zh"
+     ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+Failure!
+Compile finished with exit code '-1' (compiled with warnings)
+
+=== 00615-data-collection-script/DataCollection.zs
 Pass 1: Parsing
 Pass 2: Preprocessing
 Pass 3: Registration
 Pass 4: Analyzing Code
-Circulum_trap.z Line 52 - Error S009: Variable rightangle has not been declared.
+DataCollection.zs Line 1487 - Error T021: Function Graphics->MixColor(rgb, rgb, int, const int) has not been declared.
 
-50    int CollY = 0;
-51    int leftangle = angle;
-52    int rightangle = rightangle;
-                       ^~~~~~~~~~
+1485    for(int i=1; i<64; ++i)
+1486    {
+1487        pd->Color[16*7+i] = Graphics->MixColor(c_start, c_end, i/62, HEATMAP_BLEND_TYPE);
+                                ^~~~~~~~~~~~~~~~~~
 
 
-Circulum_trap.z Line 54 - Error S009: Variable rightangle has not been declared.
+DataCollection.zs Line 493 - Warning S108: Arrays should be explicitly typed - change `int` to `int[]`
 
-52    int rightangle = rightangle;
-53    if (CCW==0||CCW==2)leftangle=angle-anglerange;
-54    if (CCW==1||CCW==2)rightangle=angle-anglerange;
-                         ^~~~~~~~~~
+491    {
+492        Values[i] = Floor(Values[i]/TotalValue*100);
+493        if(Values[i]<MinValue[i]&&Values[i]>0)
+                        ^~~~~~~~~~~
+
+
+DataCollection.zs Line 505 - Warning S108: Arrays should be explicitly typed - change `int` to `int[]`
+
+503    {
+504        Values[i] = Floor(Values[i]/MaxValue*100);
+505        if(Values[i]<MinValue[i]&&Values[i]>0)
+                        ^~~~~~~~~~~
+
+
+Failure!
+Compile finished with exit code '21' (compiled with errors)
+
+=== 00628-converted-global-script-pack/GlobalGeneric_DarkSoulsStatuses.zs
+Pass 1: Parsing
+Pass 2: Preprocessing
+Pass 3: Registration
+Pass 4: Analyzing Code
+GlobalGeneric_DarkSoulsStatuses.zs Line 19 - Error T021: Function DarkSoulsStatus::Init() has not been declared.
+
+17    this->ReloadState[GENSCR_ST_CONTINUE] = true;
+18    WaitTo(SCR_TIMING_POST_GLOBAL_ACTIVE);
+19    DarkSoulsStatus::Init();
+      ^~~~~~~~~~~~~~~~~~~~~
+
+
+GlobalGeneric_DarkSoulsStatuses.zs Line 22 - Error T021: Function DarkSoulsStatus::Update() has not been declared.
+
+20    while(true)
+21    {
+22        DarkSoulsStatus::Update();
+          ^~~~~~~~~~~~~~~~~~~~~~~
+
+
+Failure!
+Compile finished with exit code '21' (compiled with errors)
+
+=== 00628-converted-global-script-pack/GlobalGeneric_DekuLeaf.zs
+Pass 1: Parsing
+Pass 2: Preprocessing
+Pass 3: Registration
+Pass 4: Analyzing Code
+GlobalGeneric_DekuLeaf.zs Line 60 - Error S009: Variable Link_Z has not been declared.
+
+58    //Check Link's Z position and if it's less than or equal to 0 cancel the glide by removing the LTM item.
+59    if(Link->Z <= 0){
+60        Link_Z = 0;
+          ^~~~~~
+
+
+GlobalGeneric_DekuLeaf.zs Line 61 - Error S009: Variable I_DEKULEAF_LTM has not been declared.
+
+59    if(Link->Z <= 0){
+60        Link_Z = 0;
+61        Link->Item[I_DEKULEAF_LTM] = 0;
+                     ^~~~~~~~~~~~~~
+
+
+GlobalGeneric_DekuLeaf.zs Line 69 - Error S009: Variable Link_Z has not been declared.
+
+67    }
+68    //Set Link's Z position to Link_Z and subtract Link_Z by GRAVITY2.
+69    Link->Z = Link_Z;
+                ^~~~~~
+
+
+GlobalGeneric_DekuLeaf.zs Line 70 - Error S009: Variable Link_Z has not been declared.
+
+68    //Set Link's Z position to Link_Z and subtract Link_Z by GRAVITY2.
+69    Link->Z = Link_Z;
+70    Link_Z -= GRAVITY2;
+      ^~~~~~
+
+
+GlobalGeneric_DekuLeaf.zs Line 23 - Error S009: Variable HitGround has not been declared.
+
+21    {
+22        if(Link->Z == 0){
+23            if(!HitGround) Game->PlaySound(SFX_LAND);
+                  ^~~~~~~~~
+
+
+GlobalGeneric_DekuLeaf.zs Line 24 - Error S009: Variable HitGround has not been declared.
+
+22    if(Link->Z == 0){
+23        if(!HitGround) Game->PlaySound(SFX_LAND);
+24        HitGround = true;
+          ^~~~~~~~~
+
+
+GlobalGeneric_DekuLeaf.zs Line 27 - Error S009: Variable I_DEKULEAF_LTM has not been declared.
+
+25    }
+26    //Check if Link has the Deku Leaf LTM item.
+27    if(Link->Item[I_DEKULEAF_LTM]){
+                    ^~~~~~~~~~~~~~
 
 
 Failure!
 Compile finished with exit code '9' (compiled with errors)
 
-=== 00605-ff-z-styled-line-of-sight-and-constant-traps/script.zs
+=== 00628-converted-global-script-pack/Obsoleted/GlobalGeneric_EmptyBottles.zs
 Pass 1: Parsing
 Pass 2: Preprocessing
 Pass 3: Registration
 Pass 4: Analyzing Code
-script.zs Line 283 - Error S009: Variable rightangle has not been declared.
+GlobalGeneric_EmptyBottles.zs Line 19 - Error T021: Function RefreshBottles() has not been declared.
 
-281    int CollY = 0;
-282    int leftangle = angle;
-283    int rightangle = rightangle;
-                        ^~~~~~~~~~
+17    this->ReloadState[GENSCR_ST_CONTINUE] = true;
+18    WaitTo(SCR_TIMING_POST_GLOBAL_ACTIVE);
+19    RefreshBottles();
+      ^~~~~~~~~~~~~~
 
 
-script.zs Line 285 - Error S009: Variable rightangle has not been declared.
+GlobalGeneric_EmptyBottles.zs Line 22 - Error T021: Function EmptyBottleGlobal() has not been declared.
 
-283    int rightangle = rightangle;
-284    if (CCW==0||CCW==2)leftangle=angle-anglerange;
-285    if (CCW==1||CCW==2)rightangle=angle-anglerange;
-                          ^~~~~~~~~~
+20    while(true)
+21    {
+22        EmptyBottleGlobal();
+          ^~~~~~~~~~~~~~~~~
 
 
 Failure!
-Compile finished with exit code '9' (compiled with errors)
+Compile finished with exit code '21' (compiled with errors)
 

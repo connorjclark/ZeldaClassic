@@ -13,12 +13,12 @@
 # TODO failures worth investigating
 #   00310-newbie-item/script.zs
 #   00462-dark-souls-status-effects
-#   00531-example-enemy/ExampleEnemyGhost.zs
+#   00531-example-enemy-2-55/ExampleEnemyGhost.zs
 #   00532-status-effects/statusEffects.zs
 
 # TODO Errors in authored code, report to author
 #   00096-shallow-water-splash-and-tall-grass-sfx
-#   00431-no-cycle-spinning-tiles
+#   00431-no-cycle-spinning-tiles-2-55
 
 import argparse
 import os
@@ -31,7 +31,7 @@ from pathlib import Path
 
 from common import ZCTestCase
 
-ZSCRIPT_DATABASE_COMMIT = '8b448930ffa8665816114ad88bb61b38bdcfc4e5'
+ZSCRIPT_DATABASE_COMMIT = '0972b841631b47d3b38ea625e234511c13ecfd76'
 
 parser = argparse.ArgumentParser()
 parser.add_argument(
@@ -97,11 +97,11 @@ def intuit_imports(database_dir: Path, script_path: Path):
     if re.search(r'CF_MATRIX', code, re.IGNORECASE):
         except_for = [
             '00397-matrix-password-puzzle',
-            '00414-matrix-password-puzzle-up-and-down',
+            '00414-matrix-password-puzzle-5-up-and-down',
         ]
         if not any(e in script_path.as_posix() for e in except_for):
             imports.append(
-                database_dir / '00414-matrix-password-puzzle-up-and-down/matrix50.z'
+                database_dir / '00414-matrix-password-puzzle-5-up-and-down/matrix50.z'
             )
 
     if re.search(r'LinkMovement', code, re.IGNORECASE):
@@ -129,9 +129,7 @@ def intuit_imports(database_dir: Path, script_path: Path):
         )
         include_paths.append(database_dir / '00284-linkmovement-zh')
 
-    if re.search(
-        r'GetCurrentItem|freezeScreen|debugValue|moveLink', code
-    ):
+    if re.search(r'GetCurrentItem|freezeScreen|debugValue|moveLink', code):
         imports.append(test_scripts_dir / 'compat/stdExtra.zh')
         include_paths.append(test_scripts_dir / 'compat')
 
@@ -192,6 +190,76 @@ def intuit_imports(database_dir: Path, script_path: Path):
     ):
         imports.append(database_dir / '00113-bigenemydx/script.zs')
 
+    # Headers that other scripts pull in via `using namespace X`.
+    namespace_headers = [
+        (r'NPCAnim', '00499-npcanim-zh', '00499-npcanim-zh/NPCAnim3.0.zh'),
+        (
+            r'PlayerAnim',
+            '00616-playeranim-zh/PlayerAnim.zh',
+            '00616-playeranim-zh/PlayerAnim.zh',
+        ),
+        (
+            r'MenuInputHandler',
+            '00617-menuinputhandler-zh',
+            '00617-menuinputhandler-zh/MenuInputHandler.zh',
+        ),
+        (
+            r'StringWrapping',
+            '00624-stringwrapping-zh',
+            '00624-stringwrapping-zh/StringWrapping.zh',
+        ),
+    ]
+    for pattern, self_path, header in namespace_headers:
+        if self_path in script_path.as_posix():
+            continue
+        if re.search(pattern, code):
+            imports.append(database_dir / header)
+
+    if re.search(r'TempLinkState_|TEMPLINKSTATE_', code) and not (
+        '00366-templinkstate-zh' in script_path.as_posix()
+    ):
+        imports.append(database_dir / '00366-templinkstate-zh/TempLinkState3.0.zh')
+
+    if re.search(r'ScrollingDraws_', code) and not (
+        '00281-scrollingdraws-zh' in script_path.as_posix()
+    ):
+        imports.append(database_dir / '00281-scrollingdraws-zh/scrollingDraws.zh')
+
+    # 00628 converts other database entries' global scripts into generic scripts,
+    # and expects the original script to be included alongside.
+    if '00628-converted-global-script-pack' in script_path.as_posix():
+        originals = [
+            (r'EstusFlask_', '00335-estus-flask-souls-like/script.zs'),
+            (
+                r'DamageNumbers_',
+                '00364-link-enemy-damage-and-healing-numbers/script.zs',
+            ),
+            (r'DifficultyGlobal_', '00375-global-difficulty-system/Difficulty.zs'),
+            (r'DeathPenalty_', '00334-scripted-death-penalties-souls-like/script.zs'),
+            (r'shutterControl', '00061-freeform-shutters/script.zs'),
+            (r'RupeeFlower_', '00216-rupee-flower/script.zs'),
+            (r'SeedShooter_', '00285-seed-shooter-satchel/script.zs'),
+            (r'BombConveyor', '00183-conveyor-bomb/BombConveyor.z'),
+            (r'BombsScreenShake', '00138-bombs-shake-the-screen/script.zs'),
+            (
+                r'CrystalSwitch_',
+                '00328-crystal-switch-and-colored-red-blue-barriers/script.zs',
+            ),
+            (r'JumpButton_', '00355-jump-button/script.zs'),
+            (r'MooshPit_', '00267-moosh-s-pit-script/script.zs'),
+            (r'ScrollingBG_', '00385-scrolling-backgrounds/script.zs'),
+        ]
+        for pattern, original in originals:
+            if not re.search(pattern, code):
+                continue
+            # The original script may itself need a hand.
+            dep_imports, dep_include_paths = intuit_imports(
+                database_dir, database_dir / original
+            )
+            imports.extend(dep_imports)
+            include_paths.extend(dep_include_paths)
+            imports.append(database_dir / original)
+
     imports = [p.as_posix() if isinstance(p, Path) else p for p in imports]
     include_paths = [p.as_posix() if isinstance(p, Path) else p for p in include_paths]
     return list(dict.fromkeys(imports)), list(dict.fromkeys(include_paths))
@@ -233,9 +301,9 @@ class TestZScriptDatabase(ZCTestCase):
             # Tested in others.
             '00247-tango-zh/header',
             # These fail in different ways across platforms.
-            '00341-wind-waker-stealth',
+            '00341-wind-waker-stealth-2-55',
             '00462-dark-souls-status-effects',
-            '00531-example-enemy',
+            '00531-example-enemy-2-55',
             # Casing issue in imports (ex: FFCscript.zh instead of ffcscript.zh)
             '00078-lttp-style-map-display',
             '00210-magic-clock',
