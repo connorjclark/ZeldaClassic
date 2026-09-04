@@ -1,4 +1,4 @@
-691 / 839 (82%) passed
+692 / 839 (82%) passed
 
 Failures:
 	00026-deku-leaf/script.zs
@@ -15,7 +15,6 @@ Failures:
 	00132-automated-weapon-or-item-auto-fire/AutoFire_v2.1.z
 	00156-jump-drown-spawn/merge jumppit.z
 	00170-the-river-of-destiny-custom-maps/MapGlobal.z
-	00170-the-river-of-destiny-custom-maps/MapImport.z
 	00175-scripted-traps/script.zs
 	00188-solid-ffc/script.zs
 	00196-links-awakening-alpha-0-63/LinksAwakening_0.63_Dist.z
@@ -171,11 +170,11 @@ Compile finished with exit code '19' (compiled with errors)
 === 00044-animation-zh/script.zs
 Pass 1: Parsing
 syntax error, unexpected LOOP, expecting EMPTYBRACKETS or IDENTIFIER [00044-animation-zh/script.zs Line 25 Column 62 'loop']
-script.zs Line 7 - Error P001: Included file '00044-animation-zh/script.zs' encountered an error.
+script.zs Line 8 - Error P001: Included file '00044-animation-zh/script.zs' encountered an error.
 
-5    
-6    #include "std.zh"
-7    #include "00044-animation-zh/script.zs"
+6    
+7    #include "std.zh"
+8    #include "00044-animation-zh/script.zs"
      ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
@@ -342,11 +341,11 @@ Compile finished with exit code '8' (compiled with errors)
 === 00096-shallow-water-splash-and-tall-grass-sfx/script.zs
 Pass 1: Parsing
 syntax error, unexpected RPAREN [00096-shallow-water-splash-and-tall-grass-sfx/script.zs Line 16 Column 5 ')']
-script.zs Line 7 - Error P001: Included file '00096-shallow-water-splash-and-tall-grass-sfx/script.zs' encountered an error.
+script.zs Line 8 - Error P001: Included file '00096-shallow-water-splash-and-tall-grass-sfx/script.zs' encountered an error.
 
-5    
-6    #include "std.zh"
-7    #include "00096-shallow-water-splash-and-tall-grass-sfx/script.zs"
+6    
+7    #include "std.zh"
+8    #include "00096-shallow-water-splash-and-tall-grass-sfx/script.zs"
      ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
@@ -1746,11 +1745,11 @@ Compile finished with exit code '8' (compiled with errors)
 === 00132-automated-weapon-or-item-auto-fire/AutoFire_v2.1.z
 Pass 1: Parsing
 syntax error, unexpected REPEAT, expecting EMPTYBRACKETS or IDENTIFIER [00132-automated-weapon-or-item-auto-fire/AutoFire_v2.1.z Line 100 Column 21 'repeat']
-AutoFire_v2.1.z Line 7 - Error P001: Included file '00132-automated-weapon-or-item-auto-fire/AutoFire_v2.1.z' encountered an error.
+AutoFire_v2.1.z Line 8 - Error P001: Included file '00132-automated-weapon-or-item-auto-fire/AutoFire_v2.1.z' encountered an error.
 
-5    
-6    #include "std.zh"
-7    #include "00132-automated-weapon-or-item-auto-fire/AutoFire_v2.1.z"
+6    
+7    #include "std.zh"
+8    #include "00132-automated-weapon-or-item-auto-fire/AutoFire_v2.1.z"
      ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
@@ -1844,27 +1843,6 @@ MapGlobal.z Line 118 - Error S009: Variable setmarksbeenrun has not been declare
 
 Failure!
 Compile finished with exit code '21' (compiled with errors)
-
-=== 00170-the-river-of-destiny-custom-maps/MapImport.z
-Pass 1: Parsing
-MapImport.z Line 7 - Error P083: Could not find included file 'MapHeader.zh'. Please check your include paths!
-
-5    
-6    import "std.zh"
-7    import "MapHeader.zh"
-     ^~~~~~~~~~~~~~~~~~~~
-
-
-MapImport.z Line 8 - Error P083: Could not find included file 'MapGlobal.z'. Please check your include paths!
-
-6    import "std.zh"
-7    import "MapHeader.zh"
-8    import "MapGlobal.z"
-     ^~~~~~~~~~~~~~~~~~~
-
-
-Failure!
-Compile finished with exit code '-1' (compiled with warnings)
 
 === 00175-scripted-traps/script.zs
 Pass 1: Parsing
@@ -3555,12 +3533,12 @@ Compile finished with exit code '-1' (compiled with warnings)
 === 00228-hurteffects-zh-link-knockback-sound-etc/HurtEffects.zh
 Pass 1: Parsing
 syntax error, unexpected LBRACE, expecting RPAREN [00228-hurteffects-zh-link-knockback-sound-etc/HurtEffects.zh Line 162 Column 65 '{']
-HurtEffects.zh Line 8 - Error P001: Included file '00228-hurteffects-zh-link-knockback-sound-etc/HurtEffects.zh' encountered an error.
+HurtEffects.zh Line 9 - Error P001: Included file '00228-hurteffects-zh-link-knockback-sound-etc/HurtEffects.zh' encountered an error.
 
-6    #include "std.zh"
-7    #include "ghost.zh"
-8    #include "00228-hurteffects-zh-link-knockback-sound-etc/HurtEffects.zh"
-     ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ 7    #include "std.zh"
+ 8    #include "ghost.zh"
+ 9    #include "00228-hurteffects-zh-link-knockback-sound-etc/HurtEffects.zh"
+      ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
 Failure!
@@ -3569,12 +3547,12 @@ Compile finished with exit code '-1' (compiled with warnings)
 === 00228-hurteffects-zh-link-knockback-sound-etc/HurtEffects_v1.1.zh
 Pass 1: Parsing
 syntax error, unexpected LBRACE, expecting RPAREN [00228-hurteffects-zh-link-knockback-sound-etc/HurtEffects_v1.1.zh Line 129 Column 65 '{']
-HurtEffects_v1.1.zh Line 8 - Error P001: Included file '00228-hurteffects-zh-link-knockback-sound-etc/HurtEffects_v1.1.zh' encountered an error.
+HurtEffects_v1.1.zh Line 9 - Error P001: Included file '00228-hurteffects-zh-link-knockback-sound-etc/HurtEffects_v1.1.zh' encountered an error.
 
-6    #include "std.zh"
-7    #include "ghost.zh"
-8    #include "00228-hurteffects-zh-link-knockback-sound-etc/HurtEffects_v1.1.zh"
-     ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ 7    #include "std.zh"
+ 8    #include "ghost.zh"
+ 9    #include "00228-hurteffects-zh-link-knockback-sound-etc/HurtEffects_v1.1.zh"
+      ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
 Failure!
@@ -3583,12 +3561,12 @@ Compile finished with exit code '-1' (compiled with warnings)
 === 00228-hurteffects-zh-link-knockback-sound-etc/HurtEffects_v1.2.zh
 Pass 1: Parsing
 syntax error, unexpected LBRACE, expecting RPAREN [00228-hurteffects-zh-link-knockback-sound-etc/HurtEffects_v1.2.zh Line 162 Column 65 '{']
-HurtEffects_v1.2.zh Line 8 - Error P001: Included file '00228-hurteffects-zh-link-knockback-sound-etc/HurtEffects_v1.2.zh' encountered an error.
+HurtEffects_v1.2.zh Line 9 - Error P001: Included file '00228-hurteffects-zh-link-knockback-sound-etc/HurtEffects_v1.2.zh' encountered an error.
 
-6    #include "std.zh"
-7    #include "ghost.zh"
-8    #include "00228-hurteffects-zh-link-knockback-sound-etc/HurtEffects_v1.2.zh"
-     ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ 7    #include "std.zh"
+ 8    #include "ghost.zh"
+ 9    #include "00228-hurteffects-zh-link-knockback-sound-etc/HurtEffects_v1.2.zh"
+      ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
 Failure!
@@ -4055,11 +4033,11 @@ stdWeapons.zh Line 86 - Error P001: Included file '00235-stdweapons-zh/stdWeapon
 
 
 syntax error, unexpected STATIC, expecting EMPTYBRACKETS or IDENTIFIER [00235-stdweapons-zh/stdWeapons/update.zh Line 207 Column 13 'static']
-update.zh Line 14 - Error P001: Included file '00235-stdweapons-zh/stdWeapons/update.zh' encountered an error.
+update.zh Line 15 - Error P001: Included file '00235-stdweapons-zh/stdWeapons/update.zh' encountered an error.
 
-12    #include "00415-grayswandir-sideview-engine/GSD_sideview/GSD_sideview.z"
-13    #include "tests/scripts/compat/stdExtra.zh"
-14    #include "00235-stdweapons-zh/stdWeapons/update.zh"
+13    #include "00415-grayswandir-sideview-engine/GSD_sideview/GSD_sideview.z"
+14    #include "tests/scripts/compat/stdExtra.zh"
+15    #include "00235-stdweapons-zh/stdWeapons/update.zh"
       ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
@@ -4300,11 +4278,11 @@ Compile finished with exit code '27' (compiled with errors)
 === 00238-splitting-and-tribbling-enemies/splitter_v0.6.2.z
 Pass 1: Parsing
 syntax error, unexpected LBRACE, expecting RPAREN [00238-splitting-and-tribbling-enemies/splitter_v0.6.2.z Line 88 Column 47 '{']
-splitter_v0.6.2.z Line 7 - Error P001: Included file '00238-splitting-and-tribbling-enemies/splitter_v0.6.2.z' encountered an error.
+splitter_v0.6.2.z Line 8 - Error P001: Included file '00238-splitting-and-tribbling-enemies/splitter_v0.6.2.z' encountered an error.
 
-5    
-6    #include "std.zh"
-7    #include "00238-splitting-and-tribbling-enemies/splitter_v0.6.2.z"
+6    
+7    #include "std.zh"
+8    #include "00238-splitting-and-tribbling-enemies/splitter_v0.6.2.z"
      ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
@@ -8017,11 +7995,11 @@ Compile finished with exit code '9' (compiled with errors)
 Pass 1: Parsing
 The 'try' keyword is reserved and may not be used as an identifier.
 syntax error, unexpected end of file, expecting EMPTYBRACKETS or IDENTIFIER [00255-swindle-haggle/script.zs Line 66 Column 7 'try']
-script.zs Line 7 - Error P001: Included file '00255-swindle-haggle/script.zs' encountered an error.
+script.zs Line 8 - Error P001: Included file '00255-swindle-haggle/script.zs' encountered an error.
 
-5    
-6    #include "std.zh"
-7    #include "00255-swindle-haggle/script.zs"
+6    
+7    #include "std.zh"
+8    #include "00255-swindle-haggle/script.zs"
      ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
@@ -11331,11 +11309,11 @@ Compile finished with exit code '-1' (compiled with warnings)
 === 00336-splitting-segmented-worm-2-55/SegmentWorm.zs
 Pass 1: Parsing
 syntax error, unexpected LBRACE, expecting COMMA or RPAREN [00336-splitting-segmented-worm-2-55/SegmentWorm.zs Line 47 Column 62 '{']
-SegmentWorm.zs Line 7 - Error P001: Included file '00336-splitting-segmented-worm-2-55/SegmentWorm.zs' encountered an error.
+SegmentWorm.zs Line 8 - Error P001: Included file '00336-splitting-segmented-worm-2-55/SegmentWorm.zs' encountered an error.
 
-5    
-6    #include "std.zh"
-7    #include "00336-splitting-segmented-worm-2-55/SegmentWorm.zs"
+6    
+7    #include "std.zh"
+8    #include "00336-splitting-segmented-worm-2-55/SegmentWorm.zs"
      ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
@@ -12803,11 +12781,11 @@ Compile finished with exit code '21' (compiled with errors)
 === 00431-no-cycle-spinning-tiles-2-55/script.zs
 Pass 1: Parsing
 syntax error, unexpected RBRACE, expecting SEMICOLON [00431-no-cycle-spinning-tiles-2-55/script.zs Line 231 Column 3 '}']
-script.zs Line 7 - Error P001: Included file '00431-no-cycle-spinning-tiles-2-55/script.zs' encountered an error.
+script.zs Line 8 - Error P001: Included file '00431-no-cycle-spinning-tiles-2-55/script.zs' encountered an error.
 
-5    
-6    #include "std.zh"
-7    #include "00431-no-cycle-spinning-tiles-2-55/script.zs"
+6    
+7    #include "std.zh"
+8    #include "00431-no-cycle-spinning-tiles-2-55/script.zs"
      ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 

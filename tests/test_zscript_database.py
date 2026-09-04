@@ -41,7 +41,7 @@ parser.add_argument('unittest_args', nargs='*')
 args = parser.parse_args()
 
 script_dir = Path(os.path.dirname(os.path.realpath(__file__)))
-root_dir = script_dir.parent
+root_dir = script_dir.parent.resolve()
 test_scripts_dir = root_dir / 'tests/scripts'
 tmp_script_dir = root_dir / '.tmp/test_zscript_database'
 tmp_script_dir.mkdir(parents=True, exist_ok=True)
@@ -260,6 +260,14 @@ def intuit_imports(database_dir: Path, script_path: Path):
             include_paths.extend(dep_include_paths)
             imports.append(database_dir / original)
 
+    # Scripts may include siblings by bare name, and zscript only resolves
+    # includes via the include paths (never relative to the including file).
+    include_paths.append(script_path.parent)
+
+    for path in [*imports, *include_paths]:
+        if isinstance(path, Path):
+            assert path.exists(), f'intuit_imports references missing path: {path}'
+
     imports = [p.as_posix() if isinstance(p, Path) else p for p in imports]
     include_paths = [p.as_posix() if isinstance(p, Path) else p for p in include_paths]
     return list(dict.fromkeys(imports)), list(dict.fromkeys(include_paths))
@@ -309,6 +317,9 @@ class TestZScriptDatabase(ZCTestCase):
             '00210-magic-clock',
         ]
         for dir_path in ignore:
+            assert (
+                database_dir / dir_path
+            ).exists(), f'ignored path missing: {dir_path}'
             script_paths -= set(find_all_scripts(database_dir / dir_path))
         script_paths = list(script_paths)
         script_paths.sort()
@@ -317,7 +328,7 @@ class TestZScriptDatabase(ZCTestCase):
         failures = []
         passed = 0
 
-        num_workers = max(1, os.cpu_count() - 1)
+        num_workers = max(1, (os.cpu_count() or 2) - 1)
         workers = [None] * num_workers
 
         result_dict = {}
@@ -367,6 +378,8 @@ class TestZScriptDatabase(ZCTestCase):
                 stdout=subprocess.PIPE,
                 stderr=subprocess.STDOUT,
                 text=True,
+                encoding='utf-8',
+                errors='replace',
             )
             workers[worker_index] = (script_path, p)
 
@@ -396,11 +409,7 @@ class TestZScriptDatabase(ZCTestCase):
             rel_name = script_path.relative_to(database_dir).as_posix()
             result += f'=== {rel_name}\n'
             result += output + '\n'
-
-            if success:
-                passed += 1
-            else:
-                failures.append(str(rel_name))
+            failures.append(rel_name)
 
         total = len(script_paths)
         header = f'{passed} / {total} ({int(passed/total*100)}%) passed\n\n'
