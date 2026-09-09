@@ -1,0 +1,76 @@
+diff --git a/include/allegro5/platform/aintwin.h b/include/allegro5/platform/aintwin.h
+index 479d6a6d2..e6678acb1 100644
+--- a/include/allegro5/platform/aintwin.h
++++ b/include/allegro5/platform/aintwin.h
+@@ -125,7 +125,7 @@ void _al_win_grab_input(ALLEGRO_DISPLAY_WIN *win_disp);
+ void _al_win_kbd_handle_key_press(int scode, int vcode, bool extended,
+                            bool repeated, ALLEGRO_DISPLAY_WIN *win_disp);
+ void _al_win_kbd_handle_key_release(int scode, int vcode, bool extended,
+-                           ALLEGRO_DISPLAY_WIN *win_disp);
++                           bool previous, ALLEGRO_DISPLAY_WIN *win_disp);
+ void _al_win_fix_modifiers(void);
+ 
+ /* mouse routines */
+diff --git a/src/win/wkeyboard.c b/src/win/wkeyboard.c
+index b1bff956b..797b19be5 100644
+--- a/src/win/wkeyboard.c
++++ b/src/win/wkeyboard.c
+@@ -420,7 +420,7 @@ void _al_win_kbd_handle_key_press(int scode, int vcode, bool extended,
+ /* _al_win_kbd_handle_key_release:
+  *  Does stuff when a key is released.
+  */
+-void _al_win_kbd_handle_key_release(int scode, int vcode, bool extended, ALLEGRO_DISPLAY_WIN *win_disp)
++void _al_win_kbd_handle_key_release(int scode, int vcode, bool extended, bool previous, ALLEGRO_DISPLAY_WIN *win_disp)
+ {
+    ALLEGRO_EVENT event;
+    int my_code;
+@@ -437,6 +437,17 @@ void _al_win_kbd_handle_key_release(int scode, int vcode, bool extended, ALLEGRO
+          vcode = MapVirtualKey(scode, MAPVK_VSC_TO_VK_EX);
+       my_code = hw_to_mycode[vcode];
+    }
++
++   /* local edit: MSDN documents the "previous key state" bit as always set for
++    * key up messages, but it is clear for the spurious Control releases that
++    * holding Shift and tapping Alt produces, and for the release of any key
++    * Windows already considered up. Upstream ignores every release without the
++    * bit, so a key we still hold as pressed stays pressed until it is pressed
++    * and released again. Only ignore the message when we don't have the key
++    * down; a release for a held key is always real. */
++   if (!previous && !_AL_KEYBOARD_STATE_KEY_DOWN(the_state, my_code))
++      return;
++
+    update_modifiers(my_code, false);
+ 
+    _AL_KEYBOARD_STATE_CLEAR_KEY_DOWN(the_state, my_code);
+@@ -445,9 +456,9 @@ void _al_win_kbd_handle_key_release(int scode, int vcode, bool extended, ALLEGRO
+       both have been released. If one of the Shift keys is still reported
+       as down, we need to release it as well. */
+    if (my_code == ALLEGRO_KEY_LSHIFT && _AL_KEYBOARD_STATE_KEY_DOWN(the_state, ALLEGRO_KEY_RSHIFT))
+-      _al_win_kbd_handle_key_release(scode, VK_RSHIFT, extended, win_disp);
++      _al_win_kbd_handle_key_release(scode, VK_RSHIFT, extended, true, win_disp);
+    else if (my_code == ALLEGRO_KEY_RSHIFT && _AL_KEYBOARD_STATE_KEY_DOWN(the_state, ALLEGRO_KEY_LSHIFT))
+-      _al_win_kbd_handle_key_release(scode, VK_LSHIFT, extended, win_disp);
++      _al_win_kbd_handle_key_release(scode, VK_LSHIFT, extended, true, win_disp);
+ 
+    if (!_al_event_source_needs_to_generate_event(&the_keyboard.es))
+       return;
+diff --git a/src/win/wwindow.c b/src/win/wwindow.c
+index 9524c4212..737c252d9 100644
+--- a/src/win/wwindow.c
++++ b/src/win/wwindow.c
+@@ -755,11 +755,10 @@ static LRESULT CALLBACK window_callback(HWND hWnd, UINT message,
+          bool extended = (lParam >> 24) & 0x1;
+          bool previous = (lParam >> 30) & 0x1;
+ 
+-         /* The docs say that previous should always be 1, but it's not in practice.
+-          * The events with previous = 0 seem malformed? I can get them reliably by
+-          * pressing + holding Shift and then tapping Alt. */
+-         if (previous)
+-            _al_win_kbd_handle_key_release(scode, vcode, extended, win_display);
++         /* local edit: the previous-state check lives in
++          * _al_win_kbd_handle_key_release, which only ignores releases of keys
++          * it does not have down. */
++         _al_win_kbd_handle_key_release(scode, vcode, extended, previous, win_display);
+          break;
+       }
+       case WM_SYSCOMMAND: {

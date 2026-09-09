@@ -326,6 +326,7 @@ FetchContent_Declare(
   allegro5
   GIT_REPOSITORY https://github.com/connorjclark/allegro5.git
   GIT_TAG        a2799f13bdf890c1480e8dcbc9fca4e5938bd98b
+  PATCH_COMMAND  git restore . && git apply ${CMAKE_SOURCE_DIR}/third_party/allegro5.patch
   EXCLUDE_FROM_ALL
 )
 if(EMSCRIPTEN)
