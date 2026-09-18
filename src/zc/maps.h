@@ -273,8 +273,21 @@ std::optional<CameraEffect> get_active_camera_effect();
 bool has_active_camera_effect();
 void clear_camera_effect();
 void tick_camera_effect();
+// The farthest the follow camera's focus may sit from the target's center on each axis: half
+// the viewport minus half a hero, since the target's center can get no closer than 8px to a
+// region edge. As long as the follow camera's displacement (half the deadzone) stays within
+// this, the viewport is flush against a region edge whenever the target stands on one, which
+// is the only place a scroll can start - so scrolling geometry never depends on the follow
+// settings. Uses the base viewport height even in extended-height mode, which is merely
+// conservative there.
+constexpr int CAMERA_FOLLOW_MAX_OFFSET_X = 256/2 - 8;
+constexpr int CAMERA_FOLLOW_MAX_OFFSET_Y = 176/2 - 8;
 void tick_camera_follow();
 void reset_camera_follow();
+int get_camera_deadzone_width();
+int get_camera_deadzone_height();
+void set_camera_deadzone_width(std::optional<int> width);
+void set_camera_deadzone_height(std::optional<int> height);
 void update_viewport();
 mapscr* determine_hero_screen_from_coords();
 bool edge_of_region(direction dir);

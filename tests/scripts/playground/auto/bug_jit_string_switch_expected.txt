@@ -214,7 +214,7 @@ POP D2; InlineFunc[void strcpy(char32[], char32[])] Body Start
 STRINGCOPY D2 D3; InlineFunc[void strcpy(char32[], char32[])] Body End AND if() #3 Else End
 NOP; if() #2 Else End
 NOP
-LOAD D2 0; switch("") #3553 Key
+LOAD D2 0; switch("") #3557 Key
 SETR SWITCHKEY D2; Store key
 ALLOCATEMEMV D2 4 0
 WRITEPODSTRING D2 "one"
@@ -228,7 +228,7 @@ ALLOCATEMEMV D2 6 0
 WRITEPODSTRING D2 "three"
 STRCMPR SWITCHKEY D2; case "three"
 GOTOCMP 212 ==
-GOTO 215; switch("") #3553 NoMatch
+GOTO 215; switch("") #3557 NoMatch
 LOAD D2 0.0002; Case block
 ADDV D2 1
 STORE D2 0.0002
@@ -315,7 +315,7 @@ RETURNFUNC; Func[void AssertEqual(int, int)] Body End
 SETR D4 SP2; Func[int classify(char32[])] Body Start
 MARK_TYPE_STACK 0.0009 0
 REF_INC 0
-LOAD D2 0; switch("") #3508 Key
+LOAD D2 0; switch("") #3512 Key
 SETR SWITCHKEY D2; Store key
 ALLOCATEMEMV D2 6 0
 WRITEPODSTRING D2 "apple"
@@ -329,7 +329,7 @@ ALLOCATEMEMV D2 7 0
 WRITEPODSTRING D2 "cherry"
 STRCMPR SWITCHKEY D2; case "cherry"
 GOTOCMP 309 ==
-GOTO 311; switch("") #3508 NoMatch
+GOTO 311; switch("") #3512 NoMatch
 SETV D2 1; Case block AND return Start
 GOTO 314; return End
 SETV D2 2; Case block AND return Start
@@ -347,7 +347,7 @@ SETR D4 SP2
 MARK_TYPE_STACK 0.0009 0.0001
 REF_INC 0.0001
 STOREV -1 0
-LOAD D2 0.0001; switch("") #3525 Key
+LOAD D2 0.0001; switch("") #3529 Key
 SETR SWITCHKEY D2; Store key
 ALLOCATEMEMV D2 5 0
 WRITEPODSTRING D2 "left"
@@ -357,7 +357,7 @@ ALLOCATEMEMV D2 6 0
 WRITEPODSTRING D2 "right"
 STRCMPR SWITCHKEY D2; case "right"
 GOTOCMP 336 ==
-GOTO 338; switch("") #3525 NoMatch
+GOTO 338; switch("") #3529 NoMatch
 SETV D2 10; Case block
 STORE D2 0
 GOTO 338; break 1;

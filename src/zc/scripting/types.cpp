@@ -1422,6 +1422,8 @@ constexpr EngineSubsystem getEngineSubsystemForRegister(int reg)
 		case SUBWIDG_DISPY:
 			return EngineSubsystem::subscreenwidget;
 
+		case VIEWPORT_DEADZONE_HEIGHT:
+		case VIEWPORT_DEADZONE_WIDTH:
 		case VIEWPORT_HEIGHT:
 		case VIEWPORT_MODE:
 		case VIEWPORT_TARGET:
