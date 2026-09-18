@@ -6,6 +6,7 @@
 #include "zc/scripting/arrays.h"
 #include "zc/scripting/types/musicdata.h"
 #include "zc/zc_sys.h"
+#include "zc/maps.h"
 
 extern refInfo *ri;
 extern int32_t sarg1;
@@ -135,6 +136,41 @@ int32_t dmapdata_get_register(int32_t reg)
 		case DMAPDATA_GRAVITY_STRENGTH:
 		{
 			ret = dmap.dmap_gravity.getZLong();
+			break;
+		}
+		case DMAPDATA_VIEWPORT_DEADZONE_WIDTH:
+		{
+			ret = dmap.viewport_follow.deadzone_w * 10000;
+			break;
+		}
+		case DMAPDATA_VIEWPORT_DEADZONE_HEIGHT:
+		{
+			ret = dmap.viewport_follow.deadzone_h * 10000;
+			break;
+		}
+		case DMAPDATA_VIEWPORT_LOOKAHEAD_X:
+		{
+			ret = dmap.viewport_follow.lookahead_x * 10000;
+			break;
+		}
+		case DMAPDATA_VIEWPORT_LOOKAHEAD_Y:
+		{
+			ret = dmap.viewport_follow.lookahead_y * 10000;
+			break;
+		}
+		case DMAPDATA_VIEWPORT_LOOKAHEAD_SPEED:
+		{
+			ret = dmap.viewport_follow.lookahead_speed.getZLong();
+			break;
+		}
+		case DMAPDATA_VIEWPORT_RECENTER_SPEED:
+		{
+			ret = dmap.viewport_follow.recenter_speed.getZLong();
+			break;
+		}
+		case DMAPDATA_VIEWPORT_RECENTER_DELAY:
+		{
+			ret = dmap.viewport_follow.recenter_delay * 10000;
 			break;
 		}
 		case DMAPDATA_MUSIC:
@@ -323,6 +359,59 @@ void dmapdata_set_register(int32_t reg, int32_t value)
 				if (amus->is_playing(false) && zcmusic)
 					zcmusic->fadeoutframes = (value / 10000);
 			}
+			break;
+		}
+		case DMAPDATA_VIEWPORT_DEADZONE_WIDTH:
+		{
+			int val = value / 10000;
+			if (BC::checkBounds(val, 0, 2*VIEWPORT_FOLLOW_MAX_OFFSET_X) == SH::_NoError)
+				dmap.viewport_follow.deadzone_w = val;
+			break;
+		}
+		case DMAPDATA_VIEWPORT_DEADZONE_HEIGHT:
+		{
+			int val = value / 10000;
+			if (BC::checkBounds(val, 0, 2*VIEWPORT_FOLLOW_MAX_OFFSET_Y) == SH::_NoError)
+				dmap.viewport_follow.deadzone_h = val;
+			break;
+		}
+		case DMAPDATA_VIEWPORT_LOOKAHEAD_X:
+		{
+			int val = value / 10000;
+			if (BC::checkBounds(val, INT8_MIN, INT8_MAX) == SH::_NoError)
+				dmap.viewport_follow.lookahead_x = val;
+			break;
+		}
+		case DMAPDATA_VIEWPORT_LOOKAHEAD_Y:
+		{
+			int val = value / 10000;
+			if (BC::checkBounds(val, INT8_MIN, INT8_MAX) == SH::_NoError)
+				dmap.viewport_follow.lookahead_y = val;
+			break;
+		}
+		case DMAPDATA_VIEWPORT_LOOKAHEAD_SPEED:
+		{
+			zfix val = zslongToFix(value);
+			if (val < 0 || val > VIEWPORT_FOLLOW_MAX_SPEED)
+				_scripting_log_error_with_context("Invalid value: {} - must be >= 0 and <= {}", val, VIEWPORT_FOLLOW_MAX_SPEED);
+			else
+				dmap.viewport_follow.lookahead_speed = val;
+			break;
+		}
+		case DMAPDATA_VIEWPORT_RECENTER_SPEED:
+		{
+			zfix val = zslongToFix(value);
+			if (val < 0 || val > VIEWPORT_FOLLOW_MAX_SPEED)
+				_scripting_log_error_with_context("Invalid value: {} - must be >= 0 and <= {}", val, VIEWPORT_FOLLOW_MAX_SPEED);
+			else
+				dmap.viewport_follow.recenter_speed = val;
+			break;
+		}
+		case DMAPDATA_VIEWPORT_RECENTER_DELAY:
+		{
+			int val = value / 10000;
+			if (BC::checkBounds(val, 0, 65535) == SH::_NoError)
+				dmap.viewport_follow.recenter_delay = val;
 			break;
 		}
 		case DMAPDATA_GRAVITY_STRENGTH:
