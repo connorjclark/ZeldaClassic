@@ -73,6 +73,9 @@ struct ViewportFollowState
 	// Current lookahead offset, eased by tick_viewport_follow toward the configured
 	// lookahead distance along the direction the target is moving.
 	zfix lookahead_x, lookahead_y;
+	// Where that easing is heading (equal to the offset while it holds). Only the camera
+	// debug overlay reads this.
+	zfix lookahead_want_x, lookahead_want_y;
 	// The target's center as of the last tick, to tell which way it's moving.
 	zfix target_x, target_y;
 	// How many consecutive ticks the target has stood still, for idle recentering.
@@ -589,6 +592,8 @@ void reset_viewport_follow(bool keep_lookahead)
 		follow_state.lookahead_x = 0;
 		follow_state.lookahead_y = 0;
 	}
+	follow_state.lookahead_want_x = follow_state.lookahead_x;
+	follow_state.lookahead_want_y = follow_state.lookahead_y;
 	follow_state.x = follow_state.target_x + bound_viewport_lookahead_x(follow_state.lookahead_x);
 	follow_state.y = follow_state.target_y + bound_viewport_lookahead_y(follow_state.lookahead_y);
 }
@@ -612,6 +617,8 @@ void set_camera_effect(CameraEffect camera_effect)
 	// position, so this doesn't affect its motion.
 	follow_state.lookahead_x = 0;
 	follow_state.lookahead_y = 0;
+	follow_state.lookahead_want_x = 0;
+	follow_state.lookahead_want_y = 0;
 }
 
 std::optional<CameraEffect> get_active_camera_effect()
@@ -915,18 +922,22 @@ void tick_viewport_follow()
 	{
 		bool moving = dx != 0 || dy != 0;
 		zfix speed = get_viewport_lookahead_speed();
-		auto ease = [&](zfix& offset, int lookahead, zfix delta, zfix (*bound)(zfix)) {
+		auto ease = [&](zfix& offset, zfix& want_out, int lookahead, zfix delta, zfix (*bound)(zfix)) {
 			zfix want;
 			if (!lookahead)
 				want = 0;
 			else if (!moving)
+			{
+				want_out = offset;
 				return;
+			}
 			else
 				want = bound(delta < 0 ? -lookahead : delta > 0 ? lookahead : 0);
 			offset += vbound(want - offset, -speed, speed);
+			want_out = want;
 		};
-		ease(follow_state.lookahead_x, get_viewport_lookahead_x(), dx, bound_viewport_lookahead_x);
-		ease(follow_state.lookahead_y, get_viewport_lookahead_y(), dy, bound_viewport_lookahead_y);
+		ease(follow_state.lookahead_x, follow_state.lookahead_want_x, get_viewport_lookahead_x(), dx, bound_viewport_lookahead_x);
+		ease(follow_state.lookahead_y, follow_state.lookahead_want_y, get_viewport_lookahead_y(), dy, bound_viewport_lookahead_y);
 	}
 
 	// Idle recentering: once the target has stood still (any displacement counts, shoves
@@ -4881,6 +4892,63 @@ static void do_trigger_prox_ranges()
 	end_info_bmp();
 }
 
+// Show viewport follow cheat: draw the follow state, so quest makers can see the deadzone box
+// and watch the lookahead offset build, hold and ease.
+//   - cyan box: the deadzone, centered on the viewport's focus (white cross). The aim point
+//     must stay inside it; the viewport only moves once it pushes past an edge.
+//   - yellow line from the target's center to a filled dot: the current lookahead offset,
+//     ending at the aim point. A hollow dot marks where the easing is heading (it sits short
+//     of the configured distance when the per-axis cap is limiting it).
+static void do_viewport_follow_overlay()
+{
+	if (!show_viewport_follow || !info_bmp_enabled())
+		return;
+	// The follow logic isn't driving the viewport, so its state means nothing right now.
+	if (viewport_mode == ViewportMode::Script || has_active_camera_effect())
+		return;
+
+	start_info_bmp();
+
+	// Snap to whole pixels the same way sprites and the viewport do (getInt rounds), then
+	// draw on pixel centers. Sub-pixel coordinates would wobble against the pixel-snapped
+	// sprites and viewport as fractional positions advance.
+	auto to_screen = [](zfix wx, zfix wy) -> std::pair<float, float> {
+		return {wx.getInt() - viewport.x + 0.5f, wy.getInt() + playing_field_offset - viewport.y + 0.5f};
+	};
+	ALLEGRO_COLOR col_deadzone = al_map_rgba(85, 255, 255, info_opacity);
+	ALLEGRO_COLOR col_focus = al_map_rgba(255, 255, 255, info_opacity);
+	ALLEGRO_COLOR col_lookahead = al_map_rgba(255, 255, 85, info_opacity);
+
+	sprite* spr = get_viewport_sprite();
+	zfix target_x = spr->x + spr->txsz*16/2;
+	zfix target_y = spr->y + spr->tysz*16/2;
+	auto [tx, ty] = to_screen(target_x, target_y);
+	auto [lookahead_x, lookahead_y] = get_viewport_lookahead_offset();
+	bool lookahead_on = get_viewport_lookahead_x() || get_viewport_lookahead_y();
+	if (lookahead_on)
+	{
+		auto [wx, wy] = to_screen(target_x + follow_state.lookahead_want_x, target_y + follow_state.lookahead_want_y);
+		al_draw_circle(wx, wy, 3, col_lookahead, 1);
+	}
+	if (lookahead_on || lookahead_x != 0 || lookahead_y != 0)
+	{
+		auto [ax, ay] = to_screen(target_x + lookahead_x, target_y + lookahead_y);
+		al_draw_line(tx, ty, ax, ay, col_lookahead, 1);
+		al_draw_filled_circle(ax, ay, 2, col_lookahead);
+	}
+
+	auto [fx, fy] = to_screen(follow_state.x, follow_state.y);
+	int deadzone_w = get_viewport_deadzone_width();
+	int deadzone_h = get_viewport_deadzone_height();
+	if (deadzone_w || deadzone_h)
+		al_draw_rectangle(fx - deadzone_w/2, fy - deadzone_h/2, fx + deadzone_w/2, fy + deadzone_h/2, col_deadzone, 1);
+	// Arms span whole pixels (4 each side of the center pixel) so the cross is symmetric.
+	al_draw_line(fx - 4.5f, fy, fx + 4.5f, fy, col_focus, 1);
+	al_draw_line(fx, fy - 4.5f, fx, fy + 4.5f, col_focus, 1);
+
+	end_info_bmp();
+}
+
 // Effectflags L4 cheat
 void do_effectflags(mapscr* scr, int32_t x, int32_t y)
 {
@@ -5493,6 +5561,9 @@ void draw_screen(bool showhero, bool runGeneric, bool drawPassiveSubscreenSepara
 
 	// Show trigger proximity cheat
 	do_trigger_prox_ranges();
+
+	// Show viewport follow cheat
+	do_viewport_follow_overlay();
 
 	putscrdoors(nearby_screens, scrollbuf, 0, playing_field_offset);
 	
