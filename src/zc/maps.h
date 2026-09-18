@@ -17,7 +17,7 @@ class solid_object;
 // How large the current region is in pixels.
 // If not currently in a scrolling region, this is just the size of a single screen (256, 176).
 extern int world_w, world_h;
-// The "camera" in the above world-space coordinates.
+// The "viewport" in the above world-space coordinates.
 // (viewport.x, viewport.y) is the point in world-space to draw as the top-left corner of the visible screen.
 // In region mode, by default x and y are set such that the hero in the middle of the screen when possible, snapping
 // to the region edges when not. This behavior is modified by `viewport_mode`.
@@ -273,21 +273,41 @@ std::optional<CameraEffect> get_active_camera_effect();
 bool has_active_camera_effect();
 void clear_camera_effect();
 void tick_camera_effect();
-// The farthest the follow camera's focus may sit from the target's center on each axis: half
+// The farthest the follow logic's focus may sit from the target's center on each axis: half
 // the viewport minus half a hero, since the target's center can get no closer than 8px to a
-// region edge. As long as the follow camera's displacement (half the deadzone) stays within
-// this, the viewport is flush against a region edge whenever the target stands on one, which
-// is the only place a scroll can start - so scrolling geometry never depends on the follow
-// settings. Uses the base viewport height even in extended-height mode, which is merely
-// conservative there.
-constexpr int CAMERA_FOLLOW_MAX_OFFSET_X = 256/2 - 8;
-constexpr int CAMERA_FOLLOW_MAX_OFFSET_Y = 176/2 - 8;
-void tick_camera_follow();
-void reset_camera_follow();
-int get_camera_deadzone_width();
-int get_camera_deadzone_height();
-void set_camera_deadzone_width(std::optional<int> width);
-void set_camera_deadzone_height(std::optional<int> height);
+// region edge. As long as the total displacement (half the deadzone plus the lookahead
+// offset) stays within this, the viewport is flush against a region edge whenever the target
+// stands on one, which is the only place a scroll can start - so scrolling geometry never
+// depends on the follow settings. Uses the base viewport height even in extended-height mode,
+// which is merely conservative there.
+constexpr int VIEWPORT_FOLLOW_MAX_OFFSET_X = 256/2 - 8;
+constexpr int VIEWPORT_FOLLOW_MAX_OFFSET_Y = 176/2 - 8;
+// Cap on the follow logic's easing speeds (lookahead, recentering), in pixels per frame.
+// Anything at or above the max offset is already an instant snap, so this is just a sanity
+// bound.
+constexpr int VIEWPORT_FOLLOW_MAX_SPEED = 240;
+void tick_viewport_follow();
+void reset_viewport_follow(bool keep_lookahead = false);
+std::pair<zfix, zfix> get_viewport_lookahead_offset();
+// The follow settings in effect: the current dmap's own if it has dmfVIEWPORT_SETTINGS, else
+// Init Data's.
+const ViewportFollowSettings& get_viewport_follow_settings();
+int get_viewport_deadzone_width();
+int get_viewport_deadzone_height();
+void set_viewport_deadzone_width(int width);
+void set_viewport_deadzone_height(int height);
+int get_viewport_lookahead_x();
+int get_viewport_lookahead_y();
+zfix get_viewport_lookahead_speed();
+void set_viewport_lookahead_x(int lookahead);
+void set_viewport_lookahead_y(int lookahead);
+void set_viewport_lookahead_speed(zfix speed);
+zfix get_viewport_recenter_speed();
+int get_viewport_recenter_delay();
+void set_viewport_recenter_speed(zfix speed);
+void set_viewport_recenter_delay(int delay);
+// Drop every script override, returning to the configured follow settings.
+void reset_viewport_follow_settings();
 void update_viewport();
 mapscr* determine_hero_screen_from_coords();
 bool edge_of_region(direction dir);

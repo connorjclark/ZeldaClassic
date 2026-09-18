@@ -14,6 +14,15 @@ void fillScreen(mapdata scr)
 	}
 }
 
+void walk(int button, int frames)
+{
+	for (int i = 0; i < frames; i++)
+	{
+		press(button);
+		Waitframe();
+	}
+}
+
 lweapon script seeking_arrow
 {
 	void run()
@@ -175,7 +184,7 @@ generic script viewport
 		Input->DisableButton[CB_LEFT] = false;
 		Input->DisableButton[CB_RIGHT] = false;
 
-		// Deadzone: while the hero stays within the box, the camera must not move; once past
+		// Deadzone: while the hero stays within the box, the viewport must not move; once past
 		// the box's edge, the hero stays pinned to it.
 		Test::AssertEqual(Viewport->DeadzoneWidth, 0);
 		Viewport->DeadzoneWidth = 64;
@@ -186,18 +195,18 @@ generic script viewport
 		int start_y = Viewport->Y;
 		int hero_start_x = Hero->X;
 
-		// A short walk (well under half the box width) must not move the camera.
+		// A short walk (well under half the box width) must not move the viewport.
 		for (int i = 0; i < 12; i++)
 		{
 			press(CB_RIGHT);
 			Waitframe();
 		}
 		Test::AssertEqual(Hero->X > hero_start_x, true, "hero didn't walk");
-		Test::AssertEqual(Viewport->X, start_x, "camera moved inside deadzone");
-		Test::AssertEqual(Viewport->Y, start_y, "camera moved inside deadzone");
+		Test::AssertEqual(Viewport->X, start_x, "viewport moved inside deadzone");
+		Test::AssertEqual(Viewport->Y, start_y, "viewport moved inside deadzone");
 
 		// A long walk pushes the hero to the box's edge: their center stays exactly
-		// half the box width ahead of the camera's focus.
+		// half the box width ahead of the viewport's focus.
 		for (int i = 0; i < 60; i++)
 		{
 			press(CB_RIGHT);
@@ -206,18 +215,191 @@ generic script viewport
 		int focus_x = Viewport->X + Viewport->Width / 2;
 		Test::AssertEqual(Hero->X + 8 - focus_x, Viewport->DeadzoneWidth / 2, "hero not pinned to deadzone edge");
 
-		// Walking back the same distance re-crosses the box before the camera moves again.
+		// Walking back the same distance re-crosses the box before the viewport moves again.
 		int came_from_x = Viewport->X;
 		for (int i = 0; i < 12; i++)
 		{
 			press(CB_LEFT);
 			Waitframe();
 		}
-		Test::AssertEqual(Viewport->X, came_from_x, "camera should idle while re-crossing the deadzone");
+		Test::AssertEqual(Viewport->X, came_from_x, "viewport should idle while re-crossing the deadzone");
 
 		Viewport->DeadzoneWidth = 0;
 		Viewport->DeadzoneHeight = 0;
 		Waitframe();
+
+		// Lookahead: while the target moves, the viewport gradually aims ahead of (positive)
+		// or behind (negative) its direction of travel; while it stands still, the offset
+		// holds.
+		Test::AssertEqual(Viewport->LookaheadX, 0);
+		Test::AssertEqual(Viewport->LookaheadY, 0);
+		Test::AssertEqual(Viewport->LookaheadSpeed, 1);
+
+		// Stand in the middle of the region so the ±40px aims stay clear of the region
+		// clamp on both axes.
+		Hero->X = 600;
+		Hero->Y = 350;
+		Viewport->LookaheadX = 40;
+		Viewport->LookaheadY = 40;
+		Viewport->LookaheadSpeed = 2;
+		Waitframe();
+
+		// Walking right builds a lead in front; it settles after 40/2 = 20 frames of movement.
+		walk(CB_RIGHT, 30);
+		Test::AssertEqual(Viewport->X + Viewport->Width / 2, Floor(Hero->X) + 8 + 40, "viewport should lead ahead of movement");
+
+		// Standing still (even turning in place) holds the offset.
+		Hero->Dir = DIR_LEFT;
+		Waitframes(20);
+		Test::AssertEqual(Viewport->X + Viewport->Width / 2, Floor(Hero->X) + 8 + 40, "lookahead should hold while idle");
+
+		// Walking the other way shifts the lead gradually, not instantly.
+		walk(CB_LEFT, 10);
+		int focus = Viewport->X + Viewport->Width / 2;
+		Test::AssertEqual(focus > Floor(Hero->X) + 8 - 40 && focus < Floor(Hero->X) + 8 + 40, true, "lookahead should shift gradually");
+		walk(CB_LEFT, 30);
+		Test::AssertEqual(Viewport->X + Viewport->Width / 2, Floor(Hero->X) + 8 - 40, "viewport should lead ahead of movement");
+
+		// Negative lookahead trails behind the direction of travel instead.
+		Viewport->LookaheadX = -40;
+		Viewport->LookaheadY = -40;
+		walk(CB_LEFT, 40);
+		Test::AssertEqual(Viewport->X + Viewport->Width / 2, Floor(Hero->X) + 8 + 40, "viewport should trail behind movement");
+
+		// The vertical axis works the same way with its own distance, and the horizontal offset
+		// eases out.
+		Viewport->LookaheadX = 40;
+		Viewport->LookaheadY = 20;
+		walk(CB_UP, 40);
+		Test::AssertEqual(Viewport->X + Viewport->Width / 2, Floor(Hero->X) + 8, "horizontal offset should ease out when moving up");
+		Test::AssertEqual(Viewport->Y + Viewport->Height / 2, Floor(Hero->Y) + 8 - 20, "viewport should lead vertically by its own distance");
+
+		// Disabling lookahead eases the held offset away even while idle.
+		Viewport->LookaheadX = 0;
+		Viewport->LookaheadY = 0;
+		Waitframes(30);
+		Test::AssertEqual(Viewport->Y + Viewport->Height / 2, Floor(Hero->Y) + 8, "lookahead should ease out when disabled");
+
+		// Fractional speeds are allowed: at 0.5 px/frame a 40px lead takes 80 frames of
+		// movement to build, so it is still growing after 40.
+		Viewport->LookaheadX = 40;
+		Viewport->LookaheadY = 40;
+		Viewport->LookaheadSpeed = 0.5;
+		Test::AssertEqual(Viewport->LookaheadSpeed, 0.5);
+		walk(CB_RIGHT, 40);
+		focus = Viewport->X + Viewport->Width / 2;
+		Test::AssertEqual(focus > Floor(Hero->X) + 8 && focus < Floor(Hero->X) + 8 + 40, true, "fractional speed should ease gradually");
+		walk(CB_RIGHT, 50);
+		Test::AssertEqual(Viewport->X + Viewport->Width / 2, Floor(Hero->X) + 8 + 40, "viewport should lead ahead of movement");
+
+		// The configured distance may use the full signed-byte range; the offset the viewport
+		// actually holds is capped per axis so the viewport can still reach the region edges.
+		Viewport->LookaheadX = 127;
+		Viewport->LookaheadY = 127;
+		Test::AssertEqual(Viewport->LookaheadX, 127);
+		Test::AssertEqual(Viewport->LookaheadY, 127);
+		Viewport->LookaheadX = -128;
+		Viewport->LookaheadY = -128;
+		Test::AssertEqual(Viewport->LookaheadX, -128);
+		Test::AssertEqual(Viewport->LookaheadY, -128);
+		Viewport->LookaheadX = 0;
+		Viewport->LookaheadY = 0;
+		Viewport->LookaheadSpeed = 0.75;
+		Viewport->ResetFollowSettings();
+		Test::AssertEqual(Viewport->LookaheadSpeed, 1, "reset should restore the configured speed");
+		Test::AssertEqual(Viewport->LookaheadX, 0, "reset should restore the configured lookahead");
+
+		// Only movement in the direction the hero faces counts: a shove the other way
+		// (knockback, conveyors, a script writing the position) neither flips nor builds
+		// the lead. Freeze the offset while repositioning so the jump isn't read as movement.
+		Viewport->LookaheadX = 40;
+		Viewport->LookaheadY = 40;
+		Viewport->LookaheadSpeed = 0;
+		Hero->X = 600;
+		Hero->Y = 350;
+		Waitframe();
+		Viewport->LookaheadSpeed = 1;
+		walk(CB_RIGHT, 50);
+		Test::AssertEqual(Viewport->X + Viewport->Width / 2, Floor(Hero->X) + 8 + 40, "viewport should lead ahead of movement");
+		Hero->X -= 16;
+		Waitframes(5);
+		Test::AssertEqual(Viewport->X + Viewport->Width / 2, Floor(Hero->X) + 8 + 40, "a backward shove should not move the lead");
+
+		// Warps drop the offset: the viewport lands centered on the hero.
+		Hero->WarpEx(WT_IWARP, Test::TestingDmap, 18, 128, 88, WARPEFFECT_NONE, 0, WARP_FLAG_DONT_RESET_DM_SCRIPT);
+		Waitframe();
+		Test::AssertEqual(Viewport->X + Viewport->Width / 2, Floor(Hero->X) + 8, "warp should drop the lookahead offset");
+		Test::AssertEqual(Viewport->Y + Viewport->Height / 2, Floor(Hero->Y) + 8, "warp should drop the lookahead offset");
+
+		// Scroll transitions carry the offset. Build a full leftward lead on the single screen
+		// east of the region (it's exactly one viewport, so the lead isn't visible there), then
+		// walk back into the region. Once past the region clamp, the viewport must already hold
+		// the full lead rather than be re-easing it from zero, which the slow speed set just
+		// before the scroll would make obvious.
+		mapdata east = Game->LoadMapData(map, 4);
+		fillScreen(east);
+		east->Valid = 1;
+		Hero->WarpEx(WT_IWARP, Test::TestingDmap, 4, 224, 88, WARPEFFECT_NONE, 0, WARP_FLAG_DONT_RESET_DM_SCRIPT);
+		Waitframe();
+		walk(CB_LEFT, 50);
+		Viewport->LookaheadSpeed = 0.25;
+		int frames = 0;
+		while (Game->Scrolling[SCROLL_DIR] == -1 && frames++ < 300)
+		{
+			press(CB_LEFT);
+			Waitframe();
+		}
+		Test::Assert(frames < 300, "never scrolled back into the region");
+		while (Game->Scrolling[SCROLL_DIR] > -1)
+			Waitframe();
+		Test::AssertEqual(Game->CurScreen, 0, "should have scrolled into the region (origin screen 0)");
+		Test::AssertEqual(Game->HeroScreen, 3, "should have arrived on the region's east column");
+		frames = 0;
+		while (Hero->X > 1024 - 16 - 100 && frames++ < 200)
+		{
+			press(CB_LEFT);
+			Waitframe();
+		}
+		Test::Assert(frames * 0.25 < 40, "walk-in should be too short to rebuild the lead from zero");
+		// The walk-in can end on a half pixel, which the viewport rounds.
+		Test::AssertEqual(Viewport->X + Viewport->Width / 2, Round(Hero->X) + 8 - 40, "scroll should carry the lookahead offset");
+
+		// A dmap can supply its own follow settings instead of Init Data's; script writes still
+		// win over both, and ResetFollowSettings returns to whichever is configured.
+		Viewport->ResetFollowSettings();
+		dmapdata dm = Game->LoadDMapData(Test::TestingDmap);
+		dm->Flagset[DMFS_VIEWPORT_SETTINGS] = true;
+		dm->ViewportDeadzoneWidth = 48;
+		dm->ViewportLookaheadY = -16;
+		Test::AssertEqual(Viewport->DeadzoneWidth, 48, "dmap follow settings should apply");
+		Test::AssertEqual(Viewport->LookaheadY, -16, "dmap follow settings should apply");
+		Viewport->DeadzoneWidth = 16;
+		Test::AssertEqual(Viewport->DeadzoneWidth, 16, "script override should win over the dmap");
+		Viewport->ResetFollowSettings();
+		Test::AssertEqual(Viewport->DeadzoneWidth, 48, "reset should return to the dmap's settings");
+		dm->Flagset[DMFS_VIEWPORT_SETTINGS] = false;
+		Test::AssertEqual(Viewport->DeadzoneWidth, 0, "without the flag the dmap defers to Init Data");
+		Test::AssertEqual(Viewport->LookaheadY, 0, "without the flag the dmap defers to Init Data");
+		Waitframe();
+
+		// Idle recentering: after standing still for the delay, the viewport eases back until the
+		// hero is centered in the deadzone box again. Drop any held lookahead offset first.
+		Viewport->ResetFollowSettings();
+		Viewport->LookaheadSpeed = 240;
+		Hero->X = 600;
+		Hero->Y = 350;
+		Waitframes(2);
+		Viewport->DeadzoneWidth = 64;
+		Viewport->RecenterSpeed = 1;
+		Viewport->RecenterDelay = 10;
+		walk(CB_LEFT, 60);
+		focus_x = Viewport->X + Viewport->Width / 2;
+		Test::AssertEqual(focus_x - (Floor(Hero->X) + 8), 32, "hero should be pinned to the deadzone edge");
+		Waitframes(8);
+		Test::AssertEqual(Viewport->X + Viewport->Width / 2, focus_x, "viewport should wait out the recenter delay");
+		Waitframes(50);
+		Test::AssertEqual(Viewport->X + Viewport->Width / 2, Floor(Hero->X) + 8, "viewport should recenter on the idle hero");
+		Viewport->ResetFollowSettings();
 
 		Test::End();
 	}

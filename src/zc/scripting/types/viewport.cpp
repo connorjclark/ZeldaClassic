@@ -40,12 +40,37 @@ int32_t viewport_get_register(int32_t reg)
 		break;
 		case VIEWPORT_DEADZONE_WIDTH:
 		{
-			ret = get_camera_deadzone_width() * 10000;
+			ret = get_viewport_deadzone_width() * 10000;
 		}
 		break;
 		case VIEWPORT_DEADZONE_HEIGHT:
 		{
-			ret = get_camera_deadzone_height() * 10000;
+			ret = get_viewport_deadzone_height() * 10000;
+		}
+		break;
+		case VIEWPORT_LOOKAHEAD_X:
+		{
+			ret = get_viewport_lookahead_x() * 10000;
+		}
+		break;
+		case VIEWPORT_LOOKAHEAD_Y:
+		{
+			ret = get_viewport_lookahead_y() * 10000;
+		}
+		break;
+		case VIEWPORT_LOOKAHEAD_SPEED:
+		{
+			ret = get_viewport_lookahead_speed().getZLong();
+		}
+		break;
+		case VIEWPORT_RECENTER_SPEED:
+		{
+			ret = get_viewport_recenter_speed().getZLong();
+		}
+		break;
+		case VIEWPORT_RECENTER_DELAY:
+		{
+			ret = get_viewport_recenter_delay() * 10000;
 		}
 		break;
 		case VIEWPORT_X:
@@ -64,12 +89,6 @@ int32_t viewport_get_register(int32_t reg)
 	}
 
 	return ret;
-}
-
-// The follow-camera settings take -1 from scripts to clear their override.
-static std::optional<int> override_or_clear(int val)
-{
-	return val < 0 ? std::nullopt : std::optional(val);
 }
 
 void viewport_set_register(int32_t reg, int32_t value)
@@ -101,7 +120,7 @@ void viewport_set_register(int32_t reg, int32_t value)
 			if (auto s = ResolveBaseSprite(value))
 			{
 				set_viewport_sprite(s);
-				reset_camera_follow();
+				reset_viewport_follow();
 				update_viewport();
 			}
 		}
@@ -118,21 +137,74 @@ void viewport_set_register(int32_t reg, int32_t value)
 		case VIEWPORT_DEADZONE_WIDTH:
 		{
 			int val = value / 10000;
-			if (BC::checkBounds(val, -1, 2*CAMERA_FOLLOW_MAX_OFFSET_X) != SH::_NoError)
+			if (BC::checkBounds(val, 0, 2*VIEWPORT_FOLLOW_MAX_OFFSET_X) != SH::_NoError)
 				break;
 
-			set_camera_deadzone_width(override_or_clear(val));
+			set_viewport_deadzone_width(val);
 			update_viewport();
 		}
 		break;
 		case VIEWPORT_DEADZONE_HEIGHT:
 		{
 			int val = value / 10000;
-			if (BC::checkBounds(val, -1, 2*CAMERA_FOLLOW_MAX_OFFSET_Y) != SH::_NoError)
+			if (BC::checkBounds(val, 0, 2*VIEWPORT_FOLLOW_MAX_OFFSET_Y) != SH::_NoError)
 				break;
 
-			set_camera_deadzone_height(override_or_clear(val));
+			set_viewport_deadzone_height(val);
 			update_viewport();
+		}
+		break;
+		case VIEWPORT_LOOKAHEAD_X:
+		{
+			int val = value / 10000;
+			if (BC::checkBounds(val, INT8_MIN, INT8_MAX) != SH::_NoError)
+				break;
+
+			set_viewport_lookahead_x(val);
+		}
+		break;
+		case VIEWPORT_LOOKAHEAD_Y:
+		{
+			int val = value / 10000;
+			if (BC::checkBounds(val, INT8_MIN, INT8_MAX) != SH::_NoError)
+				break;
+
+			set_viewport_lookahead_y(val);
+		}
+		break;
+		case VIEWPORT_LOOKAHEAD_SPEED:
+		{
+			// Fractional, so no truncation to int (a negative value is an error rather than
+			// silently becoming 0).
+			zfix val = zslongToFix(value);
+			if (val < 0 || val > VIEWPORT_FOLLOW_MAX_SPEED)
+			{
+				_scripting_log_error_with_context("Invalid value: {} - must be >= 0 and <= {}", val, VIEWPORT_FOLLOW_MAX_SPEED);
+				break;
+			}
+
+			set_viewport_lookahead_speed(val);
+		}
+		break;
+		case VIEWPORT_RECENTER_SPEED:
+		{
+			zfix val = zslongToFix(value);
+			if (val < 0 || val > VIEWPORT_FOLLOW_MAX_SPEED)
+			{
+				_scripting_log_error_with_context("Invalid value: {} - must be >= 0 and <= {}", val, VIEWPORT_FOLLOW_MAX_SPEED);
+				break;
+			}
+
+			set_viewport_recenter_speed(val);
+		}
+		break;
+		case VIEWPORT_RECENTER_DELAY:
+		{
+			int val = value / 10000;
+			if (BC::checkBounds(val, 0, 65535) != SH::_NoError)
+				break;
+
+			set_viewport_recenter_delay(val);
 		}
 		break;
 		case VIEWPORT_X:
@@ -149,4 +221,19 @@ void viewport_set_register(int32_t reg, int32_t value)
 		default:
 			NOTREACHED();
 	}
+}
+
+std::optional<int32_t> viewport_run_command(word command)
+{
+	switch (command)
+	{
+		case VIEWPORT_RESET_FOLLOW_SETTINGS:
+			reset_viewport_follow_settings();
+			update_viewport();
+			break;
+
+		default: return std::nullopt;
+	}
+
+	return RUNSCRIPT_OK;
 }

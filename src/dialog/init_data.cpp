@@ -754,18 +754,60 @@ std::shared_ptr<GUI::Widget> InitDataDialog::view()
 								INFOBTN("In what way screens should be marked as visited."
 									"\nFull: Every screen in a region is mapped upon entry"
 									"\nPhysical: Only screens the Hero steps into are mapped"),
-								VAL_FIELD(byte,"Camera Deadzone Width:",0,240,viewport_deadzone_w,false),
-								INFOBTN("While the player (or other camera target) stays within a box of this width"
-									" centered on the camera, the camera does not move horizontally. Once they push"
-									" past the box's edge, the camera moves just enough to keep them on it."
+								VAL_FIELD(byte,"Viewport Deadzone Width:",0,240,viewport_follow.deadzone_w,false),
+								INFOBTN("While the player (or other viewport target) stays within a box of this width"
+									" centered on the viewport, the viewport does not move horizontally. Once they push"
+									" past the box's edge, the viewport moves just enough to keep them on it. With a"
+									" Viewport Lookahead, the box applies to the shifted aim point rather than the"
+									" player's own position."
+									"\n\nOnly observable in scrolling regions. A DMap can supply its own follow"
+									" settings instead ('Customize Viewport Follow Settings' in the DMap editor)."
+									" Scripts can change this at runtime via Viewport->DeadzoneWidth."),
+								VAL_FIELD(byte,"Viewport Deadzone Height:",0,160,viewport_follow.deadzone_h,false),
+								INFOBTN("While the player (or other viewport target) stays within a box of this height"
+									" centered on the viewport, the viewport does not move vertically. Once they push"
+									" past the box's edge, the viewport moves just enough to keep them on it. With a"
+									" Viewport Lookahead, the box applies to the shifted aim point rather than the"
+									" player's own position."
 									"\n\nOnly observable in scrolling regions. Scripts can change this at runtime"
-									" via Viewport->DeadzoneWidth."),
-								VAL_FIELD(byte,"Camera Deadzone Height:",0,160,viewport_deadzone_h,false),
-								INFOBTN("While the player (or other camera target) stays within a box of this height"
-									" centered on the camera, the camera does not move vertically. Once they push"
-									" past the box's edge, the camera moves just enough to keep them on it."
+									" via Viewport->DeadzoneHeight."),
+								VAL_FIELD(int8_t,"Viewport Lookahead X:",-128,127,viewport_follow.lookahead_x,false),
+								INFOBTN("How far the viewport aims ahead of the direction the player (or other viewport"
+									" target) is moving horizontally, in pixels. Positive values lead in front (more"
+									" frontal view); negative values trail behind. Each axis has its own distance,"
+									" so diagonal movement leads by both."
+									"\n\nThe offset builds while the target moves, at the Lookahead Speed, and holds"
+									" while they stand still, so the viewport never drifts or reacts to turning in"
+									" place. Only movement in the direction they face counts, so being knocked back"
+									" or pushed against their facing doesn't swing the viewport. It is capped so the"
+									" viewport can still reach"
+									" the region edges, dropped by warps (whistle warps included) and viewport cutscene"
+									" effects (rebuilding as the target moves), and carried through scroll"
+									" transitions."
 									"\n\nOnly observable in scrolling regions. Scripts can change this at runtime"
-									" via Viewport->DeadzoneHeight.")
+									" via Viewport->LookaheadX."),
+								VAL_FIELD(int8_t,"Viewport Lookahead Y:",-128,127,viewport_follow.lookahead_y,false),
+								INFOBTN("How far the viewport aims ahead of the direction the player (or other viewport"
+									" target) is moving vertically, in pixels. Works like Viewport Lookahead X; since the"
+									" viewport is shorter than it is wide, a smaller distance usually feels right here."
+									"\n\nScripts can change this at runtime via Viewport->LookaheadY."),
+								ZFIX_VAL_FIELD("Viewport Lookahead Speed:",0,2400000,viewport_follow.lookahead_speed,false),
+								INFOBTN("How fast the viewport lookahead offset shifts toward its target distance, in"
+									" pixels per frame (0 freezes it in place). Values between 0 and 1 are"
+									" recommended: while the target moves, this is added to their own speed, so"
+									" anything higher makes the viewport visibly outrun them."
+									"\n\nScripts can change this at runtime via Viewport->LookaheadSpeed."),
+								ZFIX_VAL_FIELD("Viewport Recenter Speed:",0,2400000,viewport_follow.recenter_speed,false),
+								INFOBTN("Once the player (or other viewport target) has stood still for the Viewport"
+									" Recenter Delay, the viewport eases back at this many pixels per frame until they"
+									" are centered in the deadzone box again. 0 (the default) disables recentering;"
+									" values around 1 feel gentle. Any movement cancels it."
+									"\n\nScripts can change this at runtime via Viewport->RecenterSpeed."),
+								VAL_FIELD(word,"Viewport Recenter Delay:",0,65535,viewport_follow.recenter_delay,false),
+								INFOBTN("How many frames the player (or other viewport target) must stand still before"
+									" the viewport starts recentering. A short delay keeps brief pauses mid-walk from"
+									" nudging the viewport."
+									"\n\nScripts can change this at runtime via Viewport->RecenterDelay.")
 							)
 						)
 					))

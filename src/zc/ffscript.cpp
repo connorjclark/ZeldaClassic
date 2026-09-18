@@ -8412,7 +8412,7 @@ bool FFScript::warp_player(int32_t warpType, int32_t dmap, int32_t screen, int32
 			
 			Hero.x = (zfix)wx;
 			Hero.y = (zfix)wy;
-			reset_camera_follow();
+			reset_viewport_follow();
 			update_viewport();
 			
 			warp_hero_auto_face(lx, ly, heroFacesDir, false);
@@ -8489,7 +8489,7 @@ bool FFScript::warp_player(int32_t warpType, int32_t dmap, int32_t screen, int32
 			//Move Hero's coordinates
 			Hero.x = (zfix)wx;
 			Hero.y = (zfix)wy;
-			reset_camera_follow();
+			reset_viewport_follow();
 			update_viewport();
 
 			warp_hero_auto_face(lx, ly, heroFacesDir, true);

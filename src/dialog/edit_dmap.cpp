@@ -78,6 +78,28 @@ Checkbox(checked = local_dmap.member&flag, \
 		SETFLAG(local_dmap.member, flag, state); \
 	})
 
+// One of the dmap's viewport follow settings, enabled only while dmfVIEWPORT_SETTINGS is set.
+#define DMAP_VIEWPORT_FIELD(idx, name, minval, maxval, member, inf) \
+Label(text = name, hAlign = 1.0), \
+viewport_tf[idx] = TextField(maxLength = 11, type = GUI::TextField::type::INT_DECIMAL, \
+	bounds = {minval, maxval}, val = local_dmap.viewport_follow.member, \
+	disabled = !(local_dmap.flags & dmfVIEWPORT_SETTINGS), \
+	onValChangedFunc = [&](GUI::TextField::type,std::string_view,int32_t val) \
+	{ \
+		local_dmap.viewport_follow.member = val; \
+	}), \
+INFOBTN(inf)
+#define DMAP_VIEWPORT_ZFIX_FIELD(idx, name, minval, maxval, member, inf) \
+Label(text = name, hAlign = 1.0), \
+viewport_tf[idx] = TextField(maxLength = 11, type = GUI::TextField::type::FIXED_DECIMAL, \
+	bounds = {minval, maxval}, val = local_dmap.viewport_follow.member.getZLong(), places = 4, \
+	disabled = !(local_dmap.flags & dmfVIEWPORT_SETTINGS), \
+	onValChangedFunc = [&](GUI::TextField::type,std::string_view,int32_t val) \
+	{ \
+		local_dmap.viewport_follow.member = zslongToFix(val); \
+	}), \
+INFOBTN(inf)
+
 #define DMAP_CB_SV(member, cspan, txt, inf) \
 INFOBTN(inf), \
 Checkbox(checked = local_dmap.sideview, \
@@ -318,6 +340,39 @@ std::shared_ptr<GUI::Widget> EditDMapDialog::view()
 										{
 											local_dmap.dmap_terminal_v = zslongToFix(val);
 										})
+								)
+							)
+						),
+						Frame(title = "Viewport",
+							Column(
+								Rows<2>(padding = 0_px,
+									INFOBTN("How the viewport follows the player in scrolling regions. When checked, the"
+										" settings below apply on this DMap instead of the ones in Init Data's 'Regions'"
+										" tab, which also explains each setting in detail."),
+									Checkbox(checked = local_dmap.flags & dmfVIEWPORT_SETTINGS,
+										text = "Customize Viewport Follow Settings", fitParent = true,
+										onToggleFunc = [&](bool state)
+										{
+											SETFLAG(local_dmap.flags, dmfVIEWPORT_SETTINGS, state);
+											for (auto& tf : viewport_tf)
+												tf->setDisabled(!state);
+										})
+								),
+								Rows<3>(padding = 0_px,
+									DMAP_VIEWPORT_FIELD(0, "Deadzone Width:", 0, 240, deadzone_w,
+										"Width of the box the player can move within before the viewport follows horizontally. 0 locks the viewport to the player."),
+									DMAP_VIEWPORT_FIELD(1, "Deadzone Height:", 0, 160, deadzone_h,
+										"Height of the box the player can move within before the viewport follows vertically. 0 locks the viewport to the player."),
+									DMAP_VIEWPORT_FIELD(2, "Lookahead X:", -128, 127, lookahead_x,
+										"How far the viewport aims ahead of the direction the player is moving horizontally, in pixels. Negative values trail behind."),
+									DMAP_VIEWPORT_FIELD(3, "Lookahead Y:", -128, 127, lookahead_y,
+										"How far the viewport aims ahead of the direction the player is moving vertically, in pixels. Negative values trail behind."),
+									DMAP_VIEWPORT_ZFIX_FIELD(4, "Lookahead Speed:", 0, 2400000, lookahead_speed,
+										"How fast the lookahead offset shifts, in pixels per frame. Values between 0 and 1 are recommended."),
+									DMAP_VIEWPORT_ZFIX_FIELD(5, "Recenter Speed:", 0, 2400000, recenter_speed,
+										"After the player stands still for the Recenter Delay, the viewport eases back at this many pixels per frame until they are centered in the deadzone box. 0 disables."),
+									DMAP_VIEWPORT_FIELD(6, "Recenter Delay:", 0, 65535, recenter_delay,
+										"How many frames the player must stand still before the viewport starts recentering.")
 								)
 							)
 						)

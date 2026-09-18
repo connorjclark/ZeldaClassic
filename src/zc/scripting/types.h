@@ -242,6 +242,8 @@ ZC_FORCE_INLINE std::optional<int32_t> scripting_engine_run_command(word command
 		return *r;
 	if (auto r = weapondata_run_command(command))
 		return *r;
+	if (auto r = viewport_run_command(command))
+		return *r;
 
 	return std::nullopt;
 }

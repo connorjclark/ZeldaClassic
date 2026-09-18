@@ -7359,6 +7359,23 @@ int32_t write_one_dmap(PACKFILE* f, int index)
 		if (!p_iputzf(DMaps[index].dmap_terminal_v, f))
 			new_return(49);
 	}
+	if (DMaps[index].flags & dmfVIEWPORT_SETTINGS)
+	{
+		if (!p_putc(DMaps[index].viewport_follow.deadzone_w, f))
+			new_return(53);
+		if (!p_putc(DMaps[index].viewport_follow.deadzone_h, f))
+			new_return(54);
+		if (!p_putc(DMaps[index].viewport_follow.lookahead_x, f))
+			new_return(55);
+		if (!p_putc(DMaps[index].viewport_follow.lookahead_y, f))
+			new_return(57);
+		if (!p_iputzf(DMaps[index].viewport_follow.lookahead_speed, f))
+			new_return(56);
+		if (!p_iputzf(DMaps[index].viewport_follow.recenter_speed, f))
+			new_return(58);
+		if (!p_iputw(DMaps[index].viewport_follow.recenter_delay, f))
+			new_return(59);
+	}
 	if(!p_iputw(DMaps[index].map_subscreen, f))
 		new_return(50);
 	if(!p_putc(DMaps[index].floor, f))
@@ -13280,10 +13297,20 @@ int32_t writeinitdata(PACKFILE *f, zquestheader *)
 			new_return(88);
 		if (!p_putarr(zinit.hero_scrconfig, f))
 			new_return(89);
-		if (!p_putc(zinit.viewport_deadzone_w, f))
+		if (!p_putc(zinit.viewport_follow.deadzone_w, f))
 			new_return(90);
-		if (!p_putc(zinit.viewport_deadzone_h, f))
+		if (!p_putc(zinit.viewport_follow.deadzone_h, f))
 			new_return(91);
+		if (!p_putc(zinit.viewport_follow.lookahead_x, f))
+			new_return(92);
+		if (!p_putc(zinit.viewport_follow.lookahead_y, f))
+			new_return(94);
+		if (!p_iputzf(zinit.viewport_follow.lookahead_speed, f))
+			new_return(93);
+		if (!p_iputzf(zinit.viewport_follow.recenter_speed, f))
+			new_return(95);
+		if (!p_iputw(zinit.viewport_follow.recenter_delay, f))
+			new_return(96);
 
 		if(writecycle==0)
 		{

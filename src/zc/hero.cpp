@@ -2022,7 +2022,7 @@ void HeroClass::init()
 	{
 		x += region_scr_dx*256;
 		y += region_scr_dy*176;
-		reset_camera_follow();
+		reset_viewport_follow();
 		update_viewport();
 	}
 
@@ -25874,7 +25874,7 @@ bool HeroClass::dowarp(const mapscr* scr, int32_t type, int32_t index, int32_t w
 		y += region_scr_dy * 176;
 		x = vbound(x.getInt(), 0, world_w-16);
 		y = vbound(y.getInt(), 0, world_h-16);
-		reset_camera_follow();
+		reset_viewport_follow();
 		update_viewport();
 		
 		if(dlevel)
@@ -26192,7 +26192,7 @@ bool HeroClass::dowarp(const mapscr* scr, int32_t type, int32_t index, int32_t w
 		y += region_scr_dy * 176;
 		x = vbound(x.getInt(), 0, world_w-16);
 		y = vbound(y.getInt(), 0, world_h-16);
-		reset_camera_follow();
+		reset_viewport_follow();
 		update_viewport();
 
 		if (cave_check_world_coords)
@@ -26370,7 +26370,7 @@ bool HeroClass::dowarp(const mapscr* scr, int32_t type, int32_t index, int32_t w
 			y += region_scr_dy * 176;
 			x = vbound(x.getInt(), 0, world_w-16);
 			y = vbound(y.getInt(), 0, world_h-16);
-			reset_camera_follow();
+			reset_viewport_follow();
 			update_viewport();
 
 			if (cave_check_world_coords)
@@ -26667,7 +26667,7 @@ void HeroClass::exitcave()
     y += region_scr_dy*176;
 	x = vbound(x.getInt(), 0, world_w-16);
 	y = vbound(y.getInt(), 0, world_h-16);
-	reset_camera_follow();
+	reset_viewport_follow();
 	update_viewport();
         
     int32_t type1 = combobuf[MAPCOMBO(x,y-16)].type;
@@ -27248,7 +27248,7 @@ void HeroClass::stepout() // Step out of item cellars and passageways
 	y += region_scr_dy * 176;
 	x = vbound(x.getInt(), 0, world_w-16);
 	y = vbound(y.getInt(), 0, world_h-16);
-	reset_camera_follow();
+	reset_viewport_follow();
 	update_viewport();
     
     if(x+y == 0)
@@ -28736,7 +28736,7 @@ void HeroClass::scrollscr(int32_t scrolldir, int32_t dest_screen, int32_t destdm
 		set_viewport_sprite(&Hero);
 		viewport_mode = ViewportMode::CenterAndBound;
 		clear_camera_effect();
-		reset_camera_follow();
+		reset_viewport_follow();
 		update_viewport();
 	}
 	
@@ -28818,8 +28818,21 @@ void HeroClass::scrollscr(int32_t scrolldir, int32_t dest_screen, int32_t destdm
 			new_hero_y_for_viewport += new_scr_dy*176;
 		}
 
+		// The follow logic carries its lookahead offset through the scroll (see
+		// reset_viewport_follow), so aim the destination viewport where it will resume from
+		// rather than at the hero's center. Offsets are bounded such that the viewport still
+		// ends up flush against the region edge on the scroll axis.
+		zfix new_viewport_aim_x = new_hero_x_for_viewport + Hero.txsz*16/2;
+		zfix new_viewport_aim_y = new_hero_y_for_viewport + Hero.tysz*16/2;
+		if (!HeroInOutgoingWhistleWarp())
+		{
+			auto [lookahead_x, lookahead_y] = get_viewport_lookahead_offset();
+			new_viewport_aim_x += lookahead_x;
+			new_viewport_aim_y += lookahead_y;
+		}
+
 		new_viewport = {};
-		calculate_viewport(new_viewport, new_dmap, dest_screen, new_region.width, new_region.height, new_hero_x_for_viewport + Hero.txsz*16/2, new_hero_y_for_viewport + Hero.tysz*16/2);
+		calculate_viewport(new_viewport, new_dmap, dest_screen, new_region.width, new_region.height, new_viewport_aim_x, new_viewport_aim_y);
 
 		scrolling_new_region = new_region;
 	};
@@ -29844,7 +29857,7 @@ void HeroClass::scrollscr(int32_t scrolldir, int32_t dest_screen, int32_t destdm
 	playing_field_offset = new_playing_field_offset;
 	x = new_hero_x;
 	y = new_hero_y;
-	reset_camera_follow();
+	reset_viewport_follow(!HeroInOutgoingWhistleWarp());
 	yofs = playing_field_offset;
 	if(ladderx > 0 || laddery > 0)
 	{
