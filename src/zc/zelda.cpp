@@ -4084,6 +4084,28 @@ static void init_display()
 	clear_to_color(screen, BLACK);
 }
 
+// Brings up the parts of the engine that starting a game depends on: bitmaps, the
+// display, the render tree, sound and the save list. init_and_run_main_zplayer_loop does
+// this as part of a much larger setup that `-test-zc` never reaches, so tests that start
+// a game call this first. Does nothing if the engine is already up.
+void init_zplayer_for_test()
+{
+	if (framebuf)
+		return;
+
+	load_game_configs();
+	init_bitmaps();
+	zcmusic_init();
+	zcmixer = zcmixer_create();
+	set_color_conversion(COLORCONV_NONE);
+	zscriptDrawingRenderTarget = new ZScriptDrawingRenderTarget();
+	Z_init_sound();
+	init_display();
+	render_zc();
+	fix_dialogs();
+	saves_init();
+}
+
 void init_and_run_main_zplayer_loop()
 {
 	int argc = zapp_get_argc();

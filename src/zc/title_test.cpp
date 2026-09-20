@@ -19,6 +19,10 @@ TestResults test_title_reload([[maybe_unused]] bool verbose)
 	int test_zc_arg = zapp_check_switch("-test-zc", {"test_dir"});
 	std::string test_dir = zapp_get_arg_string(test_zc_arg + 1);
 
+	// test_debugger runs the main loop, which leaves the engine initialized - but it is
+	// skipped on Windows CI, so do not count on another test having gotten there first.
+	init_zplayer_for_test();
+
 	// A save slot for a game that has already been played, so a reload restores its saved
 	// state instead of starting a fresh game.
 	gamedata* saved = new gamedata();
