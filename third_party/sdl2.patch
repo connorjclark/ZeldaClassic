@@ -6,6 +6,12 @@ Open in non-exclusive background mode instead when there is no helper window.
 Upstreamed as https://github.com/libsdl-org/SDL/pull/16207 - drop this patch
 once the vendored SDL includes the fix.
 
+Also, SDL's RawInput backend (which handles XInput controllers on Windows)
+never checked SDL_ShouldIgnoreJoystick, unlike every other backend. So the
+Steam Virtual Gamepad, which SDL otherwise hides unless running under Steam,
+could show up alongside the physical controller and take joystick 0. SDL3
+already has this check.
+
 diff --git a/src/joystick/windows/SDL_dinputjoystick.c b/src/joystick/windows/SDL_dinputjoystick.c
 index 73c26051..e99dba07 100644
 --- a/src/joystick/windows/SDL_dinputjoystick.c
@@ -26,3 +32,17 @@ index 73c26051..e99dba07 100644
                                                      DISCL_BACKGROUND);
      if (FAILED(result)) {
          return SetDIerror("IDirectInputDevice8::SetCooperativeLevel", result);
+diff --git a/src/joystick/windows/SDL_rawinputjoystick.c b/src/joystick/windows/SDL_rawinputjoystick.c
+index cd958b1f..804236a6 100644
+--- a/src/joystick/windows/SDL_rawinputjoystick.c
++++ b/src/joystick/windows/SDL_rawinputjoystick.c
+@@ -883,6 +883,9 @@ static void RAWINPUT_AddDevice(HANDLE hDevice)
+     /* Don't take devices handled by HIDAPI */
+     CHECK(!HIDAPI_IsDevicePresent((Uint16)rdi.hid.dwVendorId, (Uint16)rdi.hid.dwProductId, (Uint16)rdi.hid.dwVersionNumber, ""));
+ #endif
++    /* Don't take devices that should be ignored, like the Steam Virtual Gamepad
++     * when not running under Steam. Every other backend checks this already. */
++    CHECK(!SDL_ShouldIgnoreJoystick("", SDL_CreateJoystickGUID(SDL_HARDWARE_BUS_USB, (Uint16)rdi.hid.dwVendorId, (Uint16)rdi.hid.dwProductId, (Uint16)rdi.hid.dwVersionNumber, NULL, NULL, 'r', 0)));
+     device = (SDL_RAWINPUT_Device *)SDL_calloc(1, sizeof(SDL_RAWINPUT_Device));
+     CHECK(device);
+     device->hDevice = hDevice;
