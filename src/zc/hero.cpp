@@ -27381,6 +27381,11 @@ bool HeroClass::nextcombo_solid(int32_t d2)
 	int32_t cx = x.getInt() + (cur_region.origin_screen_x - dest_region.origin_screen_x) * 256;
 	int32_t cy = y.getInt() + (cur_region.origin_screen_y - dest_region.origin_screen_y) * 176;
 
+	// The Hero may straddle a seam between screens of the current region, which leaves part of
+	// them outside the next region. Only check the part that is inside.
+	cx = std::clamp(cx, 0, dest_region.width - 16);
+	cy = std::clamp(cy, 0, dest_region.height - 16);
+
 	// Adjust along the axis of scroll.
 	switch(d2)
 	{
