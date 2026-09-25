@@ -1,6 +1,7 @@
 #include "gui/button.h"
 
 #include "base/check.h"
+#include "base/util.h"
 #include "base/zc_math.h"
 #include "gui/common.h"
 #include "gui/dialog.h"
@@ -30,7 +31,6 @@ static const string hotkey_index_names[] =
 {
 	"Main", "Alternate"
 };
-static bool waiting_no_buttons = false;
 static void reset_held_mod_keys()
 {
 	poll_keyboard();
@@ -72,36 +72,31 @@ bool joystick(int stick_idx, int s)
 	}
 	return false;
 }
-static optional<int> get_btnpress(int stick_idx, bool stick)
+// The gamepad inputs currently held: buttons (1-based), or sticks when binding
+// a stick.
+static std::vector<int> get_held_inputs(int stick_idx, bool stick)
 {
-	if (!binding_joystick || !al_get_joystick_active(binding_joystick))
-		return -1;
+	std::vector<int> held;
 	if (stick)
 	{
 		for(int q = 0; q < joy[stick_idx].num_sticks; ++q)
 			if(joystick (stick_idx, q))
-				return q;
+				held.push_back(q);
 	}
 	else
 	{
 		for(int q = 1; q <= joy[stick_idx].num_buttons; ++q)
 			if(joybtn (stick_idx, q))
-				return q;
+				held.push_back(q);
 	}
-	return std::nullopt;
+	return held;
 }
-optional<int> get_next_btnpress(int stick_idx, bool stick)
+static string get_input_name(int stick_idx, bool stick, int q)
 {
-	poll_joystick();
-	auto ret = get_btnpress(stick_idx, stick);
-	if (ret && *ret < 0) return ret;
-	if (waiting_no_buttons)
-	{
-		if (!ret)
-			waiting_no_buttons = false;
-		return std::nullopt;
-	}
-	return ret;
+	const char* name = stick ? joy[stick_idx].stick[q].name : joy[stick_idx].button[q-1].name;
+	if (name && name[0])
+		return name;
+	return fmt::format("{} {}", stick ? "Stick" : "Button", q);
 }
 optional<int> get_next_keypress(bool check_mod_keys)
 {
@@ -132,7 +127,7 @@ optional<int> get_next_keypress(bool check_mod_keys)
 	return std::nullopt;
 }
 
-void spinner_loop(vector<string> const& strs, std::function<bool()> proc)
+void spinner_loop(vector<string> const& strs, std::function<bool()> proc, std::function<string()> status = nullptr)
 {
 	auto mz = mouse_z;
 	
@@ -145,7 +140,11 @@ void spinner_loop(vector<string> const& strs, std::function<bool()> proc)
 	}
 	const int fh = text_height(popup_font);
 	const int vspacing = 3;
-	const int th = (fh + vspacing) * strs.size() - vspacing;
+	// A status message, when given, gets rows below the text and is redrawn
+	// whenever it changes, wrapped to the popup's width.
+	const int status_rows = status ? 2 : 0;
+	const int rows = strs.size() + status_rows;
+	const int th = (fh + vspacing) * rows - vspacing;
 	const int ar = th / 4; // arc radius for spinner
 	const int hspacing = 5 + fh;
 	const int hmargin = 32;
@@ -169,6 +168,9 @@ void spinner_loop(vector<string> const& strs, std::function<bool()> proc)
 		textout_centre_ex(screen, popup_font, s.c_str(), tx, ty, jwin_pal[jcBOXFG], jwin_pal[jcBOX]);
 		ty += fh + vspacing;
 	}
+	const int status_y = ty;
+	const int status_w = popup_w - 8;
+	string last_status;
 	clear_keybuf();
 	zq_push_unfrozen_dialogs(1);
 
@@ -182,6 +184,34 @@ void spinner_loop(vector<string> const& strs, std::function<bool()> proc)
 
 	do
 	{
+		if (status)
+		{
+			string s = status();
+			if (s != last_status)
+			{
+				last_status = s;
+				// Wrap by words; if it still doesn't fit, end the last row with "...".
+				vector<string> lines(1);
+				for (string const& word : util::split(s, " "))
+				{
+					string candidate = lines.back().empty() ? word : lines.back() + " " + word;
+					if (lines.back().empty() || text_length(popup_font, candidate.c_str()) <= status_w)
+						lines.back() = candidate;
+					else if ((int)lines.size() < status_rows)
+						lines.push_back(word);
+					else
+					{
+						lines.back() += "...";
+						break;
+					}
+				}
+				while (text_length(popup_font, lines.back().c_str()) > status_w && lines.back().size() > 3)
+					lines.back() = lines.back().substr(0, lines.back().size() - 4) + "...";
+				rectfill(screen, popup_x + 2, status_y, popup_x + popup_w - 3, status_y + (fh + vspacing) * status_rows - vspacing - 1, jwin_pal[jcBOX]);
+				for (int i = 0; i < (int)lines.size(); i++)
+					textout_centre_ex(screen, popup_font, lines[i].c_str(), popup_x + popup_w / 2, status_y + i * (fh + vspacing), jwin_pal[jcBOXFG], jwin_pal[jcBOX]);
+			}
+		}
 		a = wrap_float(a + aspd, 0.0, 2 * PI);
 		spinner_rti->dirty = true;
 		update_hw_screen();
@@ -208,20 +238,41 @@ void joy_getbtn(string const& title, int& btn_ref, int stick_idx, bool stick)
 		strs.emplace_back(title);
 	strs.emplace_back("ESC to cancel");
 	strs.emplace_back("SPACE to clear");
-	waiting_no_buttons = true;
-	bool bound = false;
+
+	// Inputs already held when the popup opens can't be bound until they are
+	// released, since one of them may be what opened it. They are tracked one
+	// by one, rather than waiting for every input to be released, so an input
+	// that never reads as released (a stuck or noisy button or trigger) can't
+	// block binding the others. Any still held after a moment are shown in the
+	// popup and logged, to help diagnose such a controller.
+	poll_joystick();
+	std::set<int> ignored;
+	for (int q : get_held_inputs(stick_idx, stick))
+		ignored.insert(q);
+	optional<int> bound;
+	int frames = 0;
+	string ignored_str, logged_str;
+	auto status = [&]() -> string {
+		if (ignored_str.empty())
+			return "";
+		return fmt::format("Ignoring held: {}", ignored_str);
+	};
+
 	spinner_loop(strs, [&]()
 		{
+			poll_joystick();
+			if (!binding_joystick || !al_get_joystick_active(binding_joystick))
+				return true; // gamepad disconnected
+			auto held = get_held_inputs(stick_idx, stick);
+			auto is_held = [&](int q) { return std::find(held.begin(), held.end(), q) != held.end(); };
 			if (bound)
 			{
-				// Stay open until the input is released. The dialog underneath
+				// Stay open until the bound input is released. The dialog underneath
 				// turns a held button 0/1 on joystick 0 into a Space key and a
 				// held dpad into arrow keys (update_dialog in allegro_legacy's
 				// gui.c), which would reopen this popup from the still-focused
 				// Bind button, or move focus, the moment it closed.
-				poll_joystick();
-				auto held = get_btnpress(stick_idx, stick);
-				return !held || *held < 0;
+				return !is_held(*bound);
 			}
 			while (auto key = get_next_keypress(false))
 			{
@@ -233,15 +284,35 @@ void joy_getbtn(string const& title, int& btn_ref, int stick_idx, bool stick)
 					return true;
 				}
 			}
-			if (auto btn = get_next_btnpress(stick_idx, stick))
+
+			std::erase_if(ignored, [&](int q) { return !is_held(q); });
+			for (int q : held)
 			{
-				if (*btn < 0) // gamepad disconnected
-					return true;
-				btn_ref = *btn;
-				bound = true;
+				if (!ignored.contains(q))
+				{
+					btn_ref = q;
+					bound = q;
+					return false;
+				}
+			}
+
+			if (++frames >= 30)
+			{
+				ignored_str.clear();
+				for (int q : ignored)
+				{
+					if (!ignored_str.empty())
+						ignored_str += ", ";
+					ignored_str += get_input_name(stick_idx, stick, q);
+				}
+				if (!ignored_str.empty() && ignored_str != logged_str)
+				{
+					al_trace("Gamepad binding: ignoring input held since the popup opened: %s\n", ignored_str.c_str());
+					logged_str = ignored_str;
+				}
 			}
 			return false;
-		});
+		}, status);
 }
 void kb_getkey(string const& title, int& key_ref)
 {
