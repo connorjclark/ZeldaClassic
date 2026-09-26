@@ -571,6 +571,9 @@ void do_varg_makearray(ScriptType type, const uint32_t UID, script_object_type o
 void do_breakpoint();
 std::optional<StackFrame> get_script_stack_frame(int pc);
 void handle_trace(const std::string& s, bool is_error = false, bool no_prefix = false);
+// Advances the frame count, and reports the hidden repeat counts of script errors that have
+// stopped repeating. Called every frame (by advanceframe). With force, reports every hidden count and forgets all tracked errors.
+void flush_repeated_script_errors(bool force = false);
 std::optional<StackTrace> create_stack_trace(const refInfo* ri);
 // Whether script error/Trace output should include source stack traces. Also
 // gates the JIT upkeep (ri->pc, the call stack) that only those traces consume.
