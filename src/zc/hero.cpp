@@ -2792,6 +2792,10 @@ void HeroClass::draw(BITMAP* dest)
 	do_primitives(dest, SPLAYER_UNDER_PLAYER_DRAW);
 	int32_t oxofs = xofs, oyofs = yofs;
 	bool invisible = invis_timer || (hero_scr->flags3&fINVISHERO);
+	// TEMP: compare report test. Hides the hero for two frames in the demosp253 replays.
+	if (replay_is_active() && replay_get_meta_str("qst").find("demosp") != std::string::npos
+		&& replay_get_frame() >= 1000 && replay_get_frame() < 1002)
+		invisible = true;
 	{
 		if(action==dying)
 		{
