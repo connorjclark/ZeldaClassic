@@ -215,11 +215,11 @@ weapon_data* user_weapondata::get_data()
 		case wdata_type::combodata_lift:
 			if (data_index >= MAXCOMBOS)
 				break;
-			return &combobuf[data_index].lift_weap_data;
+			return &combobuf[data_index].lift_weap_data.mut();
 		case wdata_type::combodata_misc:
 			if (data_index >= MAXCOMBOS)
 				break;
-			return &combobuf[data_index].misc_weap_data;
+			return &combobuf[data_index].misc_weap_data.mut();
 	}
 	return nullptr;
 }
@@ -9577,7 +9577,8 @@ int32_t run_script(ScriptType type, word script, int32_t i)
 	set_current_script_engine_data(data, type, script, next_script_data, i);
 
 	// Because qst.cpp likes to write script_data without setting this.
-	curscript->meta.script_type = type;
+	if (curscript->meta.get().script_type != type)
+		curscript->meta.mut().script_type = type;
 
 	// Attribute this outermost call's time to the script by name (-script-timings).
 	if (script_timings_enabled && script_timings_is_outermost())
@@ -9646,7 +9647,7 @@ int32_t run_script(ScriptType type, word script, int32_t i)
 		}
 		runtime_script_debug_handle = &script_debug_handles.at(curscript->id);
 		runtime_script_debug_handle->update_file();
-		std::string line = fmt::format("=== running script type: {} index: {} name: {} i: {} script: {}", ScriptTypeToString(curscript->id.type), curscript->id.index, curscript->meta.script_name, i, script);
+		std::string line = fmt::format("=== running script type: {} index: {} name: {} i: {} script: {}", ScriptTypeToString(curscript->id.type), curscript->id.index, curscript->meta.get().script_name, i, script);
 		runtime_script_debug_handle->print("\n");
 		runtime_script_debug_handle->print(line.c_str());
 		runtime_script_debug_handle->print("\n");
@@ -9716,7 +9717,7 @@ int32_t run_script(ScriptType type, word script, int32_t i)
 				else
 					log_call_limit_error();
 
-				if (!(script_funcrun && curscript->meta.ffscript_v < 23))
+				if (!(script_funcrun && curscript->meta.get().ffscript_v < 23))
 				{
 					script_exit_cleanup(false);
 					result = RUNSCRIPT_STOPPED;
@@ -9837,7 +9838,7 @@ int32_t run_script_int(JittedScriptInstance* j_instance)
 	current_zasm_command=(ASM_DEFINE)0; // this is actually SETV, but we never will print that as a context string, so it's fine.
 
 	int commands_run = 0;
-	bool old_script_funcrun = script_funcrun && curscript->meta.ffscript_v < 23;
+	bool old_script_funcrun = script_funcrun && curscript->meta.get().ffscript_v < 23;
 	if(!is_jitted)
 	{
 		if(ri->waitframes)

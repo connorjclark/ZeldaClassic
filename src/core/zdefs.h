@@ -2,6 +2,7 @@
 #define CORE_ZDEFS_H_
 
 #include "base/general.h"
+#include "base/lazy_default.h"
 #include <cstdint>
 #define DEVLEVEL 0
 #define COLLECT_SCRIPT_ITEM_ZERO -32767
@@ -1688,13 +1689,17 @@ struct zasm_script
 	}
 };
 
+// The default (zeroed) metadata of an unused script slot.
+extern const zasm_meta empty_zasm_meta;
+
 struct script_data
 {
 	// The zasm instructions used by this script.
 	// In quests before 3.0, each script had its own chunk of zasm.
 	// Since 3.0 all scripts share the same chunk.
 	std::shared_ptr<::zasm_script> zasm_script = nullptr;
-	zasm_meta meta;
+	// Most of the thousands of script slots are unused, so metadata is only allocated when set.
+	lazy_default<zasm_meta, &empty_zasm_meta> meta;
 	script_id id;
 	// Start of script within `zasm_script`.
 	uint32_t pc;
@@ -1709,10 +1714,10 @@ struct script_data
 
 	std::string name() const
 	{
-		if (meta.script_name.empty())
+		if (meta.get().script_name.empty())
 			return fmt::format("{}-{}", ScriptTypeToString(id.type), id.index);
 		else
-			return fmt::format("{}-{}-{}", ScriptTypeToString(id.type), id.index, meta.script_name);
+			return fmt::format("{}-{}-{}", ScriptTypeToString(id.type), id.index, meta.get().script_name);
 	}
 	
 	bool valid() const
@@ -1731,7 +1736,7 @@ struct script_data
 	{
 		zasm_script = nullptr;
 		pc = end_pc = 0;
-		meta.zero();
+		meta.reset();
 		script_d_init.clear();
 		script_d_exports.clear();
 	}
