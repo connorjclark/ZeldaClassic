@@ -2450,6 +2450,9 @@ std::optional<JittedFunction> jit_backend_compile_function(zasm_script* script, 
 	restore_regs(state, cc);
 	cc.ret(state.vResult);
 
+	if (jit_exceeds_compile_memory_budget(fn.name(), start_pc, cc.virtRegs().size(), code.labelCount()))
+		return std::nullopt;
+
 	cc.endFunc();
 	cc.finalize();
 

@@ -1,6 +1,7 @@
 #ifndef ZAPP_H_
 #define ZAPP_H_
 
+#include <cstdint>
 #include <optional>
 #include <functional>
 #include <string>
@@ -33,6 +34,7 @@ std::optional<std::string> get_flag_string(const char* name);
 App get_app_id();
 bool is_web();
 bool is_ci();
+std::optional<uint64_t> get_physical_memory_bytes();
 void set_headless_mode();
 bool is_headless();
 void zapp_set_crash_cb(std::function<void()> cb);

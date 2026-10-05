@@ -25,6 +25,7 @@
 #ifdef __APPLE__
 #include <mach-o/dyld.h>
 #include <sys/syslimits.h>
+#include <sys/sysctl.h>
 #endif
 
 #ifdef HAS_SENTRY
@@ -326,6 +327,27 @@ bool is_ci()
 	// Cache the result, so it is not possible to ever change the result of "is_ci()".
 	static bool state = std::getenv("CI") != nullptr;
 	return state;
+}
+
+std::optional<uint64_t> get_physical_memory_bytes()
+{
+#if defined(_WIN32)
+	MEMORYSTATUSEX status;
+	status.dwLength = sizeof(status);
+	if (GlobalMemoryStatusEx(&status))
+		return status.ullTotalPhys;
+#elif defined(__APPLE__)
+	uint64_t size = 0;
+	size_t len = sizeof(size);
+	if (sysctlbyname("hw.memsize", &size, &len, nullptr, 0) == 0)
+		return size;
+#elif !defined(__EMSCRIPTEN__)
+	long pages = sysconf(_SC_PHYS_PAGES);
+	long page_size = sysconf(_SC_PAGE_SIZE);
+	if (pages > 0 && page_size > 0)
+		return (uint64_t)pages * page_size;
+#endif
+	return std::nullopt;
 }
 
 static bool headless;

@@ -121,4 +121,8 @@ std::optional<JittedFunction> jit_backend_compile_function(zasm_script* script, 
 int32_t jit_direct_enter(JittedExecutionContext* ctx, int32_t callee_start_pc);
 void jit_direct_retstack_pop();
 
+// True if asmjit would likely need too much memory to compile a function this large, in
+// which case it should be left to the interpreter.
+bool jit_exceeds_compile_memory_budget(const std::string& name, pc_t start_pc, size_t virt_regs, size_t labels);
+
 #endif

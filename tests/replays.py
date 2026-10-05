@@ -474,6 +474,9 @@ class CLIPlayerInterface:
             exe_args.append('-jit')
             exe_args.append('-jit-log')
             exe_args.append('-jit-fatal-compile-errors')
+            # By default giant functions are left to the interpreter on machines with less memory,
+            # but tests should always cover compiling them.
+            exe_args.extend(['-jit-compile-memory-budget-mb', '0'])
             # Only test the "hot code only" compilation for a few replays. For all others,
             # precompile all scripts on load.
             if not replay.name.startswith('yuurand') and not replay.name.startswith(

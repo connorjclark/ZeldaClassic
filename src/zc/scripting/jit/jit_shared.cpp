@@ -16,6 +16,8 @@
 #include "zc/zasm_pipeline.h"
 #include "zc/zasm_utils.h"
 #include "components/zasm/serialize.h"
+#include "base/zapp.h"
+#include "zconfig.h"
 #include <memory>
 #include <functional>
 
@@ -448,4 +450,30 @@ int32_t jit_direct_enter(JittedExecutionContext* ctx, int32_t callee_start_pc)
 void jit_direct_retstack_pop()
 {
 	retstack_pop();
+}
+
+// asmjit's register allocator keeps liveness bitsets for every block, so the memory needed to
+// compile a function grows with (virtual registers * labels) - measured at roughly that many
+// bytes. A few giant functions in real quests would need over a gigabyte, and scripts compile
+// in parallel, so skip any function whose estimate is over a share of physical memory.
+bool jit_exceeds_compile_memory_budget(const std::string& name, pc_t start_pc, size_t virt_regs, size_t labels)
+{
+	static uint64_t budget = []() -> uint64_t {
+		// <= 0 means no limit. The default (-1) is 1/32 of physical memory.
+		int64_t budget_mb = get_flag_int("-jit-compile-memory-budget-mb").value_or(
+			zc_get_config("ZSCRIPT", "jit_compile_memory_budget_mb", -1));
+		if (budget_mb == 0)
+			return UINT64_MAX;
+		if (budget_mb > 0)
+			return (uint64_t)budget_mb * 1024 * 1024;
+		return get_physical_memory_bytes().value_or(8ull * 1024 * 1024 * 1024) / 32;
+	}();
+
+	uint64_t estimate = (uint64_t)virt_regs * labels;
+	if (estimate <= budget)
+		return false;
+
+	jit_printf("[jit] not compiling function, would need too much memory (name: %s, start: %d, regs: %zu, labels: %zu, estimated MB: %llu)\n",
+		name.c_str(), start_pc, virt_regs, labels, (unsigned long long)(estimate / 1024 / 1024));
+	return true;
 }
