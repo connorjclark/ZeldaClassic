@@ -24,7 +24,8 @@ mapscr* ResolveMapdataScr(int32_t mapdataref)
 	return mapdata.scr;
 }
 
-ffc_handle_t ResolveMapdataFFC(int32_t mapdataref, int index)
+// Getters pass for_read, so reading an FFC that doesn't exist yet doesn't create it.
+ffc_handle_t ResolveMapdataFFC(int32_t mapdataref, int index, bool for_read = false)
 {
 	index -= 1;
 	if (BC::checkMapdataFFC(index) != SH::_NoError)
@@ -41,7 +42,7 @@ ffc_handle_t ResolveMapdataFFC(int32_t mapdataref, int index)
 	if (result.current() && result.layer == 0)
 		screen_index_offset = get_region_screen_offset(result.screen);
 
-	return result.scr->getFFCHandle(index, screen_index_offset);
+	return for_read ? result.scr->getFFCHandleForRead(index, screen_index_offset) : result.scr->getFFCHandle(index, screen_index_offset);
 }
 
 }
@@ -120,6 +121,19 @@ ffc_handle_t mapdata::resolve_ffc_handle(int index) const
 		screen_index_offset = get_region_screen_offset(screen);
 
 	return scr->getFFCHandle(index, screen_index_offset);
+}
+
+ffc_handle_t mapdata::resolve_ffc_handle_for_read(int index) const
+{
+	index -= 1;
+	if (BC::checkMapdataFFC(index) != SH::_NoError)
+		return ffc_handle_t{};
+
+	int screen_index_offset = 0;
+	if (current() && layer == 0)
+		screen_index_offset = get_region_screen_offset(screen);
+
+	return scr->getFFCHandleForRead(index, screen_index_offset);
 }
 
 ffcdata* mapdata::resolve_ffc(int index) const
@@ -278,7 +292,7 @@ int32_t mapdata_get_register(int32_t reg)
 	#define GET_MAPDATA_FFCPOS_INDEX32(member, indexbound) \
 	{ \
 		int32_t index = (GET_D(rINDEX) / 10000); \
-		if (auto handle = ResolveMapdataFFC(ri->mapdataref, index)) \
+		if (auto handle = ResolveMapdataFFC(ri->mapdataref, index, true)) \
 		{ \
 			ret = (handle.ffc->member).getZLong(); \
 		} \
@@ -291,7 +305,7 @@ int32_t mapdata_get_register(int32_t reg)
 	#define GET_MAPDATA_FFC_INDEX32(member, indexbound) \
 	{ \
 		int32_t index = (GET_D(rINDEX) / 10000); \
-		if (auto handle = ResolveMapdataFFC(ri->mapdataref, index)) \
+		if (auto handle = ResolveMapdataFFC(ri->mapdataref, index, true)) \
 		{ \
 			ret = (handle.ffc->member)*10000; \
 		} \
@@ -304,7 +318,7 @@ int32_t mapdata_get_register(int32_t reg)
 	#define GET_MAPDATA_FFC_INDEX32(member, indexbound) \
 	{ \
 		int32_t index = (GET_D(rINDEX) / 10000); \
-		if (auto handle = ResolveMapdataFFC(ri->mapdataref, index)) \
+		if (auto handle = ResolveMapdataFFC(ri->mapdataref, index, true)) \
 		{ \
 			ret = (handle.ffc->member)*10000; \
 		} \
@@ -372,7 +386,7 @@ int32_t mapdata_get_register(int32_t reg)
 			if (BC::checkBounds(d_index, 0, 7) != SH::_NoError)
 				break;
 
-			if (auto handle = ResolveMapdataFFC(ri->mapdataref, index))
+			if (auto handle = ResolveMapdataFFC(ri->mapdataref, index, true))
 				ret = handle.ffc->scrconfig.run_args[d_index];
 			else
 			{
@@ -417,7 +431,7 @@ int32_t mapdata_get_register(int32_t reg)
 		{
 			int index = GET_D(rINDEX) / 10000;
 
-			if (auto handle = ResolveMapdataFFC(ri->mapdataref, index))
+			if (auto handle = ResolveMapdataFFC(ri->mapdataref, index, true))
 			{
 				ret = (handle.data() != 0) ? 10000 : 0;
 			}
@@ -1668,7 +1682,8 @@ static ArrayRegistrar MAPDATALAYEROPACITY_registrar(MAPDATALAYEROPACITY, []{
 // The size of all these arrays is based on the highest valid FFC, but writing beyond that is
 // allowed and is a way to initialize an FFC. Therefore "skipIndexCheck" is used.
 
-static ffc_handle_t resolve_ffc_handle_for_scripting_index(mapdata* mapdata, int index)
+// Getters pass for_read, so reading an FFC that doesn't exist yet doesn't create it.
+static ffc_handle_t resolve_ffc_handle_for_scripting_index(mapdata* mapdata, int index, bool for_read = false)
 {
 	bool supports_neg_indices = !get_qr(qr_OLD_SCRIPTS_INTERNAL_ARRAYS_BOUND_INDEX);
 	if (supports_neg_indices && index < 0)
@@ -1682,19 +1697,19 @@ static ffc_handle_t resolve_ffc_handle_for_scripting_index(mapdata* mapdata, int
 		}
 	}
 
-	return mapdata->resolve_ffc_handle(index);
+	return for_read ? mapdata->resolve_ffc_handle_for_read(index) : mapdata->resolve_ffc_handle(index);
 }
 
-static ffcdata* resolve_ffc_for_scripting_index(mapdata* mapdata, int index)
+static ffcdata* resolve_ffc_for_scripting_index(mapdata* mapdata, int index, bool for_read = false)
 {
-	return resolve_ffc_handle_for_scripting_index(mapdata, index).ffc;
+	return resolve_ffc_handle_for_scripting_index(mapdata, index, for_read).ffc;
 }
 
 static ArrayRegistrar MAPDATAFFCPOSSTATE_registrar(MAPDATAFFCPOSSTATE, []{
 	static ScriptingArray_ObjectComputed<mapdata, int> impl(
 		[](mapdata* mapdata){ return mapdata->scr->numFFC(); },
 		[](mapdata* mapdata, int index) -> int {
-			auto ffc_handle = resolve_ffc_handle_for_scripting_index(mapdata, index);
+			auto ffc_handle = resolve_ffc_handle_for_scripting_index(mapdata, index, true);
 			if (!ffc_handle)
 				return 0;
 			
@@ -1724,7 +1739,7 @@ static ArrayRegistrar MAPDATAFFCSET_registrar(MAPDATAFFCSET, []{
 	static ScriptingArray_ObjectComputed<mapdata, int> impl(
 		[](mapdata* mapdata){ return mapdata->scr->numFFC(); },
 		[](mapdata* mapdata, int index){
-			if (auto ffc = resolve_ffc_handle_for_scripting_index(mapdata, index))
+			if (auto ffc = resolve_ffc_handle_for_scripting_index(mapdata, index, true))
 				return ffc.cset();
 
 			return -1;
@@ -1744,7 +1759,7 @@ static ArrayRegistrar MAPDATAFFDATA_registrar(MAPDATAFFDATA, []{
 	static ScriptingArray_ObjectComputed<mapdata, int> impl(
 		[](mapdata* mapdata){ return mapdata->scr->numFFC(); },
 		[](mapdata* mapdata, int index){
-			if (auto ffc = resolve_ffc_handle_for_scripting_index(mapdata, index))
+			if (auto ffc = resolve_ffc_handle_for_scripting_index(mapdata, index, true))
 				return ffc.data();
 
 			return -1;
@@ -1764,7 +1779,7 @@ static ArrayRegistrar MAPDATAFFDELAY_registrar(MAPDATAFFDELAY, []{
 	static ScriptingArray_ObjectComputed<mapdata, int> impl(
 		[](mapdata* mapdata){ return mapdata->scr->numFFC(); },
 		[](mapdata* mapdata, int index) -> int {
-			if (auto ffc = resolve_ffc_for_scripting_index(mapdata, index))
+			if (auto ffc = resolve_ffc_for_scripting_index(mapdata, index, true))
 				return ffc->delay;
 
 			return -1;
@@ -1784,7 +1799,7 @@ static ArrayRegistrar MAPDATAFFEFFECTWIDTH_registrar(MAPDATAFFEFFECTWIDTH, []{
 	static ScriptingArray_ObjectComputed<mapdata, int> impl(
 		[](mapdata* mapdata){ return mapdata->scr->numFFC(); },
 		[](mapdata* mapdata, int index) -> int {
-			if (auto ffc = resolve_ffc_for_scripting_index(mapdata, index))
+			if (auto ffc = resolve_ffc_for_scripting_index(mapdata, index, true))
 				return ffc->hit_width;
 
 			return -1;
@@ -1804,7 +1819,7 @@ static ArrayRegistrar MAPDATAFFEFFECTHEIGHT_registrar(MAPDATAFFEFFECTHEIGHT, []{
 	static ScriptingArray_ObjectComputed<mapdata, int> impl(
 		[](mapdata* mapdata){ return mapdata->scr->numFFC(); },
 		[](mapdata* mapdata, int index) -> int {
-			if (auto ffc = resolve_ffc_for_scripting_index(mapdata, index))
+			if (auto ffc = resolve_ffc_for_scripting_index(mapdata, index, true))
 				return ffc->hit_height;
 
 			return -1;
@@ -1825,7 +1840,7 @@ static ArrayRegistrar MAPDATAFFWIDTH_registrar(MAPDATAFFWIDTH, []{
 	static ScriptingArray_ObjectComputed<mapdata, int> impl(
 		[](mapdata* mapdata){ return mapdata->scr->numFFC(); },
 		[](mapdata* mapdata, int index) -> int {
-			if (auto ffc = resolve_ffc_for_scripting_index(mapdata, index))
+			if (auto ffc = resolve_ffc_for_scripting_index(mapdata, index, true))
 				return ffc->txsz;
 
 			return -1;
@@ -1846,7 +1861,7 @@ static ArrayRegistrar MAPDATAFFHEIGHT_registrar(MAPDATAFFHEIGHT, []{
 	static ScriptingArray_ObjectComputed<mapdata, int> impl(
 		[](mapdata* mapdata){ return mapdata->scr->numFFC(); },
 		[](mapdata* mapdata, int index) -> int {
-			if (auto ffc = resolve_ffc_for_scripting_index(mapdata, index))
+			if (auto ffc = resolve_ffc_for_scripting_index(mapdata, index, true))
 				return ffc->tysz;
 
 			return -1;
@@ -1867,7 +1882,7 @@ static ArrayRegistrar MAPDATAFFX_registrar(MAPDATAFFX, []{
 	static ScriptingArray_ObjectComputed<mapdata, int> impl(
 		[](mapdata* mapdata){ return mapdata->scr->numFFC(); },
 		[](mapdata* mapdata, int index) -> int {
-			if (auto ffc = resolve_ffc_for_scripting_index(mapdata, index))
+			if (auto ffc = resolve_ffc_for_scripting_index(mapdata, index, true))
 				return ffc->x.getZLong();
 
 			return -10000;
@@ -1887,7 +1902,7 @@ static ArrayRegistrar MAPDATAFFY_registrar(MAPDATAFFY, []{
 	static ScriptingArray_ObjectComputed<mapdata, int> impl(
 		[](mapdata* mapdata){ return mapdata->scr->numFFC(); },
 		[](mapdata* mapdata, int index) -> int {
-			if (auto ffc = resolve_ffc_for_scripting_index(mapdata, index))
+			if (auto ffc = resolve_ffc_for_scripting_index(mapdata, index, true))
 				return ffc->y.getZLong();
 
 			return -10000;
@@ -1907,7 +1922,7 @@ static ArrayRegistrar MAPDATAFFXDELTA_registrar(MAPDATAFFXDELTA, []{
 	static ScriptingArray_ObjectComputed<mapdata, int> impl(
 		[](mapdata* mapdata){ return mapdata->scr->numFFC(); },
 		[](mapdata* mapdata, int index) -> int {
-			if (auto ffc = resolve_ffc_for_scripting_index(mapdata, index))
+			if (auto ffc = resolve_ffc_for_scripting_index(mapdata, index, true))
 				return ffc->vx.getZLong();
 
 			return -10000;
@@ -1927,7 +1942,7 @@ static ArrayRegistrar MAPDATAFFYDELTA_registrar(MAPDATAFFYDELTA, []{
 	static ScriptingArray_ObjectComputed<mapdata, int> impl(
 		[](mapdata* mapdata){ return mapdata->scr->numFFC(); },
 		[](mapdata* mapdata, int index) -> int {
-			if (auto ffc = resolve_ffc_for_scripting_index(mapdata, index))
+			if (auto ffc = resolve_ffc_for_scripting_index(mapdata, index, true))
 				return ffc->vy.getZLong();
 
 			return -10000;
@@ -1947,7 +1962,7 @@ static ArrayRegistrar MAPDATAFFXDELTA2_registrar(MAPDATAFFXDELTA2, []{
 	static ScriptingArray_ObjectComputed<mapdata, int> impl(
 		[](mapdata* mapdata){ return mapdata->scr->numFFC(); },
 		[](mapdata* mapdata, int index) -> int {
-			if (auto ffc = resolve_ffc_for_scripting_index(mapdata, index))
+			if (auto ffc = resolve_ffc_for_scripting_index(mapdata, index, true))
 				return ffc->ax.getZLong();
 
 			return -10000;
@@ -1967,7 +1982,7 @@ static ArrayRegistrar MAPDATAFFYDELTA2_registrar(MAPDATAFFYDELTA2, []{
 	static ScriptingArray_ObjectComputed<mapdata, int> impl(
 		[](mapdata* mapdata){ return mapdata->scr->numFFC(); },
 		[](mapdata* mapdata, int index) -> int {
-			if (auto ffc = resolve_ffc_for_scripting_index(mapdata, index))
+			if (auto ffc = resolve_ffc_for_scripting_index(mapdata, index, true))
 				return ffc->ay.getZLong();
 
 			return -10000;
@@ -1987,7 +2002,7 @@ static ArrayRegistrar MAPDATAFFFLAGS_registrar(MAPDATAFFFLAGS, []{
 	static ScriptingArray_ObjectComputed<mapdata, int> impl(
 		[](mapdata* mapdata){ return mapdata->scr->numFFC(); },
 		[](mapdata* mapdata, int index) -> int {
-			if (auto ffc = resolve_ffc_for_scripting_index(mapdata, index))
+			if (auto ffc = resolve_ffc_for_scripting_index(mapdata, index, true))
 				return ffc->flags;
 
 			return -1;
@@ -2010,7 +2025,7 @@ static ArrayRegistrar MAPDATAFFLINK_registrar(MAPDATAFFLINK, []{
 	static ScriptingArray_ObjectComputed<mapdata, int> impl(
 		[](mapdata* mapdata){ return mapdata->scr->numFFC(); },
 		[](mapdata* mapdata, int index) -> int {
-			if (auto ffc = resolve_ffc_for_scripting_index(mapdata, index))
+			if (auto ffc = resolve_ffc_for_scripting_index(mapdata, index, true))
 				return ffc->link;
 
 			return -1;
@@ -2032,7 +2047,7 @@ static ArrayRegistrar MAPDATAFFSCRIPT_registrar(MAPDATAFFSCRIPT, []{
 	static ScriptingArray_ObjectComputed<mapdata, int> impl(
 		[](mapdata* mapdata){ return mapdata->scr->numFFC(); },
 		[](mapdata* mapdata, int index) -> int {
-			if (auto ffc = resolve_ffc_for_scripting_index(mapdata, index))
+			if (auto ffc = resolve_ffc_for_scripting_index(mapdata, index, true))
 				return ffc->scrconfig.script;
 
 			return -1;
@@ -2054,12 +2069,12 @@ static ArrayRegistrar MAPDATAFFINITIALISED_registrar(MAPDATAFFINITIALISED, []{
 	static ScriptingArray_ObjectComputed<mapdata, bool> impl(
 		[](mapdata* mapdata){ return mapdata->scr->numFFC(); },
 		[](mapdata* mapdata, int index) -> bool {
-			if (auto ffc = resolve_ffc_for_scripting_index(mapdata, index))
+			if (auto ffc = resolve_ffc_for_scripting_index(mapdata, index, true))
 				return get_ffc_script_engine_data(ffc->index).initialized;
 			return false;
 		},
 		[](mapdata* mapdata, int index, bool value){
-			if (auto ffc = resolve_ffc_for_scripting_index(mapdata, index))
+			if (auto ffc = resolve_ffc_for_scripting_index(mapdata, index, true))
 				get_ffc_script_engine_data(ffc->index).initialized = value;
 		}
 	);
