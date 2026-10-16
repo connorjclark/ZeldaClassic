@@ -55,6 +55,56 @@ recompiled, so script-scope variables may be added, removed, or reordered freely
 variable changed between `int` and `long` keeps its values' numbers. If a variable with
 values set is renamed, the editor asks which variable it became when assigning slots.
 
+Converting from `InitD[]`
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+A script that takes its setup values as `run()` parameters (`InitD[]`) can be converted
+to exported variables without setting every placement up again. Replace the parameters
+with exported variables of the same names, and remove all of `run()`'s parameters:
+
+.. zscript::
+
+	// Before
+	ffc script Spinner
+	{
+		void run(int speed, int radius)
+		{
+			// ...
+		}
+	}
+
+	// After
+	ffc script Spinner
+	{
+		@Export("Speed")
+		nonstatic int speed;
+		@Export("Radius")
+		nonstatic int radius;
+
+		void run()
+		{
+			// ...
+		}
+	}
+
+When the script is compiled, each placement's `InitD[]` values are copied to the exported
+variables of the same name - including values of `0`, so the script behaves as it did.
+
+When assigning slots, the editor lists each parameter that has values set, with the
+variable it will be copied to - initially the one of the same name. Check it before
+pressing OK: a misspelled variable shows up as "(Discard values)", and can be picked from
+the list instead. Cancel leaves the quest as it was, so the script can be fixed and
+compiled again.
+
+- This only happens if the new `run()` has no parameters at all. Converting only some of
+  the parameters copies nothing.
+- Parameters are matched by name, not by order, so the variables may be declared in any
+  order.
+- A variable that already has a value set for a placement keeps it.
+- A parameter changed between `int` and `long` keeps its values' numbers.
+- The `InitD[]` values themselves are left as they were, so a script that reads
+  `this->InitD[]` directly keeps working.
+
 A value in [square brackets] indicates an 'optional' value.
 
 Many of these annotations conflict with one another, and cannot be used together. The notable exception
