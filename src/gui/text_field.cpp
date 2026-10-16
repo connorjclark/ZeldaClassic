@@ -346,16 +346,24 @@ std::string_view TextField::getText()
 	else
 		return std::string_view("", 1);
 }
-void TextField::setBounds(Bounds bounds)
+void TextField::setBounds(Bounds bounds, bool clampShown)
 {
 	lbound = bounds.low;
 	ubound = bounds.high;
 	bounds_set = true;
-	if(hasBounds())
+	if(hasBounds() && clampShown)
 		startVal = vbound(startVal, lbound, ubound);
 	check_len(1);
 }
 int32_t TextField::getVal()
+{
+	int32_t value = getRawVal();
+	if(hasBounds())
+		return vbound(value, lbound, ubound);
+	return value;
+}
+
+int32_t TextField::getRawVal()
 {
 	int32_t value=0;
 	switch(tfType)
@@ -419,8 +427,6 @@ int32_t TextField::getVal()
 		}
 	}
 	
-	if(hasBounds())
-		return vbound(value, lbound, ubound);
 	return value;
 }
 
@@ -748,6 +754,22 @@ void TextField::applyFont(FONT* newFont)
 	Widget::applyFont(newFont);
 }
 
+void TextField::handleLostFocus()
+{
+	if(!edited)
+		return;
+	edited = false;
+	// A value already set (ex. shown unclamped - see setBounds) isn't changed
+	// just by leaving the field, only one the user typed.
+	int32_t raw = getRawVal(), val = getVal();
+	if(raw == val)
+		return;
+	setVal(val);
+	if(alDialog)
+		alDialog->d2 = std::min<int32_t>(alDialog->d2, strlen(buffer.get()));
+	if(onValChanged) onValChanged(tfType, getText(), val);
+}
+
 int32_t TextField::onEvent(int32_t event, MessageDispatcher& sendMessage)
 {
 	int32_t message = -1;
@@ -758,6 +780,7 @@ int32_t TextField::onEvent(int32_t event, MessageDispatcher& sendMessage)
 			break;
 
 		case geCHANGE_VALUE:
+			edited = true;
 			if(!isSwapType())
 			{
 				message = onValueChangedMsg;
@@ -772,6 +795,7 @@ int32_t TextField::onEvent(int32_t event, MessageDispatcher& sendMessage)
 		}
 
 		case geUPDATE_SWAP:
+			edited = true;
 			if(isSwapType())
 			{
 				message = onValueChangedMsg;

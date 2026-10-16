@@ -22,6 +22,23 @@ void findScrollingPane(DIALOG* d, DIALOG** sp, int32_t* index)
 
 int32_t newGUIProcImpl(int32_t msg, DIALOG* d, int32_t c, int32_t (*base)(int32_t, DIALOG*, int32_t))
 {
+	// An object asked to give up focus (MSG_LOSTFOCUS) can refuse, but loses
+	// it anyway if another object takes it - see offer_focus, which then
+	// redraws it without D_GOTFOCUS. So tell the widget at that redraw.
+	static DIALOG* lost_focus_pending = nullptr;
+	if(d->flags&D_NEW_GUI)
+	{
+		if(msg == MSG_LOSTFOCUS)
+			lost_focus_pending = d;
+		else if(msg == MSG_DRAW && d == lost_focus_pending)
+		{
+			lost_focus_pending = nullptr;
+			if(!(d->flags&D_GOTFOCUS))
+				if(Widget* w = DialogRunner::findWidget(d))
+					w->handleLostFocus();
+		}
+	}
+
 	// Tooltips: any widget with tooltip text shows it while hovered.
 	if(d->flags&D_NEW_GUI)
 	{
@@ -30,7 +47,7 @@ int32_t newGUIProcImpl(int32_t msg, DIALOG* d, int32_t c, int32_t (*base)(int32_
 		case MSG_GOTMOUSE:
 			if(Widget* w = DialogRunner::findWidget(d))
 				if(!w->getTooltip().empty())
-					gui_tooltip_show(w->getTooltip(), d->x, d->y, d->w, d->h);
+					gui_tooltip_show(w->getTooltip(), d->x, d->y, d->w, d->h, w->isInvalid());
 			break;
 
 		case MSG_LOSTMOUSE:
