@@ -850,7 +850,7 @@ def unit_tests(ctx: CiContext, args):
         )
 
     logger.info("Discovering and running unittests...")
-    run_python_cmd("-m unittest -v --durations 0 discover tests", env=env)
+    run_python_cmd(".github/workflows/run_unit_durations.py", env=env)
 
     logger.info("Running pytest unit tests...")
     run_python_cmd("-m pytest tests/test_replay_harness.py", env=env)
