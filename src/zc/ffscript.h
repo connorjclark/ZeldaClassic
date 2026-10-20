@@ -960,6 +960,13 @@ struct ScriptExecState
 	int32_t sarg1, sarg2, sarg3;
 	const std::vector<int32_t>* sargvec;
 	const std::string* sargstr;
+	// The register being read or written, for error messages.
+	uint32_t current_zasm_register;
+	// A command's request to stop the script (like RUNSCRIPT_SELFDELETE), not yet acted on.
+	int32_t earlyretval;
+	// The position of a combo whose script was cleared, so a combo script can tell it was
+	// replaced and stop.
+	int32_t combopos_modified;
 
 	static ScriptExecState save();
 	void restore() const;

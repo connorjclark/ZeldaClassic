@@ -442,6 +442,7 @@ zc_randgen script_rnggens[MAX_USER_RNGS];
 FONT *get_zc_font(int index);
 
 int32_t combopos_modified = -1;
+int32_t earlyretval = -1;
 static std::vector<word> combo_id_cache;
 
 int32_t CScriptDrawingCommands::GetCount()
@@ -690,6 +691,9 @@ ScriptExecState ScriptExecState::save()
 		.sarg3 = ::sarg3,
 		.sargvec = ::sargvec,
 		.sargstr = ::sargstr,
+		.current_zasm_register = ::current_zasm_register,
+		.earlyretval = ::earlyretval,
+		.combopos_modified = ::combopos_modified,
 	};
 }
 
@@ -707,6 +711,9 @@ void ScriptExecState::restore() const
 	::sarg3 = sarg3;
 	::sargvec = sargvec;
 	::sargstr = sargstr;
+	::current_zasm_register = current_zasm_register;
+	::earlyretval = earlyretval;
+	::combopos_modified = combopos_modified;
 }
 
 //START HELPER FUNCTIONS
@@ -2919,7 +2926,6 @@ static int get_ref(int arg)
 	return ri->refs[(int)*ref];
 }
 
-int32_t earlyretval = -1;
 
 // Inline fast path for the hottest array element accesses (the pod opcodes and
 // the JIT's pod helpers): a cached plain (non-internal) array with an in-bounds
