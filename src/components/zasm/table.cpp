@@ -2713,7 +2713,9 @@ static constexpr auto make_script_command_flags()
 		flags[sc.command] = sc.flags;
 	return flags;
 }
-extern const std::array<byte, NUMCOMMANDS> script_command_flags = make_script_command_flags();
+// constinit: the inline predicates in table.h read this, possibly during another file's static
+// initialization, so it must never be dynamically initialized.
+extern constinit const std::array<byte, NUMCOMMANDS> script_command_flags = make_script_command_flags();
 
 const script_command* get_script_command(int command)
 {
