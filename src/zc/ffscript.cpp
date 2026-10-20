@@ -678,7 +678,7 @@ size_t gen_frozen_index;
 
 ScriptExecState ScriptExecState::save()
 {
-	return {
+	ScriptExecState state{
 		.ri = ::ri,
 		.curscript = ::curscript,
 		.stack = ::stack,
@@ -695,6 +695,9 @@ ScriptExecState ScriptExecState::save()
 		.earlyretval = ::earlyretval,
 		.combopos_modified = ::combopos_modified,
 	};
+	// The nested run starts without the outer script's pending stop request (restore puts it back).
+	::earlyretval = -1;
+	return state;
 }
 
 void ScriptExecState::restore() const
@@ -713,7 +716,9 @@ void ScriptExecState::restore() const
 	::sargstr = sargstr;
 	::current_zasm_register = current_zasm_register;
 	::earlyretval = earlyretval;
-	::combopos_modified = combopos_modified;
+	// Keep a combo the nested run flagged as replaced - it may be the outer combo script's own.
+	if (::combopos_modified == -1)
+		::combopos_modified = combopos_modified;
 }
 
 //START HELPER FUNCTIONS
