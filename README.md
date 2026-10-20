@@ -14,7 +14,7 @@ Website: [zquestclassic.com](https://zquestclassic.com)
 
 [Our Discord](https://discord.gg/uStAnHJhPM)
 
-We support Windows (Win7+), OSX (12+), and Linux. There is also an experimental [web version](https://zquestclassic.com/play/) that can also be played on mobile devices.
+We support Windows (Win7+), OSX (12+), and Linux (x86-64 with glibc 2.35+: Ubuntu 22.04, Debian 12, Fedora 36, SteamOS 3, or newer; needs GTK 3, OpenSSL 3 and GLU installed). There is also an experimental [web version](https://zquestclassic.com/play/) that can also be played on mobile devices.
 
 ## Development
 
