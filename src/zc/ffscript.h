@@ -964,9 +964,6 @@ struct ScriptExecState
 	uint32_t current_zasm_register;
 	// A command's request to stop the script (like RUNSCRIPT_SELFDELETE), not yet acted on.
 	int32_t earlyretval;
-	// The position of a combo whose script was cleared, so a combo script can tell it was
-	// replaced and stop.
-	int32_t combopos_modified;
 
 	[[nodiscard]] static ScriptExecState save();
 	void restore() const;
