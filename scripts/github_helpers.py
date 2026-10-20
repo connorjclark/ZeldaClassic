@@ -18,8 +18,12 @@ root_dir = script_dir.parent
 def infer_gha_platform():
     system = platform.system()
     if system == 'Windows':
-        runs_on = 'windows-2022'
-        arch = 'x64' if platform.architecture()[0] == '64bit' else 'win32'
+        if platform.machine() == 'ARM64':
+            runs_on = 'windows-11-arm'
+            arch = 'arm64'
+        else:
+            runs_on = 'windows-2022'
+            arch = 'x64' if platform.architecture()[0] == '64bit' else 'win32'
     elif system == 'Darwin':
         runs_on = 'macos-15-intel'
         arch = 'intel'

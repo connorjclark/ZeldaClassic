@@ -80,6 +80,9 @@ jobs:
         uses: actions/setup-python@v6
         with:
           python-version: '3.12'
+          # Many pinned packages have no Windows arm64 wheels; x64 Python runs
+          # under emulation there (the binaries being built/tested stay native).
+          architecture: ${{ (runner.os == 'Windows' && runner.arch == 'ARM64') && 'x64' || '' }}
           cache: pip
 
       - name: Install Python dependencies
@@ -184,13 +187,29 @@ jobs:
           path: packages/*.*
 
       - name: Setup Sentry CLI
-        if: inputs.sentry
+        if: inputs.sentry && !(runner.os == 'Windows' && runner.arch == 'ARM64')
         uses: mathieu-bour/setup-sentry-cli@dbbd0776d55f6e0e5cd7e81fa1a80f4fd0c60369
         with:
           version: '2.20.6'
           token: ${{ secrets.SENTRY_TOKEN }}
           organization: zeldaclassic
           project: zelda-classic
+
+      # setup-sentry-cli has no Windows arm64 mapping, so it fails there. Use the
+      # x86-64 binary (run under emulation) and set what the action would have.
+      - name: Setup Sentry CLI (Windows arm64)
+        if: inputs.sentry && runner.os == 'Windows' && runner.arch == 'ARM64'
+        shell: pwsh
+        env:
+          SENTRY_TOKEN: ${{ secrets.SENTRY_TOKEN }}
+        run: |
+          $dir = Join-Path $env:RUNNER_TEMP sentry-cli
+          New-Item -ItemType Directory -Force -Path $dir | Out-Null
+          Invoke-WebRequest -Uri https://downloads.sentry-cdn.com/sentry-cli/2.20.6/sentry-cli-Windows-x86_64.exe -OutFile (Join-Path $dir sentry-cli.exe)
+          Add-Content $env:GITHUB_PATH $dir
+          Add-Content $env:GITHUB_ENV "SENTRY_AUTH_TOKEN=$env:SENTRY_TOKEN"
+          Add-Content $env:GITHUB_ENV "SENTRY_ORG=zeldaclassic"
+          Add-Content $env:GITHUB_ENV "SENTRY_PROJECT=zelda-classic"
 
       - name: Verify Sentry CLI
         if: inputs.sentry
