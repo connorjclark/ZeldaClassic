@@ -2732,6 +2732,20 @@ static constexpr auto make_script_command_written_args()
 }
 extern constinit const std::array<byte, NUMCOMMANDS> script_command_written_args = make_script_command_written_args();
 
+static constexpr auto make_script_command_suspend_info()
+{
+	auto info = make_script_command_written_args();
+	for (auto& sc : command_list)
+	{
+		// command_is_suspend (which can't be used here), plus HEROLIFTGRAB: an lweapon script
+		// lifting itself stops for the rest of the frame.
+		if ((sc.flags & ARGFL_WAIT) || sc.command == RUNGENFRZSCR || sc.command == HEROLIFTGRAB)
+			info[sc.command] |= SUSPEND_INFO_COMMAND;
+	}
+	return info;
+}
+extern constinit const std::array<byte, NUMCOMMANDS> script_command_suspend_info = make_script_command_suspend_info();
+
 const script_command* get_script_command(int command)
 {
 	if (command == 0xFFFF)

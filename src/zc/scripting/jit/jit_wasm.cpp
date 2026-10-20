@@ -568,7 +568,10 @@ static void set_z_register(CompilationState& state, int r, F&& fn)
 }
 
 // Defer to the ZASM command interpreter for 1+ commands.
-static void compile_command_interpreter(CompilationState& state, const zasm_script* script, int pc, int count, bool is_wait = false)
+// is_wait: the command is a wait, so return to the run function if it waits.
+// is_stop: the command can stop the script for the rest of the frame (see instruction_is_suspend),
+// so if it does, return to the run function with the code for jit_run_script to report.
+static void compile_command_interpreter(CompilationState& state, const zasm_script* script, int pc, int count, bool is_wait = false, bool is_stop = false)
 {
 	// TODO: fast path for these commands?
 	bool needs_sp = false;
@@ -615,6 +618,20 @@ static void compile_command_interpreter(CompilationState& state, const zasm_scri
 	if (is_wait)
 	{
 		state.wasm->emitIf();
+		emit_sp_flush(state); // the run wrapper reads the global after we return
+		state.wasm->emitReturn(); // End yielder function, return to run function.
+		state.wasm->emitEnd();
+		return;
+	}
+
+	if (is_stop)
+	{
+		// A clean return reports RUNSCRIPT_OK, so pass the code via j_instance.
+		state.wasm->emitLocalTee(0); // l_idx_scratch
+		state.wasm->emitIf();
+		state.wasm->emitGlobalGet(state.g_idx_j_instance);
+		state.wasm->emitLocalGet(0); // l_idx_scratch
+		state.wasm->emitI32Store(offsetof(JittedScriptInstance, suspend_return_code));
 		emit_sp_flush(state); // the run wrapper reads the global after we return
 		state.wasm->emitReturn(); // End yielder function, return to run function.
 		state.wasm->emitEnd();
@@ -2435,10 +2452,8 @@ static std::optional<WasmAssembler> compile_function_structured(CompilationState
 
 	for (pc_t i = start_pc; i <= final_pc; i++)
 	{
-		int command = script->zasm[i].command;
-
 		// A non-yielding function can't contain these; bail defensively.
-		if (command_is_suspend(command))
+		if (instruction_is_suspend(script->zasm[i]))
 			return std::nullopt;
 	}
 
@@ -2804,7 +2819,7 @@ static std::set<pc_t> compute_dispatch_entries(const zasm_script* script, const 
 		for (pc_t i = start_pc; i <= final_pc; i++)
 		{
 			int command = script->zasm[i].command;
-			bool resume_after = command_is_suspend(command);
+			bool resume_after = instruction_is_suspend(script->zasm[i]);
 			if (command == CALLFUNC)
 			{
 				auto it = structured_zasm.start_pc_to_function.find(script->zasm[i].arg1);
@@ -2882,7 +2897,7 @@ static std::vector<YielderRegionPlan> detect_yielder_regions(const zasm_script* 
 		for (pc_t i = h_pc; i <= t_final && ok; i++)
 		{
 			int command = script->zasm[i].command;
-			if (command_is_suspend(command))
+			if (instruction_is_suspend(script->zasm[i]))
 				ok = false;
 			else if (command == GOTOTABLE || command == GOTORANGES)
 				ok = false; // region planning has no Term::Switch support; the flat lowering handles it
@@ -3216,6 +3231,23 @@ static WasmAssembler compile_function(CompilationState& state, const zasm_script
 				continue;
 			}
 
+			// The other suspends (see instruction_is_suspend): an lweapon script lifting itself
+			// stops for the rest of the frame. Like a wait, resume at the next block.
+			if (instruction_is_suspend(script->zasm[i]))
+			{
+				ASSERT(may_yield);
+
+				// j_instance->wait_index = current_block_index + 1
+				{
+					wasm.emitGlobalGet(g_idx_wait_index);
+					wasm.emitI32Const(current_block_index + 1);
+					wasm.emitI32Store();
+				}
+
+				compile_command_interpreter(state, script, i, 1, false, true);
+				continue;
+			}
+
 			if (!instruction_is_compiled(script->zasm[i]))
 			{
 				// Every command that is not compiled to WASM must go through the regular interpreter function.
@@ -3226,6 +3258,8 @@ static WasmAssembler compile_function(CompilationState& state, const zasm_script
 					if (instruction_is_compiled(script->zasm[j]))
 						break;
 					if (j == next_block_start()) // O(1) contains_block_start; see above
+						break;
+					if (instruction_is_suspend(script->zasm[j]))
 						break;
 
 					uncompiled_command_count += 1;
@@ -4063,6 +4097,12 @@ int jit_run_script(JittedScriptInstance* j_instance)
 	jit_wasm_execution_depth++;
 	int return_code = em_poll_wasm_handle(j_instance->handle_id, (uintptr_t)&ptr);
 	jit_wasm_execution_depth--;
+
+	if (return_code == RUNSCRIPT_OK && j_instance->suspend_return_code != RUNSCRIPT_OK)
+	{
+		return_code = j_instance->suspend_return_code;
+		j_instance->suspend_return_code = RUNSCRIPT_OK;
+	}
 
 	return return_code;
 }

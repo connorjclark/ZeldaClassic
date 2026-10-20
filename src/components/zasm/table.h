@@ -91,7 +91,9 @@ inline bool command_is_wait(int command)
 // can't execute inside a jitted wasm frame - see jit_wasm.cpp). Correct resume
 // depends on every consult site - CFG block splits, dispatch entries,
 // yielding-function detection, region eligibility - agreeing on this set, so
-// it lives here rather than being spelled out at each site.
+// it lives here rather than being spelled out at each site. Those sites use
+// instruction_is_suspend (zc/ffscript.h), which adds instructions that can
+// suspend because of their args.
 inline bool command_is_suspend(int command)
 {
 	return command_is_wait(command) || command == RUNGENFRZSCR;
@@ -124,6 +126,18 @@ extern const std::array<byte, NUMCOMMANDS> script_command_written_args;
 inline byte get_script_command_written_args(int command)
 {
 	return (unsigned)command < NUMCOMMANDS ? script_command_written_args[command] : 0;
+}
+
+// For instruction_is_suspend, by command: SUSPEND_INFO_COMMAND if the command itself can suspend
+// the script, plus which of its args are registers it writes (bit i for arg i), since writing some
+// registers can suspend it too. One lookup, because this is checked for every instruction each
+// time a CFG is built.
+constexpr byte SUSPEND_INFO_COMMAND = 0x80;
+extern const std::array<byte, NUMCOMMANDS> script_command_suspend_info;
+
+inline byte get_script_command_suspend_info(int command)
+{
+	return (unsigned)command < NUMCOMMANDS ? script_command_suspend_info[command] : 0;
 }
 inline bool command_is_pure(int command)
 {
