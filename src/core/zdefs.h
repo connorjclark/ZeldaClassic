@@ -1255,6 +1255,56 @@ struct DebuggerStackFrame
 	dword this_ptr;
 };
 
+// The objects a script is currently operating on (like the npc whose X a script is reading), as
+// (name, type) pairs. Most are set by the REF* register of the same name (see
+// script_ref_for_register). The type is how the engine reads the ref: some are unsigned, which
+// matters for how they compare and divide.
+#define SCRIPT_REFS(X) \
+	X(ffcref, uint32_t) \
+	X(itemdataref, int32_t) \
+	X(itemref, dword) \
+	X(npcref, dword) \
+	X(lwpnref, dword) \
+	X(ewpnref, dword) \
+	X(screenref, dword) \
+	X(npcdataref, dword) \
+	X(bitmapref, dword) \
+	X(spriteref, dword) \
+	X(spritedataref, dword) \
+	X(dmapdataref, dword) \
+	X(msgdataref, dword) \
+	X(shopdataref, dword) \
+	X(mapdataref, int32_t) \
+	X(dropsetdataref, dword) \
+	X(fileref, dword) \
+	X(directoryref, dword) \
+	X(rngref, dword) \
+	X(stackref, dword) \
+	X(paldataref, dword) \
+	X(savemenuref, dword) \
+	X(musicref, dword) \
+	X(weapdataref, dword) \
+	X(bottletyperef, dword) \
+	X(bottleshopref, dword) \
+	X(genericdataref, dword) \
+	X(combodataref, int32_t) \
+	X(comboposref, int32_t) \
+	X(combotriggerref, dword) \
+	X(portalref, int32_t) \
+	X(savportalref, int32_t) \
+	X(websocketref, int32_t) \
+	X(subscreendataref, dword) \
+	X(subscreenpageref, dword) \
+	X(subscreenwidgref, dword)
+
+enum class ScriptRef : uint8_t
+{
+#define SCRIPT_REF_ENUM(name, type) name,
+	SCRIPT_REFS(SCRIPT_REF_ENUM)
+#undef SCRIPT_REF_ENUM
+	Count
+};
+
 class refInfo
 {
 public:
@@ -1266,19 +1316,14 @@ public:
 	uint32_t retsp; //stack pointer for the return stack
 	std::vector<DebuggerStackFrame> debugger_stack_frames; // an arena indexed by retsp (see debugger_stack_frame_store).
 
-	uint32_t ffcref;
-	int32_t itemdataref;
-	dword itemref, npcref, lwpnref, ewpnref;
-	dword screenref, npcdataref, bitmapref, spriteref, spritedataref, dmapdataref, msgdataref, shopdataref;
-	int32_t mapdataref;
-	dword dropsetdataref;
-	dword fileref, directoryref, rngref, stackref, paldataref, savemenuref, musicref, weapdataref;
-	dword bottletyperef, bottleshopref, genericdataref;
-	int32_t combodataref, comboposref;
-	dword combotriggerref;
-	int32_t portalref, savportalref;
-	int32_t websocketref;
-	dword subscreendataref, subscreenpageref, subscreenwidgref;
+	// See SCRIPT_REFS. Access a ref by its name (ri->npcref()), or by its ScriptRef when that's
+	// only known at runtime (like the REF* registers).
+	int32_t refs[(int)ScriptRef::Count] = {};
+#define SCRIPT_REF_ACCESSORS(name, type) \
+	type& name() { return reinterpret_cast<type&>(refs[(int)ScriptRef::name]); } \
+	type name() const { return refs[(int)ScriptRef::name]; }
+	SCRIPT_REFS(SCRIPT_REF_ACCESSORS)
+#undef SCRIPT_REF_ACCESSORS
 
 	int32_t switchkey; //used for switch statements
 	dword thiskey, thiskey2; //used for user class 'this' pointers
