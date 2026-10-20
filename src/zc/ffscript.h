@@ -968,7 +968,7 @@ struct ScriptExecState
 	// replaced and stop.
 	int32_t combopos_modified;
 
-	static ScriptExecState save();
+	[[nodiscard]] static ScriptExecState save();
 	void restore() const;
 };
 
