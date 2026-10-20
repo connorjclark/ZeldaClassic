@@ -598,6 +598,20 @@ static void compile_command_interpreter(CompilationState& state, const zasm_scri
 	emit_get_sp(state);
 	state.wasm->emitCall(state.f_idx_do_commands);
 
+	bool moves_sp = false;
+	for (int j = 0; j < count && pc + j < (int)script->size; j++)
+	{
+		if (command_moves_sp(script->zasm[pc + j].command))
+			moves_sp = true;
+	}
+	if (moves_sp)
+	{
+		// See command_moves_sp.
+		emit_get_ri(state);
+		state.wasm->emitI32Load(4*9); // ri->sp
+		emit_set_sp(state);
+	}
+
 	if (is_wait)
 	{
 		state.wasm->emitIf();
@@ -614,7 +628,7 @@ static void compile_command_interpreter(CompilationState& state, const zasm_scri
 		if (index >= script->size)
 			break;
 
-		if (command_could_return_not_ok(script->zasm[index].command))
+		if (instruction_could_return_not_ok(script->zasm[index]))
 		{
 			could_return_not_ok = true;
 			break;
@@ -737,6 +751,11 @@ static bool command_is_compiled(int command)
 	}
 
 	return false;
+}
+
+static bool instruction_is_compiled(const ffscript& op)
+{
+	return command_is_compiled(op.command) && !jit_instruction_runs_in_interpreter(op);
 }
 
 // Maintains ri->retsp + ret_stack (the pc call stack create_stack_trace walks)
@@ -2194,14 +2213,14 @@ struct StructuredFnSink : StructSink
 
 				default:
 				{
-					if (!command_is_compiled(command))
+					if (!instruction_is_compiled(script->zasm[i]))
 					{
 						// Batch consecutive uncompiled commands into one
 						// interpreter call, up to the end of this block.
 						int count = 1;
 						for (int j = i + 1; j <= (*body_last)[b]; j++)
 						{
-							if (command_is_compiled(script->zasm[j].command))
+							if (instruction_is_compiled(script->zasm[j]))
 								break;
 							count += 1;
 						}
@@ -3197,14 +3216,14 @@ static WasmAssembler compile_function(CompilationState& state, const zasm_script
 				continue;
 			}
 
-			if (!command_is_compiled(command))
+			if (!instruction_is_compiled(script->zasm[i]))
 			{
 				// Every command that is not compiled to WASM must go through the regular interpreter function.
 				// In order to reduce function call overhead, we call into the interpreter function in batches.
 				int uncompiled_command_count = 1;
 				for (pc_t j = i + 1; j < (pc_t)script->size; j++)
 				{
-					if (command_is_compiled(script->zasm[j].command))
+					if (instruction_is_compiled(script->zasm[j]))
 						break;
 					if (j == next_block_start()) // O(1) contains_block_start; see above
 						break;

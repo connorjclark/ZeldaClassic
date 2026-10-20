@@ -2717,6 +2717,21 @@ static constexpr auto make_script_command_flags()
 // initialization, so it must never be dynamically initialized.
 extern constinit const std::array<byte, NUMCOMMANDS> script_command_flags = make_script_command_flags();
 
+static constexpr auto make_script_command_written_args()
+{
+	std::array<byte, NUMCOMMANDS> written{};
+	for (auto& sc : command_list)
+	{
+		for (int i = 0; i < 3; i++)
+		{
+			if (sc.writes_to_register(i))
+				written[sc.command] |= 1 << i;
+		}
+	}
+	return written;
+}
+extern constinit const std::array<byte, NUMCOMMANDS> script_command_written_args = make_script_command_written_args();
+
 const script_command* get_script_command(int command)
 {
 	if (command == 0xFFFF)

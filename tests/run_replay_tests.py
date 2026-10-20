@@ -471,6 +471,10 @@ if platform.system() == 'Windows' and mode == 'update':
 # TODO: weird failures in CI starting in https://github.com/ZQuestClassic/ZQuestClassic/pull/1137
 if is_web:
     skip_tests.append('garbage_collection.zplay')
+    # TODO: the wasm JIT can't resume a script that an interpreted command stopped mid-frame (an
+    # lweapon script lifting itself): it traps out, and the next frame resumes at the last wait
+    # instead of after the lift.
+    skip_tests.append('auto_bug_lifted_weapon_self.zplay')
 # When re-running an explicit batch file, run exactly what's listed.
 if not args.replay_batch:
     tests = [t for t in tests if t.name not in skip_tests]

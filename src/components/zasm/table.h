@@ -46,12 +46,12 @@ struct script_command
 	byte arr_type; //0x1 = string, 0x2 = array
 	byte flags; //ARGFL_
 
-	bool is_register(int arg) const
+	constexpr bool is_register(int arg) const
 	{
 		return arg_type[arg] == ARGTY::READ_REG || arg_type[arg] == ARGTY::WRITE_REG || arg_type[arg] == ARGTY::READWRITE_REG;
 	}
 
-	bool writes_to_register(int arg) const
+	constexpr bool writes_to_register(int arg) const
 	{
 		return arg_type[arg] == ARGTY::WRITE_REG || arg_type[arg] == ARGTY::READWRITE_REG;
 	}
@@ -109,6 +109,21 @@ bool command_writes_comparison_result(int command);
 inline bool command_could_return_not_ok(int command)
 {
 	return get_script_command_flags(command) & ARGFL_MAY_STOP;
+}
+// Returns true if writing to `reg` can stop the script doing it, like a command flagged
+// ARGFL_MAY_STOP can: an lweapon script lifting itself with Hero->LiftedWeapon.
+inline bool register_write_could_return_not_ok(int reg)
+{
+	return reg == HEROLIFTEDWPN;
+}
+
+// Which of each command's args are registers it writes, by command: bit i for arg i (see
+// script_command::writes_to_register). Commands without an entry in the command table have none.
+extern const std::array<byte, NUMCOMMANDS> script_command_written_args;
+
+inline byte get_script_command_written_args(int command)
+{
+	return (unsigned)command < NUMCOMMANDS ? script_command_written_args[command] : 0;
 }
 inline bool command_is_pure(int command)
 {

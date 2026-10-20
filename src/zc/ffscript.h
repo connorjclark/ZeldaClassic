@@ -943,6 +943,44 @@ struct triangle3Dstruct
 };
 
 int command_to_cmp(int command, int arg);
+// Returns true if running `op` can stop the script or return something other than RUNSCRIPT_OK:
+// its command can (command_could_return_not_ok), or it writes a register that can
+// (register_write_could_return_not_ok). The JIT runs these in the interpreter, which reports it.
+inline bool instruction_could_return_not_ok(const ffscript& op)
+{
+	if (command_could_return_not_ok(op.command))
+		return true;
+
+	// This is called for every instruction in several JIT compile passes, so it avoids looking up
+	// the command's args.
+	byte written = get_script_command_written_args(op.command);
+	return ((written & 1) && register_write_could_return_not_ok(op.arg1)) ||
+		((written & 2) && register_write_could_return_not_ok(op.arg2)) ||
+		((written & 4) && register_write_could_return_not_ok(op.arg3));
+}
+// For the JIT backends: true if `op` must run in the interpreter even when its command is compiled.
+// The interpreter is what acts on a script being stopped mid-frame (see
+// instruction_could_return_not_ok), and compiled code checks the result of interpreted commands.
+inline bool jit_instruction_runs_in_interpreter(const ffscript& op)
+{
+	return instruction_could_return_not_ok(op);
+}
+// Compiled code keeps its own copy of sp, so after the interpreter runs one of these commands for
+// it (see jit_instruction_runs_in_interpreter), it reloads sp from ri->sp.
+inline bool command_moves_sp(int command)
+{
+	switch (command)
+	{
+		case POP:
+		case POPARGS:
+		case PUSHR:
+		case PUSHV:
+		case PUSHARGSR:
+		case PUSHARGSV:
+			return true;
+	}
+	return false;
+}
 
 // What the interpreter's globals say about the script it is running (ri, curscript, the current
 // command's args, ...). Running a script from within another one (an npc script run by an engine
