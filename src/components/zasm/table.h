@@ -86,9 +86,9 @@ inline bool command_is_wait(int command)
 {
 	return get_script_command_flags(command) & ARGFL_WAIT;
 }
-// Waits, plus RUNGENFRZSCR: commands that suspend the script and yield
-// control back to the engine (RUNGENFRZSCR runs nested engine frames, which
-// can't execute inside a jitted wasm frame - see jit_wasm.cpp). Correct resume
+// Waits, plus RUNGENFRZSCR: commands across which the engine runs whole
+// frames, so any game state can change (RUNGENFRZSCR runs its nested frames
+// inline instead of returning to the engine, but is otherwise alike). Correct resume
 // depends on every consult site - CFG block splits, dispatch entries,
 // yielding-function detection, region eligibility - agreeing on this set, so
 // it lives here rather than being spelled out at each site. Those sites use
