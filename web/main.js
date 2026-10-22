@@ -1,7 +1,7 @@
 import { configureMount, renderSettingsPanel, setupSettingsPanel } from "./settings.js";
 import { createElement, createUrlString, fetchWithProgress, formatBytes, fsExists, fsReadAllFiles } from "./utils.js";
 import { handleFileLaunch } from "./file_launch.js";
-import { compileScriptWasmModule, compileScriptWasmModuleBatch, createScriptWasmHandle, pollScriptWasmHandle, destroyScriptWasmHandle, destroyAllScriptWasmHandles, destroyScriptWasmModule } from "./zasm.js";
+import { compileScriptWasmModule, compileScriptWasmModuleBatch, destroyScriptWasmModule } from "./zasm.js";
 
 globalThis.ZC = {
   dataOrigin: 'https://data.zquestclassic.com',
@@ -141,10 +141,6 @@ globalThis.ZC = {
   fsReadAllFiles,
   compileScriptWasmModule,
   compileScriptWasmModuleBatch,
-  createScriptWasmHandle,
-  pollScriptWasmHandle,
-  destroyScriptWasmHandle,
-  destroyAllScriptWasmHandles,
   destroyScriptWasmModule,
 };
 

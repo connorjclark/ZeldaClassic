@@ -77,7 +77,8 @@ struct CompilationState
 
 	pc_t pc;
 
-	uint8_t f_idx_set_return_value;
+	// Thrown (with the RUNSCRIPT_* code) to stop the script from any depth; caught by `run`.
+	uint32_t tag_idx_stop;
 	uint8_t f_idx_do_commands;
 	uint8_t f_idx_get_register;
 	uint8_t f_idx_set_register;
@@ -132,41 +133,14 @@ static int em_compile_wasm(const char* name, void* ptr, size_t size)
 }
 
 // Compile many modules in one suspension: the browser compiles them in
-// parallel on its internal thread pool. Writes a module id (0 = failure) per
-// entry to out_ids.
+// parallel on its internal thread pool. Writes each module's run function
+// (its function table slot, 0 = failure) to out_ids.
 EM_ASYNC_JS(void, em_compile_wasm_batch_, (int count, uintptr_t names, uintptr_t ptrs, uintptr_t sizes, uintptr_t out_ids), {
 	await ZC.compileScriptWasmModuleBatch(count, names, ptrs, sizes, out_ids);
 });
 static void em_compile_wasm_batch(int count, const char** names, void** ptrs, uint32_t* sizes, int* out_ids)
 {
 	em_compile_wasm_batch_(count, (uintptr_t)names, (uintptr_t)ptrs, (uintptr_t)sizes, (uintptr_t)out_ids);
-}
-
-EM_JS(int, em_create_wasm_handle_, (int module_id), {
-	return ZC.createScriptWasmHandle(module_id);
-});
-static int em_create_wasm_handle(int module_id)
-{
-	return em_create_wasm_handle_(module_id);
-}
-
-// Synchronous: running a script never suspends (RUNGENFRZSCR yields back to
-// run_script instead), and an async call here would unwind and rewind the
-// whole C++ stack for every script run.
-EM_JS(int, em_poll_wasm_handle_, (int id, uintptr_t ptr), {
-	return ZC.pollScriptWasmHandle(id, ptr);
-});
-static int em_poll_wasm_handle(int id, uintptr_t ptr)
-{
-	return em_poll_wasm_handle_(id, ptr);
-}
-
-EM_JS(bool, em_destroy_wasm_handle_, (int id), {
-	return ZC.destroyScriptWasmHandle(id);
-});
-bool em_destroy_wasm_handle(int id)
-{
-	return em_destroy_wasm_handle_(id);
 }
 
 EM_JS(bool, em_destroy_wasm_module_, (int id), {
@@ -188,20 +162,6 @@ static void em_compile_wasm_batch([[maybe_unused]] int count, [[maybe_unused]] c
 {
 }
 
-static int em_create_wasm_handle([[maybe_unused]] int module_id)
-{
-	return 0;
-}
-
-static int em_poll_wasm_handle([[maybe_unused]] int id, [[maybe_unused]] uintptr_t ptr)
-{
-	return 0;
-}
-
-static bool em_destroy_wasm_handle([[maybe_unused]] int id)
-{
-	return false;
-}
 
 static bool em_destroy_wasm_module([[maybe_unused]] int id)
 {
@@ -356,8 +316,7 @@ static void check_sp(CompilationState& state)
 	wasm.emitI32Const(state.pc);
 	wasm.emitI32Store(0); // ri->pc
 	wasm.emitI32Const(RUNSCRIPT_JIT_STACK_OVERFLOW);
-	wasm.emitCall(state.f_idx_set_return_value);
-	wasm.emitUnreachable(); // Bail.
+	wasm.emitThrow(state.tag_idx_stop);
 	wasm.emitEnd();
 }
 
@@ -377,8 +336,7 @@ static void check_call_limit(CompilationState& state, pc_t target_pc)
 	wasm.emitI32Const(target_pc);
 	wasm.emitI32Store(0); // ri->pc
 	wasm.emitI32Const(RUNSCRIPT_JIT_CALL_LIMIT);
-	wasm.emitCall(state.f_idx_set_return_value);
-	wasm.emitUnreachable(); // Bail.
+	wasm.emitThrow(state.tag_idx_stop);
 	wasm.emitEnd();
 }
 
@@ -658,12 +616,11 @@ static void compile_command_interpreter(CompilationState& state, const zasm_scri
 
 	if (could_return_not_ok)
 	{
-		// If command did not succeed, trap to end execution.
+		// If command did not succeed, end execution.
 		state.wasm->emitLocalTee(0); // l_idx_scratch
 		state.wasm->emitIf();
 		state.wasm->emitLocalGet(0); // l_idx_scratch
-		state.wasm->emitCall(state.f_idx_set_return_value);
-		state.wasm->emitUnreachable(); // Bail.
+		state.wasm->emitThrow(state.tag_idx_stop);
 		state.wasm->emitEnd();
 	}
 	else
@@ -1175,8 +1132,7 @@ static void compile_quit(CompilationState& state, const zasm_script* script, pc_
 {
 	compile_command_interpreter(state, script, i, 1);
 	state.wasm->emitI32Const(RUNSCRIPT_STOPPED);
-	state.wasm->emitCall(state.f_idx_set_return_value);
-	state.wasm->emitUnreachable(); // Bail.
+	state.wasm->emitThrow(state.tag_idx_stop);
 }
 
 // Emits a GOTORANGES binary search (see the opcode's comment in defines.h).
@@ -2405,8 +2361,7 @@ struct StructuredFnSink : StructSink
 			wasm.emitIf();
 			{
 				wasm.emitI32Const(RUNSCRIPT_JIT_QUIT);
-				wasm.emitCall(state->f_idx_set_return_value);
-				wasm.emitUnreachable();
+				wasm.emitThrow(state->tag_idx_stop);
 			}
 			wasm.emitEnd();
 
@@ -3479,8 +3434,7 @@ static WasmAssembler compile_function(CompilationState& state, const zasm_script
 						wasm.emitIf();
 						{
 							wasm.emitI32Const(RUNSCRIPT_JIT_QUIT);
-							wasm.emitCall(state.f_idx_set_return_value);
-							wasm.emitUnreachable();
+							wasm.emitThrow(state.tag_idx_stop);
 						}
 						wasm.emitEnd();
 
@@ -3614,7 +3568,7 @@ static bool wasm_codegen_impl(zasm_script* script, WasmCodegenResult& out)
 	state.ptr_locals = get_flag_bool("-jit-wasm-pointer-locals").value_or(true);
 	state.inline_regs = get_flag_bool("-jit-wasm-inline-regs").value_or(true);
 
-	state.f_idx_set_return_value = comp.builder.importFunction("set_return_value", 1, 0);
+	state.tag_idx_stop = comp.builder.addTag({WasmValType::I32});
 	state.f_idx_do_commands = comp.builder.importFunction("do_commands", 4, 1);
 	state.f_idx_get_register = comp.builder.importFunction("get_register", 1, 1);
 	state.f_idx_set_register = comp.builder.importFunction("set_register", 2, 0);
@@ -3658,7 +3612,7 @@ static bool wasm_codegen_impl(zasm_script* script, WasmCodegenResult& out)
 	state.g_idx_target_block_id = comp.builder.addGlobal("target_block_id");
 	state.g_idx_start_pc = comp.builder.addGlobal("start_pc");
 
-	pc_t fn_run_idx = comp.builder.declareFunction({WasmValType::I32, WasmValType::I32, WasmValType::I32, WasmValType::I32, WasmValType::I32, WasmValType::I32, WasmValType::I32, WasmValType::I32, WasmValType::I32}, {});
+	pc_t fn_run_idx = comp.builder.declareFunction({WasmValType::I32, WasmValType::I32, WasmValType::I32, WasmValType::I32, WasmValType::I32, WasmValType::I32, WasmValType::I32, WasmValType::I32, WasmValType::I32}, {WasmValType::I32});
 	comp.builder.exportFunction(fn_run_idx, "run");
 
 	auto yielding_fns = zasm_find_yielding_functions(script, structured_zasm);
@@ -3756,9 +3710,11 @@ static bool wasm_codegen_impl(zasm_script* script, WasmCodegenResult& out)
 			comp.builder.setFunctionName(fidx, fn.name());
 	}
 
-	// Create "run" entry function.
+	// Create "run" entry function. It returns RUNSCRIPT_OK when the script yields,
+	// or the code a stop throws (tag_idx_stop) from wherever it happens.
 	{
 		WasmAssembler wasm;
+		wasm.emitTry(WasmSimpleBlockType::I32);
 
 		// Put all params into globals.
 		wasm.emitLocalGet(state.l_idx_j_instance);
@@ -3837,8 +3793,7 @@ static bool wasm_codegen_impl(zasm_script* script, WasmCodegenResult& out)
 				// otherwise the script's `doscript` flag stays set and a frozen run
 				// (runGenericFrozenEngine) loops re-running it until the game ends.
 				wasm.emitI32Const(RUNSCRIPT_JIT_QUIT);
-				wasm.emitCall(state.f_idx_set_return_value);
-				wasm.emitUnreachable();
+				wasm.emitThrow(state.tag_idx_stop);
 				wasm.emitEnd();
 			}
 
@@ -3870,6 +3825,10 @@ static bool wasm_codegen_impl(zasm_script* script, WasmCodegenResult& out)
 			wasm.emitGlobalGet(state.g_idx_ret_stack_index);
 			wasm.emitI32Store(0);
 		}
+
+		wasm.emitI32Const(RUNSCRIPT_OK);
+		wasm.emitCatch(state.tag_idx_stop);
+		wasm.emitEnd(); // try
 
 		wasm.emitEnd();
 
@@ -3912,18 +3871,19 @@ static bool wasm_codegen(zasm_script* script, WasmCodegenResult& out)
 	}
 }
 
-// Wraps a browser-compiled module id (0 = the browser failed to compile).
-static JittedScript* wasm_wrap_module(zasm_script* script, WasmCodegenResult&& r, int module_id)
+// Wraps a browser-compiled module, given by the function table slot of its `run`
+// export (0 = the browser failed to compile).
+static JittedScript* wasm_wrap_module(zasm_script* script, WasmCodegenResult&& r, int run_fn)
 {
-	printf("success: %s\n", module_id ? "YES" : "NO");
-	if (!module_id)
+	printf("success: %s\n", run_fn ? "YES" : "NO");
+	if (!run_fn)
 	{
 		jit_printf("failure\n");
 		error(script, "failed to compile");
 		return nullptr;
 	}
 
-	auto fn = new JittedScript{module_id};
+	auto fn = new JittedScript{run_fn};
 	fn->resume_dispatch = std::move(r.resume_dispatch);
 	return fn;
 }
@@ -3937,8 +3897,8 @@ static JittedScript* wasm_finalize(zasm_script* script, WasmCodegenResult&& r)
 	if (script) return nullptr;
 #endif
 
-	int module_id = em_compile_wasm(r.module_name.c_str(), r.wm.data.data(), r.wm.data.size());
-	return wasm_wrap_module(script, std::move(r), module_id);
+	int run_fn = em_compile_wasm(r.module_name.c_str(), r.wm.data.data(), r.wm.data.size());
+	return wasm_wrap_module(script, std::move(r), run_fn);
 }
 
 JittedScript* jit_compile_script(zasm_script* script)
@@ -4014,14 +3974,14 @@ bool jit_precompile_scripts_impl([[maybe_unused]] const std::vector<zasm_script*
 		ptrs.push_back(items[i].result.wm.data.data());
 		sizes.push_back(items[i].result.wm.data.size());
 	}
-	std::vector<int> module_ids(indices.size());
-	em_compile_wasm_batch(indices.size(), names.data(), ptrs.data(), sizes.data(), module_ids.data());
+	std::vector<int> run_fns(indices.size());
+	em_compile_wasm_batch(indices.size(), names.data(), ptrs.data(), sizes.data(), run_fns.data());
 
 	std::vector<JittedScript*> compiled(scripts.size());
 	for (size_t k = 0; k < indices.size(); k++)
 	{
 		size_t i = indices[k];
-		compiled[i] = wasm_wrap_module(scripts[i], std::move(items[i].result), module_ids[k]);
+		compiled[i] = wasm_wrap_module(scripts[i], std::move(items[i].result), run_fns[k]);
 	}
 	for (size_t i = 0; i < scripts.size(); i++)
 		on_compiled(scripts[i], compiled[i]);
@@ -4085,18 +4045,10 @@ JittedScriptInstance* jit_create_script_impl(script_data* script, refInfo* ri, J
 		jit_printf("[jit] adopting mid-run script: %s pc: %d depth: %d\n", script->name().c_str(), (int)ri->pc, (int)ri->retsp);
 	}
 
-	int handle_id = em_create_wasm_handle(j_script->module_id);
-	if (!handle_id)
-	{
-		al_trace("[jit] Error creating wasm handle for script: %s\n", script->zasm_script->name.c_str());
-		return nullptr;
-	}
-
 	auto j_instance = new JittedScriptInstance{
 		.j_script = j_script,
 		.script = script,
 		.ri = ri,
-		.handle_id = handle_id,
 	};
 	j_instance->wait_index = adopted_wait_index;
 	j_instance->call_stack_ret_index = adopted_ret_index;
@@ -4138,6 +4090,9 @@ void jit_profiler_increment_function_back_edge([[maybe_unused]] JittedScriptInst
 // mid-batch; the wasm can't return out of the middle of an em_do_commands
 // call. So their nested scripts run interpreted instead.
 static int jit_wasm_execution_depth = 0;
+
+using WasmRunFn = int (*)(uintptr_t j_instance, uintptr_t ri, uintptr_t global_d, uintptr_t stack, uintptr_t ret_stack,
+	uintptr_t ret_stack_index, uintptr_t wait_index, int start_pc, uintptr_t script_d);
 bool jit_can_start_script()
 {
 	return jit_wasm_execution_depth == 0;
@@ -4147,19 +4102,22 @@ int jit_run_script(JittedScriptInstance* j_instance)
 {
 	extern int32_t(*stack)[MAX_STACK_SIZE];
 
-	uintptr_t ptr[9];
-	ptr[0] = (uintptr_t)&*j_instance;
-	ptr[1] = (uintptr_t)&*j_instance->ri;
-	ptr[2] = (uintptr_t)&game->global_d;
-	ptr[3] = (uintptr_t)&*stack;
-	ptr[4] = (uintptr_t)&j_instance->call_stack_rets;
-	ptr[5] = (uintptr_t)&j_instance->call_stack_ret_index;
-	ptr[6] = (uintptr_t)&j_instance->wait_index;
-	ptr[7] = j_instance->script->pc;
-	ptr[8] = (uintptr_t)j_instance->ri->script_d.data();
+	// The module's `run` export sits in the function table (see compileOneModule in
+	// web/zasm.js), so this is a plain wasm->wasm call: no JS frame for JSPI to trip
+	// on. It returns RUNSCRIPT_OK when the script yields, or the code it stopped with.
+	auto run = reinterpret_cast<WasmRunFn>(static_cast<uintptr_t>(j_instance->j_script->run_fn));
 
 	jit_wasm_execution_depth++;
-	int return_code = em_poll_wasm_handle(j_instance->handle_id, (uintptr_t)&ptr);
+	int return_code = run(
+		(uintptr_t)&*j_instance,
+		(uintptr_t)&*j_instance->ri,
+		(uintptr_t)&game->global_d,
+		(uintptr_t)&*stack,
+		(uintptr_t)&j_instance->call_stack_rets,
+		(uintptr_t)&j_instance->call_stack_ret_index,
+		(uintptr_t)&j_instance->wait_index,
+		j_instance->script->pc,
+		(uintptr_t)j_instance->ri->script_d.data());
 	jit_wasm_execution_depth--;
 
 	// A stop stores its code there right before returning cleanly (see compile_command_interpreter).
@@ -4178,7 +4136,7 @@ void jit_release(JittedScript* j_script)
 {
 	if (!j_script) return;
 
-	bool success = em_destroy_wasm_module(j_script->module_id);
+	bool success = em_destroy_wasm_module(j_script->run_fn);
 	ASSERT(success);
 	delete j_script;
 }
@@ -4274,7 +4232,3 @@ extern "C" int em_arraysize(int arrayptr, int pc)
 
 #endif
 
-JittedScriptInstance::~JittedScriptInstance()
-{
-	ASSERT(em_destroy_wasm_handle(handle_id));
-}
