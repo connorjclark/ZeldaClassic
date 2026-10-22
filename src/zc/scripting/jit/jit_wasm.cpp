@@ -3525,8 +3525,8 @@ static bool wasm_codegen_impl(zasm_script* script, WasmCodegenResult& out)
 	// STACKWRITEATVV_IF is not yet supported by the wasm codegen - always bail.
 	//
 	// RUNGENFRZSCR (generic frozen scripts) used to bail to the interpreter by
-	// default: quests using it hit a nested-script crash (fixed - see
-	// jit_can_start_script / em_create_wasm_handle) and then an rng desync in
+	// default: quests using it hit a nested-script crash (fixed; nested scripts
+	// now run jitted, as `run` is re-entrant) and then an rng desync in
 	// terror_of_necromancy_demo6 (fixed - a script that started on the interpreter
 	// was later adopted mid-run by the JIT, restarting it; see
 	// jit_create_script_impl). With both fixed the JIT handles this content, so
@@ -3612,7 +3612,8 @@ static bool wasm_codegen_impl(zasm_script* script, WasmCodegenResult& out)
 	state.g_idx_target_block_id = comp.builder.addGlobal("target_block_id");
 	state.g_idx_start_pc = comp.builder.addGlobal("start_pc");
 
-	pc_t fn_run_idx = comp.builder.declareFunction({WasmValType::I32, WasmValType::I32, WasmValType::I32, WasmValType::I32, WasmValType::I32, WasmValType::I32, WasmValType::I32, WasmValType::I32, WasmValType::I32}, {WasmValType::I32});
+	const uint32_t run_num_params = 9;
+	pc_t fn_run_idx = comp.builder.declareFunction(std::vector<WasmValType>(run_num_params, WasmValType::I32), {WasmValType::I32});
 	comp.builder.exportFunction(fn_run_idx, "run");
 
 	auto yielding_fns = zasm_find_yielding_functions(script, structured_zasm);
@@ -3712,8 +3713,31 @@ static bool wasm_codegen_impl(zasm_script* script, WasmCodegenResult& out)
 
 	// Create "run" entry function. It returns RUNSCRIPT_OK when the script yields,
 	// or the code a stop throws (tag_idx_stop) from wherever it happens.
+	//
+	// The module keeps the running script's state in its globals, and a script can
+	// run another script mid-execution (e.g. an FFC running an enemy's script) -
+	// possibly one compiled into this same module. So `run` saves every global on
+	// entry and restores them on exit, however it exits, for the outer run to
+	// continue with its own state.
 	{
+		const uint32_t num_globals = comp.builder.globals.size();
+		const uint32_t l_idx_saved_globals = run_num_params;
+		const uint32_t l_idx_return_code = l_idx_saved_globals + num_globals;
+		auto restore_globals = [&](WasmAssembler& wasm) {
+			for (uint32_t g = 0; g < num_globals; g++)
+			{
+				wasm.emitLocalGet(l_idx_saved_globals + g);
+				wasm.emitGlobalSet(g);
+			}
+		};
+
 		WasmAssembler wasm;
+		for (uint32_t g = 0; g < num_globals; g++)
+		{
+			wasm.emitGlobalGet(g);
+			wasm.emitLocalSet(l_idx_saved_globals + g);
+		}
+
 		wasm.emitTry(WasmSimpleBlockType::I32);
 
 		// Put all params into globals.
@@ -3828,11 +3852,18 @@ static bool wasm_codegen_impl(zasm_script* script, WasmCodegenResult& out)
 
 		wasm.emitI32Const(RUNSCRIPT_OK);
 		wasm.emitCatch(state.tag_idx_stop);
+		wasm.emitCatchAll();
+		restore_globals(wasm);
+		wasm.emitRethrow(0);
 		wasm.emitEnd(); // try
 
+		wasm.emitLocalSet(l_idx_return_code);
+		restore_globals(wasm);
+		wasm.emitLocalGet(l_idx_return_code);
 		wasm.emitEnd();
 
-		comp.builder.defineFunction(fn_run_idx, {}, wasm.finish());
+		std::vector<WasmValType> locals(num_globals + 1, WasmValType::I32);
+		comp.builder.defineFunction(fn_run_idx, locals, wasm.finish());
 	}
 
 	comp.builder.moduleName = script->name;
@@ -3993,9 +4024,9 @@ JittedScriptInstance* jit_create_script_impl(script_data* script, refInfo* ri, J
 {
 	// A fresh instance resumes from its own wait_index / call_stack_rets state,
 	// which points at the script's entry - correct only for a script that has not
-	// run yet. A script can also be mid-run here: it started on the interpreter,
-	// nested inside another executing jitted script (see jit_can_start_script),
-	// and this is a later slice. Adopting it with entry state would re-run the
+	// run yet. A script can also be mid-run here: it started on the interpreter
+	// (e.g. while the ZScript debugger was open, or excluded by -jit-bisect), and
+	// this is a later slice. Adopting it with entry state would re-run the
 	// entry on top of the stack frame the interpreter already pushed, corrupting
 	// the script (this was the terror_of_necromancy rng desync). Instead,
 	// translate the interpreter's resume state: at a yield, ri->pc and every live
@@ -4062,42 +4093,8 @@ void jit_profiler_increment_function_back_edge([[maybe_unused]] JittedScriptInst
 	// Not used - the wasm backend currently only supports precompiling scripts.
 }
 
-// Depth of the currently-executing jitted wasm script(s). A jitted script that
-// runs a nested script (e.g. an FFC that runs an enemy's script mid-frame) does
-// so while its own em_poll_wasm_handle call is still on the stack, and a nested
-// jitted run would clobber the outer script's state in two places:
-// - A module keeps the running script's state (sp, the ri/stack pointers, the
-//   call stack, wait_index, ...) in its globals, so a nested run of the same
-//   module (e.g. two scripts of one @single chunk) would leave the outer script
-//   running on the inner one's state.
-// - The JS side (pollScriptWasmHandle) keeps the running script's return value
-//   in one module-level variable, so a nested poll would clobber the outer
-//   script's sentinel and an outer trap would then be reported as a clean
-//   return.
-// So the nested script must run on the interpreter. run_script consults
-// jit_can_start_script() for this.
-//
-// This is the general-case escape hatch; the RUNGENFRZSCR yield lowering is
-// the optimized protocol for the one command where nesting is the purpose.
-// RUNGENFRZSCR deterministically hands a whole engine frame to the engine and
-// has clean resume semantics (one result register, resume at the next pc), so
-// it earns a dispatch entry: the compiled script returns cleanly and the
-// run_script driver runs the frozen frame with NO script wasm on the stack -
-// depth 0, so scripts inside that frame may use the JIT. By contrast,
-// "commands whose engine side effects might start another script" (combo
-// triggers, enemy spawns, item pickups, ...) is a huge set that depends on
-// quest data, not opcodes - and those commands must complete synchronously,
-// mid-batch; the wasm can't return out of the middle of an em_do_commands
-// call. So their nested scripts run interpreted instead.
-static int jit_wasm_execution_depth = 0;
-
 using WasmRunFn = int (*)(uintptr_t j_instance, uintptr_t ri, uintptr_t global_d, uintptr_t stack, uintptr_t ret_stack,
 	uintptr_t ret_stack_index, uintptr_t wait_index, int start_pc, uintptr_t script_d);
-bool jit_can_start_script()
-{
-	return jit_wasm_execution_depth == 0;
-}
-
 int jit_run_script(JittedScriptInstance* j_instance)
 {
 	extern int32_t(*stack)[MAX_STACK_SIZE];
@@ -4107,7 +4104,6 @@ int jit_run_script(JittedScriptInstance* j_instance)
 	// on. It returns RUNSCRIPT_OK when the script yields, or the code it stopped with.
 	auto run = reinterpret_cast<WasmRunFn>(static_cast<uintptr_t>(j_instance->j_script->run_fn));
 
-	jit_wasm_execution_depth++;
 	int return_code = run(
 		(uintptr_t)&*j_instance,
 		(uintptr_t)&*j_instance->ri,
@@ -4118,7 +4114,6 @@ int jit_run_script(JittedScriptInstance* j_instance)
 		(uintptr_t)&j_instance->wait_index,
 		j_instance->script->pc,
 		(uintptr_t)j_instance->ri->script_d.data());
-	jit_wasm_execution_depth--;
 
 	// A stop stores its code there right before returning cleanly (see compile_command_interpreter).
 	// Clear it either way, so it can't be reported on a later frame.
