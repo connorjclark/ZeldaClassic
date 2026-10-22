@@ -88,10 +88,14 @@ function onSetReturnValue(value) {
 // only executes while Asyncify is in the Normal state, and the sync engine
 // callbacks never unwind (RUNGENFRZSCR - the one command that suspends the
 // script - yields back to run_script instead; see jit_wasm.cpp).
+//
+// With JSPI, only `main` is wrapped (asyncExports holds it), so every other
+// export already is the raw function.
 function rawEngineExport(name) {
   const wrapped = Module['_' + name];
   assert(wrapped, `no such engine export: ${name}`);
   const asyncify = globalThis.Asyncify;
+  if (asyncify?.asyncExports) return wrapped;
   if (asyncify?.funcWrappers) {
     for (const [original, wrapper] of asyncify.funcWrappers) {
       if (wrapper === wrapped) return original;
