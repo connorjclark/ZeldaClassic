@@ -1,12 +1,3 @@
-/** @type {Map<number, WebAssembly.Instance>} */
-const wasmInstances = new Map();
-/** @type {Map<number, string>} */
-const wasmModuleNames = new Map();
-let nextWasmModuleId = 1;
-
-/** @type {Map<number, {id: number, moduleInstance: WebAssembly.Instance, name: string}>} */
-const scriptHandles = new Map();
-
 const emFunctions = {
   doCommands: null,
   getRegister: null,
@@ -14,16 +5,6 @@ const emFunctions = {
   runtimeDebug: null,
   logError: null,
 };
-
-let nextHandleId = 1;
-function createScriptHandle(moduleId) {
-  const id = nextHandleId++;
-  const name = `${id} - ${wasmModuleNames.get(moduleId)}`;
-  const instance = wasmInstances.get(moduleId);
-  const scriptHandle = { id, instance, name };
-  scriptHandles.set(id, scriptHandle);
-  return scriptHandle;
-}
 
 function assert(value, message) {
   if (!value) {
@@ -69,11 +50,6 @@ function waitForNextWorkerMessage(worker) {
   });
 }
 
-let currentReturnValue;
-function onSetReturnValue(value) {
-  currentReturnValue = value;
-}
-
 // Returns the engine's raw wasm export for an exported C function, so it can be
 // bound as a script-module import and called wasm->wasm with no JS frame. These
 // imports are on the script hot path (get/set_register per engine-register
@@ -111,12 +87,10 @@ async function compileOneModule(name, ptr, size) {
   try {
     const buffer = new Uint8Array(Module.wasmMemory.buffer, ptr, size);
     const module = await WebAssembly.compile(buffer);
-    const id = nextWasmModuleId++;
 
     const instance = await WebAssembly.instantiate(module, {
       env: {
         memory: Module.wasmMemory,
-        set_return_value: onSetReturnValue,
         do_commands: emFunctions.doCommands,
         get_register: emFunctions.getRegister,
         set_register: emFunctions.setRegister,
@@ -136,9 +110,9 @@ async function compileOneModule(name, ptr, size) {
       },
     });
 
-    wasmInstances.set(id, instance);
-    wasmModuleNames.set(id, name);
-    return id;
+    // C++ calls `run` through the function table (see jit_run_script), with no JS
+    // frame in between. Its table slot also identifies the module.
+    return Module.addFunction(instance.exports.run);
   } catch (err) {
     console.error(`error compiling ${name}`, err);
     return 0;
@@ -175,78 +149,11 @@ export async function compileScriptWasmModuleBatch(count, namesPtr, ptrsPtr, siz
   }
 }
 
-export function createScriptWasmHandle(moduleId) {
-  assertMainThread();
-
-  const instance = wasmInstances.get(moduleId);
-  if (!instance) return 0;
-
-  const { id } = createScriptHandle(moduleId);
-  return id;
-}
-
-// Runs the script until it yields (waits) or stops.
-export function pollScriptWasmHandle(handleId, ptr) {
-  assertMainThread();
-
-  const scriptHandle = scriptHandles.get(handleId);
-  if (!scriptHandle) return false;
-
-  const i32 = heapI32();
-  const a = i32[ptr/4];
-  const b = i32[ptr/4+1];
-  const c = i32[ptr/4+2];
-  const d = i32[ptr/4+3];
-  const e = i32[ptr/4+4];
-  const f = i32[ptr/4+5];
-  const g = i32[ptr/4+6];
-  const h = i32[ptr/4+7];
-  const i = i32[ptr/4+8];
-  const args = [a, b, c, d, e, f, g, h, i];
-  scriptHandle.args = args;
-
-  const RUNSCRIPT_OK = 0;
-  const RUNSCRIPT_ERROR = 1;
-  
-  currentReturnValue = -1;
-  try {
-    // This is expected to throw if the script execution must stop.
-    // This can be for expected reasons (the script was deleted via RUNSCRIPT_SELFDELETE),
-    // or for fatal errors. To mark which, before the script stops it calls set_return_value.
-    scriptHandle.instance.exports.run(...args);
-    currentReturnValue = RUNSCRIPT_OK;
-  } catch (err) {
-    if (currentReturnValue === -1) currentReturnValue = RUNSCRIPT_ERROR;
-    if (currentReturnValue == RUNSCRIPT_ERROR) {
-      console.error(err);
-      return currentReturnValue;
-    }
-  }
-
-  return currentReturnValue;
-}
-
-export function destroyScriptWasmHandle(handleId) {
-  assertMainThread();
-
-  const scriptHandle = scriptHandles.get(handleId);
-  if (!scriptHandle) return false;
-
-  scriptHandles.delete(handleId);
-  return true;
-}
-
-export function destroyAllScriptWasmHandles() {
-  for (const handleId of scriptHandles.keys()) {
-    destroyScriptWasmHandle(handleId);
-  }
-}
-
 // Called (via em_destroy_wasm_module) when compiled scripts are released, e.g.
 // loading a different quest in the same session.
-export function destroyScriptWasmModule(moduleId) {
+export function destroyScriptWasmModule(runFn) {
   assertMainThread();
 
-  wasmModuleNames.delete(moduleId);
-  return wasmInstances.delete(moduleId);
+  Module.removeFunction(runFn);
+  return true;
 }

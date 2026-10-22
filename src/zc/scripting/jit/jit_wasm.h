@@ -8,7 +8,8 @@
 
 struct JittedScript
 {
-	int module_id;
+	// The function table slot of the compiled module's `run` export.
+	int run_fn;
 	// pc -> the yielder's dispatch value (cfg block id + 1) for every block its
 	// br_table can be asked to land on at runtime (see compute_dispatch_entries).
 	// Used to adopt a script mid-run: the interpreter's resume pc and live
@@ -21,7 +22,6 @@ struct JittedScriptInstance
 	JittedScript* j_script;
 	script_data* script;
 	refInfo* ri;
-	int handle_id;
 	pc_t call_stack_rets[MAX_CALL_FRAMES];
 	pc_t call_stack_ret_index;
 	// nth WaitX instruction last execution stopped at. If 0, then the script has not run yet.
@@ -38,8 +38,6 @@ struct JittedScriptInstance
 	// itself - see instruction_is_suspend), the code to report, like RUNSCRIPT_SELFREMOVE. A
 	// return from compiled code always reports RUNSCRIPT_OK otherwise.
 	int32_t suspend_return_code = RUNSCRIPT_OK;
-
-	~JittedScriptInstance();
 };
 
 #endif

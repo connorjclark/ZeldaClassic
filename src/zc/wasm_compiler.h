@@ -105,6 +105,10 @@ struct WasmAssembler : public WasmWriter {
     Loop = 0x03,
     If = 0x04,
     Else = 0x05,
+    // Legacy exception handling (what emscripten emits by default).
+    Try = 0x06,
+    Catch = 0x07,
+    Throw = 0x08,
     End = 0x0b,
     Br = 0x0c,
     BrIf = 0x0d,
@@ -343,6 +347,19 @@ struct WasmAssembler : public WasmWriter {
   void emitElse() { emitOp(Op::Else); }
   void emitEnd() { emitOp(Op::End); }
 
+  void emitTry(WasmSimpleBlockType type = WasmSimpleBlockType::Void) {
+    emitOp(Op::Try);
+    emit(static_cast<uint8_t>(type));
+  }
+  void emitCatch(uint32_t tag) {
+    emitOp(Op::Catch);
+    emitVarU32(tag);
+  }
+  void emitThrow(uint32_t tag) {
+    emitOp(Op::Throw);
+    emitVarU32(tag);
+  }
+
   void emitBr(uint32_t offset) {
     emitOp(Op::Br);
     emitVarU32(offset);
@@ -371,6 +388,7 @@ struct WasmModuleWriter : WasmWriter {
     Code = 10,
     Data = 11,
     DataCount = 12,
+    Tag = 13,
   };
 
   enum class DefinitionKind : uint8_t {
@@ -419,6 +437,22 @@ struct WasmModuleWriter : WasmWriter {
     }
     patchVarU32(patchLoc, code.size() - start);
   }
+  // Each tag is the index of its function type (params only, no results).
+  void emitTagSection(const std::vector<uint32_t> &tags) {
+    if (tags.empty())
+      return;
+
+    emitSectionId(SectionId::Tag);
+    size_t patchLoc = emitPatchableVarU32();
+    size_t start = code.size();
+    emitVarU32(tags.size());
+    for (uint32_t type : tags) {
+      emit(0); // Attribute: exception.
+      emitVarU32(type);
+    }
+    patchVarU32(patchLoc, code.size() - start);
+  }
+
   void emitMemorySection() {
     emitSectionId(SectionId::Memory);
     emitVarU32(1);
@@ -615,6 +649,7 @@ struct WasmModuleBuilder {
   std::vector<std::pair<uint32_t, std::string>> function_imports;
   std::vector<std::pair<uint32_t, std::string>> function_exports;
   std::vector<std::string> globals;
+  std::vector<uint32_t> tags;
   uint32_t startFunction = -1;
 
   uint32_t internFuncType(const WasmResultType &params,
@@ -629,6 +664,7 @@ struct WasmModuleBuilder {
   uint32_t importFunction(std::string name, int num_params, int num_returns);
   void exportFunction(uint32_t fid, std::string name);
   uint32_t addGlobal(std::string name);
+  uint32_t addTag(const WasmResultType &params);
   void addIndirectFunction(uint32_t idx);
   void recordStartFunction(uint32_t idx);
 
