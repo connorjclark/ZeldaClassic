@@ -131,10 +131,9 @@ static int em_compile_wasm(const char* name, void* ptr, size_t size)
 	return em_compile_wasm_(name, ptr, size);
 }
 
-// Compile many modules in ONE asyncify round-trip: the browser compiles them
-// in parallel on its internal thread pool, and the per-module cost of
-// unwinding/rewinding the whole C++ stack (which dominated serial precompile)
-// is paid once. Writes a module id (0 = failure) per entry to out_ids.
+// Compile many modules in one suspension: the browser compiles them in
+// parallel on its internal thread pool. Writes a module id (0 = failure) per
+// entry to out_ids.
 EM_ASYNC_JS(void, em_compile_wasm_batch_, (int count, uintptr_t names, uintptr_t ptrs, uintptr_t sizes, uintptr_t out_ids), {
 	await ZC.compileScriptWasmModuleBatch(count, names, ptrs, sizes, out_ids);
 });
@@ -3954,8 +3953,7 @@ JittedScript* jit_compile_script(zasm_script* script)
 // engine worker pool is unavailable there (see get_worker_thread_count), but
 // raw pthreads work (the runtime preallocates a pool). Two serial costs are
 // attacked: codegen runs on worker threads, and the browser-compile step -
-// which must be issued from the main thread, and whose per-module asyncify
-// round-trip dominated serial precompile - is issued as ONE batch
+// which must be issued from the main thread - is issued as ONE batch
 // (em_compile_wasm_batch), letting the browser compile every module in
 // parallel on its own pool.
 bool jit_precompile_scripts_impl([[maybe_unused]] const std::vector<zasm_script*>& scripts, [[maybe_unused]] const std::function<void(zasm_script*, JittedScript*)>& on_compiled)

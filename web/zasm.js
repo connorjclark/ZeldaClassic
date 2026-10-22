@@ -78,33 +78,12 @@ function onSetReturnValue(value) {
 // bound as a script-module import and called wasm->wasm with no JS frame. These
 // imports are on the script hot path (get/set_register per engine-register
 // access, do_commands per uncompiled-op batch), and going through JS was a
-// dominant cost for engine-heavy scripts.
-//
-// With ASYNCIFY, `Module._name` is not the raw function: the glue wraps every
-// wasm export in a JS bookkeeping wrapper (Asyncify.instrumentFunction), and the
-// raw exports are only reachable under minified names. But the glue records
-// original -> wrapper in Asyncify.funcWrappers, so invert that to recover the
-// raw function. Bypassing the wrapper is safe for these imports: script wasm
-// only executes while Asyncify is in the Normal state, and the sync engine
-// callbacks never unwind (RUNGENFRZSCR - the one command that suspends the
-// script - yields back to run_script instead; see jit_wasm.cpp).
-//
-// With JSPI, only `main` is wrapped (asyncExports holds it), so every other
-// export already is the raw function.
+// dominant cost for engine-heavy scripts. The wasm JIT only runs in the JSPI
+// build, where only `main` is wrapped, so every other export is the raw function.
 function rawEngineExport(name) {
-  const wrapped = Module['_' + name];
-  assert(wrapped, `no such engine export: ${name}`);
-  const asyncify = globalThis.Asyncify;
-  if (asyncify?.asyncExports) return wrapped;
-  if (asyncify?.funcWrappers) {
-    for (const [original, wrapper] of asyncify.funcWrappers) {
-      if (wrapper === wrapped) return original;
-    }
-  }
-  // Emscripten internals moved - the instrumented export still works (and still
-  // skips cwrap's per-call argument marshaling), it just pays a JS frame.
-  console.warn(`could not resolve raw wasm export for ${name}; script->engine calls will go through JS`);
-  return wrapped;
+  const fn = Module['_' + name];
+  assert(fn, `no such engine export: ${name}`);
+  return fn;
 }
 
 function ensureEmFunctions() {
@@ -175,8 +154,7 @@ export async function compileScriptWasmModule(name, ptr, size) {
 
 // Compiles many modules concurrently - the browser compiles WebAssembly on an
 // internal thread pool, so this runs in the time of the largest module rather
-// than the sum, and the (expensive) asyncify round-trip of the caller is paid
-// once instead of per module. The names/ptrs/sizes arguments point at C arrays
+// than the sum. The names/ptrs/sizes arguments point at C arrays
 // of length count; a module id (0 on failure) is written per entry to outIds.
 export async function compileScriptWasmModuleBatch(count, namesPtr, ptrsPtr, sizesPtr, outIdsPtr) {
   assertMainThread();
