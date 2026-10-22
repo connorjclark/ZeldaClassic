@@ -99,6 +99,8 @@ jobs:
       EMSDK_VERSION: 6.0.6
       # emsdk is installed fresh each run, so check the version, not file mtimes.
       CCACHE_COMPILERCHECK: string:emsdk-6.0.6
+      # Two builds (ASYNCIFY and JSPI) with different exception flags share the cache.
+      CCACHE_MAXSIZE: 1600M
 
     steps:
       # The build (workspace, emscripten cache, LFS assets, node_modules, and
@@ -188,9 +190,6 @@ jobs:
       - run: |
           git config --global user.email "you@example.com"
           git config --global user.name "Your Name"
-      - run: bash scripts/configure_emscripten.sh
-        env:
-          ZC_EMCC_CMAKE_EXTRA_FLAGS: -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
       # The wasm-opt --asyncify pass on the editor module (zquest.wasm) peaks
       # above the 16GB runner RAM, OOM-killing the job (exit 143). Add swap so
       # the link has headroom. /mnt has the large ephemeral disk.
@@ -202,6 +201,23 @@ jobs:
           sudo mkswap /mnt/swapfile
           sudo swapon /mnt/swapfile
           free -h
+
+      # Browsers that support JSPI run a JSPI build, packaged next to the ASYNCIFY
+      # one (see package_web.py). Packaging only needs its linked zplayer/zeditor.
+      - run: bash scripts/configure_emscripten.sh
+        env:
+          JSPI: 1
+          ZC_EMCC_BUILD_DIR: build_emscripten_jspi
+          ZC_EMCC_CMAKE_EXTRA_FLAGS: -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
+      - run: cmake --build build_emscripten_jspi --config RelWithDebInfo -t zplayer zeditor
+      # Its objects are in ccache now; free the disk for the second build.
+      - run: |
+          find build_emscripten_jspi -name '*.o' -delete
+          df -h /
+
+      - run: bash scripts/configure_emscripten.sh
+        env:
+          ZC_EMCC_CMAKE_EXTRA_FLAGS: -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DZC_WEB_JSPI_BUILD_DIR=${{ github.workspace }}/build_emscripten_jspi
       - run: cmake --build build_emscripten --config RelWithDebInfo -t web
       - run: ccache -s
       - name: Save ccache
@@ -238,6 +254,17 @@ jobs:
           --filter stellar_seas_intro
           --ci web
           --retries 2
+      # The above runs the JSPI build (Chrome supports it). Cover the ASYNCIFY fallback too.
+      - run: >
+          xvfb-run --auto-servernum python -Xutf8 tests/run_replay_tests.py
+          --build_folder build_emscripten/RelWithDebInfo
+          --test_results_folder .tmp/test_results_asyncify
+          --filter classic_1st_lvl1
+          --filter terror_of_necromancy_demo6_05_of_54
+          --filter stellar_seas_intro
+          --ci web
+          --retries 2
+          --extra_args "-jspi 0"
 
       - run: BUILD_FOLDER=build_emscripten/RelWithDebInfo xvfb-run --auto-servernum python -Xutf8 tests/test_zeditor.py
       - run: BUILD_FOLDER=build_emscripten/RelWithDebInfo xvfb-run --auto-servernum python -Xutf8 tests/test_zplayer.py
@@ -249,8 +276,12 @@ jobs:
           path: |
             ${{ github.workspace }}/build_emscripten/CMakeFiles/CMakeOutput.log
             ${{ github.workspace }}/build_emscripten/CMakeFiles/CMakeError.log
+            ${{ github.workspace }}/build_emscripten_jspi/CMakeFiles/CMakeOutput.log
+            ${{ github.workspace }}/build_emscripten_jspi/CMakeFiles/CMakeError.log
       - uses: actions/upload-artifact@v7
         if: failure()
         with:
           name: web test results
-          path: ${{ github.workspace }}/.tmp/test_results
+          path: |
+            ${{ github.workspace }}/.tmp/test_results
+            ${{ github.workspace }}/.tmp/test_results_asyncify
