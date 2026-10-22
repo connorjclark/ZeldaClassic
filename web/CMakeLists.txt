@@ -75,6 +75,15 @@ add_custom_command(
 )
 add_custom_target(web_zscript_playground DEPENDS npm_install_web zscript ${BUILD_FOLDER}/playground/playground.js ${BUILD_FOLDER}/playground/playground.worker.js ${BUILD_FOLDER}/playground/index.html)
 
+# A build folder configured with JSPI=1 (see scripts/configure_emscripten.sh). When set,
+# packaging also includes its zplayer/zeditor, which browsers that support JSPI run instead.
+# It must already be built, in the same configuration.
+set(ZC_WEB_JSPI_BUILD_DIR "" CACHE PATH "Build folder of a JSPI=1 web build to package alongside this one")
+set(package_web_jspi_args "")
+if(ZC_WEB_JSPI_BUILD_DIR)
+    set(package_web_jspi_args --jspi_build_folder "${ZC_WEB_JSPI_BUILD_DIR}/$<CONFIG>")
+endif()
+
 function (create_web_target target)
     add_custom_command(
         OUTPUT ${BUILD_FOLDER}/${target}.html
@@ -93,7 +102,7 @@ function (create_web_target target)
     # For packaging just this target.
     add_custom_command(
         OUTPUT web_${target}.stamp
-        COMMAND ${PYTHON} ${CMAKE_CURRENT_SOURCE_DIR}/../scripts/package_web.py --build_folder "${BUILD_FOLDER}" --target ${target}
+        COMMAND ${PYTHON} ${CMAKE_CURRENT_SOURCE_DIR}/../scripts/package_web.py --build_folder "${BUILD_FOLDER}" --target ${target} ${package_web_jspi_args}
         VERBATIM
     )
     add_custom_target(web_${target} DEPENDS web_${target}.stamp)
@@ -107,7 +116,7 @@ create_web_target(zeditor)
 # For packaging all web targets.
 add_custom_command(
     OUTPUT web.stamp
-    COMMAND ${PYTHON} ${CMAKE_CURRENT_SOURCE_DIR}/../scripts/package_web.py --build_folder "${BUILD_FOLDER}"
+    COMMAND ${PYTHON} ${CMAKE_CURRENT_SOURCE_DIR}/../scripts/package_web.py --build_folder "${BUILD_FOLDER}" ${package_web_jspi_args}
     VERBATIM
 )
 add_custom_target(web DEPENDS web.stamp)
