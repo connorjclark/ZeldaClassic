@@ -9728,11 +9728,7 @@ int32_t run_script(ScriptType type, word script, int32_t i)
 	// the per-instruction hook in run_script_int (zscript_debugger_exec). The JIT executes most
 	// commands as native code and only re-enters the interpreter for uncompiled commands, so
 	// breakpoints and line stepping would otherwise only land on those few PCs.
-	//
-	// jit_can_start_script() guards nested script runs: on the wasm backend a script that runs
-	// another script mid-execution (e.g. an FFC running an enemy's script) would need a second
-	// asyncify unwind on top of the outer script's, which traps. Nested scripts run interpreted.
-	if (jit_is_enabled() && !zscript_debugger_is_open() && jit_can_start_script() && jit_bisect_allows_this_call)
+	if (jit_is_enabled() && !zscript_debugger_is_open() && jit_bisect_allows_this_call)
 	{
 		if (!data.j_instance)
 			data.j_instance = std::shared_ptr<JittedScriptInstance>(jit_create_script_instance(curscript, ri));
@@ -9795,9 +9791,6 @@ int32_t run_script(ScriptType type, word script, int32_t i)
 			// that exposed the web-JIT nested-script crash. To reach this loop:
 			//
 			// python tests/run_replay_tests.py --build_folder build_emscripten/Release --filter terror_of_necromancy_demo6_05_of_54.zplay
-			//
-			// Without jit_can_start_script() (nested scripts run interpreted) that run
-			// traps with "unreachable" around frame 7998.
 			while (result == RUNSCRIPT_OK && j_instance->frozen_dest_reg != -1)
 			{
 				int32_t dest_reg = j_instance->frozen_dest_reg;

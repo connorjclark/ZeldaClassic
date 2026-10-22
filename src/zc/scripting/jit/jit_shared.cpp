@@ -591,12 +591,6 @@ static bool exec_script(JittedExecutionContext* ctx)
 	}
 }
 
-bool jit_can_start_script()
-{
-	// This backend runs jitted scripts as ordinary native calls, so nested
-	// jitted script execution is fine.
-	return true;
-}
 
 bool jit_precompile_scripts_impl([[maybe_unused]] const std::vector<zasm_script*>& scripts, [[maybe_unused]] const std::function<void(zasm_script*, JittedScript*)>& on_compiled)
 {

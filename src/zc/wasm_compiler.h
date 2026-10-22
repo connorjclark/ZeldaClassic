@@ -109,6 +109,8 @@ struct WasmAssembler : public WasmWriter {
     Try = 0x06,
     Catch = 0x07,
     Throw = 0x08,
+    Rethrow = 0x09,
+    CatchAll = 0x19,
     End = 0x0b,
     Br = 0x0c,
     BrIf = 0x0d,
@@ -358,6 +360,12 @@ struct WasmAssembler : public WasmWriter {
   void emitThrow(uint32_t tag) {
     emitOp(Op::Throw);
     emitVarU32(tag);
+  }
+  void emitCatchAll() { emitOp(Op::CatchAll); }
+  // Rethrows the exception caught by the try `depth` blocks out.
+  void emitRethrow(uint32_t depth) {
+    emitOp(Op::Rethrow);
+    emitVarU32(depth);
   }
 
   void emitBr(uint32_t offset) {

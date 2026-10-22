@@ -52,13 +52,6 @@ JittedScript* jit_compile_script(zasm_script* script);
 bool jit_precompile_scripts_impl(const std::vector<zasm_script*>& scripts, const std::function<void(zasm_script*, JittedScript*)>& on_compiled);
 JittedScriptInstance* jit_create_script_impl(script_data* script, refInfo* ri, JittedScript* j_script);
 int jit_run_script(JittedScriptInstance* j_instance);
-// Whether it is safe to start a (possibly nested) jitted script right now. The
-// wasm backend's asyncify-based yielding can only manage one script's unwind on
-// the stack at a time, so a script run *while another jitted wasm script is
-// already executing* must fall back to the interpreter; this returns false in
-// that case. Always true on backends where nested jit execution is fine (x64,
-// none).
-bool jit_can_start_script();
 void jit_release(JittedScript* j_script);
 
 #endif
