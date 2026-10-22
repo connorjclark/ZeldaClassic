@@ -199,12 +199,14 @@ A few AArch64-specific notes (`jit_a64.cpp`):
 
 The browser build can't emit native machine code, so `jit_wasm.cpp` compiles ZASM to a WebAssembly module instead, which the browser then compiles to machine code itself. Unlike the native backends, there is no assembler library: the backend writes the wasm binary format directly (`wasm_compiler.h`).
 
+The wasm JIT only runs in the JSPI web build (`JSPI=1 bash scripts/configure_emscripten.sh`). The fallback build for browsers without JSPI uses ASYNCIFY, and is built with `JIT_BACKEND=none`, so it runs scripts on the interpreter.
+
 ### Compilation unit and pipeline
 
 The unit of compilation is a whole ZASM chunk, compiled into one wasm module. Modern quests link all their scripts into a single `@single` chunk, so they get one big module; quests compiled before that linking existed have one chunk per script, so they produce many modules (e.g. stellar_seas builds 300+). Only precompiling is supported (no hot-function path), and it happens at quest load in two stages (`jit_precompile_scripts_impl`):
 
 1. **Codegen** (ZASM -> wasm bytes) is pure C++ and runs in parallel on background threads.
-2. **Browser compile** must be issued from the main thread. All generated modules are handed to the browser in a single batch (`em_compile_wasm_batch` -> `ZC.compileScriptWasmModuleBatch` in `web/zasm.js`), which compiles them concurrently on the browser's internal thread pool. Batching matters: issuing modules one at a time costs a full asyncify unwind/rewind of the C++ stack per module.
+2. **Browser compile** must be issued from the main thread. All generated modules are handed to the browser in a single batch (`em_compile_wasm_batch` -> `ZC.compileScriptWasmModuleBatch` in `web/zasm.js`), which compiles them concurrently on the browser's internal thread pool, in one suspension of the program.
 
 `jit_threads` applies to the codegen stage (`0` forces a fully-serial path). The engine worker pool itself stays disabled on web due to technical constraints.
 
@@ -217,15 +219,19 @@ Within a chunk, functions are split by whether they can yield (transitively reac
 
 The module exports one `run(...)` function that receives pointers (refInfo, stack, instance state, ...) and stores them in wasm globals; hot values (the script `sp`, the refInfo/stack/global-D pointers) are kept in wasm locals inside compiled code.
 
+When a module is compiled, `web/zasm.js` puts its `run` export in the engine's function table, and `jit_run_script` calls it through a function pointer. There is no JS frame between the engine and the script, so JSPI can suspend the program with script frames on the stack. `run` returns `RUNSCRIPT_OK` when the script yields. Anything that stops the script (`QUIT`, a failed command, the stack or call limit, a return from the root frame) throws the module's stop tag with a `RUNSCRIPT_*` code, from any depth, and `run` catches it and returns the code.
+
+A script can run another script mid-execution (e.g. an FFC running an enemy's script), and that one may be compiled into the same module. So `run` saves every module global on entry and restores them on exit, however it exits.
+
 Not every ZASM command is compiled (see `command_is_compiled`); runs of uncompiled commands call back into the interpreter in batches via `do_commands`. All engine callbacks (`get_register`/`set_register`/`do_commands`/...) are bound as **direct wasm->wasm imports** - `web/zasm.js` resolves the engine's raw exports (`rawEngineExport`) so script->engine calls skip JS entirely.
 
 ### Yielding and resuming
 
 A `WaitX` stores the next block's dispatch value in the instance's `wait_index` and returns cleanly from `run()`. On the next call, the run wrapper dispatches straight to that block; `call_stack_rets`/`call_stack_ret_index` restore the inlined call stack. `wait_index == 0` means "not started yet" and dispatches to the script's entry.
 
-`RUNGENFRZSCR` (generic frozen scripts) cannot run its nested engine frames inside a wasm frame - the engine advances frames via asyncify, which can't unwind through the (non-instrumented) script module. Instead it yields cleanly back to `run_script` with `frozen_dest_reg` set; the C++ driver runs the frozen engine frame, writes the result, and resumes the script (see the driver loop in `run_script`).
+`RUNGENFRZSCR` (generic frozen scripts) runs inline through the interpreter, as on the native backends: its engine frames suspend the program with the calling script's frames still on the stack.
 
-The same asyncify constraint means a script *started* while another jitted script is executing (e.g. an FFC running an enemy's script mid-frame) runs its first slices on the interpreter (`jit_can_start_script`). When the JIT later takes it over mid-run, `jit_create_script_impl` translates the interpreter's resume state: at a yield, `ri->pc` and every live `ret_stack` entry are dispatchable yielder blocks, whose dispatch values were recorded at compile time in `JittedScript::resume_dispatch`. Anything unmapped declines (an error under `jit_fatal_compile_errors`) and the script finishes its run interpreted. The native backends need none of this - they dispatch on `ri->pc` and share the interpreter's `ret_stack`, which is also what makes their hot-function upgrades trivially safe.
+A script can be mid-run when the JIT first sees it: it started on the interpreter, e.g. while the ZScript debugger was open or excluded by `-jit-run-lo`/`-jit-run-hi`. Then `jit_create_script_impl` translates the interpreter's resume state: at a yield, `ri->pc` and every live `ret_stack` entry are dispatchable yielder blocks, whose dispatch values were recorded at compile time in `JittedScript::resume_dispatch`. Anything unmapped declines (an error under `jit_fatal_compile_errors`) and the script finishes its run interpreted. The native backends need none of this - they dispatch on `ri->pc` and share the interpreter's `ret_stack`, which is also what makes their hot-function upgrades trivially safe.
 
 ## Debugging
 
@@ -257,7 +263,7 @@ It can also be useful to compile only the script you're debugging in `jit_create
 ### WASM backend
 
 - A **native build with `-DJIT_BACKEND=wasm`** generates (but can't run) the same modules - fast, execution-free codegen validation. With `-jit-save-wasm` it writes `wasm/<qst>/<module>.wasm` next to the exe; check structure with `wasm2wat <f> --enable-threads`. This is also how to verify a codegen refactor is byte-identical.
-- Each codegen strategy has an escape-hatch flag for A/B and bisection: `-jit-wasm-structured`, `-jit-wasm-structured-yielder`, `-jit-wasm-sp-local`, `-jit-wasm-pointer-locals`, `-jit-wasm-inline-regs`, `-jit-wasm-bail-on-frozen-generic` (all default on except the bail).
+- Each codegen strategy has an escape-hatch flag for A/B and bisection: `-jit-wasm-structured`, `-jit-wasm-structured-yielder`, `-jit-wasm-sp-local`, `-jit-wasm-pointer-locals`, `-jit-wasm-inline-regs` (all default on).
 - `-jit-run-lo N` / `-jit-run-hi N` force `run_script` calls outside `[lo, hi)` to the interpreter, for bisecting which invocation must be jitted to reproduce a divergence. The gate is only active when `-jit-run-hi` is set (its default of -1 disables it), so `-jit-run-lo` alone has no effect. Once the failing call is found, `-jit-run-log-call N` logs the replay frame and script that `run_script` call N runs on. `scripts/jit_runtime_debug.py` automates this against a native no-jit baseline and works on web replays (pass `--baseline_build_folder build/Release` to speed up baseline collection).
 
 ## Flags reference
@@ -279,7 +285,6 @@ Boolean flags can be negated with a `-no` prefix (e.g. `-no-jit-wasm-structured`
 | `-jit-max-piece-size N` | native | 10000 | [Split larger functions into pieces](#large-functions-are-compiled-in-pieces) of at most this many instructions (at most 15000 on a64) |
 | `-jit-save-wasm` | wasm | off | Write modules to `wasm/<qst>/` |
 | `-jit-wasm-structured`, `-jit-wasm-structured-yielder`, `-jit-wasm-sp-local`, `-jit-wasm-pointer-locals`, `-jit-wasm-inline-regs` | wasm | on | Codegen escape hatches |
-| `-jit-wasm-bail-on-frozen-generic` | wasm | off | Codegen escape hatch |
 | `-jit-run-lo N` / `-jit-run-hi N` | all | off | Bisect which `run_script` call must be jitted |
 | `-jit-run-log-call N` | all | off | Log the frame and script of `run_script` call N |
 | `-script-runtime-debug 1\|2` | all | off | Register/stack dumps per script (1) or per instruction (2) |

@@ -83,6 +83,18 @@ bash scripts/configure_emscripten.sh
 cmake --build build_emscripten --config Release -t web
 ```
 
+That builds the ASYNCIFY variant, which runs scripts on the interpreter. Browsers that support
+JSPI get a JSPI variant with the wasm JIT, built in its own folder and packaged alongside:
+
+```sh
+JSPI=1 ZC_EMCC_BUILD_DIR=build_emscripten_jspi bash scripts/configure_emscripten.sh
+cmake --build build_emscripten_jspi --config Release -t zplayer zeditor
+ZC_EMCC_CMAKE_EXTRA_FLAGS="-DZC_WEB_JSPI_BUILD_DIR=$PWD/build_emscripten_jspi" bash scripts/configure_emscripten.sh
+cmake --build build_emscripten --config Release -t web
+```
+
+`?jspi=0` or `?jspi=1` in the page URL overrides which variant runs.
+
 ## Replays
 
 You can run a small, quick set of replays like this:
