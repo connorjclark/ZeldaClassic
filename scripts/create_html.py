@@ -34,9 +34,13 @@ html = html_template
 html = replace(html, '__TARGET__', args.target)
 html = replace(html, '/*__INLINECSS__*/', (web_dir / 'styles.css').read_text())
 html = replace(html, '__IS_CI__', 'true' if CI else 'false')
+# package_web.py flips this when it packages a JSPI build alongside.
+html = replace(html, '__HAS_JSPI_BUILD__', 'false')
 
+# wasmBuildUrl is chosen in index.html. document.write keeps the script parser-blocking,
+# so the load order matches a plain <script> tag.
 scripts = [
-    f'<script src="../{args.target}.js"></script>',
+    f'<script>document.write(\'<script src="\' + wasmBuildUrl + \'{args.target}.js"><\\/script>\');</script>',
 ]
 if args.target == 'zplayer':
     scripts.append('<script src="../zplayer.data.js"></script>')

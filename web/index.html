@@ -7,7 +7,6 @@
   <meta name="viewport" content="width=device-width, user-scalable=no">
   <link rel="preload" href="https://data.zquestclassic.com/manifest.json" fetchpriority="high" as="fetch" type="application/json" crossorigin="anonymous">
   <link rel="preconnect" href="https://data.zquestclassic.com">
-  <link rel="preload" href="../__TARGET__.wasm" as="fetch" crossorigin="anonymous">
   <title>ZQuest Classic</title>
   <meta name="description" content="Play one of hundreds of quests in ZQuest Classic, or create your own! ZQuest Classic is a game engine where you can make your classic adventure game">
   <style>
@@ -16,6 +15,18 @@
   <script>
     var TARGET = "__TARGET__";
     var IS_CI = __IS_CI__;
+
+    // A page packaged with a JSPI build (see package_web.py) runs it on browsers that
+    // support JSPI: it is smaller and faster than the ASYNCIFY build. ?jspi=0 or
+    // ?jspi=1 overrides the choice.
+    var HAS_JSPI_BUILD = __HAS_JSPI_BUILD__;
+    var USE_JSPI = (function () {
+      var param = new URLSearchParams(location.search).get('jspi');
+      if (param !== null) return param !== '0';
+      return HAS_JSPI_BUILD && typeof WebAssembly === 'object' && typeof WebAssembly.Suspending === 'function';
+    })();
+    var wasmBuildUrl = USE_JSPI ? '../jspi/' : '../';
+    document.write('<link rel="preload" href="' + wasmBuildUrl + TARGET + '.wasm" as="fetch" crossorigin="anonymous">');
 
     var rootUrl = new URL('..', location.href).href;
     window.ZC_Constants = {

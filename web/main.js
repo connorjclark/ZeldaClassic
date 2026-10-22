@@ -246,7 +246,7 @@ async function main() {
   }
 
   for (const [key, value] of params.entries()) {
-    if (['test', 'screen', 'dmap', 'retsquare', 'open'].includes(key)) {
+    if (['test', 'screen', 'dmap', 'retsquare', 'open', 'jspi'].includes(key)) {
       continue;
     }
 

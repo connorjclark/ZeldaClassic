@@ -9,6 +9,10 @@ from pathlib import Path
 parser = argparse.ArgumentParser()
 parser.add_argument('--build_folder', required=True)
 parser.add_argument('--target')
+parser.add_argument(
+    '--jspi_build_folder',
+    help='A build configured with JSPI=1 (see configure_emscripten.sh). Browsers that support JSPI get its zplayer/zeditor instead.',
+)
 args = parser.parse_args()
 
 script_dir = Path(os.path.dirname(os.path.realpath(__file__)))
@@ -95,26 +99,37 @@ if code != 0:
 copy_from_build('{main.js,main.js.map}', '')
 copy_from_build('{zplayer.data,zplayer.data.js}', '')
 
+
+def copy_app(target, html_dir):
+    (dist_dir / html_dir).mkdir(exist_ok=True)
+    shutil.copy2(build_dir / f'{target}.html', dist_dir / f'{html_dir}/index.html')
+
+    builds = [(build_dir, '')]
+    if args.jspi_build_folder:
+        builds.append((Path(args.jspi_build_folder), 'jspi/'))
+        replace_in(
+            f'{html_dir}/index.html',
+            r'var HAS_JSPI_BUILD = false;',
+            'var HAS_JSPI_BUILD = true;',
+        )
+
+    for folder, dest in builds:
+        (dist_dir / dest).mkdir(exist_ok=True)
+        for ext in ['wasm', 'js']:
+            shutil.copy2(folder / f'{target}.{ext}', dist_dir / dest)
+        replace_in(
+            f'{dest}{target}.js',
+            r'if ?\(SDL2.audio.scriptProcessorNode',
+            'if(SDL2.audio?.scriptProcessorNode',
+        )
+
+
 if 'zplayer' in targets:
-    (dist_dir / 'play').mkdir(exist_ok=True)
-    shutil.copy2(build_dir / 'zplayer.html', dist_dir / 'play/index.html')
-    copy_from_build('zplayer.{wasm,js}', '')
-    replace_in(
-        'zplayer.js',
-        r'if ?\(SDL2.audio.scriptProcessorNode',
-        'if(SDL2.audio?.scriptProcessorNode',
-    )
+    copy_app('zplayer', 'play')
 
 if 'zeditor' in targets:
-    (dist_dir / 'create').mkdir(exist_ok=True)
-    shutil.copy2(build_dir / 'zeditor.html', dist_dir / 'create/index.html')
-    copy_from_build('zeditor.{wasm,js}', '')
+    copy_app('zeditor', 'create')
     copy_from_build('{zeditor.data,zeditor.data.js}', '')
-    replace_in(
-        'zeditor.js',
-        r'if ?\(SDL2.audio.scriptProcessorNode',
-        'if(SDL2.audio?.scriptProcessorNode',
-    )
 
 if 'playground' in targets:
     if (dist_dir / 'zscript').exists():
