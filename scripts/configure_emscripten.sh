@@ -80,7 +80,11 @@ EMCC_AND_LINKER_FLAGS=(
 if [[ "$JSPI" ]]; then
   LINKER_FLAGS+=(-s JSPI=1)
   EMCC_AND_LINKER_FLAGS+=(-fwasm-exceptions)
+  JIT_BACKEND=wasm
 else
+  # The wasm JIT relies on JSPI, so this build (the fallback for browsers without
+  # JSPI) runs scripts on the interpreter.
+  JIT_BACKEND=none
   # ASYNCIFY can't use -fwasm-exceptions:
   #   unexpected expression type
   # UNREACHABLE executed at /opt/s/w/ir/cache/builder/emscripten-releases/binaryen/src/passes/Asyncify.cpp:1072!
@@ -145,6 +149,7 @@ embuilder build sdl2
 
 emcmake cmake \
   -G "Ninja Multi-Config" \
+  -D JIT_BACKEND=$JIT_BACKEND \
   -D ALLEGRO_SDL=ON \
   -D WANT_ALLOW_SSE=OFF \
   -D WANT_OPENAL=OFF \
