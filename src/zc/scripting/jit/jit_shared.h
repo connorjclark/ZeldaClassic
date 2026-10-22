@@ -146,10 +146,6 @@ struct JittedScriptInstance
 	// If true, run_script_int is being called to execute exactly [uncompiled_command_count] commands.
 	bool sequence_mode;
 	int32_t uncompiled_command_count;
-	// Only used by the wasm JIT (RUNGENFRZSCR yield); always -1 for the native
-	// backends (they run RUNGENFRZSCR inline via the interpreter, which can
-	// block for the nested frames).
-	int32_t frozen_dest_reg = -1;
 };
 
 // Provided by the per-architecture backend (jit_x64.cpp / jit_a64.cpp): compile

@@ -9780,27 +9780,6 @@ int32_t run_script(ScriptType type, word script, int32_t i)
 			clear_zasm_command_for_compiled_code();
 			result = jit_run_script(j_instance);
 
-			// The wasm JIT can't run a nested frozen generic script itself (its frame
-			// can't be unwound by asyncify mid-execution), so RUNGENFRZSCR yields back
-			// here instead, flagged by frozen_dest_reg != -1. Run the frozen script,
-			// write its result to the destination register, then resume. (On other
-			// backends frozen_dest_reg stays -1 and this never runs.)
-			//
-			// runGenericFrozenEngine below runs a whole frozen game frame (it advances
-			// the frame and runs FFCs/enemies), so scripts run nested here - the path
-			// that exposed the web-JIT nested-script crash. To reach this loop:
-			//
-			// python tests/run_replay_tests.py --build_folder build_emscripten/Release --filter terror_of_necromancy_demo6_05_of_54.zplay
-			while (result == RUNSCRIPT_OK && j_instance->frozen_dest_reg != -1)
-			{
-				int32_t dest_reg = j_instance->frozen_dest_reg;
-				j_instance->frozen_dest_reg = -1;
-				bool r = FFCore.runGenericFrozenEngine(word(GET_REF(genericdataref)));
-				set_register(dest_reg, r ? 10000L : 0L);
-				clear_zasm_command_for_compiled_code();
-				result = jit_run_script(j_instance);
-			}
-
 			if (result == RUNSCRIPT_JIT_STACK_OVERFLOW || result == RUNSCRIPT_JIT_CALL_LIMIT)
 			{
 				ri->overflow = true;

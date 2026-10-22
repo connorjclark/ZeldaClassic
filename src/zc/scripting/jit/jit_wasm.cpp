@@ -543,7 +543,8 @@ static void compile_command_interpreter(CompilationState& state, const zasm_scri
 		if (index >= script->size)
 			break;
 
-		if (script->zasm[index].command == STORE_OBJECT || script->zasm[index].command == REF_REMOVE)
+		// RUNGENFRZSCR runs engine frames, which can scan this script's stack (GC).
+		if (script->zasm[index].command == STORE_OBJECT || script->zasm[index].command == REF_REMOVE || script->zasm[index].command == RUNGENFRZSCR)
 		{
 			needs_sp = true;
 			break;
@@ -649,9 +650,8 @@ static bool command_is_compiled(int command)
 	case QUIT:
 	case CALLFUNC:
 	case RETURNFUNC:
-	// Yields back to the driver to run a nested frozen script (handled inline in
-	// compile_function, not compile_single_command). Marked compiled so it isn't
-	// batched into a do_commands() call.
+	// Runs through the interpreter on its own (see compile_function), not batched
+	// with other commands into a do_commands() call.
 	case RUNGENFRZSCR:
 
 	// These commands modify the stack pointer, which is just a local copy. If these commands
@@ -3214,29 +3214,13 @@ static WasmAssembler compile_function(CompilationState& state, const zasm_script
 				continue;
 			}
 
-			// RUNGENFRZSCR runs a nested generic script which yields frames via
-			// ASYNCIFY - which can't unwind through a (non-instrumented) JIT frame.
-			// Instead, yield cleanly back to the C++ driver (run_script), which runs
-			// the frozen script and writes its result to `arg1` before resuming us.
-			// Modeled on the wait yield above (store the resume block in wait_index
-			// and return). Signalled via frozen_dest_reg != -1 rather than a return
-			// code, because a clean return always reports RUNSCRIPT_OK to the poller.
+			// RUNGENFRZSCR runs frozen engine frames (a nested generic script) inline,
+			// as the interpreter does. Those frames suspend the program (JSPI) with this
+			// script's frames still on the stack, and can run other scripts - including
+			// this module's (see `run`).
 			if (command == RUNGENFRZSCR)
 			{
-				ASSERT(may_yield);
-
-				// j_instance->frozen_dest_reg = arg1 (where the driver writes the result)
-				wasm.emitGlobalGet(state.g_idx_j_instance);
-				wasm.emitI32Const(arg1);
-				wasm.emitI32Store(offsetof(JittedScriptInstance, frozen_dest_reg));
-
-				// j_instance->wait_index = current_block_index + 1 (resume at the next block)
-				wasm.emitGlobalGet(g_idx_wait_index);
-				wasm.emitI32Const(current_block_index + 1);
-				wasm.emitI32Store();
-
-				emit_sp_flush(state); // run_script reads/writes sp around the frozen run
-				wasm.emitReturn();
+				compile_command_interpreter(state, script, i, 1);
 				continue;
 			}
 
@@ -3523,17 +3507,6 @@ static bool wasm_codegen_impl(zasm_script* script, WasmCodegenResult& out)
 		return false;
 
 	// STACKWRITEATVV_IF is not yet supported by the wasm codegen - always bail.
-	//
-	// RUNGENFRZSCR (generic frozen scripts) used to bail to the interpreter by
-	// default: quests using it hit a nested-script crash (fixed; nested scripts
-	// now run jitted, as `run` is re-entrant) and then an rng desync in
-	// terror_of_necromancy_demo6 (fixed - a script that started on the interpreter
-	// was later adopted mid-run by the JIT, restarting it; see
-	// jit_create_script_impl). With both fixed the JIT handles this content, so
-	// the bail is off by default; -jit-wasm-bail-on-frozen-generic remains as an
-	// escape hatch. It is coarse: any quest using generic frozen scripts compiles
-	// its whole @single chunk with it.
-	static bool bail_on_frozen_generic = get_flag_bool("-jit-wasm-bail-on-frozen-generic").value_or(false);
 	for (size_t i = 0; i < script->size; i++)
 	{
 		int command = script->zasm[i].command;
@@ -3542,8 +3515,6 @@ static bool wasm_codegen_impl(zasm_script* script, WasmCodegenResult& out)
 			error(script, "STACKWRITEATVV_IF unsupported", true);
 			return false;
 		}
-		if (command == RUNGENFRZSCR && bail_on_frozen_generic)
-			return false;
 	}
 
 	auto structured_zasm = zasm_construct_structured(script);
