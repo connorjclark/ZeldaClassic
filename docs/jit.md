@@ -272,7 +272,7 @@ Boolean flags can be negated with a `-no` prefix (e.g. `-no-jit-wasm-structured`
 
 | Flag | Backend | Default | What it does |
 |---|---|---|---|
-| `-jit` | all | on (off on web) | Enable the JIT. Config: `[ZSCRIPT] jit` |
+| `-jit` | all | on | Enable the JIT. Config: `[ZSCRIPT] jit` |
 | `-jit-precompile` | all | off | Compile every script on quest load. Config: `jit_precompile` |
 | `-jit-threads N` | all | -2 | Compile threads; 0 implies `-jit-precompile`. Config: `jit_threads` |
 | `-jit-hot-function-call-count N` | native | 10 | Config: `jit_hot_function_call_count` |
