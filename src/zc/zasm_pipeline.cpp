@@ -35,7 +35,7 @@ int jit_requested_threads(int min_threads)
 static int get_worker_thread_count()
 {
 	// No engine worker pool on web; the wasm backend threads its own
-	// precompile (see jit_precompile_scripts_impl).
+	// compiles (see jit_precompile_scripts_impl, jit_start_background_compile_impl).
 	if (is_web())
 		return 0;
 
@@ -90,12 +90,11 @@ void zasm_pipeline_init(bool force_precompile)
 	int num_worker_threads = get_worker_thread_count();
 	bool precompile = force_precompile || is_feature_enabled("-jit-precompile", "ZSCRIPT", "jit_precompile", false);
 
-	// Currently can only compile WASM on main browser thread, so always precompile scripts.
-	if (is_web())
-		precompile = true;
 	if (get_flag_int("-test-bisect").has_value() || get_flag_int("-test-jit-bisect").has_value())
 		precompile = true;
-	if (!precompile && !num_worker_threads && jit_is_enabled())
+	// The web build has no engine worker pool, but the wasm backend compiles in the
+	// background on its own threads (jit_start_background_compile_impl).
+	if (!precompile && !num_worker_threads && jit_is_enabled() && !is_web())
 	{
 		zasm_pipeline_trace("no threads assigned for worker pool, so must precompile");
 		precompile = true;

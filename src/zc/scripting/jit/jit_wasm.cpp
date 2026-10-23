@@ -43,11 +43,14 @@
 #include "zc/zasm_utils.h"
 #include "zc/zelda.h"
 #include "components/zasm/serialize.h"
+#include <algorithm>
 #include <atomic>
+#include <chrono>
 #include <cstddef>
 #include <cstdint>
 #include <filesystem>
 #include <fstream>
+#include <functional>
 #include <memory>
 #include <optional>
 #include <set>
@@ -143,6 +146,35 @@ static void em_compile_wasm_batch(int count, const char** names, void** ptrs, ui
 	em_compile_wasm_batch_(count, (uintptr_t)names, (uintptr_t)ptrs, (uintptr_t)sizes, (uintptr_t)out_ids);
 }
 
+// The same, without waiting: starts compiling the modules and returns a batch id.
+// The module bytes are copied before this returns.
+EM_JS(int, em_compile_wasm_batch_start_, (int count, uintptr_t names, uintptr_t ptrs, uintptr_t sizes), {
+	return ZC.startCompileScriptWasmModuleBatch(count, names, ptrs, sizes);
+});
+static int em_compile_wasm_batch_start(int count, const char** names, void** ptrs, uint32_t* sizes)
+{
+	return em_compile_wasm_batch_start_(count, (uintptr_t)names, (uintptr_t)ptrs, (uintptr_t)sizes);
+}
+
+// If the batch has finished compiling, writes each module's run function to out_ids
+// (as em_compile_wasm_batch does) and returns true.
+EM_JS(bool, em_compile_wasm_batch_poll_, (int batch_id, uintptr_t out_ids), {
+	return ZC.pollCompileScriptWasmModuleBatch(batch_id, out_ids);
+});
+static bool em_compile_wasm_batch_poll(int batch_id, int* out_ids)
+{
+	return em_compile_wasm_batch_poll_(batch_id, (uintptr_t)out_ids);
+}
+
+// Discards a batch: its modules are released once they finish compiling.
+EM_JS(void, em_compile_wasm_batch_cancel_, (int batch_id), {
+	ZC.cancelCompileScriptWasmModuleBatch(batch_id);
+});
+static void em_compile_wasm_batch_cancel(int batch_id)
+{
+	em_compile_wasm_batch_cancel_(batch_id);
+}
+
 EM_JS(bool, em_destroy_wasm_module_, (int id), {
 	return ZC.destroyScriptWasmModule(id);
 });
@@ -162,6 +194,20 @@ static void em_compile_wasm_batch([[maybe_unused]] int count, [[maybe_unused]] c
 {
 }
 
+static int em_compile_wasm_batch_start([[maybe_unused]] int count, [[maybe_unused]] const char** names, [[maybe_unused]] void** ptrs, [[maybe_unused]] uint32_t* sizes)
+{
+	return 0;
+}
+
+static bool em_compile_wasm_batch_poll([[maybe_unused]] int batch_id, [[maybe_unused]] int* out_ids)
+{
+	return false;
+}
+
+static void em_compile_wasm_batch_cancel([[maybe_unused]] int batch_id)
+{
+}
+
 
 static bool em_destroy_wasm_module([[maybe_unused]] int id)
 {
@@ -170,12 +216,26 @@ static bool em_destroy_wasm_module([[maybe_unused]] int id)
 
 #endif
 
+// Codegen runs on worker threads. On the web build a worker's file writes (al_trace) are
+// done by the main thread, which is busy running the game during a background compile, so
+// codegen logs to this buffer when it is set and the main thread writes it out later (see
+// CodegenJob).
+static thread_local std::string* codegen_log;
+
+static void codegen_trace(const std::string& str)
+{
+	if (codegen_log)
+		codegen_log->append(str);
+	else
+		al_trace("%s", str.c_str());
+}
+
 static void error(const zasm_script* script, std::string str, bool expected = false)
 {
 	str = fmt::format("failed to compile zasm chunk: {} id: {}\nerror: {}\n",
 					  script->name, script->id, str);
 
-	al_trace("%s", str.c_str());
+	codegen_trace(str);
 
 	if (DEBUG_JIT_EXIT_ON_COMPILE_FAIL && !expected)
 	{
@@ -3520,11 +3580,11 @@ static bool wasm_codegen_impl(zasm_script* script, WasmCodegenResult& out)
 	auto structured_zasm = zasm_construct_structured(script);
 	if (!structured_zasm.is_modern_function_calling())
 	{
-		al_trace("[jit] NOT compiling zasm chunk (unexpected function call mode): %s id: %d size: %zu\n", script->name.c_str(), script->id, script->size);
+		codegen_trace(fmt::format("[jit] NOT compiling zasm chunk (unexpected function call mode): {} id: {} size: {}\n", script->name, script->id, script->size));
 		return false;
 	}
 
-	al_trace("[jit] compiling script: %s id: %d\n", script->name.c_str(), script->id);
+	codegen_trace(fmt::format("[jit] compiling script: {} id: {}\n", script->name, script->id));
 
 	WasmCompiler comp{};
 	CompilationState state{};
@@ -3911,6 +3971,115 @@ JittedScript* jit_compile_script(zasm_script* script)
 	return wasm_finalize(script, std::move(r));
 }
 
+// Generates modules for a set of scripts on worker threads. The threads are started by the
+// main thread: a thread a worker starts is spawned via the main thread, so a worker
+// starting them could wait on a main thread that is waiting on it.
+struct CodegenJob
+{
+	struct Item
+	{
+		bool compiled = false;
+		WasmCodegenResult result;
+		std::string log; // See codegen_log.
+	};
+
+	std::vector<zasm_script*> scripts;
+	std::vector<Item> items;
+	std::atomic<size_t> next_index{0};
+	std::atomic<size_t> num_done{0};
+	std::atomic<int> num_started{0};
+	std::atomic<bool> cancel{false};
+	std::vector<std::thread> threads;
+
+	explicit CodegenJob(const std::vector<zasm_script*>& scripts) : scripts(scripts), items(scripts.size()) {}
+
+	void start(int num_threads)
+	{
+		for (int t = 0; t < num_threads; t++)
+		{
+			threads.emplace_back([this](){
+				num_started.fetch_add(1);
+				while (!cancel.load())
+				{
+					size_t i = next_index.fetch_add(1);
+					if (i >= scripts.size())
+						break;
+					codegen_log = &items[i].log;
+					items[i].compiled = wasm_codegen(scripts[i], items[i].result);
+					codegen_log = nullptr;
+					num_done.fetch_add(1);
+				}
+			});
+		}
+	}
+
+	bool done() const
+	{
+		return num_done.load() == scripts.size();
+	}
+
+	void join()
+	{
+		for (auto& t : threads)
+			t.join();
+		threads.clear();
+	}
+};
+
+// The browser-compile half: the generated modules, in a form em_compile_wasm_batch takes.
+struct ModuleBatch
+{
+	std::vector<size_t> indices; // into CodegenJob::items
+	std::vector<const char*> names;
+	std::vector<void*> ptrs;
+	std::vector<uint32_t> sizes;
+};
+
+[[maybe_unused]] static ModuleBatch make_module_batch(CodegenJob& job)
+{
+	ModuleBatch batch;
+	for (size_t i = 0; i < job.items.size(); i++)
+	{
+		if (!job.items[i].compiled)
+			continue;
+		batch.indices.push_back(i);
+		batch.names.push_back(job.items[i].result.module_name.c_str());
+		batch.ptrs.push_back(job.items[i].result.wm.data.data());
+		batch.sizes.push_back(job.items[i].result.wm.data.size());
+	}
+	return batch;
+}
+
+// Reports every script of the job, given the browser-compiled modules (nullptr where
+// codegen or the browser compile failed).
+[[maybe_unused]] static void report_compiled(CodegenJob& job, const ModuleBatch& batch, const std::vector<int>& run_fns, const std::function<void(zasm_script*, JittedScript*)>& on_compiled)
+{
+	for (auto& item : job.items)
+	{
+		if (!item.log.empty())
+			al_trace("%s", item.log.c_str());
+	}
+
+	std::vector<JittedScript*> compiled(job.scripts.size());
+	for (size_t k = 0; k < batch.indices.size(); k++)
+	{
+		size_t i = batch.indices[k];
+		compiled[i] = wasm_wrap_module(job.scripts[i], std::move(job.items[i].result), run_fns[k]);
+	}
+	for (size_t i = 0; i < job.scripts.size(); i++)
+		on_compiled(job.scripts[i], compiled[i]);
+}
+
+// How many threads to generate code on. 0 forces synchronous compilation (debugging);
+// see jit_requested_threads for the shared -jit-threads semantics.
+[[maybe_unused]] static int codegen_thread_count(size_t num_scripts)
+{
+	int num_threads = jit_requested_threads(1);
+	if (num_threads == 0)
+		return 0;
+	return std::clamp(std::min(num_threads, (int)num_scripts), 1, 8);
+}
+
 // Precompile with backend-managed threading. Only used on the web build: the
 // engine worker pool is unavailable there (see get_worker_thread_count), but
 // raw pthreads work (the runtime preallocates a pool). Two serial costs are
@@ -3924,71 +4093,99 @@ bool jit_precompile_scripts_impl([[maybe_unused]] const std::vector<zasm_script*
 	// Native builds precompile via the engine worker pool (or serially).
 	return false;
 #else
-	// 0 forces synchronous compilation (debugging); see jit_requested_threads
-	// for the shared -jit-threads semantics.
-	int num_threads = jit_requested_threads(1);
+	int num_threads = codegen_thread_count(scripts.size());
 	if (num_threads == 0)
 		return false;
-	num_threads = std::min({num_threads, (int)scripts.size(), 8});
-	if (num_threads < 1)
-		num_threads = 1;
 
-	struct Item
-	{
-		bool compiled;
-		WasmCodegenResult result;
-	};
-	std::vector<Item> items(scripts.size());
-	std::atomic<size_t> next_index{0};
-	std::atomic<size_t> num_done{0};
-
-	auto worker = [&](){
-		while (true)
-		{
-			size_t i = next_index.fetch_add(1);
-			if (i >= scripts.size())
-				break;
-			items[i].compiled = wasm_codegen(scripts[i], items[i].result);
-			num_done.fetch_add(1);
-		}
-	};
-	std::vector<std::thread> threads;
-	for (int t = 0; t < num_threads; t++)
-		threads.emplace_back(worker);
-
+	CodegenJob job(scripts);
+	job.start(num_threads);
 	// The sleep yields to the browser, which is also what lets queued worker
 	// threads spawn.
-	while (num_done.load() < scripts.size())
+	while (!job.done())
 		emscripten_sleep(1);
-	for (auto& t : threads)
-		t.join();
+	job.join();
 
-	std::vector<size_t> indices;
-	std::vector<const char*> names;
-	std::vector<void*> ptrs;
-	std::vector<uint32_t> sizes;
-	for (size_t i = 0; i < items.size(); i++)
-	{
-		if (!items[i].compiled)
-			continue;
-		indices.push_back(i);
-		names.push_back(items[i].result.module_name.c_str());
-		ptrs.push_back(items[i].result.wm.data.data());
-		sizes.push_back(items[i].result.wm.data.size());
-	}
-	std::vector<int> run_fns(indices.size());
-	em_compile_wasm_batch(indices.size(), names.data(), ptrs.data(), sizes.data(), run_fns.data());
-
-	std::vector<JittedScript*> compiled(scripts.size());
-	for (size_t k = 0; k < indices.size(); k++)
-	{
-		size_t i = indices[k];
-		compiled[i] = wasm_wrap_module(scripts[i], std::move(items[i].result), run_fns[k]);
-	}
-	for (size_t i = 0; i < scripts.size(); i++)
-		on_compiled(scripts[i], compiled[i]);
+	ModuleBatch batch = make_module_batch(job);
+	std::vector<int> run_fns(batch.indices.size());
+	em_compile_wasm_batch(batch.indices.size(), batch.names.data(), batch.ptrs.data(), batch.sizes.data(), run_fns.data());
+	report_compiled(job, batch, run_fns, on_compiled);
 	return true;
 #endif
+}
+
+// A compile running while the game plays: codegen on worker threads, then the
+// browser compile without waiting for it. Driven by jit_poll_background_compile_impl
+// on the main thread.
+struct BackgroundCompile
+{
+	CodegenJob job;
+	std::function<void(zasm_script*, JittedScript*)> on_compiled;
+	ModuleBatch batch;
+	int batch_id = 0; // Set once the browser compile has started.
+	std::chrono::steady_clock::time_point start_time = std::chrono::steady_clock::now();
+
+	BackgroundCompile(const std::vector<zasm_script*>& scripts, const std::function<void(zasm_script*, JittedScript*)>& on_compiled)
+		: job(scripts), on_compiled(on_compiled) {}
+};
+static std::unique_ptr<BackgroundCompile> background_compile;
+
+bool jit_start_background_compile_impl([[maybe_unused]] const std::vector<zasm_script*>& scripts, [[maybe_unused]] const std::function<void(zasm_script*, JittedScript*)>& on_compiled)
+{
+#ifndef __EMSCRIPTEN__
+	// Native builds compile in the background via the engine worker pool.
+	return false;
+#else
+	int num_threads = codegen_thread_count(scripts.size());
+	if (num_threads == 0)
+		return false;
+
+	jit_cancel_background_compile_impl();
+	background_compile = std::make_unique<BackgroundCompile>(scripts, on_compiled);
+	background_compile->job.start(num_threads);
+	// A thread may need a new web worker, which only starts while the main thread yields
+	// to the browser - and the game may not, until the next frame (or, headless, for much
+	// longer). So yield here until they are all running.
+	while (background_compile->job.num_started.load() < num_threads)
+		emscripten_sleep(1);
+	return true;
+#endif
+}
+
+void jit_poll_background_compile_impl()
+{
+	auto* bc = background_compile.get();
+	if (!bc || !bc->job.done())
+		return;
+
+	if (!bc->batch_id)
+	{
+		bc->job.join();
+		bc->batch = make_module_batch(bc->job);
+		bc->batch_id = em_compile_wasm_batch_start(bc->batch.indices.size(), bc->batch.names.data(), bc->batch.ptrs.data(), bc->batch.sizes.data());
+		return;
+	}
+
+	std::vector<int> run_fns(bc->batch.indices.size());
+	if (!em_compile_wasm_batch_poll(bc->batch_id, run_fns.data()))
+		return;
+
+	report_compiled(bc->job, bc->batch, run_fns, bc->on_compiled);
+	int32_t compile_ms = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - bc->start_time).count();
+	al_trace("[jit] finished compiling scripts in the background, took %d ms\n", compile_ms);
+	background_compile.reset();
+}
+
+void jit_cancel_background_compile_impl()
+{
+	auto* bc = background_compile.get();
+	if (!bc)
+		return;
+
+	bc->job.cancel.store(true);
+	bc->job.join();
+	if (bc->batch_id)
+		em_compile_wasm_batch_cancel(bc->batch_id);
+	background_compile.reset();
 }
 
 JittedScriptInstance* jit_create_script_impl(script_data* script, refInfo* ri, JittedScript* j_script)
@@ -3996,8 +4193,8 @@ JittedScriptInstance* jit_create_script_impl(script_data* script, refInfo* ri, J
 	// A fresh instance resumes from its own wait_index / call_stack_rets state,
 	// which points at the script's entry - correct only for a script that has not
 	// run yet. A script can also be mid-run here: it started on the interpreter
-	// (e.g. while the ZScript debugger was open, or excluded by -jit-bisect), and
-	// this is a later slice. Adopting it with entry state would re-run the
+	// (before a background compile finished, while the ZScript debugger was open,
+	// or excluded by -jit-run-lo/hi), and this is a later slice. Adopting it with entry state would re-run the
 	// entry on top of the stack frame the interpreter already pushed, corrupting
 	// the script (this was the terror_of_necromancy rng desync). Instead,
 	// translate the interpreter's resume state: at a yield, ri->pc and every live
