@@ -27,6 +27,14 @@ public:
 
     void wait_for_all();
 
+    // Whether every added task has finished - for waiting without blocking (the web build's main
+    // thread must keep yielding to the browser while it waits).
+    bool idle();
+
+    // Whether every worker thread is running. On the web build a thread can need a new web
+    // worker, which only starts while the main thread yields to the browser.
+    bool all_workers_started();
+
 	// Drops all pending tasks and stops accepting new ones.
 	void terminate();
 
@@ -45,6 +53,7 @@ private:
     ALLEGRO_COND* finished_cond; // Signals when all tasks are done.
 
     size_t active_tasks = 0;
+    size_t started_workers = 0;
     bool stopping = false;
 };
 

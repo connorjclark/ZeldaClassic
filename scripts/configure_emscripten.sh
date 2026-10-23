@@ -81,6 +81,12 @@ if [[ "$JSPI" ]]; then
   LINKER_FLAGS+=(-s JSPI=1)
   EMCC_AND_LINKER_FLAGS+=(-fwasm-exceptions)
   JIT_BACKEND=wasm
+  # The JIT's codegen runs on the engine worker pool and allocates a lot, but the default
+  # allocator (dlmalloc) takes one global lock: with it, every thread added made precompiling
+  # slower (2.6s serially, 9.1s on 8 threads for yuurand_riviere; 1.3s with mimalloc), and a
+  # background compile would stall the game's own allocations. mimalloc does cost more memory
+  # (that replay's heap peaks at 626MB, vs 522MB).
+  LINKER_FLAGS+=(-s MALLOC=mimalloc)
 else
   # The wasm JIT relies on JSPI, so this build (the fallback for browsers without
   # JSPI) runs scripts on the interpreter.
