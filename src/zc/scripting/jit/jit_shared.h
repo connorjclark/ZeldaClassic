@@ -57,7 +57,7 @@ struct JittedExecutionContext
 	uintptr_t resume_address;
 	// How the compiled function was entered. 0 = by the driver (pc/
 	// resume_address describe where to resume). 1 = a direct native call from
-	// another compiled function (a64 only): always starts at the function
+	// another compiled function: always starts at the function
 	// start, and returns its exec result to the call site instead of the
 	// driver - EXEC_RESULT_RETURN means a normal return, anything else is an
 	// unwind the call site passes through untouched.
@@ -125,12 +125,14 @@ struct JittedScript
 	std::vector<JittedFunction> compiled_functions;
 	std::deque<JittedFunction> pending_compiled_jit_functions;
 	// Native entry per function for direct calls between compiled functions,
-	// indexed by function id. jit_direct_not_compiled until the function is
-	// compiled and committed; only non-yielding functions ever get a real
-	// entry (a yield must unwind to the driver, which a native call frame
-	// cannot survive). Call sites load the slot at runtime and call it
-	// unconditionally - the stub turns the call into a driver-path call - so
-	// this doubles as the hot-swap point when a function finishes compiling.
+	// indexed by function id. A stub until the function is compiled and
+	// committed; only non-yielding functions ever get a real entry (a yield
+	// must unwind to the driver, which a native call frame cannot survive).
+	// Call sites load the slot at runtime and call it unconditionally, so this
+	// doubles as the hot-swap point when a function finishes compiling. The
+	// native backends' stub (jit_direct_not_compiled) turns the call into a
+	// driver-path call; the wasm backend's (jit_wasm_direct_not_compiled) runs
+	// the call to its end on the driver (jit_call_non_yielding).
 	std::unique_ptr<uintptr_t[]> direct_entry_table;
 	std::unique_ptr<ScriptDebugHandle> debug_handle;
 	ALLEGRO_MUTEX* mutex;
@@ -171,5 +173,7 @@ const JitFunctionAnalysis& jit_analyze_function(zasm_script* script, JittedScrip
 int32_t jit_direct_enter(JittedExecutionContext* ctx, int32_t callee_start_pc);
 int32_t jit_direct_not_compiled(JittedExecutionContext* ctx);
 void jit_direct_retstack_pop();
+int32_t jit_call_non_yielding(JittedExecutionContext* ctx, pc_t callee_start_pc, pc_t ret_pc);
+int32_t jit_wasm_direct_not_compiled(JittedExecutionContext* ctx);
 
 #endif

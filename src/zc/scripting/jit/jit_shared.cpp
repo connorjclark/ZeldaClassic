@@ -428,8 +428,13 @@ static JittedScript* init_jitted_script(zasm_script* script)
 	// No function may be direct-called until it is compiled and committed.
 	size_t num_functions = j_script->structured_zasm.functions.size();
 	j_script->direct_entry_table = std::make_unique<uintptr_t[]>(num_functions);
+#if ZC_JIT_BACKEND == JIT_WASM
+	auto not_compiled = jit_wasm_direct_not_compiled;
+#else
+	auto not_compiled = jit_direct_not_compiled;
+#endif
 	for (size_t i = 0; i < num_functions; i++)
-		j_script->direct_entry_table[i] = (uintptr_t)jit_direct_not_compiled;
+		j_script->direct_entry_table[i] = (uintptr_t)not_compiled;
 
 	if (DEBUG_JIT_PRINT_ASM)
 		j_script->debug_handle = std::make_unique<ScriptDebugHandle>(script, ScriptDebugHandle::OutputSplit::ByScript, script->name);
@@ -726,3 +731,57 @@ void jit_direct_retstack_pop()
 {
 	retstack_pop();
 }
+
+#if ZC_JIT_BACKEND == JIT_WASM
+// Runs a call to a function that can never yield through the driver, until it returns: a nested
+// run loop, entered at the callee, that ends once the callee's return pops ret_pc. The wasm backend
+// calls such functions without leaving the caller (see compile_callfunc_direct in jit_wasm.cpp),
+// and uses this when the callee isn't compiled - so the caller never needs to be resumed after
+// the call. Returns EXEC_RESULT_RETURN with ctx->sp updated, or else the exec result the caller
+// must return as-is (anything stopping the script on the way, with ctx updated for it).
+int32_t jit_call_non_yielding(JittedExecutionContext* ctx, pc_t callee_start_pc, pc_t ret_pc)
+{
+	extern refInfo *ri;
+
+	uint32_t base_retsp = ri->retsp;
+	if (base_retsp >= MAX_CALL_FRAMES)
+	{
+		ctx->ret_code = RUNSCRIPT_JIT_CALL_LIMIT;
+		ctx->pc = callee_start_pc;
+		return EXEC_RESULT_EXIT;
+	}
+	retstack_push(ret_pc);
+
+	JittedExecutionContext nested = *ctx;
+	nested.pc = callee_start_pc;
+	nested.call_pc = (pc_t)-1;
+	while (true)
+	{
+		if (!exec_script(&nested))
+		{
+			ctx->ret_code = nested.ret_code;
+			ctx->pc = nested.pc;
+			ctx->sp = nested.sp;
+			return EXEC_RESULT_EXIT;
+		}
+
+		// Only the callee's own return pops back to where this started.
+		if (ri->retsp == base_retsp)
+		{
+			ctx->pc = nested.pc;
+			ctx->sp = nested.sp;
+			return EXEC_RESULT_RETURN;
+		}
+	}
+}
+
+// The direct entry of every function not (yet) compiled, for the wasm backend: runs the call to
+// its end instead of turning it into a driver-path call (as jit_direct_not_compiled does). The
+// call site stored the return pc in ctx->call_pc; the CALLFUNC just before it names the callee.
+int32_t jit_wasm_direct_not_compiled(JittedExecutionContext* ctx)
+{
+	pc_t ret_pc = ctx->call_pc;
+	pc_t callee_start_pc = ctx->j_instance->script->zasm_script->zasm[ret_pc - 1].arg1;
+	return jit_call_non_yielding(ctx, callee_start_pc, ret_pc);
+}
+#endif

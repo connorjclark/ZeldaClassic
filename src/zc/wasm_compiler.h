@@ -450,13 +450,16 @@ struct WasmModuleWriter : WasmWriter {
 
     patchVarU32(patchLoc, code.size() - start);
   }
+  // With import_table, the module also imports a funcref table ("env.table", table 0) - to
+  // call_indirect into functions of other modules.
   void emitImportSection(
-      const std::vector<std::pair<uint32_t, std::string>> &function_imports) {
+      const std::vector<std::pair<uint32_t, std::string>> &function_imports,
+      bool import_table = false) {
     emitSectionId(SectionId::Import);
     size_t patchLoc = emitPatchableVarU32();
     size_t start = code.size();
 
-    emitVarU32(1 + function_imports.size());
+    emitVarU32(1 + (import_table ? 1 : 0) + function_imports.size());
 
     emitName("env");
     emitName("memory");
@@ -465,6 +468,15 @@ struct WasmModuleWriter : WasmWriter {
          static_cast<uint8_t>(LimitsFlags::HasMaximum));
     emitVarU32(1);
     emitVarU32(32768);
+
+    if (import_table) {
+      emitName("env");
+      emitName("table");
+      emit(static_cast<uint8_t>(DefinitionKind::Table));
+      emit(0x70); // funcref
+      emit(static_cast<uint8_t>(LimitsFlags::Default));
+      emitVarU32(0); // Any size.
+    }
 
     for (auto fn : function_imports) {
       emitName("env");
@@ -616,6 +628,8 @@ struct WasmModuleBuilder {
   std::vector<std::pair<uint32_t, std::string>> function_exports;
   std::vector<std::string> globals;
   uint32_t startFunction = -1;
+  // See emitImportSection.
+  bool import_table = false;
 
   uint32_t internFuncType(const WasmResultType &params,
                         const WasmResultType &results);
