@@ -3075,16 +3075,14 @@ static WasmAssembler compile_piece(CompilationState& state, const zasm_script* s
 	wasm.emitBlock();
 	wasm.emitLocalGet(l_idx_target_block);
 	wasm.emitBrTable();
-	// Plus 2, because of the inner-most block (this most recently emitted one), and
-	// the outer-most loop.
-	pc_t br_table_len = num_blocks + 2;
+	// Plus 1, for 0: the function's start, which is the code right after the inner-most block
+	// (this most recently emitted one).
+	pc_t br_table_len = num_blocks + 1;
 	wasm.emitVarU32(br_table_len);
 	for (pc_t v = 0; v < br_table_len; v++)
 	{
 		if (v == 0)
 			wasm.emitVarU32(0);
-		else if (v == num_blocks + 1)
-			wasm.emitVarU32(num_frames + 1); // the dispatch loop itself
 		else
 		{
 			pc_t j = v - 1;
@@ -3322,9 +3320,6 @@ static WasmAssembler compile_piece(CompilationState& state, const zasm_script* s
 
 				case RETURNFUNC:
 				{
-					// The return pc on the data stack is ignored (see emit_return).
-					if (command == RETURN)
-						add_sp(state, 1);
 					emit_return(state);
 				}
 				break;
