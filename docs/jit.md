@@ -123,7 +123,7 @@ The cache can be turned off with `-no-jit-cache-registers` (config: `jit_cache_r
 The backends differ in what unit they compile and when:
 
 - **Native (`jit_x64.cpp` / `jit_a64.cpp`):** scripts are compiled **per-function**. Once a function is run enough (lots of calls to it, or it loops a lot internally), it will be compiled. Compilation happens in a worker pool – the main thread does not wait for it to be compiled. Once the worker pool compiles a function, the main thread can then run it when executing that function. Until then, the interpreter handles executing that function. If precompiling is enabled, all functions are compiled on quest load, before the game starts. Very large functions are compiled in pieces (see [Large functions are compiled in pieces](#large-functions-are-compiled-in-pieces)).
-- **wasm (`jit_wasm.cpp`, browser build):** the **entire script chunk** (e.g. `@single`, which contains all of a quest's generic/ffc scripts and their functions) is compiled to a single wasm module at once. Only precompiling is supported - there is no hot-threshold path (so the `jit_hot_function_*` settings above don't apply to the browser build). See the [WASM backend](#wasm-backend) section for how it works.
+- **wasm (`jit_wasm.cpp`, browser build):** the **entire script chunk** (e.g. `@single`, which contains all of a quest's generic/ffc scripts and their functions) is compiled to a single wasm module at once, in the background while the game runs on the interpreter (or at quest load, when precompiling). There is no hot-threshold path (so the `jit_hot_function_*` settings above don't apply to the browser build). See the [WASM backend](#wasm-backend) section for how it works.
 
 ### Yielding and resuming
 
@@ -203,12 +203,14 @@ The wasm JIT only runs in the JSPI web build (`JSPI=1 bash scripts/configure_ems
 
 ### Compilation unit and pipeline
 
-The unit of compilation is a whole ZASM chunk, compiled into one wasm module. Modern quests link all their scripts into a single `@single` chunk, so they get one big module; quests compiled before that linking existed have one chunk per script, so they produce many modules (e.g. stellar_seas builds 300+). Only precompiling is supported (no hot-function path), and it happens at quest load in two stages (`jit_precompile_scripts_impl`):
+The unit of compilation is a whole ZASM chunk, compiled into one wasm module. Modern quests link all their scripts into a single `@single` chunk, so they get one big module; quests compiled before that linking existed have one chunk per script, so they produce many modules (e.g. stellar_seas builds 300+). There is no hot-function path: every chunk is compiled at once, in two stages. By default this runs in the background (`jit_start_background_compile_impl`), while scripts run on the interpreter; a script switches to compiled code at its next yield once its module is ready, the same way a mid-run script is adopted (see below). With `-jit-precompile` (which the replay tests use, so they are reproducible) it happens at quest load instead (`jit_precompile_scripts_impl`). The stages:
 
 1. **Codegen** (ZASM -> wasm bytes) is pure C++ and runs in parallel on background threads.
 2. **Browser compile** must be issued from the main thread. All generated modules are handed to the browser in a single batch (`em_compile_wasm_batch` -> `ZC.compileScriptWasmModuleBatch` in `web/zasm.js`), which compiles them concurrently on the browser's internal thread pool, in one suspension of the program.
 
-`jit_threads` applies to the codegen stage (`0` forces a fully-serial path). The engine worker pool itself stays disabled on web due to technical constraints.
+`jit_threads` applies to the codegen stage (`0` forces a fully-serial path, at quest load). The engine worker pool itself stays disabled on web due to technical constraints.
+
+During a background compile, the main thread starts the codegen threads (a thread a worker starts is spawned via the main thread) and waits until they are running, as starting them can need the main thread to yield to the browser. Codegen threads log into a per-thread buffer that the main thread writes out (`codegen_log`): a worker's file writes are done by the main thread, which is busy running the game. The browser compile is started without waiting for it, and `jit_poll_background_compile_impl` - called from `jit_create_script_instance` whenever a script without compiled code runs - picks up the results. Headless runs only yield to the browser every 10000 frames, so there a background compile barely progresses; use `-jit-precompile`.
 
 ### Module structure
 
@@ -231,7 +233,7 @@ A `WaitX` stores the next block's dispatch value in the instance's `wait_index` 
 
 `RUNGENFRZSCR` (generic frozen scripts) runs inline through the interpreter, as on the native backends: its engine frames suspend the program with the calling script's frames still on the stack.
 
-A script can be mid-run when the JIT first sees it: it started on the interpreter, e.g. while the ZScript debugger was open or excluded by `-jit-run-lo`/`-jit-run-hi`. Then `jit_create_script_impl` translates the interpreter's resume state: at a yield, `ri->pc` and every live `ret_stack` entry are dispatchable yielder blocks, whose dispatch values were recorded at compile time in `JittedScript::resume_dispatch`. Anything unmapped declines (an error under `jit_fatal_compile_errors`) and the script finishes its run interpreted. The native backends need none of this - they dispatch on `ri->pc` and share the interpreter's `ret_stack`, which is also what makes their hot-function upgrades trivially safe.
+A script can be mid-run when the JIT first sees it: it started on the interpreter, before a background compile finished, while the ZScript debugger was open, or excluded by `-jit-run-lo`/`-jit-run-hi`. Then `jit_create_script_impl` translates the interpreter's resume state: at a yield, `ri->pc` and every live `ret_stack` entry are dispatchable yielder blocks, whose dispatch values were recorded at compile time in `JittedScript::resume_dispatch`. Anything unmapped declines (an error under `jit_fatal_compile_errors`) and the script finishes its run interpreted. The native backends need none of this - they dispatch on `ri->pc` and share the interpreter's `ret_stack`, which is also what makes their hot-function upgrades trivially safe.
 
 ## Debugging
 

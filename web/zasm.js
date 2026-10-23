@@ -128,9 +128,11 @@ export async function compileScriptWasmModule(name, ptr, size) {
 
 // Compiles many modules concurrently - the browser compiles WebAssembly on an
 // internal thread pool, so this runs in the time of the largest module rather
-// than the sum. The names/ptrs/sizes arguments point at C arrays
-// of length count; a module id (0 on failure) is written per entry to outIds.
-export async function compileScriptWasmModuleBatch(count, namesPtr, ptrsPtr, sizesPtr, outIdsPtr) {
+// than the sum. The names/ptrs/sizes arguments point at C arrays of length
+// count. Resolves to the module ids (0 on failure). compileOneModule copies
+// each module's bytes before its first await, so the C buffers are free to
+// change once this returns.
+function startCompileJobs(count, namesPtr, ptrsPtr, sizesPtr) {
   assertMainThread();
   ensureEmFunctions();
 
@@ -142,10 +144,61 @@ export async function compileScriptWasmModuleBatch(count, namesPtr, ptrsPtr, siz
     const size = u32[sizesPtr / 4 + i];
     jobs.push(compileOneModule(name, ptr, size));
   }
-  const ids = await Promise.all(jobs);
+  return Promise.all(jobs);
+}
+
+function writeIds(ids, outIdsPtr) {
   const i32 = heapI32();
-  for (let i = 0; i < count; i++) {
+  for (let i = 0; i < ids.length; i++) {
     i32[outIdsPtr / 4 + i] = ids[i];
+  }
+}
+
+// A module id (0 on failure) is written per entry to outIds.
+export async function compileScriptWasmModuleBatch(count, namesPtr, ptrsPtr, sizesPtr, outIdsPtr) {
+  writeIds(await startCompileJobs(count, namesPtr, ptrsPtr, sizesPtr), outIdsPtr);
+}
+
+/** @type {Map<number, {ids: number[] | null, cancelled: boolean}>} */
+const pendingBatches = new Map();
+let nextBatchId = 1;
+
+// compileScriptWasmModuleBatch without waiting, for compiling while the game
+// runs (see jit_start_background_compile_impl). Returns a batch id for
+// pollCompileScriptWasmModuleBatch.
+export function startCompileScriptWasmModuleBatch(count, namesPtr, ptrsPtr, sizesPtr) {
+  const id = nextBatchId++;
+  const batch = { ids: null, cancelled: false };
+  pendingBatches.set(id, batch);
+  startCompileJobs(count, namesPtr, ptrsPtr, sizesPtr).then(ids => {
+    if (batch.cancelled) {
+      for (const runFn of ids) if (runFn) destroyScriptWasmModule(runFn);
+      return;
+    }
+    batch.ids = ids;
+  });
+  return id;
+}
+
+// If the batch has finished, writes its module ids to outIds and returns true.
+export function pollCompileScriptWasmModuleBatch(id, outIdsPtr) {
+  const batch = pendingBatches.get(id);
+  if (!batch?.ids) return false;
+
+  pendingBatches.delete(id);
+  writeIds(batch.ids, outIdsPtr);
+  return true;
+}
+
+// Discards a batch; its modules are released once they finish compiling.
+export function cancelCompileScriptWasmModuleBatch(id) {
+  const batch = pendingBatches.get(id);
+  if (!batch) return;
+
+  pendingBatches.delete(id);
+  batch.cancelled = true;
+  if (batch.ids) {
+    for (const runFn of batch.ids) if (runFn) destroyScriptWasmModule(runFn);
   }
 }
 
