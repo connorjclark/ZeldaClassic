@@ -52,7 +52,8 @@ struct JittedExecutionContext
 	uint64_t saved_regs[4];
 	// The native address to jump to on entry when resuming after a call or wait. The x64 backend
 	// always uses this; the a64 backend resumes by either using this (for functions with many
-	// resume points) or by comparing pc instead (for small functions).
+	// resume points) or by comparing pc instead (for small functions). For the wasm backend it is
+	// the dispatch value of the block to resume at.
 	uintptr_t resume_address;
 	// How the compiled function was entered. 0 = by the driver (pc/
 	// resume_address describe where to resume). 1 = a direct native call from
