@@ -621,6 +621,8 @@ void jit_backend_release_function([[maybe_unused]] JittedFunction& j_fn)
 
 int jit_run_script(JittedScriptInstance* j_instance)
 {
+	jit_flush_worker_logs();
+
 	// Commit any recently compiled functions - the ones ready to run (see
 	// jit_backend_prepare_commits); the rest stay pending.
 	al_lock_mutex(j_instance->j_script->mutex);
