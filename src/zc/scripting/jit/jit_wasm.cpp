@@ -79,6 +79,10 @@ struct CompilationState
 	pc_t final_pc;
 
 	uint8_t f_idx_do_commands;
+	uint8_t f_idx_direct_enter;
+	uint8_t f_idx_direct_retstack_pop;
+	// The type of exec(ctx), for direct calls into other compiled functions.
+	uint32_t exec_type;
 	uint8_t f_idx_get_register;
 	uint8_t f_idx_set_register;
 	uint8_t f_idx_set_guarded_register;
@@ -214,6 +218,7 @@ static void error(const zasm_script* script, std::string str, bool expected = fa
 // - 5..9: the stack base, ri, global_d, script_d and j_instance pointers, loaded once from ctx
 //   (emit_exec_prologue) and never changed.
 // - 10: the dispatch target of the loop-switch lowering (cfg block id + 1).
+// - 11: ctx->entry_mode as on entry: nonzero if direct-called (see compile_callfunc_direct).
 //
 // Nothing lives in module globals: a piece can be re-entered (a script running another script
 // whose code is the same piece) while it is executing.
@@ -229,7 +234,13 @@ constexpr uint8_t l_idx_global_d_local = 7;
 constexpr uint8_t l_idx_script_d_local = 8;
 constexpr uint8_t l_idx_j_instance_local = 9;
 constexpr uint8_t l_idx_target_block = 10;
-constexpr int num_exec_locals = 10; // Not counting the ctx parameter.
+constexpr uint8_t l_idx_entry_mode = 11;
+constexpr int num_exec_locals = 11; // Not counting the ctx parameter.
+
+// Past this many ZASM call frames, a call to a function that can't yield goes through the driver
+// instead of being made directly - direct calls nest wasm frames, of which the browser has a
+// limited stack (stack_limit.zs recurses 10000 deep).
+constexpr int max_direct_call_depth = 256;
 
 // ctx->registers is ri->d, and the engine reads refInfo fields off ri (see get_z_register).
 static_assert(offsetof(refInfo, d) == 4);
@@ -314,6 +325,20 @@ static void emit_exec_prologue(CompilationState& state)
 	wasm.emitLocalSet(l_idx_j_instance_local);
 	emit_load_ctx(state, offsetof(JittedExecutionContext, resume_address));
 	wasm.emitLocalSet(l_idx_target_block);
+
+	// A direct call always enters at the start, and the callee pushes the return pc itself (the
+	// driver does for a call it makes). ctx->resume_address is stale then.
+	emit_load_ctx(state, offsetof(JittedExecutionContext, entry_mode));
+	wasm.emitLocalTee(l_idx_entry_mode);
+	wasm.emitIf();
+	{
+		wasm.emitLocalGet(l_idx_ctx);
+		wasm.emitI32Const(state.start_pc);
+		wasm.emitCall(state.f_idx_direct_enter);
+		wasm.emitI32Const(0);
+		wasm.emitLocalSet(l_idx_target_block);
+	}
+	wasm.emitEnd();
 }
 
 // Returns `result` to the driver. Every exit writes sp back to ctx->sp, like the native backends.
@@ -322,6 +347,17 @@ static void emit_exit(CompilationState& state, JitExecResult result)
 	emit_store_ctx(state, offsetof(JittedExecutionContext, sp), [&]{ emit_get_sp(state); });
 	state.wasm->emitI32Const(result);
 	state.wasm->emitReturn();
+}
+
+// A RETURNFUNC. The driver pops the return pc for a call it made; a direct-called function pops it
+// itself (see compile_callfunc_direct).
+static void emit_return(CompilationState& state)
+{
+	state.wasm->emitLocalGet(l_idx_entry_mode);
+	state.wasm->emitIf();
+	state.wasm->emitCall(state.f_idx_direct_retstack_pop);
+	state.wasm->emitEnd();
+	emit_exit(state, EXEC_RESULT_RETURN);
 }
 
 // Continues at `pc` in the driver: a jump out of this piece, or falling off its end.
@@ -1053,13 +1089,74 @@ static pc_t compile_comparison(CompilationState& state, const zasm_script* scrip
 	return g.consumers.back();
 }
 
-// Calls go through the driver, which pushes the return pc and enters the callee; this piece is
+// Whether a call to target_pc completes before control comes back to the caller - so the caller
+// can call it directly, and needs no resume point after the call: the callee is a function (not
+// some pc in the middle of one, which constructor delegation in older scripts calls) that can
+// never yield.
+static bool is_direct_callable(const StructuredZasm& structured_zasm, int target_pc)
+{
+	auto it = structured_zasm.start_pc_to_function.find(target_pc);
+	return it != structured_zasm.start_pc_to_function.end() && !structured_zasm.functions[it->second].may_yield;
+}
+
+// A call through the driver, which pushes the return pc and enters the callee; this piece is
 // re-entered after the CALLFUNC once the callee returns (see pc_to_resume_address).
-static void compile_callfunc(CompilationState& state, pc_t i, int target_pc)
+static void compile_callfunc_driver(CompilationState& state, pc_t i, int target_pc)
 {
 	emit_store_ctx_const(state, offsetof(JittedExecutionContext, pc), i);
 	emit_store_ctx_const(state, offsetof(JittedExecutionContext, call_pc), target_pc);
 	emit_exit(state, EXEC_RESULT_CALL);
+}
+
+// A call to a function that can't yield, made directly through its slot in direct_entry_table
+// (which holds jit_wasm_direct_not_compiled until it is compiled, running the call through the
+// driver to its end). A normal return continues after the call; any other exec result (the script
+// stopping, or something unusual like a call to a pc inside some function) leaves this function
+// too, and if the driver comes back here it is with no resume point - the interpreter runs the
+// rest of the function.
+static void compile_callfunc_direct(CompilationState& state, pc_t i, int target_pc)
+{
+	auto& wasm = *state.wasm;
+	const auto& structured_zasm = state.j_script->structured_zasm;
+	pc_t fn_id = structured_zasm.start_pc_to_function.at(target_pc);
+
+	emit_get_ri(state);
+	wasm.emitI32Load(offsetof(refInfo, retsp));
+	wasm.emitI32Const(max_direct_call_depth);
+	wasm.emitI32GeU();
+	wasm.emitIf();
+	compile_callfunc_driver(state, i, target_pc);
+	wasm.emitEnd();
+
+	emit_store_ctx(state, offsetof(JittedExecutionContext, sp), [&]{ emit_get_sp(state); });
+	emit_store_ctx_const(state, offsetof(JittedExecutionContext, call_pc), i + 1);
+	emit_store_ctx_const(state, offsetof(JittedExecutionContext, entry_mode), 1);
+	wasm.emitLocalGet(l_idx_ctx);
+	wasm.emitI32Const((int32_t)(uintptr_t)&state.j_script->direct_entry_table[fn_id]);
+	wasm.emitI32Load(0);
+	wasm.emitCallIndirect(state.exec_type);
+
+	wasm.emitLocalTee(l_idx_scratch);
+	wasm.emitI32Const(EXEC_RESULT_RETURN);
+	wasm.emitI32Ne();
+	wasm.emitIf();
+	wasm.emitLocalGet(l_idx_scratch);
+	wasm.emitReturn();
+	wasm.emitEnd();
+
+	// The callee consumed its arguments from the stack.
+	emit_load_ctx(state, offsetof(JittedExecutionContext, sp));
+	emit_set_sp(state);
+	// As the driver does on every return (error traces read it).
+	emit_store_ctx_const(state, offsetof(JittedExecutionContext, pc), i + 1);
+}
+
+static void compile_callfunc(CompilationState& state, pc_t i, int target_pc)
+{
+	if (is_direct_callable(state.j_script->structured_zasm, target_pc))
+		compile_callfunc_direct(state, i, target_pc);
+	else
+		compile_callfunc_driver(state, i, target_pc);
 }
 
 // A GOTO to outside this piece - the entry of some other function (only expected for the "~Init"
@@ -2157,8 +2254,9 @@ struct StructuredFnSink : StructSink
 					break;
 
 				case CALLFUNC:
-					// Only ever the last command of the piece: a call anywhere else is resumed
-					// after, which needs the loop-switch (see compile_piece).
+					// A direct call, or else the last command of the piece: a call through the
+					// driver anywhere else is resumed after, which needs the loop-switch (see
+					// compile_piece).
 					compile_callfunc(*state, i, script->zasm[i].arg1);
 					break;
 
@@ -2173,8 +2271,8 @@ struct StructuredFnSink : StructSink
 					break;
 
 				case RETURNFUNC:
-					// The driver pops the return pc (the one on the data stack is ignored).
-					emit_exit(*state, EXEC_RESULT_RETURN);
+					// The return pc on the data stack is ignored (see emit_return).
+					emit_return(*state);
 					break;
 
 				default:
@@ -2292,7 +2390,7 @@ struct StructuredFnSink : StructSink
 
 		if (d.is_return)
 		{
-			emit_exit(*state, EXEC_RESULT_RETURN);
+			emit_return(*state);
 			return;
 		}
 
@@ -2392,10 +2490,10 @@ static std::optional<WasmAssembler> compile_function_structured(CompilationState
 	for (pc_t i = start_pc; i <= final_pc; i++)
 	{
 		// Only for pieces with no resume points: nothing that leaves for the driver and comes back
-		// (a call is fine as the last command, as nothing follows it).
+		// (a call through the driver is fine as the last command, as nothing follows it).
 		if (instruction_is_suspend(script->zasm[i]))
 			return std::nullopt;
-		if (script->zasm[i].command == CALLFUNC && i != final_pc)
+		if (script->zasm[i].command == CALLFUNC && i != final_pc && !is_direct_callable(structured_zasm, script->zasm[i].arg1))
 			return std::nullopt;
 	}
 
@@ -2740,7 +2838,7 @@ static void emit_yielder_region(CompilationState& state, const zasm_script* scri
 // the piece and script entries, and the blocks after calls and suspends, where the driver resumes
 // the piece (see pc_to_resume_address). Yielder regions must not absorb these (see
 // detect_yielder_regions).
-static std::set<pc_t> compute_dispatch_entries(const zasm_script* script, const ZasmCFG& cfg, const std::vector<std::pair<pc_t, pc_t>>& pc_ranges)
+static std::set<pc_t> compute_dispatch_entries(const zasm_script* script, const StructuredZasm& structured_zasm, const ZasmCFG& cfg, const std::vector<std::pair<pc_t, pc_t>>& pc_ranges)
 {
 	std::set<pc_t> dispatch_entries;
 	for (auto [start_pc, final_pc] : pc_ranges)
@@ -2753,8 +2851,9 @@ static std::set<pc_t> compute_dispatch_entries(const zasm_script* script, const 
 		for (pc_t i = start_pc; i <= final_pc; i++)
 		{
 			int command = script->zasm[i].command;
-			// A call's return continuation: every call goes through the driver.
-			bool resume_after = instruction_is_suspend(script->zasm[i]) || command == CALLFUNC;
+			// A call's return continuation, for a call through the driver.
+			bool resume_after = instruction_is_suspend(script->zasm[i]) ||
+				(command == CALLFUNC && !is_direct_callable(structured_zasm, script->zasm[i].arg1));
 			if (resume_after && i + 1 <= final_pc && cfg.contains_block_start(i + 1))
 				dispatch_entries.insert(cfg.block_id_from_start_pc(i + 1));
 		}
@@ -2762,7 +2861,7 @@ static std::set<pc_t> compute_dispatch_entries(const zasm_script* script, const 
 	return dispatch_entries;
 }
 
-static std::vector<YielderRegionPlan> detect_yielder_regions(const zasm_script* script, const ZasmCFG& cfg, const std::vector<std::pair<pc_t, pc_t>>& pc_ranges)
+static std::vector<YielderRegionPlan> detect_yielder_regions(const zasm_script* script, const StructuredZasm& structured_zasm, const ZasmCFG& cfg, const std::vector<std::pair<pc_t, pc_t>>& pc_ranges)
 {
 	pc_t num_blocks = cfg.block_starts.size();
 	auto block_final = [&](pc_t b) -> pc_t {
@@ -2772,7 +2871,7 @@ static std::vector<YielderRegionPlan> detect_yielder_regions(const zasm_script* 
 	// These must keep their scaffold frames, so no region may absorb them (a
 	// region may still *start* at one - dispatching to the header lands at the
 	// top of the structured loop).
-	std::set<pc_t> dispatch_entries = compute_dispatch_entries(script, cfg, pc_ranges);
+	std::set<pc_t> dispatch_entries = compute_dispatch_entries(script, structured_zasm, cfg, pc_ranges);
 
 	// Candidate loops: for each backward edge b -> h, take the largest such b
 	// per header h. Also record each block's predecessor bounds; the
@@ -2821,7 +2920,7 @@ static std::vector<YielderRegionPlan> detect_yielder_regions(const zasm_script* 
 				ok = false;
 
 		// The loop must run to completion without leaving the piece: no waits, no
-		// frozen-script runs, no calls.
+		// frozen-script runs, no calls through the driver.
 		// Comparison-consumer runs must not escape the region.
 		for (pc_t i = h_pc; i <= t_final && ok; i++)
 		{
@@ -2830,7 +2929,7 @@ static std::vector<YielderRegionPlan> detect_yielder_regions(const zasm_script* 
 				ok = false;
 			else if (command == GOTOTABLE || command == GOTORANGES)
 				ok = false; // region planning has no Term::Switch support; the flat lowering handles it
-			else if (command == CALLFUNC)
+			else if (command == CALLFUNC && !is_direct_callable(structured_zasm, script->zasm[i].arg1))
 				ok = false; // resumed after, through the driver
 			else if (command_sets_comparison_result(command))
 			{
@@ -2921,7 +3020,7 @@ static WasmAssembler compile_piece(CompilationState& state, const zasm_script* s
 
 	// Dispatch values are (cfg block id + 1), matching what the jumps below set. The piece's start
 	// is entered with no resume address (dispatch value 0, which lands at the first block).
-	for (pc_t b : compute_dispatch_entries(script, cfg, pc_ranges))
+	for (pc_t b : compute_dispatch_entries(script, structured_zasm, cfg, pc_ranges))
 	{
 		pc_t pc = cfg.block_starts[b];
 		if (pc != state.start_pc)
@@ -2946,7 +3045,7 @@ static WasmAssembler compile_piece(CompilationState& state, const zasm_script* s
 	static bool yielder_structured = get_flag_bool("-jit-wasm-structured-yielder").value_or(true);
 	std::vector<YielderRegionPlan> regions;
 	if (yielder_structured)
-		regions = detect_yielder_regions(script, cfg, pc_ranges);
+		regions = detect_yielder_regions(script, structured_zasm, cfg, pc_ranges);
 
 	pc_t num_blocks = cfg.block_starts.size();
 
@@ -3145,7 +3244,13 @@ static WasmAssembler compile_piece(CompilationState& state, const zasm_script* s
 
 				case CALLFUNC:
 				{
-					compile_callfunc(state, i, arg1);
+					if (is_direct_callable(structured_zasm, arg1))
+					{
+						compile_callfunc_direct(state, i, arg1);
+						break;
+					}
+
+					compile_callfunc_driver(state, i, arg1);
 					// Resumed after the callee returns, at the next block (a dispatch entry).
 					CHECK(i == state.final_pc || cfg.contains_block_start(i + 1));
 				}
@@ -3235,10 +3340,10 @@ static WasmAssembler compile_piece(CompilationState& state, const zasm_script* s
 
 				case RETURNFUNC:
 				{
-					// The driver pops the return pc (the one on the data stack is ignored).
+					// The return pc on the data stack is ignored (see emit_return).
 					if (command == RETURN)
 						add_sp(state, 1);
-					emit_exit(state, EXEC_RESULT_RETURN);
+					emit_return(state);
 				}
 				break;
 
@@ -3317,6 +3422,8 @@ static std::optional<WasmModule> wasm_codegen_piece_impl(zasm_script* script, Ji
 	state.inline_regs = get_flag_bool("-jit-wasm-inline-regs").value_or(true);
 
 	state.f_idx_do_commands = comp.builder.importFunction("do_commands", 4, 1);
+	state.f_idx_direct_enter = comp.builder.importFunction("direct_enter", 2, 0);
+	state.f_idx_direct_retstack_pop = comp.builder.importFunction("direct_retstack_pop", 0, 0);
 	state.f_idx_get_register = comp.builder.importFunction("get_register", 1, 1);
 	state.f_idx_set_register = comp.builder.importFunction("set_register", 2, 0);
 	state.f_idx_set_guarded_register = comp.builder.importFunction("set_guarded_register", 3, 0);
@@ -3335,6 +3442,8 @@ static std::optional<WasmModule> wasm_codegen_piece_impl(zasm_script* script, Ji
 
 	uint32_t fn_exec_idx = comp.builder.declareFunction({WasmValType::I32}, {WasmValType::I32});
 	comp.builder.exportFunction(fn_exec_idx, "exec");
+	state.exec_type = comp.builder.internFuncType({WasmValType::I32}, {WasmValType::I32});
+	comp.builder.import_table = true;
 
 	// A piece that is a whole function and never leaves for the driver mid-way gets real
 	// structured control flow (falling back to the loop-switch for irreducible CFGs);
@@ -3563,6 +3672,21 @@ bool jit_precompile_scripts_impl([[maybe_unused]] const std::vector<zasm_script*
 extern "C" int em_do_commands(JittedScriptInstance* j_instance, int pc, int len, int sp)
 {
 	return run_script_jit_sequence(j_instance, pc, sp, len);
+}
+
+// The entry of a direct-called function (see compile_callfunc_direct): pushes the return pc the
+// call site stored in ctx->call_pc, as the driver does for a call it makes.
+extern "C" void em_direct_enter(JittedExecutionContext* ctx, int callee_start_pc)
+{
+	// Error traces read ctx->pc, which the driver sets to the call target on every call.
+	ctx->pc = callee_start_pc;
+	retstack_push(ctx->call_pc);
+}
+
+// The return of a direct-called function (the driver pops for one it entered).
+extern "C" void em_direct_retstack_pop()
+{
+	retstack_pop();
 }
 
 extern "C" int em_get_register(int r)

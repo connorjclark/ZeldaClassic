@@ -1304,9 +1304,9 @@ if (EMSCRIPTEN)
 	set(zplayer_runtime_methods cwrap,wasmMemory)
 	if(JIT_BACKEND STREQUAL "wasm")
 		# Imported by the jitted script modules (see web/zasm.js).
-		string(APPEND zplayer_exports ,_em_do_commands,_em_get_register,_em_set_register,_em_set_guarded_register,_em_runtime_script_debug,_em_log_error,_em_pod_read,_em_pod_write,_em_allocatemem,_em_writepodarr,_em_class_read,_em_class_write,_em_string_compare,_em_ref_change,_em_mark_type_stack,_em_arraysize)
+		string(APPEND zplayer_exports ,_em_do_commands,_em_direct_enter,_em_direct_retstack_pop,_em_get_register,_em_set_register,_em_set_guarded_register,_em_runtime_script_debug,_em_log_error,_em_pod_read,_em_pod_write,_em_allocatemem,_em_writepodarr,_em_class_read,_em_class_write,_em_string_compare,_em_ref_change,_em_mark_type_stack,_em_arraysize)
 		# Each module's `run` export goes in the function table, so C++ can call it directly.
-		string(APPEND zplayer_runtime_methods ,addFunction,removeFunction)
+		string(APPEND zplayer_runtime_methods ,addFunction,removeFunction,wasmTable)
 		target_link_options(zplayer PRIVATE "SHELL:-s ALLOW_TABLE_GROWTH=1")
 	endif()
 	target_link_options(zplayer PRIVATE "SHELL:-s EXPORTED_FUNCTIONS=${zplayer_exports} -s EXPORTED_RUNTIME_METHODS=${zplayer_runtime_methods}")

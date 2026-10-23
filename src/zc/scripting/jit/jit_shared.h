@@ -170,5 +170,7 @@ const JitFunctionAnalysis& jit_analyze_function(zasm_script* script, JittedScrip
 int32_t jit_direct_enter(JittedExecutionContext* ctx, int32_t callee_start_pc);
 int32_t jit_direct_not_compiled(JittedExecutionContext* ctx);
 void jit_direct_retstack_pop();
+int32_t jit_call_non_yielding(JittedExecutionContext* ctx, pc_t callee_start_pc, pc_t ret_pc);
+int32_t jit_wasm_direct_not_compiled(JittedExecutionContext* ctx);
 
 #endif

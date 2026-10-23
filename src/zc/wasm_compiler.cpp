@@ -89,7 +89,7 @@ WasmModule WasmModuleBuilder::finish() {
   writer.emitMagic();
   writer.emitVersion();
   writer.emitTypeSection(types);
-  writer.emitImportSection(function_imports);
+  writer.emitImportSection(function_imports, import_table);
   writer.emitFunctionSection(functions);
   // writer.emitMemorySection();
   writer.emitTagSection(tags);

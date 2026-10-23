@@ -66,6 +66,8 @@ function ensureEmFunctions() {
   if (emFunctions.doCommands) return;
 
   emFunctions.doCommands = rawEngineExport('em_do_commands');
+  emFunctions.directEnter = rawEngineExport('em_direct_enter');
+  emFunctions.directRetstackPop = rawEngineExport('em_direct_retstack_pop');
   emFunctions.getRegister = rawEngineExport('em_get_register');
   emFunctions.setRegister = rawEngineExport('em_set_register');
   emFunctions.setGuardedRegister = rawEngineExport('em_set_guarded_register');
@@ -91,7 +93,11 @@ async function compileOneModule(name, ptr, size) {
     const instance = await WebAssembly.instantiate(module, {
       env: {
         memory: Module.wasmMemory,
+        // For direct calls into other compiled functions (see compile_callfunc_direct).
+        table: Module.wasmTable,
         do_commands: emFunctions.doCommands,
+        direct_enter: emFunctions.directEnter,
+        direct_retstack_pop: emFunctions.directRetstackPop,
         get_register: emFunctions.getRegister,
         set_register: emFunctions.setRegister,
         set_guarded_register: emFunctions.setGuardedRegister,
