@@ -1,6 +1,6 @@
 // genericdata->RunFrozen() runs a generic script for whole engine frames before the
-// calling script continues. The frozen script is compiled into the same chunk as the
-// caller, so on the web JIT this also covers a nested run of the same module.
+// calling script continues. On the web JIT it runs inline, with the caller's compiled
+// code still on the stack.
 
 #include "auto/test_runner.zs"
 
