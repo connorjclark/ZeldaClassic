@@ -82,7 +82,7 @@ const std::vector<uint8_t>& zasm_get_register_dependency_mask_cache()
 	return register_dependency_mask_cache;
 }
 
-bool StructuredZasm::is_modern_function_calling()
+bool StructuredZasm::is_modern_function_calling() const
 {
 	// UNKNOWN is included b/c scripts like "global init" don't typically have any function calls,
 	// so might as well consider it "modern".
@@ -415,7 +415,7 @@ std::pair<pc_t, pc_t> ZasmCFG::get_block_bounds(int block) const
 // otherwise outside of pc_ranges) is ignored: it neither ends its block nor gets an edge. With a
 // target_range, a target outside of pc_ranges still gets a block, with no edges of its own, and so
 // does the instruction after a range (fallen through to) when target_range has it.
-static ZasmCFG construct_cfg(const zasm_script* script, const std::vector<std::pair<pc_t, pc_t>>& pc_ranges, std::optional<std::pair<pc_t, pc_t>> target_range)
+static ZasmCFG construct_cfg(const zasm_script* script, const std::vector<std::pair<pc_t, pc_t>>& pc_ranges, std::optional<std::pair<pc_t, pc_t>> target_range, bool split_after_calls = false)
 {
 	auto is_target = [&](pc_t pc) {
 		if (target_range)
@@ -443,7 +443,13 @@ static ZasmCFG construct_cfg(const zasm_script* script, const std::vector<std::p
 			int command = script->zasm[i].command;
 			int arg1 = script->zasm[i].arg1;
 
-			if (command == CALLFUNC || command == GOTO || command == GOTOCMP || command == GOTOTRUE || command == GOTOFALSE || command == GOTOLESS || command == GOTOMORE)
+			if (command == CALLFUNC && split_after_calls)
+			{
+				// The call returns to the next instruction, so it starts a block.
+				if (i + 1 <= final_pc)
+					block_starts.push_back(i + 1);
+			}
+			else if (command == CALLFUNC || command == GOTO || command == GOTOCMP || command == GOTOTRUE || command == GOTOFALSE || command == GOTOLESS || command == GOTOMORE)
 			{
 				// Ignore GOTO jumps outside provided bounds.
 				// This allows for creating a CFG that is internal to this function only.
@@ -505,7 +511,13 @@ static ZasmCFG construct_cfg(const zasm_script* script, const std::vector<std::p
 		int i = j < num_blocks ? block_starts[j] - 1 : cfg.final_pc;
 		int prev_command = script->zasm[i].command;
 		int prev_arg1 = script->zasm[i].arg1;
-		if (prev_command == GOTO || prev_command == CALLFUNC)
+		if (prev_command == CALLFUNC && split_after_calls)
+		{
+			// Continues to this block once the call returns.
+			if (j != num_blocks)
+				edges.push_back(j);
+		}
+		else if (prev_command == GOTO || prev_command == CALLFUNC)
 		{
 			if (is_target(prev_arg1))
 			{
@@ -553,9 +565,9 @@ static ZasmCFG construct_cfg(const zasm_script* script, const std::vector<std::p
 	return cfg;
 }
 
-ZasmCFG zasm_construct_cfg(const zasm_script* script, std::vector<std::pair<pc_t, pc_t>> pc_ranges)
+ZasmCFG zasm_construct_cfg(const zasm_script* script, std::vector<std::pair<pc_t, pc_t>> pc_ranges, bool split_after_calls)
 {
-	return construct_cfg(script, pc_ranges, std::nullopt);
+	return construct_cfg(script, pc_ranges, std::nullopt, split_after_calls);
 }
 
 ZasmCFG zasm_construct_function_cfg(const zasm_script* script, const StructuredZasm& structured_zasm, const ZasmFunction& fn)

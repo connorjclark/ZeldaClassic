@@ -110,20 +110,14 @@ async function compileOneModule(name, ptr, size) {
       },
     });
 
-    // C++ calls `run` through the function table (see jit_run_script), with no JS
-    // frame in between. Its table slot also identifies the module.
-    return Module.addFunction(instance.exports.run);
+    // The JIT driver calls `exec` through the function table (see exec_script in
+    // jit_shared.cpp), with no JS frame in between. Its table slot also identifies
+    // the module.
+    return Module.addFunction(instance.exports.exec);
   } catch (err) {
     console.error(`error compiling ${name}`, err);
     return 0;
   }
-}
-
-export async function compileScriptWasmModule(name, ptr, size) {
-  // TODO  support compiling in workers.
-  assertMainThread();
-  ensureEmFunctions();
-  return compileOneModule(name, ptr, size);
 }
 
 // Compiles many modules concurrently - the browser compiles WebAssembly on an

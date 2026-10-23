@@ -64,24 +64,20 @@
 struct CompilationState
 {
 	WasmAssembler* wasm;
+	JittedScript* j_script;
 	bool runtime_debugging;
-	// When true, compiled calls maintain ri->retsp + ret_stack (the script call
-	// stack create_stack_trace reads) so error/Trace context shows the full caller
-	// chain. Gated on stack traces being possible, to avoid the per-call cost
-	// otherwise.
+	// When true, ri->pc is kept current before engine calls, for the stack trace of an error they
+	// may log. Gated on stack traces being possible, to avoid the per-call cost otherwise.
 	bool maintain_call_stack;
-	// Keep sp in a function-local instead of the "sp" global; see l_idx_sp_local.
-	bool sp_local;
-	// Keep the stack/ri/global_d pointers in function-locals; see l_idx_*_local.
-	bool ptr_locals;
 	// Inline side-effect-free hot engine registers (SWITCHKEY, the
 	// GLOBALRAM/SCRIPTRAM array accessors) instead of calling get/set_register.
 	bool inline_regs;
 
 	pc_t pc;
+	// The piece being compiled (see JitPiece).
+	pc_t start_pc;
+	pc_t final_pc;
 
-	// Thrown (with the RUNSCRIPT_* code) to stop the script from any depth; caught by `run`.
-	uint32_t tag_idx_stop;
 	uint8_t f_idx_do_commands;
 	uint8_t f_idx_get_register;
 	uint8_t f_idx_set_register;
@@ -98,42 +94,9 @@ struct CompilationState
 	uint8_t f_idx_ref_change;
 	uint8_t f_idx_mark_type_stack;
 	uint8_t f_idx_arraysize;
-
-	uint8_t l_idx_j_instance;
-	uint8_t l_idx_ri;
-	uint8_t l_idx_global_d;
-	uint8_t l_idx_stack;
-	uint8_t l_idx_ret_stack;
-	uint8_t l_idx_ret_stack_index;
-	uint8_t l_idx_wait_index;
-	uint32_t l_idx_start_pc;
-	uint8_t l_idx_script_d;
-
-	uint8_t g_idx_j_instance;
-	uint8_t g_idx_ri;
-	uint8_t g_idx_global_d;
-	uint8_t g_idx_script_d;
-	uint8_t g_idx_stack;
-	uint8_t g_idx_ret_stack;
-	uint8_t g_idx_ret_stack_index;
-	// Base of ri's ret_stack[] (the pc call stack create_stack_trace reads).
-	uint8_t g_idx_ret_stack_pc;
-	uint8_t g_idx_wait_index;
-	uint8_t g_idx_sp;
-	uint8_t g_idx_target_block_id;
-	uint32_t g_idx_start_pc;
 };
 
 #ifdef __EMSCRIPTEN__
-
-EM_ASYNC_JS(int, em_compile_wasm_, (const char* name, void* ptr, size_t size), {
-	name = UTF8ToString(name);
-	return ZC.compileScriptWasmModule(name, ptr, size);
-});
-static int em_compile_wasm(const char* name, void* ptr, size_t size)
-{
-	return em_compile_wasm_(name, ptr, size);
-}
 
 // Compile many modules in one suspension: the browser compiles them in
 // parallel on its internal thread pool. Writes each module's run function
@@ -184,11 +147,6 @@ static bool em_destroy_wasm_module(int id)
 }
 
 #else
-
-static int em_compile_wasm([[maybe_unused]] const char* name, [[maybe_unused]] void* ptr, [[maybe_unused]] size_t size)
-{
-	return 0;
-}
 
 static void em_compile_wasm_batch([[maybe_unused]] int count, [[maybe_unused]] const char** names, [[maybe_unused]] void** ptrs, [[maybe_unused]] uint32_t* sizes, [[maybe_unused]] int* out_ids)
 {
@@ -243,114 +201,155 @@ static void error(const zasm_script* script, std::string str, bool expected = fa
 	}
 }
 
-static void modify_global_idx(WasmAssembler& wasm, int idx, int delta)
-{
-	wasm.emitGlobalGet(idx);
-	wasm.emitI32Const(delta);
-	wasm.emitI32Add();
-	wasm.emitGlobalSet(idx);
-}
+// Each piece of a function (see JitPiece) is compiled to a module exporting one function,
+// exec(ctx) -> JitExecResult, which the driver in jit_shared.cpp calls the same way it calls the
+// native backends' code. Its locals:
+//
+// - 0: ctx, the JittedExecutionContext* parameter.
+// - 1: scratch. 2/3: the comparison operand snapshots (2 doubles as a second scratch for
+//   two-operand commands, never live at the same time as a comparison snapshot, since a
+//   comparison's consumers immediately follow it).
+// - 4: sp. Kept in a local, which the optimizing tier keeps in a register, and written back to
+//   ctx->sp on every exit (see emit_exit).
+// - 5..9: the stack base, ri, global_d, script_d and j_instance pointers, loaded once from ctx
+//   (emit_exec_prologue) and never changed.
+// - 10: the dispatch target of the loop-switch lowering (cfg block id + 1).
+//
+// Nothing lives in module globals: a piece can be re-entered (a script running another script
+// whose code is the same piece) while it is executing.
+constexpr uint8_t l_idx_ctx = 0;
+constexpr uint8_t l_idx_scratch = 1;
+constexpr uint8_t l_idx_scratch2 = 2;
+constexpr uint8_t l_idx_cmp1 = 2;
+constexpr uint8_t l_idx_cmp2 = 3;
+constexpr uint8_t l_idx_sp_local = 4;
+constexpr uint8_t l_idx_stack_local = 5;
+constexpr uint8_t l_idx_ri_local = 6;
+constexpr uint8_t l_idx_global_d_local = 7;
+constexpr uint8_t l_idx_script_d_local = 8;
+constexpr uint8_t l_idx_j_instance_local = 9;
+constexpr uint8_t l_idx_target_block = 10;
+constexpr int num_exec_locals = 10; // Not counting the ctx parameter.
 
-// The stack pointer local (see l_idx_sp below): with -jit-wasm-sp-local (the
-// default), sp lives in a function-local while inside compiled code - the
-// optimizing tier keeps it in a machine register, where the "sp" global would
-// be a memory access on every stack operation. The global remains the
-// interchange between functions and with the run wrapper: each function loads
-// it on entry (emit_sp_reload), and flushes it back before any point another
-// function can observe it - a call to a sibling wasm function or a return
-// (emit_sp_flush). Engine imports never read the global (they take sp as an
-// argument or via ri->sp), and trap bails don't need a flush (the run
-// wrapper's post-call code doesn't run after a trap).
-constexpr uint8_t l_idx_sp_local = 3;
+// ctx->registers is ri->d, and the engine reads refInfo fields off ri (see get_z_register).
+static_assert(offsetof(refInfo, d) == 4);
+#ifdef __EMSCRIPTEN__
+static_assert(sizeof(void*) == 4, "the wasm JIT assumes wasm32 pointers");
+#endif
 
 static void emit_get_sp(CompilationState& state)
 {
-	if (state.sp_local)
-		state.wasm->emitLocalGet(l_idx_sp_local);
-	else
-		state.wasm->emitGlobalGet(state.g_idx_sp);
+	state.wasm->emitLocalGet(l_idx_sp_local);
 }
 
 // Pops the new sp value from the wasm operand stack.
 static void emit_set_sp(CompilationState& state)
 {
-	if (state.sp_local)
-		state.wasm->emitLocalSet(l_idx_sp_local);
-	else
-		state.wasm->emitGlobalSet(state.g_idx_sp);
-}
-
-static void emit_sp_flush(CompilationState& state)
-{
-	if (!state.sp_local)
-		return;
-	state.wasm->emitLocalGet(l_idx_sp_local);
-	state.wasm->emitGlobalSet(state.g_idx_sp);
-}
-
-static void emit_sp_reload(CompilationState& state)
-{
-	if (!state.sp_local)
-		return;
-	state.wasm->emitGlobalGet(state.g_idx_sp);
 	state.wasm->emitLocalSet(l_idx_sp_local);
 }
 
-// Read-only pointer locals: the stack base, ri, and global_d pointers are
-// loaded once per function (emit_ptr_locals_init) and never change inside
-// compiled code - only the run wrapper writes their globals, before any
-// function runs - so unlike sp there is nothing to flush. As locals the
-// optimizing tier keeps them in registers across the whole function body.
-// -jit-wasm-pointer-locals (default on) gates this for A/B runs.
-constexpr uint8_t l_idx_stack_local = 4;
-constexpr uint8_t l_idx_ri_local = 5;
-constexpr uint8_t l_idx_global_d_local = 6;
-constexpr uint8_t l_idx_script_d_local = 7;
-
 static void emit_get_stack_base(CompilationState& state)
 {
-	if (state.ptr_locals)
-		state.wasm->emitLocalGet(l_idx_stack_local);
-	else
-		state.wasm->emitGlobalGet(state.g_idx_stack);
+	state.wasm->emitLocalGet(l_idx_stack_local);
 }
 
 static void emit_get_ri(CompilationState& state)
 {
-	if (state.ptr_locals)
-		state.wasm->emitLocalGet(l_idx_ri_local);
-	else
-		state.wasm->emitGlobalGet(state.g_idx_ri);
+	state.wasm->emitLocalGet(l_idx_ri_local);
 }
 
 static void emit_get_global_d(CompilationState& state)
 {
-	if (state.ptr_locals)
-		state.wasm->emitLocalGet(l_idx_global_d_local);
-	else
-		state.wasm->emitGlobalGet(state.g_idx_global_d);
+	state.wasm->emitLocalGet(l_idx_global_d_local);
 }
 
 static void emit_get_script_d(CompilationState& state)
 {
-	if (state.ptr_locals)
-		state.wasm->emitLocalGet(l_idx_script_d_local);
-	else
-		state.wasm->emitGlobalGet(state.g_idx_script_d);
+	state.wasm->emitLocalGet(l_idx_script_d_local);
 }
 
-static void emit_ptr_locals_init(CompilationState& state)
+static void emit_get_j_instance(CompilationState& state)
 {
-	if (!state.ptr_locals)
-		return;
-	state.wasm->emitGlobalGet(state.g_idx_stack);
-	state.wasm->emitLocalSet(l_idx_stack_local);
-	state.wasm->emitGlobalGet(state.g_idx_ri);
-	state.wasm->emitLocalSet(l_idx_ri_local);
-	state.wasm->emitGlobalGet(state.g_idx_global_d);
-	state.wasm->emitLocalSet(l_idx_global_d_local);
-	state.wasm->emitGlobalGet(state.g_idx_script_d);
-	state.wasm->emitLocalSet(l_idx_script_d_local);
+	state.wasm->emitLocalGet(l_idx_j_instance_local);
+}
+
+static void emit_load_ctx(CompilationState& state, size_t offset)
+{
+	state.wasm->emitLocalGet(l_idx_ctx);
+	state.wasm->emitI32Load(offset);
+}
+
+// ctx->field = the value `emit_value` pushes.
+template <typename F>
+static void emit_store_ctx(CompilationState& state, size_t offset, F&& emit_value)
+{
+	state.wasm->emitLocalGet(l_idx_ctx);
+	emit_value();
+	state.wasm->emitI32Store(offset);
+}
+
+static void emit_store_ctx_const(CompilationState& state, size_t offset, int32_t value)
+{
+	emit_store_ctx(state, offset, [&]{ state.wasm->emitI32Const(value); });
+}
+
+// Loads the locals exec(ctx) keeps its state in, and the dispatch target: 0 to start at the
+// piece's start, or the dispatch value of a resume point (see pc_to_resume_address).
+static void emit_exec_prologue(CompilationState& state)
+{
+	auto& wasm = *state.wasm;
+	emit_load_ctx(state, offsetof(JittedExecutionContext, sp));
+	wasm.emitLocalSet(l_idx_sp_local);
+	emit_load_ctx(state, offsetof(JittedExecutionContext, stack_base));
+	wasm.emitLocalSet(l_idx_stack_local);
+	emit_load_ctx(state, offsetof(JittedExecutionContext, registers));
+	wasm.emitI32Const(offsetof(refInfo, d));
+	wasm.emitI32Sub();
+	wasm.emitLocalSet(l_idx_ri_local);
+	emit_load_ctx(state, offsetof(JittedExecutionContext, global_registers));
+	wasm.emitLocalSet(l_idx_global_d_local);
+	emit_load_ctx(state, offsetof(JittedExecutionContext, script_registers));
+	wasm.emitLocalSet(l_idx_script_d_local);
+	emit_load_ctx(state, offsetof(JittedExecutionContext, j_instance));
+	wasm.emitLocalSet(l_idx_j_instance_local);
+	emit_load_ctx(state, offsetof(JittedExecutionContext, resume_address));
+	wasm.emitLocalSet(l_idx_target_block);
+}
+
+// Returns `result` to the driver. Every exit writes sp back to ctx->sp, like the native backends.
+static void emit_exit(CompilationState& state, JitExecResult result)
+{
+	emit_store_ctx(state, offsetof(JittedExecutionContext, sp), [&]{ emit_get_sp(state); });
+	state.wasm->emitI32Const(result);
+	state.wasm->emitReturn();
+}
+
+// Continues at `pc` in the driver: a jump out of this piece, or falling off its end.
+static void emit_exit_continue(CompilationState& state, pc_t pc)
+{
+	emit_store_ctx_const(state, offsetof(JittedExecutionContext, pc), pc);
+	emit_exit(state, EXEC_RESULT_CONTINUE);
+}
+
+// Stops the script with the RUNSCRIPT_* code `ret_code`, at `pc`.
+static void emit_exit_stop(CompilationState& state, int32_t ret_code, pc_t pc)
+{
+	emit_store_ctx_const(state, offsetof(JittedExecutionContext, ret_code), ret_code);
+	emit_store_ctx_const(state, offsetof(JittedExecutionContext, pc), pc);
+	emit_exit(state, EXEC_RESULT_EXIT);
+}
+
+// Stops the script with the RUNSCRIPT_* code the interpreter returned (in l_idx_scratch), where
+// the interpreter left ri->pc (like after a Hero->Lift() of itself) - see the native backends'
+// ret_if_not_ok.
+static void emit_exit_interpreter_result(CompilationState& state)
+{
+	emit_store_ctx(state, offsetof(JittedExecutionContext, ret_code), [&]{ state.wasm->emitLocalGet(l_idx_scratch); });
+	emit_store_ctx(state, offsetof(JittedExecutionContext, pc), [&]{
+		emit_get_ri(state);
+		state.wasm->emitI32Load(offsetof(refInfo, pc));
+	});
+	emit_exit(state, EXEC_RESULT_EXIT);
 }
 
 static void add_sp(CompilationState& state, int delta)
@@ -370,33 +369,12 @@ static void check_sp(CompilationState& state)
 	wasm.emitI32GeU();
 
 	wasm.emitIf();
-	// ri->pc = state.pc, so the stack-overflow error's innermost stack frame is the
-	// command that overflowed (matching the interpreter), not a stale pc.
+	// The stack-overflow error's innermost stack frame is the command that overflowed (matching
+	// the interpreter), not a stale pc.
 	emit_get_ri(state);
 	wasm.emitI32Const(state.pc);
-	wasm.emitI32Store(0); // ri->pc
-	wasm.emitI32Const(RUNSCRIPT_JIT_STACK_OVERFLOW);
-	wasm.emitThrow(state.tag_idx_stop);
-	wasm.emitEnd();
-}
-
-static void check_call_limit(CompilationState& state, pc_t target_pc)
-{
-	auto& wasm = *state.wasm;
-
-	wasm.emitGlobalGet(state.g_idx_ret_stack_index);
-	wasm.emitI32Const(MAX_CALL_FRAMES);
-	wasm.emitI32GeU();
-
-	wasm.emitIf();
-	// Match the interpreter: when the call limit trips, ri->pc points at the entry
-	// of the function being called, so the error's innermost stack frame is the
-	// recursing function rather than the call site.
-	emit_get_ri(state);
-	wasm.emitI32Const(target_pc);
-	wasm.emitI32Store(0); // ri->pc
-	wasm.emitI32Const(RUNSCRIPT_JIT_CALL_LIMIT);
-	wasm.emitThrow(state.tag_idx_stop);
+	wasm.emitI32Store(offsetof(refInfo, pc));
+	emit_exit_stop(state, RUNSCRIPT_JIT_STACK_OVERFLOW, state.pc);
 	wasm.emitEnd();
 }
 
@@ -590,11 +568,14 @@ static void set_z_register(CompilationState& state, int r, F&& fn)
 }
 
 // Defer to the ZASM command interpreter for 1+ commands.
-// is_wait: the command is a wait, so return to the run function if it waits.
-// is_stop: the command can stop the script for the rest of the frame (see instruction_is_suspend),
-// so if it does, return to the run function with the code for jit_run_script to report.
-static void compile_command_interpreter(CompilationState& state, const zasm_script* script, int pc, int count, bool is_wait = false, bool is_stop = false)
+// is_wait: the command is a wait, so exit to the driver if it waits.
+// Any command the interpreter can't finish normally (see instruction_could_return_not_ok) exits
+// with what it returned - including the suspends, like an lweapon script lifting itself, for which
+// the interpreter leaves ri->pc where the script resumes.
+static void compile_command_interpreter(CompilationState& state, const zasm_script* script, int pc, int count, bool is_wait = false, bool is_suspend = false)
 {
+	auto& wasm = *state.wasm;
+
 	// TODO: fast path for these commands?
 	bool needs_sp = false;
 	for (int j = 0; j < count; j++)
@@ -615,14 +596,14 @@ static void compile_command_interpreter(CompilationState& state, const zasm_scri
 		// ri->sp = sp
 		emit_get_ri(state);
 		emit_get_sp(state);
-		state.wasm->emitI32Store(4*9); // ri->sp
+		wasm.emitI32Store(offsetof(refInfo, sp));
 	}
 
-	state.wasm->emitGlobalGet(state.g_idx_j_instance);
-	state.wasm->emitI32Const(pc);
-	state.wasm->emitI32Const(count);
+	emit_get_j_instance(state);
+	wasm.emitI32Const(pc);
+	wasm.emitI32Const(count);
 	emit_get_sp(state);
-	state.wasm->emitCall(state.f_idx_do_commands);
+	wasm.emitCall(state.f_idx_do_commands);
 
 	bool moves_sp = false;
 	for (int j = 0; j < count && pc + j < (int)script->size; j++)
@@ -634,34 +615,32 @@ static void compile_command_interpreter(CompilationState& state, const zasm_scri
 	{
 		// See command_moves_sp.
 		emit_get_ri(state);
-		state.wasm->emitI32Load(4*9); // ri->sp
+		wasm.emitI32Load(offsetof(refInfo, sp));
 		emit_set_sp(state);
 	}
 
 	if (is_wait)
 	{
-		state.wasm->emitIf();
-		emit_sp_flush(state); // the run wrapper reads the global after we return
-		state.wasm->emitReturn(); // End yielder function, return to run function.
-		state.wasm->emitEnd();
+		// RUNSCRIPT_STOPPED means it is actually waiting (a WAITFRAMESR of 0 doesn't): exit, to
+		// resume after it (see pc_to_resume_address).
+		wasm.emitLocalTee(l_idx_scratch);
+		wasm.emitIf();
+		{
+			wasm.emitLocalGet(l_idx_scratch);
+			wasm.emitI32Const(RUNSCRIPT_STOPPED);
+			wasm.emitI32Eq();
+			wasm.emitIf();
+			emit_store_ctx_const(state, offsetof(JittedExecutionContext, ret_code), RUNSCRIPT_OK);
+			emit_store_ctx_const(state, offsetof(JittedExecutionContext, pc), pc + 1);
+			emit_exit(state, EXEC_RESULT_EXIT);
+			wasm.emitEnd();
+			emit_exit_interpreter_result(state);
+		}
+		wasm.emitEnd();
 		return;
 	}
 
-	if (is_stop)
-	{
-		// A clean return reports RUNSCRIPT_OK, so pass the code via j_instance.
-		state.wasm->emitLocalTee(0); // l_idx_scratch
-		state.wasm->emitIf();
-		state.wasm->emitGlobalGet(state.g_idx_j_instance);
-		state.wasm->emitLocalGet(0); // l_idx_scratch
-		state.wasm->emitI32Store(offsetof(JittedScriptInstance, suspend_return_code));
-		emit_sp_flush(state); // the run wrapper reads the global after we return
-		state.wasm->emitReturn(); // End yielder function, return to run function.
-		state.wasm->emitEnd();
-		return;
-	}
-
-	bool could_return_not_ok = false;
+	bool could_return_not_ok = is_suspend;
 	for (int j = 0; j < count; j++)
 	{
 		int index = pc + j;
@@ -677,16 +656,14 @@ static void compile_command_interpreter(CompilationState& state, const zasm_scri
 
 	if (could_return_not_ok)
 	{
-		// If command did not succeed, end execution.
-		state.wasm->emitLocalTee(0); // l_idx_scratch
-		state.wasm->emitIf();
-		state.wasm->emitLocalGet(0); // l_idx_scratch
-		state.wasm->emitThrow(state.tag_idx_stop);
-		state.wasm->emitEnd();
+		wasm.emitLocalTee(l_idx_scratch);
+		wasm.emitIf();
+		emit_exit_interpreter_result(state);
+		wasm.emitEnd();
 	}
 	else
 	{
-		state.wasm->emitDrop();
+		wasm.emitDrop();
 	}
 }
 
@@ -799,67 +776,6 @@ static bool instruction_is_compiled(const ffscript& op)
 {
 	return command_is_compiled(op.command) && !jit_instruction_runs_in_interpreter(op);
 }
-
-// Maintains ri->retsp + ret_stack (the pc call stack create_stack_trace walks)
-// around a compiled call, so an error/Trace inside the callee reports the full
-// caller chain - matching the interpreter and x64 JIT. The x64 JIT gets this for
-// free by returning to run_script_int for CALLFUNC; the wasm JIT compiles calls
-// inline, so it must replicate the push/pop. Only emitted when stack traces are
-// possible (state.maintain_call_stack), to avoid the per-call cost otherwise.
-static void emit_trace_call_stack_push(CompilationState& state, pc_t pc)
-{
-	if (!state.maintain_call_stack)
-		return;
-	auto& wasm = *state.wasm;
-	// ret_stack[ri->retsp] = pc + 1. The interpreter pushes ri->pc+1; create_stack_trace
-	// reads back (stored - 1), which maps to the CALLFUNC's call site.
-	wasm.emitGlobalGet(state.g_idx_ret_stack_pc);
-	emit_get_ri(state);
-	wasm.emitI32Load(4 * 10); // ri->retsp
-	wasm.emitI32Const(4);
-	wasm.emitI32Mul();
-	wasm.emitI32Add();
-	wasm.emitI32Const(pc + 1);
-	wasm.emitI32Store(0);
-	// ri->retsp += 1
-	emit_get_ri(state);
-	emit_get_ri(state);
-	wasm.emitI32Load(4 * 10);
-	wasm.emitI32Const(1);
-	wasm.emitI32Add();
-	wasm.emitI32Store(4 * 10);
-}
-
-static void emit_trace_call_stack_pop(CompilationState& state)
-{
-	if (!state.maintain_call_stack)
-		return;
-	auto& wasm = *state.wasm;
-	// if (ri->retsp) ri->retsp -= 1;  - mirrors retstack_pop, which no-ops at the
-	// root frame (the entry function's top-level RETURN was never pushed).
-	emit_get_ri(state);
-	wasm.emitI32Load(4 * 10); // ri->retsp
-	wasm.emitIf();
-	{
-		emit_get_ri(state);
-		emit_get_ri(state);
-		wasm.emitI32Load(4 * 10);
-		wasm.emitI32Const(1);
-		wasm.emitI32Sub();
-		wasm.emitI32Store(4 * 10);
-	}
-	wasm.emitEnd();
-}
-
-// Locals reserved for snapshotting the two comparison operands (see the
-// defineFunction calls that declare seven I32 locals). Local 0 is the general
-// scratch; locals 1/2 double as the second scratch for two-operand commands
-// (never live at the same time as a comparison snapshot, since a comparison's
-// consumers immediately follow it). Local 3 is the sp local (l_idx_sp_local).
-constexpr uint8_t l_idx_scratch = 0;
-constexpr uint8_t l_idx_scratch2 = 1;
-constexpr uint8_t l_idx_cmp1 = 1;
-constexpr uint8_t l_idx_cmp2 = 2;
 
 static bool command_is_goto_consumer(int command)
 {
@@ -1113,10 +1029,20 @@ static pc_t compile_comparison(CompilationState& state, const zasm_script* scrip
 		{
 			emit_cmp_goto_value(state, script, g, cj);
 
-			size_t target_block_index = cfg.block_id_from_start_pc(script->zasm[cj].arg1) + 1;
-			wasm.emitI32Const(target_block_index);
-			wasm.emitGlobalSet(state.g_idx_target_block_id);
-			wasm.emitBrIf(num_frames - current_rank);
+			int target_pc = script->zasm[cj].arg1;
+			if (target_pc < (int)state.start_pc || target_pc > (int)state.final_pc)
+			{
+				wasm.emitIf();
+				emit_exit_continue(state, target_pc);
+				wasm.emitEnd();
+			}
+			else
+			{
+				size_t target_block_index = cfg.block_id_from_start_pc(target_pc) + 1;
+				wasm.emitI32Const(target_block_index);
+				wasm.emitLocalSet(l_idx_target_block);
+				wasm.emitBrIf(num_frames - current_rank);
+			}
 		}
 		else
 		{
@@ -1127,72 +1053,29 @@ static pc_t compile_comparison(CompilationState& state, const zasm_script* scrip
 	return g.consumers.back();
 }
 
-// A CALLFUNC lowered as a native wasm call, for a callee compiled as its own
-// (non-yielding) wasm function. The native call stack handles the return;
-// g_idx_ret_stack_index is still maintained so check_call_limit sees the true
-// depth.
-static void compile_callfunc_native(CompilationState& state, const StructuredZasm& structured_zasm, const std::map<pc_t, pc_t>& function_id_to_idx, pc_t i, int target_pc)
+// Calls go through the driver, which pushes the return pc and enters the callee; this piece is
+// re-entered after the CALLFUNC once the callee returns (see pc_to_resume_address).
+static void compile_callfunc(CompilationState& state, pc_t i, int target_pc)
 {
-	WasmAssembler& wasm = *state.wasm;
-
-	check_call_limit(state, target_pc);
-
-	// g_idx_ret_stack_index += 1
-	modify_global_idx(wasm, state.g_idx_ret_stack_index, 1);
-	emit_trace_call_stack_push(state, i);
-
-	// Set the initial block id to 0 so a loop-switch callee starts at its
-	// beginning. (A structured callee always starts at its entry and ignores
-	// this.)
-	wasm.emitI32Const(0);
-	wasm.emitGlobalSet(state.g_idx_target_block_id);
-
-	pc_t fn_id = structured_zasm.start_pc_to_function.at(target_pc);
-	emit_sp_flush(state);
-	wasm.emitCall(function_id_to_idx.at(fn_id));
-	emit_sp_reload(state);
-
-	// g_idx_ret_stack_index -= 1
-	emit_trace_call_stack_pop(state);
-	modify_global_idx(wasm, state.g_idx_ret_stack_index, -1);
+	emit_store_ctx_const(state, offsetof(JittedExecutionContext, pc), i);
+	emit_store_ctx_const(state, offsetof(JittedExecutionContext, call_pc), target_pc);
+	emit_exit(state, EXEC_RESULT_CALL);
 }
 
-// A GOTO whose target is the entry of a function in a *different* compile
-// unit. Each (non-yielding) function is compiled as its own WASM function, and
-// a branch can only reach code within the current function, so we cannot
-// branch there. Instead, lower the GOTO as a tail-call into the target
-// function.
-//
-// This is only expected for the "~Init" script of older (2.55-era) quests:
-// that script is assembled by inlining init function bodies and tail-jumping
-// over them (via GOTO) to the "run" continuation, rather than using a plain
-// CALLFUNC. Modern compiles don't produce cross-function GOTOs.
-// jit_compile_script validates the target is a separately-compiled,
-// non-yielding function's entry, so emitCall is sufficient.
+// A GOTO to outside this piece - the entry of some other function (only expected for the "~Init"
+// script of older, 2.55-era quests, which is assembled by tail-jumping over inlined init function
+// bodies to the "run" continuation, rather than using a CALLFUNC). The driver continues there.
 //
 // Example: .tmp/replay_uploads/EB5E2CFAE26A97BAA15637C0A60D557A/6940ead2-143f-45b9-a894-1bc05c81b9e0-updated-main.zplay
-static void compile_goto_tailcall(CompilationState& state, const StructuredZasm& structured_zasm, const std::map<pc_t, pc_t>& function_id_to_idx, int target_pc)
+static void compile_goto_out_of_piece(CompilationState& state, int target_pc)
 {
-	WasmAssembler& wasm = *state.wasm;
-
-	check_call_limit(state, target_pc);
-	modify_global_idx(wasm, state.g_idx_ret_stack_index, 1);
-	wasm.emitI32Const(0);
-	wasm.emitGlobalSet(state.g_idx_target_block_id);
-	emit_sp_flush(state);
-	wasm.emitCall(function_id_to_idx.at(structured_zasm.start_pc_to_function.at(target_pc)));
-	emit_sp_reload(state);
-	modify_global_idx(wasm, state.g_idx_ret_stack_index, -1);
-	// The GOTO does not return here, so end this function once the callee does.
-	emit_sp_flush(state);
-	wasm.emitReturn();
+	emit_exit_continue(state, target_pc);
 }
 
 static void compile_quit(CompilationState& state, const zasm_script* script, pc_t i)
 {
 	compile_command_interpreter(state, script, i, 1);
-	state.wasm->emitI32Const(RUNSCRIPT_STOPPED);
-	state.wasm->emitThrow(state.tag_idx_stop);
+	emit_exit_stop(state, RUNSCRIPT_STOPPED, i);
 }
 
 // Emits a GOTORANGES binary search (see the opcode's comment in defines.h).
@@ -2167,7 +2050,6 @@ struct StructuredFnSink : StructSink
 	CompilationState* state;
 	const zasm_script* script;
 	const StructuredZasm* structured_zasm;
-	const std::map<pc_t, pc_t>* function_id_to_idx;
 	const std::vector<pc_t>* starts;
 	// Last pc each block's body emits; the block's terminating branch (if any)
 	// is emitted by the structurer via BlockInfo / emit_cond instead.
@@ -2189,12 +2071,12 @@ struct StructuredFnSink : StructSink
 
 	// Term::Dispatch support, used only when this sink emits a structured
 	// region nested inside the yielder's loop-switch (see YielderRegionPlan).
-	// A dispatch terminator sets g_idx_target_block_id and branches out to the
+	// A dispatch terminator sets the dispatch target (l_idx_target_block) and branches out to the
 	// enclosing dispatch loop.
 	struct DispatchDesc
 	{
-		// The value stored into g_idx_target_block_id: global cfg block id + 1.
-		// Unused when is_return (RETURNFUNC computes the target at runtime).
+		// The dispatch target to set: cfg block id + 1. Unused when is_return (RETURNFUNC exits to
+		// the driver).
 		int value = -1;
 		// The terminator instruction's pc, for the debug marker / trace call.
 		pc_t pc = 0;
@@ -2275,16 +2157,15 @@ struct StructuredFnSink : StructSink
 					break;
 
 				case CALLFUNC:
-					// In a non-yielder every callee is non-yielding (a yielding
-					// callee would make this function yield), so this is always
-					// a native call.
-					compile_callfunc_native(*state, *structured_zasm, *function_id_to_idx, i, script->zasm[i].arg1);
+					// Only ever the last command of the piece: a call anywhere else is resumed
+					// after, which needs the loop-switch (see compile_piece).
+					compile_callfunc(*state, i, script->zasm[i].arg1);
 					break;
 
 				case GOTO:
-					// Only the cross-function (tail-call) variant is body-emitted;
-					// intra-function GOTOs are handled by the structurer.
-					compile_goto_tailcall(*state, *structured_zasm, *function_id_to_idx, script->zasm[i].arg1);
+					// Only the cross-function variant is body-emitted; intra-function GOTOs are
+					// handled by the structurer.
+					compile_goto_out_of_piece(*state, script->zasm[i].arg1);
 					break;
 
 				case QUIT:
@@ -2292,10 +2173,8 @@ struct StructuredFnSink : StructSink
 					break;
 
 				case RETURNFUNC:
-					// Totally ignore the return pc on the data stack; the wasm
-					// call stack handles the return.
-					emit_sp_flush(*state);
-					wasm.emitReturn();
+					// The driver pops the return pc (the one on the data stack is ignored).
+					emit_exit(*state, EXEC_RESULT_RETURN);
 					break;
 
 				default:
@@ -2339,8 +2218,8 @@ struct StructuredFnSink : StructSink
 
 		if (ffff_tail && b + 1 == (int)starts->size())
 		{
-			// This will run some 0xFFFF specific code, then trap.
-			compile_command_interpreter(*state, script, script->size - 1, 1);
+			// See emit_function_end.
+			emit_exit_stop(*state, RUNSCRIPT_STOPPED, script->size - 1);
 		}
 	}
 
@@ -2413,37 +2292,12 @@ struct StructuredFnSink : StructSink
 
 		if (d.is_return)
 		{
-			// The yielder RETURNFUNC lowering (see compile_function): a return
-			// at the root call frame ends the script; otherwise pop the
-			// continuation block id from the return stack and dispatch to it.
-			wasm.emitGlobalGet(state->g_idx_ret_stack_index);
-			wasm.emitI32Eqz();
-			wasm.emitIf();
-			{
-				wasm.emitI32Const(RUNSCRIPT_JIT_QUIT);
-				wasm.emitThrow(state->tag_idx_stop);
-			}
-			wasm.emitEnd();
-
-			// g_idx_ret_stack_index -= 1
-			modify_global_idx(wasm, state->g_idx_ret_stack_index, -1);
-			emit_trace_call_stack_pop(*state);
-
-			// g_idx_ret_stack[g_idx_ret_stack_index]
-			wasm.emitGlobalGet(state->g_idx_ret_stack);
-			wasm.emitGlobalGet(state->g_idx_ret_stack_index);
-			wasm.emitI32Const(4);
-			wasm.emitI32Mul();
-			wasm.emitI32Add();
-			wasm.emitI32Load(0);
-
-			wasm.emitGlobalSet(state->g_idx_target_block_id);
+			emit_exit(*state, EXEC_RESULT_RETURN);
+			return;
 		}
-		else
-		{
-			wasm.emitI32Const(d.value);
-			wasm.emitGlobalSet(state->g_idx_target_block_id);
-		}
+
+		wasm.emitI32Const(d.value);
+		wasm.emitLocalSet(l_idx_target_block);
 
 		// Branch out to the enclosing dispatch loop.
 		wasm.emitBr(dispatch_base_depth + ctx_depth);
@@ -2513,7 +2367,23 @@ static bool collect_cmp_groups(const zasm_script* script, pc_t start_pc, pc_t fi
 	return true;
 }
 
-static std::optional<WasmAssembler> compile_function_structured(CompilationState& state, const zasm_script* script, const StructuredZasm& structured_zasm, pc_t fn_id, const std::map<pc_t, pc_t>& function_id_to_idx)
+// Falling off the end of a piece. If the function goes on, continue in its next piece. The last
+// function's end is the script's: its final command is a 0xFFFF that isn't part of the function
+// (see zasm_construct_structured), which global init scripts rely on to end the script. Any other
+// function falls through to the next command, as in the interpreter.
+static void emit_function_end(CompilationState& state, const StructuredZasm& structured_zasm, const ZasmFunction& fn, bool end_function = true)
+{
+	if (state.final_pc != fn.final_pc)
+		emit_exit_continue(state, state.final_pc + 1);
+	else if (fn.id == structured_zasm.functions.back().id)
+		emit_exit_stop(state, RUNSCRIPT_STOPPED, fn.final_pc + 1);
+	else
+		emit_exit_continue(state, fn.final_pc + 1);
+	if (end_function)
+		state.wasm->emitEnd(); // Function end.
+}
+
+static std::optional<WasmAssembler> compile_function_structured(CompilationState& state, const zasm_script* script, const StructuredZasm& structured_zasm, pc_t fn_id)
 {
 	const auto& fn = structured_zasm.functions[fn_id];
 	pc_t start_pc = fn.start_pc;
@@ -2521,8 +2391,11 @@ static std::optional<WasmAssembler> compile_function_structured(CompilationState
 
 	for (pc_t i = start_pc; i <= final_pc; i++)
 	{
-		// A non-yielding function can't contain these; bail defensively.
+		// Only for pieces with no resume points: nothing that leaves for the driver and comes back
+		// (a call is fine as the last command, as nothing follows it).
 		if (instruction_is_suspend(script->zasm[i]))
+			return std::nullopt;
+		if (script->zasm[i].command == CALLFUNC && i != final_pc)
 			return std::nullopt;
 	}
 
@@ -2629,17 +2502,13 @@ static std::optional<WasmAssembler> compile_function_structured(CompilationState
 
 	WasmAssembler wasm;
 	state.wasm = &wasm;
-	wasm.reserve((final_pc - start_pc + 1) * 24); // see compile_function
-
-	// Load sp into its local (see l_idx_sp_local).
-	emit_sp_reload(state);
-	emit_ptr_locals_init(state);
+	wasm.reserve((final_pc - start_pc + 1) * 24); // see compile_piece
+	emit_exec_prologue(state);
 
 	StructuredFnSink sink{};
 	sink.state = &state;
 	sink.script = script;
 	sink.structured_zasm = &structured_zasm;
-	sink.function_id_to_idx = &function_id_to_idx;
 	sink.starts = &starts;
 	sink.body_last = &body_last;
 	sink.goto_debug_pc = &goto_debug_pc;
@@ -2656,9 +2525,8 @@ static std::optional<WasmAssembler> compile_function_structured(CompilationState
 		return std::nullopt;
 	structurer.emit(sink);
 
-	// An Exit block can fall off the function's end (an implicit return).
-	emit_sp_flush(state);
-	wasm.emitEnd(); // Function end.
+	// An Exit block can fall off the function's end.
+	emit_function_end(state, structured_zasm, fn);
 
 	return wasm;
 }
@@ -2846,13 +2714,12 @@ static std::optional<YielderRegionPlan> plan_yielder_region(const zasm_script* s
 }
 
 // Emits an accepted region as structured wasm at its scaffold position.
-static void emit_yielder_region(CompilationState& state, const zasm_script* script, const StructuredZasm& structured_zasm, const std::map<pc_t, pc_t>& function_id_to_idx, const YielderRegionPlan& plan, int dispatch_base_depth)
+static void emit_yielder_region(CompilationState& state, const zasm_script* script, const StructuredZasm& structured_zasm, const YielderRegionPlan& plan, int dispatch_base_depth)
 {
 	StructuredFnSink sink{};
 	sink.state = &state;
 	sink.script = script;
 	sink.structured_zasm = &structured_zasm;
-	sink.function_id_to_idx = &function_id_to_idx;
 	sink.starts = &plan.starts;
 	sink.body_last = &plan.body_last;
 	sink.goto_debug_pc = &plan.goto_debug_pc;
@@ -2869,13 +2736,11 @@ static void emit_yielder_region(CompilationState& state, const zasm_script* scri
 
 // Finds the yielder's eligible loops. Conservative by construction: anything
 // rejected simply stays on the loop-switch.
-// Dispatch entry points: blocks the yielder's br_table can be asked to land on
-// at runtime - function and script entries, wait/RUNGENFRZSCR resume points,
-// and the return continuations of calls to yielding functions. Yielder regions
-// must not absorb these (see detect_yielder_regions), and every pc the
-// interpreter can be resumed at maps to one, which is what lets a mid-run
-// script be adopted by the JIT (see jit_create_script_impl).
-static std::set<pc_t> compute_dispatch_entries(const zasm_script* script, const StructuredZasm& structured_zasm, const ZasmCFG& cfg, const std::vector<std::pair<pc_t, pc_t>>& pc_ranges)
+// Dispatch entry points: blocks the loop-switch's br_table can be asked to land on at runtime -
+// the piece and script entries, and the blocks after calls and suspends, where the driver resumes
+// the piece (see pc_to_resume_address). Yielder regions must not absorb these (see
+// detect_yielder_regions).
+static std::set<pc_t> compute_dispatch_entries(const zasm_script* script, const ZasmCFG& cfg, const std::vector<std::pair<pc_t, pc_t>>& pc_ranges)
 {
 	std::set<pc_t> dispatch_entries;
 	for (auto [start_pc, final_pc] : pc_ranges)
@@ -2888,13 +2753,8 @@ static std::set<pc_t> compute_dispatch_entries(const zasm_script* script, const 
 		for (pc_t i = start_pc; i <= final_pc; i++)
 		{
 			int command = script->zasm[i].command;
-			bool resume_after = instruction_is_suspend(script->zasm[i]);
-			if (command == CALLFUNC)
-			{
-				auto it = structured_zasm.start_pc_to_function.find(script->zasm[i].arg1);
-				if (it != structured_zasm.start_pc_to_function.end() && structured_zasm.functions[it->second].may_yield)
-					resume_after = true; // the call's return continuation
-			}
+			// A call's return continuation: every call goes through the driver.
+			bool resume_after = instruction_is_suspend(script->zasm[i]) || command == CALLFUNC;
 			if (resume_after && i + 1 <= final_pc && cfg.contains_block_start(i + 1))
 				dispatch_entries.insert(cfg.block_id_from_start_pc(i + 1));
 		}
@@ -2902,7 +2762,7 @@ static std::set<pc_t> compute_dispatch_entries(const zasm_script* script, const 
 	return dispatch_entries;
 }
 
-static std::vector<YielderRegionPlan> detect_yielder_regions(const zasm_script* script, const StructuredZasm& structured_zasm, const ZasmCFG& cfg, const std::vector<std::pair<pc_t, pc_t>>& pc_ranges)
+static std::vector<YielderRegionPlan> detect_yielder_regions(const zasm_script* script, const ZasmCFG& cfg, const std::vector<std::pair<pc_t, pc_t>>& pc_ranges)
 {
 	pc_t num_blocks = cfg.block_starts.size();
 	auto block_final = [&](pc_t b) -> pc_t {
@@ -2912,7 +2772,7 @@ static std::vector<YielderRegionPlan> detect_yielder_regions(const zasm_script* 
 	// These must keep their scaffold frames, so no region may absorb them (a
 	// region may still *start* at one - dispatching to the header lands at the
 	// top of the structured loop).
-	std::set<pc_t> dispatch_entries = compute_dispatch_entries(script, structured_zasm, cfg, pc_ranges);
+	std::set<pc_t> dispatch_entries = compute_dispatch_entries(script, cfg, pc_ranges);
 
 	// Candidate loops: for each backward edge b -> h, take the largest such b
 	// per header h. Also record each block's predecessor bounds; the
@@ -2960,8 +2820,8 @@ static std::vector<YielderRegionPlan> detect_yielder_regions(const zasm_script* 
 			if (dispatch_entries.contains(x))
 				ok = false;
 
-		// The loop must run to completion without suspending: no waits, no
-		// frozen-script runs, no calls to yielding (or unknown) functions.
+		// The loop must run to completion without leaving the piece: no waits, no
+		// frozen-script runs, no calls.
 		// Comparison-consumer runs must not escape the region.
 		for (pc_t i = h_pc; i <= t_final && ok; i++)
 		{
@@ -2971,11 +2831,7 @@ static std::vector<YielderRegionPlan> detect_yielder_regions(const zasm_script* 
 			else if (command == GOTOTABLE || command == GOTORANGES)
 				ok = false; // region planning has no Term::Switch support; the flat lowering handles it
 			else if (command == CALLFUNC)
-			{
-				auto it = structured_zasm.start_pc_to_function.find(script->zasm[i].arg1);
-				if (it == structured_zasm.start_pc_to_function.end() || structured_zasm.functions[it->second].may_yield)
-					ok = false;
-			}
+				ok = false; // resumed after, through the driver
 			else if (command_sets_comparison_result(command))
 			{
 				CmpGroup g = analyze_comparison(script, i);
@@ -3048,56 +2904,49 @@ static std::vector<YielderRegionPlan> detect_yielder_regions(const zasm_script* 
 	return plans;
 }
 
-static WasmAssembler compile_function(CompilationState& state, const zasm_script* script, const StructuredZasm& structured_zasm, std::set<pc_t> function_ids, const std::map<pc_t, pc_t>& function_id_to_idx, bool may_yield, std::map<pc_t, uint32_t>* resume_dispatch_out = nullptr)
+// Compiles a piece (state.start_pc..state.final_pc) of `fn` to the body of exec(ctx), lowered as a
+// loop-switch over its blocks: a call, wait or suspend leaves exec for the driver, which re-enters
+// it after - at a dispatch entry, whose dispatch value is recorded in pc_to_resume (keyed by the pc
+// before it, as the driver looks it up).
+static WasmAssembler compile_piece(CompilationState& state, const zasm_script* script, const StructuredZasm& structured_zasm, const ZasmFunction& fn, std::map<pc_t, uintptr_t>& pc_to_resume)
 {
 	WasmAssembler wasm;
 	state.wasm = &wasm;
 
-	uint8_t g_idx_ret_stack = state.g_idx_ret_stack;
-	uint8_t g_idx_ret_stack_index = state.g_idx_ret_stack_index;
-	uint8_t g_idx_wait_index = state.g_idx_wait_index;
-	uint8_t g_idx_target_block_id = state.g_idx_target_block_id;
-
-	std::vector<std::pair<pc_t, pc_t>> pc_ranges;
-	size_t num_instructions = 0;
-	for (auto fn_id : function_ids)
-	{
-		auto& fn = structured_zasm.functions[fn_id];
-		pc_ranges.emplace_back(fn.start_pc, fn.final_pc);
-		num_instructions += fn.final_pc - fn.start_pc + 1;
-	}
+	std::vector<std::pair<pc_t, pc_t>> pc_ranges = {{state.start_pc, state.final_pc}};
 	// ~24 bytes of wasm per ZASM instruction (measured); over-reserving is fine,
 	// the buffer is freed right after the module is assembled.
-	wasm.reserve(num_instructions * 24);
-	auto cfg = zasm_construct_cfg(script, pc_ranges);
+	wasm.reserve((state.final_pc - state.start_pc + 1) * 24);
+	auto cfg = zasm_construct_cfg(script, pc_ranges, true);
 
-	// Record where the yielder can be resumed, for adopting mid-run scripts
-	// (see jit_create_script_impl). Dispatch values are (cfg block id + 1),
-	// matching what the wait/call codegen below stores.
-	if (may_yield && resume_dispatch_out)
-		for (pc_t b : compute_dispatch_entries(script, structured_zasm, cfg, pc_ranges))
-			(*resume_dispatch_out)[cfg.block_starts[b]] = b + 1;
+	// Dispatch values are (cfg block id + 1), matching what the jumps below set. The piece's start
+	// is entered with no resume address (dispatch value 0, which lands at the first block).
+	for (pc_t b : compute_dispatch_entries(script, cfg, pc_ranges))
+	{
+		pc_t pc = cfg.block_starts[b];
+		if (pc != state.start_pc)
+			pc_to_resume[pc - 1] = b + 1;
+	}
 
 	// All control flow is converted to a simple, but slow, loop-switch construct: a giant switch case,
 	// implemented with "loop", "br_table", and a "block" for every block in the CFG.
 	//
 	// See: https://medium.com/leaningtech/solving-the-structured-control-flow-problem-once-and-for-all-5123117b1ee2#:~:text=A%20universal%20but%20inefficient%20solution
 	//
-	// Non-yielding functions don't use this - they get real structured control flow via
+	// Pieces with no resume points don't use this - they get real structured control flow via
 	// compile_function_structured (which falls back to this lowering for irreducible CFGs, and
-	// -no-jit-wasm-structured forces it everywhere). The yielder must keep the dispatch for
-	// its call/return/resume edges, whose targets are runtime values; but its *static*
-	// non-suspending loops are compiled as real wasm loops nested inside the dispatch - see
-	// the region detection just below, and https://dl.acm.org/doi/pdf/10.1145/3547621 for
-	// the general technique.
+	// -no-jit-wasm-structured forces it everywhere). The rest keep the dispatch for their
+	// resume edges; but their loops that never leave the piece are compiled as real wasm loops
+	// nested inside the dispatch - see the region detection just below, and
+	// https://dl.acm.org/doi/pdf/10.1145/3547621 for the general technique.
 
 	// -jit-wasm-structured-yielder: compile the yielder's non-suspending loops
 	// as real wasm loops nested inside the dispatch (see YielderRegionPlan).
 	// With no accepted regions this lowering is identical to the flat one.
 	static bool yielder_structured = get_flag_bool("-jit-wasm-structured-yielder").value_or(true);
 	std::vector<YielderRegionPlan> regions;
-	if (may_yield && yielder_structured)
-		regions = detect_yielder_regions(script, structured_zasm, cfg, pc_ranges);
+	if (yielder_structured)
+		regions = detect_yielder_regions(script, cfg, pc_ranges);
 
 	pc_t num_blocks = cfg.block_starts.size();
 
@@ -3123,37 +2972,7 @@ static WasmAssembler compile_function(CompilationState& state, const zasm_script
 		if (!absorbed[b])
 			rank[b] = num_frames++;
 
-	// Load sp into its local (see l_idx_sp_local); the caller/run wrapper keeps
-	// the global current across function boundaries.
-	emit_sp_reload(state);
-	emit_ptr_locals_init(state);
-
-	// Handle jumping to the correct initial block when calling the entry function.
-	if (script->name == "@single")
-	{
-		wasm.emitGlobalGet(g_idx_target_block_id);
-		wasm.emitI32Eqz();
-		wasm.emitIf();
-
-		for (auto sd : script->script_datas)
-		{
-			if (!cfg.contains_block_start(sd->pc))
-				continue;
-
-			auto block_id = cfg.block_id_from_start_pc(sd->pc);
-
-			wasm.emitI32Const(sd->pc);
-			wasm.emitGlobalGet(state.g_idx_start_pc);
-			wasm.emitI32Eq();
-
-			wasm.emitIf();
-			wasm.emitI32Const(block_id + 1);
-			wasm.emitGlobalSet(g_idx_target_block_id);
-			wasm.emitEnd();
-		}
-
-		wasm.emitEnd();
-	}
+	emit_exec_prologue(state);
 
 	wasm.emitLoop();
 	for (pc_t i = 0; i < num_blocks; i++)
@@ -3173,7 +2992,7 @@ static WasmAssembler compile_function(CompilationState& state, const zasm_script
 	// the branch depth landing at that block's code, which is (scaffold rank +
 	// 1) because frames close innermost-first while code advances forward.
 	wasm.emitBlock();
-	wasm.emitGlobalGet(g_idx_target_block_id);
+	wasm.emitLocalGet(l_idx_target_block);
 	wasm.emitBrTable();
 	// Plus 2, because of the inner-most block (this most recently emitted one), and
 	// the outer-most loop.
@@ -3196,6 +3015,19 @@ static WasmAssembler compile_function(CompilationState& state, const zasm_script
 	}
 	wasm.emitVarU32(0);
 	wasm.emitEnd();
+
+	// Jumps to `pc` from a scaffold position `depth` frames inside the dispatch loop.
+	auto emit_jump = [&](int pc, int depth) {
+		if (pc < (int)state.start_pc || pc > (int)state.final_pc)
+		{
+			emit_exit_continue(state, pc);
+			return;
+		}
+
+		wasm.emitI32Const(cfg.block_id_from_start_pc(pc) + 1);
+		wasm.emitLocalSet(l_idx_target_block);
+		wasm.emitBr(depth);
+	};
 
 	// (cfg block id of the current block) + 1 while emitting its code.
 	pc_t current_block_index = 0;
@@ -3228,7 +3060,7 @@ static WasmAssembler compile_function(CompilationState& state, const zasm_script
 				if (auto it = region_by_header.find(current_block_index - 1); it != region_by_header.end())
 				{
 					const YielderRegionPlan& plan = *it->second;
-					emit_yielder_region(state, script, structured_zasm, function_id_to_idx, plan, num_frames - current_rank);
+					emit_yielder_region(state, script, structured_zasm, plan, num_frames - current_rank);
 					i = plan.final_pc; // the loop's ++ resumes right after the region
 					current_block_index = plan.tail_block + 1;
 					continue;
@@ -3258,18 +3090,9 @@ static WasmAssembler compile_function(CompilationState& state, const zasm_script
 
 			if (command_is_wait(command))
 			{
-				ASSERT(may_yield);
-
-				// j_instance->wait_index = current_block_index + 1
-				{
-					wasm.emitGlobalGet(g_idx_wait_index);
-					wasm.emitI32Const(current_block_index + 1);
-					wasm.emitI32Store();
-				}
-
 				// Wait commands normally yield back to the engine, however there are some
 				// special cases where it does not. For example, when WAITFRAMESR arg is 0.
-				// This will return to the run function, but only if actually waiting.
+				// This exits to the driver, but only if actually waiting.
 				compile_command_interpreter(state, script, i, 1, true);
 				continue;
 			}
@@ -3277,7 +3100,7 @@ static WasmAssembler compile_function(CompilationState& state, const zasm_script
 			// RUNGENFRZSCR runs frozen engine frames (a nested generic script) inline,
 			// as the interpreter does. Those frames suspend the program (JSPI) with this
 			// script's frames still on the stack, and can run other scripts - including
-			// this module's (see `run`).
+			// this piece (nothing of a running piece lives outside its locals).
 			if (command == RUNGENFRZSCR)
 			{
 				compile_command_interpreter(state, script, i, 1);
@@ -3285,18 +3108,10 @@ static WasmAssembler compile_function(CompilationState& state, const zasm_script
 			}
 
 			// The other suspends (see instruction_is_suspend): an lweapon script lifting itself
-			// stops for the rest of the frame. Like a wait, resume at the next block.
+			// stops for the rest of the frame. The interpreter leaves ri->pc where it resumes
+			// (the next block), and compile_command_interpreter exits with it.
 			if (instruction_is_suspend(script->zasm[i]))
 			{
-				ASSERT(may_yield);
-
-				// j_instance->wait_index = current_block_index + 1
-				{
-					wasm.emitGlobalGet(g_idx_wait_index);
-					wasm.emitI32Const(current_block_index + 1);
-					wasm.emitI32Store();
-				}
-
 				compile_command_interpreter(state, script, i, 1, false, true);
 				continue;
 			}
@@ -3329,55 +3144,24 @@ static WasmAssembler compile_function(CompilationState& state, const zasm_script
 				case NOP: break;
 
 				case CALLFUNC:
+				{
+					compile_callfunc(state, i, arg1);
+					// Resumed after the callee returns, at the next block (a dispatch entry).
+					CHECK(i == state.final_pc || cfg.contains_block_start(i + 1));
+				}
+				break;
+
 				case GOTO:
 				{
-					if (command == CALLFUNC)
+					if (arg1 < (int)state.start_pc || arg1 > (int)state.final_pc)
 					{
-						pc_t fn_id = structured_zasm.start_pc_to_function.at(arg1);
-						if (!may_yield || !structured_zasm.functions[fn_id].may_yield)
-						{
-							// The callee is compiled as a separate WASM function, so we can simply
-							// call it and be done with this instruction.
-							compile_callfunc_native(state, structured_zasm, function_id_to_idx, i, arg1);
-							continue;
-						}
-
-						// The function call is to some other may-yield function which is inlined in the yielder function.
-						// Before we "call" it, we need to remember where to return to. To do that, we push the index of the
-						// subsequent block to a return call stack. RETURNFUNC will later pop that block index.
-						check_call_limit(state, arg1);
-
-						// g_idx_ret_stack[g_idx_ret_stack_index] = return_block
-						{
-							wasm.emitGlobalGet(g_idx_ret_stack);
-							wasm.emitGlobalGet(g_idx_ret_stack_index);
-							wasm.emitI32Const(4);
-							wasm.emitI32Mul();
-							wasm.emitI32Add();
-							wasm.emitI32Const(current_block_index + 1);
-							wasm.emitI32Store(0);
-						}
-
-						// g_idx_ret_stack_index += 1
-						modify_global_idx(wasm, g_idx_ret_stack_index, 1);
-						emit_trace_call_stack_push(state, i);
-					}
-					else if (structured_zasm.start_pc_to_function.contains(arg1) &&
-							 !function_ids.contains(structured_zasm.start_pc_to_function.at(arg1)))
-					{
-						// A cross-function GOTO; see compile_goto_tailcall.
-						compile_goto_tailcall(state, structured_zasm, function_id_to_idx, arg1);
+						compile_goto_out_of_piece(state, arg1);
 						continue;
 					}
 
-					// In both the "call within the yielder function case", or the "branch within a function" case,
-					// we set the target block index and jump back to the loop-switch.
-
-					size_t target_block_index = cfg.block_id_from_start_pc(arg1) + 1;
-					wasm.emitI32Const(target_block_index);
-					wasm.emitGlobalSet(g_idx_target_block_id);
-
-					// Branch by jumping to start of loop-switch.
+					// Set the target block index and jump back to the loop-switch.
+					wasm.emitI32Const(cfg.block_id_from_start_pc(arg1) + 1);
+					wasm.emitLocalSet(l_idx_target_block);
 					wasm.emitBr(num_frames - current_rank);
 				}
 				break;
@@ -3391,9 +3175,7 @@ static WasmAssembler compile_function(CompilationState& state, const zasm_script
 					int base_depth = num_frames - current_rank;
 					emit_gotoranges_tree(state, script, i, [&](int target_index, int extra) {
 						int target_pc = target_index < 0 ? table[0] : gotoranges_at(table, target_index).target;
-						wasm.emitI32Const(cfg.block_id_from_start_pc(target_pc) + 1);
-						wasm.emitGlobalSet(g_idx_target_block_id);
-						wasm.emitBr(base_depth + extra);
+						emit_jump(target_pc, base_depth + extra);
 					});
 				}
 				break;
@@ -3411,10 +3193,7 @@ static WasmAssembler compile_function(CompilationState& state, const zasm_script
 					int base_depth = num_frames - current_rank;
 
 					auto emit_jump_to = [&](int pc, int extra) {
-						size_t target_block_index = cfg.block_id_from_start_pc(pc) + 1;
-						wasm.emitI32Const(target_block_index);
-						wasm.emitGlobalSet(g_idx_target_block_id);
-						wasm.emitBr(base_depth + extra);
+						emit_jump(pc, base_depth + extra);
 					};
 
 					if (num_targets == 0)
@@ -3456,62 +3235,10 @@ static WasmAssembler compile_function(CompilationState& state, const zasm_script
 
 				case RETURNFUNC:
 				{
-					if (may_yield)
-					{
-						// Note: the return pc is on the stack, but we just ignore it and instead use
-						// g_idx_ret_stack.
-						if (command == RETURN)
-						{
-							add_sp(state, 1);
-						}
-
-						// A RETURNFUNC at the root call frame is the entry function ("void
-						// run()") falling off its end, which ends the script. Report it as
-						// RUNSCRIPT_JIT_QUIT (same as the x64 JIT and what the interpreter does
-						// via `scommand = 0xFFFF`) so the caller runs script_exit_cleanup - which
-						// runs owned-object destructors - before stopping. Otherwise
-						// g_idx_ret_stack_index would decrement below zero, and check_call_limit's
-						// unsigned compare would later read that as a huge depth and falsely trip
-						// the call limit.
-						wasm.emitGlobalGet(g_idx_ret_stack_index);
-						wasm.emitI32Eqz();
-						wasm.emitIf();
-						{
-							wasm.emitI32Const(RUNSCRIPT_JIT_QUIT);
-							wasm.emitThrow(state.tag_idx_stop);
-						}
-						wasm.emitEnd();
-
-						// g_idx_ret_stack_index -= 1
-						modify_global_idx(wasm, g_idx_ret_stack_index, -1);
-						emit_trace_call_stack_pop(state);
-
-						// g_idx_ret_stack[g_idx_ret_stack_index]
-						{
-							wasm.emitGlobalGet(g_idx_ret_stack);
-							wasm.emitGlobalGet(g_idx_ret_stack_index);
-							wasm.emitI32Const(4);
-							wasm.emitI32Mul();
-							wasm.emitI32Add();
-							wasm.emitI32Load(0);
-						}
-
-						// Branch to callee by jumping to start of loop-switch.
-						wasm.emitGlobalSet(g_idx_target_block_id);
-						wasm.emitBr(num_frames - current_rank);
-					}
-					else
-					{
-						// Totally ignore the return pc on the stack.
-						if (command == RETURN)
-						{
-							add_sp(state, 1);
-						}
-
-						// Call stack is implicitly handled by WASM.
-						emit_sp_flush(state);
-						wasm.emitReturn();
-					}
+					// The driver pops the return pc (the one on the data stack is ignored).
+					if (command == RETURN)
+						add_sp(state, 1);
+					emit_exit(state, EXEC_RESULT_RETURN);
 				}
 				break;
 
@@ -3525,81 +3252,70 @@ static WasmAssembler compile_function(CompilationState& state, const zasm_script
 		}
 	}
 
-	// Handles scripts that are just a single function. When they execute the last command (0xFFFF),
-	// that exits the script.
-	// Normally a QUIT does this. But, global init scripts don't end with a QUIT.
-	if (function_ids.contains((0)) && script->size - 1 == structured_zasm.functions.at(0).final_pc + 1)
-	{
-		if (script->zasm[script->size - 1].command == 0xFFFF)
-		{
-			// This will run some 0xFFFF specific code, then trap.
-			compile_command_interpreter(state, script, script->size - 1, 1);
-		}
-	}
+	// Falling off the end of the piece.
+	emit_function_end(state, structured_zasm, fn, false);
 
 	// Finish loop construct.
 	wasm.emitBr(0); // Unconditional branch to top of loop.
 	wasm.emitEnd(); // Loop end.
 
+	wasm.emitUnreachable(); // Every path exits above.
 	wasm.emitEnd(); // Function end.
 
 	return wasm;
 }
 
-void jit_startup_impl()
+// Each piece compiles to its own module (see compile_piece). Codegen touches only the script and
+// local state, so it runs on any thread; the browser compiles and instantiates the module, on the
+// main thread, before the function is committed (see jit_backend_prepare_commits).
+struct WasmPendingModule
 {
-}
-
-// The thread-safe half of compiling a chunk: everything up to (but not
-// including) handing the module bytes to the browser. Touches only the script
-// and local state, so it can run on any thread (see
-// jit_precompile_scripts_impl); em_compile_wasm must stay on the main thread.
-struct WasmCodegenResult
-{
-	std::string module_name;
+	std::string name;
 	WasmModule wm;
-	std::map<pc_t, uint32_t> resume_dispatch;
+	// The browser compile of a batch of modules, started by jit_backend_prepare_commits.
+	struct Batch
+	{
+		int id = 0;
+		bool done = false;
+		std::vector<int> run_fns;
+	};
+	std::shared_ptr<Batch> batch;
+	size_t index_in_batch = 0;
 };
 
-static bool wasm_codegen_impl(zasm_script* script, WasmCodegenResult& out)
+static std::optional<WasmModule> wasm_codegen_piece_impl(zasm_script* script, JittedScript* j_script, pc_t piece_id, std::map<pc_t, uintptr_t>& pc_to_resume, std::string& module_name)
 {
-	if (script->size <= 1)
-		return false;
+	const JitPiece& piece = j_script->pieces[piece_id];
+	const StructuredZasm& structured_zasm = j_script->structured_zasm;
+	const ZasmFunction& fn = structured_zasm.functions[piece.fn_id];
 
-	// STACKWRITEATVV_IF is not yet supported by the wasm codegen - always bail.
-	for (size_t i = 0; i < script->size; i++)
-	{
-		int command = script->zasm[i].command;
-		if (command == STACKWRITEATVV_IF)
-		{
-			error(script, "STACKWRITEATVV_IF unsupported", true);
-			return false;
-		}
-	}
-
-	auto structured_zasm = zasm_construct_structured(script);
 	if (!structured_zasm.is_modern_function_calling())
 	{
 		codegen_trace(fmt::format("[jit] NOT compiling zasm chunk (unexpected function call mode): {} id: {} size: {}\n", script->name, script->id, script->size));
-		return false;
+		return std::nullopt;
 	}
 
-	codegen_trace(fmt::format("[jit] compiling script: {} id: {}\n", script->name, script->id));
+	// STACKWRITEATVV_IF is not yet supported by the wasm codegen - always bail.
+	for (pc_t i = piece.start_pc; i <= piece.final_pc; i++)
+	{
+		if (script->zasm[i].command == STACKWRITEATVV_IF)
+		{
+			error(script, "STACKWRITEATVV_IF unsupported", true);
+			return std::nullopt;
+		}
+	}
 
 	WasmCompiler comp{};
 	CompilationState state{};
-
+	state.j_script = j_script;
+	state.start_pc = piece.start_pc;
+	state.final_pc = piece.final_pc;
 	state.runtime_debugging = script_debug_is_runtime_debugging() == 2;
-	// Maintain ri->pc and the pc call stack only when a stack trace could actually
-	// be produced (their only consumer), so non-tracing runs pay nothing per call.
+	// Keep ri->pc current only when a stack trace could actually be produced (its only
+	// consumer), so non-tracing runs pay nothing per engine call.
 	state.maintain_call_stack = FFCore.should_display_stack_traces();
-	// -jit-wasm-sp-local: keep sp in a wasm local inside compiled code (see
-	// l_idx_sp_local). The flag exists for A/B runs and bisection.
-	state.sp_local = get_flag_bool("-jit-wasm-sp-local").value_or(true);
-	state.ptr_locals = get_flag_bool("-jit-wasm-pointer-locals").value_or(true);
 	state.inline_regs = get_flag_bool("-jit-wasm-inline-regs").value_or(true);
 
-	state.tag_idx_stop = comp.builder.addTag({WasmValType::I32});
 	state.f_idx_do_commands = comp.builder.importFunction("do_commands", 4, 1);
 	state.f_idx_get_register = comp.builder.importFunction("get_register", 1, 1);
 	state.f_idx_set_register = comp.builder.importFunction("set_register", 2, 0);
@@ -3617,287 +3333,26 @@ static bool wasm_codegen_impl(zasm_script* script, WasmCodegenResult& out)
 	state.f_idx_mark_type_stack = comp.builder.importFunction("mark_type_stack", 2, 0);
 	state.f_idx_arraysize = comp.builder.importFunction("arraysize", 2, 1);
 
-	// params
-	state.l_idx_j_instance = 0;
-	state.l_idx_ri = 1;
-	state.l_idx_global_d = 2;
-	state.l_idx_stack = 3;
-	state.l_idx_ret_stack = 4;
-	state.l_idx_ret_stack_index = 5;
-	state.l_idx_wait_index = 6;
-	state.l_idx_start_pc = 7;
-	state.l_idx_script_d = 8;
-	// params ended
-	// Note: if you add another one, also add to the call to declareFunction.
+	uint32_t fn_exec_idx = comp.builder.declareFunction({WasmValType::I32}, {WasmValType::I32});
+	comp.builder.exportFunction(fn_exec_idx, "exec");
 
-	state.g_idx_j_instance = comp.builder.addGlobal("j_instance");
-	state.g_idx_ri = comp.builder.addGlobal("ri");
-	state.g_idx_global_d = comp.builder.addGlobal("global_d");
-	state.g_idx_script_d = comp.builder.addGlobal("script_d");
-	state.g_idx_stack = comp.builder.addGlobal("stack");
-	state.g_idx_ret_stack = comp.builder.addGlobal("ret_stack");
-	state.g_idx_ret_stack_pc = comp.builder.addGlobal("ret_stack_pc");
-	state.g_idx_ret_stack_index = comp.builder.addGlobal("ret_stack_index");
-	state.g_idx_wait_index = comp.builder.addGlobal("wait_index");
-	state.g_idx_sp = comp.builder.addGlobal("sp");
-	state.g_idx_target_block_id = comp.builder.addGlobal("target_block_id");
-	state.g_idx_start_pc = comp.builder.addGlobal("start_pc");
+	// A piece that is a whole function and never leaves for the driver mid-way gets real
+	// structured control flow (falling back to the loop-switch for irreducible CFGs);
+	// -no-jit-wasm-structured forces the loop-switch everywhere, for A/B runs and bisection.
+	static bool structured = get_flag_bool("-jit-wasm-structured").value_or(true);
+	std::optional<WasmAssembler> wasm;
+	if (structured && piece.start_pc == fn.start_pc && piece.final_pc == fn.final_pc)
+		wasm = compile_function_structured(state, script, structured_zasm, fn.id);
+	if (!wasm)
+		wasm = compile_piece(state, script, structured_zasm, fn, pc_to_resume);
 
-	const uint32_t run_num_params = 9;
-	pc_t fn_run_idx = comp.builder.declareFunction(std::vector<WasmValType>(run_num_params, WasmValType::I32), {WasmValType::I32});
-	comp.builder.exportFunction(fn_run_idx, "run");
+	comp.builder.defineFunction(fn_exec_idx, std::vector<WasmValType>(num_exec_locals, WasmValType::I32), wasm->finish());
+	comp.builder.setFunctionName(fn_exec_idx, fn.name());
 
-	auto yielding_fns = zasm_find_yielding_functions(script, structured_zasm);
-
-	// Each function compiles to its own WASM function (or the yielder's loop-switch), so a
-	// call can only land on a function's start. Scripts from older compilers call into the
-	// middle of a constructor when it delegates to another constructor of its class
-	// (`Foo() { Foo(5); }`); run those in the interpreter.
-	for (pc_t i = 0; i < (pc_t)script->size; i++)
-	{
-		if (script->zasm[i].command != CALLFUNC)
-			continue;
-		pc_t tgt = script->zasm[i].arg1;
-		if (!structured_zasm.start_pc_to_function.contains(tgt))
-		{
-			error(script, fmt::format("unsupported call into the middle of a function at pc {} -> {}", (int)i, (int)tgt), true);
-			return false;
-		}
-	}
-
-	// A GOTO whose target is outside its own function is lowered as a tail-call into
-	// the target function (see compile_function). This is only expected for the "~Init"
-	// script of older (2.55-era) quests, whose entry tail-jumps over inlined init
-	// function bodies to the "run" continuation. The tail-call lowering only works when
-	// the target is a separately-compiled, non-yielding function's entry. Bail to the
-	// interpreter for anything else (e.g. a GOTO into a yielding function inlined in the
-	// yielder, or a GOTO that doesn't land on a function entry), rather than miscompile it.
-	for (auto& fn : structured_zasm.functions)
-	{
-		for (pc_t i = fn.start_pc; i <= fn.final_pc && i < (pc_t)script->size; i++)
-		{
-			if (script->zasm[i].command != GOTO)
-				continue;
-			pc_t tgt = script->zasm[i].arg1;
-			if (tgt >= fn.start_pc && tgt <= fn.final_pc)
-				continue; // intra-function GOTO, handled by the loop-switch
-			bool tgt_is_entry = structured_zasm.start_pc_to_function.contains(tgt);
-			pc_t tgt_fn = tgt_is_entry ? structured_zasm.start_pc_to_function.at(tgt) : (pc_t)-1;
-			// Source and target both in the yielder => same WASM unit, handled by its combined CFG.
-			if (tgt_is_entry && yielding_fns.contains(fn.id) && yielding_fns.contains(tgt_fn))
-				continue;
-			if (!tgt_is_entry || yielding_fns.contains(fn.id) || yielding_fns.contains(tgt_fn))
-			{
-				error(script, fmt::format("unsupported cross-function GOTO at pc {} -> {}", (int)i, (int)tgt), true);
-				return false;
-			}
-		}
-	}
-
-	pc_t fn_yielder_idx = yielding_fns.empty() ? -1 : comp.builder.declareFunction({}, {});
-
-	std::map<pc_t, pc_t> function_id_to_idx;
-	for (auto& fn : structured_zasm.functions)
-	{
-		function_id_to_idx[fn.id] = yielding_fns.contains(fn.id) ? fn_yielder_idx :
-			comp.builder.declareFunction({}, {});
-	}
-
-	// First compile the "yielder" function, which inlines all the ZASM functions that may possibly yield.
-	// There may be no yielding function, in which case the script will run fully in a single execution.
-	std::map<pc_t, uint32_t> resume_dispatch;
-	if (!yielding_fns.empty())
-	{
-		bool may_yield = true;
-		auto wasm = compile_function(state, script, structured_zasm, yielding_fns, function_id_to_idx, may_yield, &resume_dispatch);
-		comp.builder.defineFunction(fn_yielder_idx, {WasmValType::I32, WasmValType::I32, WasmValType::I32, WasmValType::I32, WasmValType::I32, WasmValType::I32, WasmValType::I32, WasmValType::I32}, wasm.finish());
-		comp.builder.setFunctionName(fn_yielder_idx, "yielder");
-	}
-
-	// -jit-wasm-structured: compile non-yielding functions with real structured
-	// control flow instead of the loop-switch. On by default; the flag exists to
-	// A/B and to bisect a suspected structuring bug.
-	static bool structure_enabled = get_flag_bool("-jit-wasm-structured").value_or(true);
-	for (const auto& fn : structured_zasm.functions)
-	{
-		if (yielding_fns.contains(fn.id))
-			continue;
-
-		std::optional<WasmAssembler> wasm;
-		if (structure_enabled)
-			wasm = compile_function_structured(state, script, structured_zasm, fn.id, function_id_to_idx);
-		if (!wasm)
-		{
-			bool may_yield = false;
-			wasm = compile_function(state, script, structured_zasm, {fn.id}, function_id_to_idx, may_yield);
-		}
-		pc_t fidx = function_id_to_idx.at(fn.id);
-		comp.builder.defineFunction(fidx, {WasmValType::I32, WasmValType::I32, WasmValType::I32, WasmValType::I32, WasmValType::I32, WasmValType::I32, WasmValType::I32, WasmValType::I32}, wasm->finish());
-		// Note: fn.name() can't be used for the emptiness check - it returns the
-		// placeholder "<empty>" for unnamed functions, which used to end up as
-		// dozens of functions all literally named "<empty>" in the name section.
-		if (fn._name.empty())
-			comp.builder.setFunctionName(fidx, fmt::format("fn_{}", fn.id));
-		else
-			comp.builder.setFunctionName(fidx, fn.name());
-	}
-
-	// Create "run" entry function. It returns RUNSCRIPT_OK when the script yields,
-	// or the code a stop throws (tag_idx_stop) from wherever it happens.
-	//
-	// The module keeps the running script's state in its globals, and a script can
-	// run another script mid-execution (e.g. an FFC running an enemy's script) -
-	// possibly one compiled into this same module. So `run` saves every global on
-	// entry and restores them on exit, however it exits, for the outer run to
-	// continue with its own state.
-	{
-		const uint32_t num_globals = comp.builder.globals.size();
-		const uint32_t l_idx_saved_globals = run_num_params;
-		const uint32_t l_idx_return_code = l_idx_saved_globals + num_globals;
-		auto restore_globals = [&](WasmAssembler& wasm) {
-			for (uint32_t g = 0; g < num_globals; g++)
-			{
-				wasm.emitLocalGet(l_idx_saved_globals + g);
-				wasm.emitGlobalSet(g);
-			}
-		};
-
-		WasmAssembler wasm;
-		for (uint32_t g = 0; g < num_globals; g++)
-		{
-			wasm.emitGlobalGet(g);
-			wasm.emitLocalSet(l_idx_saved_globals + g);
-		}
-
-		wasm.emitTry(WasmSimpleBlockType::I32);
-
-		// Put all params into globals.
-		wasm.emitLocalGet(state.l_idx_j_instance);
-		wasm.emitGlobalSet(state.g_idx_j_instance);
-		wasm.emitLocalGet(state.l_idx_ri);
-		wasm.emitGlobalSet(state.g_idx_ri);
-		// g_idx_ret_stack_pc = &data.ret_stack. ri == &data.ref (the first member of
-		// ScriptEngineData), so this is the same pc call stack create_stack_trace reads.
-		if (state.maintain_call_stack)
-		{
-			wasm.emitLocalGet(state.l_idx_ri);
-			wasm.emitI32Const(offsetof(ScriptEngineData, ret_stack));
-			wasm.emitI32Add();
-			wasm.emitGlobalSet(state.g_idx_ret_stack_pc);
-		}
-		wasm.emitLocalGet(state.l_idx_global_d);
-		wasm.emitGlobalSet(state.g_idx_global_d);
-		wasm.emitLocalGet(state.l_idx_script_d);
-		wasm.emitGlobalSet(state.g_idx_script_d);
-		wasm.emitLocalGet(state.l_idx_stack);
-		wasm.emitGlobalSet(state.g_idx_stack);
-		wasm.emitLocalGet(state.l_idx_ret_stack);
-		wasm.emitGlobalSet(state.g_idx_ret_stack);
-		wasm.emitLocalGet(state.l_idx_wait_index);
-		wasm.emitGlobalSet(state.g_idx_wait_index);
-		wasm.emitLocalGet(state.l_idx_start_pc);
-		wasm.emitGlobalSet(state.g_idx_start_pc);
-
-		// g_idx_sp = ri->sp
-		{
-			wasm.emitLocalGet(state.l_idx_ri);
-			wasm.emitI32Load(4*9); // ri->sp
-			wasm.emitGlobalSet(state.g_idx_sp);
-		}
-
-		// g_idx_target_block_id = j_instance->wait_index
-		{
-			wasm.emitLocalGet(state.l_idx_wait_index);
-			wasm.emitI32Load(0);
-			wasm.emitGlobalSet(state.g_idx_target_block_id);
-		}
-
-		// g_idx_ret_stack_index = j_instance->call_stack_ret_index
-		{
-			wasm.emitLocalGet(state.l_idx_ret_stack_index);
-			wasm.emitI32Load(0);
-			wasm.emitGlobalSet(state.g_idx_ret_stack_index);
-		}
-
-		// Dispatch to the correct starting function.
-		if (script->name == "@single")
-		{
-			// Handle calling the entry function on the first call (when j_instance->wait_index is 0).
-			wasm.emitGlobalGet(state.g_idx_target_block_id);
-			wasm.emitI32Eqz();
-			wasm.emitIf();
-
-			// First handle synchronous functions - scripts that never call `WaitX`.
-			for (auto sd : script->script_datas)
-			{
-				pc_t fn_id = structured_zasm.start_pc_to_function.at(sd->pc);
-				if (yielding_fns.contains(fn_id))
-					continue;
-
-				pc_t fn_idx = function_id_to_idx.at(fn_id);
-
-				wasm.emitI32Const(sd->pc);
-				wasm.emitGlobalGet(state.g_idx_start_pc);
-				wasm.emitI32Eq();
-
-				wasm.emitIf();
-				wasm.emitCall(fn_idx);
-				// The synchronous entry function ran to completion (it never waits), so
-				// the script is done. Report it like the x64 JIT's root return (and the
-				// yielding RETURNFUNC) so the engine runs script_exit_cleanup and stops -
-				// otherwise the script's `doscript` flag stays set and a frozen run
-				// (runGenericFrozenEngine) loops re-running it until the game ends.
-				wasm.emitI32Const(RUNSCRIPT_JIT_QUIT);
-				wasm.emitThrow(state.tag_idx_stop);
-				wasm.emitEnd();
-			}
-
-			wasm.emitEnd();
-
-			// If this script is not synchronous, call the yielder function (which will again handle jumping to the
-			// correct entry block for the first call).
-			if (fn_yielder_idx != -1)
-				wasm.emitCall(fn_yielder_idx);
-		}
-		else
-		{
-			// The first ZASM function we compiled marks the entry point. This is typically fn_yielder_idx,
-			// but if their is no yielding then it's the first function compiled. Regardless, it always
-			// maps to the original ZASM at pc 0.
-			wasm.emitCall(function_id_to_idx.begin()->second);
-		}
-
-		// ri->sp = g_idx_sp
-		{
-			wasm.emitLocalGet(state.l_idx_ri);
-			wasm.emitGlobalGet(state.g_idx_sp);
-			wasm.emitI32Store(4*9); // ri->sp
-		}
-
-		// j_instance->call_stack_ret_index = g_idx_ret_stack_index
-		{
-			wasm.emitLocalGet(state.l_idx_ret_stack_index);
-			wasm.emitGlobalGet(state.g_idx_ret_stack_index);
-			wasm.emitI32Store(0);
-		}
-
-		wasm.emitI32Const(RUNSCRIPT_OK);
-		wasm.emitCatch(state.tag_idx_stop);
-		wasm.emitCatchAll();
-		restore_globals(wasm);
-		wasm.emitRethrow(0);
-		wasm.emitEnd(); // try
-
-		wasm.emitLocalSet(l_idx_return_code);
-		restore_globals(wasm);
-		wasm.emitLocalGet(l_idx_return_code);
-		wasm.emitEnd();
-
-		std::vector<WasmValType> locals(num_globals + 1, WasmValType::I32);
-		comp.builder.defineFunction(fn_run_idx, locals, wasm.finish());
-	}
-
-	comp.builder.moduleName = script->name;
+	// Unique per piece: function names repeat (overloads), and -jit-save-wasm writes a file per
+	// module, possibly from many threads at once.
+	module_name = fmt::format("{}-{}-{}", script->name, fn.name(), piece.start_pc);
+	comp.builder.moduleName = module_name;
 	auto wm = comp.finish();
 
 	static bool write_to_disk = get_flag_bool("-jit-save-wasm").value_or(false);
@@ -3905,403 +3360,203 @@ static bool wasm_codegen_impl(zasm_script* script, WasmCodegenResult& out)
 	{
 		fs::path folder = fs::current_path() / "wasm" / get_filename(qstpath);
 		fs::create_directories(folder);
-		fs::path filename = folder / fmt::format("{}.wasm", comp.builder.moduleName);
-    	std::ofstream outfile(filename, std::ios::out | std::ios::binary);
+		fs::path filename = folder / fmt::format("{}.wasm", module_name);
+		std::ofstream outfile(filename, std::ios::out | std::ios::binary);
 		outfile.write(reinterpret_cast<const char*>(wm.data.data()), wm.data.size());
 	}
 
-	out.module_name = comp.builder.moduleName;
-	out.wm = std::move(wm);
-	out.resume_dispatch = std::move(resume_dispatch);
-	return true;
+	return wm;
 }
 
-// Codegen often runs on a worker thread (see jit_precompile_scripts_impl), where an
-// uncaught exception kills the worker and the browser logs only "Uncaught [object Object]".
-// Report it as a compile failure instead, so the message is logged and the script runs in
-// the interpreter.
-static bool wasm_codegen(zasm_script* script, WasmCodegenResult& out)
+// Codegen often runs on a worker thread (see compile_and_queue_piece), where an uncaught
+// exception kills the worker and the browser logs only "Uncaught [object Object]". Report it as a
+// compile failure instead, so the message is logged and the function stays interpreted.
+static std::optional<WasmModule> wasm_codegen_piece(zasm_script* script, JittedScript* j_script, pc_t piece_id, std::map<pc_t, uintptr_t>& pc_to_resume, std::string& module_name)
 {
 	try
 	{
-		return wasm_codegen_impl(script, out);
+		return wasm_codegen_piece_impl(script, j_script, piece_id, pc_to_resume, module_name);
 	}
 	catch (const std::exception& e)
 	{
 		error(script, fmt::format("exception: {}", e.what()));
-		return false;
+		return std::nullopt;
 	}
 }
 
-// Wraps a browser-compiled module, given by the function table slot of its `run`
-// export (0 = the browser failed to compile).
-static JittedScript* wasm_wrap_module(zasm_script* script, WasmCodegenResult&& r, int run_fn)
+std::optional<JittedFunction> jit_backend_compile_function(zasm_script* script, JittedScript* j_script, pc_t piece_id)
 {
-	printf("success: %s\n", run_fn ? "YES" : "NO");
-	if (!run_fn)
-	{
-		jit_printf("failure\n");
-		error(script, "failed to compile");
-		return nullptr;
-	}
+	std::string log;
+	codegen_log = &log;
 
-	auto fn = new JittedScript{run_fn};
-	fn->resume_dispatch = std::move(r.resume_dispatch);
-	return fn;
-}
+	std::map<pc_t, uintptr_t> pc_to_resume;
+	std::string module_name;
+	auto wm = wasm_codegen_piece(script, j_script, piece_id, pc_to_resume, module_name);
 
-// The main-thread half: hand the module bytes to the browser to compile.
-static JittedScript* wasm_finalize(zasm_script* script, WasmCodegenResult&& r)
-{
+	codegen_log = nullptr;
+	if (!log.empty())
+		jit_printf("%s", log.c_str());
+
+	if (!wm)
+		return std::nullopt;
+
 #ifndef __EMSCRIPTEN__
-	// Native builds can only generate the module (e.g. for -jit-save-wasm
+	// Native builds with this backend can only generate the module (e.g. for -jit-save-wasm
 	// validation), not run it.
-	if (script) return nullptr;
-#endif
-
-	int run_fn = em_compile_wasm(r.module_name.c_str(), r.wm.data.data(), r.wm.data.size());
-	return wasm_wrap_module(script, std::move(r), run_fn);
-}
-
-JittedScript* jit_compile_script(zasm_script* script)
-{
-	WasmCodegenResult r;
-	if (!wasm_codegen(script, r))
-		return nullptr;
-	return wasm_finalize(script, std::move(r));
-}
-
-// Generates modules for a set of scripts on worker threads. The threads are started by the
-// main thread: a thread a worker starts is spawned via the main thread, so a worker
-// starting them could wait on a main thread that is waiting on it.
-struct CodegenJob
-{
-	struct Item
-	{
-		bool compiled = false;
-		WasmCodegenResult result;
-		std::string log; // See codegen_log.
+	return std::nullopt;
+#else
+	auto pending = std::make_shared<WasmPendingModule>();
+	pending->name = std::move(module_name);
+	pending->wm = std::move(*wm);
+	return JittedFunction{
+		.exec = nullptr,
+		.id = piece_id,
+		.pc_to_resume_address = std::move(pc_to_resume),
+		.backend_data = std::move(pending),
 	};
+#endif
+}
 
-	std::vector<zasm_script*> scripts;
-	std::vector<Item> items;
-	std::atomic<size_t> next_index{0};
-	std::atomic<size_t> num_done{0};
-	std::atomic<int> num_started{0};
-	std::atomic<bool> cancel{false};
-	std::vector<std::thread> threads;
-
-	explicit CodegenJob(const std::vector<zasm_script*>& scripts) : scripts(scripts), items(scripts.size()) {}
-
-	void start(int num_threads)
-	{
-		for (int t = 0; t < num_threads; t++)
-		{
-			threads.emplace_back([this](){
-				num_started.fetch_add(1);
-				while (!cancel.load())
-				{
-					size_t i = next_index.fetch_add(1);
-					if (i >= scripts.size())
-						break;
-					codegen_log = &items[i].log;
-					items[i].compiled = wasm_codegen(scripts[i], items[i].result);
-					codegen_log = nullptr;
-					num_done.fetch_add(1);
-				}
-			});
-		}
-	}
-
-	bool done() const
-	{
-		return num_done.load() == scripts.size();
-	}
-
-	void join()
-	{
-		for (auto& t : threads)
-			t.join();
-		threads.clear();
-	}
-};
-
-// The browser-compile half: the generated modules, in a form em_compile_wasm_batch takes.
-struct ModuleBatch
+// Starts one browser compile for every function given that isn't being compiled yet. With `wait`,
+// returns once it's done.
+[[maybe_unused]] static void start_browser_compiles(const std::vector<JittedFunction*>& fns, bool wait)
 {
-	std::vector<size_t> indices; // into CodegenJob::items
+	std::vector<WasmPendingModule*> modules;
+	for (auto j_fn : fns)
+	{
+		auto module = static_cast<WasmPendingModule*>(j_fn->backend_data.get());
+		if (module && !module->batch)
+			modules.push_back(module);
+	}
+	if (modules.empty())
+		return;
+
+	auto batch = std::make_shared<WasmPendingModule::Batch>();
+	batch->run_fns.resize(modules.size());
 	std::vector<const char*> names;
 	std::vector<void*> ptrs;
 	std::vector<uint32_t> sizes;
-};
-
-[[maybe_unused]] static ModuleBatch make_module_batch(CodegenJob& job)
-{
-	ModuleBatch batch;
-	for (size_t i = 0; i < job.items.size(); i++)
+	for (size_t i = 0; i < modules.size(); i++)
 	{
-		if (!job.items[i].compiled)
-			continue;
-		batch.indices.push_back(i);
-		batch.names.push_back(job.items[i].result.module_name.c_str());
-		batch.ptrs.push_back(job.items[i].result.wm.data.data());
-		batch.sizes.push_back(job.items[i].result.wm.data.size());
-	}
-	return batch;
-}
-
-// Reports every script of the job, given the browser-compiled modules (nullptr where
-// codegen or the browser compile failed).
-[[maybe_unused]] static void report_compiled(CodegenJob& job, const ModuleBatch& batch, const std::vector<int>& run_fns, const std::function<void(zasm_script*, JittedScript*)>& on_compiled)
-{
-	for (auto& item : job.items)
-	{
-		if (!item.log.empty())
-			al_trace("%s", item.log.c_str());
+		modules[i]->batch = batch;
+		modules[i]->index_in_batch = i;
+		names.push_back(modules[i]->name.c_str());
+		ptrs.push_back(modules[i]->wm.data.data());
+		sizes.push_back(modules[i]->wm.data.size());
 	}
 
-	std::vector<JittedScript*> compiled(job.scripts.size());
-	for (size_t k = 0; k < batch.indices.size(); k++)
+	if (wait)
 	{
-		size_t i = batch.indices[k];
-		compiled[i] = wasm_wrap_module(job.scripts[i], std::move(job.items[i].result), run_fns[k]);
+		em_compile_wasm_batch(modules.size(), names.data(), ptrs.data(), sizes.data(), batch->run_fns.data());
+		batch->done = true;
 	}
-	for (size_t i = 0; i < job.scripts.size(); i++)
-		on_compiled(job.scripts[i], compiled[i]);
+	else
+	{
+		batch->id = em_compile_wasm_batch_start(modules.size(), names.data(), ptrs.data(), sizes.data());
+	}
 }
 
-// How many threads to generate code on. 0 forces synchronous compilation (debugging);
-// see jit_requested_threads for the shared -jit-threads semantics.
-[[maybe_unused]] static int codegen_thread_count(size_t num_scripts)
+// Sets j_fn.exec once its browser compile is done. Returns false if the browser failed to compile
+// it (it stays interpreted).
+[[maybe_unused]] static bool finish_browser_compile(JittedFunction& j_fn)
 {
-	int num_threads = jit_requested_threads(1);
-	if (num_threads == 0)
-		return 0;
-	return std::clamp(std::min(num_threads, (int)num_scripts), 1, 8);
+	auto module = static_cast<WasmPendingModule*>(j_fn.backend_data.get());
+	if (!module || j_fn.exec || !module->batch)
+		return true;
+
+	auto& batch = *module->batch;
+	if (!batch.done && em_compile_wasm_batch_poll(batch.id, batch.run_fns.data()))
+		batch.done = true;
+	if (!batch.done)
+		return true;
+
+	int run_fn = batch.run_fns[module->index_in_batch];
+	if (!run_fn)
+	{
+		jit_error("[jit ERROR] the browser failed to compile %s\n", module->name.c_str());
+		return false;
+	}
+
+	j_fn.exec = reinterpret_cast<JittedFunctionImpl>(static_cast<uintptr_t>(run_fn));
+	j_fn.backend_data.reset(); // The module bytes aren't needed anymore.
+	return true;
 }
 
-// Precompile with backend-managed threading. Only used on the web build: the
-// engine worker pool is unavailable there (see get_worker_thread_count), but
-// raw pthreads work (the runtime preallocates a pool). Two serial costs are
-// attacked: codegen runs on worker threads, and the browser-compile step -
-// which must be issued from the main thread - is issued as ONE batch
-// (em_compile_wasm_batch), letting the browser compile every module in
-// parallel on its own pool.
+[[maybe_unused]] static void finish_browser_compiles(std::deque<JittedFunction>& pending)
+{
+	std::erase_if(pending, [](JittedFunction& j_fn){ return !finish_browser_compile(j_fn); });
+}
+
+void jit_backend_prepare_commits([[maybe_unused]] JittedScript* j_script, [[maybe_unused]] std::deque<JittedFunction>& pending)
+{
+#ifdef __EMSCRIPTEN__
+	std::vector<JittedFunction*> fns;
+	for (auto& j_fn : pending)
+		fns.push_back(&j_fn);
+	start_browser_compiles(fns, false);
+	finish_browser_compiles(pending);
+#endif
+}
+
+void jit_backend_release_function(JittedFunction& j_fn)
+{
+	if (j_fn.exec)
+	{
+		em_destroy_wasm_module(static_cast<int>(reinterpret_cast<uintptr_t>(j_fn.exec)));
+		return;
+	}
+
+	// Still in a browser compile, which may cover other functions of the same script being
+	// released too. If done, release this module; otherwise drop the batch, which releases its
+	// modules once compiled.
+	auto module = static_cast<WasmPendingModule*>(j_fn.backend_data.get());
+	if (!module || !module->batch)
+		return;
+	auto& batch = *module->batch;
+	if (batch.done)
+	{
+		if (int run_fn = batch.run_fns[module->index_in_batch])
+			em_destroy_wasm_module(run_fn);
+	}
+	else if (batch.id)
+	{
+		em_compile_wasm_batch_cancel(batch.id);
+		batch.id = 0;
+	}
+}
+
+// Precompile: set up every script (which, with precompiling on, codegens each of its functions),
+// then compile every module in the browser in ONE batch (em_compile_wasm_batch) before the game
+// starts, letting the browser compile them in parallel on its own pool. The functions are
+// committed on their script's first run.
 bool jit_precompile_scripts_impl([[maybe_unused]] const std::vector<zasm_script*>& scripts, [[maybe_unused]] const std::function<void(zasm_script*, JittedScript*)>& on_compiled)
 {
 #ifndef __EMSCRIPTEN__
-	// Native builds precompile via the engine worker pool (or serially).
 	return false;
 #else
-	int num_threads = codegen_thread_count(scripts.size());
-	if (num_threads == 0)
-		return false;
-
-	CodegenJob job(scripts);
-	job.start(num_threads);
-	// The sleep yields to the browser, which is also what lets queued worker
-	// threads spawn.
-	while (!job.done())
-		emscripten_sleep(1);
-	job.join();
-
-	ModuleBatch batch = make_module_batch(job);
-	std::vector<int> run_fns(batch.indices.size());
-	em_compile_wasm_batch(batch.indices.size(), batch.names.data(), batch.ptrs.data(), batch.sizes.data(), run_fns.data());
-	report_compiled(job, batch, run_fns, on_compiled);
-	return true;
-#endif
-}
-
-// A compile running while the game plays: codegen on worker threads, then the
-// browser compile without waiting for it. Driven by jit_poll_background_compile_impl
-// on the main thread.
-struct BackgroundCompile
-{
-	CodegenJob job;
-	std::function<void(zasm_script*, JittedScript*)> on_compiled;
-	ModuleBatch batch;
-	int batch_id = 0; // Set once the browser compile has started.
-	std::chrono::steady_clock::time_point start_time = std::chrono::steady_clock::now();
-
-	BackgroundCompile(const std::vector<zasm_script*>& scripts, const std::function<void(zasm_script*, JittedScript*)>& on_compiled)
-		: job(scripts), on_compiled(on_compiled) {}
-};
-static std::unique_ptr<BackgroundCompile> background_compile;
-
-bool jit_start_background_compile_impl([[maybe_unused]] const std::vector<zasm_script*>& scripts, [[maybe_unused]] const std::function<void(zasm_script*, JittedScript*)>& on_compiled)
-{
-#ifndef __EMSCRIPTEN__
-	// Native builds compile in the background via the engine worker pool.
-	return false;
-#else
-	int num_threads = codegen_thread_count(scripts.size());
-	if (num_threads == 0)
-		return false;
-
-	jit_cancel_background_compile_impl();
-	background_compile = std::make_unique<BackgroundCompile>(scripts, on_compiled);
-	background_compile->job.start(num_threads);
-	// A thread may need a new web worker, which only starts while the main thread yields
-	// to the browser - and the game may not, until the next frame (or, headless, for much
-	// longer). So yield here until they are all running.
-	while (background_compile->job.num_started.load() < num_threads)
-		emscripten_sleep(1);
-	return true;
-#endif
-}
-
-void jit_poll_background_compile_impl()
-{
-	auto* bc = background_compile.get();
-	if (!bc || !bc->job.done())
-		return;
-
-	if (!bc->batch_id)
+	std::vector<JittedScript*> j_scripts;
+	std::vector<JittedFunction*> fns;
+	for (auto script : scripts)
 	{
-		bc->job.join();
-		bc->batch = make_module_batch(bc->job);
-		bc->batch_id = em_compile_wasm_batch_start(bc->batch.indices.size(), bc->batch.names.data(), bc->batch.ptrs.data(), bc->batch.sizes.data());
-		return;
-	}
-
-	std::vector<int> run_fns(bc->batch.indices.size());
-	if (!em_compile_wasm_batch_poll(bc->batch_id, run_fns.data()))
-		return;
-
-	report_compiled(bc->job, bc->batch, run_fns, bc->on_compiled);
-	int32_t compile_ms = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - bc->start_time).count();
-	al_trace("[jit] finished compiling scripts in the background, took %d ms\n", compile_ms);
-	background_compile.reset();
-}
-
-void jit_cancel_background_compile_impl()
-{
-	auto* bc = background_compile.get();
-	if (!bc)
-		return;
-
-	bc->job.cancel.store(true);
-	bc->job.join();
-	if (bc->batch_id)
-		em_compile_wasm_batch_cancel(bc->batch_id);
-	background_compile.reset();
-}
-
-JittedScriptInstance* jit_create_script_impl(script_data* script, refInfo* ri, JittedScript* j_script)
-{
-	// A fresh instance resumes from its own wait_index / call_stack_rets state,
-	// which points at the script's entry - correct only for a script that has not
-	// run yet. A script can also be mid-run here: it started on the interpreter
-	// (before a background compile finished, while the ZScript debugger was open,
-	// or excluded by -jit-run-lo/hi), and this is a later slice. Adopting it with entry state would re-run the
-	// entry on top of the stack frame the interpreter already pushed, corrupting
-	// the script (this was the terror_of_necromancy rng desync). Instead,
-	// translate the interpreter's resume state: at a yield, ri->pc and every live
-	// ret_stack entry are wait/RUNGENFRZSCR resume points or yielding-call return
-	// continuations - all dispatchable yielder blocks (see
-	// compute_dispatch_entries). If anything doesn't map, decline and the script
-	// just finishes its run on the interpreter. (The x64 backend needs none of
-	// this: it dispatches on ri->pc and shares the interpreter's ret_stack.)
-	//
-	// ri->pc == script->pc exactly when the script has not run yet: it is set to
-	// the entry when the script instance is first initialized, and no later wait
-	// can yield with the pc back at the entry.
-	uint32_t adopted_wait_index = 0;
-	uint32_t adopted_ret_index = 0;
-	pc_t adopted_rets[MAX_CALL_FRAMES];
-	if (ri->pc != script->pc)
-	{
-		extern int32_t(*ret_stack)[MAX_CALL_FRAMES];
-
-		auto decline = [&](pc_t pc) -> JittedScriptInstance* {
-			// Should not happen (every interpreter yield point is a dispatch
-			// entry) - error so -jit-fatal-compile-errors runs (CI) fail hard.
-			// Log once per script: this is retried every slice for the rest of
-			// the run.
-			static std::set<std::string> logged;
-			if (logged.insert(script->name()).second)
-				error(script->zasm_script.get(), fmt::format("cannot adopt mid-run script (unmapped resume pc {}): {}", (int)pc, script->name()));
-			return nullptr;
-		};
-
-		auto it = j_script->resume_dispatch.find(ri->pc);
-		if (it == j_script->resume_dispatch.end())
-			return decline(ri->pc);
-		adopted_wait_index = it->second;
-
-		if (ri->retsp > MAX_CALL_FRAMES)
-			return decline(ri->pc);
-		for (; adopted_ret_index < ri->retsp; adopted_ret_index++)
+		JittedScript* j_script = jit_compile_script(script);
+		j_scripts.push_back(j_script);
+		if (j_script)
 		{
-			pc_t ret_pc = (*ret_stack)[adopted_ret_index];
-			auto rit = j_script->resume_dispatch.find(ret_pc);
-			if (rit == j_script->resume_dispatch.end())
-				return decline(ret_pc);
-			adopted_rets[adopted_ret_index] = rit->second;
+			for (auto& j_fn : j_script->pending_compiled_jit_functions)
+				fns.push_back(&j_fn);
 		}
-
-		jit_printf("[jit] adopting mid-run script: %s pc: %d depth: %d\n", script->name().c_str(), (int)ri->pc, (int)ri->retsp);
 	}
 
-	auto j_instance = new JittedScriptInstance{
-		.j_script = j_script,
-		.script = script,
-		.ri = ri,
-	};
-	j_instance->wait_index = adopted_wait_index;
-	j_instance->call_stack_ret_index = adopted_ret_index;
-	for (uint32_t k = 0; k < adopted_ret_index; k++)
-		j_instance->call_stack_rets[k] = adopted_rets[k];
-	return j_instance;
-}
+	start_browser_compiles(fns, true);
 
-void jit_profiler_increment_function_back_edge([[maybe_unused]] JittedScriptInstance* j_instance, [[maybe_unused]] pc_t pc)
-{
-	// Not used - the wasm backend currently only supports precompiling scripts.
-}
-
-using WasmRunFn = int (*)(uintptr_t j_instance, uintptr_t ri, uintptr_t global_d, uintptr_t stack, uintptr_t ret_stack,
-	uintptr_t ret_stack_index, uintptr_t wait_index, int start_pc, uintptr_t script_d);
-int jit_run_script(JittedScriptInstance* j_instance)
-{
-	extern int32_t(*stack)[MAX_STACK_SIZE];
-
-	// The module's `run` export sits in the function table (see compileOneModule in
-	// web/zasm.js), so this is a plain wasm->wasm call: no JS frame for JSPI to trip
-	// on. It returns RUNSCRIPT_OK when the script yields, or the code it stopped with.
-	auto run = reinterpret_cast<WasmRunFn>(static_cast<uintptr_t>(j_instance->j_script->run_fn));
-
-	int return_code = run(
-		(uintptr_t)&*j_instance,
-		(uintptr_t)&*j_instance->ri,
-		(uintptr_t)&game->global_d,
-		(uintptr_t)&*stack,
-		(uintptr_t)&j_instance->call_stack_rets,
-		(uintptr_t)&j_instance->call_stack_ret_index,
-		(uintptr_t)&j_instance->wait_index,
-		j_instance->script->pc,
-		(uintptr_t)j_instance->ri->script_d.data());
-
-	// A stop stores its code there right before returning cleanly (see compile_command_interpreter).
-	// Clear it either way, so it can't be reported on a later frame.
-	if (j_instance->suspend_return_code != RUNSCRIPT_OK)
+	for (size_t i = 0; i < scripts.size(); i++)
 	{
-		if (return_code == RUNSCRIPT_OK)
-			return_code = j_instance->suspend_return_code;
-		j_instance->suspend_return_code = RUNSCRIPT_OK;
+		if (j_scripts[i])
+			finish_browser_compiles(j_scripts[i]->pending_compiled_jit_functions);
+		on_compiled(scripts[i], j_scripts[i]);
 	}
-
-	return return_code;
-}
-
-void jit_release(JittedScript* j_script)
-{
-	if (!j_script) return;
-
-	bool success = em_destroy_wasm_module(j_script->run_fn);
-	ASSERT(success);
-	delete j_script;
+	return true;
+#endif
 }
 
 #ifdef __EMSCRIPTEN__

@@ -50,15 +50,6 @@ JittedScript* jit_compile_script(zasm_script* script);
 // must happen on the main thread - is drained there. on_compiled is called on
 // the calling thread for every script, in no particular order.
 bool jit_precompile_scripts_impl(const std::vector<zasm_script*>& scripts, const std::function<void(zasm_script*, JittedScript*)>& on_compiled);
-// Start compiling every script in the background, using backend-managed
-// threading, while the game runs on the interpreter. Returns false if the
-// backend has no such support. on_compiled is called on the main thread, from
-// jit_poll_background_compile_impl, as results become ready.
-bool jit_start_background_compile_impl(const std::vector<zasm_script*>& scripts, const std::function<void(zasm_script*, JittedScript*)>& on_compiled);
-// Called on the main thread whenever a script without compiled code runs.
-void jit_poll_background_compile_impl();
-// Stops a background compile, discarding its results. Blocks until its threads exit.
-void jit_cancel_background_compile_impl();
 JittedScriptInstance* jit_create_script_impl(script_data* script, refInfo* ri, JittedScript* j_script);
 int jit_run_script(JittedScriptInstance* j_instance);
 void jit_release(JittedScript* j_script);
