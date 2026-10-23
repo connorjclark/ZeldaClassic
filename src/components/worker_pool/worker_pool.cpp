@@ -58,6 +58,22 @@ void WorkerPool::wait_for_all()
 	al_unlock_mutex(mutex);
 }
 
+bool WorkerPool::idle()
+{
+	al_lock_mutex(mutex);
+	bool result = active_tasks == 0;
+	al_unlock_mutex(mutex);
+	return result;
+}
+
+bool WorkerPool::all_workers_started()
+{
+	al_lock_mutex(mutex);
+	bool result = started_workers == workers.size();
+	al_unlock_mutex(mutex);
+	return result;
+}
+
 void WorkerPool::terminate()
 {
 	al_lock_mutex(mutex);
@@ -76,6 +92,10 @@ void* WorkerPool::worker_proc(ALLEGRO_THREAD* thread, void* arg)
 
 void WorkerPool::worker_loop()
 {
+	al_lock_mutex(mutex);
+	started_workers++;
+	al_unlock_mutex(mutex);
+
 	while (true)
 	{
 		std::function<void()> task;

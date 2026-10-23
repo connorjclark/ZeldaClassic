@@ -3,6 +3,9 @@
 #include "zc/zasm_optimize.h"
 #include "zc/zasm_utils.h"
 #include <thread>
+#ifdef __EMSCRIPTEN__
+#include <emscripten.h>
+#endif
 #include <fmt/format.h>
 
 // Raw pointer on purpose: if an exit path forgets zasm_pipeline_shutdown, a
@@ -34,13 +37,12 @@ int jit_requested_threads(int min_threads)
 
 static int get_worker_thread_count()
 {
-	// No engine worker pool on web: the wasm backend precompiles with its own
-	// batching (see jit_precompile_scripts_impl), and otherwise compiles hot
-	// functions on the main thread.
+	int num_threads = std::min(MAX_THREADS, jit_requested_threads(0));
+	// The web build preallocates a pool of web workers for threads (PTHREAD_POOL_SIZE in
+	// configure_emscripten.sh), which the engine's own threads share; stay well within it.
 	if (is_web())
-		return 0;
-
-	return std::min(MAX_THREADS, jit_requested_threads(0));
+		num_threads = std::min(num_threads, 8);
+	return num_threads;
 }
 
 static void init_worker_pool(int num_threads)
@@ -49,6 +51,12 @@ static void init_worker_pool(int num_threads)
 	{
 		worker_pool = new WorkerPool(num_threads);
 		zasm_pipeline_trace("created worker pool with {} threads", num_threads);
+#ifdef __EMSCRIPTEN__
+		// A thread can need a new web worker, which only starts while this thread yields to
+		// the browser - which the game may not do for a while (headless runs yield rarely).
+		while (!worker_pool->all_workers_started())
+			emscripten_sleep(1);
+#endif
 	}
 }
 
@@ -93,10 +101,7 @@ void zasm_pipeline_init(bool force_precompile)
 
 	if (get_flag_int("-test-bisect").has_value() || get_flag_int("-test-jit-bisect").has_value())
 		precompile = true;
-	// The web build has no engine worker pool, but the wasm backend compiles hot
-	// functions as they're found (the browser compile is async; see
-	// jit_backend_prepare_commits).
-	if (!precompile && !num_worker_threads && jit_is_enabled() && !is_web())
+	if (!precompile && !num_worker_threads && jit_is_enabled())
 	{
 		zasm_pipeline_trace("no threads assigned for worker pool, so must precompile");
 		precompile = true;

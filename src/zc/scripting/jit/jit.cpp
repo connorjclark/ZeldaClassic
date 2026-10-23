@@ -256,49 +256,46 @@ void jit_startup(bool precompile)
 
 	auto worker_pool = zasm_pipeline_worker_pool();
 
-	if (worker_pool)
-	{
-		if (jit_precompile)
-			al_trace("[jit] precompiling ...\n");
-		for (auto script : scripts)
-			create_compile_task(worker_pool, script);
-	}
-
-	// Without the engine worker pool (the web build), set up every script now; the backend
-	// compiles each function once it gets hot.
-	if (!jit_precompile && !worker_pool)
-	{
-		for (auto script : scripts)
-			compiled_scripts[script->id] = jit_compile_script(script);
-	}
-
 	if (jit_precompile)
 	{
-		// Handle special case where there are no worker threads.
-		if (!worker_pool)
+		al_trace("[jit] precompiling ...\n");
+
+		// The backend may precompile on its own (the wasm backend does, as it also has to wait
+		// for the browser to compile each module).
+		bool compiled = jit_precompile_scripts_impl(scripts, [](zasm_script* script, JittedScript* j_script){
+			compiled_scripts[script->id] = j_script;
+		});
+		if (!compiled && worker_pool)
 		{
-			// The backend may still manage its own threading (the wasm backend
-			// does on the web build, where the engine worker pool is
-			// unavailable); otherwise compile serially.
-			bool compiled = jit_precompile_scripts_impl(scripts, [](zasm_script* script, JittedScript* j_script){
-				compiled_scripts[script->id] = j_script;
-			});
-			if (!compiled)
-			{
-				for (auto script : scripts)
-				{
-					compiled_scripts[script->id] = jit_compile_script(script);
-				}
-			}
-		}
-		else
-		{
+			for (auto script : scripts)
+				create_compile_task(worker_pool, script);
 			worker_pool->wait_for_all();
+		}
+		else if (!compiled)
+		{
+			for (auto script : scripts)
+				compiled_scripts[script->id] = jit_compile_script(script);
 		}
 
 		end_time = std::chrono::steady_clock::now();
 		int32_t compile_ms = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time).count();
 		al_trace("[jit] finished precompiling scripts, took %d ms\n", compile_ms);
+		return;
+	}
+
+	// Set up the scripts, after which the backend compiles each function once it gets hot. On
+	// the web build this is always done right here: there, a worker thread's file writes (logging)
+	// are done by the main thread, so a worker can stall until the game yields to the browser.
+	bool init_scripts_in_background = worker_pool;
+#ifdef __EMSCRIPTEN__
+	init_scripts_in_background = false;
+#endif
+	for (auto script : scripts)
+	{
+		if (init_scripts_in_background)
+			create_compile_task(worker_pool, script);
+		else
+			compiled_scripts[script->id] = jit_compile_script(script);
 	}
 }
 
