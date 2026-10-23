@@ -71,7 +71,7 @@ struct StructuredZasm
 		CALLING_MODE_CALLFUNC_RETURNFUNC,
 	} calling_mode;
 
-	bool is_modern_function_calling();
+	bool is_modern_function_calling() const;
 };
 
 struct ZasmCFG
@@ -142,7 +142,9 @@ std::set<pc_t> zasm_find_yielding_functions(const zasm_script* script, Structure
 // as we don't need to convert the graph to be reducible.
 //
 // https://www2.cs.arizona.edu/~collberg/Teaching/453/2009/Handouts/Handout-15.pdf
-ZasmCFG zasm_construct_cfg(const zasm_script* script, std::vector<std::pair<pc_t, pc_t>> pc_ranges);
+// With split_after_calls, every CALLFUNC ends its block, which continues to the next one (where the
+// call returns) - as the wasm JIT, which leaves for the driver on every call, needs.
+ZasmCFG zasm_construct_cfg(const zasm_script* script, std::vector<std::pair<pc_t, pc_t>> pc_ranges, bool split_after_calls = false);
 
 // Returns the control flow graph of one function, with the same blocks and edges the function has
 // in the CFG of every function in its script. Control that leaves the function (a call, a jump,

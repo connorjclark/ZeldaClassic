@@ -1,6 +1,6 @@
 // Architecture-independent JIT driver: compilation pipeline, script/instance
 // lifecycle, hot-function profiling, and the run loop. The per-architecture
-// backends (jit_x64.cpp, jit_a64.cpp) provide code generation via
+// backends (jit_x64.cpp, jit_a64.cpp, jit_wasm.cpp) provide code generation via
 // jit_backend_compile_function; everything here is shared between them.
 
 #include "zc/scripting/jit/jit_shared.h"
@@ -239,6 +239,10 @@ static size_t jit_max_piece_size()
 		// densest code over every script of ~1000 quests is ~57 bytes per instruction, so this
 		// keeps every piece within reach (one that wasn't would be left to the interpreter).
 		size = std::min<size_t>(size, 15000);
+#elif ZC_JIT_BACKEND == JIT_WASM
+		// The wasm backend compiles whole functions: its lowering has no entry points for jumps
+		// from another piece of the function, and the browser compiles a big function fine.
+		size = SIZE_MAX;
 #endif
 		return size;
 	}();
@@ -592,35 +596,37 @@ static bool exec_script(JittedExecutionContext* ctx)
 }
 
 
+#if ZC_JIT_BACKEND != JIT_WASM
+// The wasm backend provides its own (see jit_wasm.cpp).
+
 bool jit_precompile_scripts_impl([[maybe_unused]] const std::vector<zasm_script*>& scripts, [[maybe_unused]] const std::function<void(zasm_script*, JittedScript*)>& on_compiled)
 {
-	// This backend precompiles via the engine worker pool.
+	// The native backends precompile via the engine worker pool.
 	return false;
 }
 
-bool jit_start_background_compile_impl([[maybe_unused]] const std::vector<zasm_script*>& scripts, [[maybe_unused]] const std::function<void(zasm_script*, JittedScript*)>& on_compiled)
-{
-	// This backend compiles in the background via the engine worker pool.
-	return false;
-}
-
-void jit_poll_background_compile_impl()
+void jit_backend_prepare_commits([[maybe_unused]] JittedScript* j_script, [[maybe_unused]] std::deque<JittedFunction>& pending)
 {
 }
 
-void jit_cancel_background_compile_impl()
+void jit_backend_release_function([[maybe_unused]] JittedFunction& j_fn)
 {
 }
+#endif
 
 int jit_run_script(JittedScriptInstance* j_instance)
 {
-	// Commit any recently compiled functions.
+	// Commit any recently compiled functions - the ones ready to run (see
+	// jit_backend_prepare_commits); the rest stay pending.
 	al_lock_mutex(j_instance->j_script->mutex);
 	{
 		auto& pending = j_instance->j_script->pending_compiled_jit_functions;
-		while (!pending.empty())
-		{
-			JittedFunction& j_fn = pending.front();
+		if (!pending.empty())
+			jit_backend_prepare_commits(j_instance->j_script, pending);
+		std::erase_if(pending, [&](JittedFunction& j_fn){
+			if (!j_fn.exec)
+				return false;
+
 			j_instance->j_script->pc_to_resume_address.insert(j_fn.pc_to_resume_address.begin(), j_fn.pc_to_resume_address.end());
 			j_fn.pc_to_resume_address.clear();
 			pc_t piece_id = j_fn.id;
@@ -632,8 +638,8 @@ int jit_run_script(JittedScriptInstance* j_instance)
 			const auto& fn = j_instance->j_script->structured_zasm.functions[piece.fn_id];
 			if (piece.start_pc == fn.start_pc && !fn.may_yield)
 				j_instance->j_script->direct_entry_table[fn.id] = (uintptr_t)exec;
-			pending.pop_front();
-		}
+			return true;
+		});
 	}
 	al_unlock_mutex(j_instance->j_script->mutex);
 
@@ -663,6 +669,14 @@ void jit_release(JittedScript* j_script)
 {
 	if (!j_script)
 		return;
+
+	for (auto& j_fn : j_script->compiled_functions)
+	{
+		if (j_fn.exec != stub_exec_function)
+			jit_backend_release_function(j_fn);
+	}
+	for (auto& j_fn : j_script->pending_compiled_jit_functions)
+		jit_backend_release_function(j_fn);
 
 	al_destroy_mutex(j_script->mutex);
 	delete j_script;

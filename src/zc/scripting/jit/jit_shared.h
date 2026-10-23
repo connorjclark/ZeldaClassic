@@ -1,12 +1,12 @@
 #ifndef ZC_JIT_SHARED_H_
 #define ZC_JIT_SHARED_H_
 
-// Shared data structures and driver for the native JIT backends (x64 and a64).
+// Shared data structures and driver for the JIT backends (x64, a64 and wasm).
 //
 // The compilation pipeline, script/instance lifecycle, hot-function profiling,
 // and the run loop are architecture independent and live in jit_shared.cpp.
-// The per-architecture backends (jit_x64.cpp, jit_a64.cpp) provide only the
-// code generation, exposed through jit_backend_compile_function.
+// The per-architecture backends (jit_x64.cpp, jit_a64.cpp, jit_wasm.cpp) provide
+// only the code generation, exposed through jit_backend_compile_function.
 //
 // This is the runtime layer, included engine-wide via jit.h - keep it to
 // plain types and declarations. The codegen policy the two backends share
@@ -52,7 +52,8 @@ struct JittedExecutionContext
 	uint64_t saved_regs[4];
 	// The native address to jump to on entry when resuming after a call or wait. The x64 backend
 	// always uses this; the a64 backend resumes by either using this (for functions with many
-	// resume points) or by comparing pc instead (for small functions).
+	// resume points) or by comparing pc instead (for small functions). For the wasm backend it is
+	// the dispatch value of the block to resume at.
 	uintptr_t resume_address;
 	// How the compiled function was entered. 0 = by the driver (pc/
 	// resume_address describe where to resume). 1 = a direct native call from
@@ -80,10 +81,15 @@ struct JitPiece
 
 struct JittedFunction
 {
+	// Null until the backend finishes compiling it (see jit_backend_prepare_commits).
 	JittedFunctionImpl exec;
 	// The piece id.
 	pc_t id;
+	// The resume points, keyed by the pc just before each (see exec_script). The values are
+	// whatever the backend's code jumps on: a native address, or a wasm dispatch value.
 	std::map<pc_t, uintptr_t> pc_to_resume_address;
+	// The wasm backend's compile in progress.
+	std::shared_ptr<void> backend_data;
 };
 
 // The control flow and D-register liveness a function is compiled with.
@@ -148,9 +154,15 @@ struct JittedScriptInstance
 	int32_t uncompiled_command_count;
 };
 
-// Provided by the per-architecture backend (jit_x64.cpp / jit_a64.cpp): compile
-// one piece of a function to native code, or std::nullopt if it should stay interpreted.
+// Provided by the per-architecture backend (jit_x64.cpp / jit_a64.cpp / jit_wasm.cpp): compile
+// one piece of a function, or std::nullopt if it should stay interpreted. Runs on any thread.
 std::optional<JittedFunction> jit_backend_compile_function(zasm_script* script, JittedScript* j_script, pc_t piece_id);
+// Called on the main thread, with j_script->mutex held, before committing compiled functions. The
+// wasm backend finishes compiling them here (the browser compiles a module on the main thread):
+// it sets exec once ready, and removes any that failed. The native backends have nothing to do.
+void jit_backend_prepare_commits(JittedScript* j_script, std::deque<JittedFunction>& pending);
+// Frees a compiled (or still compiling) function's code, when its script is released.
+void jit_backend_release_function(JittedFunction& j_fn);
 
 // The analysis to compile a function with: the script's if it has one, otherwise `storage`,
 // filled in for just this function.

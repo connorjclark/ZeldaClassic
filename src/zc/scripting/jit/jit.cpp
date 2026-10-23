@@ -191,8 +191,6 @@ JittedScriptInstance* jit_create_script_instance(script_data* script, refInfo* r
 	if (!compiled_scripts_mutex)
 		return nullptr;
 
-	jit_poll_background_compile_impl();
-
 	auto j_script = find_jitted_script(script->zasm_script.get());
 	if (j_script)
 		return jit_create_script_impl(script, ri, j_script);
@@ -216,9 +214,6 @@ void jit_startup(bool precompile)
 	jit_log_enabled = is_feature_enabled("-jit-log", "ZSCRIPT", "jit_log", false) || is_ci();
 	jit_use_cached_regs_enabled = is_feature_enabled("-jit-cache-registers", "ZSCRIPT", "jit_cache_registers", true);
 	jit_precompile = precompile;
-
-	// A background compile from the previous quest load must not outlive its scripts.
-	jit_cancel_background_compile_impl();
 
 	jit_startup_impl();
 
@@ -269,23 +264,15 @@ void jit_startup(bool precompile)
 			create_compile_task(worker_pool, script);
 	}
 
-	// Without the engine worker pool (the web build), the backend may compile in the
-	// background itself; scripts run on the interpreter until their code is ready.
-	bool precompile_now = jit_precompile;
+	// Without the engine worker pool (the web build), set up every script now; the backend
+	// compiles each function once it gets hot.
 	if (!jit_precompile && !worker_pool)
 	{
-		bool started = jit_start_background_compile_impl(scripts, [](zasm_script* script, JittedScript* j_script){
-			al_lock_mutex(compiled_scripts_mutex);
-			compiled_scripts[script->id] = j_script;
-			al_unlock_mutex(compiled_scripts_mutex);
-		});
-		if (started)
-			al_trace("[jit] compiling scripts in the background\n");
-		else
-			precompile_now = true;
+		for (auto script : scripts)
+			compiled_scripts[script->id] = jit_compile_script(script);
 	}
 
-	if (precompile_now)
+	if (jit_precompile)
 	{
 		// Handle special case where there are no worker threads.
 		if (!worker_pool)
@@ -319,8 +306,6 @@ void jit_shutdown()
 {
 	if (!is_enabled)
 		return;
-
-	jit_cancel_background_compile_impl();
 
 	if (compiled_scripts_mutex)
 	{

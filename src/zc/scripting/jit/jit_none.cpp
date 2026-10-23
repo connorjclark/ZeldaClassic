@@ -15,19 +15,6 @@ bool jit_precompile_scripts_impl([[maybe_unused]] const std::vector<zasm_script*
 	return false;
 }
 
-bool jit_start_background_compile_impl([[maybe_unused]] const std::vector<zasm_script*>& scripts, [[maybe_unused]] const std::function<void(zasm_script*, JittedScript*)>& on_compiled)
-{
-	return false;
-}
-
-void jit_poll_background_compile_impl()
-{
-}
-
-void jit_cancel_background_compile_impl()
-{
-}
-
 int jit_run_script([[maybe_unused]] JittedScriptInstance* j_instance)
 {
 	return RUNSCRIPT_ERROR;
