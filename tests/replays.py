@@ -411,6 +411,12 @@ class StartReplayArgs:
     output_dir: Path
 
 
+# Only test the "hot code only" compilation for a few replays. For all others, precompile all
+# scripts on load.
+def should_precompile(replay) -> bool:
+    return not replay.name.startswith('yuurand') and not replay.name.startswith('freedom')
+
+
 class CLIPlayerInterface:
     p = None
 
@@ -475,11 +481,7 @@ class CLIPlayerInterface:
             exe_args.append('-jit')
             exe_args.append('-jit-log')
             exe_args.append('-jit-fatal-compile-errors')
-            # Only test the "hot code only" compilation for a few replays. For all others,
-            # precompile all scripts on load.
-            if not replay.name.startswith('yuurand') and not replay.name.startswith(
-                'freedom'
-            ):
+            if should_precompile(replay):
                 exe_args.append('-jit-precompile')
         else:
             exe_args.append('-no-jit')
@@ -568,7 +570,8 @@ class WebPlayerInterface:
             extra_args.append('-jit')
             extra_args.append('-jit-log')
             extra_args.append('-jit-fatal-compile-errors')
-            extra_args.append('-jit-precompile')
+            if should_precompile(replay):
+                extra_args.append('-jit-precompile')
         else:
             extra_args.append('-no-jit')
 
