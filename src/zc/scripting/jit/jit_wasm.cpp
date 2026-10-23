@@ -161,24 +161,12 @@ static bool em_destroy_wasm_module([[maybe_unused]] int id)
 
 #endif
 
-// Codegen of a function logs to this buffer, written out as one piece when done (see
-// jit_backend_compile_function).
-static thread_local std::string* codegen_log;
-
-static void codegen_trace(const std::string& str)
-{
-	if (codegen_log)
-		codegen_log->append(str);
-	else
-		jit_trace(str);
-}
-
 static void error(const zasm_script* script, std::string str, bool expected = false)
 {
 	str = fmt::format("failed to compile zasm chunk: {} id: {}\nerror: {}\n",
 					  script->name, script->id, str);
 
-	codegen_trace(str);
+	jit_trace(str);
 
 	if (DEBUG_JIT_EXIT_ON_COMPILE_FAIL && !expected)
 	{
@@ -3390,7 +3378,7 @@ static std::optional<WasmModule> wasm_codegen_piece_impl(zasm_script* script, Ji
 
 	if (!structured_zasm.is_modern_function_calling())
 	{
-		codegen_trace(fmt::format("[jit] NOT compiling zasm chunk (unexpected function call mode): {} id: {} size: {}\n", script->name, script->id, script->size));
+		jit_trace(fmt::format("[jit] NOT compiling zasm chunk (unexpected function call mode): {} id: {} size: {}\n", script->name, script->id, script->size));
 		return std::nullopt;
 	}
 
@@ -3489,17 +3477,9 @@ static std::optional<WasmModule> wasm_codegen_piece(zasm_script* script, JittedS
 
 std::optional<JittedFunction> jit_backend_compile_function(zasm_script* script, JittedScript* j_script, pc_t piece_id)
 {
-	std::string log;
-	codegen_log = &log;
-
 	std::map<pc_t, uintptr_t> pc_to_resume;
 	std::string module_name;
 	auto wm = wasm_codegen_piece(script, j_script, piece_id, pc_to_resume, module_name);
-
-	codegen_log = nullptr;
-	if (!log.empty() && jit_log_is_enabled())
-		jit_trace(log);
-
 	if (!wm)
 		return std::nullopt;
 
