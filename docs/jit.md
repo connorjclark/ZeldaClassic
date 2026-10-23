@@ -6,15 +6,15 @@
 |---|---|---|---|
 | File | `jit_x64.cpp` | `jit_a64.cpp` | `jit_wasm.cpp` |
 | Platform | x86-64 | AArch64 (e.g. Apple Silicon) | browser |
-| Compiles | one function at a time (large ones in pieces) | same as x64 | a whole script chunk |
-| When | once a function is hot, or all on quest load with `jit_precompile` | same as x64 | on quest load only |
-| On by default | yes | yes | no (still experimental) |
+| Compiles | one function at a time (large ones in pieces) | same as x64 | one function at a time (never in pieces) |
+| When | once a function is hot, or all on quest load with `jit_precompile` | same as x64 | same as x64 |
+| On by default | yes | yes | yes, in the JSPI web build (the fallback build has no JIT) |
 
 ## Using the JIT
 
 ### Enabling
 
-JIT compilation is on by default on desktop; the shipped web config still disables it (`jit = 1 #? web = 0` in `resources/base_config/zc.cfg`), so browser builds only use it when opted in. It can be toggled with the `[ZSCRIPT] jit` config option, found in the launcher. There is also the `-jit` / `-no-jit` command line switch, or `--(no-)jit` for `run_replay_tests.py`.
+JIT compilation is on by default. On the web it only exists in the JSPI build, which browsers with `WebAssembly.Suspending` get; the fallback build for other browsers runs scripts on the interpreter (see [WASM backend](#wasm-backend)). It can be toggled with the `[ZSCRIPT] jit` config option, found in the launcher. There is also the `-jit` / `-no-jit` command line switch, or `--(no-)jit` for `run_replay_tests.py`.
 
 ### Configuration
 
@@ -40,7 +40,7 @@ jit_precompile = 0
 jit_cache_registers = 1
 ```
 
-With `jit_threads = 0` there is no worker pool to compile hot functions in the background, so the native backends precompile every script on quest load, as if `jit_precompile` were on. The browser build always precompiles.
+With `jit_threads = 0` there is no worker pool to compile hot functions in the background, so every script is precompiled on quest load, as if `jit_precompile` were on. The web build's pool has at most 8 threads.
 
 ## How the interpreter runs ZASM
 
@@ -219,7 +219,7 @@ Each module imports the engine's memory, function table and callbacks, and expor
 - **A function that never leaves for the driver mid-way** (no `WaitX`, and no calls except direct ones, below) gets real structured control flow (`compile_function_structured`; `WasmStructurer` in `wasm_structurer.h`, a dominator-tree-guided translation). Irreducible control flow falls back to the lowering below.
 - **Any other function** is a loop-switch: a `loop` + `br_table` dispatch over its basic blocks (`compile_piece`), because the driver can re-enter it after a `WaitX` or after a call returns. Its resume points go in `pc_to_resume_address` (keyed by the pc before the resume point, as for the native backends), and the dispatch value is the block id + 1. Loops that never leave the function are still compiled as real wasm loops nested in the dispatch (see `detect_yielder_regions`).
 
-Calls work like the native backends: a call to a function that can never yield is a direct call (`compile_callfunc_direct`) - a `call_indirect` through the callee's slot in `direct_entry_table`, which holds `jit_wasm_direct_not_compiled` until the callee is committed (that runs the call on the driver, to its end). The callee's entry pushes the ZASM return stack via `direct_enter`, and past 256 direct-call frames a call goes through the driver instead. Any other call returns `EXEC_RESULT_CALL` to the driver.
+Calls work like the native backends: a call to a function that can never yield is a direct call (`compile_callfunc_direct`) - a `call_indirect` through the callee's slot in `direct_entry_table`, which holds `jit_wasm_direct_not_compiled` until the callee is committed (that runs the call on the driver, to its end). The callee's entry pushes the ZASM return stack via `direct_enter`, and past 256 direct-call frames a call goes through the driver instead. A direct call site has no resume point after it, so when that call returns, the caller finishes on the interpreter, as does each caller below it when it's returned to: recursion deeper than 256 runs interpreted from there. Any other call returns `EXEC_RESULT_CALL` to the driver.
 
 There is no JS frame between the engine and a script's compiled code, so JSPI can suspend the program with script frames on the stack. That's how `RUNGENFRZSCR` (generic frozen scripts) runs inline through the interpreter, as on the native backends: its engine frames suspend the program with the calling script's frames still on the stack.
 
