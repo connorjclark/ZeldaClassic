@@ -20,7 +20,7 @@
 	cmake --build build --config Debug -t  zplayer &&
 	rm -rf build/Debug/wasm/playground/playground.qst &&
 	./build/Debug/zplayer -replay $PWD/tests/replays/playground/maths.zplay -headless -jit -jit-save-wasm -jit-precompile -frame 0 -replay-exit-when-done &&
-	wasm2wat build/Debug/wasm/playground.qst/ffc-5-Maths.wasm --enable-threads --generate-names
+	wasm2wat build/Debug/wasm/playground.qst/<script>-<function>-<start pc>.wasm --enable-threads --generate-names
 */
 
 #include "zc/scripting/jit/jit_wasm.h"
@@ -45,8 +45,6 @@
 #include "components/zasm/serialize.h"
 #include "components/worker_pool/worker_pool.h"
 #include <algorithm>
-#include <atomic>
-#include <chrono>
 #include <cstddef>
 #include <cstdint>
 #include <filesystem>
@@ -56,7 +54,6 @@
 #include <optional>
 #include <set>
 #include <stdint.h>
-#include <thread>
 
 #ifdef __EMSCRIPTEN__
 #include <emscripten/emscripten.h>
@@ -103,19 +100,8 @@ struct CompilationState
 
 #ifdef __EMSCRIPTEN__
 
-// Compile many modules in one suspension: the browser compiles them in
-// parallel on its internal thread pool. Writes each module's run function
-// (its function table slot, 0 = failure) to out_ids.
-EM_ASYNC_JS(void, em_compile_wasm_batch_, (int count, uintptr_t names, uintptr_t ptrs, uintptr_t sizes, uintptr_t out_ids), {
-	await ZC.compileScriptWasmModuleBatch(count, names, ptrs, sizes, out_ids);
-});
-static void em_compile_wasm_batch(int count, const char** names, void** ptrs, uint32_t* sizes, int* out_ids)
-{
-	em_compile_wasm_batch_(count, (uintptr_t)names, (uintptr_t)ptrs, (uintptr_t)sizes, (uintptr_t)out_ids);
-}
-
-// The same, without waiting: starts compiling the modules and returns a batch id.
-// The module bytes are copied before this returns.
+// Starts compiling many modules, and returns a batch id: the browser compiles them in parallel on
+// its own threads. The module bytes are copied before this returns.
 EM_JS(int, em_compile_wasm_batch_start_, (int count, uintptr_t names, uintptr_t ptrs, uintptr_t sizes), {
 	return ZC.startCompileScriptWasmModuleBatch(count, names, ptrs, sizes);
 });
@@ -124,8 +110,8 @@ static int em_compile_wasm_batch_start(int count, const char** names, void** ptr
 	return em_compile_wasm_batch_start_(count, (uintptr_t)names, (uintptr_t)ptrs, (uintptr_t)sizes);
 }
 
-// If the batch has finished compiling, writes each module's run function to out_ids
-// (as em_compile_wasm_batch does) and returns true.
+// If the batch has finished compiling, writes each module's exec function (its function table
+// slot, 0 = failure) to out_ids and returns true.
 EM_JS(bool, em_compile_wasm_batch_poll_, (int batch_id, uintptr_t out_ids), {
 	return ZC.pollCompileScriptWasmModuleBatch(batch_id, out_ids);
 });
@@ -152,10 +138,6 @@ static bool em_destroy_wasm_module(int id)
 }
 
 #else
-
-static void em_compile_wasm_batch([[maybe_unused]] int count, [[maybe_unused]] const char** names, [[maybe_unused]] void** ptrs, [[maybe_unused]] uint32_t* sizes, [[maybe_unused]] int* out_ids)
-{
-}
 
 static int em_compile_wasm_batch_start([[maybe_unused]] int count, [[maybe_unused]] const char** names, [[maybe_unused]] void** ptrs, [[maybe_unused]] uint32_t* sizes)
 {
@@ -2141,6 +2123,8 @@ static void compile_plain_command(CompilationState& state, const zasm_script* sc
 // model (e.g. a comparison-goto with no reaching compare) - and the caller
 // falls back to the loop-switch lowering.
 
+static void emit_function_end(CompilationState& state, const StructuredZasm& structured_zasm, const ZasmFunction& fn, bool end_function = true);
+
 struct StructuredFnSink : StructSink
 {
 	CompilationState* state;
@@ -2164,6 +2148,9 @@ struct StructuredFnSink : StructSink
 	// The entry function of a script that ends by falling off the end (global
 	// init scripts have no QUIT) runs the script-end 0xFFFF handling.
 	bool ffff_tail;
+	// Otherwise, the function whose last block falls off its end, continuing at the next pc
+	// (see emit_function_end). Null if it doesn't.
+	const ZasmFunction* falls_off_fn = nullptr;
 
 	// Term::Dispatch support, used only when this sink emits a structured
 	// region nested inside the yielder's loop-switch (see YielderRegionPlan).
@@ -2313,10 +2300,14 @@ struct StructuredFnSink : StructSink
 			}
 		}
 
-		if (ffff_tail && b + 1 == (int)starts->size())
+		// An Exit block leaves the function itself (see wasm_structurer.h), wherever the
+		// structurer lays it out.
+		if (b + 1 == (int)starts->size())
 		{
-			// See emit_function_end.
-			emit_exit_stop(*state, RUNSCRIPT_STOPPED, script->size - 1);
+			if (ffff_tail)
+				emit_exit_stop(*state, RUNSCRIPT_STOPPED, script->size - 1); // See emit_function_end.
+			else if (falls_off_fn)
+				emit_function_end(*state, *structured_zasm, *falls_off_fn, false);
 		}
 	}
 
@@ -2468,7 +2459,7 @@ static bool collect_cmp_groups(const zasm_script* script, pc_t start_pc, pc_t fi
 // function's end is the script's: its final command is a 0xFFFF that isn't part of the function
 // (see zasm_construct_structured), which global init scripts rely on to end the script. Any other
 // function falls through to the next command, as in the interpreter.
-static void emit_function_end(CompilationState& state, const StructuredZasm& structured_zasm, const ZasmFunction& fn, bool end_function = true)
+static void emit_function_end(CompilationState& state, const StructuredZasm& structured_zasm, const ZasmFunction& fn, bool end_function)
 {
 	if (state.final_pc != fn.final_pc)
 		emit_exit_continue(state, state.final_pc + 1);
@@ -2516,6 +2507,7 @@ static std::optional<WasmAssembler> compile_function_structured(CompilationState
 	std::vector<int> goto_debug_pc(n, -1);
 	std::vector<int> switch_pc(n, -1);
 	bool ffff_tail = false;
+	bool falls_off_end = false;
 	for (int b = 0; b < n; b++)
 	{
 		pc_t bfinal = block_final(b);
@@ -2592,6 +2584,7 @@ static std::optional<WasmAssembler> compile_function_structured(CompilationState
 			// run the script-end 0xFFFF handling; otherwise this is simply an
 			// implicit return.
 			bi.term = Term::Exit;
+			falls_off_end = true;
 			if (fn_id == 0 && script->size - 1 == final_pc + 1 && script->zasm[script->size - 1].command == 0xFFFF)
 				ffff_tail = true;
 		}
@@ -2614,6 +2607,7 @@ static std::optional<WasmAssembler> compile_function_structured(CompilationState
 	sink.consumer_to_cmp = &consumer_to_cmp;
 	sink.final_pc = final_pc;
 	sink.ffff_tail = ffff_tail;
+	sink.falls_off_fn = falls_off_end ? &fn : nullptr;
 	sink.num_real_blocks = n;
 
 	// Irreducibility is detected before anything is emitted.
@@ -2622,8 +2616,9 @@ static std::optional<WasmAssembler> compile_function_structured(CompilationState
 		return std::nullopt;
 	structurer.emit(sink);
 
-	// An Exit block can fall off the function's end.
-	emit_function_end(state, structured_zasm, fn);
+	// Every path has left the function by now.
+	wasm.emitUnreachable();
+	wasm.emitEnd(); // Function end.
 
 	return wasm;
 }
@@ -2639,7 +2634,7 @@ static std::optional<WasmAssembler> compile_function_structured(CompilationState
 // dead - nothing dispatches to them at runtime), and the whole region is
 // emitted structured in the header's scaffold segment. Edges leaving the
 // region (breaks past the loop, returns) become Term::Dispatch: set
-// g_idx_target_block_id and branch out to the dispatch loop.
+// l_idx_target_block and branch out to the dispatch loop.
 
 struct YielderRegionPlan
 {
@@ -3525,9 +3520,9 @@ std::optional<JittedFunction> jit_backend_compile_function(zasm_script* script, 
 #endif
 }
 
-// Starts one browser compile for every function given that isn't being compiled yet. With `wait`,
-// returns once it's done.
-[[maybe_unused]] static void start_browser_compiles(const std::vector<JittedFunction*>& fns, bool wait)
+// Starts one browser compile for every function given that isn't being compiled yet. Returns its
+// batch, or null if there was nothing to compile.
+[[maybe_unused]] static std::shared_ptr<WasmPendingModule::Batch> start_browser_compiles(const std::vector<JittedFunction*>& fns)
 {
 	std::vector<WasmPendingModule*> modules;
 	for (auto j_fn : fns)
@@ -3537,7 +3532,7 @@ std::optional<JittedFunction> jit_backend_compile_function(zasm_script* script, 
 			modules.push_back(module);
 	}
 	if (modules.empty())
-		return;
+		return nullptr;
 
 	auto batch = std::make_shared<WasmPendingModule::Batch>();
 	batch->run_fns.resize(modules.size());
@@ -3553,30 +3548,27 @@ std::optional<JittedFunction> jit_backend_compile_function(zasm_script* script, 
 		sizes.push_back(modules[i]->wm.data.size());
 	}
 
-	if (wait)
-	{
-		em_compile_wasm_batch(modules.size(), names.data(), ptrs.data(), sizes.data(), batch->run_fns.data());
-		batch->done = true;
-	}
-	else
-	{
-		batch->id = em_compile_wasm_batch_start(modules.size(), names.data(), ptrs.data(), sizes.data());
-	}
+	batch->id = em_compile_wasm_batch_start(modules.size(), names.data(), ptrs.data(), sizes.data());
+	return batch;
 }
 
-// Sets j_fn.exec once its browser compile is done. Returns false if the browser failed to compile
-// it (it stays interpreted).
+// Returns whether the batch has finished compiling.
+[[maybe_unused]] static bool poll_browser_compile(WasmPendingModule::Batch& batch)
+{
+	if (!batch.done && em_compile_wasm_batch_poll(batch.id, batch.run_fns.data()))
+		batch.done = true;
+	return batch.done;
+}
+
+// Sets j_fn.exec once its browser compile is done (see poll_browser_compile). Returns false if the
+// browser failed to compile it (it stays interpreted).
 [[maybe_unused]] static bool finish_browser_compile(JittedFunction& j_fn)
 {
 	auto module = static_cast<WasmPendingModule*>(j_fn.backend_data.get());
-	if (!module || j_fn.exec || !module->batch)
+	if (!module || j_fn.exec || !module->batch || !module->batch->done)
 		return true;
 
 	auto& batch = *module->batch;
-	if (!batch.done && em_compile_wasm_batch_poll(batch.id, batch.run_fns.data()))
-		batch.done = true;
-	if (!batch.done)
-		return true;
 
 	int run_fn = batch.run_fns[module->index_in_batch];
 	if (!run_fn)
@@ -3592,6 +3584,15 @@ std::optional<JittedFunction> jit_backend_compile_function(zasm_script* script, 
 
 [[maybe_unused]] static void finish_browser_compiles(std::deque<JittedFunction>& pending)
 {
+	// Poll each batch once, rather than once per function in it.
+	std::set<WasmPendingModule::Batch*> polled;
+	for (auto& j_fn : pending)
+	{
+		auto module = static_cast<WasmPendingModule*>(j_fn.backend_data.get());
+		if (module && module->batch && polled.insert(module->batch.get()).second)
+			poll_browser_compile(*module->batch);
+	}
+
 	std::erase_if(pending, [](JittedFunction& j_fn){ return !finish_browser_compile(j_fn); });
 }
 
@@ -3601,7 +3602,7 @@ void jit_backend_prepare_commits([[maybe_unused]] JittedScript* j_script, [[mayb
 	std::vector<JittedFunction*> fns;
 	for (auto& j_fn : pending)
 		fns.push_back(&j_fn);
-	start_browser_compiles(fns, false);
+	start_browser_compiles(fns);
 	finish_browser_compiles(pending);
 #endif
 }
@@ -3674,7 +3675,11 @@ bool jit_precompile_scripts_impl([[maybe_unused]] const std::vector<zasm_script*
 		}
 	}
 
-	start_browser_compiles(fns, true);
+	if (auto batch = start_browser_compiles(fns))
+	{
+		while (!poll_browser_compile(*batch))
+			emscripten_sleep(1);
+	}
 
 	for (size_t i = 0; i < scripts.size(); i++)
 	{

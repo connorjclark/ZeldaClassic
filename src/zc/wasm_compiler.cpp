@@ -71,11 +71,6 @@ uint32_t WasmModuleBuilder::addGlobal(std::string name) {
   return globals.size() - 1;
 }
 
-uint32_t WasmModuleBuilder::addTag(const WasmResultType &params) {
-  tags.push_back(internFuncType(params, {}));
-  return tags.size() - 1;
-}
-
 void WasmModuleBuilder::addIndirectFunction(uint32_t idx) {
   indirectFunctionTable.push_back(idx);
 }
@@ -92,7 +87,6 @@ WasmModule WasmModuleBuilder::finish() {
   writer.emitImportSection(function_imports, import_table);
   writer.emitFunctionSection(functions);
   // writer.emitMemorySection();
-  writer.emitTagSection(tags);
   writer.emitGlobalSection(globals);
   writer.emitExportSection(function_exports);
   if (startFunction != uint32_t(-1))

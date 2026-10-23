@@ -40,16 +40,6 @@ function assertMainThread() {
   assert(typeof window !== 'undefined', 'expected to be called from main thread');
 }
 
-// TODO: maybe need? for compile on workers?
-function waitForNextWorkerMessage(worker) {
-  return new Promise((resolve, reject) => {
-    worker.addEventListener('message', e => {
-      resolve(e.data);
-    });
-    worker.addEventListener('error', reject);
-  });
-}
-
 // Returns the engine's raw wasm export for an exported C function, so it can be
 // bound as a script-module import and called wasm->wasm with no JS frame. These
 // imports are on the script hot path (get/set_register per engine-register
@@ -154,18 +144,12 @@ function writeIds(ids, outIdsPtr) {
   }
 }
 
-// A module id (0 on failure) is written per entry to outIds.
-export async function compileScriptWasmModuleBatch(count, namesPtr, ptrsPtr, sizesPtr, outIdsPtr) {
-  writeIds(await startCompileJobs(count, namesPtr, ptrsPtr, sizesPtr), outIdsPtr);
-}
-
 /** @type {Map<number, {ids: number[] | null, cancelled: boolean}>} */
 const pendingBatches = new Map();
 let nextBatchId = 1;
 
-// compileScriptWasmModuleBatch without waiting, for compiling while the game
-// runs (see jit_start_background_compile_impl). Returns a batch id for
-// pollCompileScriptWasmModuleBatch.
+// Starts compiling a batch of modules (see jit_backend_prepare_commits), and
+// returns its id for pollCompileScriptWasmModuleBatch.
 export function startCompileScriptWasmModuleBatch(count, namesPtr, ptrsPtr, sizesPtr) {
   const id = nextBatchId++;
   const batch = { ids: null, cancelled: false };
