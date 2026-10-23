@@ -51,7 +51,6 @@
 #include <fstream>
 #include <functional>
 #include <memory>
-#include <mutex>
 #include <optional>
 #include <set>
 #include <stdint.h>
@@ -162,40 +161,12 @@ static bool em_destroy_wasm_module([[maybe_unused]] int id)
 
 #endif
 
-// Codegen runs on worker threads. On the web build a worker's file writes (al_trace) are
-// done by the main thread, which may be busy running the game (or waiting on the workers), so
-// codegen logs to this buffer when it is set and the main thread writes it out later (see
-// flush_codegen_logs).
-static thread_local std::string* codegen_log;
-static std::mutex codegen_logs_mutex;
-static std::vector<std::string> codegen_logs;
-
-// Call only from the main thread.
-static void flush_codegen_logs()
-{
-	std::vector<std::string> logs;
-	{
-		std::lock_guard lock(codegen_logs_mutex);
-		logs.swap(codegen_logs);
-	}
-	for (auto& log : logs)
-		al_trace("%s", log.c_str());
-}
-
-static void codegen_trace(const std::string& str)
-{
-	if (codegen_log)
-		codegen_log->append(str);
-	else
-		al_trace("%s", str.c_str());
-}
-
 static void error(const zasm_script* script, std::string str, bool expected = false)
 {
 	str = fmt::format("failed to compile zasm chunk: {} id: {}\nerror: {}\n",
 					  script->name, script->id, str);
 
-	codegen_trace(str);
+	jit_trace(str);
 
 	if (DEBUG_JIT_EXIT_ON_COMPILE_FAIL && !expected)
 	{
@@ -3407,7 +3378,7 @@ static std::optional<WasmModule> wasm_codegen_piece_impl(zasm_script* script, Ji
 
 	if (!structured_zasm.is_modern_function_calling())
 	{
-		codegen_trace(fmt::format("[jit] NOT compiling zasm chunk (unexpected function call mode): {} id: {} size: {}\n", script->name, script->id, script->size));
+		jit_trace(fmt::format("[jit] NOT compiling zasm chunk (unexpected function call mode): {} id: {} size: {}\n", script->name, script->id, script->size));
 		return std::nullopt;
 	}
 
@@ -3506,24 +3477,9 @@ static std::optional<WasmModule> wasm_codegen_piece(zasm_script* script, JittedS
 
 std::optional<JittedFunction> jit_backend_compile_function(zasm_script* script, JittedScript* j_script, pc_t piece_id)
 {
-	std::string log;
-	codegen_log = &log;
-
 	std::map<pc_t, uintptr_t> pc_to_resume;
 	std::string module_name;
 	auto wm = wasm_codegen_piece(script, j_script, piece_id, pc_to_resume, module_name);
-
-	codegen_log = nullptr;
-	if (!log.empty() && jit_log_is_enabled())
-	{
-#ifdef __EMSCRIPTEN__
-		std::lock_guard lock(codegen_logs_mutex);
-		codegen_logs.push_back(std::move(log));
-#else
-		al_trace("%s", log.c_str());
-#endif
-	}
-
 	if (!wm)
 		return std::nullopt;
 
@@ -3622,7 +3578,6 @@ std::optional<JittedFunction> jit_backend_compile_function(zasm_script* script, 
 
 void jit_backend_prepare_commits([[maybe_unused]] JittedScript* j_script, [[maybe_unused]] std::deque<JittedFunction>& pending)
 {
-	flush_codegen_logs();
 #ifdef __EMSCRIPTEN__
 	std::vector<JittedFunction*> fns;
 	for (auto& j_fn : pending)
@@ -3659,8 +3614,8 @@ void jit_backend_release_function(JittedFunction& j_fn)
 	}
 }
 
-// Precompile: set up every script (which, with precompiling on, codegens each of its functions on
-// the engine worker pool), then compile every module in the browser in ONE batch
+// Precompile: set up every script (which, with precompiling on, codegens each of its functions) on
+// the engine worker pool, then compile every module in the browser in ONE batch
 // (em_compile_wasm_batch) before the game starts, letting the browser compile them in parallel on
 // its own pool. The functions are committed on their script's first run.
 bool jit_precompile_scripts_impl([[maybe_unused]] const std::vector<zasm_script*>& scripts, [[maybe_unused]] const std::function<void(zasm_script*, JittedScript*)>& on_compiled)
@@ -3668,18 +3623,27 @@ bool jit_precompile_scripts_impl([[maybe_unused]] const std::vector<zasm_script*
 #ifndef __EMSCRIPTEN__
 	return false;
 #else
-	std::vector<JittedScript*> j_scripts;
-	for (auto script : scripts)
-		j_scripts.push_back(jit_compile_script(script));
-
-	// Yield while waiting, rather than block: a worker may need the main thread (see
-	// codegen_log).
+	std::vector<JittedScript*> j_scripts(scripts.size());
 	if (auto worker_pool = zasm_pipeline_worker_pool())
 	{
+		for (size_t i = 0; i < scripts.size(); i++)
+		{
+			worker_pool->add_task([&, i](){
+				j_scripts[i] = jit_compile_script(scripts[i]);
+			});
+		}
+
+		// Yield while waiting, rather than block: a worker may still need the main thread (such as
+		// for a file write), and the page stays responsive.
 		while (!worker_pool->idle())
 			emscripten_sleep(1);
 	}
-	flush_codegen_logs();
+	else
+	{
+		for (size_t i = 0; i < scripts.size(); i++)
+			j_scripts[i] = jit_compile_script(scripts[i]);
+	}
+	jit_flush_worker_logs();
 
 	std::vector<JittedFunction*> fns;
 	for (auto j_script : j_scripts)

@@ -12,11 +12,17 @@
 #include "zc/zasm_pipeline.h"
 #include "zc/zasm_utils.h"
 #include "zc/zelda.h"
+#include "zalleg/zalleg.h"
 #include "zconfig.h"
 #include <fmt/format.h>
 #include <algorithm>
+#include <atomic>
 #include <map>
 #include <memory>
+#include <mutex>
+#ifdef __EMSCRIPTEN__
+#include <emscripten/threading.h>
+#endif
 
 static bool is_enabled;
 static bool jit_log_enabled;
@@ -40,6 +46,48 @@ static void create_compile_task(WorkerPool* worker_pool, zasm_script* script)
 	});
 }
 
+#ifdef __EMSCRIPTEN__
+// On the web build a worker thread's file writes (al_trace) are done by the main thread, so a
+// worker that logs waits for the main thread - which may be busy running the game, or even waiting
+// on that worker. Instead, logs from worker threads are queued here, and the main thread writes
+// them (jit_flush_worker_logs).
+static std::mutex worker_logs_mutex;
+static std::string worker_logs;
+static std::atomic<bool> has_worker_logs;
+#endif
+
+void jit_trace(const std::string& str)
+{
+#ifdef __EMSCRIPTEN__
+	if (!emscripten_is_main_runtime_thread())
+	{
+		std::lock_guard lock(worker_logs_mutex);
+		worker_logs += str;
+		has_worker_logs = true;
+		return;
+	}
+#endif
+	// Not al_trace: it formats into a fixed-size buffer.
+	safe_al_trace(str);
+}
+
+// Call only from the main thread.
+void jit_flush_worker_logs()
+{
+#ifdef __EMSCRIPTEN__
+	if (!has_worker_logs)
+		return;
+
+	std::string logs;
+	{
+		std::lock_guard lock(worker_logs_mutex);
+		logs.swap(worker_logs);
+		has_worker_logs = false;
+	}
+	safe_al_trace(logs);
+#endif
+}
+
 void jit_printf(const char *format, ...)
 {
 	if (!jit_log_enabled)
@@ -49,7 +97,7 @@ void jit_printf(const char *format, ...)
 	va_list argList;
 	va_start(argList, format);
 	vsnprintf(buffer, sizeof(buffer) - 1, format, argList);
-	al_trace("%s", buffer);
+	jit_trace(buffer);
 }
 
 void jit_error(const char *format, ...)
@@ -58,7 +106,7 @@ void jit_error(const char *format, ...)
 	va_list argList;
 	va_start(argList, format);
 	vsnprintf(buffer, sizeof(buffer) - 1, format, argList);
-	al_trace("%s", buffer);
+	jit_trace(buffer);
 	if (DEBUG_JIT_EXIT_ON_COMPILE_FAIL)
 		abort();
 }
@@ -283,16 +331,10 @@ void jit_startup(bool precompile)
 		return;
 	}
 
-	// Set up the scripts, after which the backend compiles each function once it gets hot. On
-	// the web build this is always done right here: there, a worker thread's file writes (logging)
-	// are done by the main thread, so a worker can stall until the game yields to the browser.
-	bool init_scripts_in_background = worker_pool;
-#ifdef __EMSCRIPTEN__
-	init_scripts_in_background = false;
-#endif
+	// Set up the scripts, after which the backend compiles each function once it gets hot.
 	for (auto script : scripts)
 	{
-		if (init_scripts_in_background)
+		if (worker_pool)
 			create_compile_task(worker_pool, script);
 		else
 			compiled_scripts[script->id] = jit_compile_script(script);

@@ -7,6 +7,7 @@
 #include "core/zdefs.h"
 #include "components/zasm/pc.h"
 #include <functional>
+#include <string>
 #include <vector>
 
 #define JIT_NONE 0
@@ -28,6 +29,8 @@ ZC_FORMAT_PRINTF(1, 2)
 void jit_printf(const char *format, ...);
 ZC_FORMAT_PRINTF(1, 2)
 void jit_error(const char *format, ...);
+void jit_trace(const std::string& str);
+void jit_flush_worker_logs();
 bool jit_is_enabled();
 void jit_set_enabled(bool enabled);
 bool jit_log_is_enabled();
