@@ -120,20 +120,17 @@ The cache can be turned off with `-no-jit-cache-registers` (config: `jit_cache_r
 
 ### Compilation unit and timing
 
-The backends differ in what unit they compile and when:
-
-- **Native (`jit_x64.cpp` / `jit_a64.cpp`):** scripts are compiled **per-function**. Once a function is run enough (lots of calls to it, or it loops a lot internally), it will be compiled. Compilation happens in a worker pool – the main thread does not wait for it to be compiled. Once the worker pool compiles a function, the main thread can then run it when executing that function. Until then, the interpreter handles executing that function. If precompiling is enabled, all functions are compiled on quest load, before the game starts. Very large functions are compiled in pieces (see [Large functions are compiled in pieces](#large-functions-are-compiled-in-pieces)).
-- **wasm (`jit_wasm.cpp`, browser build):** the **entire script chunk** (e.g. `@single`, which contains all of a quest's generic/ffc scripts and their functions) is compiled to a single wasm module at once, in the background while the game runs on the interpreter (or at quest load, when precompiling). There is no hot-threshold path (so the `jit_hot_function_*` settings above don't apply to the browser build). See the [WASM backend](#wasm-backend) section for how it works.
+Every backend (`jit_x64.cpp`, `jit_a64.cpp`, and `jit_wasm.cpp` for the browser build) compiles scripts **per-function**, driven by `jit_shared.cpp`. Once a function is run enough (lots of calls to it, or it loops a lot internally), it will be compiled. Compilation happens in a worker pool – the main thread does not wait for it to be compiled. Once the worker pool compiles a function, the main thread can then run it when executing that function. Until then, the interpreter handles executing that function. If precompiling is enabled, all functions are compiled on quest load, before the game starts. On the native backends, very large functions are compiled in pieces (see [Large functions are compiled in pieces](#large-functions-are-compiled-in-pieces)). The wasm backend adds a step after compiling, in the browser (see the [WASM backend](#wasm-backend) section).
 
 ### Yielding and resuming
 
-When a `WaitX` command is hit, the compiled function saves where to resume and returns; the next time it is called it picks up at the instruction after that `WaitX`. The native backends resume from `ri->pc` (see [Resume dispatch](#resume-dispatch)); the wasm backend resumes from its own saved block index (see [WASM backend: Yielding and resuming](#yielding-and-resuming-1)).
+When a `WaitX` command is hit, the compiled function saves where to resume and returns; the next time it is called it picks up at the instruction after that `WaitX`. Every backend resumes from `ri->pc` (see [Resume dispatch](#resume-dispatch)).
 
 ## Native backends (x64, a64)
 
 ### Code layout
 
-The two native backends share everything except instruction selection: `jit_shared.{h,cpp}` is the runtime driver (compilation pipeline, script/instance lifecycle, hot-function profiling, the run loop) and `jit_codegen_shared.h` is the codegen policy they must apply identically (the D-register cache and its liveness-based flush rules, the per-command emit loop, the compiled-command list).
+The two native backends share everything except instruction selection: `jit_shared.{h,cpp}` is the runtime driver (compilation pipeline, script/instance lifecycle, hot-function profiling, the run loop) and `jit_codegen_shared.h` is the codegen policy they must apply identically (the D-register cache and its liveness-based flush rules, the per-command emit loop, the compiled-command list). The wasm backend uses the same driver, but not the codegen policy.
 
 ### Resume dispatch
 
@@ -143,7 +140,7 @@ The native backends track resume points via `JittedScript::pc_to_resume_address`
 
 The driver loop in `jit_shared.cpp` normally orchestrates every script function call: a `CALLFUNC` exits the caller's compiled code back to C++, which looks up the callee (a binary search over function start pcs), pushes the ZASM return pc, and re-enters the callee's compiled code through its prologue; every `RETURNFUNC` does the mirror image, plus a resume-address lookup to re-enter the caller mid-function. That round-trip exists because a script can `WaitX` mid-call-stack: native stack frames can't survive returning to C++, so call state has to live in the ZASM return stack instead.
 
-But a function that can never yield (no `WaitX` transitively reachable - the same `may_yield` analysis the wasm backend uses to split its module) never needs to suspend, so calls to it are emitted as plain native calls on the machine stack. The call site loads the callee's entry from the per-script `direct_entry_table`, passes the return pc in `ctx->call_pc`, sets `ctx->entry_mode = 1`, and calls. Until the callee is compiled and committed its slot holds `jit_direct_not_compiled`, a stub that rewrites `ctx` into the driver-path call the site would otherwise have made, so the slot doubles as the hot-swap point without the call site needing a branch of its own. The callee's entry pushes the ZASM return stack via `jit_direct_enter` (so the driver's view of the call chain stays exact) and skips its resume dispatch; its `RETURNFUNC` pops the return stack and returns `EXEC_RESULT_RETURN` to the call site instead of to the driver.
+But a function that can never yield (no `WaitX` transitively reachable - `ZasmFunction::may_yield`) never needs to suspend, so calls to it are emitted as plain native calls on the machine stack. The call site loads the callee's entry from the per-script `direct_entry_table`, passes the return pc in `ctx->call_pc`, sets `ctx->entry_mode = 1`, and calls. Until the callee is compiled and committed its slot holds `jit_direct_not_compiled`, a stub that rewrites `ctx` into the driver-path call the site would otherwise have made, so the slot doubles as the hot-swap point without the call site needing a branch of its own. The callee's entry pushes the ZASM return stack via `jit_direct_enter` (so the driver's view of the call chain stays exact) and skips its resume dispatch; its `RETURNFUNC` pops the return stack and returns `EXEC_RESULT_RETURN` to the call site instead of to the driver.
 
 #### Unwinding
 
@@ -197,43 +194,36 @@ A few AArch64-specific notes (`jit_a64.cpp`):
 
 ## WASM backend
 
-The browser build can't emit native machine code, so `jit_wasm.cpp` compiles ZASM to a WebAssembly module instead, which the browser then compiles to machine code itself. Unlike the native backends, there is no assembler library: the backend writes the wasm binary format directly (`wasm_compiler.h`).
+The browser build can't emit native machine code, so `jit_wasm.cpp` compiles ZASM to WebAssembly instead, which the browser then compiles to machine code itself. Unlike the native backends, there is no assembler library: the backend writes the wasm binary format directly (`wasm_compiler.h`).
 
 The wasm JIT only runs in the JSPI web build (`JSPI=1 bash scripts/configure_emscripten.sh`). The fallback build for browsers without JSPI uses ASYNCIFY, and is built with `JIT_BACKEND=none`, so it runs scripts on the interpreter.
 
 ### Compilation unit and pipeline
 
-The unit of compilation is a whole ZASM chunk, compiled into one wasm module. Modern quests link all their scripts into a single `@single` chunk, so they get one big module; quests compiled before that linking existed have one chunk per script, so they produce many modules (e.g. stellar_seas builds 300+). There is no hot-function path: every chunk is compiled at once, in two stages. By default this runs in the background (`jit_start_background_compile_impl`), while scripts run on the interpreter; a script switches to compiled code at its next yield once its module is ready, the same way a mid-run script is adopted (see below). With `-jit-precompile` (which the replay tests use, so they are reproducible) it happens at quest load instead (`jit_precompile_scripts_impl`). The stages:
+The wasm backend plugs into the same driver as the native backends (`jit_shared.cpp`): each function is compiled on its own, once it's hot (or at quest load, with `-jit-precompile`), into its own small wasm module, and its `exec` is called by the driver loop just like a native function. Functions are never split into pieces (`jit_max_piece_size`): the browser compiles a big function fine. Compiling a function has two stages:
 
-1. **Codegen** (ZASM -> wasm bytes) is pure C++ and runs in parallel on background threads.
-2. **Browser compile** must be issued from the main thread. All generated modules are handed to the browser in a single batch (`em_compile_wasm_batch` -> `ZC.compileScriptWasmModuleBatch` in `web/zasm.js`), which compiles them concurrently on the browser's internal thread pool, in one suspension of the program.
+1. **Codegen** (ZASM -> wasm bytes) is plain C++, and runs on the engine worker pool.
+2. **Browser compile** must be issued from the main thread. When a script runs, `jit_backend_prepare_commits` hands any newly generated modules to the browser in one batch (`em_compile_wasm_batch_start` -> `ZC.startCompileScriptWasmModuleBatch` in `web/zasm.js`), which compiles and instantiates them concurrently on the browser's own threads, and puts each module's `exec` in the engine's function table. Later script runs poll the batch, and commit each function once its `exec` is ready. The main thread never waits for this. For `-jit-precompile`, `jit_precompile_scripts_impl` waits for all of codegen, then compiles every module in one batch before the game starts.
 
-`jit_threads` applies to the codegen stage (`0` forces a fully-serial path, at quest load). The engine worker pool itself stays disabled on web due to technical constraints.
+A few things about the web build's threads shape this:
 
-During a background compile, the main thread starts the codegen threads (a thread a worker starts is spawned via the main thread) and waits until they are running, as starting them can need the main thread to yield to the browser. Codegen threads log into a per-thread buffer that the main thread writes out (`codegen_log`): a worker's file writes are done by the main thread, which is busy running the game. The browser compile is started without waiting for it, and `jit_poll_background_compile_impl` - called from `jit_create_script_instance` whenever a script without compiled code runs - picks up the results. Headless runs only yield to the browser every 10000 frames, so there a background compile barely progresses; use `-jit-precompile`.
+- **A worker's file writes (`al_trace`) are done by the main thread**, which may be busy running the game, or waiting on that worker. So JIT logs from worker threads are queued (`jit_trace`), and written by the main thread (`jit_flush_worker_logs`).
+- **A new thread's web worker only starts while the main thread yields to the browser.** So `zasm_pipeline_init` waits (with `emscripten_sleep`) for the worker pool's threads to start, and the main thread waits for the pool by polling it (`WorkerPool::idle`) with `emscripten_sleep`, never by blocking.
+- **The JSPI build links mimalloc.** With the default allocator (dlmalloc), a single lock covers every allocation, and codegen allocates a lot: each thread added made precompiling slower, and a background compile would stall the game's own allocations. mimalloc costs more memory (yuurand_riviere's heap peaks at 626 MB, vs 522 MB).
+- Headless runs only yield to the browser every 10000 frames, so there the browser compile of a hot function finishes late.
 
 ### Module structure
 
-Within a chunk, functions are split by whether they can yield (transitively reach a `WaitX`; see `zasm_find_yielding_functions`):
+Each module imports the engine's memory, function table and callbacks, and exports one function, `exec(ctx)`, with the same contract as a native function: it runs from `ctx->resume_address` (0 for the function's start), and returns an `EXEC_RESULT_*` for the driver. Hot values (the script `sp`, the refInfo/stack/global-D pointers) are kept in wasm locals, loaded from `ctx` on entry.
 
-- **Non-yielding functions** compile to individual wasm functions with real structured control flow (`WasmStructurer` in `wasm_structurer.h`, a dominator-tree-guided translation). Calls to them are plain wasm calls; the native call stack handles returns. (The native backends apply the same idea to non-yielding callees - see "Direct calls between compiled functions" above.) Irreducible control flow falls back to the loop-switch lowering below.
-- **All yielding functions are inlined into one "yielder" function** built as a loop-switch: a `loop` + `br_table` dispatch over every basic block, because its call/return/resume targets are runtime values. Dispatch values are `(cfg block id + 1)`. A `CALLFUNC` to a yielding function pushes the return continuation's dispatch value onto a per-instance return stack (`call_stack_rets`) and jumps back to the dispatch; `RETURNFUNC` pops it. Non-suspending loops inside the yielder are still compiled as real wasm loops nested in the dispatch (see `detect_yielder_regions`).
+- **A function that never leaves for the driver mid-way** (no `WaitX`, and no calls except direct ones, below) gets real structured control flow (`compile_function_structured`; `WasmStructurer` in `wasm_structurer.h`, a dominator-tree-guided translation). Irreducible control flow falls back to the lowering below.
+- **Any other function** is a loop-switch: a `loop` + `br_table` dispatch over its basic blocks (`compile_piece`), because the driver can re-enter it after a `WaitX` or after a call returns. Its resume points go in `pc_to_resume_address` (keyed by the pc before the resume point, as for the native backends), and the dispatch value is the block id + 1. Loops that never leave the function are still compiled as real wasm loops nested in the dispatch (see `detect_yielder_regions`).
 
-The module exports one `run(...)` function that receives pointers (refInfo, stack, instance state, ...) and stores them in wasm globals; hot values (the script `sp`, the refInfo/stack/global-D pointers) are kept in wasm locals inside compiled code.
+Calls work like the native backends: a call to a function that can never yield is a direct call (`compile_callfunc_direct`) - a `call_indirect` through the callee's slot in `direct_entry_table`, which holds `jit_wasm_direct_not_compiled` until the callee is committed (that runs the call on the driver, to its end). The callee's entry pushes the ZASM return stack via `direct_enter`, and past 256 direct-call frames a call goes through the driver instead. Any other call returns `EXEC_RESULT_CALL` to the driver.
 
-When a module is compiled, `web/zasm.js` puts its `run` export in the engine's function table, and `jit_run_script` calls it through a function pointer. There is no JS frame between the engine and the script, so JSPI can suspend the program with script frames on the stack. `run` returns `RUNSCRIPT_OK` when the script yields. Anything that stops the script (`QUIT`, a failed command, the stack or call limit, a return from the root frame) throws the module's stop tag with a `RUNSCRIPT_*` code, from any depth, and `run` catches it and returns the code.
-
-A script can run another script mid-execution (e.g. an FFC running an enemy's script), and that one may be compiled into the same module. So `run` saves every module global on entry and restores them on exit, however it exits.
+There is no JS frame between the engine and a script's compiled code, so JSPI can suspend the program with script frames on the stack. That's how `RUNGENFRZSCR` (generic frozen scripts) runs inline through the interpreter, as on the native backends: its engine frames suspend the program with the calling script's frames still on the stack.
 
 Not every ZASM command is compiled (see `command_is_compiled`); runs of uncompiled commands call back into the interpreter in batches via `do_commands`. All engine callbacks (`get_register`/`set_register`/`do_commands`/...) are bound as **direct wasm->wasm imports** - `web/zasm.js` resolves the engine's raw exports (`rawEngineExport`) so script->engine calls skip JS entirely.
-
-### Yielding and resuming
-
-A `WaitX` stores the next block's dispatch value in the instance's `wait_index` and returns cleanly from `run()`. On the next call, the run wrapper dispatches straight to that block; `call_stack_rets`/`call_stack_ret_index` restore the inlined call stack. `wait_index == 0` means "not started yet" and dispatches to the script's entry.
-
-`RUNGENFRZSCR` (generic frozen scripts) runs inline through the interpreter, as on the native backends: its engine frames suspend the program with the calling script's frames still on the stack.
-
-A script can be mid-run when the JIT first sees it: it started on the interpreter, before a background compile finished, while the ZScript debugger was open, or excluded by `-jit-run-lo`/`-jit-run-hi`. Then `jit_create_script_impl` translates the interpreter's resume state: at a yield, `ri->pc` and every live `ret_stack` entry are dispatchable yielder blocks, whose dispatch values were recorded at compile time in `JittedScript::resume_dispatch`. Anything unmapped declines (an error under `jit_fatal_compile_errors`) and the script finishes its run interpreted. The native backends need none of this - they dispatch on `ri->pc` and share the interpreter's `ret_stack`, which is also what makes their hot-function upgrades trivially safe.
 
 ## Debugging
 
@@ -265,7 +255,7 @@ It can also be useful to compile only the script you're debugging in `jit_create
 ### WASM backend
 
 - A **native build with `-DJIT_BACKEND=wasm`** generates (but can't run) the same modules - fast, execution-free codegen validation. With `-jit-save-wasm` it writes `wasm/<qst>/<module>.wasm` next to the exe; check structure with `wasm2wat <f> --enable-threads`. This is also how to verify a codegen refactor is byte-identical.
-- Each codegen strategy has an escape-hatch flag for A/B and bisection: `-jit-wasm-structured`, `-jit-wasm-structured-yielder`, `-jit-wasm-sp-local`, `-jit-wasm-pointer-locals`, `-jit-wasm-inline-regs` (all default on).
+- Each codegen strategy has an escape-hatch flag for A/B and bisection: `-jit-wasm-structured`, `-jit-wasm-structured-yielder` (the nested loops in a loop-switch), `-jit-wasm-inline-regs` (all default on).
 - `-jit-run-lo N` / `-jit-run-hi N` force `run_script` calls outside `[lo, hi)` to the interpreter, for bisecting which invocation must be jitted to reproduce a divergence. The gate is only active when `-jit-run-hi` is set (its default of -1 disables it), so `-jit-run-lo` alone has no effect. Once the failing call is found, `-jit-run-log-call N` logs the replay frame and script that `run_script` call N runs on. `scripts/jit_runtime_debug.py` automates this against a native no-jit baseline and works on web replays (pass `--baseline_build_folder build/Release` to speed up baseline collection).
 
 ## Flags reference
@@ -277,8 +267,8 @@ Boolean flags can be negated with a `-no` prefix (e.g. `-no-jit-wasm-structured`
 | `-jit` | all | on | Enable the JIT. Config: `[ZSCRIPT] jit` |
 | `-jit-precompile` | all | off | Compile every script on quest load. Config: `jit_precompile` |
 | `-jit-threads N` | all | -2 | Compile threads; 0 implies `-jit-precompile`. Config: `jit_threads` |
-| `-jit-hot-function-call-count N` | native | 10 | Config: `jit_hot_function_call_count` |
-| `-jit-hot-function-loop-count N` | native | 1000 | Config: `jit_hot_function_loop_count` |
+| `-jit-hot-function-call-count N` | all | 10 | Config: `jit_hot_function_call_count` |
+| `-jit-hot-function-loop-count N` | all | 1000 | Config: `jit_hot_function_loop_count` |
 | `-jit-log` | all | off (on in CI) | Log compilation to `allegro.log`. Config: `jit_log` |
 | `-jit-print-asm` | native | off | Config: `jit_print_asm` |
 | `-jit-fatal-compile-errors` | all | off | Config: `jit_fatal_compile_errors` |
@@ -286,7 +276,7 @@ Boolean flags can be negated with a `-no` prefix (e.g. `-no-jit-wasm-structured`
 | `-jit-direct-calls` | native | on | [Direct calls between compiled functions](#direct-calls-between-compiled-functions) |
 | `-jit-max-piece-size N` | native | 10000 | [Split larger functions into pieces](#large-functions-are-compiled-in-pieces) of at most this many instructions (at most 15000 on a64) |
 | `-jit-save-wasm` | wasm | off | Write modules to `wasm/<qst>/` |
-| `-jit-wasm-structured`, `-jit-wasm-structured-yielder`, `-jit-wasm-sp-local`, `-jit-wasm-pointer-locals`, `-jit-wasm-inline-regs` | wasm | on | Codegen escape hatches |
+| `-jit-wasm-structured`, `-jit-wasm-structured-yielder`, `-jit-wasm-inline-regs` | wasm | on | Codegen escape hatches |
 | `-jit-run-lo N` / `-jit-run-hi N` | all | off | Bisect which `run_script` call must be jitted |
 | `-jit-run-log-call N` | all | off | Log the frame and script of `run_script` call N |
 | `-script-runtime-debug 1\|2` | all | off | Register/stack dumps per script (1) or per instruction (2) |
