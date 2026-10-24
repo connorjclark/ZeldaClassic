@@ -52,6 +52,8 @@ jobs:
       compiler: ${{ inputs.compiler }}
       config: ${{ inputs.config }}
       debug-info: true
+      sentry: true
+      release-tag: 2.55.99-sentrytest
 
   test:
     needs: ["build"]

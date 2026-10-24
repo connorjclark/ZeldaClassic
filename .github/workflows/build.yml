@@ -235,6 +235,31 @@ jobs:
       - run: cmake --build build --config ${{ inputs.config }} --target ${{ env.TARGET }} -j 4 -- -k 0
       - run: ccache -s
 
+      # TEMP: send one real crash report per platform so the upgraded Sentry is
+      # exercised end to end. CI must be unset, or zplayer skips Sentry init.
+      - name: TEMP send a test crash to Sentry
+        if: runner.os != 'Windows'
+        shell: bash
+        working-directory: build/${{ inputs.config }}
+        run: |
+          exe=$(find . -maxdepth 4 -type f -perm -u+x -name zplayer | head -1)
+          echo "running $exe"
+          env -u CI "$exe" -headless -crash || echo "exited with $?"
+          sleep 45
+          ls -laR .sentry_native || true
+
+      - name: TEMP send a test crash to Sentry (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        working-directory: build/${{ inputs.config }}
+        continue-on-error: true
+        run: |
+          Remove-Item Env:CI -ErrorAction SilentlyContinue
+          & .\zplayer.exe -headless -crash
+          Start-Sleep -Seconds 45
+          Get-ChildItem .sentry_native -Recurse -ErrorAction SilentlyContinue | Select-Object -ExpandProperty FullName
+          exit 0
+
       # Fail if any changes were written to any source files.
       - run: git diff --cached --exit-code
 
@@ -292,7 +317,9 @@ jobs:
 
       # Upload debug symbols to Sentry.
       - name: Setup Sentry CLI
-        if: inputs.sentry
+        # TEMP: check the v3 action + 2.58.6 install on every runner (incl. windows-11-arm).
+        if: true
+        continue-on-error: true
         uses: mathieu-bour/setup-sentry-cli@ff4fff773f5e628fa214ebd19e46fb7289454ee2 # v3.0.0
         with:
           version: '2.58.6'
@@ -300,7 +327,8 @@ jobs:
           organization: zeldaclassic
           project: zelda-classic
       - run: sentry-cli --version
-        if: inputs.sentry
+        if: true
+        continue-on-error: true
       - name: Upload debugging symbols
-        if: inputs.sentry
+        if: false
         run: sentry-cli --log-level=DEBUG upload-dif 'zelda-classic@${{ inputs.release-tag }}' --include-sources --wait build

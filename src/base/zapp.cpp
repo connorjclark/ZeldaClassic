@@ -183,6 +183,12 @@ void common_main_setup(App id, int argc_, char **argv_)
 	init_sentry(id);
 #endif
 
+	// Helps to test crash reporting.
+	if (used_switch(argc, argv, "-crash"))
+	{
+		abort();
+	}
+
 #ifdef ALLEGRO_SDL
 	SDL_LogSetAllPriority(SDL_LOG_PRIORITY_DEBUG);
 #endif
