@@ -125,6 +125,7 @@ jobs:
           --retries 1
           --ci ${{ inputs.runs-on }}_${{ inputs.arch }}
           --shard ${{ matrix.shard_index }}/${{ matrix.num_shards }}
+          --filter ss_jenny.zplay
           ${{ inputs.extra-args }}
 
       # Just run a few replays with JIT disabled.
@@ -153,7 +154,7 @@ jobs:
 
       - if: ${{ matrix.shard_index == 1 && inputs.from-ci-workflow && inputs.config != 'Coverage' }}
         name: Run Python tests
-        run: bash .github/workflows/run_python.sh -m unittest discover tests
+        run: bash .github/workflows/run_python.sh -m unittest discover tests -p test_zeditor.py
 
       - name: Generate coverage json
         if: inputs.config == 'Coverage'

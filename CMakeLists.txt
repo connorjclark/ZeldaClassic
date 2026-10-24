@@ -506,7 +506,12 @@ endif()
 
 if(MSVC)
 	# REQUIRED or else MSVC throws internal compiler error(!)
-	add_compile_options("$<$<COMPILE_LANGUAGE:C,CXX>:/fp:fast>")
+	# TEMP experiment: /fp:precise on arm64 (no FMA contraction)
+	if(CMAKE_CXX_COMPILER_ARCHITECTURE_ID MATCHES "ARM64")
+		add_compile_options("$<$<COMPILE_LANGUAGE:C,CXX>:/fp:precise>")
+	else()
+		add_compile_options("$<$<COMPILE_LANGUAGE:C,CXX>:/fp:fast>")
+	endif()
 elseif(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
 	# TODO: GCC w/ these flags don't quite match the behavior of MSVC or clang, as seen in a replay report:
 	#    https://zc-replay-compare-3700187020.surge.sh/
