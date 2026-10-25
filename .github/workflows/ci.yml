@@ -30,18 +30,6 @@ jobs:
     strategy:
       matrix:
         include:
-          - runs-on: windows-2022
-            arch: x64
-            compiler: msvc
-            # RelWithDebInfo invalidates ccache, and we currently can't show backtraces on crash for windows in CI
-            # so no need for it yet.
-            config: Release
-          - runs-on: windows-2022
-            arch: win32
-            compiler: msvc
-            config: RelWithDebInfo
-            # For some reason, crucible_quest.zplay fails on frame 1492 but only on this build.
-            extra-args: --max_duration 60 --frame=crucible_quest.zplay=1
           - runs-on: windows-11-arm
             arch: arm64
             compiler: msvc
@@ -50,27 +38,6 @@ jobs:
             # desyncs at frame 168354 here (hero y off by one), though not on the
             # Linux arm64 interpreter: MSVC's arm64 fast-math codegen differs from
             # x64's somewhere in the interpreter. Stop just before.
-            extra-args: >-
-              --frame=crucible_quest.zplay=1490
-              --frame=enigma_of_basilischi_island_basilse_1_of_2.zplay=135200
-              --frame=enigma_of_basilischi_island_basilse_2_of_2.zplay=31800
-              --frame=ss_jenny.zplay=168350
-          - runs-on: macos-15-intel
-            arch: intel
-            compiler: clang
-            config: RelWithDebInfo
-          - runs-on: ubuntu-22.04
-            arch: x64
-            compiler: clang
-            config: RelWithDebInfo
-          - runs-on: ubuntu-22.04-arm
-            arch: aarch64
-            compiler: clang
-            config: RelWithDebInfo
-            # There is no AArch64 JIT on 2.55, so these replays run under the
-            # interpreter, which diverges from the expected (x64 JIT) output
-            # at these frames. Same on any platform with --no-jit; see also the
-            # win32 entry. Stop just before.
             extra-args: >-
               --frame=crucible_quest.zplay=1490
               --frame=enigma_of_basilischi_island_basilse_1_of_2.zplay=135200

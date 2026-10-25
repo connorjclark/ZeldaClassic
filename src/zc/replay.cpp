@@ -613,9 +613,11 @@ static void uninstall_keyboard_handlers()
 	keyboard_callback = nullptr;
 }
 
+void temp_state_trace(int frame);
 static void do_recording_poll()
 {
 	gfx_got_mismatch = false;
+	temp_state_trace(frame_count);
 
 	if (debug && !Quit)
 	{

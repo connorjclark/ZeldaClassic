@@ -117,15 +117,26 @@ jobs:
 
       # Note: Uses JIT by default, except for win32.
       - name: Run replay tests
+        env:
+          ZC_STATE_TRACE: ${{ github.workspace }}/state_trace.txt
         run: >
           bash .github/workflows/run_python.sh tests/run_replay_tests.py
           --build_folder "${{ env.BUILD_FOLDER }}"
           --build_type ${{ inputs.config }}
           --test_results_folder .tmp/test_results/${{ github.run_id }}
-          --retries 1
+          --retries 0
           --ci ${{ inputs.runs-on }}_${{ inputs.arch }}
           --shard ${{ matrix.shard_index }}/${{ matrix.num_shards }}
+          --filter ss_jenny.zplay
           ${{ inputs.extra-args }}
+
+      - name: TEMP upload state trace
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: state-trace-${{ matrix.shard_index }}
+          path: ${{ github.workspace }}/state_trace.txt
+          if-no-files-found: ignore
 
       # Just run a few replays with JIT disabled.
       # Also, without headless.
@@ -151,7 +162,7 @@ jobs:
           path: ${{ github.workspace }}/.tmp/test_updater/cache
           key: updater-cache-${{ inputs.runs-on }}-${{ runner.arch }}
 
-      - if: ${{ matrix.shard_index == 1 && inputs.from-ci-workflow && inputs.config != 'Coverage' }}
+      - if: false
         name: Run Python tests
         run: bash .github/workflows/run_python.sh -m unittest discover tests
 

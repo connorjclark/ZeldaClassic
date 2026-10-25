@@ -55018,3 +55018,61 @@ int32_t combopos_ref_to_layer(int32_t combopos_ref)
 	return combopos_ref / 176;
 }
 
+
+// TEMP (arm64 desync hunt): with ZC_STATE_TRACE=<path>, write one line per frame of
+// hashes of gameplay state, so two builds' runs can be diffed for the first divergence.
+namespace {
+struct StateHasher
+{
+	uint64_t h = 1469598103934665603ULL;
+	void bytes(const void* p, size_t n)
+	{
+		auto c = (const uint8_t*)p;
+		for (size_t i = 0; i < n; i++) { h ^= c[i]; h *= 1099511628211ULL; }
+	}
+	template<typename T> void val(const T& v) { bytes(&v, sizeof(T)); }
+	void fix(zfix v) { val(v.getZLong()); }
+	void spr(sprite* s)
+	{
+		fix(s->x); fix(s->y); fix(s->z); fix(s->fall);
+		val(s->id); val(s->clk); val(s->misc);
+		uint64_t bits; memcpy(&bits, &s->angle, 8); val(bits);
+	}
+	void list(sprite_list& l)
+	{
+		int n = l.Count();
+		val(n);
+		for (int i = 0; i < n; i++) spr(l.spr(i));
+	}
+};
+}
+
+void temp_state_trace(int frame)
+{
+	static FILE* f = []() -> FILE* {
+		const char* path = getenv("ZC_STATE_TRACE");
+		return path ? fopen(path, "w") : nullptr;
+	}();
+	if (!f) return;
+
+	StateHasher hero, ffc, gy, lw, ew, it, dc, scr;
+	hero.spr(&Hero);
+	for (int i = 0; i < MAXFFCS; i++)
+	{
+		auto& c = tmpscr->ffcs[i];
+		ffc.fix(c.x); ffc.fix(c.y); ffc.fix(c.vx); ffc.fix(c.vy); ffc.fix(c.ax); ffc.fix(c.ay);
+	}
+	gy.list(guys); lw.list(Lwpns); ew.list(Ewpns); it.list(items); dc.list(decorations);
+	for (auto& [key, data] : scriptEngineDatas)
+	{
+		scr.val((int)key.first); scr.val(key.second);
+		scr.val(data.ref.pc); scr.bytes(data.ref.d, sizeof(data.ref.d)); scr.val(data.ref.sp);
+		if (data.ref.sp < MAX_STACK_SIZE)
+			scr.bytes(&data.stack[data.ref.sp], (MAX_STACK_SIZE - data.ref.sp) * sizeof(int32_t));
+	}
+	scr.bytes(game->global_d, sizeof(game->global_d));
+	fprintf(f, "%d hero=%016llx ffc=%016llx guys=%016llx lw=%016llx ew=%016llx items=%016llx deco=%016llx scr=%016llx\n",
+		frame, (unsigned long long)hero.h, (unsigned long long)ffc.h, (unsigned long long)gy.h,
+		(unsigned long long)lw.h, (unsigned long long)ew.h, (unsigned long long)it.h,
+		(unsigned long long)dc.h, (unsigned long long)scr.h);
+}
