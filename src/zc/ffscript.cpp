@@ -35995,6 +35995,24 @@ int32_t run_script(ScriptType type, const word script, const int32_t i)
 	return result;
 }
 
+// TEMP (arm64 desync hunt): with ZC_OP_TRACE=<path> and ZC_OP_TRACE_FRAMES=<a>-<b>, log
+// every interpreted ZASM command and the D registers after it during those frames.
+static void temp_op_trace(ScriptType type, int script, int index, dword pc, word command, int32_t arg1, int32_t arg2, const int32_t* d)
+{
+	static int from = -1, to = -2;
+	static FILE* f = []() -> FILE* {
+		const char* path = getenv("ZC_OP_TRACE");
+		const char* frames = getenv("ZC_OP_TRACE_FRAMES");
+		if (!path || !frames || sscanf(frames, "%d-%d", &from, &to) != 2) return nullptr;
+		return fopen(path, "w");
+	}();
+	if (!f) return;
+	int frame = replay_get_frame();
+	if (frame < from || frame > to) return;
+	fprintf(f, "%d t=%d s=%d i=%d pc=%u %s %d %d | %d %d %d %d %d %d %d %d\n", frame, (int)type, script, index, pc,
+		get_script_command(command).name, arg1, arg2, d[0], d[1], d[2], d[3], d[4], d[5], d[6], d[7]);
+}
+
 int32_t run_script_int(bool is_jitted)
 {
 	ScriptType type = curScriptType;
@@ -36026,6 +36044,7 @@ j_command:
 #endif
 
 		const auto& op = code[ri->pc];
+		const dword temp_trace_pc = ri->pc;
 		scommand = op.command;
 		sarg1 = op.arg1;
 		sarg2 = op.arg2;
@@ -40399,6 +40418,8 @@ j_command:
 				scommand = 0xFFFF;
 			}
 		}
+
+		temp_op_trace(type, script, i, temp_trace_pc, op.command, op.arg1, op.arg2, ri->d);
 
 		// If running a JIT compiled script, we're only here to do a few commands.
 		commands_run += 1;

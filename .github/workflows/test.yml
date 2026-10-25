@@ -119,6 +119,8 @@ jobs:
       - name: Run replay tests
         env:
           ZC_STATE_TRACE: ${{ github.workspace }}/state_trace.txt
+          ZC_OP_TRACE: ${{ github.workspace }}/op_trace.txt
+          ZC_OP_TRACE_FRAMES: 168320-168330
         run: >
           bash .github/workflows/run_python.sh tests/run_replay_tests.py
           --build_folder "${{ env.BUILD_FOLDER }}"
@@ -135,7 +137,9 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: state-trace-${{ matrix.shard_index }}
-          path: ${{ github.workspace }}/state_trace.txt
+          path: |
+            ${{ github.workspace }}/state_trace.txt
+            ${{ github.workspace }}/op_trace.txt
           if-no-files-found: ignore
 
       # Just run a few replays with JIT disabled.
