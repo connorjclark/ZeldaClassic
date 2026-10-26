@@ -942,7 +942,9 @@ def compare_replays(ctx: CiContext, args):
     }
 
     try:
-        response = requests.get(url, headers=headers)
+        # The default page is 30, and the builds, replay shards, unit tests and
+        # uploaded-replay shards of one run add up to more than that.
+        response = requests.get(url, headers=headers, params={'per_page': 100})
         response.raise_for_status()
         data = response.json()
     except requests.RequestException as e:
