@@ -1,0 +1,101 @@
+name: Refresh uploaded replay baselines
+
+# Re-records the baselines of the known good uploaded replays with the current
+# build (see scripts/replay_uploads.py --refresh_known_good), uploads them to the
+# replay bucket, and leaves the refreshed scripts/replay_uploads_known_good_replays.json
+# as an artifact to commit. Run this after a change that intentionally alters
+# gameplay or graphics in a way the uploaded replays pick up - the same situation
+# where the test suite's replays get updated.
+#
+# This is the one place the bucket's write key is used; the uploads job in
+# test.yml only reads.
+
+on:
+  workflow_dispatch:
+
+env:
+  PYTHONUNBUFFERED: '1'
+
+jobs:
+  build:
+    # See https://github.com/community/community/discussions/40777
+    # uses: ./.github/workflows/build.yml
+    uses: ZQuestClassic/ZQuestClassic/.github/workflows/build.yml@main
+    with:
+      runs-on: ubuntu-22.04
+      arch: x64
+      compiler: clang
+      config: RelWithDebInfo
+      debug-info: true
+
+  refresh:
+    needs: build
+    name: Replay uploads refresh
+    runs-on: ubuntu-22.04
+    timeout-minutes: 300
+    steps:
+      - name: git clone
+        uses: connorjclark/action-cached-lfs-checkout@3ea4dc59b06f3baa8c01ba891fbfc2dbfdce5bc8
+        with:
+          enableCrossOsArchive: true
+
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+          cache: pip
+
+      - name: Install Python dependencies
+        run: pip install -r requirements.txt
+
+      - name: Install Linux Test Dependencies
+        run: sudo apt-get update && sudo apt-get install libopengl0 lldb libpulse0 xvfb
+
+      - run: mkdir -p .tmp
+
+      - name: Download Artifacts
+        uses: actions/download-artifact@v6
+        with:
+          name: ${{ needs.build.outputs.artifact-name }}
+          path: ${{ needs.build.outputs.artifact-name }}
+
+      # Extract the build artifact to zc-extracted.
+      - name: Extract package
+        run: >
+          bash .github/workflows/run_python.sh .github/workflows/ci.py extract-package
+          --repo ${{ github.repository }}
+          --config RelWithDebInfo
+          --package "${{ needs.build.outputs.artifact-name }}/${{ needs.build.outputs.package-name }}"
+          --artifact-name "${{ needs.build.outputs.artifact-name }}"
+          --build-folder zc-extracted
+
+      - name: Refresh known good replays
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.ZC_REPLAYS_WRITE_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.ZC_REPLAYS_WRITE_SECRET_ACCESS_KEY }}
+          BUILD_TYPE: RelWithDebInfo
+        run: >
+          bash .github/workflows/run_python.sh scripts/replay_uploads.py
+          --refresh_known_good
+          --build_folder zc-extracted/bin
+
+      - name: Upload known good replays json
+        uses: actions/upload-artifact@v7
+        with:
+          name: replay-uploads-known-good
+          path: ${{ github.workspace }}/scripts/replay_uploads_known_good_replays.json
+
+      - name: Archive test results
+        if: failure()
+        shell: bash
+        run: |
+          cd .tmp
+          bash ../.github/workflows/run_python.sh -m tarfile -c replay_uploads_test_results.tar replay_uploads_test_results*
+
+      # Not named replays-*: the compare report collects those as test suite shards.
+      - name: Upload test results
+        uses: actions/upload-artifact@v7
+        if: failure()
+        with:
+          name: replay-uploads-refresh-test-results
+          path: ${{ github.workspace }}/.tmp/replay_uploads_test_results.tar
