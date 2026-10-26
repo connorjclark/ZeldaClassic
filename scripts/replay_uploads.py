@@ -54,6 +54,11 @@
 # and listed at the end as likely JIT/optimizer bugs (if they pass that) or replay
 # bugs (if they don't).
 #
+# The baselines never contain raw key events (keys not bound to a game button): they
+# are whatever the player typed while the game had focus, and the game rarely needs
+# them. They are removed when a copy is made from an original, and again before every
+# --update, so a quest that does need them fails to update and is not known good.
+#
 # Each known good replay also pins its baseline: the sha256 of the updated local copy
 # that was validated. The baselines themselves live in the upload bucket under
 # `baselines/<sha256>.zplay.gz`, where both of the above put them, so anyone (and CI)
@@ -322,6 +327,31 @@ def read_replay(path: Path) -> tuple[dict[str, str], list[str]]:
     return meta, [l for l in lines[num_meta:] if l]
 
 
+# A key bound to a game button is recorded as that button, so a raw key step is an
+# unbound key: a typed name, a cheat, a system key - or anything typed into the
+# wrong window. None of it belongs in a baseline.
+def is_raw_key_step(step: str) -> bool:
+    # Some key names have spaces ("2 PAD"), so don't count the parts.
+    parts = step.split(' ')
+    return parts[0] in ('D', 'U') and len(parts) >= 4 and parts[2] == 'k'
+
+
+def strip_raw_key_steps(steps: list[str]) -> list[str]:
+    return [s for s in steps if not is_raw_key_step(s)]
+
+
+# Rewrites the replay without its raw key steps. Returns how many were removed.
+def strip_raw_key_steps_from_file(path: Path) -> int:
+    meta, steps = read_replay(path)
+    stripped = strip_raw_key_steps(steps)
+    if len(stripped) == len(steps):
+        return 0
+    meta['length'] = len(stripped)
+    lines = [f'M {k} {v}' for k, v in meta.items()] + stripped
+    path.write_text('\n'.join(lines), 'utf-8')
+    return len(steps) - len(stripped)
+
+
 def get_replay_pin(key: str) -> dict:
     """The length (number of steps) and frames of the local copy of an uploaded replay."""
     # The api server only accepts a replay whose length meta matches its steps, so the
@@ -473,20 +503,16 @@ def init_updated_replay(key: str, pin: dict | None):
     meta['replay_upload_key'] = key
     meta['replay_upload_length'] = pin['length']
     meta['replay_upload_frames'] = pin['frames']
-    meta['length'] = pin['length']
+    # The pin counts the original's steps; the copy has fewer once the raw key
+    # steps are gone.
+    steps = strip_raw_key_steps(steps[: pin['length']])
+    meta['length'] = len(steps)
     meta['frames'] = pin['frames']
 
     new_lines = []
     for meta_key, value in meta.items():
         new_lines.append(f'M {meta_key} {value}')
-
-    # TODO: if we make these replays viewable publicly, should first remove key
-    # events. It's rare that a quest needs them.
-    # if line.startswith('D') or line.startswith('U'):
-    #     parts = line.split(' ')
-    #     if len(parts) == 4 and parts[2] == 'k':
-    #         continue
-    new_lines.extend(steps[: pin['length']])
+    new_lines.extend(steps)
 
     updated_replay_path.write_text('\n'.join(new_lines), 'utf-8')
 
@@ -603,6 +629,15 @@ def run_replays():
     if not updated_paths:
         print('No replays to run')
         sys.exit(1)
+
+    if args.update:
+        num_stripped = [strip_raw_key_steps_from_file(p) for p in updated_paths]
+        num_files = sum(1 for n in num_stripped if n)
+        if num_files:
+            print(
+                f'Removed {sum(num_stripped)} raw key steps from {num_files} replays before updating',
+                flush=True,
+            )
 
     test_results = run_replays_process([*run_args, *updated_paths])
     outcomes = get_run_outcomes(test_results)
