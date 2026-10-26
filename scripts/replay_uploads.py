@@ -4,7 +4,9 @@
 #
 # This requires an auth key placed at `~/.aws/credentials`
 # (or `C:\Users\USERNAME\.aws\credentials`) under `[zc-replays]`.
-# Ask Connor to get a personal key.
+# Ask Connor to get a personal key. That key only reads; writing baselines
+# (--refresh_known_good / --update_known_good) takes a read/write key under
+# `[zc-replays-write]`.
 #
 # Note this currently accepts any graphical changes, and will only report
 # an error if a replay fails to update due to behavioral changes (ex: rng
@@ -30,16 +32,38 @@
 #
 # The known good replays (scripts/replay_uploads_known_good_replays.json) are pinned
 # to how much of each replay was validated, so everyone runs the same replays even
-# as players upload longer versions of them. To refresh that list (picking up new
-# and re-uploaded replays), run `python scripts/replay_uploads.py --update --update_known_good`
-# (some will fail to update, that is ok) and commit the result.
+# as players upload longer versions of them. There are two ways to change that list:
+#
+#   python scripts/replay_uploads.py --refresh_known_good
+#
+# re-records the baselines of the current known good replays (ex: after a change
+# that intentionally alters gameplay or graphics). Every one of them must still
+# pass, otherwise nothing is written - a replay that no longer passes is a bug to
+# investigate, not something to silently drop.
+#
+#   python scripts/replay_uploads.py --update --update_known_good
+#
+# rebuilds the list from scratch (picking up new and re-uploaded replays, and
+# dropping any that no longer pass). Some will fail to update, that is ok. Commit
+# the result either way.
 #
 # --update records with the JIT and ZASM optimizer disabled, so the baseline comes from
-# the plain interpreter. --update_known_good then asserts the updated replays with both
-# enabled, and only replays that pass that too are added to the known good set. Replays
+# the plain interpreter. Both of the above then assert the updated replays with both
+# enabled, and only replays that pass that too are in the known good set. Replays
 # that update but fail that assert are asserted again without the JIT and optimizer,
 # and listed at the end as likely JIT/optimizer bugs (if they pass that) or replay
 # bugs (if they don't).
+#
+# Each known good replay also pins its baseline: the sha256 of the updated local copy
+# that was validated. The baselines themselves live in the upload bucket under
+# `baselines/<sha256>.zplay.gz`, where both of the above put them, so anyone (and CI)
+# can assert exactly the baselines a commit was validated with. This is the uploaded
+# replays' equivalent of the test suite's checked-in .zplay files: the json is the
+# pointer, the bucket is the store. A local copy that differs from its pin is left
+# alone (it may be a local --update), unless --use_pinned_baselines restores it.
+#
+# The exit code is non-zero when a replay fails in --assert mode, or in --update mode
+# when only the known good replays were run (they should all update).
 #
 # To debug why a replay can't be updated, run:
 #
@@ -49,10 +73,17 @@
 #
 #   python tests/run_replay_tests.py $PWD/.tmp/replay_uploads/D2905F6A4976CBC02C3ACC92AD6CB12C/c4c21082-dc31-49e0-9f35-d18bfb87c841-updated-main.zplay --show
 #
-# TODO: consider running in CI (see the "For example" above)
+# CI asserts the known good replays on every run (the "Replay uploads" jobs in
+# .github/workflows/test.yml, Linux x64 only) with --ci, which downloads just the
+# pinned baselines and qst files, and refreshes them on demand with
+# .github/workflows/replay-uploads-refresh.yml. CI has no ~/.aws profile; it
+# provides the bucket key as AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY instead.
 
 import argparse
 import csv
+import gzip
+import hashlib
+import io
 import json
 import os
 import shlex
@@ -64,6 +95,7 @@ from pathlib import Path
 
 import archives
 import boto3
+import botocore.exceptions
 import common
 import database
 
@@ -100,7 +132,29 @@ parser.add_argument(
 parser.add_argument(
     '--update_known_good',
     action='store_true',
-    help='Update the checked-in file for which replays are update-able',
+    help='Rebuild the checked-in file for which replays are update-able from whatever passes',
+)
+parser.add_argument(
+    '--refresh_known_good',
+    action='store_true',
+    help='Re-record the baselines of the known good replays. Fails if any no longer pass',
+)
+parser.add_argument(
+    '--use_pinned_baselines',
+    action='store_true',
+    help='Replace any local copy of a known good replay that differs from its pinned baseline',
+)
+parser.add_argument(
+    '--known_good_file',
+    type=Path,
+    default=script_dir / 'replay_uploads_known_good_replays.json',
+    help='The known good replays file to read and write',
+)
+parser.add_argument(
+    '--test_results_folder',
+    type=Path,
+    default=root_dir / '.tmp/replay_uploads_test_results',
+    help='Where to write the test results',
 )
 parser.add_argument(
     '--jit',
@@ -115,6 +169,20 @@ parser.add_argument(
 parser.add_argument(
     '--build_folder', help='The folder containing the zplayer executable to run'
 )
+parser.add_argument(
+    '--ci',
+    metavar='PLATFORM',
+    help='Assert the known good replays the way CI does: download only their pinned baselines and qst files (never the originals, never the rest of a quest release), and fail if any does not pass. The value is passed on to run_replay_tests.py --ci (ex: ubuntu-22.04_x64)',
+)
+parser.add_argument(
+    '--shard',
+    help='Run only this part of the known good replays, ex: 2/4. Shards are balanced by frame count',
+)
+parser.add_argument(
+    '--max_duration',
+    type=int,
+    help='Passed on to run_replay_tests.py: stop each replay after this many (estimated) seconds',
+)
 parser.add_argument('--debug', help='Debug why the given replay cannot be updated')
 parser.add_argument(
     '--coverage',
@@ -122,16 +190,29 @@ parser.add_argument(
     help='Save CSV of replay coverage across all database quests, using uploaded replays and test replays',
 )
 args = parser.parse_args()
+if args.refresh_known_good:
+    args.update = True
+    args.only_known_good = True
 
 bucket = None
 db = database.Database()
+
+# Where the known good baselines live in the upload bucket (see the header).
+baselines_prefix = 'baselines/'
 
 
 def connect_bucket():
     global bucket
 
     bucket_name = 'zc-replays'
-    boto3.setup_default_session(profile_name='zc-replays')
+    profile_name = 'zc-replays'
+    if profile_name in boto3.session.Session().available_profiles:
+        boto3.setup_default_session(profile_name=profile_name)
+    elif not os.environ.get('AWS_ACCESS_KEY_ID'):
+        # CI provides the key through the environment instead of a profile.
+        raise Exception(
+            f'no [{profile_name}] profile in ~/.aws/credentials (see the top of this script), and no AWS_ACCESS_KEY_ID in the environment'
+        )
     s3 = boto3.resource(
         's3',
         region_name='nyc3',
@@ -144,7 +225,11 @@ def prepare_and_get_replay_keys():
     connect_bucket()
 
     get_qst_keys_by_hash = db.get_qst_keys_by_hash()
-    sizes_by_key = {obj.key: obj.size for obj in bucket.objects.all()}
+    sizes_by_key = {
+        obj.key: obj.size
+        for obj in bucket.objects.all()
+        if not obj.key.startswith(baselines_prefix)
+    }
     # Note: currently no plans to actual upload updated replays back to bucket.
     original_keys = [key for key in sizes_by_key if updated_suffx not in key]
 
@@ -259,6 +344,83 @@ def read_updated_replay_pin(path: Path) -> dict | None:
     }
 
 
+def baseline_sha(path: Path) -> str:
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def baseline_bucket_key(sha: str) -> str:
+    return f'{baselines_prefix}{sha}.zplay.gz'
+
+
+# Uploads the baseline of each replay to the bucket (unless it is already there),
+# and returns each replay's baseline sha. Objects are named by content, so a
+# baseline is never overwritten and every version of the known good file keeps
+# pointing at exactly what it was validated with.
+# The bucket from connect_bucket() is read-only for most keys; this one can write.
+def get_writable_bucket():
+    write_profile_name = 'zc-replays-write'
+    if write_profile_name in boto3.session.Session().available_profiles:
+        session = boto3.session.Session(profile_name=write_profile_name)
+    else:
+        # CI provides a read/write key through the environment.
+        session = boto3.session.Session()
+    s3 = session.resource(
+        's3',
+        region_name='nyc3',
+        endpoint_url='https://nyc3.digitaloceanspaces.com',
+    )
+    return s3.Bucket(bucket.name)
+
+
+def upload_baselines(paths: list[Path]) -> dict[Path, str]:
+    writable_bucket = get_writable_bucket()
+    existing_keys = {obj.key for obj in bucket.objects.filter(Prefix=baselines_prefix)}
+    shas = {}
+    num_uploaded = 0
+    for path in paths:
+        sha = baseline_sha(path)
+        shas[path] = sha
+        key = baseline_bucket_key(sha)
+        if key in existing_keys:
+            continue
+
+        buf = io.BytesIO()
+        # mtime=0 so the same baseline always makes the same object.
+        with gzip.GzipFile(fileobj=buf, mode='wb', mtime=0) as f:
+            f.write(path.read_bytes())
+        try:
+            writable_bucket.put_object(Key=key, Body=buf.getvalue())
+        except botocore.exceptions.ClientError as e:
+            if e.response['Error']['Code'] == 'AccessDenied':
+                raise Exception(
+                    'the bucket key cannot write (see the top of this script for the [zc-replays-write] profile)'
+                ) from e
+            raise
+        num_uploaded += 1
+
+    print(
+        f'Uploaded {num_uploaded} baselines ({len(paths) - num_uploaded} were already in the bucket)'
+    )
+    return shas
+
+
+def download_baseline(sha: str, path: Path):
+    buf = io.BytesIO()
+    try:
+        bucket.download_fileobj(baseline_bucket_key(sha), buf)
+    except botocore.exceptions.ClientError as e:
+        if e.response['Error']['Code'] == '404':
+            raise Exception(
+                f'baseline {sha} for {path.name} is not in the bucket (it is written by --refresh_known_good / --update_known_good)'
+            )
+        raise
+    data = gzip.decompress(buf.getvalue())
+    if hashlib.sha256(data).hexdigest() != sha:
+        raise Exception(f'baseline {sha} is corrupt in the bucket')
+    path.parent.mkdir(exist_ok=True, parents=True)
+    path.write_bytes(data)
+
+
 # Creates the local copy of an uploaded replay that gets updated / asserted.
 #
 # If `pin` is given, only that much of the uploaded replay is used. Replays are
@@ -277,21 +439,29 @@ def init_updated_replay(key: str, pin: dict | None):
 
     if not pin:
         pin = get_replay_pin(key)
+    expected_pin = {'length': pin['length'], 'frames': pin['frames']}
+    rel_path = updated_replay_path.relative_to(replays_dir)
 
     if updated_replay_path.exists():
         current_pin = read_updated_replay_pin(updated_replay_path)
-        if current_pin == pin:
+        if current_pin == expected_pin:
+            check_pinned_baseline(pin, updated_replay_path)
             return
 
-        rel_path = updated_replay_path.relative_to(replays_dir)
         if not args.update:
             if args.assertmode:
                 print(
-                    f'warning: {rel_path} was made from {current_pin}, not {pin} (run with --update to recreate)'
+                    f'warning: {rel_path} was made from {current_pin}, not {expected_pin} (run with --update to recreate)'
                 )
             return
 
-        print(f'recreating: {rel_path} ({current_pin} -> {pin})')
+        print(f'recreating: {rel_path} ({current_pin} -> {expected_pin})')
+    elif pin.get('baseline'):
+        # A fresh copy starts from the baseline everyone validated against,
+        # not from the original (which has no baseline to assert).
+        print(f'downloading baseline: {rel_path}')
+        download_baseline(pin['baseline'], updated_replay_path)
+        return
 
     meta, steps = read_replay(original_replay_path)
     if len(steps) < pin['length']:
@@ -321,15 +491,38 @@ def init_updated_replay(key: str, pin: dict | None):
     updated_replay_path.write_text('\n'.join(new_lines), 'utf-8')
 
 
-def run_replays_process(args, test_results_folder_name='replay_uploads_test_results'):
-    test_results_folder = root_dir / '.tmp' / test_results_folder_name
+# The local copy matches its pin, but may not be the pinned baseline (ex: a local
+# --update changed it). Leave it alone unless asked to restore the pinned one.
+def check_pinned_baseline(pin: dict, updated_replay_path: Path):
+    sha = pin.get('baseline')
+    if not sha or baseline_sha(updated_replay_path) == sha:
+        return
+    # About to be re-recorded anyway.
+    if args.update:
+        return
+
+    rel_path = updated_replay_path.relative_to(replays_dir)
+    if args.use_pinned_baselines:
+        print(f'restoring baseline: {rel_path}')
+        download_baseline(sha, updated_replay_path)
+    elif args.assertmode:
+        print(
+            f'warning: {rel_path} is not the pinned baseline (run with --use_pinned_baselines to restore it)'
+        )
+
+
+def run_replays_process(run_args: list, test_results_folder: Path = None):
+    if test_results_folder is None:
+        test_results_folder = args.test_results_folder
     if test_results_folder.exists():
         shutil.rmtree(test_results_folder)
     test_results_folder.parent.mkdir(parents=True, exist_ok=True)
     # There can be hundreds of replay paths here, which blows past Windows'
     # ~32k command line limit, so pass them in a response file instead.
-    args_path = test_results_folder.parent / f'{test_results_folder_name}_args.txt'
-    args_path.write_text('\n'.join(str(arg) for arg in args))
+    args_path = test_results_folder.parent / f'{test_results_folder.name}_args.txt'
+    args_path.write_text('\n'.join(str(arg) for arg in run_args))
+    # The exit code is not checked: a failing replay is reported through
+    # test_results.json, and the caller decides what to do about it.
     subprocess.run(
         [
             sys.executable,
@@ -360,8 +553,7 @@ def run_replays_process_with_version(zc_version, args):
 # Maps each known good replay to its pin: how much of the replay was validated
 # (see init_updated_replay).
 def get_known_good_replays() -> dict[str, dict]:
-    known_good_path = Path(script_dir / 'replay_uploads_known_good_replays.json')
-    return json.loads(known_good_path.read_text())
+    return json.loads(args.known_good_file.read_text())
 
 
 def run_replays():
@@ -370,16 +562,27 @@ def run_replays():
     elif args.assertmode:
         mode = 'assert'
 
-    original_keys = prepare_and_get_replay_keys()
-    exclude_keys = [
-        # This replay has an RNG desync even when played in the same release it was made in.
-        # Warrants further investigation.
-        'DFA6082440977B8C2C0BD323D17068C4/f064251f-0507-44ef-8cc3-42c0c71dd979.zplay'
-    ]
-    original_keys = [key for key in original_keys if key not in exclude_keys]
-    if args.only_known_good:
-        known_good = get_known_good_replays()
-        original_keys = [k for k in original_keys if k in known_good]
+    known_good = get_known_good_replays() if args.only_known_good else {}
+    if known_good and all(pin.get('baseline') for pin in known_good.values()):
+        # Only the pinned baselines and their qst files are needed (not the
+        # originals, nor whole quest releases), which is what lets a refresh
+        # run in CI.
+        original_keys = prepare_known_good_replays()
+        if args.refresh_known_good and len(original_keys) < len(known_good):
+            print(
+                'Some known good replays could not be prepared, so nothing was refreshed'
+            )
+            sys.exit(1)
+    else:
+        original_keys = prepare_and_get_replay_keys()
+        exclude_keys = [
+            # This replay has an RNG desync even when played in the same release it was made in.
+            # Warrants further investigation.
+            'DFA6082440977B8C2C0BD323D17068C4/f064251f-0507-44ef-8cc3-42c0c71dd979.zplay'
+        ]
+        original_keys = [key for key in original_keys if key not in exclude_keys]
+        if args.only_known_good:
+            original_keys = [k for k in original_keys if k in known_good]
     updated_keys = [get_updated_key(key) for key in original_keys]
     updated_paths = [get_replay_path(key) for key in updated_keys]
 
@@ -402,75 +605,221 @@ def run_replays():
         sys.exit(1)
 
     test_results = run_replays_process([*run_args, *updated_paths])
-    passed = get_passed_paths(test_results)
-    failing_paths = [p for p in updated_paths if p not in passed]
+    outcomes = get_run_outcomes(test_results)
+    # Only replays that ran count: a shard runs a subset of the paths.
+    failing_paths = [p for p in updated_paths if p in outcomes and not outcomes[p]]
     print_failing_replays(
         'These replays failed (to debug, use `--debug replay/path.zplay`):',
         failing_paths,
     )
 
-    if args.update_known_good:
-        # Only trust replays that also pass with the JIT and optimizer enabled.
-        updated_ok_paths = [p for p in updated_paths if p in passed]
-        jit_passed = set()
-        # With no paths, run_replay_tests.py would run every test replay instead.
-        if updated_ok_paths:
-            jit_test_results = run_replays_process(
-                ['--assert', '--no_report_on_failure', *build_args, *updated_ok_paths],
-                'replay_uploads_test_results_jit',
-            )
-            jit_passed = get_passed_paths(jit_test_results)
-        jit_failing_paths = [p for p in updated_ok_paths if p not in jit_passed]
+    if args.update_known_good or args.refresh_known_good:
+        passed_paths = [p for p in updated_paths if outcomes.get(p)]
+        jit_passed = assert_with_jit(passed_paths, build_args)
 
-        # Assert those again without the JIT and optimizer, to tell apart JIT or
-        # optimizer bugs from replays that just don't assert right after updating.
-        nojit_passed = set()
-        if jit_failing_paths:
-            nojit_test_results = run_replays_process(
-                [
-                    '--assert',
-                    '--no_report_on_failure',
-                    *build_args,
-                    '--no-jit',
-                    '--no-optimize-zasm',
-                    *jit_failing_paths,
-                ],
-                'replay_uploads_test_results_nojit',
-            )
-            nojit_passed = get_passed_paths(nojit_test_results)
-        print_failing_replays(
-            'These replays updated, but then failed with the JIT and ZASM optimizer enabled, and passed without them (likely a JIT or optimizer bug):',
-            [p for p in jit_failing_paths if p in nojit_passed],
-        )
-        print_failing_replays(
-            'These replays updated, but then failed to assert even without the JIT and ZASM optimizer (likely a replay bug):',
-            [p for p in jit_failing_paths if p not in nojit_passed],
-        )
+        if args.refresh_known_good:
+            dropped_paths = [p for p in updated_paths if p not in jit_passed]
+            if dropped_paths:
+                print_failing_replays(
+                    'These known good replays no longer pass, so the known good replays were not refreshed (investigate, or drop them with `--update --update_known_good`):',
+                    dropped_paths,
+                )
+                sys.exit(1)
 
-        known_good = {}
-        for index, path in enumerate(updated_paths):
-            if path in jit_passed:
-                known_good[original_keys[index]] = read_updated_replay_pin(path)
-        known_good = dict(sorted(known_good.items()))
-        # Nothing passing means something is broken (ex: the build), not that every
-        # replay is bad - so keep the existing list.
-        if not known_good:
-            print('No replays passed, so not updating the known good replays')
+        write_known_good(original_keys, updated_paths, jit_passed)
+    elif failing_paths:
+        # Plain --update over every uploaded replay is expected to have failures
+        # (the ones that are not known good), so that is not an error.
+        if mode == 'assert' or args.only_known_good:
             sys.exit(1)
-        known_good_path = Path(script_dir / 'replay_uploads_known_good_replays.json')
-        known_good_path.write_text(json.dumps(known_good, indent=2))
-        print(f'Wrote {len(known_good)} known good replays to {known_good_path}')
-    elif not failing_paths:
+    else:
         print('All replays passed')
 
 
-def get_passed_paths(test_results: ReplayTestResults) -> set[Path]:
+# Asserts the given (freshly updated) replays with the JIT and ZASM optimizer
+# enabled, and returns the ones that pass. Only those can be trusted as known good.
+def assert_with_jit(updated_ok_paths: list[Path], build_args: list[str]) -> set[Path]:
+    jit_passed = set()
+    # With no paths, run_replay_tests.py would run every test replay instead.
+    if updated_ok_paths:
+        jit_test_results = run_replays_process(
+            ['--assert', '--no_report_on_failure', *build_args, *updated_ok_paths],
+            args.test_results_folder.with_name(f'{args.test_results_folder.name}_jit'),
+        )
+        jit_passed = get_passed_paths(jit_test_results)
+    jit_failing_paths = [p for p in updated_ok_paths if p not in jit_passed]
+
+    # Assert those again without the JIT and optimizer, to tell apart JIT or
+    # optimizer bugs from replays that just don't assert right after updating.
+    nojit_passed = set()
+    if jit_failing_paths:
+        nojit_test_results = run_replays_process(
+            [
+                '--assert',
+                '--no_report_on_failure',
+                *build_args,
+                '--no-jit',
+                '--no-optimize-zasm',
+                *jit_failing_paths,
+            ],
+            args.test_results_folder.with_name(
+                f'{args.test_results_folder.name}_nojit'
+            ),
+        )
+        nojit_passed = get_passed_paths(nojit_test_results)
+    print_failing_replays(
+        'These replays updated, but then failed with the JIT and ZASM optimizer enabled, and passed without them (likely a JIT or optimizer bug):',
+        [p for p in jit_failing_paths if p in nojit_passed],
+    )
+    print_failing_replays(
+        'These replays updated, but then failed to assert even without the JIT and ZASM optimizer (likely a replay bug):',
+        [p for p in jit_failing_paths if p not in nojit_passed],
+    )
+    return jit_passed
+
+
+def write_known_good(
+    original_keys: list[str], updated_paths: list[Path], good_paths: set[Path]
+):
+    good_paths = [p for p in updated_paths if p in good_paths]
+    # Nothing passing means something is broken (ex: the build), not that every
+    # replay is bad - so keep the existing list.
+    if not good_paths:
+        print('No replays passed, so not updating the known good replays')
+        sys.exit(1)
+
+    # Before the file is written, so it never points at a missing baseline.
+    shas = upload_baselines(good_paths)
+
+    known_good = {}
+    for index, path in enumerate(updated_paths):
+        if path in shas:
+            known_good[original_keys[index]] = {
+                **read_updated_replay_pin(path),
+                'baseline': shas[path],
+            }
+    known_good = dict(sorted(known_good.items()))
+    args.known_good_file.write_text(json.dumps(known_good, indent=2))
+    print(f'Wrote {len(known_good)} known good replays to {args.known_good_file}')
+
+
+# The success of every replay that ran, by path.
+def get_run_outcomes(test_results: ReplayTestResults) -> dict[Path, bool]:
     # A replay may have been retried; its last run is the one that counts.
     success_by_path = {}
     for runs in test_results.runs:
         for run in runs:
             success_by_path[Path(run.path).resolve()] = run.success
-    return {path for path, success in success_by_path.items() if success}
+    return success_by_path
+
+
+def get_passed_paths(test_results: ReplayTestResults) -> set[Path]:
+    return {p for p, success in get_run_outcomes(test_results).items() if success}
+
+
+# Gets just what asserting the known good replays needs: each one's pinned
+# baseline, and its qst. Unlike prepare_and_get_replay_keys, this never lists
+# or downloads the originals (there is nothing to assert in them), and takes
+# only the qst from the quest's release (not its music etc). Returns the keys
+# of the replays that are ready to run.
+def prepare_known_good_replays(wanted_keys: list[str] = None) -> list[str]:
+    connect_bucket()
+    known_good = get_known_good_replays()
+    if wanted_keys is None:
+        wanted_keys = list(known_good)
+    qst_keys_by_hash = db.get_qst_keys_by_hash()
+
+    keys = []
+    unavailable_qst_hashes = set()
+    for key in wanted_keys:
+        pin = known_good[key]
+        if not pin.get('baseline'):
+            raise Exception(
+                f'{key} has no pinned baseline (run --refresh_known_good first)'
+            )
+
+        qst_hash = key.split('/')[0]
+        if qst_hash in unavailable_qst_hashes:
+            continue
+        copied_qst_path = replays_dir / qst_hash / f'{qst_hash}.qst'
+        if not copied_qst_path.exists():
+            if qst_hash not in qst_keys_by_hash:
+                print(f'warning: no quest {qst_hash} in the database, skipping {key}')
+                unavailable_qst_hashes.add(qst_hash)
+                continue
+            qst_key, _ = qst_keys_by_hash[qst_hash]
+            qst_path = db.download(qst_key)
+            # The hash is the qst's md5, so this catches a changed release too.
+            if hashlib.md5(qst_path.read_bytes()).hexdigest().upper() != qst_hash:
+                print(f'warning: {qst_key} does not hash to {qst_hash}, skipping {key}')
+                unavailable_qst_hashes.add(qst_hash)
+                continue
+            copied_qst_path.parent.mkdir(exist_ok=True, parents=True)
+            shutil.copyfile(qst_path, copied_qst_path)
+
+        updated_path = get_replay_path(get_updated_key(key))
+        if not updated_path.exists() or baseline_sha(updated_path) != pin['baseline']:
+            print(f'downloading baseline: {key}')
+            download_baseline(pin['baseline'], updated_path)
+        keys.append(key)
+
+    return keys
+
+
+# Splits the known good replays into `count` shards balanced by frame count,
+# and returns the one at `index` (1-based). Same greedy packing as the test
+# suite uses: largest first, each into the lightest shard so far.
+def get_shard(keys: list[str], known_good: dict, shard: str) -> list[str]:
+    index, count = (int(s) for s in shard.split('/'))
+    if index > count or index <= 0 or count <= 0:
+        raise ValueError('invalid --shard')
+
+    def cost(key: str) -> int:
+        frames = known_good[key]['frames']
+        if args.max_duration:
+            # run_replay_tests.py stops a replay at its estimated fps (1500 for
+            # any quest it does not know) times the max duration.
+            frames = min(frames, 1500 * args.max_duration)
+        return frames
+
+    shards = [[] for _ in range(count)]
+    loads = [0] * count
+    for key in sorted(keys, key=lambda k: -cost(k)):
+        i = loads.index(min(loads))
+        shards[i].append(key)
+        loads[i] += cost(key)
+    return shards[index - 1]
+
+
+def run_ci():
+    known_good = get_known_good_replays()
+    keys = list(known_good)
+    # Shard first, so each shard downloads only what it runs.
+    if args.shard:
+        keys = get_shard(keys, known_good, args.shard)
+    keys = prepare_known_good_replays(keys)
+    paths = [get_replay_path(get_updated_key(key)) for key in keys]
+    if not paths:
+        print('No replays to run')
+        sys.exit(1)
+
+    run_args = ['--assert', '--ci', args.ci, '--retries=1', '--prune_test_results']
+    if args.build_folder:
+        run_args += ['--build_folder', args.build_folder]
+    if args.max_duration:
+        run_args += ['--max_duration', str(args.max_duration)]
+    test_results = run_replays_process([*run_args, *paths])
+
+    # Here a replay that did not run at all is a failure too.
+    outcomes = get_run_outcomes(test_results)
+    failing_paths = [p for p in paths if not outcomes.get(p)]
+    print_failing_replays(
+        'These replays failed (to debug, use `--debug replay/path.zplay`):',
+        failing_paths,
+    )
+    if failing_paths:
+        sys.exit(1)
+    print('All replays passed')
 
 
 def print_failing_replays(header: str, paths: list[Path]):
@@ -786,6 +1135,8 @@ def debug_replay(replay_path: Path):
 
 if args.coverage:
     make_coverage_csv()
+elif args.ci:
+    run_ci()
 elif args.update or args.assertmode:
     run_replays()
 elif args.debug:
