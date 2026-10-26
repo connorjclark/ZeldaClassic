@@ -115,9 +115,14 @@ def find_baseline(gh: Github, repo_str: str, branch: str = 'main'):
             list_item='jobs',
         )
 
-        ignore_jobs = ['web', 'compare']
+        # The uploaded-replay jobs are advisory: their baselines are refreshed
+        # separately from the test suite's, so a failure there says nothing
+        # about whether this run's suite results can serve as a baseline.
+        def is_ignored_job(name: str) -> bool:
+            return name in ('web', 'compare') or 'Replay uploads' in name
+
         if all(
-            job.conclusion == 'success' for job in jobs if job.name not in ignore_jobs
+            job.conclusion == 'success' for job in jobs if not is_ignored_job(job.name)
         ):
             return True
 
