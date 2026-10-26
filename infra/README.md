@@ -59,9 +59,13 @@ This is the production server used by ZC. It's currently only used to facilitate
 
 ## Uploaded replays
 
-Host: DigitalOcean Spaces (S3)
+Host: DigitalOcean Spaces (S3), bucket `zc-replays` (private)
 
-`scripts/replay_uploads.py` downloads the uploaded replays for local testing.
+Replays players opt in to upload, via the API server. `scripts/replay_uploads.py` downloads them for local testing - see the top of that script for the workflows.
+
+The bucket also holds the baselines of the "known good" uploaded replays under `baselines/<sha256>.zplay.gz`. `scripts/replay_uploads_known_good_replays.json` pins each known good replay to one of those by hash, so the json is the pointer and the bucket is the store (like the test suite's replays, but without LFS). CI asserts these replays on every run ("Replay uploads" jobs in [test.yml](https://github.com/ZQuestClassic/ZQuestClassic/blob/main/.github/workflows/test.yml), Linux x64 only), and [replay-uploads-refresh.yml](https://github.com/ZQuestClassic/ZQuestClassic/blob/main/.github/workflows/replay-uploads-refresh.yml) re-records the baselines after an intended change, leaving the json to commit as an artifact. Both only need the quest files, which come from the public quest database.
+
+Repository secrets: `ZC_REPLAYS_READ_ACCESS_KEY_ID` / `ZC_REPLAYS_READ_SECRET_ACCESS_KEY` (a read-only key for the bucket, used by the CI assert) and `ZC_REPLAYS_WRITE_ACCESS_KEY_ID` / `ZC_REPLAYS_WRITE_SECRET_ACCESS_KEY` (a read/write key, used only by the refresh workflow). Pull requests from forks get no secrets, so the assert is skipped there.
 
 ## Archives
 
