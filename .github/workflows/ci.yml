@@ -94,6 +94,7 @@ jobs:
       GH_PAT_ZSCRIPT_DATABASE: ${{ secrets.GH_PAT_ZSCRIPT_DATABASE }}
       ZC_REPLAYS_READ_ACCESS_KEY_ID: ${{ secrets.ZC_REPLAYS_READ_ACCESS_KEY_ID }}
       ZC_REPLAYS_READ_SECRET_ACCESS_KEY: ${{ secrets.ZC_REPLAYS_READ_SECRET_ACCESS_KEY }}
+      SURGE_TOKEN: ${{ secrets.SURGE_TOKEN }}
 
   web:
     needs: warm-lfs-cache

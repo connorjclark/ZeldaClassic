@@ -1033,6 +1033,223 @@ def compare_replays(ctx: CiContext, args):
 # -----------------------------------------------------------------------------
 
 
+# The uploaded-replay shards of a CI run (see test.yml). A run can serve as the
+# compare baseline for them only if they passed there: their baselines are
+# refreshed separately from the test suite's, so the run's overall conclusion
+# says nothing about them.
+def _find_baseline_run_for_replay_uploads(gh, repo_str, branch, workflow_file, artifact_name):
+    from github import PaginatedList
+    from workflow_job import WorkflowJob
+
+    repo = gh.get_repo(repo_str)
+    workflow = repo.get_workflow(workflow_file)
+    for i, run in enumerate(workflow.get_runs(branch=branch, status='completed')):
+        if i >= 40:
+            break
+
+        # TODO: remove when https://github.com/PyGithub/PyGithub/pull/1951 is released.
+        jobs = PaginatedList.PaginatedList(
+            WorkflowJob, run._requester, run.jobs_url, dict(), list_item='jobs'
+        )
+        uploads_jobs = [job for job in jobs if 'Replay uploads' in job.name]
+        if not uploads_jobs or any(job.conclusion != 'success' for job in uploads_jobs):
+            continue
+
+        artifact = next(
+            (a for a in run.get_artifacts() if a.name == artifact_name and not a.expired),
+            None,
+        )
+        if artifact:
+            return run, artifact
+
+    return None, None
+
+
+@command(
+    "compare-replay-uploads",
+    help="Build a compare report for the failing uploaded replays of this job, against a passing build of the base branch",
+)
+@argument("--runs-on", required=True)
+@argument("--run-id", required=True, help="Current GitHub Run ID")
+@argument("--shard", default="", help="Only names the published report (ex: 2/4)")
+@argument("--test-results", default=str(tmp_dir / "replay_uploads_test_results"))
+@argument(
+    "--baseline-build-folder",
+    help="Compare against this local build instead of a CI build artifact",
+)
+@argument(
+    "--baseline-branch",
+    help="Take the baseline build from this branch's CI runs (default: the failing run's base branch)",
+)
+@argument(
+    "--baseline-workflow",
+    default="ci.yml",
+    help="The workflow whose runs supply the baseline build",
+)
+def compare_replay_uploads(ctx: CiContext, args):
+    """Unlike the test suite's compare workflow, which has to dispatch a
+    baseline run on the baseline commit, this runs in the failing job itself:
+    the uploaded replays and their quests are already on disk, and the baseline
+    build is the build artifact of the latest run of the base branch in which
+    the uploaded replays passed. The failing replays are re-run with that build
+    over the frames that differed, and the two results become one report.
+    """
+    import dataclasses
+
+    sys.path.append(str(root_dir / 'tests'))
+    sys.path.append(str(root_dir / 'scripts'))
+    from github import Github
+    from github_helpers import _download_artifact
+    from run_test_workflow import (
+        find_baseline_branch_for_run,
+        get_args_for_collect_baseline_from_test_results,
+    )
+
+    results_dir = Path(args.test_results).absolute()
+    test_results_path = results_dir / 'test_results.json'
+    if not test_results_path.exists():
+        logger.error(f"No test results at {test_results_path}")
+        sys.exit(1)
+
+    # The failing replays as paths, plus the frames to snapshot around each
+    # failure. Raises when every failure was a crash or a stop without a frame:
+    # nothing to compare then, which is not an error of this step.
+    try:
+        replay_args = get_args_for_collect_baseline_from_test_results([test_results_path])
+    except Exception as e:
+        logger.warning(f"Nothing to compare: {e}")
+        return
+
+    baseline_dir = tmp_dir / 'replay_uploads_baseline'
+    if baseline_dir.exists():
+        shutil.rmtree(baseline_dir)
+    baseline_dir.mkdir(parents=True)
+
+    # The nightly Asan run has no Asan build to compare against, and a
+    # RelWithDebInfo build draws the same frames.
+    baseline_config = 'RelWithDebInfo' if ctx.config == 'Asan' else ctx.config
+
+    if args.baseline_build_folder:
+        baseline_bin = Path(args.baseline_build_folder).absolute()
+        baseline_run_id = 'local'
+        baseline_label = 'local baseline'
+    else:
+        token = os.environ.get('GITHUB_TOKEN')
+        if not token:
+            logger.error("GITHUB_TOKEN environment variable is required.")
+            sys.exit(1)
+        gh = Github(token)
+
+        branch = args.baseline_branch or find_baseline_branch_for_run(
+            gh, ctx.repo, int(args.run_id)
+        )
+        artifact_name = f'build-{args.runs_on}-{ctx.arch}-{ctx.compiler}-{baseline_config}'
+        logger.info(f"Looking for a baseline build on {branch}: {artifact_name}")
+        run, artifact = _find_baseline_run_for_replay_uploads(
+            gh, ctx.repo, branch, args.baseline_workflow, artifact_name
+        )
+        if not run:
+            logger.warning(
+                f"No recent {args.baseline_workflow} run on {branch} passed the uploaded replays and still has {artifact_name}, so there is nothing to compare against."
+            )
+            return
+
+        baseline_run_id = run.id
+        baseline_label = f'{branch} {run.head_sha[:10]} (baseline)'
+        logger.info(f"Baseline: run {run.id}, {run.head_sha}")
+
+        artifact_dir = baseline_dir / 'artifact'
+        logger.info(f"Downloading {artifact.name}...")
+        _download_artifact(gh, ctx.repo, artifact, artifact_dir)
+        package = next(p for p in artifact_dir.iterdir() if p.name != 'build.tar.gz')
+
+        baseline_ctx = dataclasses.replace(
+            ctx, config=baseline_config, build_folder_base=baseline_dir / 'zc-extracted'
+        )
+        extract_package(
+            baseline_ctx,
+            argparse.Namespace(package=str(package), artifact_name=str(artifact_dir)),
+        )
+        baseline_bin = baseline_ctx.get_binary_dir()
+
+    baseline_results = baseline_dir / 'test_results'
+    cmd = [
+        sys.executable,
+        '-Xutf8',
+        root_dir / 'tests/run_replay_tests.py',
+        '--assert',
+        f'--build_folder={baseline_bin}',
+        f'--build_type={baseline_config}',
+        f'--test_results_folder={baseline_results}',
+        f'--root_replays_folder={tmp_dir / "replay_uploads"}',
+        f'--ci={args.runs_on}_{ctx.arch}',
+        '--no_report_on_failure',
+        *replay_args,
+    ]
+    logger.info(f"Running: {shlex.join(str(c) for c in cmd)}")
+    # A replay that also fails on the baseline build still gets its snapshots,
+    # and the report shows it, so the exit code is not checked.
+    subprocess.run(cmd)
+    if not (baseline_results / 'test_results.json').exists():
+        logger.error("The baseline run produced no test results")
+        sys.exit(1)
+
+    # Both runs happened on this runner, so tell them apart in the report.
+    def relabel(path: Path, run_id, git_ref: str):
+        test_results = json.loads(path.read_text('utf-8'))
+        test_results['ci'] = True
+        test_results['workflow_run_id'] = run_id
+        test_results['git_ref'] = git_ref
+        path.write_text(json.dumps(test_results, indent=2), 'utf-8')
+
+    relabel(baseline_results / 'test_results.json', baseline_run_id, baseline_label)
+    current_ref = os.environ.get('GITHUB_REF_NAME') or os.environ.get('GITHUB_REF') or 'current'
+    relabel(test_results_path, args.run_id, f'{current_ref} (current)')
+
+    report_dir = tmp_dir / 'replay_uploads_compare_report'
+    if report_dir.exists():
+        shutil.rmtree(report_dir)
+    report_dir.mkdir(parents=True)
+    run_python_cmd(
+        [
+            'tests/compare_replays.py',
+            '--local',
+            baseline_results,
+            '--local',
+            results_dir,
+            '--dest',
+            report_dir,
+        ]
+    )
+
+    report_url = None
+    surge_token = os.environ.get('SURGE_TOKEN')
+    if surge_token:
+        shard = re.sub(r'[^0-9]+', '-', args.shard).strip('-')
+        domain = f"zc-replay-uploads-compare-{args.run_id}-{shard or 'x'}.surge.sh"
+        env = os.environ.copy()
+        env['SURGE_TOKEN'] = surge_token
+        try:
+            run_cmd(f"npx surge@0.23.1 {report_dir} {domain}", env=env)
+            report_url = f"https://{domain}"
+        except SystemExit:
+            # The report is still uploaded as an artifact by the workflow.
+            logger.error("Deploying the report to surge failed")
+
+    lines = [
+        '## Uploaded replays compare report',
+        '',
+        f'Baseline: {baseline_label}',
+        '',
+        report_url or 'The report is attached to this run as an artifact.',
+    ]
+    logger.info('\n'.join(lines))
+    summary_path = os.environ.get('GITHUB_STEP_SUMMARY')
+    if summary_path:
+        with open(summary_path, 'a', encoding='utf-8') as f:
+            f.write('\n'.join(lines) + '\n')
+
+
 def main():
     parser = argparse.ArgumentParser(description="ZQuest Classic CI Script")
     subparsers = parser.add_subparsers(dest="command", required=True)

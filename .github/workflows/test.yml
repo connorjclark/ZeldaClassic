@@ -63,6 +63,10 @@ on:
         required: false
       ZC_REPLAYS_READ_SECRET_ACCESS_KEY:
         required: false
+      # Publishes the compare report of failing uploaded replays. Without it
+      # the report is only attached to the run as an artifact.
+      SURGE_TOKEN:
+        required: false
 
 env:
   PYTHONUNBUFFERED: '1'
@@ -318,6 +322,33 @@ jobs:
           --shard ${{ matrix.shard_index }}/4
           --max_duration 300
           --build_folder zc-extracted/bin
+
+      # Compare the failing replays against the latest build of the base branch
+      # that passed them, in this job: the replays and their quests are already
+      # here, and that build is a CI artifact, so there is no baseline run to
+      # dispatch, which is what the test suite's compare workflow has to do.
+      - name: Compare failing uploaded replays against the base branch
+        if: ${{ failure() && hashFiles('.tmp/replay_uploads_test_results/test_results.json') != '' }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SURGE_TOKEN: ${{ secrets.SURGE_TOKEN }}
+        run: >
+          bash .github/workflows/run_python.sh .github/workflows/ci.py compare-replay-uploads
+          --repo ${{ github.repository }}
+          --arch ${{ inputs.arch }}
+          --compiler ${{ inputs.compiler }}
+          --config ${{ inputs.config }}
+          --runs-on ${{ inputs.runs-on }}
+          --run-id ${{ github.run_id }}
+          --shard ${{ matrix.shard_index }}/4
+
+      - name: Upload compare report
+        uses: actions/upload-artifact@v7
+        if: failure()
+        with:
+          name: replay-uploads-compare-report-${{ matrix.shard_index }}-of-4
+          path: ${{ github.workspace }}/.tmp/replay_uploads_compare_report
+          if-no-files-found: ignore
 
       - name: Archive test results
         if: failure()
