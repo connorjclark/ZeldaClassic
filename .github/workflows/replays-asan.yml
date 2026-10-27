@@ -1,0 +1,41 @@
+name: Replays under ASan
+
+# Every replay test and the known good uploaded replays, against an
+# AddressSanitizer build of zplayer. The regular replay runs only notice a
+# memory error when it changes what the game does; a write into freed memory
+# that nothing reads back passes them. ASan fails the replay at the bad access
+# instead, with a stack trace.
+#
+# ASan is too slow to run on every push, so this runs nightly (and on demand).
+# Linux only: it has libstdc++'s heap layout, which exposes bugs that macOS's
+# libc++ hides (and the other way around), and its runners are the cheapest.
+on:
+  schedule:
+    # 02:00 PT.
+    - cron: '0 9 * * *'
+  workflow_dispatch:
+
+env:
+  PYTHONUNBUFFERED: '1'
+
+jobs:
+  test:
+    # See https://github.com/community/community/discussions/40777
+    # uses: ./.github/workflows/test.yml
+    uses: ZQuestClassic/ZQuestClassic/.github/workflows/test.yml@main
+    with:
+      runs-on: ubuntu-22.04
+      arch: x64
+      compiler: clang
+      config: Asan
+      # Twice the regular Linux shard count, to make up for the sanitizer's
+      # slowdown.
+      num-shards: 8
+      extra-args: --prune_test_results
+      # Not from-ci-workflow: that adds the unit test job, which the Asan build
+      # cannot pass. Its snapshot tests capture stdout, and the asserting Allegro
+      # in this build writes its debug trace there.
+      replay-uploads: true
+    secrets:
+      ZC_REPLAYS_READ_ACCESS_KEY_ID: ${{ secrets.ZC_REPLAYS_READ_ACCESS_KEY_ID }}
+      ZC_REPLAYS_READ_SECRET_ACCESS_KEY: ${{ secrets.ZC_REPLAYS_READ_SECRET_ACCESS_KEY }}
