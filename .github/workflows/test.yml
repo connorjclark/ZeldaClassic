@@ -66,6 +66,9 @@ on:
 
 env:
   PYTHONUNBUFFERED: '1'
+  # For Asan builds. LeakSanitizer would fail every run: much of the engine's
+  # state is never freed at exit, by design.
+  ASAN_OPTIONS: detect_leaks=0
 
 jobs:
   # Get the LFS cache ready. This avoids every shard of each environment downloading the LFS objects
@@ -123,7 +126,8 @@ jobs:
         if: ${{ contains(inputs.runs-on, 'ubuntu') }}
         # libglu1 is for the older release binaries some tests run (e.g. the vscode
         # extension tests), which still link GLU. The current build does not.
-        run: sudo apt-get update && sudo apt-get install libopengl0 libglu1 lldb libpulse0 xvfb
+        # llvm provides llvm-symbolizer, without which ASan reports have no symbols.
+        run: sudo apt-get update && sudo apt-get install libopengl0 libglu1 lldb libpulse0 xvfb ${{ inputs.config == 'Asan' && 'llvm' || '' }}
 
       - run: mkdir -p .tmp
 
@@ -157,7 +161,7 @@ jobs:
           --config ${{ inputs.config }}
           --run-id ${{ github.run_id }}
           --shard ${{ matrix.shard_index }}/${{ matrix.num_shards }}
-          --extra-args "$EXTRA_ARGS"
+          --extra-args="$EXTRA_ARGS"
           --build-folder zc-extracted
 
       # Just run a few replays with JIT disabled.
@@ -177,7 +181,7 @@ jobs:
           --config ${{ inputs.config }}
           --run-id ${{ github.run_id }}
           --no-jit
-          --extra-args "$EXTRA_ARGS"
+          --extra-args="$EXTRA_ARGS"
           --build-folder zc-extracted
 
       # Run the same subset with the ZASM optimizer disabled. Some JIT bugs only
@@ -197,7 +201,7 @@ jobs:
           --config ${{ inputs.config }}
           --run-id ${{ github.run_id }}
           --no-optimize-zasm
-          --extra-args "$EXTRA_ARGS"
+          --extra-args="$EXTRA_ARGS"
           --build-folder zc-extracted
 
       - name: Generate coverage json
@@ -280,7 +284,7 @@ jobs:
 
       - name: Install Linux Test Dependencies
         if: ${{ contains(inputs.runs-on, 'ubuntu') }}
-        run: sudo apt-get update && sudo apt-get install libopengl0 lldb libpulse0 xvfb
+        run: sudo apt-get update && sudo apt-get install libopengl0 lldb libpulse0 xvfb ${{ inputs.config == 'Asan' && 'llvm' || '' }}
 
       - run: mkdir -p .tmp
 
@@ -367,7 +371,7 @@ jobs:
         if: ${{ contains(inputs.runs-on, 'ubuntu') }}
         # libglu1 is for the older release binaries some tests run (e.g. the vscode
         # extension tests), which still link GLU. The current build does not.
-        run: sudo apt-get update && sudo apt-get install libopengl0 libglu1 lldb libpulse0 xvfb
+        run: sudo apt-get update && sudo apt-get install libopengl0 libglu1 lldb libpulse0 xvfb ${{ inputs.config == 'Asan' && 'llvm' || '' }}
 
       - run: mkdir -p .tmp
 
