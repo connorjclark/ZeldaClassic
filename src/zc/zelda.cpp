@@ -4863,7 +4863,7 @@ void quit_game()
 	
 	al_trace("Freeing Data: \n");
 	
-	free(game);
+	delete game;
 	game = NULL;
 	
 	al_trace("Bitmaps... \n");
