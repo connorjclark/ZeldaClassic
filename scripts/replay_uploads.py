@@ -188,6 +188,10 @@ parser.add_argument(
     type=int,
     help='Passed on to run_replay_tests.py: stop each replay after this many (estimated) seconds',
 )
+parser.add_argument(
+    '--extra_args',
+    help='Passed on to run_replay_tests.py --extra_args: extra flags for zplayer (ex: "-replay-debug-corrupt-frame 300")',
+)
 parser.add_argument('--debug', help='Debug why the given replay cannot be updated')
 parser.add_argument(
     '--coverage',
@@ -625,6 +629,8 @@ def run_replays():
         run_args.append('--no-jit')
     if not use_optimize_zasm:
         run_args.append('--no-optimize-zasm')
+    if args.extra_args:
+        run_args.append(f'--extra_args={args.extra_args}')
     # With no paths, run_replay_tests.py would run every replay in replays_dir instead.
     if not updated_paths:
         print('No replays to run')
@@ -843,6 +849,8 @@ def run_ci():
         run_args += ['--build_folder', args.build_folder]
     if args.max_duration:
         run_args += ['--max_duration', str(args.max_duration)]
+    if args.extra_args:
+        run_args.append(f'--extra_args={args.extra_args}')
     test_results = run_replays_process([*run_args, *paths])
 
     # Here a replay that did not run at all is a failure too.
