@@ -181,7 +181,7 @@ parser.add_argument(
 )
 parser.add_argument(
     '--shard',
-    help='Run only this part of the known good replays, ex: 2/4. Shards are balanced by frame count',
+    help='Only with --ci: run only this part of the known good replays, ex: 2/4. Shards are balanced by frame count',
 )
 parser.add_argument(
     '--max_duration',
@@ -550,7 +550,8 @@ def run_replays_process(run_args: list, test_results_folder: Path = None):
     # There can be hundreds of replay paths here, which blows past Windows'
     # ~32k command line limit, so pass them in a response file instead.
     args_path = test_results_folder.parent / f'{test_results_folder.name}_args.txt'
-    args_path.write_text('\n'.join(str(arg) for arg in run_args))
+    # argparse reads the response file as utf-8.
+    args_path.write_text('\n'.join(str(arg) for arg in run_args), encoding='utf-8')
     # The exit code is not checked: a failing replay is reported through
     # test_results.json, and the caller decides what to do about it.
     subprocess.run(
@@ -631,6 +632,8 @@ def run_replays():
         run_args.append('--no-optimize-zasm')
     if args.extra_args:
         run_args.append(f'--extra_args={args.extra_args}')
+    if args.max_duration:
+        run_args += ['--max_duration', str(args.max_duration)]
     # With no paths, run_replay_tests.py would run every replay in replays_dir instead.
     if not updated_paths:
         print('No replays to run')
@@ -799,9 +802,19 @@ def prepare_known_good_replays(wanted_keys: list[str] = None) -> list[str]:
             shutil.copyfile(qst_path, copied_qst_path)
 
         updated_path = get_replay_path(get_updated_key(key))
-        if not updated_path.exists() or baseline_sha(updated_path) != pin['baseline']:
+        if not updated_path.exists():
             print(f'downloading baseline: {key}')
             download_baseline(pin['baseline'], updated_path)
+        elif args.ci or args.refresh_known_good:
+            # Both must start from exactly the pinned baseline, whatever a local
+            # --update left here.
+            if baseline_sha(updated_path) != pin['baseline']:
+                print(f'downloading baseline: {key}')
+                download_baseline(pin['baseline'], updated_path)
+        else:
+            # A local copy that differs is probably a local --update, kept for
+            # the --assert that follows it (see the top of this file).
+            check_pinned_baseline(pin, updated_path)
         keys.append(key)
 
     return keys
@@ -838,7 +851,15 @@ def run_ci():
     # Shard first, so each shard downloads only what it runs.
     if args.shard:
         keys = get_shard(keys, known_good, args.shard)
+    wanted_keys = keys
     keys = prepare_known_good_replays(keys)
+    # A known good replay whose quest went missing from the database would
+    # otherwise drop out of CI without anyone noticing.
+    if len(keys) < len(wanted_keys):
+        print(
+            f'{len(wanted_keys) - len(keys)} known good replays could not be prepared (see the warnings above)'
+        )
+        sys.exit(1)
     paths = [get_replay_path(get_updated_key(key)) for key in keys]
     if not paths:
         print('No replays to run')
