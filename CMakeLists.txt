@@ -121,8 +121,11 @@ else()
 	# -fsanitize=bool aborts on loading a bool that isn't 0 or 1. ASan fills new heap memory with
 	# 0xbe, so this catches reads of uninitialized bool members (unless the object was
 	# value-initialized, which zero-fills it).
-	set(CMAKE_CXX_FLAGS_ASAN "${CMAKE_CXX_FLAGS_DEBUG} -fsanitize=address,bool -fno-sanitize-recover=bool -fno-omit-frame-pointer" CACHE STRING "" FORCE)
-	set(CMAKE_C_FLAGS_ASAN "${CMAKE_C_FLAGS_DEBUG} -fsanitize=address,bool -fno-sanitize-recover=bool -fno-omit-frame-pointer" CACHE STRING "" FORCE)
+	# -O1 rather than Debug's -O0: the sanitizer catches the same errors, and the replay
+	# suite runs several times faster, which is what makes the scheduled ASan replay
+	# runs affordable (.github/workflows/replays-asan.yml). Asserts stay on (no NDEBUG).
+	set(CMAKE_CXX_FLAGS_ASAN "-O1 -g -fsanitize=address,bool -fno-sanitize-recover=bool -fno-omit-frame-pointer" CACHE STRING "" FORCE)
+	set(CMAKE_C_FLAGS_ASAN "-O1 -g -fsanitize=address,bool -fno-sanitize-recover=bool -fno-omit-frame-pointer" CACHE STRING "" FORCE)
 	set(CMAKE_EXE_LINKER_FLAGS_ASAN "${CMAKE_EXE_LINKER_FLAGS_DEBUG} -fsanitize=address,bool" CACHE STRING "" FORCE)
 endif()
 
