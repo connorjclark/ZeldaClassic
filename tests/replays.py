@@ -52,7 +52,9 @@ def configure_estimate_multiplier(build_folder: Path, build_type: str):
     if is_coverage:
         m *= 10
     if is_asan:
-        m *= 15
+        # Measured against RelWithDebInfo on the Linux CI runners, with the
+        # Asan config at -O1.
+        m *= 4
     estimate_divisor = m
 
 
