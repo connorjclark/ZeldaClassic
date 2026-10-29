@@ -1,0 +1,59 @@
+name: TEMP no-display check
+
+on:
+  push:
+    branches:
+      - temp-no-display
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        include:
+          - runs-on: ubuntu-22.04
+            arch: x64
+          - runs-on: ubuntu-22.04-arm
+            arch: aarch64
+      fail-fast: false
+    uses: ./.github/workflows/build.yml
+    with:
+      runs-on: ${{ matrix.runs-on }}
+      arch: ${{ matrix.arch }}
+      compiler: clang
+      config: Release
+
+  check:
+    needs: build
+    strategy:
+      matrix:
+        runs-on: [ubuntu-22.04, ubuntu-22.04-arm]
+      fail-fast: false
+    runs-on: ${{ matrix.runs-on }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: true
+      - uses: actions/download-artifact@v6
+        with:
+          pattern: build-${{ matrix.runs-on }}-*
+          path: artifact
+          merge-multiple: true
+      - run: sudo apt-get update && sudo apt-get install -y libopengl0 libpulse0
+      - name: Run without a display
+        shell: bash
+        run: |
+          mkdir x && tar -xzf artifact/*.tar.gz -C x
+          cd x/bin
+          echo "DISPLAY=${DISPLAY:-<unset>}"
+          for app in zplayer zlauncher; do
+            set +e
+            env -u DISPLAY ./$app > out.txt 2>&1
+            code=$?
+            set -e
+            echo "== $app exit=$code"; cat out.txt
+            grep -q "Could not connect to an X11 display" out.txt
+            test $code -eq 1
+          done
+          # -headless must still work without a display.
+          env -u DISPLAY ./zplayer -headless -replay "$GITHUB_WORKSPACE/tests/replays/playground/keys.zplay" -replay-exit-when-done -frame 200
+          echo "headless exit=$?"
