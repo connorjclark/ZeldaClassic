@@ -42,7 +42,7 @@ jobs:
           pattern: build-${{ matrix.runs-on }}-${{ matrix.arch }}-*
           path: artifact
           merge-multiple: true
-      - run: sudo apt-get update && sudo apt-get install -y libopengl0 libpulse0
+      - run: sudo apt-get update && sudo apt-get install -y libopengl0 libpulse0 xvfb
       - name: Run without a display
         shell: bash
         run: |
@@ -61,3 +61,10 @@ jobs:
           # -headless must still work without a display.
           env -u DISPLAY ./zplayer -headless -replay "$GITHUB_WORKSPACE/tests/replays/misc/keys.zplay" -replay-exit-when-done -frame 200
           echo "headless exit=$?"
+          # With a real X server, the check must pass (the app keeps running until killed).
+          set +e
+          timeout 20 xvfb-run -a ./zplayer > xvfb.txt 2>&1
+          echo "xvfb exit=$?"
+          set -e
+          head -20 xvfb.txt
+          ! grep -q "Could not connect to an X11 display" xvfb.txt
