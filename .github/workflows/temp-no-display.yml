@@ -26,7 +26,11 @@ jobs:
     needs: build
     strategy:
       matrix:
-        runs-on: [ubuntu-22.04, ubuntu-22.04-arm]
+        include:
+          - runs-on: ubuntu-22.04
+            arch: x64
+          - runs-on: ubuntu-22.04-arm
+            arch: aarch64
       fail-fast: false
     runs-on: ${{ matrix.runs-on }}
     steps:
@@ -35,7 +39,7 @@ jobs:
           lfs: true
       - uses: actions/download-artifact@v6
         with:
-          pattern: build-${{ matrix.runs-on }}-*
+          pattern: build-${{ matrix.runs-on }}-${{ matrix.arch }}-*
           path: artifact
           merge-multiple: true
       - run: sudo apt-get update && sudo apt-get install -y libopengl0 libpulse0
