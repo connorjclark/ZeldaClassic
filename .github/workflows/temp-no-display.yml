@@ -55,5 +55,5 @@ jobs:
             test $code -eq 1
           done
           # -headless must still work without a display.
-          env -u DISPLAY ./zplayer -headless -replay "$GITHUB_WORKSPACE/tests/replays/playground/keys.zplay" -replay-exit-when-done -frame 200
+          env -u DISPLAY ./zplayer -headless -replay "$GITHUB_WORKSPACE/tests/replays/misc/keys.zplay" -replay-exit-when-done -frame 200
           echo "headless exit=$?"
