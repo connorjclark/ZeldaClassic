@@ -554,7 +554,9 @@ def build(ctx: CiContext, args):
 
     is_official = str(args.official).lower()
     wants_tests = str(args.test_runner).lower()
-    sentry = str(args.sentry).lower()
+    # Windows builds always link Sentry, so the Windows 7 import check (see package) covers it.
+    # Only official builds start it, and only release builds upload debug info.
+    sentry = str(args.sentry or ctx.is_windows).lower()
 
     # A mac universal build compiles the host architecture into `build`, the
     # other architecture into `build-<arch>`, and lipo-merges the second into
