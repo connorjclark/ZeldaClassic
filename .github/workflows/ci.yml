@@ -94,7 +94,6 @@ jobs:
       GH_PAT_ZSCRIPT_DATABASE: ${{ secrets.GH_PAT_ZSCRIPT_DATABASE }}
       ZC_REPLAYS_READ_ACCESS_KEY_ID: ${{ secrets.ZC_REPLAYS_READ_ACCESS_KEY_ID }}
       ZC_REPLAYS_READ_SECRET_ACCESS_KEY: ${{ secrets.ZC_REPLAYS_READ_SECRET_ACCESS_KEY }}
-      SURGE_TOKEN: ${{ secrets.SURGE_TOKEN }}
 
   # One comment on a pull request for the replays that failed in this run: the
   # test suite's (on any platform) and the uploaded ones, how each failed, their

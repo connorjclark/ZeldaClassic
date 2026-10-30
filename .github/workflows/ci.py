@@ -1406,6 +1406,11 @@ def _replay_cell(entry: dict) -> str:
     return f'`{qst_hash[:8]}…/{name[:8]}…`'
 
 
+# A failure text or quest title as a markdown table cell: a | would end it.
+def _table_cell(text) -> str:
+    return str(text).replace('|', '\\|')
+
+
 # One entry per test suite replay that failed in a CI run, from the replays-*
 # artifacts of its shards (downloaded one directory each, tars extracted): its
 # name (tests/replays/<name>), the platforms it failed on, and how.
@@ -1413,7 +1418,15 @@ def _summarize_failing_suite_replays(artifacts_dir: Path) -> list[dict]:
     by_name = {}
     for results_path in sorted(artifacts_dir.glob('replays-*/**/test_results.json')):
         test_results = json.loads(results_path.read_text('utf-8'))
-        platform = f"{test_results['runs_on']} {test_results['arch']}"
+        # The platform from the artifact's name (replays-<runs-on>-<arch>-
+        # <compiler>-N-of-M): the results don't record the compiler, and the
+        # gcc Linux results are not pixel-exact with clang's.
+        artifact_name = results_path.relative_to(artifacts_dir).parts[0]
+        match = re.fullmatch(r'replays-(.+)-\d+-of-\d+', artifact_name)
+        if match:
+            platform = match.group(1)
+        else:
+            platform = f"{test_results['runs_on']} {test_results['arch']}"
         # replay-tests keeps the passes without the JIT and without the ZASM
         # optimizer in directories named for them.
         dir_name = results_path.parent.name
@@ -1438,36 +1451,35 @@ def _summarize_failing_suite_replays(artifacts_dir: Path) -> list[dict]:
 # extracted): each holds the shard's own test results and the baseline build's
 # (see compare-replay-uploads), which are sorted into one directory per side so
 # that compare_replays.py shows each side as one run. Returns the report's URL
-# on surge (None when it could not be published) and its directory, or None
-# for both when no shard had a baseline to compare against.
+# on surge (None when it could not be published), its directory, and, when
+# there is no report, why (None otherwise).
 def _build_uploads_compare_report(artifacts_dir: Path, run_id) -> tuple:
     work = tmp_dir / 'replay_report/uploads_compare'
     if work.exists():
         shutil.rmtree(work)
-    for results_path in list(artifacts_dir.glob('replay-uploads-*/**/test_results.json')):
-        side = 'baseline' if 'replay_uploads_baseline' in results_path.parts else 'current'
-        artifact_name = results_path.relative_to(artifacts_dir).parts[0]
-        dest = work / side / artifact_name
-        dest.parent.mkdir(parents=True, exist_ok=True)
-        shutil.move(results_path.parent, dest)
+    _sort_uploads_results_by_side(artifacts_dir, work)
     if not (work / 'baseline').exists():
-        return None, None
+        return None, None, 'No compare report.'
 
     report_dir = tmp_dir / 'replay_report/uploads_compare_report'
     if report_dir.exists():
         shutil.rmtree(report_dir)
     report_dir.mkdir(parents=True)
-    run_python_cmd(
-        [
-            'tests/compare_replays.py',
-            '--local',
-            work / 'baseline',
-            '--local',
-            work / 'current',
-            '--dest',
-            report_dir,
-        ]
-    )
+    try:
+        run_python_cmd(
+            [
+                'tests/compare_replays.py',
+                '--local',
+                work / 'baseline',
+                '--local',
+                work / 'current',
+                '--dest',
+                report_dir,
+            ]
+        )
+    except SystemExit:
+        logger.error("Building the compare report failed")
+        return None, None, "No compare report: building it failed, see the Replay report job's log."
 
     report_url = None
     surge_token = os.environ.get('SURGE_TOKEN')
@@ -1481,14 +1493,24 @@ def _build_uploads_compare_report(artifacts_dir: Path, run_id) -> tuple:
         except SystemExit:
             # The workflow still attaches the report to the run as an artifact.
             logger.error("Deploying the report to surge failed")
-    return report_url, report_dir
+    return report_url, report_dir, None
+
+
+# Moves each shard's test results directories under work/<side>/<artifact name>.
+def _sort_uploads_results_by_side(artifacts_dir: Path, work: Path):
+    for results_path in list(artifacts_dir.glob('replay-uploads-*/**/test_results.json')):
+        side = 'baseline' if 'replay_uploads_baseline' in results_path.parts else 'current'
+        artifact_name = results_path.relative_to(artifacts_dir).parts[0]
+        dest = work / side / artifact_name
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        shutil.move(results_path.parent, dest)
 
 
 # The conclusions of a CI run's test suite replay jobs and its uploaded replay
-# jobs, each folded to one of: success (every job), failure (any job), none
-# (no such job, or only skipped ones: the platforms that don't run the uploaded
-# replays still list the job) or other (cancelled, ...).
-def _replay_job_outcomes(run) -> tuple[str, str]:
+# jobs (from _get_run_jobs), each folded to one of: success (every job), failure
+# (any job), none (no such job, or only skipped ones: the platforms that don't
+# run the uploaded replays still list the job) or other (cancelled, ...).
+def _replay_job_outcomes(jobs) -> tuple[str, str]:
     def fold(conclusions: list[str]) -> str:
         conclusions = [c for c in conclusions if c != 'skipped']
         if not conclusions:
@@ -1499,7 +1521,6 @@ def _replay_job_outcomes(run) -> tuple[str, str]:
             return 'failure'
         return 'other'
 
-    jobs = _get_run_jobs(run)
     suite = [j.conclusion for j in jobs if re.search(r'(^|/ )Replays \d+/\d+$', j.name)]
     uploads = [j.conclusion for j in jobs if 'Replay uploads' in j.name]
     return fold(suite), fold(uploads)
@@ -1548,11 +1569,13 @@ def report_replays(ctx: CiContext, args):
             logger.info(f"No open pull request for {head}, nothing to report")
             return
 
-    suite_outcome, uploads_outcome = _replay_job_outcomes(run)
+    suite_outcome, uploads_outcome = _replay_job_outcomes(_get_run_jobs(run))
     logger.info(f"Test suite replays: {suite_outcome}, uploaded replays: {uploads_outcome}")
-    if 'failure' not in (suite_outcome, uploads_outcome):
-        if 'success' in (suite_outcome, uploads_outcome):
-            # Only an earlier failure's comment is worth updating.
+    outcomes = {suite_outcome, uploads_outcome}
+    if 'failure' not in outcomes:
+        if 'success' in outcomes and 'other' not in outcomes:
+            # Only an earlier failure's comment is worth updating, and only
+            # when nothing was cancelled.
             _upsert_pr_comment(
                 pr,
                 REPLAY_REPORT_MARKER,
@@ -1582,10 +1605,10 @@ def report_replays(ctx: CiContext, args):
             if 'replay_uploads_baseline' not in results_path.parts:
                 uploads_failing += _summarize_failing_uploaded_replays(results_path)
         uploads_failing.sort(key=lambda f: f['key'])
-    uploads_report_url = uploads_report_dir = None
+    uploads_report_url = uploads_report_dir = uploads_report_note = None
     if uploads_failing:
-        uploads_report_url, uploads_report_dir = _build_uploads_compare_report(
-            artifacts_dir, run.id
+        uploads_report_url, uploads_report_dir, uploads_report_note = (
+            _build_uploads_compare_report(artifacts_dir, run.id)
         )
 
     lines = [f'## Replays: {len(suite_failing) + len(uploads_failing)} failed on {sha}', '']
@@ -1600,7 +1623,7 @@ def report_replays(ctx: CiContext, args):
             lines += ['| Replay | Failure | Platforms |', '|---|---|---|']
             for entry in suite_failing:
                 lines.append(
-                    f"| `{entry['name']}` | {entry['how']} | {', '.join(entry['platforms'])} |"
+                    f"| `{entry['name']}` | {_table_cell(entry['how'])} | {', '.join(entry['platforms'])} |"
                 )
             filters = ' '.join(f'--filter {entry["name"]}' for entry in suite_failing)
             lines += [
@@ -1623,7 +1646,9 @@ def report_replays(ctx: CiContext, args):
         else:
             lines += ['| Replay | Quest | Failure |', '|---|---|---|']
             for entry in uploads_failing:
-                lines.append(f"| {_replay_cell(entry)} | {entry['title']} | {entry['how']} |")
+                lines.append(
+                    f"| {_replay_cell(entry)} | {_table_cell(entry['title'])} | {_table_cell(entry['how'])} |"
+                )
             lines += ['', '<details><summary>Replay keys</summary>', '']
             lines += [f"- `{entry['key']}`" for entry in uploads_failing]
             lines += ['', '</details>', '']
@@ -1633,8 +1658,8 @@ def report_replays(ctx: CiContext, args):
             elif uploads_report_dir:
                 report = f'Compare report: attached to [the run]({run.html_url}) as the `replay-uploads-compare-report` artifact.'
             else:
-                report = 'No compare report.'
-            if baselines:
+                report = uploads_report_note
+            if uploads_report_dir and baselines:
                 report += f" Baseline: {', '.join(baselines)}. It shows the first differing frame of each replay, and the frames around it."
             lines.append(report)
             lines += sorted({s['note'] for s in summaries if s['note']})

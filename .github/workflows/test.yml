@@ -63,10 +63,6 @@ on:
         required: false
       ZC_REPLAYS_READ_SECRET_ACCESS_KEY:
         required: false
-      # Publishes the compare report of failing uploaded replays. Without it
-      # the report is only attached to the run as an artifact.
-      SURGE_TOKEN:
-        required: false
 
 env:
   PYTHONUNBUFFERED: '1'
