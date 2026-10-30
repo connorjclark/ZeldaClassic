@@ -96,6 +96,58 @@ jobs:
       ZC_REPLAYS_READ_SECRET_ACCESS_KEY: ${{ secrets.ZC_REPLAYS_READ_SECRET_ACCESS_KEY }}
       SURGE_TOKEN: ${{ secrets.SURGE_TOKEN }}
 
+  # One comment on a pull request for the replays that failed in this run: the
+  # test suite's (on any platform) and the uploaded ones, how each failed, their
+  # compare reports, and how to accept the changes. Edited in place by later
+  # runs, and by a passing run after a failing one. A dispatched run on a PR
+  # branch (what the refresh workflow starts after its push) finds the branch's
+  # open PR itself. A PR from a fork gets no comment: its token cannot write.
+  replay-report:
+    needs: test
+    if: ${{ always() && needs.test.result != 'skipped' && needs.test.result != 'cancelled' && ((github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository) || github.event_name == 'workflow_dispatch') }}
+    name: Replay report
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - name: git clone
+        uses: connorjclark/action-cached-lfs-checkout@3ea4dc59b06f3baa8c01ba891fbfc2dbfdce5bc8
+        with:
+          include: ''
+          enableCrossOsArchive: true
+
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+          cache: pip
+
+      - name: Install Python dependencies
+        run: pip install -r requirements.txt
+
+      # The test results of the failing shards (none when every replay passed).
+      - name: Download test suite results
+        uses: actions/download-artifact@v6
+        with:
+          pattern: replays-*
+          path: .tmp/replay_report/artifacts
+
+      - name: Download uploaded replay results
+        uses: actions/download-artifact@v6
+        with:
+          pattern: replay-uploads-*
+          path: .tmp/replay_report/artifacts
+
+      - name: Comment on the pull request
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: >
+          bash .github/workflows/run_python.sh .github/workflows/ci.py report-replays
+          --repo ${{ github.repository }}
+          --run-id ${{ github.run_id }}
+          --pr ${{ github.event.pull_request.number || 0 }}
+
   web:
     needs: warm-lfs-cache
     runs-on: ubuntu-22.04

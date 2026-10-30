@@ -1291,6 +1291,21 @@ def _uploaded_replay_key(path: Path) -> str:
     return re.sub(r'-updated-[^./]+\.zplay$', '.zplay', key)
 
 
+# How a replay failed, from its entry in a test results file.
+def _describe_failure(run: dict) -> str:
+    frame = run.get('failing_frame')
+    if run.get('rng_desync'):
+        return f'rng desync at frame {frame}'
+    if frame is not None:
+        return f'differs at frame {frame}'
+    if run.get('exceptions'):
+        # Ex: "failed w/ exit code 1", "timed out waiting for replay to start".
+        return run['exceptions'][-1].splitlines()[0][:100]
+    if run.get('stopped'):
+        return 'stopped'
+    return f'crashed (exit code {run.get("exit_code")})'
+
+
 # One entry per replay that failed in the last run of a test results file: its
 # key in the known good json, its quest's title (when the replay is on disk),
 # and how it failed.
@@ -1308,21 +1323,12 @@ def _summarize_failing_uploaded_replays(test_results_path: Path) -> list[dict]:
         if path.exists():
             meta = replay_helpers.read_replay_meta(path)
             title = meta.get('qst_title') or meta.get('qst', '')
-        frame = run.get('failing_frame')
-        if run.get('rng_desync'):
-            how = f'rng desync at frame {frame}'
-        elif frame is not None:
-            how = f'differs at frame {frame}'
-        elif run.get('stopped'):
-            how = 'stopped'
-        else:
-            how = f'crashed (exit code {run.get("exit_code")})'
         failing.append(
             {
                 'key': _uploaded_replay_key(path),
                 'title': title,
-                'frame': frame,
-                'how': how,
+                'frame': run.get('failing_frame'),
+                'how': _describe_failure(run),
             }
         )
     return failing
@@ -1352,8 +1358,8 @@ def _get_run_jobs(run):
 
 # Each marker identifies one comment per pull request, which later runs edit
 # rather than piling up a new comment per push.
-REPLAY_UPLOADS_REPORT_MARKER = '<!-- zc-replay-uploads-report -->'
-REPLAY_UPLOADS_REFRESH_MARKER = '<!-- zc-replay-uploads-refresh -->'
+REPLAY_REPORT_MARKER = '<!-- zc-replay-report -->'
+REPLAY_REFRESH_MARKER = '<!-- zc-replay-refresh -->'
 REPLAY_UPLOADS_REFRESH_LABEL = 'refresh-uploaded-replays'
 
 
@@ -1418,9 +1424,55 @@ def _replay_cell(entry: dict) -> str:
     return f'`{qst_hash[:8]}…/{name[:8]}…`'
 
 
+# One entry per test suite replay that failed in a CI run, from the replays-*
+# artifacts of its shards (downloaded one directory each, tars extracted): its
+# name (tests/replays/<name>), the platforms it failed on, and how.
+def _summarize_failing_suite_replays(artifacts_dir: Path) -> list[dict]:
+    by_name = {}
+    for results_path in sorted(artifacts_dir.glob('replays-*/**/test_results.json')):
+        test_results = json.loads(results_path.read_text('utf-8'))
+        platform = f"{test_results['runs_on']} {test_results['arch']}"
+        # replay-tests keeps the passes without the JIT and without the ZASM
+        # optimizer in directories named for them.
+        dir_name = results_path.parent.name
+        if dir_name.endswith('-nojit'):
+            platform += ' (no JIT)'
+        elif dir_name.endswith('-nooptimizezasm'):
+            platform += ' (no ZASM optimizer)'
+        for run in test_results['runs'][-1]:
+            if run['success']:
+                continue
+            entry = by_name.setdefault(
+                run['name'],
+                {'name': run['name'], 'platforms': [], 'how': _describe_failure(run)},
+            )
+            if platform not in entry['platforms']:
+                entry['platforms'].append(platform)
+    return [by_name[name] for name in sorted(by_name)]
+
+
+# The conclusions of a CI run's test suite replay jobs and its uploaded replay
+# jobs, each folded to one of: success (every job), failure (any job), none
+# (no such job) or other (cancelled, skipped, ...).
+def _replay_job_outcomes(run) -> tuple[str, str]:
+    def fold(conclusions: list[str]) -> str:
+        if not conclusions:
+            return 'none'
+        if all(c == 'success' for c in conclusions):
+            return 'success'
+        if any(c == 'failure' for c in conclusions):
+            return 'failure'
+        return 'other'
+
+    jobs = _get_run_jobs(run)
+    suite = [j.conclusion for j in jobs if re.search(r'(^|/ )Replays \d+/\d+$', j.name)]
+    uploads = [j.conclusion for j in jobs if 'Replay uploads' in j.name]
+    return fold(suite), fold(uploads)
+
+
 @command(
-    "report-replay-uploads",
-    help="Comment on the pull request with the uploaded replays that failed and where their compare reports are",
+    "report-replays",
+    help="Comment on the pull request with the replays that failed in this CI run, how, and how to accept the changes",
 )
 @argument("--run-id", required=True, help="Current GitHub Run ID")
 @argument(
@@ -1430,17 +1482,20 @@ def _replay_cell(entry: dict) -> str:
     help="The pull request number (0: the open pull request for the run's branch, if any)",
 )
 @argument(
-    "--result",
-    required=True,
-    help="The result of the Replay uploads jobs (success, failure, cancelled, ...)",
+    "--artifacts",
+    default=str(tmp_dir / "replay_report/artifacts"),
+    help="Where the run's replays-* and replay-uploads-* artifacts were downloaded, one directory each",
 )
-@argument("--summaries", default=str(tmp_dir / "replay_uploads_summary"))
-def report_replay_uploads(ctx: CiContext, args):
-    """Runs after every Replay uploads shard of a pull request's CI run. On a
-    failure it gathers the shards' summaries (see compare-replay-uploads) into
-    one comment: which replays failed, how, and the compare report of each
-    shard. Later runs edit that comment, so a PR has at most one.
+def report_replays(ctx: CiContext, args):
+    """Runs once every replay job of a pull request's CI run is done. When any
+    failed, it puts one comment on the PR: the test suite replays that failed
+    (on any platform) with the command that updates them locally, the uploaded
+    replays that failed with their compare reports, and the label that accepts
+    all of it in CI. Later runs edit that comment, so a PR has at most one.
     """
+    sys.path.append(str(root_dir / 'scripts'))
+    from github_helpers import extract_tars
+
     gh = _github_from_env()
     repo = gh.get_repo(ctx.repo)
     run = repo.get_workflow_run(int(args.run_id))
@@ -1456,71 +1511,97 @@ def report_replay_uploads(ctx: CiContext, args):
             logger.info(f"No open pull request for {head}, nothing to report")
             return
 
-    if args.result == 'success':
-        # Only an earlier failure's comment is worth updating.
-        _upsert_pr_comment(
-            pr,
-            REPLAY_UPLOADS_REPORT_MARKER,
-            f'## Uploaded replays: all pass on {sha}\n\n'
-            f'An earlier commit failed some of them (see this comment\'s edit history).',
-            create=False,
-        )
-        return
-    if args.result != 'failure':
-        logger.info(f"Replay uploads jobs ended with {args.result}, nothing to report")
-        return
-
-    summaries = [
-        json.loads(p.read_text('utf-8')) for p in sorted(Path(args.summaries).glob('*.json'))
-    ]
-    failing = [(entry, s) for s in summaries for entry in s['failing']]
-
-    lines = []
-    if not failing:
-        lines += [
-            f'## Uploaded replays: the jobs failed on {sha}',
-            '',
-            f'They failed before running any replay, so there is nothing to compare. See [the run]({run.html_url}).',
-        ]
-    else:
-        lines += [
-            f'## Uploaded replays: {len(failing)} failed on {sha}',
-            '',
-            '| Replay | Quest | Failure | Compare report |',
-            '|---|---|---|---|',
-        ]
-        for entry, s in sorted(failing, key=lambda f: f[0]['key']):
-            if s['report_url']:
-                report = f"[shard {s['shard']}]({s['report_url']})"
-            elif s['report_artifact'] and not s['note']:
-                report = f"artifact `{s['report_artifact']}`"
-            else:
-                report = 'none'
-            lines.append(
-                f"| {_replay_cell(entry)} | {entry['title']} | {entry['how']} | {report} |"
+    suite_outcome, uploads_outcome = _replay_job_outcomes(run)
+    logger.info(f"Test suite replays: {suite_outcome}, uploaded replays: {uploads_outcome}")
+    if 'failure' not in (suite_outcome, uploads_outcome):
+        if 'success' in (suite_outcome, uploads_outcome):
+            # Only an earlier failure's comment is worth updating.
+            _upsert_pr_comment(
+                pr,
+                REPLAY_REPORT_MARKER,
+                f'## Replays: all pass on {sha}\n\n'
+                f'An earlier commit failed some of them (see this comment\'s edit history).',
+                create=False,
             )
-        baselines = sorted({s['baseline'] for s in summaries if s['baseline']})
-        notes = sorted({s['note'] for s in summaries if s['note']})
-        lines += [
-            '',
-            '<details><summary>Replay keys</summary>',
-            '',
-        ]
-        lines += [f"- `{entry['key']}`" for entry, _ in sorted(failing, key=lambda f: f[0]['key'])]
-        lines += ['', '</details>', '']
-        if baselines:
-            lines.append(
-                f"Baseline: {', '.join(baselines)}. The report shows the first differing frame of each replay, and the frames around it."
-            )
-        lines += notes
-        lines += [
-            '',
-            f'If this is an intended change, add the `{REPLAY_UPLOADS_REFRESH_LABEL}` label to this pull request: '
-            'the baselines of these replays are re-recorded with the CI build of this commit, '
-            'the new pins are pushed to this branch as a fixup of its head commit, and CI runs again.',
-        ]
+        return
 
-    _upsert_pr_comment(pr, REPLAY_UPLOADS_REPORT_MARKER, '\n'.join(lines))
+    artifacts_dir = Path(args.artifacts)
+    if artifacts_dir.exists():
+        extract_tars(artifacts_dir)
+    suite_failing = _summarize_failing_suite_replays(artifacts_dir) if suite_outcome == 'failure' else []
+    summaries = []
+    if uploads_outcome == 'failure':
+        summaries = [
+            json.loads(p.read_text('utf-8'))
+            for p in sorted(artifacts_dir.glob('replay-uploads-summary-*/*.json'))
+        ]
+    uploads_failing = sorted(
+        ((entry, s) for s in summaries for entry in s['failing']), key=lambda f: f[0]['key']
+    )
+
+    lines = [f'## Replays: {len(suite_failing) + len(uploads_failing)} failed on {sha}', '']
+
+    if suite_outcome == 'failure':
+        lines += ['### Test suite', '']
+        if not suite_failing:
+            lines.append(
+                f'The replay jobs failed before running any replay, so there is nothing to compare. See [the run]({run.html_url}).'
+            )
+        else:
+            lines += ['| Replay | Failure | Platforms |', '|---|---|---|']
+            for entry in suite_failing:
+                lines.append(
+                    f"| `{entry['name']}` | {entry['how']} | {', '.join(entry['platforms'])} |"
+                )
+            filters = ' '.join(f'--filter {entry["name"]}' for entry in suite_failing)
+            lines += [
+                '',
+                f'Compare report: https://zc-replay-compare-{run.id}.surge.sh (the compare workflow builds it a while after this run ends).',
+                '',
+                'To accept these as the new recordings, update them locally and commit the `.zplay` files:',
+                '```',
+                f'python tests/run_replay_tests.py --update {filters}',
+                '```',
+            ]
+        lines.append('')
+
+    if uploads_outcome == 'failure':
+        lines += ['### Uploaded replays', '']
+        if not uploads_failing:
+            lines.append(
+                f'The jobs failed before running any replay, so there is nothing to compare. See [the run]({run.html_url}).'
+            )
+        else:
+            lines += ['| Replay | Quest | Failure | Compare report |', '|---|---|---|---|']
+            for entry, s in uploads_failing:
+                if s['report_url']:
+                    report = f"[shard {s['shard']}]({s['report_url']})"
+                elif s['report_artifact'] and not s['note']:
+                    report = f"artifact `{s['report_artifact']}`"
+                else:
+                    report = 'none'
+                lines.append(
+                    f"| {_replay_cell(entry)} | {entry['title']} | {entry['how']} | {report} |"
+                )
+            baselines = sorted({s['baseline'] for s in summaries if s['baseline']})
+            notes = sorted({s['note'] for s in summaries if s['note']})
+            lines += ['', '<details><summary>Replay keys</summary>', '']
+            lines += [f"- `{entry['key']}`" for entry, _ in uploads_failing]
+            lines += ['', '</details>', '']
+            if baselines:
+                lines.append(
+                    f"Baseline: {', '.join(baselines)}. The report shows the first differing frame of each replay, and the frames around it."
+                )
+            lines += notes
+            lines += [
+                '',
+                f'If this is an intended change, add the `{REPLAY_UPLOADS_REFRESH_LABEL}` label to this pull request: '
+                'the baselines of these replays are re-recorded with the CI build of this commit, '
+                'the new pins are pushed to this branch as a fixup of its head commit, and CI runs again.',
+            ]
+        lines.append('')
+
+    _upsert_pr_comment(pr, REPLAY_REPORT_MARKER, '\n'.join(lines))
     logger.info('\n'.join(lines))
 
 
@@ -1568,7 +1649,7 @@ def refresh_replay_uploads(ctx: CiContext, args):
         if pr:
             logger.info(message)
             _upsert_pr_comment(
-                pr, REPLAY_UPLOADS_REFRESH_MARKER, f'## Uploaded replays refresh\n\n{message}'
+                pr, REPLAY_REFRESH_MARKER, f'## Uploaded replays refresh\n\n{message}'
             )
             try:
                 pr.remove_from_labels(REPLAY_UPLOADS_REFRESH_LABEL)

@@ -351,7 +351,8 @@ jobs:
           path: ${{ github.workspace }}/.tmp/replay_uploads_compare_report
           if-no-files-found: ignore
 
-      # What failed and where its report is, for the pull request comment below.
+      # What failed and where its report is, for the pull request comment
+      # (the replay-report job of ci.yml).
       - name: Upload summary
         uses: actions/upload-artifact@v7
         if: failure()
@@ -376,51 +377,6 @@ jobs:
         with:
           name: replay-uploads-${{ inputs.runs-on }}-${{ inputs.arch }}-${{ inputs.compiler }}-${{ matrix.shard_index }}-of-4
           path: ${{ github.workspace }}/.tmp/replay_uploads_test_results.tar
-
-  # One comment on the pull request for all the shards: which uploaded replays
-  # failed, how, and the compare report of each shard. Edited in place by later
-  # runs, and by a passing run after a failing one. A dispatched run (what the
-  # refresh workflow starts after its push) finds the branch's open PR itself.
-  replay-uploads-report:
-    needs: replay-uploads
-    if: ${{ always() && inputs.replay-uploads && needs.replay-uploads.result != 'skipped' && (github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch') }}
-    name: Replay uploads report
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      pull-requests: write
-    steps:
-      - name: git clone
-        uses: connorjclark/action-cached-lfs-checkout@3ea4dc59b06f3baa8c01ba891fbfc2dbfdce5bc8
-        with:
-          include: ''
-          enableCrossOsArchive: true
-
-      - name: Setup Python
-        uses: actions/setup-python@v6
-        with:
-          python-version: '3.12'
-          cache: pip
-
-      - name: Install Python dependencies
-        run: pip install -r requirements.txt
-
-      - name: Download summaries
-        uses: actions/download-artifact@v6
-        with:
-          pattern: replay-uploads-summary-*
-          path: .tmp/replay_uploads_summary
-          merge-multiple: true
-
-      - name: Comment on the pull request
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: >
-          bash .github/workflows/run_python.sh .github/workflows/ci.py report-replay-uploads
-          --repo ${{ github.repository }}
-          --run-id ${{ github.run_id }}
-          --pr ${{ github.event.pull_request.number || 0 }}
-          --result ${{ needs.replay-uploads.result }}
 
   # Its own job, so the unit tests run alongside the replay shards.
   unit-tests:
