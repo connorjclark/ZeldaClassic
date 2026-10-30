@@ -324,15 +324,16 @@ jobs:
           --max_duration 300
           --build_folder zc-extracted/bin
 
-      # Compare the failing replays against the latest build of the base branch
-      # that passed them, in this job: the replays and their quests are already
-      # here, and that build is a CI artifact, so there is no baseline run to
-      # dispatch, which is what the test suite's compare workflow has to do.
+      # Re-run the failing replays with the latest build of the base branch that
+      # passed them, in this job: the replays and their quests are already here,
+      # and that build is a CI artifact, so there is no baseline run to dispatch,
+      # which is what the test suite's compare workflow has to do. The results
+      # go out with the test results below; the Replay report job of ci.yml
+      # builds one compare report from every shard's.
       - name: Compare failing uploaded replays against the base branch
         if: ${{ failure() && hashFiles('.tmp/replay_uploads_test_results/test_results.json') != '' }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          SURGE_TOKEN: ${{ secrets.SURGE_TOKEN }}
         run: >
           bash .github/workflows/run_python.sh .github/workflows/ci.py compare-replay-uploads
           --repo ${{ github.repository }}
@@ -343,16 +344,8 @@ jobs:
           --run-id ${{ github.run_id }}
           --shard ${{ matrix.shard_index }}/4
 
-      - name: Upload compare report
-        uses: actions/upload-artifact@v7
-        if: failure()
-        with:
-          name: replay-uploads-compare-report-${{ matrix.shard_index }}-of-4
-          path: ${{ github.workspace }}/.tmp/replay_uploads_compare_report
-          if-no-files-found: ignore
-
-      # What failed and where its report is, for the pull request comment
-      # (the replay-report job of ci.yml).
+      # What failed and what it was compared against, for the pull request
+      # comment (the Replay report job of ci.yml).
       - name: Upload summary
         uses: actions/upload-artifact@v7
         if: failure()
@@ -361,13 +354,17 @@ jobs:
           path: ${{ github.workspace }}/.tmp/replay_uploads_summary
           if-no-files-found: ignore
 
+      # This shard's results and, when the compare step ran, the baseline build's.
       - name: Archive test results
         if: failure()
         shell: bash
         run: |
-          if [[ -d ".tmp/replay_uploads_test_results" ]] ; then
-            cd .tmp/replay_uploads_test_results
-            bash ../../.github/workflows/run_python.sh -m tarfile -c ../replay_uploads_test_results.tar .
+          cd .tmp
+          dirs=""
+          [[ -d replay_uploads_test_results ]] && dirs="$dirs replay_uploads_test_results"
+          [[ -d replay_uploads_baseline/test_results ]] && dirs="$dirs replay_uploads_baseline/test_results"
+          if [[ -n "$dirs" ]] ; then
+            bash ../.github/workflows/run_python.sh -m tarfile -c replay_uploads_test_results.tar $dirs
           fi
 
       # Not named replays-*: the compare report collects those as test suite shards.

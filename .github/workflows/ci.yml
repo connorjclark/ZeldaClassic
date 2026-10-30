@@ -142,11 +142,28 @@ jobs:
       - name: Comment on the pull request
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SURGE_TOKEN: ${{ secrets.SURGE_TOKEN }}
         run: >
           bash .github/workflows/run_python.sh .github/workflows/ci.py report-replays
           --repo ${{ github.repository }}
           --run-id ${{ github.run_id }}
           --pr ${{ github.event.pull_request.number || 0 }}
+
+      # In case publishing it to surge failed.
+      - name: Upload compare report
+        uses: actions/upload-artifact@v7
+        with:
+          name: replay-uploads-compare-report
+          path: ${{ github.workspace }}/.tmp/replay_report/uploads_compare_report
+          if-no-files-found: ignore
+
+      # What the comment says, for the refresh workflow.
+      - name: Upload summary
+        uses: actions/upload-artifact@v7
+        with:
+          name: replay-report
+          path: ${{ github.workspace }}/.tmp/replay_report/summary.json
+          if-no-files-found: ignore
 
   web:
     needs: warm-lfs-cache
