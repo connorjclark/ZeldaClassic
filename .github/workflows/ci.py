@@ -1044,7 +1044,13 @@ def _find_baseline_run_for_replay_uploads(gh, repo_str, branch, workflow_file, a
         if i >= 40:
             break
 
-        uploads_jobs = [job for job in _get_run_jobs(run) if 'Replay uploads' in job.name]
+        # The platforms that don't run the uploaded replays still list the job,
+        # skipped.
+        uploads_jobs = [
+            job
+            for job in _get_run_jobs(run)
+            if 'Replay uploads' in job.name and job.conclusion != 'skipped'
+        ]
         if not uploads_jobs or any(job.conclusion != 'success' for job in uploads_jobs):
             continue
 
@@ -1479,9 +1485,11 @@ def _build_uploads_compare_report(artifacts_dir: Path, run_id) -> tuple:
 
 # The conclusions of a CI run's test suite replay jobs and its uploaded replay
 # jobs, each folded to one of: success (every job), failure (any job), none
-# (no such job) or other (cancelled, skipped, ...).
+# (no such job, or only skipped ones: the platforms that don't run the uploaded
+# replays still list the job) or other (cancelled, ...).
 def _replay_job_outcomes(run) -> tuple[str, str]:
     def fold(conclusions: list[str]) -> str:
+        conclusions = [c for c in conclusions if c != 'skipped']
         if not conclusions:
             return 'none'
         if all(c == 'success' for c in conclusions):
