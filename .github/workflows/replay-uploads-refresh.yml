@@ -12,8 +12,10 @@ name: Refresh uploaded replay baselines
 # - Add the `refresh-uploaded-replays` label to a pull request whose "Replay
 #   uploads" jobs failed. Only the replays that failed are re-recorded, with the
 #   build CI already made for the PR's commit, so nothing is rebuilt. The new
-#   pins are committed to the PR branch, CI runs again, and a comment on the PR
-#   says what moved. The label is removed when done; add it again to retry.
+#   pins are pushed to the PR branch as a fixup of its head commit (fold it in
+#   with `git rebase -i --autosquash` before merging), CI runs again, and a
+#   comment on the PR says what moved. The label is removed when done; add it
+#   again to retry.
 #
 # - Dispatch it on a branch to re-record every known good replay with a fresh
 #   build of that branch, and commit the result there.

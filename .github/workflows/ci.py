@@ -1517,7 +1517,7 @@ def report_replay_uploads(ctx: CiContext, args):
             '',
             f'If this is an intended change, add the `{REPLAY_UPLOADS_REFRESH_LABEL}` label to this pull request: '
             'the baselines of these replays are re-recorded with the CI build of this commit, '
-            'the new pins are committed to this branch, and CI runs again.',
+            'the new pins are pushed to this branch as a fixup of its head commit, and CI runs again.',
         ]
 
     _upsert_pr_comment(pr, REPLAY_UPLOADS_REPORT_MARKER, '\n'.join(lines))
@@ -1542,9 +1542,9 @@ def report_replay_uploads(ctx: CiContext, args):
 def refresh_replay_uploads(ctx: CiContext, args):
     """Two ways in. From a pull request (the refresh-uploaded-replays label):
     takes the failing replays and the build from the PR's latest CI run, so
-    nothing is rebuilt, re-records just those, commits the json to the PR
-    branch, dispatches CI on it (a push by the Actions token starts no run on
-    its own) and leaves a comment. From a workflow_dispatch: re-records every
+    nothing is rebuilt, re-records just those, pushes the json to the PR branch
+    as a fixup of its head commit, dispatches CI on it (a push by the Actions
+    token starts no run on its own) and leaves a comment. From a workflow_dispatch: re-records every
     known good replay with the build at --build-folder, and commits to the
     branch the workflow ran on.
     """
@@ -1700,21 +1700,27 @@ def refresh_replay_uploads(ctx: CiContext, args):
         logger.error("No branch to commit to (GITHUB_REF_NAME is not set)")
         sys.exit(1)
 
-    # From the json's perspective these are the pins that moved; the message
-    # lists them by quest so the commit reads without the hashes.
-    message_lines = [
-        f'test!: refresh {len(moved)} uploaded replay baseline{"s" if len(moved) != 1 else ""}',
-        '',
-    ]
+    count = f'{len(moved)} uploaded replay baseline{"s" if len(moved) != 1 else ""}'
     if pr:
-        message_lines.append(
-            f'Re-recorded with the CI build of {head_sha} (run {run.id}) for #{pr.number}.'
-        )
+        # A fixup of the PR's head commit rather than a commit of its own, so
+        # that `git rebase -i --autosquash` folds the new pins into the change
+        # that moved them and every commit of the PR passes on its own. A second
+        # refresh of the same head finds the first fixup there, and targets what
+        # it targets.
+        subject = subprocess.check_output(
+            ['git', 'log', '-1', '--format=%s', 'HEAD'], text=True
+        ).strip()
+        if not subject.startswith('fixup! '):
+            subject = f'fixup! {subject}'
+        message_lines = [
+            subject,
+            '',
+            f'Refreshes {count}, re-recorded with the CI build of {head_sha} (run {run.id}) for #{pr.number}.',
+        ]
     else:
-        message_lines.append('Re-recorded with this branch\'s build.')
+        message_lines = [f'test!: refresh {count}', '', "Re-recorded with this branch's build."]
     message_lines.append('')
-    for key in moved:
-        message_lines.append(key)
+    message_lines += moved
     message_path = tmp_dir / 'replay_uploads_refresh_commit.txt'
     message_path.write_text('\n'.join(message_lines) + '\n', 'utf-8')
 
@@ -1736,7 +1742,12 @@ def refresh_replay_uploads(ctx: CiContext, args):
         ci_run = _start_ci_after_token_push(repo.get_workflow('ci.yml'), branch, new_sha)
         ci_text = f'[started CI]({ci_run.html_url})' if ci_run else 'started CI'
         lines = [
-            f'Refreshed {len(moved)} baseline{"s" if len(moved) != 1 else ""} with {source}, committed as {new_sha[:10]}, and {ci_text} on it.',
+            f'Refreshed {count} with {source}, pushed as {new_sha[:10]} (a fixup of {head_sha[:10]}), and {ci_text} on it.',
+            '',
+            'Before merging, fold it into your commit:',
+            '```',
+            f'git pull --rebase && git rebase -i --autosquash origin/{pr.base.ref} && git push --force-with-lease',
+            '```',
             '',
         ]
         if compare_links:
