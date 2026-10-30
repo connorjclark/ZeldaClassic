@@ -43,7 +43,11 @@ namespace fs = std::filesystem;
 #ifdef HAS_SENTRY
 #define SENTRY_BUILD_STATIC 1
 #include "sentry.h"
+#endif
 
+// Only official builds report crashes (CMakeLists.txt defines SENTRY_REPORTING), so a CI build run
+// on someone's machine doesn't. Other builds with Sentry still link it.
+#ifdef SENTRY_REPORTING
 void sentry_atexit()
 {
     sentry_close();
@@ -65,12 +69,6 @@ static sentry_value_t on_crash_callback(const sentry_ucontext_t *uctx, sentry_va
 
 static void init_sentry(App id)
 {
-	// Only official builds report crashes (see SENTRY_REPORTING in CMakeLists.txt), so a CI build
-	// run on someone's machine doesn't.
-#ifndef SENTRY_REPORTING
-	return;
-#endif
-
 	// Crashes during CI test runs would pollute the project, so don't report them.
 	if (is_ci())
 		return;
@@ -218,7 +216,7 @@ static bool is_exe_in_bin_folder()
 
 void zapp_set_crash_cb([[maybe_unused]] std::function<void()> cb)
 {
-#ifdef HAS_SENTRY
+#ifdef SENTRY_REPORTING
 	crash_cb = cb;
 #endif
 }
@@ -272,7 +270,7 @@ void common_main_setup(App id, int argc_, char **argv_)
 #endif
 	}
 
-#ifdef HAS_SENTRY
+#ifdef SENTRY_REPORTING
 	init_sentry(id);
 #endif
 
