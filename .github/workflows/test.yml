@@ -379,10 +379,11 @@ jobs:
 
   # One comment on the pull request for all the shards: which uploaded replays
   # failed, how, and the compare report of each shard. Edited in place by later
-  # runs, and by a passing run after a failing one.
+  # runs, and by a passing run after a failing one. A dispatched run (what the
+  # refresh workflow starts after its push) finds the branch's open PR itself.
   replay-uploads-report:
     needs: replay-uploads
-    if: ${{ always() && inputs.replay-uploads && github.event_name == 'pull_request' && needs.replay-uploads.result != 'skipped' }}
+    if: ${{ always() && inputs.replay-uploads && needs.replay-uploads.result != 'skipped' && (github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch') }}
     name: Replay uploads report
     runs-on: ubuntu-latest
     permissions:
@@ -418,7 +419,7 @@ jobs:
           bash .github/workflows/run_python.sh .github/workflows/ci.py report-replay-uploads
           --repo ${{ github.repository }}
           --run-id ${{ github.run_id }}
-          --pr ${{ github.event.pull_request.number }}
+          --pr ${{ github.event.pull_request.number || 0 }}
           --result ${{ needs.replay-uploads.result }}
 
   # Its own job, so the unit tests run alongside the replay shards.
