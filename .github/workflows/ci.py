@@ -1335,7 +1335,7 @@ def _get_run_jobs(run):
 # rather than piling up a new comment per push.
 REPLAY_REPORT_MARKER = '<!-- zc-replay-report -->'
 REPLAY_REFRESH_MARKER = '<!-- zc-replay-refresh -->'
-REPLAY_UPLOADS_REFRESH_LABEL = 'refresh-uploaded-replays'
+REPLAY_REFRESH_LABEL = 'refresh-replays'
 
 
 def _upsert_pr_comment(pr, marker: str, body: str, create: bool = True):
@@ -1629,13 +1629,18 @@ def report_replays(ctx: CiContext, args):
                 report += f" Baseline: {', '.join(baselines)}. It shows the first differing frame of each replay, and the frames around it."
             lines.append(report)
             lines += sorted({s['note'] for s in summaries if s['note']})
-            lines += [
-                '',
-                f'If this is an intended change, add the `{REPLAY_UPLOADS_REFRESH_LABEL}` label to this pull request: '
-                'the baselines of these replays are re-recorded with the CI build of this commit, '
-                'the new pins are pushed to this branch as a fixup of its head commit, and CI runs again.',
-            ]
         lines.append('')
+
+    if suite_failing or uploads_failing:
+        lines += [
+            '### Accepting the changes',
+            '',
+            f'If every change above is intended, add the `{REPLAY_REFRESH_LABEL}` label to this pull request: '
+            "CI re-records the failing test suite replays and the failing uploaded replays' baselines with the Linux build of this commit, "
+            'pushes them to this branch as a fixup of its head commit, and runs again. '
+            'A test suite replay that fails on some platforms only is a bug on those platforms, not a change to accept: '
+            'the re-recording gives it back unchanged.',
+        ]
 
     _upsert_pr_comment(pr, REPLAY_REPORT_MARKER, '\n'.join(lines))
     logger.info('\n'.join(lines))
@@ -1657,8 +1662,8 @@ def report_replays(ctx: CiContext, args):
 
 
 @command(
-    "refresh-replay-uploads",
-    help="Re-record the known good uploaded replays' baselines and commit the new pins; for a pull request, only its failing replays, with its CI build",
+    "refresh-replays",
+    help="Re-record and commit the replays that failed in a pull request's CI run (test suite and uploaded), or every known good uploaded replay's baseline",
 )
 @argument(
     "--pr",
@@ -1668,29 +1673,34 @@ def report_replays(ctx: CiContext, args):
 @argument(
     "--runs-on",
     default="ubuntu-22.04",
-    help="With --pr: the CI platform whose build and results to use",
+    help="With --pr: the CI platform whose build to re-record with",
 )
-@argument("--no-commit", action="store_true", help="Leave the refreshed json uncommitted")
-def refresh_replay_uploads(ctx: CiContext, args):
-    """Two ways in. From a pull request (the refresh-uploaded-replays label):
-    takes the failing replays and the build from the PR's latest CI run, so
-    nothing is rebuilt, re-records just those, pushes the json to the PR branch
-    as a fixup of its head commit, dispatches CI on it (a push by the Actions
-    token starts no run on its own) and leaves a comment. From a workflow_dispatch: re-records every
-    known good replay with the build at --build-folder, and commits to the
-    branch the workflow ran on.
+@argument("--no-commit", action="store_true", help="Leave the refreshed files uncommitted")
+def refresh_replays(ctx: CiContext, args):
+    """Two ways in. From a pull request (the refresh-replays label): takes the
+    replays that failed in the PR's latest CI run, the test suite's (on any
+    platform) and the uploaded ones, and the build of that run, so nothing is
+    rebuilt; re-records just those; pushes the .zplay files and the known good
+    json to the PR branch as a fixup of its head commit; dispatches CI on it (a
+    push by the Actions token starts no run on its own) and leaves a comment.
+    From a workflow_dispatch: re-records every known good uploaded replay with
+    the build at --build-folder, and commits to the branch the workflow ran on.
     """
     sys.path.append(str(root_dir / 'scripts'))
     sys.path.append(str(root_dir / 'tests'))
-    from github_helpers import _download_artifact
+    from github_helpers import _download_artifact, extract_tars
 
     known_good_path = root_dir / 'scripts/replay_uploads_known_good_replays.json'
-    cmd = [
+    uploads_cmd = [
         sys.executable,
         '-Xutf8',
         root_dir / 'scripts/replay_uploads.py',
         '--refresh_known_good',
     ]
+    # Known good json keys to re-record (None: all of them), and test suite
+    # replays (tests/replays/<name>) to update.
+    keys = None
+    suite_names = []
 
     pr = None
     compare_links = []
@@ -1699,11 +1709,9 @@ def refresh_replay_uploads(ctx: CiContext, args):
     def finish(message: str, ok: bool):
         if pr:
             logger.info(message)
-            _upsert_pr_comment(
-                pr, REPLAY_REFRESH_MARKER, f'## Uploaded replays refresh\n\n{message}'
-            )
+            _upsert_pr_comment(pr, REPLAY_REFRESH_MARKER, f'## Replays refresh\n\n{message}')
             try:
-                pr.remove_from_labels(REPLAY_UPLOADS_REFRESH_LABEL)
+                pr.remove_from_labels(REPLAY_REFRESH_LABEL)
             except Exception as e:
                 logger.warning(f"Could not remove the label: {e}")
         elif ok:
@@ -1719,8 +1727,8 @@ def refresh_replay_uploads(ctx: CiContext, args):
         head_sha = pr.head.sha
         if not pr.head.repo or pr.head.repo.full_name != ctx.repo:
             finish(
-                'The baselines can only be refreshed from a branch of this repository, not a fork: '
-                'the workflow has to push the new pins to the branch.',
+                'The replays can only be refreshed from a branch of this repository, not a fork: '
+                'the workflow has to push the new recordings to the branch.',
                 ok=False,
             )
 
@@ -1742,40 +1750,53 @@ def refresh_replay_uploads(ctx: CiContext, args):
                 f'CI is still running for {head_sha[:10]} ([run]({run.html_url})). Add the label again once it has finished.',
                 ok=False,
             )
-        uploads_jobs = [j for j in _get_run_jobs(run) if 'Replay uploads' in j.name]
-        if not uploads_jobs:
-            finish(f'[The CI run]({run.html_url}) for {head_sha[:10]} did not run the uploaded replays.', ok=False)
-        if all(j.conclusion == 'success' for j in uploads_jobs):
-            finish(f'Every uploaded replay passed in [the CI run]({run.html_url}) for {head_sha[:10]}, so there is nothing to refresh.', ok=True)
+        suite_outcome, uploads_outcome = _replay_job_outcomes(run)
+        if 'failure' not in (suite_outcome, uploads_outcome):
+            finish(f'Every replay passed in [the CI run]({run.html_url}) for {head_sha[:10]}, so there is nothing to refresh.', ok=True)
 
-        work_dir = tmp_dir / 'replay_uploads_refresh'
+        work_dir = tmp_dir / 'replays_refresh'
         if work_dir.exists():
             shutil.rmtree(work_dir)
         work_dir.mkdir(parents=True)
         artifacts = [a for a in run.get_artifacts() if not a.expired]
 
-        # The failing replays, from the test results the failing shards uploaded.
-        keys = []
-        results_prefix = f'replay-uploads-{args.runs_on}-{ctx.arch}-{ctx.compiler}-'
-        for artifact in artifacts:
-            if not artifact.name.startswith(results_prefix):
-                continue
-            dest = work_dir / artifact.name
-            _download_artifact(gh, ctx.repo, artifact, dest)
-            for tar_path in dest.glob('*.tar'):
-                with tarfile.open(tar_path) as tar:
-                    tar.extractall(dest / 'results')
-            # The shard's own results; the tar also holds the baseline build's.
-            for results_path in dest.rglob('test_results.json'):
+        def download_results(prefix: str, dest_root: Path):
+            for artifact in artifacts:
+                if artifact.name.startswith(prefix):
+                    _download_artifact(gh, ctx.repo, artifact, dest_root / artifact.name)
+            if dest_root.exists():
+                extract_tars(dest_root)
+
+        # The failing test suite replays, from every platform's shards: one
+        # that fails on only some platforms is re-recorded too, which gives the
+        # same file back when this platform agrees with the recording.
+        if suite_outcome == 'failure':
+            download_results('replays-', work_dir / 'suite')
+            suite_names = [e['name'] for e in _summarize_failing_suite_replays(work_dir / 'suite')]
+            if not suite_names:
+                finish(
+                    f'The failing Replays jobs of [the CI run]({run.html_url}) left no test results, '
+                    'so they failed before running any replay. See their logs.',
+                    ok=False,
+                )
+
+        # The failing uploaded replays, from the test results the failing shards
+        # uploaded (the tar also holds the baseline build's results).
+        if uploads_outcome == 'failure':
+            keys = []
+            download_results(
+                f'replay-uploads-{args.runs_on}-{ctx.arch}-{ctx.compiler}-', work_dir / 'uploads'
+            )
+            for results_path in (work_dir / 'uploads').rglob('test_results.json'):
                 if 'replay_uploads_baseline' not in results_path.parts:
                     keys += [f['key'] for f in _summarize_failing_uploaded_replays(results_path)]
-        keys = sorted(set(keys))
-        if not keys:
-            finish(
-                f'The failing Replay uploads jobs of [the CI run]({run.html_url}) left no test results, '
-                'so they failed before running any replay. See their logs.',
-                ok=False,
-            )
+            keys = sorted(set(keys))
+            if not keys:
+                finish(
+                    f'The failing Replay uploads jobs of [the CI run]({run.html_url}) left no test results, '
+                    'so they failed before running any replay. See their logs.',
+                    ok=False,
+                )
 
         # The compare report the run's Replay report job built, for the comment.
         artifact = next((a for a in artifacts if a.name == 'replay-report'), None)
@@ -1786,7 +1807,7 @@ def refresh_replay_uploads(ctx: CiContext, args):
             if report_summary.get('uploads_report_url'):
                 compare_links.append(report_summary['uploads_report_url'])
 
-        # The build of that run: what failed is what records the new baselines.
+        # The build of that run: what failed is what records the new recordings.
         build_artifact_name = f'build-{args.runs_on}-{ctx.arch}-{ctx.compiler}-{ctx.config}'
         artifact = next((a for a in artifacts if a.name == build_artifact_name), None)
         if not artifact:
@@ -1801,44 +1822,79 @@ def refresh_replay_uploads(ctx: CiContext, args):
         extract_package(
             ctx, argparse.Namespace(package=str(package), artifact_name=str(artifact_dir))
         )
-        cmd += ['--build_folder', ctx.get_binary_dir()]
-        for key in keys:
-            cmd += ['--only', key]
         source = f'the CI build of {head_sha[:10]} ([run]({run.html_url}))'
         branch = pr.head.ref
     else:
-        cmd += ['--build_folder', ctx.get_binary_dir()]
         branch = os.environ.get('GITHUB_REF_NAME')
 
+    binary_dir = ctx.get_binary_dir()
+
     before = json.loads(known_good_path.read_text('utf-8'))
-    logger.info(f"Running: {shlex.join(str(c) for c in cmd)}")
-    if subprocess.run(cmd).returncode != 0:
-        finish(
-            f'Re-recording with {source} failed: some replay no longer plays through, which is a bug to look into, not an intended change. See the job log.',
-            ok=False,
-        )
+    if keys is None or keys:
+        uploads_cmd += ['--build_folder', binary_dir]
+        for key in keys or []:
+            uploads_cmd += ['--only', key]
+        logger.info(f"Running: {shlex.join(str(c) for c in uploads_cmd)}")
+        if subprocess.run(uploads_cmd).returncode != 0:
+            finish(
+                f'Re-recording the uploaded replays with {source} failed: some replay no longer plays through, which is a bug to look into, not an intended change. See the job log.',
+                ok=False,
+            )
     after = json.loads(known_good_path.read_text('utf-8'))
     moved = sorted(k for k in after if after[k] != before.get(k))
-    if not moved:
+
+    updated = []
+    if suite_names:
+        suite_cmd = [
+            sys.executable,
+            '-Xutf8',
+            root_dir / 'tests/run_replay_tests.py',
+            '--update',
+            f'--build_folder={binary_dir}',
+            f'--build_type={ctx.config}',
+            f'--test_results_folder={tmp_dir / "replays_refresh/test_results"}',
+            f'--ci={args.runs_on}_{ctx.arch}',
+        ]
+        suite_cmd += [f'--filter={name}' for name in suite_names]
+        logger.info(f"Running: {shlex.join(str(c) for c in suite_cmd)}")
+        if subprocess.run(suite_cmd).returncode != 0:
+            finish(
+                f'Re-recording the test suite replays with {source} failed: some replay no longer plays through, which is a bug to look into, not an intended change. See the job log.',
+                ok=False,
+            )
+        # The .zplay files are rewritten in place, and only when they changed.
+        status = subprocess.check_output(
+            ['git', 'status', '--porcelain', '-z', '--', 'tests/replays'], text=True
+        )
+        updated = sorted(entry[3:] for entry in status.split('\0') if entry.strip())
+
+    if not moved and not updated:
         finish(
-            f'Re-recording with {source} gave the pinned baselines back unchanged, so there is nothing to commit. '
-            'The failure is not in what the replays record; see the job logs.',
+            f'Re-recording with {source} gave every replay back unchanged, so there is nothing to commit. '
+            'The failures are not in what the replays record; see the job logs.',
             ok=True,
         )
+    what = ' and '.join(
+        part
+        for part in [
+            moved and f'{len(moved)} uploaded replay baseline{"s" if len(moved) != 1 else ""}',
+            updated and f'{len(updated)} test suite replay{"s" if len(updated) != 1 else ""}',
+        ]
+        if part
+    )
     if args.no_commit:
-        logger.info(f"{len(moved)} baselines refreshed, left uncommitted")
+        logger.info(f"Refreshed {what}, left uncommitted")
         return
     if not branch:
         logger.error("No branch to commit to (GITHUB_REF_NAME is not set)")
         sys.exit(1)
 
-    count = f'{len(moved)} uploaded replay baseline{"s" if len(moved) != 1 else ""}'
     if pr:
         # A fixup of the PR's head commit rather than a commit of its own, so
-        # that `git rebase -i --autosquash` folds the new pins into the change
-        # that moved them and every commit of the PR passes on its own. A second
-        # refresh of the same head finds the first fixup there, and targets what
-        # it targets.
+        # that `git rebase -i --autosquash` folds the new recordings into the
+        # change that moved them and every commit of the PR passes on its own.
+        # A second refresh of the same head finds the first fixup there, and
+        # targets what it targets.
         subject = subprocess.check_output(
             ['git', 'log', '-1', '--format=%s', 'HEAD'], text=True
         ).strip()
@@ -1847,13 +1903,14 @@ def refresh_replay_uploads(ctx: CiContext, args):
         message_lines = [
             subject,
             '',
-            f'Refreshes {count}, re-recorded with the CI build of {head_sha} (run {run.id}) for #{pr.number}.',
+            f'Refreshes {what}, re-recorded with the CI build of {head_sha} (run {run.id}) for #{pr.number}.',
         ]
     else:
-        message_lines = [f'test!: refresh {count}', '', "Re-recorded with this branch's build."]
+        message_lines = [f'test!: refresh {what}', '', "Re-recorded with this branch's build."]
     message_lines.append('')
     message_lines += moved
-    message_path = tmp_dir / 'replay_uploads_refresh_commit.txt'
+    message_lines += updated
+    message_path = tmp_dir / 'replays_refresh_commit.txt'
     message_path.write_text('\n'.join(message_lines) + '\n', 'utf-8')
 
     run_cmd(['git', 'config', 'user.name', 'github-actions[bot]'])
@@ -1865,7 +1922,13 @@ def refresh_replay_uploads(ctx: CiContext, args):
             '41898282+github-actions[bot]@users.noreply.github.com',
         ]
     )
-    run_cmd(['git', 'add', str(known_good_path)])
+    if moved:
+        run_cmd(['git', 'add', str(known_good_path)])
+    if updated:
+        # The replays are LFS files: this sets up the filter that turns them
+        # into pointers on add, and the hook that pushes their objects.
+        run_cmd(['git', 'lfs', 'install', '--local'])
+        run_cmd(['git', 'add', '--', *updated])
     run_cmd(['git', 'commit', '-F', str(message_path)])
     run_cmd(['git', 'push', 'origin', f'HEAD:refs/heads/{branch}'])
     new_sha = subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip()
@@ -1874,7 +1937,7 @@ def refresh_replay_uploads(ctx: CiContext, args):
         ci_run = _start_ci_after_token_push(repo.get_workflow('ci.yml'), branch, new_sha)
         ci_text = f'[started CI]({ci_run.html_url})' if ci_run else 'started CI'
         lines = [
-            f'Refreshed {count} with {source}, pushed as {new_sha[:10]} (a fixup of {head_sha[:10]}), and {ci_text} on it.',
+            f'Refreshed {what} with {source}, pushed as {new_sha[:10]} (a fixup of {head_sha[:10]}), and {ci_text} on it.',
             '',
             'Before merging, fold it into your commit:',
             '```',
@@ -1884,12 +1947,13 @@ def refresh_replay_uploads(ctx: CiContext, args):
         ]
         if compare_links:
             lines.append(
-                f"What changed, old baseline against this commit: {', '.join(compare_links)}."
+                f"What changed in the uploaded replays, old baselines against this commit: {', '.join(compare_links)}."
             )
             lines.append('')
         lines += [f'- `{key}`' for key in moved]
+        lines += [f'- `{path}`' for path in updated]
         finish('\n'.join(lines), ok=True)
-    logger.info(f"Refreshed {len(moved)} baselines, committed as {new_sha[:10]} on {branch}")
+    logger.info(f"Refreshed {what}, committed as {new_sha[:10]} on {branch}")
 
 
 def main():

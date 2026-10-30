@@ -257,8 +257,8 @@ jobs:
   # baselines live in the replay bucket, not the repo, so this needs the bucket's
   # read key and is skipped without it (pull requests from forks). Their qst files
   # come from the public quest database. Refreshing the baselines after an
-  # intended change is a separate workflow (replay-uploads-refresh.yml), which
-  # a pull request starts with the refresh-uploaded-replays label.
+  # intended change is a separate workflow (replays-refresh.yml), which a pull
+  # request starts with the refresh-replays label.
   replay-uploads:
     needs: build
     if: inputs.replay-uploads

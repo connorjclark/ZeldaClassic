@@ -41,7 +41,7 @@
 # pass, otherwise nothing is written - a replay that no longer passes is a bug to
 # investigate, not something to silently drop. Add `--only <key>` (repeatable) to
 # re-record just those and keep the other pins. CI does the same for a pull
-# request when it gets the refresh-uploaded-replays label (see infra/README.md).
+# request when it gets the refresh-replays label (see infra/README.md).
 #
 #   python scripts/replay_uploads.py --update --update_known_good
 #
@@ -83,7 +83,7 @@
 # CI asserts the known good replays on every run (the "Replay uploads" jobs in
 # .github/workflows/test.yml, Linux x64 only) with --ci, which downloads just the
 # pinned baselines and qst files, and refreshes them on demand with
-# .github/workflows/replay-uploads-refresh.yml. CI has no ~/.aws profile; it
+# .github/workflows/replays-refresh.yml. CI has no ~/.aws profile; it
 # provides the bucket key as AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY instead.
 
 import argparse
