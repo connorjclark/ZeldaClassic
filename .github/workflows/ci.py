@@ -1326,6 +1326,7 @@ def _github_from_env():
 
 
 def _get_run_jobs(run):
+    sys.path.append(str(root_dir / 'tests'))
     from github import PaginatedList
     from workflow_job import WorkflowJob
 
