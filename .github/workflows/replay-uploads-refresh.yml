@@ -1,23 +1,47 @@
 name: Refresh uploaded replay baselines
 
-# Re-records the baselines of the known good uploaded replays with the current
-# build (see scripts/replay_uploads.py --refresh_known_good), uploads them to the
-# replay bucket, and leaves the refreshed scripts/replay_uploads_known_good_replays.json
-# as an artifact to commit. Run this after a change that intentionally alters
-# gameplay or graphics in a way the uploaded replays pick up - the same situation
-# where the test suite's replays get updated.
+# Re-records the baselines of the known good uploaded replays (see
+# scripts/replay_uploads.py --refresh_known_good), uploads them to the replay
+# bucket, and commits the refreshed scripts/replay_uploads_known_good_replays.json.
+# Run this after a change that intentionally alters gameplay or graphics in a way
+# the uploaded replays pick up - the same situation where the test suite's replays
+# get updated.
+#
+# Two ways to run it:
+#
+# - Add the `refresh-uploaded-replays` label to a pull request whose "Replay
+#   uploads" jobs failed. Only the replays that failed are re-recorded, with the
+#   build CI already made for the PR's commit, so nothing is rebuilt. The new
+#   pins are committed to the PR branch, CI runs again, and a comment on the PR
+#   says what moved. The label is removed when done; add it again to retry.
+#
+# - Dispatch it on a branch to re-record every known good replay with a fresh
+#   build of that branch, and commit the result there.
 #
 # This is the one place the bucket's write key is used; the uploads job in
 # test.yml only reads.
 
 on:
   workflow_dispatch:
+    inputs:
+      commit:
+        type: boolean
+        description: 'Commit the refreshed json to this branch (otherwise it is only an artifact)'
+        default: true
+  pull_request:
+    types: [labeled]
 
 env:
   PYTHONUNBUFFERED: '1'
 
+# Two label adds in a row would race on the branch.
+concurrency:
+  group: replay-uploads-refresh-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: false
+
 jobs:
   build:
+    if: github.event_name == 'workflow_dispatch'
     # See https://github.com/community/community/discussions/40777
     # uses: ./.github/workflows/build.yml
     uses: ZQuestClassic/ZQuestClassic/.github/workflows/build.yml@main
@@ -29,14 +53,18 @@ jobs:
       debug-info: true
 
   refresh:
+    if: github.event_name == 'workflow_dispatch'
     needs: build
     name: Replay uploads refresh
     runs-on: ubuntu-22.04
     timeout-minutes: 300
+    permissions:
+      contents: write
     steps:
       - name: git clone
         uses: connorjclark/action-cached-lfs-checkout@3ea4dc59b06f3baa8c01ba891fbfc2dbfdce5bc8
         with:
+          include: ''
           enableCrossOsArchive: true
 
       - name: Setup Python
@@ -75,9 +103,13 @@ jobs:
           AWS_SECRET_ACCESS_KEY: ${{ secrets.ZC_REPLAYS_WRITE_SECRET_ACCESS_KEY }}
           BUILD_TYPE: RelWithDebInfo
         run: >
-          bash .github/workflows/run_python.sh scripts/replay_uploads.py
-          --refresh_known_good
-          --build_folder zc-extracted/bin
+          bash .github/workflows/run_python.sh .github/workflows/ci.py refresh-replay-uploads
+          --repo ${{ github.repository }}
+          --config RelWithDebInfo
+          --arch x64
+          --compiler clang
+          --build-folder zc-extracted
+          ${{ inputs.commit && '' || '--no-commit' }}
 
       - name: Upload known good replays json
         uses: actions/upload-artifact@v7
@@ -93,6 +125,69 @@ jobs:
           bash ../.github/workflows/run_python.sh -m tarfile -c replay_uploads_test_results.tar replay_uploads_test_results*
 
       # Not named replays-*: the compare report collects those as test suite shards.
+      - name: Upload test results
+        uses: actions/upload-artifact@v7
+        if: failure()
+        with:
+          name: replay-uploads-refresh-test-results
+          path: ${{ github.workspace }}/.tmp/replay_uploads_test_results.tar
+
+  refresh-pr:
+    if: github.event_name == 'pull_request' && github.event.label.name == 'refresh-uploaded-replays'
+    name: Replay uploads refresh (pull request)
+    runs-on: ubuntu-22.04
+    timeout-minutes: 300
+    permissions:
+      # Push the json, comment and unlabel, and start CI on the new commit.
+      contents: write
+      pull-requests: write
+      actions: write
+    steps:
+      # The PR branch itself (not the merge commit), to push the json to it.
+      - name: git clone
+        uses: connorjclark/action-cached-lfs-checkout@3ea4dc59b06f3baa8c01ba891fbfc2dbfdce5bc8
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+          include: ''
+          enableCrossOsArchive: true
+
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+          cache: pip
+
+      - name: Install Python dependencies
+        run: pip install -r requirements.txt
+
+      - name: Install Linux Test Dependencies
+        run: sudo apt-get update && sudo apt-get install libopengl0 lldb libpulse0 xvfb
+
+      - run: mkdir -p .tmp
+
+      - name: Refresh the failing known good replays
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.ZC_REPLAYS_WRITE_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.ZC_REPLAYS_WRITE_SECRET_ACCESS_KEY }}
+          BUILD_TYPE: RelWithDebInfo
+        run: >
+          bash .github/workflows/run_python.sh .github/workflows/ci.py refresh-replay-uploads
+          --repo ${{ github.repository }}
+          --config RelWithDebInfo
+          --arch x64
+          --compiler clang
+          --build-folder zc-extracted
+          --runs-on ubuntu-22.04
+          --pr ${{ github.event.pull_request.number }}
+
+      - name: Archive test results
+        if: failure()
+        shell: bash
+        run: |
+          cd .tmp
+          bash ../.github/workflows/run_python.sh -m tarfile -c replay_uploads_test_results.tar replay_uploads_test_results*
+
       - name: Upload test results
         uses: actions/upload-artifact@v7
         if: failure()
