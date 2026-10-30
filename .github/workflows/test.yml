@@ -257,7 +257,8 @@ jobs:
   # baselines live in the replay bucket, not the repo, so this needs the bucket's
   # read key and is skipped without it (pull requests from forks). Their qst files
   # come from the public quest database. Refreshing the baselines after an
-  # intended change is a separate workflow (replay-uploads-refresh.yml).
+  # intended change is a separate workflow (replay-uploads-refresh.yml), which
+  # a pull request starts with the refresh-uploaded-replays label.
   replay-uploads:
     needs: build
     if: inputs.replay-uploads
@@ -350,6 +351,15 @@ jobs:
           path: ${{ github.workspace }}/.tmp/replay_uploads_compare_report
           if-no-files-found: ignore
 
+      # What failed and where its report is, for the pull request comment below.
+      - name: Upload summary
+        uses: actions/upload-artifact@v7
+        if: failure()
+        with:
+          name: replay-uploads-summary-${{ matrix.shard_index }}-of-4
+          path: ${{ github.workspace }}/.tmp/replay_uploads_summary
+          if-no-files-found: ignore
+
       - name: Archive test results
         if: failure()
         shell: bash
@@ -366,6 +376,50 @@ jobs:
         with:
           name: replay-uploads-${{ inputs.runs-on }}-${{ inputs.arch }}-${{ inputs.compiler }}-${{ matrix.shard_index }}-of-4
           path: ${{ github.workspace }}/.tmp/replay_uploads_test_results.tar
+
+  # One comment on the pull request for all the shards: which uploaded replays
+  # failed, how, and the compare report of each shard. Edited in place by later
+  # runs, and by a passing run after a failing one.
+  replay-uploads-report:
+    needs: replay-uploads
+    if: ${{ always() && inputs.replay-uploads && github.event_name == 'pull_request' && needs.replay-uploads.result != 'skipped' }}
+    name: Replay uploads report
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - name: git clone
+        uses: connorjclark/action-cached-lfs-checkout@3ea4dc59b06f3baa8c01ba891fbfc2dbfdce5bc8
+        with:
+          include: ''
+          enableCrossOsArchive: true
+
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+          cache: pip
+
+      - name: Install Python dependencies
+        run: pip install -r requirements.txt
+
+      - name: Download summaries
+        uses: actions/download-artifact@v6
+        with:
+          pattern: replay-uploads-summary-*
+          path: .tmp/replay_uploads_summary
+          merge-multiple: true
+
+      - name: Comment on the pull request
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: >
+          bash .github/workflows/run_python.sh .github/workflows/ci.py report-replay-uploads
+          --repo ${{ github.repository }}
+          --run-id ${{ github.run_id }}
+          --pr ${{ github.event.pull_request.number }}
+          --result ${{ needs.replay-uploads.result }}
 
   # Its own job, so the unit tests run alongside the replay shards.
   unit-tests:

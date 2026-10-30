@@ -1038,20 +1038,13 @@ def compare_replays(ctx: CiContext, args):
 # refreshed separately from the test suite's, so the run's overall conclusion
 # says nothing about them.
 def _find_baseline_run_for_replay_uploads(gh, repo_str, branch, workflow_file, artifact_name):
-    from github import PaginatedList
-    from workflow_job import WorkflowJob
-
     repo = gh.get_repo(repo_str)
     workflow = repo.get_workflow(workflow_file)
     for i, run in enumerate(workflow.get_runs(branch=branch, status='completed')):
         if i >= 40:
             break
 
-        # TODO: remove when https://github.com/PyGithub/PyGithub/pull/1951 is released.
-        jobs = PaginatedList.PaginatedList(
-            WorkflowJob, run._requester, run.jobs_url, dict(), list_item='jobs'
-        )
-        uploads_jobs = [job for job in jobs if 'Replay uploads' in job.name]
+        uploads_jobs = [job for job in _get_run_jobs(run) if 'Replay uploads' in job.name]
         if not uploads_jobs or any(job.conclusion != 'success' for job in uploads_jobs):
             continue
 
@@ -1111,6 +1104,34 @@ def compare_replay_uploads(ctx: CiContext, args):
         logger.error(f"No test results at {test_results_path}")
         sys.exit(1)
 
+    # What this shard found, for the pull request comment (report-replay-uploads
+    # gathers one of these from every shard). Written now, so a failure of this
+    # step still leaves the list of failing replays, and again with the report.
+    shard_parts = args.shard.split('/') if '/' in args.shard else []
+    shard_slug = '-'.join(shard_parts) or 'x'
+    summary_dir = tmp_dir / 'replay_uploads_summary'
+    summary_dir.mkdir(parents=True, exist_ok=True)
+    summary = {
+        'shard': args.shard,
+        'run_id': args.run_id,
+        'failing': _summarize_failing_uploaded_replays(test_results_path),
+        'report_url': None,
+        'report_artifact': (
+            f'replay-uploads-compare-report-{shard_parts[0]}-of-{shard_parts[1]}'
+            if shard_parts
+            else None
+        ),
+        'baseline': None,
+        'note': None,
+    }
+
+    def write_summary():
+        (summary_dir / f'shard-{shard_slug}.json').write_text(
+            json.dumps(summary, indent=2), 'utf-8'
+        )
+
+    write_summary()
+
     # The failing replays as paths, plus the frames to snapshot around each
     # failure. Raises when every failure was a crash or a stop without a frame:
     # nothing to compare then, which is not an error of this step.
@@ -1118,6 +1139,8 @@ def compare_replay_uploads(ctx: CiContext, args):
         replay_args = get_args_for_collect_baseline_from_test_results([test_results_path])
     except Exception as e:
         logger.warning(f"Nothing to compare: {e}")
+        summary['note'] = 'Nothing to compare: every failure was a crash or a stop without a frame.'
+        write_summary()
         return
 
     baseline_dir = tmp_dir / 'replay_uploads_baseline'
@@ -1152,6 +1175,10 @@ def compare_replay_uploads(ctx: CiContext, args):
             logger.warning(
                 f"No recent {args.baseline_workflow} run on {branch} passed the uploaded replays and still has {artifact_name}, so there is nothing to compare against."
             )
+            summary['note'] = (
+                f'No compare report: no recent run on {branch} passed the uploaded replays and still has its build.'
+            )
+            write_summary()
             return
 
         baseline_run_id = run.id
@@ -1236,6 +1263,10 @@ def compare_replay_uploads(ctx: CiContext, args):
             # The report is still uploaded as an artifact by the workflow.
             logger.error("Deploying the report to surge failed")
 
+    summary['report_url'] = report_url
+    summary['baseline'] = baseline_label
+    write_summary()
+
     lines = [
         '## Uploaded replays compare report',
         '',
@@ -1248,6 +1279,190 @@ def compare_replay_uploads(ctx: CiContext, args):
     if summary_path:
         with open(summary_path, 'a', encoding='utf-8') as f:
             f.write('\n'.join(lines) + '\n')
+
+
+# The known good json's key for a local copy of an uploaded replay
+# (.tmp/replay_uploads/<qst hash>/<id>-updated-main.zplay -> <qst hash>/<id>.zplay).
+def _uploaded_replay_key(path: Path) -> str:
+    parts = path.parts
+    if 'replay_uploads' in parts:
+        parts = parts[parts.index('replay_uploads') + 1 :]
+    key = '/'.join(parts)
+    return re.sub(r'-updated-[^./]+\.zplay$', '.zplay', key)
+
+
+# One entry per replay that failed in the last run of a test results file: its
+# key in the known good json, its quest's title (when the replay is on disk),
+# and how it failed.
+def _summarize_failing_uploaded_replays(test_results_path: Path) -> list[dict]:
+    sys.path.append(str(root_dir / 'tests/lib'))
+    import replay_helpers
+
+    test_results = json.loads(test_results_path.read_text('utf-8'))
+    failing = []
+    for run in test_results['runs'][-1]:
+        if run['success']:
+            continue
+        path = Path(run['path'])
+        title = ''
+        if path.exists():
+            meta = replay_helpers.read_replay_meta(path)
+            title = meta.get('qst_title') or meta.get('qst', '')
+        frame = run.get('failing_frame')
+        if run.get('rng_desync'):
+            how = f'rng desync at frame {frame}'
+        elif frame is not None:
+            how = f'differs at frame {frame}'
+        elif run.get('stopped'):
+            how = 'stopped'
+        else:
+            how = f'crashed (exit code {run.get("exit_code")})'
+        failing.append(
+            {
+                'key': _uploaded_replay_key(path),
+                'title': title,
+                'frame': frame,
+                'how': how,
+            }
+        )
+    return failing
+
+
+def _github_from_env():
+    from github import Github
+
+    token = os.environ.get('GITHUB_TOKEN')
+    if not token:
+        logger.error("GITHUB_TOKEN environment variable is required.")
+        sys.exit(1)
+    return Github(token)
+
+
+def _get_run_jobs(run):
+    from github import PaginatedList
+    from workflow_job import WorkflowJob
+
+    # TODO: remove when https://github.com/PyGithub/PyGithub/pull/1951 is released.
+    return list(
+        PaginatedList.PaginatedList(
+            WorkflowJob, run._requester, run.jobs_url, dict(), list_item='jobs'
+        )
+    )
+
+
+# Each marker identifies one comment per pull request, which later runs edit
+# rather than piling up a new comment per push.
+REPLAY_UPLOADS_REPORT_MARKER = '<!-- zc-replay-uploads-report -->'
+REPLAY_UPLOADS_REFRESH_MARKER = '<!-- zc-replay-uploads-refresh -->'
+REPLAY_UPLOADS_REFRESH_LABEL = 'refresh-uploaded-replays'
+
+
+def _upsert_pr_comment(pr, marker: str, body: str, create: bool = True):
+    body = f'{marker}\n{body}'
+    for comment in pr.get_issue_comments():
+        if comment.body and comment.body.startswith(marker):
+            comment.edit(body)
+            return comment
+    if create:
+        return pr.create_issue_comment(body)
+    return None
+
+
+def _replay_cell(entry: dict) -> str:
+    qst_hash, _, name = entry['key'].partition('/')
+    return f'`{qst_hash[:8]}…/{name[:8]}…`'
+
+
+@command(
+    "report-replay-uploads",
+    help="Comment on the pull request with the uploaded replays that failed and where their compare reports are",
+)
+@argument("--run-id", required=True, help="Current GitHub Run ID")
+@argument("--pr", required=True, type=int, help="The pull request number")
+@argument(
+    "--result",
+    required=True,
+    help="The result of the Replay uploads jobs (success, failure, cancelled, ...)",
+)
+@argument("--summaries", default=str(tmp_dir / "replay_uploads_summary"))
+def report_replay_uploads(ctx: CiContext, args):
+    """Runs after every Replay uploads shard of a pull request's CI run. On a
+    failure it gathers the shards' summaries (see compare-replay-uploads) into
+    one comment: which replays failed, how, and the compare report of each
+    shard. Later runs edit that comment, so a PR has at most one.
+    """
+    gh = _github_from_env()
+    repo = gh.get_repo(ctx.repo)
+    pr = repo.get_pull(args.pr)
+    run = repo.get_workflow_run(int(args.run_id))
+    sha = run.head_sha[:10]
+
+    if args.result == 'success':
+        # Only an earlier failure's comment is worth updating.
+        _upsert_pr_comment(
+            pr,
+            REPLAY_UPLOADS_REPORT_MARKER,
+            f'## Uploaded replays: all pass on {sha}\n\n'
+            f'An earlier commit failed some of them (see this comment\'s edit history).',
+            create=False,
+        )
+        return
+    if args.result != 'failure':
+        logger.info(f"Replay uploads jobs ended with {args.result}, nothing to report")
+        return
+
+    summaries = [
+        json.loads(p.read_text('utf-8')) for p in sorted(Path(args.summaries).glob('*.json'))
+    ]
+    failing = [(entry, s) for s in summaries for entry in s['failing']]
+
+    lines = []
+    if not failing:
+        lines += [
+            f'## Uploaded replays: the jobs failed on {sha}',
+            '',
+            f'They failed before running any replay, so there is nothing to compare. See [the run]({run.html_url}).',
+        ]
+    else:
+        lines += [
+            f'## Uploaded replays: {len(failing)} failed on {sha}',
+            '',
+            '| Replay | Quest | Failure | Compare report |',
+            '|---|---|---|---|',
+        ]
+        for entry, s in sorted(failing, key=lambda f: f[0]['key']):
+            if s['report_url']:
+                report = f"[shard {s['shard']}]({s['report_url']})"
+            elif s['report_artifact'] and not s['note']:
+                report = f"artifact `{s['report_artifact']}`"
+            else:
+                report = 'none'
+            lines.append(
+                f"| {_replay_cell(entry)} | {entry['title']} | {entry['how']} | {report} |"
+            )
+        baselines = sorted({s['baseline'] for s in summaries if s['baseline']})
+        notes = sorted({s['note'] for s in summaries if s['note']})
+        lines += [
+            '',
+            '<details><summary>Replay keys</summary>',
+            '',
+        ]
+        lines += [f"- `{entry['key']}`" for entry, _ in sorted(failing, key=lambda f: f[0]['key'])]
+        lines += ['', '</details>', '']
+        if baselines:
+            lines.append(
+                f"Baseline: {', '.join(baselines)}. The report shows the first differing frame of each replay, and the frames around it."
+            )
+        lines += notes
+        lines += [
+            '',
+            f'If this is an intended change, add the `{REPLAY_UPLOADS_REFRESH_LABEL}` label to this pull request: '
+            'the baselines of these replays are re-recorded with the CI build of this commit, '
+            'the new pins are committed to this branch, and CI runs again.',
+        ]
+
+    _upsert_pr_comment(pr, REPLAY_UPLOADS_REPORT_MARKER, '\n'.join(lines))
+    logger.info('\n'.join(lines))
 
 
 def main():
