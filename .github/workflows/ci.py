@@ -514,7 +514,6 @@ def merge_mac_binaries(primary_dir: Path, secondary_dir: Path):
 @argument("--no-cache", dest="cache", action="store_false", help="Disable ccache")
 @argument("--official", action="store_true", help="Mark as an official build")
 @argument("--test-runner", action="store_true", help="Include base_test_runner target")
-@argument("--sentry", action="store_true", help="Build with Sentry support")
 def build(ctx: CiContext, args):
     logger.info(
         f"Starting build process (Config: {ctx.config}, Compiler: {ctx.compiler})..."
@@ -554,10 +553,6 @@ def build(ctx: CiContext, args):
 
     is_official = str(args.official).lower()
     wants_tests = str(args.test_runner).lower()
-    # Windows builds always link Sentry, so the Windows 7 import check (see package) covers it.
-    # Only official builds start it, and only release builds upload debug info.
-    sentry = str(args.sentry or ctx.is_windows).lower()
-
     # A mac universal build compiles the host architecture into `build`, the
     # other architecture into `build-<arch>`, and lipo-merges the second into
     # the first. A single configure with both archs in CMAKE_OSX_ARCHITECTURES
@@ -609,7 +604,10 @@ def build(ctx: CiContext, args):
             f"-DRELEASE_PLATFORM={ctx.platform_label}",
             "-DRELEASE_CHANNEL=3",
             f"-DREPO={ctx.repo}",
-            f"-DWANT_SENTRY={sentry}",
+            # Every build links Sentry, like the releases, so CI covers it (for example, the
+            # Windows 7 import check in package). Only official builds start it, and only
+            # release builds upload debug info (build.yml's `sentry` input).
+            "-DWANT_SENTRY=true",
             f"-DWANT_ZC_TESTS={wants_tests}",
         ]
         cmake_config_cmd.extend(extra_config_args)
