@@ -44,7 +44,7 @@ jobs:
     if: github.event_name == 'workflow_dispatch'
     # See https://github.com/community/community/discussions/40777
     # uses: ./.github/workflows/build.yml
-    uses: ZQuestClassic/ZQuestClassic/.github/workflows/build.yml@main
+    uses: connorjclark/ZeldaClassic/.github/workflows/build.yml@replay-uploads-pr-test2
     with:
       runs-on: ubuntu-22.04
       arch: x64
