@@ -39,7 +39,9 @@
 # re-records the baselines of the current known good replays (ex: after a change
 # that intentionally alters gameplay or graphics). Every one of them must still
 # pass, otherwise nothing is written - a replay that no longer passes is a bug to
-# investigate, not something to silently drop.
+# investigate, not something to silently drop. Add `--only <key>` (repeatable) to
+# re-record just those and keep the other pins. CI does the same for a pull
+# request when it gets the refresh-uploaded-replays label (see infra/README.md).
 #
 #   python scripts/replay_uploads.py --update --update_known_good
 #
@@ -143,6 +145,12 @@ parser.add_argument(
     '--refresh_known_good',
     action='store_true',
     help='Re-record the baselines of the known good replays. Fails if any no longer pass',
+)
+parser.add_argument(
+    '--only',
+    action='append',
+    metavar='KEY',
+    help='Only this replay (ex: <qst hash>/<id>.zplay); repeat for several. With --refresh_known_good, the other known good replays keep their pins',
 )
 parser.add_argument(
     '--use_pinned_baselines',
@@ -594,12 +602,18 @@ def run_replays():
         mode = 'assert'
 
     known_good = get_known_good_replays() if args.only_known_good else {}
+    if known_good and args.only:
+        unknown = [k for k in args.only if k not in known_good]
+        if unknown:
+            print(f'Not known good replays: {", ".join(unknown)}')
+            sys.exit(1)
     if known_good and all(pin.get('baseline') for pin in known_good.values()):
         # Only the pinned baselines and their qst files are needed (not the
         # originals, nor whole quest releases), which is what lets a refresh
         # run in CI.
-        original_keys = prepare_known_good_replays()
-        if args.refresh_known_good and len(original_keys) < len(known_good):
+        wanted_keys = args.only or list(known_good)
+        original_keys = prepare_known_good_replays(wanted_keys)
+        if args.refresh_known_good and len(original_keys) < len(wanted_keys):
             print(
                 'Some known good replays could not be prepared, so nothing was refreshed'
             )
@@ -614,6 +628,8 @@ def run_replays():
         original_keys = [key for key in original_keys if key not in exclude_keys]
         if args.only_known_good:
             original_keys = [k for k in original_keys if k in known_good]
+        if args.only:
+            original_keys = [k for k in original_keys if k in args.only]
     updated_keys = [get_updated_key(key) for key in original_keys]
     updated_paths = [get_replay_path(key) for key in updated_keys]
 
@@ -684,6 +700,10 @@ def run_replays():
 # enabled, and returns the ones that pass. Only those can be trusted as known good.
 def assert_with_jit(updated_ok_paths: list[Path], build_args: list[str]) -> set[Path]:
     jit_passed = set()
+    # Flags that change what the game does must apply to the check as well as
+    # to the recording.
+    if args.extra_args:
+        build_args = [*build_args, f'--extra_args={args.extra_args}']
     # With no paths, run_replay_tests.py would run every test replay instead.
     if updated_ok_paths:
         jit_test_results = run_replays_process(
@@ -735,7 +755,9 @@ def write_known_good(
     # Before the file is written, so it never points at a missing baseline.
     shas = upload_baselines(good_paths)
 
-    known_good = {}
+    # A refresh of some replays (--only) leaves the others' pins as they are;
+    # --update_known_good rebuilds the list from what ran.
+    known_good = get_known_good_replays() if args.refresh_known_good else {}
     for index, path in enumerate(updated_paths):
         if path in shas:
             known_good[original_keys[index]] = {
@@ -848,6 +870,12 @@ def get_shard(keys: list[str], known_good: dict, shard: str) -> list[str]:
 def run_ci():
     known_good = get_known_good_replays()
     keys = list(known_good)
+    if args.only:
+        unknown = [k for k in args.only if k not in known_good]
+        if unknown:
+            print(f'Not known good replays: {", ".join(unknown)}')
+            sys.exit(1)
+        keys = args.only
     # Shard first, so each shard downloads only what it runs.
     if args.shard:
         keys = get_shard(keys, known_good, args.shard)
