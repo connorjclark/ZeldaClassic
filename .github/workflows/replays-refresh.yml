@@ -131,8 +131,10 @@ jobs:
           name: replay-uploads-refresh-test-results
           path: ${{ github.workspace }}/.tmp/replay_uploads_test_results.tar
 
+  # Same-repository pull requests only: the branch has to be pushed to, and a
+  # fork's token could neither push nor comment.
   refresh-pr:
-    if: github.event_name == 'pull_request' && github.event.label.name == 'refresh-replays'
+    if: github.event_name == 'pull_request' && github.event.label.name == 'refresh-replays' && github.event.pull_request.head.repo.full_name == github.repository
     name: Refresh replays (pull request)
     runs-on: ubuntu-22.04
     timeout-minutes: 300
@@ -142,12 +144,13 @@ jobs:
       pull-requests: write
       actions: write
     steps:
-      # The PR branch itself (not the merge commit), to push to it. With the LFS
-      # files: the test suite replays are updated in place.
+      # The PR's head commit itself (not the merge commit): what CI built, and
+      # what the fixup goes on top of. With the LFS files: the test suite
+      # replays are updated in place.
       - name: git clone
         uses: connorjclark/action-cached-lfs-checkout@3ea4dc59b06f3baa8c01ba891fbfc2dbfdce5bc8
         with:
-          ref: ${{ github.event.pull_request.head.ref }}
+          ref: ${{ github.event.pull_request.head.sha }}
           enableCrossOsArchive: true
 
       - name: Setup Python
@@ -179,6 +182,14 @@ jobs:
           --build-folder zc-extracted
           --runs-on ubuntu-22.04
           --pr ${{ github.event.pull_request.number }}
+
+      # The script removes the label on every way out it knows; this covers a
+      # cancelled or timed out job, so that adding the label again always works.
+      - name: Remove the label
+        if: always()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh pr edit ${{ github.event.pull_request.number }} --remove-label refresh-replays || true
 
       - name: Archive test results
         if: failure()

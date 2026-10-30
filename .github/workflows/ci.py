@@ -1373,7 +1373,7 @@ def _start_ci_after_token_push(workflow, branch: str, sha: str):
         for r in runs_for_sha('pull_request'):
             if r.conclusion == 'action_required':
                 logger.info(f"Deleting run {r.id}, which waits for approval")
-                r._requester.requestJsonAndCheck('DELETE', r.url)
+                r.delete()
             else:
                 live = r
         return live
@@ -1720,6 +1720,47 @@ def refresh_replays(ctx: CiContext, args):
     From a workflow_dispatch: re-records every known good uploaded replay with
     the build at --build-folder, and commits to the branch the workflow ran on.
     """
+    pr = repo = gh = None
+    if args.pr:
+        gh = _github_from_env()
+        repo = gh.get_repo(ctx.repo)
+        pr = repo.get_pull(args.pr)
+
+    # Every way out of a PR refresh comments on the PR and removes the label,
+    # so that adding it again starts a new one; an unexpected error too.
+    done = False
+
+    def finish(message: str, ok: bool):
+        nonlocal done
+        done = True
+        if pr:
+            logger.info(message)
+            _upsert_pr_comment(pr, REPLAY_REFRESH_MARKER, f'## Replays refresh\n\n{message}')
+            try:
+                pr.remove_from_labels(REPLAY_REFRESH_LABEL)
+            except Exception as e:
+                logger.warning(f"Could not remove the label: {e}")
+        elif ok:
+            logger.info(message)
+        else:
+            logger.error(message)
+        sys.exit(0 if ok else 1)
+
+    try:
+        _refresh_replays(ctx, args, gh, repo, pr, finish)
+    except BaseException:
+        if done or not pr:
+            raise
+        logger.exception("Refreshing the replays failed")
+        server = os.environ.get('GITHUB_SERVER_URL', 'https://github.com')
+        job_url = f"{server}/{ctx.repo}/actions/runs/{os.environ.get('GITHUB_RUN_ID', '')}"
+        finish(
+            f'Refreshing the replays failed: see [the job log]({job_url}). Fix the cause, then add the label again.',
+            ok=False,
+        )
+
+
+def _refresh_replays(ctx: CiContext, args, gh, repo, pr, finish: Callable[[str, bool], None]):
     sys.path.append(str(root_dir / 'scripts'))
     sys.path.append(str(root_dir / 'tests'))
     from github_helpers import _download_artifact, extract_tars
@@ -1736,28 +1777,12 @@ def refresh_replays(ctx: CiContext, args):
     keys = None
     suite_names = []
 
-    pr = None
     compare_links = []
     source = 'this branch'
+    # What failed but could not be re-recorded, for the comment.
+    notes = []
 
-    def finish(message: str, ok: bool):
-        if pr:
-            logger.info(message)
-            _upsert_pr_comment(pr, REPLAY_REFRESH_MARKER, f'## Replays refresh\n\n{message}')
-            try:
-                pr.remove_from_labels(REPLAY_REFRESH_LABEL)
-            except Exception as e:
-                logger.warning(f"Could not remove the label: {e}")
-        elif ok:
-            logger.info(message)
-        else:
-            logger.error(message)
-        sys.exit(0 if ok else 1)
-
-    if args.pr:
-        gh = _github_from_env()
-        repo = gh.get_repo(ctx.repo)
-        pr = repo.get_pull(args.pr)
+    if pr:
         head_sha = pr.head.sha
         if not pr.head.repo or pr.head.repo.full_name != ctx.repo:
             finish(
@@ -1766,14 +1791,14 @@ def refresh_replays(ctx: CiContext, args):
                 ok=False,
             )
 
-        # The PR's latest CI run must be for its current head, and done.
+        # The PR's latest CI run must be for its current head, and done. After
+        # a refresh the head's only run is the one the refresh dispatched (a
+        # push by the Actions token starts none).
         run = next(
             (
                 r
-                for r in repo.get_workflow('ci.yml').get_runs(
-                    branch=pr.head.ref, event='pull_request'
-                )
-                if r.head_sha == head_sha
+                for r in repo.get_workflow('ci.yml').get_runs(branch=pr.head.ref)
+                if r.head_sha == head_sha and r.event in ('pull_request', 'workflow_dispatch')
             ),
             None,
         )
@@ -1784,8 +1809,14 @@ def refresh_replays(ctx: CiContext, args):
                 f'CI is still running for {head_sha[:10]} ([run]({run.html_url})). Add the label again once it has finished.',
                 ok=False,
             )
-        suite_outcome, uploads_outcome = _replay_job_outcomes(run)
+        suite_outcome, uploads_outcome = _replay_job_outcomes(_get_run_jobs(run))
         if 'failure' not in (suite_outcome, uploads_outcome):
+            if 'other' in (suite_outcome, uploads_outcome):
+                finish(
+                    f'Some replay jobs of [the CI run]({run.html_url}) for {head_sha[:10]} were cancelled or did not finish, '
+                    'so there is nothing to refresh from. Re-run them, then add the label again.',
+                    ok=False,
+                )
             finish(f'Every replay passed in [the CI run]({run.html_url}) for {head_sha[:10]}, so there is nothing to refresh.', ok=True)
 
         work_dir = tmp_dir / 'replays_refresh'
@@ -1808,10 +1839,9 @@ def refresh_replays(ctx: CiContext, args):
             download_results('replays-', work_dir / 'suite')
             suite_names = [e['name'] for e in _summarize_failing_suite_replays(work_dir / 'suite')]
             if not suite_names:
-                finish(
-                    f'The failing Replays jobs of [the CI run]({run.html_url}) left no test results, '
-                    'so they failed before running any replay. See their logs.',
-                    ok=False,
+                notes.append(
+                    f'The failing Replays jobs of [the CI run]({run.html_url}) left no test results, so they failed '
+                    'before running any replay: nothing of the test suite was re-recorded. See their logs.'
                 )
 
         # The failing uploaded replays, from the test results the failing shards
@@ -1826,11 +1856,12 @@ def refresh_replays(ctx: CiContext, args):
                     keys += [f['key'] for f in _summarize_failing_uploaded_replays(results_path)]
             keys = sorted(set(keys))
             if not keys:
-                finish(
-                    f'The failing Replay uploads jobs of [the CI run]({run.html_url}) left no test results, '
-                    'so they failed before running any replay. See their logs.',
-                    ok=False,
+                notes.append(
+                    f'The failing Replay uploads jobs of [the CI run]({run.html_url}) left no test results, so they failed '
+                    'before running any replay: no uploaded replay was re-recorded. See their logs.'
                 )
+        if not suite_names and not keys:
+            finish('\n\n'.join(notes), ok=False)
 
         # The compare report the run's Replay report job built, for the comment.
         artifact = next((a for a in artifacts if a.name == 'replay-report'), None)
@@ -1879,6 +1910,9 @@ def refresh_replays(ctx: CiContext, args):
 
     updated = []
     if suite_names:
+        # The replays are LFS files: this sets up the filter that compares
+        # and adds them as pointers, and the hook that pushes their objects.
+        run_cmd(['git', 'lfs', 'install', '--local'])
         suite_cmd = [
             sys.executable,
             '-Xutf8',
@@ -1897,15 +1931,20 @@ def refresh_replays(ctx: CiContext, args):
                 ok=False,
             )
         # The .zplay files are rewritten in place, and only when they changed.
-        status = subprocess.check_output(
-            ['git', 'status', '--porcelain', '-z', '--', 'tests/replays'], text=True
+        changed = subprocess.check_output(
+            ['git', 'diff', '--name-only', '-z', '--', 'tests/replays'], text=True
         )
-        updated = sorted(entry[3:] for entry in status.split('\0') if entry.strip())
+        updated = sorted(path for path in changed.split('\0') if path)
 
     if not moved and not updated:
         finish(
-            f'Re-recording with {source} gave every replay back unchanged, so there is nothing to commit. '
-            'The failures are not in what the replays record; see the job logs.',
+            '\n\n'.join(
+                [
+                    f'Re-recording with {source} gave every replay back unchanged, so there is nothing to commit. '
+                    'The failures are not in what the replays record; see the job logs.',
+                    *notes,
+                ]
+            ),
             ok=True,
         )
     what = ' and '.join(
@@ -1917,8 +1956,7 @@ def refresh_replays(ctx: CiContext, args):
         if part
     )
     if args.no_commit:
-        logger.info(f"Refreshed {what}, left uncommitted")
-        return
+        finish(f"Refreshed {what}, left uncommitted.", ok=True)
     if not branch:
         logger.error("No branch to commit to (GITHUB_REF_NAME is not set)")
         sys.exit(1)
@@ -1929,8 +1967,10 @@ def refresh_replays(ctx: CiContext, args):
         # change that moved them and every commit of the PR passes on its own.
         # A second refresh of the same head finds the first fixup there, and
         # targets what it targets.
+        # The newest non-merge commit: the rebase drops merges of the base
+        # branch, and a fixup of one would be left standing.
         subject = subprocess.check_output(
-            ['git', 'log', '-1', '--format=%s', 'HEAD'], text=True
+            ['git', 'log', '-1', '--no-merges', '--format=%s', 'HEAD'], text=True
         ).strip()
         if not subject.startswith('fixup! '):
             subject = f'fixup! {subject}'
@@ -1959,9 +1999,6 @@ def refresh_replays(ctx: CiContext, args):
     if moved:
         run_cmd(['git', 'add', str(known_good_path)])
     if updated:
-        # The replays are LFS files: this sets up the filter that turns them
-        # into pointers on add, and the hook that pushes their objects.
-        run_cmd(['git', 'lfs', 'install', '--local'])
         run_cmd(['git', 'add', '--', *updated])
     run_cmd(['git', 'commit', '-F', str(message_path)])
     run_cmd(['git', 'push', 'origin', f'HEAD:refs/heads/{branch}'])
@@ -1971,14 +2008,16 @@ def refresh_replays(ctx: CiContext, args):
         ci_run = _start_ci_after_token_push(repo.get_workflow('ci.yml'), branch, new_sha)
         ci_text = f'[started CI]({ci_run.html_url})' if ci_run else 'started CI'
         lines = [
-            f'Refreshed {what} with {source}, pushed as {new_sha[:10]} (a fixup of {head_sha[:10]}), and {ci_text} on it.',
+            f'Refreshed {what} with {source}, pushed as {new_sha[:10]} (`{subject}`), and {ci_text} on it.',
             '',
             'Before merging, fold it into your commit:',
             '```',
-            f'git pull --rebase && git rebase -i --autosquash origin/{pr.base.ref} && git push --force-with-lease',
+            f'git pull --rebase && git rebase -i --autosquash $(git merge-base HEAD origin/{pr.base.ref}) && git push --force-with-lease',
             '```',
             '',
         ]
+        for note in notes:
+            lines += [note, '']
         if compare_links:
             lines.append(
                 f"What changed in the uploaded replays, old baselines against this commit: {', '.join(compare_links)}."
