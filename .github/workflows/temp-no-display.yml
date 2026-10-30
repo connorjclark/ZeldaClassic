@@ -1,0 +1,86 @@
+name: TEMP no-display check
+
+on:
+  push:
+    branches:
+      - temp-no-display-2.55
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        include:
+          - runs-on: ubuntu-22.04
+            arch: x64
+          - runs-on: ubuntu-22.04-arm
+            arch: aarch64
+      fail-fast: false
+    uses: ./.github/workflows/build.yml
+    with:
+      runs-on: ${{ matrix.runs-on }}
+      arch: ${{ matrix.arch }}
+      compiler: clang
+      config: Release
+
+  check:
+    needs: build
+    strategy:
+      matrix:
+        include:
+          - runs-on: ubuntu-22.04
+            arch: x64
+          - runs-on: ubuntu-22.04-arm
+            arch: aarch64
+      fail-fast: false
+    runs-on: ${{ matrix.runs-on }}
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: true
+      - uses: actions/download-artifact@v6
+        with:
+          pattern: build-${{ matrix.runs-on }}-${{ matrix.arch }}-*
+          path: artifact
+          merge-multiple: true
+      - run: sudo apt-get update && sudo apt-get install -y libopengl0 libglu1-mesa libpulse0 xvfb gdb
+      - name: Run without a display
+        shell: bash
+        run: |
+          mkdir x && tar -xzf artifact/*.tar.gz -C x
+          cd x/bin
+          echo "DISPLAY=${DISPLAY:-<unset>}"
+          for app in zplayer zlauncher; do
+            set +e
+            env -u DISPLAY ./$app > out.txt 2>&1
+            code=$?
+            set -e
+            echo "== $app exit=$code"; cat out.txt
+            grep -q "Could not connect to an X11 display" out.txt
+            test $code -eq 1
+          done
+          # -headless without a display: this build, then the 2.55.17 release (no fix) for comparison.
+          set +e
+          env -u DISPLAY gdb -batch -ex run -ex bt --args ./zplayer -headless -replay "$GITHUB_WORKSPACE/tests/replays/keys.zplay" -replay-exit-when-done -frame 200 2>&1 | tail -40
+          env -u DISPLAY ./zplayer -headless -replay "$GITHUB_WORKSPACE/tests/replays/keys.zplay" -replay-exit-when-done -frame 200 > /dev/null 2>&1
+          echo "headless exit=$?"
+          set -e
+          if [ "${{ matrix.arch }}" = x64 ]; then
+            mkdir -p ../../rel && cd ../../rel
+            gh release download 2.55.17 -R ZQuestClassic/ZQuestClassic -p '2.55.17-linux.tar.gz'
+            tar -xzf 2.55.17-linux.tar.gz
+            cd bin
+            set +e
+            env -u DISPLAY ./zplayer -headless -replay "$GITHUB_WORKSPACE/tests/replays/keys.zplay" -replay-exit-when-done -frame 200 > rel.txt 2>&1
+            echo "release 2.55.17 headless exit=$?"; tail -5 rel.txt
+            set -e
+            cd ../../x/bin
+          fi
+          # With a real X server, the check must pass (the app keeps running until killed).
+          set +e
+          timeout 20 xvfb-run -a ./zplayer > xvfb.txt 2>&1
+          echo "xvfb exit=$?"
+          set -e
+          head -20 xvfb.txt
+          ! grep -q "Could not connect to an X11 display" xvfb.txt
