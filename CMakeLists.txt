@@ -1462,6 +1462,10 @@ if(WANT_SENTRY)
 	foreach(target IN LISTS zc_targets)
 		target_link_libraries(${target} PRIVATE sentry)
 		target_compile_definitions(${target} PRIVATE HAS_SENTRY)
+		# Only official builds report to Sentry. Others (like CI builds) link it, but never start it.
+		if(ZC_OFFICIAL)
+			target_compile_definitions(${target} PRIVATE SENTRY_REPORTING)
+		endif()
 	endforeach()
 
 	list(APPEND ZC_INSTALL_TARGETS crashpad_handler)

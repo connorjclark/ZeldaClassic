@@ -65,6 +65,12 @@ static sentry_value_t on_crash_callback(const sentry_ucontext_t *uctx, sentry_va
 
 static void init_sentry(App id)
 {
+	// Only official builds report crashes (see SENTRY_REPORTING in CMakeLists.txt), so a CI build
+	// run on someone's machine doesn't.
+#ifndef SENTRY_REPORTING
+	return;
+#endif
+
 	// Crashes during CI test runs would pollute the project, so don't report them.
 	if (is_ci())
 		return;
