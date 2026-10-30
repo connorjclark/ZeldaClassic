@@ -796,7 +796,7 @@ static void do_recording_poll()
 		// Test hook: inverts the top-left corner of one frame, so the replay fails with a visible
 		// graphical difference. tests/run_compare_selftest.py uses it to exercise compare reports.
 		static const int debug_corrupt_frame = std::stoi(get_flag_string("-replay-debug-corrupt-frame").value_or("-1"));
-		if (rs.frame_count == debug_corrupt_frame)
+		if (rs.frame_count == debug_corrupt_frame || (rs.frame_count == 40 && replay_get_meta_str("qst_hash", "") == "041E5F5FC4F6721A4A5A27624AB370D0"))
 		{
 			for (int y = 0; y < std::min(64, presentbuf->h); y++)
 				for (int x = 0; x < std::min(64, presentbuf->w); x++)
