@@ -1456,7 +1456,11 @@ if(WANT_SENTRY)
 		# falls back to polling there. See docs/windows_support.md.
 		get_target_property(sentry_defs sentry COMPILE_DEFINITIONS)
 		list(TRANSFORM sentry_defs REPLACE "^_WIN32_WINNT=.*" "_WIN32_WINNT=0x0601")
+		if(NOT "_WIN32_WINNT=0x0601" IN_LIST sentry_defs)
+			message(FATAL_ERROR "sentry no longer defines _WIN32_WINNT on its target. Update the Windows 7 override.")
+		endif()
 		set_target_properties(sentry PROPERTIES COMPILE_DEFINITIONS "${sentry_defs}")
+		unset(sentry_defs)
 	endif()
 
 	foreach(target IN LISTS zc_targets)
