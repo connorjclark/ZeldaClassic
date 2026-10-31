@@ -12,9 +12,10 @@ in the package is looked up in scripts/windows7_imports.txt, the list of OS impo
 exist on Windows 7. Delay-loaded imports are skipped, since they only resolve when called.
 
 If this fails for a new import, check the "Minimum supported client" in the function's
-Microsoft docs. If it is Windows 7 or older, add the printed line to windows7_imports.txt.
-Otherwise, load it at runtime with GetProcAddress and list the workaround in
-docs/windows_support.md.
+Microsoft docs. Both the function and the DLL must exist on Windows 7: an api-ms-win-core-*-l1-2-*
+DLL is Windows 8+ even when the function itself is older. If they are, add the printed line to
+windows7_imports.txt. Otherwise, load it at runtime with GetProcAddress and list the workaround
+in docs/windows_support.md.
 
     python scripts/check_windows_imports.py <package .zip or folder>
 """
@@ -144,9 +145,10 @@ def main():
         print(f'{dll} {function}    (imported by {", ".join(names)})')
     print(
         '\nWindows 7 refuses to start an exe that imports a function it does not have. Check the '
-        '"Minimum supported client" in each function\'s Microsoft docs. If it is Windows 7 or '
-        f'older, add the line above to scripts/{ALLOWLIST_PATH.name}. Otherwise, load it at '
-        'runtime with GetProcAddress (see docs/windows_support.md).'
+        '"Minimum supported client" in each function\'s Microsoft docs. If both the function and '
+        'the DLL exist on Windows 7 (api-ms-win-core-*-l1-2-* DLLs are Windows 8+), add the line '
+        f'above to scripts/{ALLOWLIST_PATH.name}. Otherwise, load it at runtime with '
+        'GetProcAddress (see docs/windows_support.md).'
     )
     sys.exit(1)
 
