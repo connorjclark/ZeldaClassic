@@ -45,9 +45,9 @@ namespace fs = std::filesystem;
 #include "sentry.h"
 #endif
 
-// Only official builds report crashes (CMakeLists.txt defines SENTRY_REPORTING), so a CI build run
+// Only official builds report crashes (CMakeLists.txt defines ZC_SENTRY_REPORTING), so a CI build run
 // on someone's machine doesn't. Other builds with Sentry still link it.
-#ifdef SENTRY_REPORTING
+#ifdef ZC_SENTRY_REPORTING
 void sentry_atexit()
 {
     sentry_close();
@@ -216,7 +216,7 @@ static bool is_exe_in_bin_folder()
 
 void zapp_set_crash_cb([[maybe_unused]] std::function<void()> cb)
 {
-#ifdef SENTRY_REPORTING
+#ifdef ZC_SENTRY_REPORTING
 	crash_cb = cb;
 #endif
 }
@@ -270,7 +270,7 @@ void common_main_setup(App id, int argc_, char **argv_)
 #endif
 	}
 
-#ifdef SENTRY_REPORTING
+#ifdef ZC_SENTRY_REPORTING
 	init_sentry(id);
 #endif
 

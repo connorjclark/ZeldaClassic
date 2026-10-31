@@ -1468,7 +1468,7 @@ if(WANT_SENTRY)
 		target_compile_definitions(${target} PRIVATE HAS_SENTRY)
 		# Only official builds report to Sentry. Others (like CI builds) link it, but never start it.
 		if(ZC_OFFICIAL)
-			target_compile_definitions(${target} PRIVATE SENTRY_REPORTING)
+			target_compile_definitions(${target} PRIVATE ZC_SENTRY_REPORTING)
 		endif()
 	endforeach()
 
