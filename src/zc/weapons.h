@@ -74,6 +74,10 @@ public:
 	// (layer, rpos_t)
 	std::set<std::pair<int, rpos_t>> rposes_checked;
 	std::set<ffcdata*> ffcs_checked;
+	// The combos whose triggers this weapon checked this frame. Each point of the hitbox
+	// finds a combo, so without this a combo under several points triggers several times.
+	std::set<std::pair<int, rpos_t>> rposes_triggered_this_frame;
+	std::set<ffcdata*> ffcs_triggered_this_frame;
 	
 	int16_t death_spawnitem;
 	int16_t death_spawndropset;

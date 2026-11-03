@@ -448,6 +448,8 @@ static void MatchComboTrigger2(weapon *w, int32_t bx, int32_t by, int32_t layer 
 			for_every_ffc([&](const ffc_handle_t& ffc_handle) {
 				if (ffcIsAt(ffc_handle, bx, by))
 				{
+					if (!w->ffcs_triggered_this_frame.insert(ffc_handle.ffc).second)
+						return;
 					int trig_idx = -1;
 					auto cid = ffc_handle.data();
 					do
@@ -469,6 +471,8 @@ static void MatchComboTrigger2(weapon *w, int32_t bx, int32_t by, int32_t layer 
 	bx=TRUNCATE_TILE(bx);
 	by=TRUNCATE_TILE(by);
 	auto rpos_handle = get_rpos_handle_for_world_xy(bx, by, layer);
+	if (!w->rposes_triggered_this_frame.insert({layer, rpos_handle.rpos}).second)
+		return;
 	int32_t cid = rpos_handle.data();
 	int trig_idx = -1;
 	do
@@ -3468,6 +3472,8 @@ void weapon::limited_animate()
 bool weapon::animate([[maybe_unused]] int32_t index)
 {
 	update_current_screen();
+	rposes_triggered_this_frame.clear();
+	ffcs_triggered_this_frame.clear();
 	if(weapon_start_frame)
 	{
 		if(get_qr(qr_WEAPONS_EXTRA_SPAWN_FRAME))
