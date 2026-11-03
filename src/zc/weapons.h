@@ -10,7 +10,9 @@
 #include "../ffc.h"
 #include "sprite.h"
 
+#include <map>
 #include <set>
+#include <tuple>
 
 class enemy;
 extern byte boomframe[16];
@@ -74,6 +76,20 @@ public:
 	// (layer, rpos_t)
 	std::set<std::pair<int, rpos_t>> rposes_checked;
 	std::set<ffcdata*> ffcs_checked;
+	// The triggers this weapon ran this frame, by where they are, their combo and their index,
+	// and whether each fired. Each point of the hitbox finds a combo, and the weapon can look
+	// for combos again later in the frame, so without this a trigger fires several times a
+	// frame.
+	//
+	// animate() clears these and looks with findcombotriggers(), then can look again
+	// in the same animate(): through collision_check() when gravity lands it with
+	// WFLAG_BREAK_WHEN_LANDING or WFLAG_STOP_WHEN_LANDING, and with findcombotriggers() when
+	// its move hits something solid with WFLAG_BREAK_ON_SOLID or WFLAG_STOP_WHEN_HIT_SOLID.
+	//
+	// A trigger that wasn't set off by the weapon (say, a ground-only trigger while it was in
+	// the air) isn't here, so a later look in the same frame can still set it off.
+	std::map<std::tuple<int, rpos_t, int, int>, bool> rpos_triggers_this_frame;
+	std::map<std::tuple<ffcdata*, int, int>, bool> ffc_triggers_this_frame;
 	
 	int16_t death_spawnitem;
 	int16_t death_spawndropset;
