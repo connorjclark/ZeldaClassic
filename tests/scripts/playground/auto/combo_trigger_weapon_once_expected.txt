@@ -18,9 +18,9 @@ stdout:
   "success": true,
   "diagnostics": [],
   "metadata": {
-    "currentFileSymbols": 8,
-    "symbols": 43,
-    "identifiers": 91,
+    "currentFileSymbols": 9,
+    "symbols": 46,
+    "identifiers": 125,
     "elided": true
   }
 }
@@ -80,43 +80,43 @@ SETR D2 GENDATARUNNING
 COMPAREV D2 0
 GOTOCMP 58 ==; Test 'while'
 PUSHR D4; while() Body Start
-CALLFUNC 0.0410; UsrFunc[void DrawLabel()] Call
+CALLFUNC 0.0529; UsrFunc[void DrawLabel()] Call
 POP D4
 WAITFRAME; InlineFunc[void Waitframe()] Body AND while() Body End
 GOTO 47; while() End
-CALLFUNC 0.0270; UsrFunc[void End()] Call AND [Opt:NeverRet]
+CALLFUNC 0.0389; UsrFunc[void End()] Call AND [Opt:NeverRet]
 REF_REMOVE 0.0002; [Opt:NeverRet] AND void run() Body End
-PUSHARGSV 0 0.0002; void run() Body Start
+PUSHARGSV 0 0.0003; void run() Body Start
 SETR D4 SP2
 PUSHR D4
 PUSHV 0; UsrFunc[void Init(int)] Params
-CALLFUNC 0.0248; UsrFunc[void Init(int)] Call
+CALLFUNC 0.0367; UsrFunc[void Init(int)] Call
 PEEK D4
 PUSHV 3300; UsrFunc[combodata setupCombo(int, int)] Params Start
 PUSHV 0; UsrFunc[combodata setupCombo(int, int)] Params End
-CALLFUNC 0.0305; UsrFunc[combodata setupCombo(int, int)] Call
+CALLFUNC 0.0424; UsrFunc[combodata setupCombo(int, int)] Call
 POP D4
-STORE D2 0.0001
+STORE D2 0.0002
 SETV D2 1
 PUSHR D2
-LOAD D2 0.0001
+LOAD D2 0.0002
 POP D3
 PUSHR D2
 PUSHR D3
 POP D2
 POP REFCOMBODATA
 SETR COMBODNUMTRIGGERS D2
-LOAD D2 0.0001
+LOAD D2 0.0002
 PUSHR D2
 SETV D2 0
 PUSHR D2
 POP D0
 POP REFCOMBODATA
 SETR D2 COMBODTRIGGERS
-STORE D2 0
+STORE D2 0.0001
 SETV D2 1
 PUSHR D2
-LOAD D2 0
+LOAD D2 0.0001
 POP D3
 PUSHR D2
 PUSHR D3
@@ -128,7 +128,7 @@ POP REFCOMBOTRIGGER
 SETR CMBTRIGFLAGS D2
 SETV D2 1
 PUSHR D2
-LOAD D2 0
+LOAD D2 0.0001
 POP D3
 PUSHR D2
 PUSHR D3
@@ -137,7 +137,7 @@ POP REFCOMBOTRIGGER
 SETR CMBTRIGCTR D2
 SETV D2 1
 PUSHR D2
-LOAD D2 0
+LOAD D2 0.0001
 POP D3
 PUSHR D2
 PUSHR D3
@@ -146,7 +146,7 @@ POP REFCOMBOTRIGGER
 SETR CMBTRIGCTRAMNT D2
 SETV D2 1
 PUSHR D2
-LOAD D2 0
+LOAD D2 0.0001
 POP D3
 PUSHR D2
 PUSHR D3
@@ -178,7 +178,7 @@ SETV D2 3300
 PUSHR D2
 PUSHR D4
 PUSHARGSV 5 0.0002; UsrFunc[int pos(int, int)] Params Start AND UsrFunc[int pos(int, int)] Params End
-CALLFUNC 0.0401; UsrFunc[int pos(int, int)] Call
+CALLFUNC 0.0520; UsrFunc[int pos(int, int)] Call
 POP D4
 PUSHR D2
 POP D0
@@ -189,7 +189,7 @@ PUSHR D2
 PUSHR D4
 PUSHV 10; UsrFunc[int pos(int, int)] Params Start
 PUSHV 5; UsrFunc[int pos(int, int)] Params End
-CALLFUNC 0.0401; UsrFunc[int pos(int, int)] Call
+CALLFUNC 0.0520; UsrFunc[int pos(int, int)] Call
 POP D4
 PUSHR D2
 POP D0
@@ -198,18 +198,64 @@ SETR COMBODD D2
 WAITFRAME; InlineFunc[void Waitframe()] Body
 PUSHARGSR D4 0.0002; UsrFunc[void AssertEqual(int, int, char32[])] Params Start
 PUSHV 10; UsrFunc[int holdWeapon(int)] Params
-CALLFUNC 0.0455; UsrFunc[int holdWeapon(int)] Call
+CALLFUNC 0.0574; UsrFunc[int holdWeapon(int)] Call
 POP D4
 PUSHR D2
 PUSHV 10
 ALLOCATEMEMV D2 35 0
 WRITEPODSTRING D2 "the trigger fires once every frame"
 PUSHR D2; UsrFunc[void AssertEqual(int, int, char32[])] Params End
-CALLFUNC 0.0277; UsrFunc[void AssertEqual(int, int, char32[])] Call
+CALLFUNC 0.0396; UsrFunc[void AssertEqual(int, int, char32[])] Call
 POP D4
+SETV D2 1
+PUSHR D2
+LOAD D2 0.0001
+POP D3
+PUSHR D2
+PUSHR D3
+SETV D2 185
+PUSHR D2
+POP D0
+POP D2
+POP REFCOMBOTRIGGER
+SETR CMBTRIGFLAGS D2
+PUSHARGSR D4 0.0002; UsrFunc[void AssertEqual(int, int, char32[])] Params Start
+PUSHV 10; UsrFunc[int holdWeapon(int)] Params
+CALLFUNC 0.0574; UsrFunc[int holdWeapon(int)] Call
+POP D4
+PUSHR D2
+PUSHV 1
+ALLOCATEMEMV D2 58 0
+WRITEPODSTRING D2 "with 'Once Per Weapon', the trigger fires once per weapon"
+PUSHR D2; UsrFunc[void AssertEqual(int, int, char32[])] Params End
+CALLFUNC 0.0396; UsrFunc[void AssertEqual(int, int, char32[])] Call
+PEEK D4
+PUSHR D4; UsrFunc[void AssertEqual(int, int, char32[])] Params Start
+PUSHV 10; UsrFunc[int holdWeapon(int)] Params
+CALLFUNC 0.0574; UsrFunc[int holdWeapon(int)] Call
+POP D4
+PUSHR D2
+PUSHV 1
+ALLOCATEMEMV D2 28 0
+WRITEPODSTRING D2 "a new weapon fires it again"
+PUSHR D2; UsrFunc[void AssertEqual(int, int, char32[])] Params End
+CALLFUNC 0.0396; UsrFunc[void AssertEqual(int, int, char32[])] Call
+POP D4
+SETV D2 0
+PUSHR D2
+LOAD D2 0.0001
+POP D3
+PUSHR D2
+PUSHR D3
+SETV D2 185
+PUSHR D2
+POP D0
+POP D2
+POP REFCOMBOTRIGGER
+SETR CMBTRIGFLAGS D2
 SETV D2 200
 PUSHR D2
-LOAD D2 0
+LOAD D2 0.0001
 POP D3
 PUSHR D2
 PUSHR D3
@@ -218,7 +264,7 @@ POP REFCOMBOTRIGGER
 SETR CMBTRIGCOPYCAT D2
 SETV D2 1
 PUSHR D2
-LOAD D2 0
+LOAD D2 0.0001
 POP D3
 PUSHR D2
 PUSHR D3
@@ -230,29 +276,18 @@ POP REFCOMBOTRIGGER
 SETR CMBTRIGFLAGS D2
 PUSHARGSR D4 0.0002; UsrFunc[void AssertEqual(int, int, char32[])] Params Start
 PUSHV 10; UsrFunc[int holdWeapon(int)] Params
-CALLFUNC 0.0455; UsrFunc[int holdWeapon(int)] Call
+CALLFUNC 0.0574; UsrFunc[int holdWeapon(int)] Call
 POP D4
 PUSHR D2
 PUSHV 1
-ALLOCATEMEMV D2 58 0
-WRITEPODSTRING D2 "with an unused copycat, the trigger fires once per weapon"
+ALLOCATEMEMV D2 53 0
+WRITEPODSTRING D2 "a copycat makes the weapon skip the combo afterwards"
 PUSHR D2; UsrFunc[void AssertEqual(int, int, char32[])] Params End
-CALLFUNC 0.0277; UsrFunc[void AssertEqual(int, int, char32[])] Call
-PEEK D4
-PUSHR D4; UsrFunc[void AssertEqual(int, int, char32[])] Params Start
-PUSHV 10; UsrFunc[int holdWeapon(int)] Params
-CALLFUNC 0.0455; UsrFunc[int holdWeapon(int)] Call
-POP D4
-PUSHR D2
-PUSHV 1
-ALLOCATEMEMV D2 28 0
-WRITEPODSTRING D2 "a new weapon fires it again"
-PUSHR D2; UsrFunc[void AssertEqual(int, int, char32[])] Params End
-CALLFUNC 0.0277; UsrFunc[void AssertEqual(int, int, char32[])] Call
+CALLFUNC 0.0396; UsrFunc[void AssertEqual(int, int, char32[])] Call
 POP D4
 SETV D2 0
 PUSHR D2
-LOAD D2 0
+LOAD D2 0.0001
 POP D3
 PUSHR D2
 PUSHR D3
@@ -264,16 +299,100 @@ POP REFCOMBOTRIGGER
 SETR CMBTRIGFLAGS D2
 PUSHARGSR D4 0.0002; UsrFunc[void AssertEqual(int, int, char32[])] Params Start
 PUSHV 10; UsrFunc[int holdWeapon(int)] Params
-CALLFUNC 0.0455; UsrFunc[int holdWeapon(int)] Call
+CALLFUNC 0.0574; UsrFunc[int holdWeapon(int)] Call
 POP D4
 PUSHR D2
 PUSHV 2
 ALLOCATEMEMV D2 65 0
 WRITEPODSTRING D2 "without 'Copycat doesn't trigger this', the other copy fires too"
 PUSHR D2; UsrFunc[void AssertEqual(int, int, char32[])] Params End
-CALLFUNC 0.0277; UsrFunc[void AssertEqual(int, int, char32[])] Call
+CALLFUNC 0.0396; UsrFunc[void AssertEqual(int, int, char32[])] Call
 POP D4
-CALLFUNC 0.0270; UsrFunc[void End()] Call AND [Opt:NeverRet] AND [Opt:NeverRet] AND void run() Body End
+SETV D2 0
+PUSHR D2
+LOAD D2 0.0001
+POP D3
+PUSHR D2
+PUSHR D3
+POP D2
+POP REFCOMBOTRIGGER
+SETR CMBTRIGCOPYCAT D2
+SETV D2 2
+PUSHR D2
+LOAD D2 0.0002
+POP D3
+PUSHR D2
+PUSHR D3
+POP D2
+POP REFCOMBODATA
+SETR COMBODNUMTRIGGERS D2
+LOAD D2 0.0002
+PUSHR D2
+SETV D2 1
+PUSHR D2
+POP D0
+POP REFCOMBODATA
+SETR D2 COMBODTRIGGERS
+STORE D2 0
+SETV D2 1
+PUSHR D2
+LOAD D2 0
+POP D3
+PUSHR D2
+PUSHR D3
+SETV D2 37
+PUSHR D2
+POP D0
+POP D2
+POP REFCOMBOTRIGGER
+SETR CMBTRIGFLAGS D2
+SETV D2 1
+PUSHR D2
+LOAD D2 0
+POP D3
+PUSHR D2
+PUSHR D3
+SETV D2 108
+PUSHR D2
+POP D0
+POP D2
+POP REFCOMBOTRIGGER
+SETR CMBTRIGFLAGS D2
+PUSHARGSR D4 0.0002; UsrFunc[void AssertEqual(int, int, char32[])] Params Start
+PUSHV 10; UsrFunc[int holdWeapon(int)] Params
+CALLFUNC 0.0574; UsrFunc[int holdWeapon(int)] Call
+POP D4
+PUSHR D2
+PUSHV 10
+ALLOCATEMEMV D2 61 0
+WRITEPODSTRING D2 "a 'Weapon Separate Triggers' trigger doesn't mark the weapon"
+PUSHR D2; UsrFunc[void AssertEqual(int, int, char32[])] Params End
+CALLFUNC 0.0396; UsrFunc[void AssertEqual(int, int, char32[])] Call
+POP D4
+SETV D2 1
+PUSHR D2
+LOAD D2 0
+POP D3
+PUSHR D2
+PUSHR D3
+SETV D2 185
+PUSHR D2
+POP D0
+POP D2
+POP REFCOMBOTRIGGER
+SETR CMBTRIGFLAGS D2
+PUSHARGSR D4 0.0002; UsrFunc[void AssertEqual(int, int, char32[])] Params Start
+PUSHV 10; UsrFunc[int holdWeapon(int)] Params
+CALLFUNC 0.0574; UsrFunc[int holdWeapon(int)] Call
+POP D4
+PUSHR D2
+PUSHV 1
+ALLOCATEMEMV D2 32 0
+WRITEPODSTRING D2 "unless it has 'Once Per Weapon'"
+PUSHR D2; UsrFunc[void AssertEqual(int, int, char32[])] Params End
+CALLFUNC 0.0396; UsrFunc[void AssertEqual(int, int, char32[])] Call
+POP D4
+CALLFUNC 0.0389; UsrFunc[void End()] Call AND [Opt:NeverRet] AND [Opt:NeverRet] AND void run() Body End
 SETR D4 SP2; Func[void Init(int)] Body Start
 ALLOCATEMEMV D2 35 0; InlineFunc[void printf(char32[], ...untyped[])] Params Start
 WRITEPODSTRING D2 "[Test] started: dmap %d screen %d\n"
@@ -287,7 +406,7 @@ LOAD D2 0; if() Test
 COMPAREV D2 0
 SETCMP D2 I!=
 COMPAREV D2 0
-GOTOCMP 267 ==; Test 'if'
+GOTOCMP 386 ==; Test 'if'
 PUSHV 5; InlineFunc[void hero::Warp(int, int)] Params Start AND if() Body Start
 LOAD D2 0; InlineFunc[void hero::Warp(int, int)] Params End
 POP D3; InlineFunc[void hero::Warp(int, int)] Body Start
@@ -313,7 +432,7 @@ POP D3
 COMPARER D3 D2
 SETCMP D2 I!=
 COMPAREV D2 0
-GOTOCMP 301 ==; Test 'if'
+GOTOCMP 420 ==; Test 'if'
 ALLOCATEMEMV D2 53 0; InlineFunc[void printf(char32[], ...untyped[])] Params Start AND if() Body Start
 WRITEPODSTRING D2 "[Test] failed assertion: expected %d but got %d. %s\n"
 PUSHR D2
@@ -374,7 +493,7 @@ LOAD D2 0; for() LoopTest
 COMPAREV D2 16
 SETCMP D2 I<
 COMPAREV D2 0
-GOTOCMP 365 ==; for() TestFail?
+GOTOCMP 484 ==; for() TestFail?
 SETV D2 0; for() Body Start
 PUSHR D2
 LOAD D2 0.0001
@@ -390,14 +509,14 @@ SETR COMBODUSRFLAGARR D2; for() Body End
 LOAD D2 0; for() LoopIncrement
 ADDV D2 1
 STORE D2 0
-GOTO 344; for() End
+GOTO 463; for() End
 NOP
 STOREV 0 0; for() setup
 LOAD D2 0; for() LoopTest
 COMPAREV D2 24
 SETCMP D2 I<
 COMPAREV D2 0
-GOTOCMP 388 ==; for() TestFail?
+GOTOCMP 507 ==; for() TestFail?
 SETV D2 0; for() Body Start
 PUSHR D2
 LOAD D2 0.0001
@@ -413,7 +532,7 @@ SETR COMBODATTRIBUTES D2; for() Body End
 LOAD D2 0; for() LoopIncrement
 ADDV D2 1
 STORE D2 0
-GOTO 367; for() End
+GOTO 486; for() End
 NOP
 SETV D2 0
 PUSHR D2
@@ -439,7 +558,7 @@ RETURNFUNC; Func[int pos(int, int)] Body End
 SETR D4 SP2; Func[void DrawLabel()] Body Start
 SETR D2 GD1; unless() Test
 COMPAREV D2 0
-GOTOCMP 428 ==; Test 'unless' AND return (Void) AND unless() Body
+GOTOCMP 547 ==; Test 'unless' AND return (Void) AND unless() Body
 NOP
 SETV D2 0.0001
 PUSHR D2
@@ -459,7 +578,7 @@ SETR D4 SP2; Func[void Remove(lweapon)] Body Start
 LOAD D2 0; InlineFunc[bool lweapon::isValid()] Params AND unless() Test
 ISVALIDLWPN D2; InlineFunc[bool lweapon::isValid()] Body
 COMPAREV D2 0
-GOTOCMP 453 ==; Test 'unless' AND return (Void) AND unless() Body
+GOTOCMP 572 ==; Test 'unless' AND return (Void) AND unless() Body
 NOP
 SETV D2 0
 PUSHR D2
@@ -526,7 +645,7 @@ WAITFRAMESR D2; InlineFunc[void Waitframes(int)] Body
 PUSHR D4
 LOAD D2 0; UsrFunc[void Remove(lweapon)] Params Start
 PUSHR D2; UsrFunc[void Remove(lweapon)] Params End
-CALLFUNC 0.0429; UsrFunc[void Remove(lweapon)] Call
+CALLFUNC 0.0548; UsrFunc[void Remove(lweapon)] Call
 POP D4
 WAITFRAME; InlineFunc[void Waitframe()] Body
 SETV D2 1; return Start

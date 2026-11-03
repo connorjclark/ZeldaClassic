@@ -2,14 +2,12 @@
 #include "auto/test_runner.zs"
 
 // A weapon checks the triggers of a combo it overlaps every frame. Only some
-// effects (secrets, combo change, copycat, ...) make it skip that combo
-// afterwards. The combo triggers guide documents giving a trigger a copycat ID
-// nothing else uses, with 'Copycat doesn't trigger this', to fire it once per
-// weapon without any other effect.
+// effects (secrets, combo change, copycat, ...) or 'Once Per Weapon' make it
+// skip that combo afterwards, as the combo triggers guide documents.
 generic script combo_trigger_weapon_once
 {
 	const int CMB = 3300;
-	const int UNUSED_COPYCAT = 200;
+	const int COPYCAT = 200;
 
 	// Holds a still weapon on the combo at (5,5) and returns how many times the
 	// trigger fired, counted by the rupee each firing consumes.
@@ -48,13 +46,29 @@ generic script combo_trigger_weapon_once
 		// The weapon's hitbox has 4 corners on the same combo, but only triggers it once a frame.
 		Test::AssertEqual(holdWeapon(10), 10, "the trigger fires once every frame");
 
-		trig->Copycat = UNUSED_COPYCAT;
-		trig->Flags[TRIGFLAG_NO_COPYCAT_CAUSE] = true;
-		Test::AssertEqual(holdWeapon(10), 1, "with an unused copycat, the trigger fires once per weapon");
+		trig->Flags[TRIGFLAG_ONCE_PER_WEAPON] = true;
+		Test::AssertEqual(holdWeapon(10), 1, "with 'Once Per Weapon', the trigger fires once per weapon");
 		Test::AssertEqual(holdWeapon(10), 1, "a new weapon fires it again");
+		trig->Flags[TRIGFLAG_ONCE_PER_WEAPON] = false;
+
+		// The copy of the combo at (10,5) shares the copycat.
+		trig->Copycat = COPYCAT;
+		trig->Flags[TRIGFLAG_NO_COPYCAT_CAUSE] = true;
+		Test::AssertEqual(holdWeapon(10), 1, "a copycat makes the weapon skip the combo afterwards");
 
 		trig->Flags[TRIGFLAG_NO_COPYCAT_CAUSE] = false;
 		Test::AssertEqual(holdWeapon(10), 2, "without 'Copycat doesn't trigger this', the other copy fires too");
+		trig->Copycat = 0;
+
+		// A weapon skips all of a combo's triggers once one of them marks it, including a
+		// 'Weapon Separate Triggers' one, which only runs its weapon effects.
+		cd->NumTriggers = 2;
+		combotrigger separate = cd->Triggers[1];
+		separate->Flags[TRIGFLAG_SCRIPT1] = true;
+		separate->Flags[TRIGFLAG_SEPARATE_WEAPON_TRIGGERS] = true;
+		Test::AssertEqual(holdWeapon(10), 10, "a 'Weapon Separate Triggers' trigger doesn't mark the weapon");
+		separate->Flags[TRIGFLAG_ONCE_PER_WEAPON] = true;
+		Test::AssertEqual(holdWeapon(10), 1, "unless it has 'Once Per Weapon'");
 
 		Test::End();
 	}

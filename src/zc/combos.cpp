@@ -3020,6 +3020,17 @@ static bool _do_trigger_combo(const combined_handle_t& handle, size_t idx, int32
 	bool hasitem = false;
 	if(w && trig.trigger_flags.get(TRIGFLAG_SEPARATEWEAPON))
 	{
+		if (trig.trigger_flags.get(TRIGFLAG_ONCE_PER_WEAPON))
+		{
+			bool checked = ffc_handle ? w->ffcs_checked.contains(ffc_handle->ffc)
+				: w->rposes_checked.contains({rpos_handle->layer, rpos_handle->rpos});
+			if (checked)
+				return true;
+			if (ffc_handle)
+				w->ffcs_checked.insert(ffc_handle->ffc);
+			else
+				w->rposes_checked.insert({rpos_handle->layer, rpos_handle->rpos});
+		}
 		do_weapon_fx(w,trig);
 		return true;
 	}
@@ -3206,7 +3217,7 @@ static bool _do_trigger_combo(const combined_handle_t& handle, size_t idx, int32
 		if(!check_bit)
 			handle_trigger_results(handle, trig, idx, hasitem, used_bit, special, timer, cid, ocs, w);
 		
-		if (w && used_bit)
+		if (w && (used_bit || trig.trigger_flags.get(TRIGFLAG_ONCE_PER_WEAPON)))
 		{
 			if(ffc_handle)
 				w->ffcs_checked.insert(ffc_handle->ffc);
