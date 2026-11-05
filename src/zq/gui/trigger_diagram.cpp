@@ -24,11 +24,11 @@
 // Text and bitmaps are drawn at whole pixels (draw_text, draw_bitmap). The font is pixel art,
 // and at a fractional scroll position its glyphs lose rows and columns.
 //
-// Input, in trigger_diagram_proc: the wheel scrolls the list or the diagram, and MSG_IDLE
-// tracks the hover. A left drag pans, and a left click on a list row or the screen picture
-// scrolls to that card, or on a card raises geCLICK with clickedCid and clickedTrigger set,
-// which onEvent() passes to the dialog's click function to open the Combo Editor. A right
-// click opens contextMenu().
+// Input, in trigger_diagram_proc: the wheel scrolls the list or the diagram. The horizontal
+// wheel has no message, so MSG_IDLE watches mouse_w for it, and also tracks the hover. A left
+// drag pans, and a left click on a list row or the screen picture scrolls to that card, or on
+// a card raises geCLICK with clickedCid and clickedTrigger set, which onEvent() passes to the
+// dialog's click function to open the Combo Editor. A right click opens contextMenu().
 
 #include "zq/gui/trigger_diagram.h"
 #include "core/combo.h"
@@ -359,6 +359,7 @@ int32_t trigger_diagram_proc(int32_t msg, DIALOG* d, int32_t c)
 	switch (msg)
 	{
 		case MSG_START:
+			widg->lastMouseW = mouse_w;
 			if (!widg->rti)
 			{
 				widg->rti = add_dlg_layer();
@@ -400,8 +401,23 @@ int32_t trigger_diagram_proc(int32_t msg, DIALOG* d, int32_t c)
 		}
 
 		case MSG_IDLE:
+		{
+			// The horizontal wheel (or a trackpad's sideways scroll) has no message of its own.
+			// macOS also sends Shift + wheel as the horizontal wheel.
+			int w = mouse_w;
+			if (w != widg->lastMouseW)
+			{
+				if (widg->viewRect().contains(gui_mouse_x(), gui_mouse_y()))
+				{
+					widg->scrollX += 3 * line_height() * (w > widg->lastMouseW ? -1 : 1);
+					widg->clampScroll();
+					widg->markDirty();
+				}
+				widg->lastMouseW = w;
+			}
 			widg->updateHover(gui_mouse_x(), gui_mouse_y());
 			break;
+		}
 
 		case MSG_CLICK:
 		{
@@ -490,6 +506,8 @@ void TriggerDiagram::setGraph(trigger_graph newGraph, std::vector<CardInfo> newC
 	cards = std::move(newCards);
 	screenBmp = screen_bmp;
 	hoverCard = hoverHub = hoverPos = previewFocus = focusCard = filterHub = -1;
+	// The wheel may have turned in a dialog opened from here, like the Combo Editor.
+	lastMouseW = mouse_w;
 	layout();
 	clampScroll();
 	markDirty();

@@ -119,6 +119,8 @@ private:
 
 	const bool expanded;
 	float scrollX = 0, scrollY = 0;
+	// mouse_w when last checked, to see the horizontal wheel turn.
+	int lastMouseW = 0;
 	int hoverCard = -1, hoverHub = -1, hoverPos = -1;
 	std::function<void(int cid, int trigger)> onClickCard;
 	int clickedCid = -1, clickedTrigger = -1;
