@@ -1,255 +1,96 @@
 name: CI
 
+# Debugging branch: repeat the release's mac universal build + package to catch the
+# "hdiutil detach" failure, with packaging/hdiutil_repeat.sh logging the cause.
+
 on:
   push:
     branches:
-      - main
-      - releases/2.55
-  pull_request:
+      - debug-dmg-detach
   workflow_dispatch:
 
 env:
   PYTHONUNBUFFERED: '1'
-  CCACHE_BASEDIR: ${{ github.workspace }}
-  CCACHE_DIR: ${{ github.workspace }}/.ccache
-  CCACHE_MAXSIZE: 800M
-  CCACHE_SLOPPINESS: time_macros
 
 jobs:
-  # Get the LFS cache ready. This avoids every shard of each environment downloading the LFS objects
-  # at the same time on any change, which is bad for quota.
+  # Get the LFS cache ready, so the copies don't all download the LFS objects at once.
   warm-lfs-cache:
     runs-on: ubuntu-latest
     steps:
       - name: git clone
         uses: connorjclark/action-cached-lfs-checkout@3ea4dc59b06f3baa8c01ba891fbfc2dbfdce5bc8
         with:
+          include: 'resources/**/*'
           enableCrossOsArchive: true
 
-  test:
+  mac:
     needs: warm-lfs-cache
+    runs-on: macos-15
     strategy:
       matrix:
-        # num-shards follows each platform's replay load (measured 2026-10). Each shard
-        # spends 1-2 minutes on setup, so lighter loads get fewer shards.
-        include:
-          - runs-on: windows-2022
-            arch: x64
-            compiler: msvc
-            num-shards: 5
-            config: RelWithDebInfo
-          - runs-on: windows-2022
-            arch: win32
-            compiler: msvc
-            num-shards: 4
-            config: RelWithDebInfo
-            extra-args: --max_duration 60
-          - runs-on: windows-11-arm
-            arch: arm64
-            compiler: msvc
-            num-shards: 5
-            config: RelWithDebInfo
-          - runs-on: macos-15-intel
-            arch: intel
-            compiler: clang
-            num-shards: 3
-            config: RelWithDebInfo
-            # Mac runners are slower, and if we were paying for Actions are 10x more expensive than linux.
-            # So let's test a subset of replays.
-            extra-args: --filter playground --filter misc --filter terror
-          - runs-on: ubuntu-22.04
-            arch: x64
-            compiler: clang
-            num-shards: 4
-            config: RelWithDebInfo
-          - runs-on: ubuntu-22.04-arm
-            arch: aarch64
-            compiler: clang
-            num-shards: 4
-            config: RelWithDebInfo
-          - runs-on: ubuntu-22.04
-            arch: x64
-            compiler: gcc
-            num-shards: 1
-            config: RelWithDebInfo
-            # Can't run all the replays, because under gcc replays don't produce exactly the same pixel output yet.
-            # See "TODO: GCC w/ these flags" in CMakeLists.txt
-            extra-args: --filter playground --frame=keys.zplay=20
+        copy: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
       fail-fast: false
-    # See https://github.com/community/community/discussions/40777
-    # uses: ./.github/workflows/test.yml
-    uses: ZQuestClassic/ZQuestClassic/.github/workflows/test.yml@main
-    with:
-      runs-on: ${{ matrix.runs-on }}
-      arch: ${{ matrix.arch }}
-      compiler: ${{ matrix.compiler }}
-      config: ${{ matrix.config }}
-      extra-args: ${{ matrix.extra-args }} --prune_test_results
-      num-shards: ${{ matrix.num-shards }}
-      from-ci-workflow: true
-    secrets:
-      GH_PAT_ZSCRIPT_DATABASE: ${{ secrets.GH_PAT_ZSCRIPT_DATABASE }}
-
-  web:
-    needs: warm-lfs-cache
-    runs-on: ubuntu-22.04
     env:
-      # Keep in sync with scripts/configure_emscripten.sh.
-      EMSDK_VERSION: 6.0.6
-      # emsdk is installed fresh each run, so check the version, not file mtimes.
-      CCACHE_COMPILERCHECK: string:emsdk-6.0.6
-
+      HDIUTIL_REPEAT_LOG: ${{ github.workspace }}/hdiutil_repeat.log
     steps:
-      # The build (workspace, emscripten cache, LFS assets, node_modules, and
-      # the editor wasm + debug info) fills the ~21GB free on /. Reclaim space
-      # by removing preinstalled toolchains this job never uses.
-      - name: Free disk space
-        run: |
-          df -h /
-          sudo rm -rf /usr/local/lib/android /usr/share/dotnet /opt/ghc \
-            /usr/local/.ghcup /usr/local/share/powershell /usr/share/swift \
-            /usr/local/lib/node_modules /opt/hostedtoolcache/CodeQL
-          sudo docker image prune --all --force || true
-          df -h /
-
       - name: Install cmake
         uses: jwlawson/actions-setup-cmake@v2
         with:
-          cmake-version: '3.31.6'
+          cmake-version: '3.31.10'
 
       - name: git clone
         uses: connorjclark/action-cached-lfs-checkout@3ea4dc59b06f3baa8c01ba891fbfc2dbfdce5bc8
         with:
+          include: 'resources/**/*'
           enableCrossOsArchive: true
-      # The version header comes from `git describe`, which needs the history and
-      # tags but no old file contents. Fetch them without those blobs (minutes faster),
-      # after the LFS checkout: its `git lfs prune` fails in a blobless clone.
       - name: Fetch history
         shell: bash
         run: git fetch --filter=blob:none --unshallow --tags origin '+refs/heads/*:refs/remotes/origin/*'
 
-      - name: Check module layering
-        run: python3 scripts/check_layering.py
-
-      # Install emsdk at a fixed path: the include paths are part of every ccache
-      # key, so a path that changes each run means no hits. (setup-emsdk used a
-      # new temp dir every run, since its cache restore always failed.)
-      - name: Install emsdk
-        run: |
-          git clone --depth 1 https://github.com/emscripten-core/emsdk.git ~/emsdk
-          ~/emsdk/emsdk install ${{ env.EMSDK_VERSION }}
-          ~/emsdk/emsdk activate ${{ env.EMSDK_VERSION }}
-          # Later steps need emsdk and emcc on PATH (web packaging runs emcc's tools).
-          source ~/emsdk/emsdk_env.sh
-          echo "$EMSDK" >> $GITHUB_PATH
-          echo "$EMSDK/upstream/emscripten" >> $GITHUB_PATH
-          echo "EMSDK=$EMSDK" >> $GITHUB_ENV
-          echo "EMSDK_NODE=$EMSDK_NODE" >> $GITHUB_ENV
-
-      - name: Install Node.js 22.x
-        uses: actions/setup-node@v3
-        with:
-          node-version: 22.x
-
-      # --ignore-scripts skips the postinstall that installs the client/server
-      # packages, which the grammar check doesn't need.
-      - run: npm ci --ignore-scripts
-        working-directory: vscode-extension
-      - run: npm run check-zscript-grammar
-        working-directory: vscode-extension
-
-      - run: npm add mime-types
-      # puppeteer caches Chrome in ~/.ccache/puppeteer, but only on npm install. Which means
-      # restored caches from actions/setup-node will never install Chrome.
-      - run: npm rm puppeteer && npm add puppeteer@25.2.1
-
-      - run: sudo apt-get update && sudo apt-get install ccache ninja-build flex bison
-
-      # Setup build cache via ccache. Only main and release branches save the cache -
-      # every save is a new key, and saves from other branches would evict main's
-      # caches (the repo's cache storage is capped).
-      - name: ccache cache files
-        id: ccache-restore
-        uses: actions/cache/restore@v5
-        with:
-          path: .ccache
-          key: web-ccache-v2-${{ github.run_id }}
-          restore-keys: web-ccache-v2-
-      - run: ccache -z
-
-      - run: |
-          git clone https://github.com/psi29a/unsf.git
-          cd unsf
-          cmake -S . -B build .
-          cmake --build build
-          echo "UNSF=$PWD/build/unsf-static" >> $GITHUB_ENV
-
-      - run: |
-          git config --global user.email "you@example.com"
-          git config --global user.name "Your Name"
-      - run: bash scripts/configure_emscripten.sh
-        env:
-          ZC_EMCC_CMAKE_EXTRA_FLAGS: -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
-      # The wasm-opt --asyncify pass on the editor module (zquest.wasm) peaks
-      # above the 16GB runner RAM, OOM-killing the job (exit 143). Add swap so
-      # the link has headroom. /mnt has the large ephemeral disk.
-      - name: Add swap space
-        run: |
-          sudo swapoff -a || true
-          sudo fallocate -l 16G /mnt/swapfile
-          sudo chmod 600 /mnt/swapfile
-          sudo mkswap /mnt/swapfile
-          sudo swapon /mnt/swapfile
-          free -h
-      - run: cmake --build build_emscripten --config RelWithDebInfo -t web
-      - run: ccache -s
-      - name: Save ccache
-        if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/releases/')
-        uses: actions/cache/save@v5
-        with:
-          path: .ccache
-          key: ${{ steps.ccache-restore.outputs.cache-primary-key }}
-
-      - run: sudo apt-get update && sudo apt-get install libopengl0
-      - run: sudo apt-get install xvfb
-      - run: npm install
-        working-directory: web
-      - run: xvfb-run --auto-servernum npm run test -- --timeout 100000 || xvfb-run --auto-servernum npm run test -- --timeout 100000 || xvfb-run --auto-servernum npm run test -- --timeout 100000
-        working-directory: web
-        env:
-          BUILD_FOLDER: ../build_emscripten/RelWithDebInfo
-      - uses: actions/setup-python@v6
+      - name: Setup Python
+        uses: actions/setup-python@v6
         with:
           python-version: '3.12'
           cache: pip
-      - run: pip install -r requirements.txt
-      # terror_of_necromancy_demo6_05_of_54 and stellar_seas_intro cover the wasm
-      # JIT's frozen-generic content (RUNGENFRZSCR) and mid-run script adoption
-      # (see jit_create_script_impl) - the shortest replays that exercise both.
-      - run: >
-          xvfb-run --auto-servernum python -Xutf8 tests/run_replay_tests.py
-          --build_folder build_emscripten/RelWithDebInfo
-          --test_results_folder .tmp/test_results
-          --filter classic_1st_lvl1
-          --filter playground
-          --filter freedom_in_chains
-          --filter terror_of_necromancy_demo6_05_of_54
-          --filter stellar_seas_intro
-          --ci web
-          --retries 2
 
-      - run: BUILD_FOLDER=build_emscripten/RelWithDebInfo xvfb-run --auto-servernum python -Xutf8 tests/test_zeditor.py
-      - run: BUILD_FOLDER=build_emscripten/RelWithDebInfo xvfb-run --auto-servernum python -Xutf8 tests/test_zplayer.py
+      - name: Install Python dependencies
+        run: pip install -r requirements.txt
 
-      - uses: actions/upload-artifact@v7
-        if: failure()
+      - name: Install OS Dependencies
+        run: >
+          python .github/workflows/ci.py install-deps
+          --repo ${{ github.repository }}
+          --arch universal
+          --compiler clang
+
+      # Same as the release: universal, RelWithDebInfo, no ccache.
+      - name: Build
+        run: >
+          bash .github/workflows/run_python.sh .github/workflows/ci.py build
+          --arch universal
+          --compiler clang
+          --config RelWithDebInfo
+          --release-version "3.0.0"
+          --repo "${{ github.repository }}"
+          --no-cache
+
+      - name: Package
+        run: >
+          bash .github/workflows/run_python.sh .github/workflows/ci.py package
+          --repo ${{ github.repository }}
+          --arch universal
+          --config RelWithDebInfo
+          --release-version "zc"
+          --packages-dir packages
+
+      - name: Print hdiutil log
+        if: always()
+        run: cat "$HDIUTIL_REPEAT_LOG" || echo "no log"
+
+      - name: Upload hdiutil log
+        if: always()
+        uses: actions/upload-artifact@v7
         with:
-          name: emscripten cmake
-          path: |
-            ${{ github.workspace }}/build_emscripten/CMakeFiles/CMakeOutput.log
-            ${{ github.workspace }}/build_emscripten/CMakeFiles/CMakeError.log
-      - uses: actions/upload-artifact@v7
-        if: failure()
-        with:
-          name: web test results
-          path: ${{ github.workspace }}/.tmp/test_results
+          name: hdiutil-log-${{ matrix.copy }}
+          path: ${{ github.workspace }}/hdiutil_repeat.log
+          if-no-files-found: ignore
