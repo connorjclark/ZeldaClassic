@@ -1,0 +1,90 @@
+name: dmg repeat
+
+# Debugging branch: build the release's mac universal build once, then package it
+# 20 times in a row to catch the "hdiutil detach" failure, with
+# packaging/hdiutil_repeat.sh logging the cause.
+
+on:
+  push:
+    branches:
+      - debug-dmg-detach
+  workflow_dispatch:
+
+env:
+  PYTHONUNBUFFERED: '1'
+
+jobs:
+  mac:
+    runs-on: macos-15
+    env:
+      HDIUTIL_REPEAT_LOG: ${{ github.workspace }}/hdiutil_repeat.log
+    steps:
+      - name: Install cmake
+        uses: jwlawson/actions-setup-cmake@v2
+        with:
+          cmake-version: '3.31.10'
+
+      - name: git clone
+        uses: connorjclark/action-cached-lfs-checkout@3ea4dc59b06f3baa8c01ba891fbfc2dbfdce5bc8
+        with:
+          include: 'resources/**/*'
+          enableCrossOsArchive: true
+      - name: Fetch history
+        shell: bash
+        run: git fetch --filter=blob:none --unshallow --tags origin '+refs/heads/*:refs/remotes/origin/*'
+
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+          cache: pip
+
+      - name: Install Python dependencies
+        run: pip install -r requirements.txt
+
+      - name: Install OS Dependencies
+        run: >
+          python .github/workflows/ci.py install-deps
+          --repo ${{ github.repository }}
+          --arch universal
+          --compiler clang
+
+      # Same as the release: universal, RelWithDebInfo, no ccache.
+      - name: Build
+        run: >
+          bash .github/workflows/run_python.sh .github/workflows/ci.py build
+          --arch universal
+          --compiler clang
+          --config RelWithDebInfo
+          --release-version "3.0.0"
+          --repo "${{ github.repository }}"
+          --no-cache
+
+      - name: Package 20 times
+        shell: bash
+        run: |
+          for i in $(seq 1 20); do
+            echo "=== iteration $i $(date -u +%H:%M:%S)" | tee -a "$HDIUTIL_REPEAT_LOG"
+            if ! bash .github/workflows/run_python.sh .github/workflows/ci.py package \
+                --repo ${{ github.repository }} \
+                --arch universal \
+                --config RelWithDebInfo \
+                --release-version "zc" \
+                --packages-dir packages; then
+              echo "=== failed on iteration $i" | tee -a "$HDIUTIL_REPEAT_LOG"
+              exit 1
+            fi
+          done
+          echo "=== all 20 passed" | tee -a "$HDIUTIL_REPEAT_LOG"
+
+      - name: Print hdiutil log
+        if: always()
+        run: cat "$HDIUTIL_REPEAT_LOG" || echo "no log"
+
+      - name: Upload hdiutil log
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: hdiutil-log
+          path: ${{ github.workspace }}/hdiutil_repeat.log
+          if-no-files-found: ignore

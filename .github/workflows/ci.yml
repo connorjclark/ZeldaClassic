@@ -4,9 +4,6 @@ name: CI
 # "hdiutil detach" failure, with packaging/hdiutil_repeat.sh logging the cause.
 
 on:
-  push:
-    branches:
-      - debug-dmg-detach
   workflow_dispatch:
 
 env:
