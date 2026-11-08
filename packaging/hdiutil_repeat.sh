@@ -77,6 +77,15 @@ diagnose() {
 # See https://github.com/actions/runner-images/issues/7522
 i=0
 args=("$@")
+
+# Local edit: "hdiutil detach <mount point>" unmounts the volume and then ejects the disk. If
+# the eject fails (busy), the volume is already unmounted, so retrying the mount point fails with
+# "No such file or directory" forever. Find the disk now, and retry with that instead.
+detach_disk=
+if [ "$1" = "detach" ] && [ -d "${!#}" ]; then
+	detach_disk=$(diskutil info "${!#}" | awk -F': *' '/Part of Whole/ {print $2}')
+fi
+
 while true; do
 	start=$(date +%s)
 	set +e
@@ -101,10 +110,13 @@ while true; do
 
 	if [ $i -eq 30 ]; then exit 1; fi
 	i=$((i+1))
-	# Local edit: a volume can stay busy (Spotlight, XProtect, Finder) for longer than all the
-	# retries, so after a few tries force the detach.
-	if [ "$1" = "detach" ] && [ $i -eq 5 ]; then
-		args=(detach -force "${@:2}")
+	if [ "$1" = "detach" ]; then
+		target=("${@:2}")
+		if [ -n "$detach_disk" ]; then target=("/dev/$detach_disk"); fi
+		# A volume can stay busy (Spotlight, XProtect, Finder) for longer than all the
+		# retries, so after a few tries force the detach.
+		if [ $i -ge 5 ]; then target=(-force "${target[@]}"); fi
+		args=(detach "${target[@]}")
 	fi
 	sleep 5
 done
