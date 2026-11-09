@@ -19,18 +19,21 @@ void mark_save_dirty();
 extern script_data *genericscripts[NUMSCRIPTSGENERIC];
 
 static bool life_in_hearts;
-void call_init_dlg(zinitdata& sourcezinit, bool zc, bool testQuest)
+bool call_init_dlg(zinitdata& sourcezinit, bool zc, bool testQuest)
 {
 	life_in_hearts = zc_get_config("misc","init_data_life_in_hearts",1);
 	bool tmpb = life_in_hearts;
+	bool kept = false;
 	InitDataDialog(sourcezinit, zc, testQuest,
-		[&sourcezinit](zinitdata const& other)
+		[&sourcezinit, &kept](zinitdata const& other)
 		{
 			mark_save_dirty();
 			sourcezinit = other;
+			kept = true;
 		}).show();
 	if(tmpb != life_in_hearts)
 		zc_set_config("misc","init_data_life_in_hearts",life_in_hearts?1:0);
+	return kept;
 }
 
 InitDataDialog::InitDataDialog(zinitdata const& start, bool zc, bool testQuest, std::function<void(zinitdata const&)> setVals):

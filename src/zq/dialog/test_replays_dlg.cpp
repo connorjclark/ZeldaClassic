@@ -22,6 +22,26 @@ int32_t onSave();
 extern char *filepath;
 extern bool saved;
 
+// Checks text that will be saved in a replay's metadata.
+bool validate_replay_meta_text(const std::string& text, std::string& error)
+{
+	// zplayer reads "«" as the start of an annotation, which isn't allowed in the metadata.
+	if (text.find("\xC2\xAB") != std::string::npos)
+	{
+		error = "Names can't contain \"\xC2\xAB\".";
+		return false;
+	}
+	for (char c : text)
+	{
+		if ((unsigned char)c < 0x20 || c == 0x7F)
+		{
+			error = "Names can't contain control characters.";
+			return false;
+		}
+	}
+	return true;
+}
+
 #ifndef __EMSCRIPTEN__
 // The last run of replays launched from the Test Replays dialog. This lives outside the dialog,
 // so closing and reopening it doesn't lose track of a run.
@@ -603,26 +623,7 @@ public:
 				}
 
 				auto& replay = test_replays[test_replay_val];
-				auto validate = [](const std::string& text, std::string& error)
-				{
-					// zplayer reads "«" as the start of an annotation, which isn't allowed in
-					// the metadata.
-					if (text.find("\xC2\xAB") != std::string::npos)
-					{
-						error = "Names can't contain \"\xC2\xAB\".";
-						return false;
-					}
-					for (char c : text)
-					{
-						if ((unsigned char)c < 0x20 || c == 0x7F)
-						{
-							error = "Names can't contain control characters.";
-							return false;
-						}
-					}
-					return true;
-				};
-				if (auto label = call_get_text("Rename Replay", "Name:", replay.meta["label"], validate))
+				if (auto label = call_get_text("Rename Replay", "Name:", replay.meta["label"], validate_replay_meta_text))
 				{
 					util::trimstr(*label);
 					if (!set_replay_label(replay.path, *label))

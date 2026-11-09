@@ -14,7 +14,8 @@
 #include "gui/switcher.h"
 #include "core/initdata.h"
 
-void call_init_dlg(zinitdata& sourcezinit, bool zc, bool testQuest = false);
+// Returns whether the changes were kept (OK was pressed).
+bool call_init_dlg(zinitdata& sourcezinit, bool zc, bool testQuest = false);
 
 class InitDataDialog: public GUI::Dialog<InitDataDialog>
 {

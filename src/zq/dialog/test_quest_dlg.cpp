@@ -11,6 +11,7 @@
 #include "zq/zq_class.h"
 #include "base/util.h"
 #include "dialog/externs.h"
+#include "dialog/init_data.h"
 #include "gui/list.h"
 #include <fmt/format.h>
 #include <algorithm>
@@ -125,14 +126,22 @@ std::shared_ptr<GUI::Widget> TestQstDialog::view()
 					}
 				),
 				Label(text = "Init Data:"),
-				DropDownList(
-					maxwidth = 10_em,
-					data = init_data_list,
-					selectedValue = test_init_data_val,
-					onSelectFunc = [&](int32_t val)
-					{
-						test_init_data_val = val;
-					}
+				Row(
+					hAlign = 0.0,
+					DropDownList(
+						maxwidth = 10_em,
+						data = init_data_list,
+						selectedValue = test_init_data_val,
+						onSelectFunc = [&](int32_t val)
+						{
+							test_init_data_val = val;
+						}
+					),
+					Button(
+						text = "Edit...",
+						padding = 0_px,
+						forceFitH = true,
+						onClick = message::MANAGE_INIT_DATA)
 				)
 			),
 			Row(
@@ -153,18 +162,6 @@ std::shared_ptr<GUI::Widget> TestQstDialog::view()
 					text = "Cancel",
 					minwidth = 90_px,
 					onClick = message::CANCEL)
-			),
-			Row(
-				vAlign = 1.0,
-				spacing = 2_em,
-				Button(
-					text = "Edit Test Init Data",
-					minwidth = 90_px,
-					onClick = message::EDIT_INIT_DATA),
-				Button(
-					text = "Create Test Init Data",
-					minwidth = 90_px,
-					onClick = message::CREATE_INIT_DATA)
 			),
 			Rows<2>(
 				INFOBTN("Save before opening test mode."),
@@ -207,59 +204,194 @@ static void save_test_init_data(int i)
 	zc_set_config(qst_cfg_header.c_str(), fmt::format("test_init_data_{}_name", i + 1).c_str(), test_init_data_names[i].c_str());
 }
 
+// Test init data names go in the metadata of replays recorded with them, and on zplayer's
+// command line, where a leading "-" would be read as a switch.
+static bool validate_test_init_data_name(const std::string& text, std::string& error)
+{
+	auto first = text.find_first_not_of("\t\n\v\f\r ");
+	if (first != std::string::npos && text[first] == '-')
+	{
+		error = "Names can't start with \"-\".";
+		return false;
+	}
+	return validate_replay_meta_text(text, error);
+}
+
+namespace {
+
+// Lists the quest's test init data, which Test Quest can start the game with, and creates,
+// edits and renames them. Picking a different one here also picks it for Test Quest.
+class TestInitDataDialog: public GUI::Dialog<TestInitDataDialog>
+{
+public:
+	enum class message { REFR_INFO, CREATE, EDIT, RENAME, CLOSE };
+
+	std::shared_ptr<GUI::Widget> view() override
+	{
+		using namespace GUI::Builder;
+		using namespace GUI::Props;
+
+		list_data = GUI::ListData();
+		for (int i = 0; i < test_init_data_names.size(); i++)
+			list_data.add(test_init_data_names[i], i + 1);
+
+		std::shared_ptr<GUI::Widget> content;
+		if (test_init_data.empty())
+			content = Label(text = "No test init data yet.");
+		else
+		{
+			if (selected < 1 || selected > test_init_data.size())
+				selected = test_init_data_val >= 1 && test_init_data_val <= test_init_data.size() ? test_init_data_val : 1;
+			content = List(
+				data = list_data,
+				width = 20_em, height = 8_em, fitParent = true,
+				focused = true,
+				selectedValue = selected,
+				onSelectFunc = [&](int32_t val)
+				{
+					selected = test_init_data_val = val;
+				},
+				onDClick = message::EDIT
+			);
+		}
+
+		bool none = test_init_data.empty();
+		return Window(
+			title = "Test Init Data",
+			info = "Test init data changes what the game starts with in test mode, like the"
+				" items, counters and level items, without changing the quest's own init data."
+				" Picking a different one here also picks it in the Test Quest dialog's Init Data"
+				" list.",
+			onClose = message::CLOSE,
+			Column(
+				content,
+				Row(
+					spacing = 1_em,
+					Button(
+						text = "Create",
+						onClick = message::CREATE),
+					Button(
+						text = "Edit",
+						disabled = none,
+						onClick = message::EDIT),
+					Button(
+						text = "Rename",
+						disabled = none,
+						onClick = message::RENAME)
+				),
+				Button(
+					text = "Close",
+					minwidth = 90_px,
+					onClick = message::CLOSE,
+					focused = none)
+			)
+		);
+	}
+
+	bool handleMessage(const GUI::DialogMessage<message>& msg)
+	{
+		int i = selected - 1;
+		bool has_selection = i >= 0 && i < test_init_data.size();
+		switch (msg.message)
+		{
+			case message::CREATE:
+			{
+				zinitdata zinit_test = zinit;
+				bool old_saved = saved;
+				// Only allow configuration for the same stuff visible in the cheat menu in the player,
+				// plus the viewport follow settings, which (unlike the cheat) Test Quest can apply.
+				bool kept = call_init_dlg(zinit_test, true, true);
+				saved = old_saved;
+				if (!kept)
+					return false;
+
+				std::string delta = serialize_init_data_delta(&zinit, &zinit_test);
+
+				int index = test_init_data.size();
+				// Cancelling the name keeps the default, rather than losing the init data just set up.
+				std::string name = fmt::format("Init Data {}", index + 1);
+				if (auto new_name = call_get_text("Name Test Init Data", "Name:", name, validate_test_init_data_name))
+				{
+					util::trimstr(*new_name);
+					if (!new_name->empty())
+						name = *new_name;
+				}
+
+				test_init_data.push_back(delta);
+				test_init_data_names.push_back(name);
+				save_test_init_data(index);
+				selected = test_init_data_val = index + 1;
+				refresh_dlg();
+				return false;
+			}
+
+			case message::EDIT:
+			{
+				if (!has_selection)
+					return false;
+
+				std::string error;
+				zinitdata* zinit_test = apply_init_data_delta(&zinit, test_init_data[i], error);
+				if (!zinit_test)
+				{
+					InfoDialog("Error applying init data delta", error).show();
+					return false;
+				}
+
+				bool old_saved = saved;
+				bool kept = call_init_dlg(*zinit_test, true, true);
+				saved = old_saved;
+
+				if (kept)
+				{
+					std::string delta = serialize_init_data_delta(&zinit, zinit_test);
+					test_init_data[i] = delta;
+					save_test_init_data(i);
+				}
+
+				delete zinit_test;
+				return false;
+			}
+
+			case message::RENAME:
+			{
+				if (!has_selection)
+					return false;
+
+				auto name = call_get_text("Rename Test Init Data", "Name:", test_init_data_names[i], validate_test_init_data_name);
+				if (!name)
+					return false;
+
+				util::trimstr(*name);
+				test_init_data_names[i] = name->empty() ? fmt::format("Init Data {}", i + 1) : *name;
+				save_test_init_data(i);
+				refresh_dlg();
+				return false;
+			}
+
+			case message::CLOSE:
+				return true;
+		}
+		return false;
+	}
+
+private:
+	GUI::ListData list_data;
+	// The highlighted test init data, counting from 1.
+	int selected = 0;
+};
+
+}
+
 bool TestQstDialog::handleMessage(const GUI::DialogMessage<message>& msg)
 {
 	switch(msg.message)
 	{
-		// TODO: calling `zinit.clear` should really be done in ctor...
-		case message::CREATE_INIT_DATA:
-		{
-			zinitdata zinit_test = zinit;
-			bool old_saved = saved;
-			// Only allow configuration for the same stuff visible in the cheat menu in the player,
-			// plus the viewport follow settings, which (unlike the cheat) Test Quest can apply.
-			doInit(&zinit_test, true, true);
-			saved = old_saved;
-
-			std::string delta = serialize_init_data_delta(&zinit, &zinit_test);
-
-			int i = test_init_data.size();
-			test_init_data.push_back(delta);
-			test_init_data_names.push_back(fmt::format("Init Data {}", i + 1));
-			save_test_init_data(i);
+		case message::MANAGE_INIT_DATA:
+			TestInitDataDialog().show();
+			// Show changes to the test init data in the dropdown.
 			rerun_dlg = true;
-			test_init_data_val = i + 1;
 			return true;
-		}
-		break;
-
-		case message::EDIT_INIT_DATA:
-		{
-			if (test_init_data_val == 0)
-				return false;
-			if (test_init_data_val - 1 >= test_init_data.size())
-				return false;
-
-			std::string error;
-			zinitdata* zinit_test = apply_init_data_delta(&zinit, test_init_data[test_init_data_val - 1], error);
-			if (!zinit_test)
-			{
-				InfoDialog("Error applying init data delta", error).show();
-				return false;
-			}
-
-			bool old_saved = saved;
-			doInit(zinit_test, true, true);
-			saved = old_saved;
-
-			std::string delta = serialize_init_data_delta(&zinit, zinit_test);
-			test_init_data[test_init_data_val - 1] = delta;
-			save_test_init_data(test_init_data_val - 1);
-
-			delete zinit_test;
-			return false;
-		}
-		break;
 
 		case message::OK:
 		{

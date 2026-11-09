@@ -19,7 +19,7 @@ std::string find_test_init_data_name(const std::string& init_data);
 class TestQstDialog: public GUI::Dialog<TestQstDialog>
 {
 public:
-	enum class message { REFR_INFO, CREATE_INIT_DATA, EDIT_INIT_DATA, OK, CANCEL, REPLAYS };
+	enum class message { REFR_INFO, MANAGE_INIT_DATA, OK, CANCEL, REPLAYS };
 
 	TestQstDialog();
 
