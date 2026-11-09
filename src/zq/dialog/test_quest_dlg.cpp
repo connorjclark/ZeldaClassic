@@ -224,7 +224,7 @@ namespace {
 class TestInitDataDialog: public GUI::Dialog<TestInitDataDialog>
 {
 public:
-	enum class message { REFR_INFO, CREATE, EDIT, RENAME, CLOSE };
+	enum class message { REFR_INFO, CREATE, EDIT, RENAME, REMOVE, CLOSE };
 
 	std::shared_ptr<GUI::Widget> view() override
 	{
@@ -277,7 +277,11 @@ public:
 					Button(
 						text = "Rename",
 						disabled = none,
-						onClick = message::RENAME)
+						onClick = message::RENAME),
+					Button(
+						text = "Delete",
+						disabled = none,
+						onClick = message::REMOVE)
 				),
 				Button(
 					text = "Close",
@@ -365,6 +369,37 @@ public:
 				util::trimstr(*name);
 				test_init_data_names[i] = name->empty() ? fmt::format("Init Data {}", i + 1) : *name;
 				save_test_init_data(i);
+				refresh_dlg();
+				return false;
+			}
+
+			case message::REMOVE:
+			{
+				if (!has_selection)
+					return false;
+
+				if (!alert_confirm("Delete Test Init Data",
+					fmt::format("Delete \"{}\"? This can't be undone.", test_init_data_names[i])))
+					return false;
+
+				test_init_data.erase(test_init_data.begin() + i);
+				test_init_data_names.erase(test_init_data_names.begin() + i);
+
+				// They're saved numbered from 1, and loading stops at the first number that's
+				// missing, so move the ones after it down and clear the last.
+				for (int j = i; j < test_init_data.size(); j++)
+					save_test_init_data(j);
+				std::string qst_cfg_header = qst_cfg_header_from_path(filepath);
+				int last = test_init_data.size() + 1;
+				zc_set_config(qst_cfg_header.c_str(), fmt::format("test_init_data_{}", last).c_str(), "");
+				zc_set_config(qst_cfg_header.c_str(), fmt::format("test_init_data_{}_name", last).c_str(), "");
+
+				// If Test Quest was using it, go back to the default rather than picking another.
+				if (test_init_data_val == i + 1)
+					test_init_data_val = 0;
+				else if (test_init_data_val > i + 1)
+					test_init_data_val--;
+				selected = std::min<int>(i + 1, test_init_data.size());
 				refresh_dlg();
 				return false;
 			}
