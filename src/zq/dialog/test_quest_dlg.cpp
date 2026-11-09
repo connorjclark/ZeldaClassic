@@ -2,14 +2,21 @@
 #include "core/initdata.h"
 #include "dialog/info.h"
 #include "test_quest_dlg.h"
+#include "test_replays_dlg.h"
 #include "dialog/alertfunc.h"
 #include "base/process_management.h"
 #include "gui/builder.h"
 #include "zc_list_data.h"
 #include "init.h"
 #include "zq/zq_class.h"
+#include "base/util.h"
+#include "dialog/externs.h"
+#include "gui/list.h"
 #include <fmt/format.h>
+#include <algorithm>
+#include <ctime>
 #include <filesystem>
+#include <optional>
 
 #ifdef __EMSCRIPTEN__
 #include "base/emscripten_utils.h"
@@ -34,6 +41,12 @@ static const GUI::ListData retsqrlist
 };
 
 static GUI::ListData init_data_list;
+
+std::string find_test_init_data_name(const std::string& init_data)
+{
+	auto it = std::find(test_init_data.begin(), test_init_data.end(), init_data);
+	return it != test_init_data.end() ? test_init_data_names[it - test_init_data.begin()] : "";
+}
 
 int calculate_test_dmap();
 void call_testqst_dialog()
@@ -130,6 +143,12 @@ std::shared_ptr<GUI::Widget> TestQstDialog::view()
 					minwidth = 90_px,
 					onClick = message::OK,
 					focused = true),
+#ifndef __EMSCRIPTEN__
+				Button(
+					text = "Replays",
+					minwidth = 90_px,
+					onClick = message::REPLAYS),
+#endif
 				Button(
 					text = "Cancel",
 					minwidth = 90_px,
@@ -166,7 +185,9 @@ std::shared_ptr<GUI::Widget> TestQstDialog::view()
 					}
 				),
 
-				INFOBTN("Save a recording to replays/test_XXXXXXXX.zplay."),
+				INFOBTN("Record your test session so you can play it back later. After changing"
+					" the quest, use Replays > Assert to check it still plays the same, so you'll"
+					" know if a change broke something."),
 				Checkbox(text = "Record", fitParent = true,
 					checked = zc_get_config("zquest", "test_mode_record", false),
 					onToggleFunc = [&](bool state)
@@ -250,11 +271,6 @@ bool TestQstDialog::handleMessage(const GUI::DialogMessage<message>& msg)
 #else
 			test_killer.kill();
 
-			bool should_record = zc_get_config("zquest", "test_mode_record", false);
-			std::filesystem::path replay_file_dir = std::filesystem::path(zc_get_config("zquest", "replay_file_dir", "replays/")) / "test";
-			std::filesystem::create_directories(replay_file_dir);
-			auto replay_path = replay_file_dir / fmt::format("test_{}.zplay", std::time(nullptr));
-
 			std::vector<std::string> args = {
 				"-test",
 				filepath,
@@ -266,21 +282,45 @@ bool TestQstDialog::handleMessage(const GUI::DialogMessage<message>& msg)
 			{
 				args.push_back("-test-init-data");
 				args.push_back(test_init_data[test_init_data_val - 1]);
+				args.push_back("-test-init-data-name");
+				args.push_back(test_init_data_names[test_init_data_val - 1]);
 			}
 			if (zc_get_config("zquest", "test_mode_auto_restart", false))
 			{
 				args.push_back("-test-auto-restart");
 			}
-			if (should_record)
+			if (zc_get_config("zquest", "test_mode_record", false))
 			{
-				args.push_back("-record");
-				args.push_back(replay_path.string().c_str());
+				std::error_code ec;
+				std::filesystem::path replay_file_dir = get_test_replay_dir();
+				std::filesystem::create_directories(replay_file_dir, ec);
+				if (ec)
+				{
+					InfoDialog("Test Quest", fmt::format("Couldn't create {} ({}), so this test won't be recorded.",
+						replay_file_dir.string(), ec.message())).show();
+				}
+				else
+				{
+					args.push_back("-record");
+					args.push_back((replay_file_dir / fmt::format("test_{}.zplay", std::time(nullptr))).string());
+					// Record the hero's position and a hash of each frame, so that asserting the
+					// replay later catches changes to what's drawn, not just to RNG and events.
+					args.push_back("-replay-debug");
+				}
 			}
 			test_killer = launch_process(locate_zapp_file(ZPLAYER_FILE), args);
 #endif
 		}
 		return true;
 		
+#ifndef __EMSCRIPTEN__
+		case message::REPLAYS:
+		{
+			call_test_replays_dialog();
+			return false;
+		}
+#endif
+
 		case message::CANCEL:
 			return true;
 	}

@@ -5,9 +5,13 @@
 #include "gui/checkbox.h"
 #include "gui/text_field.h"
 #include <functional>
+#include <string>
 #include <string_view>
 
 void call_testqst_dialog();
+
+// The name of the quest's test init data with these contents, or an empty string if none has them.
+std::string find_test_init_data_name(const std::string& init_data);
 
 /* Note: The string_views passed to setCheatCodes will include
  * null terminators.
@@ -15,7 +19,7 @@ void call_testqst_dialog();
 class TestQstDialog: public GUI::Dialog<TestQstDialog>
 {
 public:
-	enum class message { REFR_INFO, CREATE_INIT_DATA, EDIT_INIT_DATA, OK, CANCEL };
+	enum class message { REFR_INFO, CREATE_INIT_DATA, EDIT_INIT_DATA, OK, CANCEL, REPLAYS };
 
 	TestQstDialog();
 
