@@ -1,6 +1,7 @@
 import { configureMount, renderSettingsPanel, setupSettingsPanel } from "./settings.js";
 import { createElement, createUrlString, fetchWithProgress, formatBytes, fsExists, fsReadAllFiles, sanitizeHtml } from "./utils.js";
 import { handleFileLaunch } from "./file_launch.js";
+import { fsEnqueue, fsPersist, fsPull, fsRemove } from "./local_files.js";
 import { compileScriptWasmModule, compileScriptWasmModuleBatch, createScriptWasmHandle, pollScriptWasmHandle, destroyScriptWasmHandle, destroyAllScriptWasmHandles, destroyScriptWasmModule } from "./zasm.js";
 
 globalThis.ZC = {
@@ -93,13 +94,52 @@ globalThis.ZC = {
   setShareableUrl(params) {
     ZC.url = createUrlString('', params);
   },
-  openTestMode(quest, dmap, screen, retsquare) {
-    if (0x80 < screen) return;
+  // The player that the editor's Test Replays dialog last opened: a tab, or a hidden frame
+  // in this one.
+  trackedPlayer: null,
+  // Opens the player. The params are its command line switches without the dash in front
+  // (ex: replay-debug), where an empty value is a switch that takes none. A headless player
+  // has nothing to show, so it runs in a hidden frame; any other gets a new tab.
+  openPlayer(params, track) {
+    const url = new URL(ZC_Constants.zeldaUrl, location.href);
+    url.search = new URLSearchParams(params).toString();
 
-    const params = { test: quest, dmap, screen };
-    if (retsquare !== -1) params.retsquare = retsquare;
-    const url = createUrlString(ZC_Constants.zeldaUrl, params);
-    window.open(url, '_blank');
+    let player;
+    if (params.some(([name]) => name === 'headless')) {
+      player = document.createElement('iframe');
+      player.src = url;
+      // Not display:none, which could pause the page inside.
+      player.style.cssText = 'position: fixed; left: -100px; top: 0; width: 10px; height: 10px; border: 0; visibility: hidden';
+      player.setAttribute('aria-hidden', 'true');
+      player.tabIndex = -1;
+      document.body.append(player);
+    } else {
+      player = window.open(url, '_blank');
+    }
+    if (track) ZC.trackedPlayer = player;
+  },
+  isTrackedPlayerOpen() {
+    const player = ZC.trackedPlayer;
+    if (!player) return false;
+    return player instanceof HTMLIFrameElement ? player.isConnected : !player.closed;
+  },
+  closeTrackedPlayer() {
+    const player = ZC.trackedPlayer;
+    if (player instanceof HTMLIFrameElement) player.remove();
+    else if (player) player.close();
+    ZC.trackedPlayer = null;
+  },
+  // The player is about to exit. If the editor opened it to run replays, close it once what
+  // they saved is stored.
+  onPlayerExiting() {
+    const params = new URLSearchParams(location.search);
+    if (!params.has('replay-exit-when-done') && !params.has('replay-batch')) return;
+
+    if (window.frameElement) {
+      fsEnqueue(() => window.frameElement.remove());
+    } else if (window.opener) {
+      fsEnqueue(() => window.close());
+    }
   },
   async runZscriptCompiler(scriptPath, consolePath, qr) {
     scriptPath = PATH.join('/root-fs', scriptPath);
@@ -131,12 +171,19 @@ globalThis.ZC = {
     return {code};
   },
   async fsSync(populate) {
+    // Saving deletes what the store has that this tab doesn't. A player tab that the editor
+    // opened may have written replays and results there since, so load those first.
+    if (!populate && TARGET === 'zeditor') await fsPull('/local/replays');
+
     // Sync /local to IndexedDB or to the attached folder.
-    await new Promise((resolve, reject) => FS.syncfs(populate, (err) => {
+    await fsEnqueue(() => new Promise((resolve, reject) => FS.syncfs(populate, (err) => {
       if (err) return reject(err);
       resolve();
-    }));
+    })));
   },
+  fsPersist,
+  fsPull,
+  fsRemove,
   configureMount,
   fsReadAllFiles,
   compileScriptWasmModule,
@@ -194,6 +241,10 @@ async function main() {
 
       const progress = (Module.totalDependencies - left) / (Module.totalDependencies);
       ZC.setStatus(left ? `Preparing... (${Module.totalDependencies - left}/${Module.totalDependencies})` : '', progress);
+    },
+    onAbort: function () {
+      // Nobody can see a hidden player that crashed, so close it and let the editor carry on.
+      if (window.frameElement) fsEnqueue(() => window.frameElement.remove());
     },
     onExit: function (code) {
       const msg = `exit with code: ${code}`;
@@ -300,6 +351,14 @@ async function main() {
 
   await readyToRunPromise;
   callMain(Module.arguments);
+
+  if (TARGET === 'zplayer') {
+    // Going back to the editor's tab hides this one, and it may be closed without ever being
+    // shown again, so this is the player's chance to save a test mode replay.
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden && Module._zc_web_page_hidden) Module._zc_web_page_hidden();
+    });
+  }
 
   await renderQuestList();
 

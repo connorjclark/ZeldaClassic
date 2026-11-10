@@ -145,10 +145,83 @@ void em_open_link(std::string url) {
   }, url.c_str());
 }
 
-void em_open_test_mode(const char* qstpath, int dmap, int screen, int retsquare) {
+void em_open_player(const std::vector<std::pair<std::string, std::string>>& params, bool track) {
 	EM_ASM({
-    ZC.openTestMode(UTF8ToString($0), $1, $2, $3);
-	}, qstpath, dmap, screen, retsquare);
+		ZC.pendingPlayerParams = [];
+	});
+	for (auto& [key, value] : params) {
+		EM_ASM({
+			ZC.pendingPlayerParams.push([UTF8ToString($0), UTF8ToString($1)]);
+		}, key.c_str(), value.c_str());
+	}
+	EM_ASM({
+		ZC.openPlayer(ZC.pendingPlayerParams, $0);
+	}, track);
+}
+
+bool em_is_tracked_player_open() {
+	return EM_ASM_INT({
+		return ZC.isTrackedPlayerOpen();
+	});
+}
+
+void em_close_tracked_player() {
+	EM_ASM({
+		ZC.closeTrackedPlayer();
+	});
+}
+
+void em_player_exiting() {
+	EM_ASM({
+		ZC.onPlayerExiting();
+	});
+}
+
+// Paths are passed to JS as one string, a path to a line.
+static std::string join_paths(const std::vector<std::string>& paths) {
+	std::string joined;
+	for (auto& path : paths)
+		joined += path + '\n';
+	return joined;
+}
+
+EM_ASYNC_JS(void, em_persist_files_, (const char* paths), {
+  try {
+    await ZC.fsPersist(UTF8ToString(paths).split('\n'));
+  } catch (e) {
+    console.error(e);
+  }
+});
+void em_persist_files(const std::vector<std::string>& paths) {
+	em_persist_files_(join_paths(paths).c_str());
+}
+
+void em_persist_files_async(const std::vector<std::string>& paths) {
+	EM_ASM({
+		ZC.fsPersist(UTF8ToString($0).split('\n')).catch(e => console.error(e));
+	}, join_paths(paths).c_str());
+}
+
+EM_ASYNC_JS(void, em_remove_persisted_files_, (const char* paths), {
+  try {
+    await ZC.fsRemove(UTF8ToString(paths).split('\n'));
+  } catch (e) {
+    console.error(e);
+  }
+});
+void em_remove_persisted_files(const std::vector<std::string>& paths) {
+	em_remove_persisted_files_(join_paths(paths).c_str());
+}
+
+EM_ASYNC_JS(void, em_pull_persisted_dir_, (const char* dir), {
+  try {
+    await ZC.fsPull(UTF8ToString(dir));
+  } catch (e) {
+    console.error(e);
+  }
+});
+void em_pull_persisted_dir(std::string dir) {
+	em_pull_persisted_dir_(dir.c_str());
 }
 
 EM_ASYNC_JS(int, em_compile_zscript_, (const char* script_path, const char* console_path, const char* qr), {

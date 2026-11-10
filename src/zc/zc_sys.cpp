@@ -161,6 +161,10 @@ void zc_exit(int code)
 	Z_message("ZQuest Classic website: https://zquestclassic.com\n");
 	Z_message("ZQuest Classic docs: https://docs.zquestclassic.com\n");
 
+#ifdef __EMSCRIPTEN__
+	em_player_exiting();
+#endif
+
 	// Before allegro_exit destroys the main display - see zscript_debugger_shutdown.
 	zscript_debugger_shutdown();
 	allegro_exit();
@@ -4124,15 +4128,15 @@ void advanceframe(bool allowwavy, bool sfxcleanup, bool allowF6Script)
 	frame_timings_poll();
 
 #ifdef __EMSCRIPTEN__
-	// Yield the main thread back to the browser occasionally.
+	// Yield the main thread back to the browser now and then. The editor runs replays in a frame
+	// of its own page, and can't do anything until this does.
 	if (is_headless())
 	{
-		static int rate = 10000;
-		static int force_yield = rate;
-		if (force_yield++ >= rate)
+		static double last_yield = emscripten_get_now();
+		if (emscripten_get_now() - last_yield >= 30)
 		{
-			force_yield = 0;
 			emscripten_sleep(0);
+			last_yield = emscripten_get_now();
 		}
 	}
 #endif

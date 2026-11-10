@@ -1252,6 +1252,8 @@ static void save_replay(std::string filename, const std::vector<ReplayStepVarian
     // Written to a temporary file first, so the replay isn't lost if the program dies while
     // writing it.
     std::string tmp_filename = filename + ".tmp";
+    std::error_code dir_ec;
+    std::filesystem::create_directories(std::filesystem::path(filename).parent_path(), dir_ec);
     std::ofstream out(tmp_filename, std::ios::binary);
     for (auto it : rs.meta_map)
         out << fmt::format("{} {} {}", TypeMeta, it.first, it.second) << '\n';
@@ -1366,6 +1368,10 @@ static void save_result(bool stopped = false, bool changed = false)
     out << fmt::format("stopped: {}", stopped) << '\n';
 
 	out.close();
+#ifdef __EMSCRIPTEN__
+	// So that the editor's tab can read it, and show the replay's progress.
+	em_persist_files_async({get_file_path(".result.txt").string()});
+#endif
 }
 
 static void save_snapshot(BITMAP* bitmap, PALETTE pal, int frame, bool was_unexpected)
@@ -2274,7 +2280,21 @@ void replay_save()
 void replay_save(std::filesystem::path path)
 {
     save_replay(path.string(), record_log);
+#ifdef __EMSCRIPTEN__
+    // So that the editor's tab can read it. Not waited for, as some callers can't be suspended.
+    em_persist_files_async({path.string()});
+#endif
 }
+
+#ifdef __EMSCRIPTEN__
+// Called when the page is hidden, like by going back to the editor's tab. The tab may be closed
+// without the player ever exiting, so this is when a test mode replay gets saved.
+extern "C" EMSCRIPTEN_KEEPALIVE void zc_web_page_hidden()
+{
+    if (rs.mode == ReplayMode::Record && replay_get_meta_bool("test_mode"))
+        replay_save();
+}
+#endif
 
 // Ends the recording as if the program was closed on the frame that crashed, and saves it. A
 // save file's replay then continues after that when the save is next loaded, as it does after

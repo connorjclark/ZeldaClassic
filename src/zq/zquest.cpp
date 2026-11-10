@@ -67,6 +67,7 @@
 
 #include "dialog/cheat_codes.h"
 #include "zq/dialog/quest_browser.h"
+#include "zq/dialog/test_quest_dlg.h"
 #include "dialog/set_password.h"
 #include "dialog/quest_rules.h"
 #include "zq/dialog/script_rules.h"
@@ -22009,7 +22010,7 @@ extern "C" void open_test_mode()
 	int dmap = calculate_test_dmap();
 	int scr = zc_min(0x7F, Map.getCurrScr());
 
-	em_open_test_mode(filepath, dmap, scr, -1);
+	launch_player({{"-test", filepath, fmt::format("{}", dmap), fmt::format("{}", scr)}});
 }
 
 extern "C" void get_shareable_url()

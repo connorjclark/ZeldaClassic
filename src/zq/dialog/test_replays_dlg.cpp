@@ -18,6 +18,10 @@
 #include <map>
 #include <optional>
 
+#ifdef __EMSCRIPTEN__
+#include "base/emscripten_utils.h"
+#endif
+
 int32_t onSave();
 extern char *filepath;
 extern bool saved;
@@ -42,13 +46,12 @@ bool validate_replay_meta_text(const std::string& text, std::string& error)
 	return true;
 }
 
-#ifndef __EMSCRIPTEN__
 // The last run of replays launched from the Test Replays dialog. This lives outside the dialog,
 // so closing and reopening it doesn't lose track of a run.
 struct ReplayRun
 {
 	// Kept apart from the test session so that running a replay doesn't end it, which would
-	// lose a recording in progress.
+	// lose a recording in progress. On web the player runs in a browser tab or a hidden frame instead.
 	process_killer killer;
 	// The replays it was launched to play.
 	std::vector<std::filesystem::path> paths;
@@ -65,13 +68,33 @@ static ReplayRun replay_run;
 
 static bool is_replay_run_going()
 {
-	return !replay_run.paths.empty() && replay_run.killer.is_alive();
+	if (replay_run.paths.empty())
+		return false;
+#ifdef __EMSCRIPTEN__
+	return em_is_tracked_player_open();
+#else
+	return replay_run.killer.is_alive();
+#endif
 }
 
 // Whether the last run ended by crashing (or being killed), rather than exiting.
 static bool did_replay_run_crash()
 {
+#ifdef __EMSCRIPTEN__
+	// There's no telling from another tab or frame.
+	return false;
+#else
 	return !replay_run.paths.empty() && !replay_run.stopped && !replay_run.killer.is_alive() && !replay_run.killer.exit_code();
+#endif
+}
+
+static void stop_replay_run_player()
+{
+#ifdef __EMSCRIPTEN__
+	em_close_tracked_player();
+#else
+	replay_run.killer.kill();
+#endif
 }
 
 static bool is_in_replay_run(const std::filesystem::path& path)
@@ -92,7 +115,21 @@ static int32_t test_replay_val = 0;
 
 static std::filesystem::path get_test_replay_root()
 {
+#ifdef __EMSCRIPTEN__
+	// Only /local is kept between sessions, and shared with the player's tab.
+	return "local/replays/test";
+#else
 	return std::filesystem::path(zc_get_config("zquest", "replay_file_dir", "replays/")) / "test";
+#endif
+}
+
+// On web the player runs in another tab or frame, with its own copy of the files. This loads the
+// replays and results that it has saved since.
+static void pull_test_replays()
+{
+#ifdef __EMSCRIPTEN__
+	em_pull_persisted_dir(get_test_replay_root().string());
+#endif
 }
 
 // zplayer writes a .result.txt file next to a replay every time it runs it. Playing a replay back
@@ -408,7 +445,9 @@ static std::string get_replay_run_error()
 				"The player crashed while running the replays. ";
 		if (missing)
 			error += fmt::format("{} of {} weren't checked (marked [not checked]). ", missing, count);
+#ifndef __EMSCRIPTEN__
 		error += "Details are in allegro.log in the ZQuest Classic folder.";
+#endif
 	}
 
 	// The player refuses to update a replay when the quest plays differently, rather than just
@@ -573,10 +612,13 @@ public:
 					Button(
 						text = "Copy Path",
 						disabled = no_replays,
-						onClick = message::COPY_PATH),
+						onClick = message::COPY_PATH)
+#ifndef __EMSCRIPTEN__
+					,
 					Button(
 						text = "Open Folder",
 						onClick = message::OPEN_FOLDER)
+#endif
 				),
 				Button(
 					text = "Close",
@@ -628,6 +670,9 @@ public:
 					util::trimstr(*label);
 					if (!set_replay_label(replay.path, *label))
 						InfoDialog("Rename Replay", fmt::format("Failed to write {}", replay.path.string())).show();
+#ifdef __EMSCRIPTEN__
+					em_persist_files({replay.path.string()});
+#endif
 					refresh_dlg();
 				}
 				return false;
@@ -643,6 +688,7 @@ public:
 				if (!alert_confirm("Delete Replays", fmt::format("Delete {}? This can't be undone.", what)))
 					return false;
 
+				std::vector<std::string> removed;
 				for (int32_t i : selected)
 				{
 					auto files = get_test_replay_files(test_replays[i].path);
@@ -651,8 +697,12 @@ public:
 					{
 						std::error_code ec;
 						std::filesystem::remove(file, ec);
+						removed.push_back(file.string());
 					}
 				}
+#ifdef __EMSCRIPTEN__
+				em_remove_persisted_files(removed);
+#endif
 				refresh_dlg();
 				return false;
 			}
@@ -672,6 +722,7 @@ public:
 
 			case message::OPEN_FOLDER:
 			{
+#ifndef __EMSCRIPTEN__
 				std::error_code ec;
 				auto dir = get_test_replay_dir();
 				std::filesystem::create_directories(dir, ec);
@@ -683,11 +734,12 @@ public:
 #else
 				launch_process("xdg-open", {path});
 #endif
+#endif
 				return false;
 			}
 
 			case message::CANCEL_RUN:
-				replay_run.killer.kill();
+				stop_replay_run_player();
 				replay_run.stopped = true;
 				refresh_in_place();
 				return false;
@@ -724,6 +776,7 @@ private:
 	// the selection.
 	void refresh_in_place()
 	{
+		pull_test_replays();
 		for (auto& replay : test_replays)
 			replay.result = read_replay_result(replay.path.string() + ".result.txt");
 		update_replay_list();
@@ -797,29 +850,32 @@ private:
 		if (!saved && zc_get_config("zquest", "test_mode_auto_save", true))
 			onSave();
 
-		std::vector<std::string> args;
+		PlayerArgs args;
 		if (checks)
-			args.push_back("-headless");
+			args.push_back({"-headless"});
 		else
 		{
 			auto dir = get_play_result_path("").parent_path();
 			std::error_code ec;
 			std::filesystem::create_directories(dir, ec);
-			args.push_back("-replay-output-dir");
-			args.push_back(dir.string());
+#ifdef __EMSCRIPTEN__
+			// The player's tab has its own copy of the files, which it loads when it starts.
+			em_persist_files({dir.string()});
+#endif
+			args.push_back({"-replay-output-dir", dir.string()});
 		}
 		if (selected.size() == 1)
 		{
-			args.push_back(mode_switch);
-			args.push_back(test_replays[selected[0]].path.string());
+			args.push_back({mode_switch, test_replays[selected[0]].path.string()});
 			// Otherwise the player starts the replay over once it ends.
-			args.push_back("-replay-exit-when-done");
+			args.push_back({"-replay-exit-when-done"});
 		}
 		else
 		{
 			// Play them one after another, in the order they're listed. zplayer exits once
 			// they're all done.
-			// zplayer reads the list when it starts, so this one file is reused.
+			// zplayer reads the list when it starts, so this one file is reused. On web it has
+			// to be somewhere the player's tab can read.
 			std::error_code ec;
 			auto list_path = std::filesystem::absolute(get_test_replay_root(), ec) / "zc_test_replays.txt";
 			std::filesystem::create_directories(list_path.parent_path(), ec);
@@ -832,18 +888,22 @@ private:
 				InfoDialog("Test Replays", fmt::format("Failed to write {}", list_path.string())).show();
 				return false;
 			}
+#ifdef __EMSCRIPTEN__
+			em_persist_files({list_path.string()});
+#endif
 
-			args.push_back("-replay-batch");
-			args.push_back(list_path.string());
+			args.push_back({"-replay-batch", list_path.string()});
 			// Assert is the default for a batch.
 			if (strcmp(mode_switch, "-assert"))
-				args.push_back(mode_switch);
+				args.push_back({mode_switch});
 		}
 
 		replay_run.paths.clear();
 		replay_run.old_results.clear();
 		replay_run.stopped = false;
 		replay_run.checks = checks;
+		// The results as they are now, including what a player on web has saved since.
+		pull_test_replays();
 		for (int32_t i : selected)
 		{
 			auto& path = test_replays[i].path;
@@ -851,7 +911,7 @@ private:
 			replay_run.old_results[path] = util::read_text_file(get_replay_run_result_path(path));
 		}
 		replay_run.killer.kill();
-		replay_run.killer = launch_process(locate_zapp_file(ZPLAYER_FILE), args);
+		replay_run.killer = launch_player(args, true);
 
 		refresh_in_place();
 		return false;
@@ -861,7 +921,10 @@ private:
 
 void call_test_replays_dialog()
 {
+#ifdef __EMSCRIPTEN__
+	pull_test_replays();
+#else
 	migrate_old_test_replays();
+#endif
 	TestReplaysDialog().show();
 }
-#endif

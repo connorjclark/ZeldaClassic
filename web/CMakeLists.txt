@@ -42,6 +42,7 @@ add_custom_command(
         "${CMAKE_BINARY_DIR}/npm_install.stamp"
         file_launch.js
         fsfs.js
+        local_files.js
         main.js
         package-lock.json
         package.json

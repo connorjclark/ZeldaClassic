@@ -49,6 +49,33 @@ std::string find_test_init_data_name(const std::string& init_data)
 	return it != test_init_data.end() ? test_init_data_names[it - test_init_data.begin()] : "";
 }
 
+process_killer launch_player(const PlayerArgs& args, [[maybe_unused]] bool track)
+{
+#ifdef __EMSCRIPTEN__
+	// The web player takes its switches as URL params, without the dash in front.
+	std::vector<std::pair<std::string, std::string>> params;
+	for (auto& arg : args)
+	{
+		if (arg[0] == "-test")
+		{
+			// The only one with more than one value. Each has its own param.
+			const char* keys[] = {"test", "dmap", "screen", "retsquare"};
+			for (size_t i = 1; i < arg.size(); i++)
+				params.push_back({keys[i - 1], arg[i]});
+		}
+		else
+			params.push_back({arg[0].substr(1), arg.size() > 1 ? arg[1] : ""});
+	}
+	em_open_player(params, track);
+	return {};
+#else
+	std::vector<std::string> flat_args;
+	for (auto& arg : args)
+		flat_args.insert(flat_args.end(), arg.begin(), arg.end());
+	return launch_process(locate_zapp_file(ZPLAYER_FILE), flat_args);
+#endif
+}
+
 int calculate_test_dmap();
 void call_testqst_dialog()
 {
@@ -152,12 +179,10 @@ std::shared_ptr<GUI::Widget> TestQstDialog::view()
 					minwidth = 90_px,
 					onClick = message::OK,
 					focused = true),
-#ifndef __EMSCRIPTEN__
 				Button(
 					text = "Replays",
 					minwidth = 90_px,
 					onClick = message::REPLAYS),
-#endif
 				Button(
 					text = "Cancel",
 					minwidth = 90_px,
@@ -433,60 +458,60 @@ bool TestQstDialog::handleMessage(const GUI::DialogMessage<message>& msg)
 			if (!saved && zc_get_config("zquest", "test_mode_auto_save", true))
 				onSave();
 
-#ifdef __EMSCRIPTEN__
-			em_open_test_mode(filepath, test_start_dmap, test_start_screen, test_ret_sqr);
-#else
-			test_killer.kill();
-
-			std::vector<std::string> args = {
-				"-test",
-				filepath,
-				fmt::format("{}", test_start_dmap),
-				fmt::format("{}", test_start_screen),
-				fmt::format("{}", test_ret_sqr),
-			};
+			std::string init_data, init_data_name;
 			if (test_init_data_val)
 			{
-				args.push_back("-test-init-data");
-				args.push_back(test_init_data[test_init_data_val - 1]);
-				args.push_back("-test-init-data-name");
-				args.push_back(test_init_data_names[test_init_data_val - 1]);
+				init_data = test_init_data[test_init_data_val - 1];
+				init_data_name = test_init_data_names[test_init_data_val - 1];
 			}
-			if (zc_get_config("zquest", "test_mode_auto_restart", false))
-			{
-				args.push_back("-test-auto-restart");
-			}
+
+			std::string record_path;
 			if (zc_get_config("zquest", "test_mode_record", false))
 			{
 				std::error_code ec;
-				std::filesystem::path replay_file_dir = get_test_replay_dir();
-				std::filesystem::create_directories(replay_file_dir, ec);
+				std::filesystem::path replay_file_dir = std::filesystem::absolute(get_test_replay_dir(), ec);
+				if (!ec)
+					std::filesystem::create_directories(replay_file_dir, ec);
 				if (ec)
 				{
 					InfoDialog("Test Quest", fmt::format("Couldn't create {} ({}), so this test won't be recorded.",
 						replay_file_dir.string(), ec.message())).show();
 				}
 				else
-				{
-					args.push_back("-record");
-					args.push_back((replay_file_dir / fmt::format("test_{}.zplay", std::time(nullptr))).string());
-					// Record the hero's position and a hash of each frame, so that asserting the
-					// replay later catches changes to what's drawn, not just to RNG and events.
-					args.push_back("-replay-debug");
-				}
+					record_path = (replay_file_dir / fmt::format("test_{}.zplay", std::time(nullptr))).string();
 			}
-			test_killer = launch_process(locate_zapp_file(ZPLAYER_FILE), args);
-#endif
+
+			PlayerArgs args = {{
+				"-test",
+				filepath,
+				fmt::format("{}", test_start_dmap),
+				fmt::format("{}", test_start_screen),
+				fmt::format("{}", test_ret_sqr),
+			}};
+			if (!init_data.empty())
+			{
+				args.push_back({"-test-init-data", init_data});
+				args.push_back({"-test-init-data-name", init_data_name});
+			}
+			if (zc_get_config("zquest", "test_mode_auto_restart", false))
+				args.push_back({"-test-auto-restart"});
+			if (!record_path.empty())
+			{
+				args.push_back({"-record", record_path});
+				// Record the hero's position and a hash of each frame, so that asserting the
+				// replay later catches changes to what's drawn, not just to RNG and events.
+				args.push_back({"-replay-debug"});
+			}
+			test_killer.kill();
+			test_killer = launch_player(args);
 		}
 		return true;
 		
-#ifndef __EMSCRIPTEN__
 		case message::REPLAYS:
 		{
 			call_test_replays_dialog();
 			return false;
 		}
-#endif
 
 		case message::CANCEL:
 			return true;
