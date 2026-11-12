@@ -29,6 +29,7 @@
 #include "zc/frame_timings.h"
 #include "zc/script_timings.h"
 #include "zc/replay_upload.h"
+#include "zc/scripting/jit/jit.h"
 #include "zc/scripting/types/genericdata.h"
 #include "zc/zasm_pipeline.h"
 #include "zc/zc_init.h"
@@ -4129,8 +4130,9 @@ void advanceframe(bool allowwavy, bool sfxcleanup, bool allowF6Script)
 
 #ifdef __EMSCRIPTEN__
 	// Yield the main thread back to the browser now and then. The editor runs replays in a frame
-	// of its own page, and can't do anything until this does.
-	if (is_headless())
+	// of its own page, and can't do anything until this does. Not while a compiled script is
+	// running though (one that called for a screen wipe, say), as yielding can't unwind it.
+	if (is_headless() && jit_can_start_script())
 	{
 		static double last_yield = emscripten_get_now();
 		if (emscripten_get_now() - last_yield >= 30)
