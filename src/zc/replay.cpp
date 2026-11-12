@@ -1,6 +1,7 @@
 #include "zc/replay.h"
 #include "zc/replay_compat.h"
 #include "base/check.h"
+#include "base/frame_stream.h"
 #include "core/qrs.h"
 #include "base/version.h"
 #include "base/zapp.h"
@@ -64,6 +65,12 @@ static bool snapshot_all_frames;
 static bool exit_when_done;
 // Whether an Update stopped at a frame offers to hand the replay over to the player there.
 static bool take_over_enabled;
+// Whether recording or updating a replay saves a picture of each frame that looks different from
+// the last, next to the replay (<replay>.frames). The editor shows them next to the screenshots of
+// a failed Assert, to compare how a frame looks now with how it looked when it was recorded.
+static bool save_frames_enabled;
+// Those pictures, kept in a temporary file until the replay is saved.
+static FrameStreamWriter frame_writer;
 static bool batch_when_done;
 static bool batch_any_failed;
 static std::filesystem::path output_dir;
@@ -156,6 +163,8 @@ struct ReplayState
 	int failing_screen = -1;
 	// Why the replay was stopped early, if it was.
 	std::string failing_error;
+	// Whether the pictures of the frames couldn't be saved (see save_frames_enabled).
+	bool frames_failed = false;
 	int last_failing_gfx_frame = -1;
 	int current_failing_gfx_segment_start_frame = -1;
 	std::vector<int> unexpected_gfx_frames;
@@ -1336,6 +1345,64 @@ static std::string segments_to_string(const std::vector<std::pair<int, int>>& se
 	return fmt::format("{}", fmt::join(parts, " "));
 }
 
+static std::filesystem::path get_frames_path(const std::filesystem::path& replay_path)
+{
+	return replay_path.string() + ".frames";
+}
+
+static std::filesystem::path get_frames_tmp_path()
+{
+	return get_frames_path(rs.replay_path).string() + ".tmp";
+}
+
+static void save_frame_picture()
+{
+	if (!save_frames_enabled || rs.frames_failed || bitmap_color_depth(presentbuf) != 8)
+		return;
+	if (rs.mode != ReplayMode::Record && rs.mode != ReplayMode::Update)
+		return;
+	if (!frame_writer.is_open() && !frame_writer.open(get_frames_tmp_path()))
+	{
+		rs.frames_failed = true;
+		return;
+	}
+
+	uint8_t pal[768];
+	for (int i = 0; i < 256; i++)
+	{
+		pal[i * 3] = RAMpal[i].r;
+		pal[i * 3 + 1] = RAMpal[i].g;
+		pal[i * 3 + 2] = RAMpal[i].b;
+	}
+	frame_writer.add(rs.frame_count, presentbuf->w, presentbuf->h, presentbuf->line, pal);
+}
+
+// Puts the pictures of the frames so far next to the replay, replacing those of its last version.
+static void save_frame_pictures()
+{
+	if (!frame_writer.is_open())
+		return;
+
+	frame_writer.flush();
+	auto path = get_frames_path(rs.replay_path);
+	std::error_code ec;
+	std::filesystem::copy_file(get_frames_tmp_path(), path, std::filesystem::copy_options::overwrite_existing, ec);
+#ifdef __EMSCRIPTEN__
+	if (!ec)
+		em_persist_files_async({path.string()});
+#endif
+}
+
+static void discard_frame_pictures()
+{
+	if (!frame_writer.is_open())
+		return;
+
+	frame_writer.close();
+	std::error_code ec;
+	std::filesystem::remove(get_frames_tmp_path(), ec);
+}
+
 static void save_result(bool stopped = false, bool changed = false)
 {
 	rs.time_result_saved = std::chrono::steady_clock::now();
@@ -2288,6 +2355,7 @@ void replay_stop(bool aborted)
     if (rs.mode == ReplayMode::Update && !aborted)
     {
         bool should_save;
+        bool failed = rs.failed_loadscr_count_frame != -1;
         if (rs.failed_loadscr_count_frame != -1)
         {
             should_save = false;
@@ -2329,6 +2397,9 @@ void replay_stop(bool aborted)
         }
         else
         {
+            // The replay is the same, but it may not have pictures of its frames yet.
+            if (!failed)
+                save_frame_pictures();
             save_result(true);
         }
     }
@@ -2336,6 +2407,9 @@ void replay_stop(bool aborted)
     {
         save_result(true);
     }
+
+    // Pictures that weren't saved with the replay by now aren't wanted.
+    discard_frame_pictures();
 
     for (int i = 0; i < rs.framebuf_history.size(); i++)
     {
@@ -2389,6 +2463,8 @@ void replay_save(std::filesystem::path path)
     // So that the editor's tab can read it. Not waited for, as some callers can't be suspended.
     em_persist_files_async({path.string()});
 #endif
+    if (path == rs.replay_path)
+        save_frame_pictures();
 }
 
 #ifdef __EMSCRIPTEN__
@@ -2532,6 +2608,7 @@ void replay_step_gfx(uint32_t gfx_hash)
 	{
 		replay_step_comment(gfx_comment);
 		rs.prev_gfx_hash = gfx_hash;
+		save_frame_picture();
 	}
 
 	// Note: I tried a simple queue cache to remember the last N hashes and use shorthand
@@ -2806,6 +2883,11 @@ void replay_enable_exit_when_done()
 void replay_enable_take_over()
 {
 	take_over_enabled = true;
+}
+
+void replay_enable_save_frames()
+{
+	save_frames_enabled = true;
 }
 
 bool replay_is_exit_when_done()

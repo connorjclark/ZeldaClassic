@@ -4,6 +4,7 @@
 #include "dialog/externs.h"
 #include "dialog/info.h"
 #include "base/process_management.h"
+#include "base/frame_stream.h"
 #include "base/util.h"
 #include "base/win_encoding.h"
 #include "gui/builder.h"
@@ -559,6 +560,88 @@ static std::optional<std::filesystem::path> get_replay_failure_image(const std::
 	return std::nullopt;
 }
 
+// The picture of how a frame of a replay looked when it was recorded, if one was saved with it.
+static ALLEGRO_BITMAP* load_recorded_frame(const std::filesystem::path& replay_path, int frame)
+{
+	auto picture = read_frame_stream(replay_path.string() + ".frames", frame);
+	if (!picture)
+		return nullptr;
+
+	ALLEGRO_BITMAP* bmp = al_create_bitmap(picture->width, picture->height);
+	if (!bmp)
+		return nullptr;
+	ALLEGRO_LOCKED_REGION* lr = al_lock_bitmap(bmp, ALLEGRO_PIXEL_FORMAT_ABGR_8888_LE, ALLEGRO_LOCK_WRITEONLY);
+	if (!lr)
+	{
+		al_destroy_bitmap(bmp);
+		return nullptr;
+	}
+	for (int y = 0; y < picture->height; y++)
+	{
+		uint8_t* row = (uint8_t*)lr->data + y * lr->pitch;
+		for (int x = 0; x < picture->width; x++)
+		{
+			const uint8_t* color = &picture->palette[picture->pixels[y * picture->width + x] * 3];
+			row[x * 4] = color[0];
+			row[x * 4 + 1] = color[1];
+			row[x * 4 + 2] = color[2];
+			row[x * 4 + 3] = 255;
+		}
+	}
+	al_unlock_bitmap(bmp);
+	return bmp;
+}
+
+// Copies a picture with the pixels that differ from another of the same size marked, and the rest
+// darkened. Returns nothing if they aren't the same size.
+static ALLEGRO_BITMAP* mark_differences(ALLEGRO_BITMAP* bmp, ALLEGRO_BITMAP* other, int* count)
+{
+	int w = al_get_bitmap_width(bmp), h = al_get_bitmap_height(bmp);
+	if (w != al_get_bitmap_width(other) || h != al_get_bitmap_height(other))
+		return nullptr;
+
+	ALLEGRO_BITMAP* marked = al_clone_bitmap(bmp);
+	if (!marked)
+		return nullptr;
+	ALLEGRO_LOCKED_REGION* lr = al_lock_bitmap(marked, ALLEGRO_PIXEL_FORMAT_ABGR_8888_LE, ALLEGRO_LOCK_READWRITE);
+	ALLEGRO_LOCKED_REGION* other_lr = al_lock_bitmap(other, ALLEGRO_PIXEL_FORMAT_ABGR_8888_LE, ALLEGRO_LOCK_READONLY);
+	if (!lr || !other_lr)
+	{
+		if (lr)
+			al_unlock_bitmap(marked);
+		if (other_lr)
+			al_unlock_bitmap(other);
+		al_destroy_bitmap(marked);
+		return nullptr;
+	}
+
+	*count = 0;
+	for (int y = 0; y < h; y++)
+	{
+		uint8_t* row = (uint8_t*)lr->data + y * lr->pitch;
+		const uint8_t* other_row = (const uint8_t*)other_lr->data + y * other_lr->pitch;
+		for (int x = 0; x < w; x++)
+		{
+			uint8_t* color = &row[x * 4];
+			if (memcmp(color, &other_row[x * 4], 3))
+			{
+				color[0] = 255;
+				color[1] = 0;
+				color[2] = 255;
+				++*count;
+			}
+			else
+			{
+				for (int i = 0; i < 3; i++)
+					color[i] /= 3;
+			}
+		}
+	}
+	al_unlock_bitmap(other);
+	al_unlock_bitmap(marked);
+	return marked;
+}
+
 static void load_test_replays()
 {
 	test_replays.clear();
@@ -690,24 +773,25 @@ static std::string get_replay_label(const TestReplay& replay)
 
 namespace {
 
-// Shows a screenshot zplayer saved while running a replay. The editor's dialogs are drawn with
-// its own palette, so this draws on a true-color layer above the dialog instead.
+// Shows a picture of a frame of a replay. The editor's dialogs are drawn with its own palette, so
+// this draws on a true-color layer above the dialog instead.
 class ReplayFrameView: public GUI::Widget
 {
 public:
-	explicit ReplayFrameView(const std::filesystem::path& path)
+	// The bitmap is the caller's, and has to outlive the dialog.
+	explicit ReplayFrameView(ALLEGRO_BITMAP* bmp)
+		: bmp(bmp)
 	{
-		bmp = al_load_bitmap(path.string().c_str());
-		int w = bmp ? al_get_bitmap_width(bmp) : 256;
-		int h = bmp ? al_get_bitmap_height(bmp) : 224;
-		setPreferredWidth(GUI::Size::pixels(w + 4));
-		setPreferredHeight(GUI::Size::pixels(h + 4));
+		setPreferredWidth(GUI::Size::pixels(al_get_bitmap_width(bmp) + 4));
+		setPreferredHeight(GUI::Size::pixels(al_get_bitmap_height(bmp) + 4));
 	}
 
-	~ReplayFrameView()
+	void setBitmap(ALLEGRO_BITMAP* new_bmp)
 	{
-		if (bmp)
-			al_destroy_bitmap(bmp);
+		bmp = new_bmp;
+		if (rti)
+			rti->dirty = true;
+		pendDraw();
 	}
 
 private:
@@ -775,15 +859,38 @@ private:
 	}
 };
 
-// Explains why a replay failed its last Assert, with a screenshot of the frame it failed on.
+// Explains why a replay failed its last Assert, with pictures of the frame it failed on as it
+// looks now and as it looked when the replay was recorded.
 class ReplayFailureDialog: public GUI::Dialog<ReplayFailureDialog>
 {
 public:
 	enum class message { REPLAY_TO_FAILURE, CLOSE };
 
-	ReplayFailureDialog(std::string details, std::optional<std::filesystem::path> image, bool can_replay)
-		: details(std::move(details)), image(std::move(image)), can_replay(can_replay)
+	// Takes the bitmap of how the frame looked when recorded, if there is one.
+	ReplayFailureDialog(std::string details, std::optional<std::filesystem::path> image,
+		ALLEGRO_BITMAP* recorded, bool can_replay)
+		: details(std::move(details)), recorded(recorded), can_replay(can_replay)
 	{
+		if (image)
+			now = al_load_bitmap(image->string().c_str());
+		if (now && recorded)
+		{
+			marked_now = mark_differences(now, recorded, &difference_count);
+			if (marked_now)
+				marked_recorded = mark_differences(recorded, now, &difference_count);
+		}
+		if (now && !recorded)
+			this->details += "\n\nThere's no picture of how this looked when it was recorded. Replays"
+				" save one of each frame when they're recorded or updated.";
+	}
+
+	~ReplayFailureDialog()
+	{
+		for (ALLEGRO_BITMAP* bmp : {recorded, now, marked_recorded, marked_now})
+		{
+			if (bmp)
+				al_destroy_bitmap(bmp);
+		}
 	}
 
 	// Whether Replay to Failure was clicked.
@@ -794,11 +901,34 @@ public:
 		using namespace GUI::Builder;
 		using namespace GUI::Props;
 
-		std::shared_ptr<GUI::Widget> picture;
-		if (image)
-			picture = Frame(title = "Now", std::make_shared<ReplayFrameView>(*image));
+		// The pictures go side by side, with the details below them.
+		auto pictures = Row(vAlign = 0.0);
+		int pictures_width = 0;
+		for (auto [bmp, view, name] : {std::tuple{recorded, &recorded_view, "When recorded"}, {now, &now_view, "Now"}})
+		{
+			if (!bmp)
+				continue;
+			*view = std::make_shared<ReplayFrameView>(bmp);
+			pictures->add(Frame(title = name, *view));
+			pictures_width += al_get_bitmap_width(bmp) + 16;
+		}
+
+		std::shared_ptr<GUI::Widget> highlight;
+		if (marked_now && difference_count == 0)
+			highlight = Label(text = "The pictures look the same.");
+		else if (marked_now)
+		{
+			highlight = Checkbox(
+				text = difference_count == 1 ? "Highlight the 1 pixel that differs" :
+					fmt::format("Highlight the {} pixels that differ", difference_count),
+				onToggleFunc = [&](bool state)
+				{
+					recorded_view->setBitmap(state ? marked_recorded : recorded);
+					now_view->setBitmap(state ? marked_now : now);
+				});
+		}
 		else
-			picture = DummyWidget();
+			highlight = DummyWidget();
 
 		return Window(
 			title = "Assert Failed",
@@ -807,10 +937,9 @@ public:
 				" replay again, which replaces it when you quit.",
 			onClose = message::CLOSE,
 			Column(
-				Row(
-					Label(text = details, width = 22_em, maxLines = 20, vAlign = 0.0),
-					picture
-				),
+				pictures,
+				highlight,
+				Label(text = details, width = GUI::Size::pixels(std::max(pictures_width, 300)), maxLines = 16),
 				Row(
 					spacing = 1_em,
 					Button(
@@ -837,7 +966,13 @@ public:
 
 private:
 	std::string details;
-	std::optional<std::filesystem::path> image;
+	ALLEGRO_BITMAP* recorded;
+	ALLEGRO_BITMAP* now = nullptr;
+	// Copies of those with the pixels that differ marked.
+	ALLEGRO_BITMAP* marked_recorded = nullptr;
+	ALLEGRO_BITMAP* marked_now = nullptr;
+	int difference_count = 0;
+	std::shared_ptr<ReplayFrameView> recorded_view, now_view;
 	bool can_replay;
 };
 
@@ -989,7 +1124,7 @@ public:
 
 				int frame = parse_int<int>(get_or_empty(replay.result, "failing_frame"));
 				ReplayFailureDialog dlg(*details, get_replay_failure_image(replay.path, replay.result),
-					frame > 0 && !is_replay_run_going());
+					frame >= 0 ? load_recorded_frame(replay.path, frame) : nullptr, frame > 0 && !is_replay_run_going());
 				dlg.show();
 				if (dlg.replay_to_failure)
 					return launch("-update", {test_replay_val}, frame);
@@ -1246,6 +1381,9 @@ private:
 			if (!strcmp(mode_switch, "-update"))
 				args.push_back({"-replay-take-over"});
 		}
+		// Updating a replay also saves pictures of its frames, to compare with if an Assert fails.
+		if (!strcmp(mode_switch, "-update"))
+			args.push_back({"-replay-save-frames"});
 		if (selected.size() == 1)
 		{
 			args.push_back({mode_switch, test_replays[selected[0]].path.string()});

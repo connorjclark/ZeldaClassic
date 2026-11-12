@@ -734,11 +734,30 @@ list(APPEND IMAGELIBS al5img)
 # Common libraries
 #############################################################
 
+# Compresses the pictures of each frame saved alongside test replays (see base/frame_stream.h).
+FetchContent_Declare(
+	zstd
+	GIT_REPOSITORY https://github.com/facebook/zstd.git
+	GIT_TAG f8745da6ff1ad1e7bab384bd1f9d742439278e99 # v1.5.7
+	GIT_SHALLOW TRUE
+	SOURCE_SUBDIR build/cmake
+	EXCLUDE_FROM_ALL
+)
+set(ZSTD_BUILD_PROGRAMS OFF CACHE BOOL "" FORCE)
+set(ZSTD_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+set(ZSTD_BUILD_SHARED OFF CACHE BOOL "" FORCE)
+set(ZSTD_BUILD_STATIC ON CACHE BOOL "" FORCE)
+set(ZSTD_LEGACY_SUPPORT OFF CACHE BOOL "" FORCE)
+set(ZSTD_MULTITHREAD_SUPPORT OFF CACHE BOOL "" FORCE)
+FetchContent_MakeAvailable(zstd)
+set_target_properties(libzstd_static PROPERTIES POSITION_INDEPENDENT_CODE ON)
+
 set(base_sources
 	src/base/about.cpp
 	src/base/check.cpp
 	src/base/containers.cpp
 	src/base/crash_backtrace.cpp
+	src/base/frame_stream.cpp
 	src/base/general.cpp
 	src/base/md5.cpp
 	src/base/process_management.cpp
@@ -756,6 +775,8 @@ if (EMSCRIPTEN)
 endif()
 add_library(base STATIC ${base_sources})
 target_link_libraries(base PUBLIC fmt nlohmann_json::nlohmann_json)
+target_link_libraries(base PRIVATE libzstd_static)
+target_include_directories(base PRIVATE ${zstd_SOURCE_DIR}/lib)
 target_include_directories(base PUBLIC src third_party/nonstd/include)
 if(CURL_FOUND)
 	target_sources(base PRIVATE src/base/http.cpp)
@@ -803,6 +824,7 @@ if(WANT_ZC_TESTS)
 		src/base/zc_math_test.cpp
 		src/base/zfix_test.cpp
 		src/base/containers_test.cpp
+		src/base/frame_stream_test.cpp
 		src/base/util_test.cpp
 		src/base/process_management_test.cpp
 		src/base/win_encoding_test.cpp

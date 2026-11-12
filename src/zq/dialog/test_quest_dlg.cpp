@@ -501,6 +501,8 @@ bool TestQstDialog::handleMessage(const GUI::DialogMessage<message>& msg)
 				// Record the hero's position and a hash of each frame, so that asserting the
 				// replay later catches changes to what's drawn, not just to RNG and events.
 				args.push_back({"-replay-debug"});
+				// And a picture of each of those frames, to show what changed if it does.
+				args.push_back({"-replay-save-frames"});
 			}
 			test_killer.kill();
 			test_killer = launch_player(args);

@@ -4358,6 +4358,9 @@ reload_for_replay_file:
 	if (used_switch(argc, argv, "-replay-take-over") > 0)
 		replay_enable_take_over();
 
+	if (used_switch(argc, argv, "-replay-save-frames") > 0)
+		replay_enable_save_frames();
+
 	if (used_switch(argc, argv, "-replay-save-games") > 0)
 		saves_enable_save_current_replay();
 
