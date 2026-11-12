@@ -14,6 +14,7 @@
 #include "gui/list.h"
 #include "zalleg/render.h"
 #include "zq/zq_class.h"
+#include "zq/zquest.h"
 #include <allegro5/allegro.h>
 #include <fmt/format.h>
 #include <algorithm>
@@ -778,12 +779,12 @@ namespace {
 class ReplayFrameView: public GUI::Widget
 {
 public:
-	// The bitmap is the caller's, and has to outlive the dialog.
-	explicit ReplayFrameView(ALLEGRO_BITMAP* bmp)
+	// The bitmap is the caller's, and has to outlive the dialog. It's drawn `scale` times as large.
+	explicit ReplayFrameView(ALLEGRO_BITMAP* bmp, int scale = 1)
 		: bmp(bmp)
 	{
-		setPreferredWidth(GUI::Size::pixels(al_get_bitmap_width(bmp) + 4));
-		setPreferredHeight(GUI::Size::pixels(al_get_bitmap_height(bmp) + 4));
+		setPreferredWidth(GUI::Size::pixels(al_get_bitmap_width(bmp) * scale + 4));
+		setPreferredHeight(GUI::Size::pixels(al_get_bitmap_height(bmp) * scale + 4));
 	}
 
 	void setBitmap(ALLEGRO_BITMAP* new_bmp)
@@ -859,12 +860,119 @@ private:
 	}
 };
 
+// The two pictures of a frame a replay failed an Assert on: how it looked when it was recorded,
+// and how it looks now. Either can be missing. Each has a copy with the pixels that differ marked.
+struct ReplayFramePictures
+{
+	static constexpr const char* names[2] = {"When recorded", "Now"};
+	std::array<ALLEGRO_BITMAP*, 2> plain{};
+	std::array<ALLEGRO_BITMAP*, 2> marked{};
+	int difference_count = 0;
+
+	ALLEGRO_BITMAP* get(int which, bool highlight) const
+	{
+		return highlight && marked[which] ? marked[which] : plain[which];
+	}
+};
+
+// Shows one picture of a failed frame at a time, as large as fits in the editor's window, and
+// switches between the two to compare them.
+class ReplayFrameCompareDialog: public GUI::Dialog<ReplayFrameCompareDialog>
+{
+public:
+	enum class message { SWITCH, CLOSE };
+
+	ReplayFrameCompareDialog(const ReplayFramePictures& pictures, int shown, bool highlight)
+		: pictures(pictures), shown(shown), highlight(highlight)
+	{
+	}
+
+	// Which picture is shown, and whether the differences are highlighted, to carry back.
+	int shown;
+	bool highlight;
+
+	std::shared_ptr<GUI::Widget> view() override
+	{
+		using namespace GUI::Builder;
+		using namespace GUI::Props;
+
+		// Scaled by a whole number, so the pixels stay square, leaving room for the title bar
+		// and buttons.
+		int w = 0, h = 0;
+		for (ALLEGRO_BITMAP* bmp : pictures.plain)
+		{
+			if (!bmp)
+				continue;
+			w = std::max(w, al_get_bitmap_width(bmp));
+			h = std::max(h, al_get_bitmap_height(bmp));
+		}
+		int scale = std::max(1, std::min((zq_screen_w - 40) / w, (zq_screen_h - 110) / h));
+
+		bool both = pictures.plain[0] && pictures.plain[1];
+		std::shared_ptr<GUI::Widget> highlight_checkbox = DummyWidget();
+		if (pictures.marked[0] && pictures.difference_count)
+		{
+			highlight_checkbox = Checkbox(
+				text = "&Highlight differences",
+				checked = highlight,
+				onToggleFunc = [&](bool state)
+				{
+					highlight = state;
+					frame_view->setBitmap(pictures.get(shown, highlight));
+				});
+		}
+
+		return Window(
+			title = "Compare Frames",
+			info = "Switch (or S) shows the other picture, to see what changed between them."
+				" Highlight (or H) marks the pixels that differ.",
+			onClose = message::CLOSE,
+			Column(
+				frame = Frame(
+					title = pictures.names[shown],
+					frame_view = std::make_shared<ReplayFrameView>(pictures.get(shown, highlight), scale)),
+				Row(
+					spacing = 1_em,
+					Button(
+						text = "&Switch",
+						tooltip = "Show the other picture",
+						disabled = !both,
+						focused = both,
+						onClick = message::SWITCH),
+					highlight_checkbox,
+					Button(
+						text = "Close",
+						minwidth = 90_px,
+						focused = !both,
+						onClick = message::CLOSE)
+				)
+			)
+		);
+	}
+
+	bool handleMessage(const GUI::DialogMessage<message>& msg)
+	{
+		if (msg.message == message::CLOSE)
+			return true;
+
+		shown = 1 - shown;
+		frame->setTitle(pictures.names[shown]);
+		frame_view->setBitmap(pictures.get(shown, highlight));
+		return false;
+	}
+
+private:
+	const ReplayFramePictures& pictures;
+	std::shared_ptr<GUI::Frame> frame;
+	std::shared_ptr<ReplayFrameView> frame_view;
+};
+
 // Explains why a replay failed its last Assert, with pictures of the frame it failed on as it
 // looks now and as it looked when the replay was recorded.
 class ReplayFailureDialog: public GUI::Dialog<ReplayFailureDialog>
 {
 public:
-	enum class message { REPLAY_TO_FAILURE, CLOSE };
+	enum class message { REPLAY_TO_FAILURE, FULL_SCREEN, CLOSE };
 
 	// Takes the bitmap of how the frame looked when recorded, if there is one.
 	ReplayFailureDialog(std::string details, std::optional<std::filesystem::path> image,
@@ -918,13 +1026,12 @@ public:
 			highlight = Label(text = "The pictures look the same.");
 		else if (marked_now)
 		{
-			highlight = Checkbox(
+			highlight = highlight_checkbox = Checkbox(
 				text = difference_count == 1 ? "Highlight the 1 pixel that differs" :
 					fmt::format("Highlight the {} pixels that differ", difference_count),
 				onToggleFunc = [&](bool state)
 				{
-					recorded_view->setBitmap(state ? marked_recorded : recorded);
-					now_view->setBitmap(state ? marked_now : now);
+					show_highlight(state);
 				});
 		}
 		else
@@ -943,6 +1050,11 @@ public:
 				Row(
 					spacing = 1_em,
 					Button(
+						text = "Full Screen",
+						tooltip = "Show the pictures as large as fits, one at a time, to switch between them",
+						disabled = !recorded && !now,
+						onClick = message::FULL_SCREEN),
+					Button(
 						text = "Replay to Failure",
 						tooltip = "Play the replay up to just before it went wrong, and pause there,"
 							" to play on or record the rest of it again",
@@ -960,6 +1072,23 @@ public:
 
 	bool handleMessage(const GUI::DialogMessage<message>& msg)
 	{
+		if (msg.message == message::FULL_SCREEN)
+		{
+			ReplayFramePictures pictures;
+			pictures.plain = {recorded, now};
+			pictures.marked = {marked_recorded, marked_now};
+			pictures.difference_count = difference_count;
+			bool highlight = highlight_checkbox && highlight_checkbox->getChecked();
+			ReplayFrameCompareDialog dlg(pictures, now ? 1 : 0, highlight);
+			dlg.show();
+			if (highlight_checkbox && dlg.highlight != highlight)
+			{
+				highlight_checkbox->setChecked(dlg.highlight);
+				show_highlight(dlg.highlight);
+			}
+			return false;
+		}
+
 		replay_to_failure = msg.message == message::REPLAY_TO_FAILURE;
 		return true;
 	}
@@ -973,7 +1102,14 @@ private:
 	ALLEGRO_BITMAP* marked_now = nullptr;
 	int difference_count = 0;
 	std::shared_ptr<ReplayFrameView> recorded_view, now_view;
+	std::shared_ptr<GUI::Checkbox> highlight_checkbox;
 	bool can_replay;
+
+	void show_highlight(bool highlight)
+	{
+		recorded_view->setBitmap(highlight ? marked_recorded : recorded);
+		now_view->setBitmap(highlight ? marked_now : now);
+	}
 };
 
 // Lists the replays made of the current quest in test mode, and launches them in zplayer.
