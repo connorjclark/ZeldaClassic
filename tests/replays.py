@@ -95,6 +95,14 @@ class RunResult:
     unexpected_gfx_frames: list[int] = None
     unexpected_gfx_segments: list[tuple[int, int]] = None
     unexpected_gfx_segments_limited: list[tuple[int, int]] = None
+    # The first step that differed: what the replay expected, and what happened instead (empty
+    # if there was nothing), and the dmap and screen the hero was on. Or why the replay was
+    # stopped, like "rng desync".
+    failing_expected: str = None
+    failing_got: str = None
+    failing_dmap: int = None
+    failing_screen: int = None
+    failing_error: str = None
     exceptions: list[str] = field(default_factory=list)
     # Only for compare report. Populated by compare_replays.py from files on
     # disk (stderr.txt, the .roundtrip file), not written during a normal run.
@@ -156,17 +164,54 @@ class ReplayTestResults:
                         f'{r[0]}-{r[1]}' for r in run.unexpected_gfx_segments
                     ]
                     failing_str += ': ' + ', '.join(segments_str)
+                details = describe_failure(run)
+                if details:
+                    failing_str += '\n' + details
                 if run.exceptions:
                     failing_str += '\nExceptions:\n\t' + '\n\t'.join(run.exceptions)
                 roundtrip_path = directory / run.directory / f'{run.name}.roundtrip'
                 if roundtrip_path.exists():
-                    roundtrip = roundtrip_path.read_text()
-                    failing_str += 'roundtrip file:\n'
-                    failing_str += roundtrip_path.read_text()
+                    failing_str += '\nroundtrip file, around the first difference:\n'
+                    failing_str += roundtrip_excerpt(
+                        roundtrip_path.read_text(encoding='utf-8', errors='replace')
+                    )
                 failing_str += '\n'
                 failing_strs.append(failing_str)
 
         return '\n'.join(failing_strs)
+
+
+def describe_failure(run: RunResult) -> str:
+    """Says where a replay first went differently and how, from what zplayer wrote in its
+    result file, ex: "on DMap 1 Scr 04: expected `C 121 g Hdi!`, got `C 121 g Hi!`". Empty if
+    zplayer didn't say."""
+    where = ''
+    if run.failing_dmap is not None:
+        where = f'on DMap {run.failing_dmap} Scr {run.failing_screen:02X}: '
+    if run.failing_error:
+        return f'{where}stopped by {run.failing_error}'
+    if run.failing_expected is None and run.failing_got is None:
+        return ''
+    expected = f'`{run.failing_expected}`' if run.failing_expected else 'nothing more'
+    got = f'`{run.failing_got}`' if run.failing_got else 'nothing more'
+    return f'{where}expected {expected}, got {got}'
+
+
+def roundtrip_excerpt(roundtrip: str, context: int = 10) -> str:
+    """The lines of a .roundtrip file around the first one zplayer marked as different (with
+    "«"), rather than the whole file, which can be many thousands of lines."""
+    lines = roundtrip.splitlines()
+    first = next((i for i, line in enumerate(lines) if '«' in line), None)
+    if first is None:
+        return roundtrip
+    start = max(0, first - context)
+    end = min(len(lines), first + context + 1)
+    excerpt = lines[start:end]
+    if start > 0:
+        excerpt.insert(0, f'[... {start} lines]')
+    if end < len(lines):
+        excerpt.append(f'[... {len(lines) - end} lines]')
+    return '\n'.join(excerpt) + '\n'
 
 
 class ReplayResultReader:
@@ -742,6 +787,19 @@ def _run_replay_test(
             player_interface.wait_for_finish()
             on_result_updated(watcher)
 
+            failure_keys = [
+                'failing_expected',
+                'failing_got',
+                'failing_dmap',
+                'failing_screen',
+                'failing_error',
+            ]
+            for key in failure_keys:
+                value = watcher.result.get(key, None) if not result.success else None
+                # A step can look like a number, which the result file parser turns into one.
+                if value is not None and key not in ('failing_dmap', 'failing_screen'):
+                    value = str(value)
+                setattr(result, key, value)
             if not result.success:
                 result.failing_frame = watcher.result.get('failing_frame', None)
                 result.unexpected_gfx_frames = watcher.result.get(

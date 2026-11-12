@@ -78,6 +78,7 @@ from replays import (
     RunResult,
     apply_test_filter,
     configure_estimate_multiplier,
+    describe_failure,
     estimate_fps,
     get_shards,
     group_arg,
@@ -939,6 +940,10 @@ class ProgressDisplay:
 
         if result.failing_frame != None:
             parts.append(f'failure on frame {result.failing_frame}')
+            if result.failing_dmap != None:
+                parts.append(
+                    f'(DMap {result.failing_dmap} Scr {result.failing_screen:02X})'
+                )
 
         if result.exceptions:
             parts.append(' | '.join(result.exceptions))
@@ -1138,6 +1143,9 @@ for result in test_results.runs[-1]:
     # Only print on failure and last attempt.
     if not result.success or result.exceptions:
         print(f'failure: {result.path}')
+        details = describe_failure(result)
+        if details:
+            print(f'first difference, at frame {result.failing_frame} {details}')
 
         if result.exceptions:
             title = 'EXCEPTIONS'
