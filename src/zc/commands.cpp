@@ -1,4 +1,5 @@
 #include "zc/commands.h"
+#include "base/frame_stream.h"
 #include "core/misctypes.h"
 #include "core/qst.h"
 #include "base/zapp.h"
@@ -190,6 +191,35 @@ void zplayer_handle_commands()
 		int map = zapp_get_arg_int(dump_screen_arg + 2);
 		int screen = zapp_get_arg_int(dump_screen_arg + 3);
 		do_dump_screen_command(path.c_str(), map, screen);
+	}
+
+	// Writes the picture of a frame saved with a replay (see -replay-save-frames) as an image,
+	// the same way replays save their screenshots.
+	int extract_frame_arg = zapp_check_switch("-extract-replay-frame", {"frames", "frame", "image"});
+	if (extract_frame_arg > 0)
+	{
+		std::string path = zapp_get_arg_string(extract_frame_arg + 1);
+		int frame = zapp_get_arg_int(extract_frame_arg + 2);
+		std::string image_path = zapp_get_arg_string(extract_frame_arg + 3);
+		auto picture = read_frame_stream(path, frame);
+		if (!picture)
+			Z_error_fatal("No picture of frame %d in %s\n", frame, path.c_str());
+
+		BITMAP* bmp = create_bitmap_ex(8, picture->width, picture->height);
+		for (int y = 0; y < picture->height; y++)
+			memcpy(bmp->line[y], &picture->pixels[y * picture->width], picture->width);
+		PALETTE pal;
+		for (int i = 0; i < PAL_SIZE; i++)
+		{
+			pal[i].r = picture->palette[i * 3];
+			pal[i].g = picture->palette[i * 3 + 1];
+			pal[i].b = picture->palette[i * 3 + 2];
+		}
+		bool saved = save_bitmap(image_path.c_str(), bmp, pal) == 0;
+		destroy_bitmap(bmp);
+		if (!saved)
+			Z_error_fatal("Failed to write %s\n", image_path.c_str());
+		zapp_exit(0);
 	}
 
 	int extract_zasm_arg = zapp_check_switch("-extract-zasm", {"qst"});
