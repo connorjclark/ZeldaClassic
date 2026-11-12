@@ -7,8 +7,13 @@
 #include "base/util.h"
 #include "base/win_encoding.h"
 #include "gui/builder.h"
+#include "gui/common.h"
+#include "gui/dialog_runner.h"
+#include "gui/jwin.h"
 #include "gui/list.h"
+#include "zalleg/render.h"
 #include "zq/zq_class.h"
+#include <allegro5/allegro.h>
 #include <fmt/format.h>
 #include <algorithm>
 #include <charconv>
@@ -263,6 +268,24 @@ static std::vector<std::filesystem::path> get_test_replay_files(const std::files
 	return files;
 }
 
+// Removes the screenshots zplayer saved of where a replay failed. zplayer doesn't remove those
+// itself, and they'd be mistaken for ones of a new failure.
+static void remove_replay_failure_images(const std::filesystem::path& replay)
+{
+	std::vector<std::string> removed;
+	for (const auto& file : get_test_replay_files(replay))
+	{
+		if (file.extension() != ".png" && file.extension() != ".roundtrip")
+			continue;
+		std::error_code ec;
+		std::filesystem::remove(file, ec);
+		removed.push_back(file.string());
+	}
+#ifdef __EMSCRIPTEN__
+	em_remove_persisted_files(removed);
+#endif
+}
+
 // Test replays used to all be saved directly in replays/test/. Move those into the folder
 // for their quest, along with the files zplayer writes next to them (like the .result.txt).
 static void migrate_old_test_replays()
@@ -381,6 +404,142 @@ static std::optional<std::string> get_replay_outcome(const std::filesystem::path
 	if (mode == "update")
 		return get("changed") == "true" ? "updated: changes saved" : "updated: no changes";
 	return "passed";
+}
+
+// Describes a frame of a replay as a time, like "0:02 (frame 121)".
+static std::string describe_replay_frame(int frame)
+{
+	int seconds = frame / 60;
+	return fmt::format("{}:{:02} (frame {})", seconds / 60, seconds % 60, frame);
+}
+
+// A step of a replay, as zplayer writes it in a .zplay file: its type, the frame it happened
+// on, and the rest.
+struct ReplayStepText
+{
+	char type = 0;
+	int frame = -1;
+	std::string text;
+};
+
+static std::optional<ReplayStepText> parse_replay_step(const std::string& line)
+{
+	if (line.size() < 3 || line[1] != ' ')
+		return std::nullopt;
+	auto sep = line.find(' ', 2);
+	ReplayStepText step;
+	step.type = line[0];
+	step.frame = parse_int<int>(line.substr(2, sep == std::string::npos ? std::string::npos : sep - 2));
+	step.text = sep == std::string::npos ? "" : line.substr(sep + 1);
+	return step;
+}
+
+// Whether a step is the hash of a frame, which the debug data of a test replay records
+// whenever the screen changes (`C <frame> g <hash>`).
+static bool is_gfx_step(const std::optional<ReplayStepText>& step)
+{
+	return step && step->type == 'C' && step->text.starts_with("g ");
+}
+
+// Describes a step of a replay in words, for the ones that test replays record most often.
+static std::string describe_replay_step(const std::optional<ReplayStepText>& step)
+{
+	if (!step)
+		return "the replay ended";
+	if (step->type != 'C')
+		return fmt::format("input or random numbers ({} {})", step->type, step->text);
+
+	const std::string& text = step->text;
+	if (text.starts_with("g "))
+		return "the screen changed";
+	if (text.starts_with("h "))
+	{
+		// The hero's position, in hex.
+		int x = 0, y = 0;
+		if (sscanf(text.c_str() + 2, "%x %x", &x, &y) == 2)
+			return fmt::format("the hero moved to ({}, {})", x, y);
+	}
+	if (text.starts_with("scr="))
+		return fmt::format("screen {:02X} loaded", parse_int<int>(text.substr(4)));
+	if (text.starts_with("dmap="))
+		return fmt::format("warped to DMap {}", text.substr(5));
+	if (text.starts_with("sfx "))
+		return fmt::format("sound \"{}\" played", text.substr(4));
+	if (text.starts_with("getitem "))
+		return fmt::format("got the item \"{}\"", text.substr(8));
+	return text;
+}
+
+// Explains why a replay failed its last Assert, from the details zplayer writes in the
+// .result.txt file. Returns nothing if it didn't fail one.
+static std::optional<std::string> describe_replay_failure(const std::map<std::string, std::string>& result)
+{
+	auto get = [&](const char* key) { return get_or_empty(result, key); };
+	if (get("mode") != "assert" || get("stopped") != "true" || get("aborted") == "true" || get("success") == "true")
+		return std::nullopt;
+
+	std::string text = "Assert failed";
+	std::string frame = get("failing_frame");
+	if (!frame.empty() && frame != "-1")
+		text += " at " + describe_replay_frame(parse_int<int>(frame));
+	if (!get("failing_dmap").empty())
+		text += fmt::format(", on DMap {} Scr {:02X}", parse_int<int>(get("failing_dmap")), parse_int<int>(get("failing_screen")));
+	text += ".\n\n";
+
+	bool looks_different = false;
+	std::string error = get("failing_error");
+	if (error == "rng desync")
+		text += "Random numbers came out differently than when it was recorded.";
+	else if (!error.empty())
+		text += fmt::format("The replay was stopped: {}.", error);
+	else if (result.contains("failing_expected"))
+	{
+		auto expected = parse_replay_step(get("failing_expected"));
+		auto got = parse_replay_step(get("failing_got"));
+		looks_different = is_gfx_step(expected) && is_gfx_step(got);
+		if (looks_different)
+			text += "The screen looks different than when it was recorded, though the game played the same up to here.";
+		else
+		{
+			// Only say when each happened if that's part of the difference.
+			bool same_frame = expected && got && expected->frame == got->frame;
+			auto describe = [&](const std::optional<ReplayStepText>& step) {
+				std::string desc = describe_replay_step(step);
+				if (step && !same_frame)
+					desc += " at " + describe_replay_frame(step->frame);
+				return desc;
+			};
+			text += fmt::format("The first difference:\n  When recorded, {}.\n  Now, {}.", describe(expected), describe(got));
+		}
+	}
+	else
+		text += "The quest played differently than when it was recorded.";
+
+	if (looks_different)
+		text += "\n\nIf that's an intended change, such as new tiles or palettes, Update accepts it."
+			" (Update fails if the quest also plays differently later on.)";
+	else
+		text += "\n\nThe quest now plays differently, which Update can't accept. If that's an intended"
+			" change, record a new session to replace this replay.";
+	return text;
+}
+
+// The screenshot zplayer saved of the frame a replay failed its last Assert on, if there is one.
+static std::optional<std::filesystem::path> get_replay_failure_image(const std::filesystem::path& replay_path,
+	const std::map<std::string, std::string>& result)
+{
+	std::string frame = get_or_empty(result, "failing_frame");
+	if (frame.empty() || frame == "-1")
+		return std::nullopt;
+
+	std::error_code ec;
+	for (const char* suffix : {"-unexpected.png", ".png"})
+	{
+		std::filesystem::path path = fmt::format("{}.{}{}", replay_path.string(), frame, suffix);
+		if (std::filesystem::exists(path, ec))
+			return path;
+	}
+	return std::nullopt;
 }
 
 static void load_test_replays()
@@ -514,11 +673,145 @@ static std::string get_replay_label(const TestReplay& replay)
 
 namespace {
 
+// Shows a screenshot zplayer saved while running a replay. The editor's dialogs are drawn with
+// its own palette, so this draws on a true-color layer above the dialog instead.
+class ReplayFrameView: public GUI::Widget
+{
+public:
+	explicit ReplayFrameView(const std::filesystem::path& path)
+	{
+		bmp = al_load_bitmap(path.string().c_str());
+		int w = bmp ? al_get_bitmap_width(bmp) : 256;
+		int h = bmp ? al_get_bitmap_height(bmp) : 224;
+		setPreferredWidth(GUI::Size::pixels(w + 4));
+		setPreferredHeight(GUI::Size::pixels(h + 4));
+	}
+
+	~ReplayFrameView()
+	{
+		if (bmp)
+			al_destroy_bitmap(bmp);
+	}
+
+private:
+	ALLEGRO_BITMAP* bmp = nullptr;
+	RenderTreeItem* rti = nullptr;
+	GUI::DialogRef alDialog;
+
+	static int32_t proc(int32_t msg, DIALOG* d, int32_t)
+	{
+		auto* view = (ReplayFrameView*)d->dp3;
+		if (!view)
+			return D_O_K;
+
+		switch (msg)
+		{
+			case MSG_START:
+				if (!view->rti)
+				{
+					view->rti = add_dlg_layer();
+					view->rti->render_cb = [view, d](RenderTreeItem*, bool) {
+						if (view->bmp && !(d->flags & D_HIDDEN))
+							al_draw_scaled_bitmap(view->bmp, 0, 0, al_get_bitmap_width(view->bmp), al_get_bitmap_height(view->bmp),
+								d->x + 2, d->y + 2, d->w - 4, d->h - 4, 0);
+					};
+				}
+				break;
+
+			case MSG_END:
+				if (view->rti)
+				{
+					remove_dlg_layer(view->rti);
+					view->rti = nullptr;
+				}
+				break;
+
+			case MSG_DRAW:
+				rectfill(screen, d->x, d->y, d->x + d->w - 1, d->y + d->h - 1, jwin_pal[jcBOX]);
+				jwin_draw_frame(screen, d->x, d->y, d->w, d->h, FR_DEEP);
+				if (view->rti)
+					view->rti->dirty = true;
+				break;
+		}
+		return D_O_K;
+	}
+
+	void applyVisibility(bool visible) override
+	{
+		Widget::applyVisibility(visible);
+		if (alDialog)
+			alDialog.applyVisibility(visible);
+	}
+
+	void realize(GUI::DialogRunner& runner) override
+	{
+		Widget::realize(runner);
+		alDialog = runner.push(shared_from_this(), DIALOG {
+			GUI::newGUIProc<proc>,
+			x, y, getWidth(), getHeight(),
+			0, 0,
+			0, // key
+			getFlags(), // flags
+			0, 0, // d1, d2
+			nullptr, nullptr, this // dp, dp2, dp3
+		});
+	}
+};
+
+// Explains why a replay failed its last Assert, with a screenshot of the frame it failed on.
+class ReplayFailureDialog: public GUI::Dialog<ReplayFailureDialog>
+{
+public:
+	enum class message { CLOSE };
+
+	ReplayFailureDialog(std::string details, std::optional<std::filesystem::path> image)
+		: details(std::move(details)), image(std::move(image))
+	{
+	}
+
+	std::shared_ptr<GUI::Widget> view() override
+	{
+		using namespace GUI::Builder;
+		using namespace GUI::Props;
+
+		std::shared_ptr<GUI::Widget> picture;
+		if (image)
+			picture = Frame(title = "Now", std::make_shared<ReplayFrameView>(*image));
+		else
+			picture = DummyWidget();
+
+		return Window(
+			title = "Assert Failed",
+			onClose = message::CLOSE,
+			Column(
+				Row(
+					Label(text = details, width = 22_em, maxLines = 20, vAlign = 0.0),
+					picture
+				),
+				Button(
+					text = "Close",
+					minwidth = 90_px,
+					focused = true,
+					onClick = message::CLOSE)
+			)
+		);
+	}
+
+	bool handleMessage(const GUI::DialogMessage<message>&)
+	{
+		return true;
+	}
+
+private:
+	std::string details;
+	std::optional<std::filesystem::path> image;
+};
+
 // Lists the replays made of the current quest in test mode, and launches them in zplayer.
 class TestReplaysDialog: public GUI::Dialog<TestReplaysDialog>
 {
 public:
-	enum class message { REFR_INFO, PLAY, ASSERT, UPDATE, RENAME, REMOVE, COPY_PATH, OPEN_FOLDER, CANCEL_RUN, CLOSE };
+	enum class message { REFR_INFO, PLAY, ASSERT, UPDATE, DETAILS, RENAME, REMOVE, COPY_PATH, OPEN_FOLDER, CANCEL_RUN, CLOSE };
 
 	std::shared_ptr<GUI::Widget> view() override
 	{
@@ -547,6 +840,7 @@ public:
 				onSelectFunc = [&](int32_t val)
 				{
 					test_replay_val = val;
+					update_details_button();
 				},
 				onDClick = message::PLAY
 			);
@@ -564,6 +858,8 @@ public:
 				"\n\nPlay shows a replay in the player. Assert also checks that the quest still plays"
 				" the same as when it was recorded. Assert and Update run in the background, and"
 				" the result of the last one is shown at the start of each row."
+				"\n\nIf an Assert fails, Details explains what went wrong, and shows the frame it"
+				" went wrong on."
 				"\n\nUpdate accepts changes to how the quest looks, such as new tiles or palettes,"
 				" by saving them into the replay. If a change alters where the hero goes or"
 				" when screens change, Update fails, and you'll need to record a new session."
@@ -599,7 +895,11 @@ public:
 					stop_button = Button(
 						text = "Stop",
 						tooltip = "Stop the replays that are running",
-						onClick = message::CANCEL_RUN)
+						onClick = message::CANCEL_RUN),
+					details_button = Button(
+						text = "Details",
+						tooltip = "Explain why the highlighted replay failed its last Assert",
+						onClick = message::DETAILS)
 				),
 				Row(
 					spacing = 1_em,
@@ -641,6 +941,19 @@ public:
 
 			case message::ASSERT:
 				return launch("-assert");
+
+			case message::DETAILS:
+			{
+				if (test_replay_val >= test_replays.size())
+					return false;
+				auto& replay = test_replays[test_replay_val];
+				auto details = describe_replay_failure(replay.result);
+				if (!details)
+					return false;
+
+				ReplayFailureDialog(*details, get_replay_failure_image(replay.path, replay.result)).show();
+				return false;
+			}
 
 			case message::UPDATE:
 			{
@@ -753,7 +1066,7 @@ public:
 private:
 	GUI::ListData replay_list;
 	std::shared_ptr<GUI::List> list_widget;
-	std::shared_ptr<GUI::Button> replay_button, assert_button, update_button, rename_button, delete_button;
+	std::shared_ptr<GUI::Button> replay_button, assert_button, update_button, rename_button, delete_button, details_button;
 	// Disabled during a run: starting another would end the one going on, and renaming or
 	// deleting would change a replay it may be reading.
 	std::vector<std::shared_ptr<GUI::Button>> run_buttons;
@@ -822,6 +1135,16 @@ private:
 			button->setDisabled(test_replays.empty() || running);
 		shown_running = running;
 		ticks = 0;
+		update_details_button();
+	}
+
+	// Details is only for a replay that failed its last Assert.
+	void update_details_button()
+	{
+		bool failed = test_replay_val < test_replays.size() &&
+			!(is_in_replay_run(test_replays[test_replay_val].path) && is_replay_run_going()) &&
+			describe_replay_failure(test_replays[test_replay_val].result);
+		details_button->setDisabled(!failed);
 	}
 
 	std::vector<int32_t> get_selected() const
@@ -863,6 +1186,11 @@ private:
 			em_persist_files({dir.string()});
 #endif
 			args.push_back({"-replay-output-dir", dir.string()});
+		}
+		if (checks)
+		{
+			for (int32_t i : selected)
+				remove_replay_failure_images(test_replays[i].path);
 		}
 		if (selected.size() == 1)
 		{

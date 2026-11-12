@@ -5,6 +5,7 @@
 #include "base/version.h"
 #include "base/zapp.h"
 #include "zc/zc_sys.h"
+#include "zc/hero.h"
 #include "zalleg/render.h"
 #include "zalleg/zalleg.h"
 #include "base/util.h"
@@ -144,6 +145,15 @@ struct ReplayState
 	bool has_assert_failed = false;
 	bool has_aborted = false;
 	int failing_frame = -1;
+	// What the first differing step was expected to be, and what it was instead (empty if
+	// there wasn't one), and where the hero was when it happened. Written to the result file,
+	// so the editor can say what went wrong.
+	std::string failing_expected;
+	std::string failing_got;
+	int failing_dmap = -1;
+	int failing_screen = -1;
+	// Why the replay was stopped early, if it was.
+	std::string failing_error;
 	int last_failing_gfx_frame = -1;
 	int current_failing_gfx_segment_start_frame = -1;
 	std::vector<int> unexpected_gfx_frames;
@@ -1354,6 +1364,18 @@ static void save_result(bool stopped = false, bool changed = false)
 		out << fmt::format("rng_desync: {}", rs.has_rng_desynced) << '\n';
 	if (rs.has_assert_failed)
 		out << fmt::format("failing_frame: {}", rs.failing_frame) << '\n';
+	if (!rs.failing_expected.empty() || !rs.failing_got.empty())
+	{
+		out << fmt::format("failing_expected: {}", rs.failing_expected) << '\n';
+		out << fmt::format("failing_got: {}", rs.failing_got) << '\n';
+	}
+	if (rs.failing_dmap != -1)
+	{
+		out << fmt::format("failing_dmap: {}", rs.failing_dmap) << '\n';
+		out << fmt::format("failing_screen: {}", rs.failing_screen) << '\n';
+	}
+	if (!rs.failing_error.empty())
+		out << fmt::format("failing_error: {}", rs.failing_error) << '\n';
 	if (rs.mode == ReplayMode::Update)
 		out << fmt::format("changed: {}", changed) << '\n';
 	if (rs.has_assert_failed && !rs.unexpected_gfx_frames.empty())
@@ -1386,6 +1408,11 @@ static void save_snapshot(BITMAP* bitmap, PALETTE pal, int frame, bool was_unexp
 	save_bitmap(img_path.string().c_str(), bitmap, pal);
 	if (was_unexpected)
 		rs.unexpected_gfx_frames.push_back(frame);
+#ifdef __EMSCRIPTEN__
+	// So that the editor's tab can show it with the details of the failure.
+	if (frame == rs.failing_frame)
+		em_persist_files_async({img_path.string()});
+#endif
 }
 
 static void save_history_snapshots()
@@ -1513,6 +1540,16 @@ static void do_replaying_poll()
     rs.replay_log_current_qr_index = rs.replay_log_current_index;
 }
 
+static void record_failure(std::string expected, std::string got)
+{
+	rs.failing_expected = std::move(expected);
+	rs.failing_got = std::move(got);
+	rs.failing_dmap = get_currdmap();
+	rs.failing_screen = Hero.current_screen;
+	// Always keep a picture of the frame it went wrong on, not just ones that look different.
+	rs.snapshot_frames.push_back(rs.failing_frame);
+}
+
 static void check_assert()
 {
     // Only print the very first difference. When replay_stop is called,
@@ -1533,6 +1570,7 @@ static void check_assert()
         {
             rs.has_assert_failed = true;
             rs.failing_frame = get_frame(record_step);
+            record_failure(print_step(replay_step), print_step(record_step));
             int line_number = rs.assert_current_index + rs.meta_map.size() + 1;
             std::string error = fmt::format("<{}> expected:\n\t{}\nbut got:\n\t{}", line_number,
                                             print_step(replay_step), print_step(record_step));
@@ -1616,6 +1654,8 @@ static void fail_replay(std::string error)
 	{
 		rs.failing_frame = rs.frame_count;
 	}
+	if (rs.failing_error.empty())
+		rs.failing_error = error;
 
 	if (!exit_when_done)
 	{
@@ -2159,6 +2199,14 @@ void replay_stop(bool aborted)
         if (log_size_mismatch)
         {
             fprintf(stderr, "replay_log size is %zu but record_log size is %zu\n", replay_log.size(), record_log.size());
+            // Every step matched until one of them ran out.
+            if (rs.failing_expected.empty() && rs.failing_got.empty())
+            {
+                if (replay_log.size() > record_log.size())
+                    rs.failing_expected = print_step(replay_log[record_log.size()]);
+                else
+                    rs.failing_got = print_step(record_log[replay_log.size()]);
+            }
         }
 
         save_result(true);
