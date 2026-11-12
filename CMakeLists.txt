@@ -752,6 +752,20 @@ set(ZSTD_MULTITHREAD_SUPPORT OFF CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(zstd)
 set_target_properties(libzstd_static PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
+# Reads the updater's downloads, and writes the bundles of test replays the editor exports.
+FetchContent_Declare(
+	miniz
+	GIT_REPOSITORY
+		https://github.com/richgel999/miniz.git
+	GIT_TAG
+		9ae305f6e109f8f1fbd2130458f1ee6197269b3b
+	EXCLUDE_FROM_ALL
+)
+set(BUILD_SHARED_LIBS_PREV ${BUILD_SHARED_LIBS})
+set(BUILD_SHARED_LIBS OFF)
+FetchContent_MakeAvailable(miniz)
+set(BUILD_SHARED_LIBS ${BUILD_SHARED_LIBS_PREV} CACHE BOOL "" FORCE)
+
 set(base_sources
 	src/base/about.cpp
 	src/base/check.cpp
@@ -1189,6 +1203,7 @@ add_executable(zeditor ${ZQUEST_CORE_SOURCES} ${ZQUEST_GUI_SOURCES} ${ZQUEST_MIS
 set_property(TARGET zeditor PROPERTY VS_DPI_AWARE "PerMonitor")
 
 target_link_libraries(zeditor PUBLIC core zconsolelogger zcgui zcsound zasm)
+target_link_libraries(zeditor PRIVATE miniz)
 target_include_directories(zeditor PRIVATE src)
 
 if(MSVC)
@@ -1303,18 +1318,6 @@ if(BUILD_ZUPDATER)
 		target_link_options(zupdater PRIVATE "/SUBSYSTEM:WINDOWS")
 	endif()
 
-	FetchContent_Declare(
-		miniz
-		GIT_REPOSITORY
-			https://github.com/richgel999/miniz.git
-		GIT_TAG
-			9ae305f6e109f8f1fbd2130458f1ee6197269b3b
-		EXCLUDE_FROM_ALL
-	)
-	set(BUILD_SHARED_LIBS_PREV ${BUILD_SHARED_LIBS})
-	set(BUILD_SHARED_LIBS OFF)
-	FetchContent_MakeAvailable(miniz)
-	set(BUILD_SHARED_LIBS ${BUILD_SHARED_LIBS_PREV} CACHE BOOL "" FORCE)
 	target_link_libraries(zupdater PRIVATE miniz)
 endif()
 

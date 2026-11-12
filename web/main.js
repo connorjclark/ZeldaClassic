@@ -1,3 +1,4 @@
+import { fileSave } from "browser-fs-access";
 import { configureMount, renderSettingsPanel, setupSettingsPanel } from "./settings.js";
 import { createElement, createUrlString, fetchWithProgress, formatBytes, fsExists, fsReadAllFiles, sanitizeHtml } from "./utils.js";
 import { handleFileLaunch } from "./file_launch.js";
@@ -139,6 +140,15 @@ globalThis.ZC = {
       fsEnqueue(() => window.frameElement.remove());
     } else if (window.opener) {
       fsEnqueue(() => window.close());
+    }
+  },
+  async saveFile(path, fileName) {
+    const blob = new Blob([FS.readFile(path)]);
+    try {
+      await fileSave(blob, { fileName });
+    } catch (e) {
+      // Cancelled.
+      if (e.name !== 'AbortError') throw e;
     }
   },
   async runZscriptCompiler(scriptPath, consolePath, qr) {

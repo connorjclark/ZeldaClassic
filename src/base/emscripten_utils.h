@@ -14,6 +14,8 @@ std::string get_initial_file_dialog_folder();
 void em_mark_initializing_status();
 void em_mark_ready_status();
 void em_open_link(std::string url);
+// Hands a file in the browser's own files to the user to save, like a download.
+void em_save_file(std::string path, std::string file_name);
 bool em_is_mobile();
 // Opens the player in a new tab, or in a hidden frame if it's headless. The params are its
 // command line switches as URL params, without the dash in front (ex: replay-debug), where an

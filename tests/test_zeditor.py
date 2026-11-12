@@ -13,6 +13,7 @@ import struct
 import subprocess
 import sys
 import unittest
+import zipfile
 
 from pathlib import Path
 
@@ -113,6 +114,55 @@ class TestZEditor(unittest.TestCase):
         if output.returncode != 0:
             return f'run_replay_tests.py exited with code {output.returncode}'
         return ''
+
+    # Export a bundle of a replay and its quest, and check the replay still plays from where it's
+    # unzipped, finding the quest next to it rather than where it was.
+    def test_export_replay_bundle(self):
+        if 'emscripten' in str(run_target.get_build_folder()):
+            return
+
+        bundle_dir = tmp_dir / 'replay_bundle'
+        if bundle_dir.exists():
+            shutil.rmtree(bundle_dir)
+        bundle_dir.mkdir(parents=True)
+        replay_path = bundle_dir / 'keys_v8.zplay'
+        shutil.copy(root_dir / 'tests/replays/misc/keys_v8.zplay', replay_path)
+        zip_path = bundle_dir / 'keys_bundle.zip'
+        run_target.check_run(
+            'zeditor',
+            [
+                '-headless',
+                '-export-replay-bundle',
+                root_dir / 'tests/replays/misc/keys.qst',
+                zip_path,
+                replay_path,
+            ],
+        )
+
+        out_dir = bundle_dir / 'out'
+        with zipfile.ZipFile(zip_path) as zip:
+            self.assertEqual(
+                sorted(zip.namelist()),
+                [
+                    'keys_bundle/README.txt',
+                    'keys_bundle/keys.qst',
+                    'keys_bundle/keys_v8.zplay',
+                ],
+            )
+            zip.extractall(out_dir)
+
+        bundled_replay = out_dir / 'keys_bundle/keys_v8.zplay'
+        self.assertIn('M qst keys.qst\n', bundled_replay.read_text())
+        self.assertIn('keys_v8.zplay', (out_dir / 'keys_bundle/README.txt').read_text())
+        run_target.check_run(
+            'zplayer',
+            [
+                '-headless',
+                '-assert',
+                bundled_replay,
+                '-replay-exit-when-done',
+            ],
+        )
 
     # Simply open the editor with the new quest template.
     def test_file_new(self):

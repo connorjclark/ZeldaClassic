@@ -145,6 +145,13 @@ void em_open_link(std::string url) {
   }, url.c_str());
 }
 
+EM_ASYNC_JS(void, em_save_file_, (const char* path, const char* file_name), {
+  await ZC.saveFile(UTF8ToString(path), UTF8ToString(file_name));
+});
+void em_save_file(std::string path, std::string file_name) {
+  em_save_file_(path.c_str(), file_name.c_str());
+}
+
 void em_open_player(const std::vector<std::pair<std::string, std::string>>& params, bool track) {
 	EM_ASM({
 		ZC.pendingPlayerParams = [];

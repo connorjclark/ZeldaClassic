@@ -11,6 +11,7 @@
 #include "core/quest_format.h"
 #include "zc/ffscript.h"
 #include "zq/package.h"
+#include "zq/dialog/test_replays_dlg.h"
 #include "zq/zq_class.h"
 #include "zq/zq_custom.h"
 #include "zq/zq_files.h"
@@ -467,6 +468,17 @@ void zeditor_handle_commands()
 		std::string input_filename = zapp_get_arg_string(package_arg + 1);
 		std::string package_name = zapp_get_arg_string(package_arg + 2);
 		if (auto error = package_create(input_filename, package_name))
+			Z_error_fatal("%s\n", error->c_str());
+		zq_exit(0);
+	}
+
+	int export_bundle_arg = zapp_check_switch("-export-replay-bundle", {"qst", "zip", "replay"});
+	if (export_bundle_arg)
+	{
+		std::string qst = zapp_get_arg_string(export_bundle_arg + 1);
+		std::string zip = zapp_get_arg_string(export_bundle_arg + 2);
+		std::string replay = zapp_get_arg_string(export_bundle_arg + 3);
+		if (auto error = export_test_replay_bundle({replay}, qst, zip))
 			Z_error_fatal("%s\n", error->c_str());
 		zq_exit(0);
 	}

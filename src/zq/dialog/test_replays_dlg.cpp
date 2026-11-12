@@ -12,7 +12,9 @@
 #include "gui/dialog_runner.h"
 #include "gui/jwin.h"
 #include "gui/list.h"
+#include "zalleg/files.h"
 #include "zalleg/render.h"
+#include "zq/replay_bundle.h"
 #include "zq/zq_class.h"
 #include "zq/zquest.h"
 #include <allegro5/allegro.h>
@@ -994,12 +996,12 @@ private:
 class ReplayFailureDialog: public GUI::Dialog<ReplayFailureDialog>
 {
 public:
-	enum class message { REPLAY_TO_FAILURE, FULL_SCREEN, CLOSE };
+	enum class message { REPLAY_TO_FAILURE, FULL_SCREEN, EXPORT, CLOSE };
 
 	// Takes the bitmap of how the frame looked when recorded, if there is one.
 	ReplayFailureDialog(std::string details, std::optional<std::filesystem::path> image,
-		ALLEGRO_BITMAP* recorded, bool can_replay)
-		: details(std::move(details)), recorded(recorded), can_replay(can_replay)
+		ALLEGRO_BITMAP* recorded, bool can_replay, std::function<void()> export_bundle)
+		: details(std::move(details)), recorded(recorded), can_replay(can_replay), export_bundle(std::move(export_bundle))
 	{
 		if (image)
 			now = al_load_bitmap(image->string().c_str());
@@ -1072,6 +1074,10 @@ public:
 				Row(
 					spacing = 1_em,
 					Button(
+						text = "Export Bundle",
+						tooltip = "Save a zip of the replay with the quest, to share so others can see it fail too",
+						onClick = message::EXPORT),
+					Button(
 						text = "Full Screen",
 						tooltip = "Show the pictures as large as fits, one at a time, to switch between them",
 						disabled = !recorded && !now,
@@ -1111,6 +1117,12 @@ public:
 			return false;
 		}
 
+		if (msg.message == message::EXPORT)
+		{
+			export_bundle();
+			return false;
+		}
+
 		replay_to_failure = msg.message == message::REPLAY_TO_FAILURE;
 		return true;
 	}
@@ -1126,6 +1138,7 @@ private:
 	std::shared_ptr<ReplayFrameView> recorded_view, now_view;
 	std::shared_ptr<GUI::Checkbox> highlight_checkbox;
 	bool can_replay;
+	std::function<void()> export_bundle;
 
 	void show_highlight(bool highlight)
 	{
@@ -1138,7 +1151,7 @@ private:
 class TestReplaysDialog: public GUI::Dialog<TestReplaysDialog>
 {
 public:
-	enum class message { REFR_INFO, PLAY, ASSERT, UPDATE, DETAILS, RENAME, REMOVE, COPY_PATH, OPEN_FOLDER, CANCEL_RUN, PAUSE_PREVIEW, CLOSE };
+	enum class message { REFR_INFO, PLAY, ASSERT, UPDATE, DETAILS, RENAME, REMOVE, COPY_PATH, OPEN_FOLDER, EXPORT, CANCEL_RUN, PAUSE_PREVIEW, CLOSE };
 
 	~TestReplaysDialog()
 	{
@@ -1225,7 +1238,11 @@ public:
 				" when screens change, Update fails, and you'll need to record a new session."
 				"\n\nRename names the highlighted replay. Delete deletes the selected replays,"
 				" and Copy Path copies their paths. Open Folder shows where this quest's"
-				" replays are kept.",
+				" replays are kept."
+				"\n\nExport Bundle saves a zip of the selected replays together with the quest file"
+				" (and the results, screenshots and pictures saved with them), so someone else can"
+				" play them and see the same thing, like when reporting a bug. Anyone you share it"
+				" with can open the quest in the editor.",
 			onClose = message::CLOSE,
 			use_vsync = true,
 			onTick = [&]()
@@ -1273,7 +1290,12 @@ public:
 					Button(
 						text = "Copy Path",
 						disabled = no_replays,
-						onClick = message::COPY_PATH)
+						onClick = message::COPY_PATH),
+					Button(
+						text = "Export Bundle",
+						tooltip = "Save a zip of the selected replays with the quest, to share",
+						disabled = no_replays,
+						onClick = message::EXPORT)
 #ifndef __EMSCRIPTEN__
 					,
 					Button(
@@ -1317,7 +1339,8 @@ public:
 
 				int frame = parse_int<int>(get_or_empty(replay.result, "failing_frame"));
 				ReplayFailureDialog dlg(*details, get_replay_failure_image(replay.path, replay.result),
-					frame >= 0 ? load_recorded_frame(replay.path, frame) : nullptr, frame > 0 && !is_replay_run_going());
+					frame >= 0 ? load_recorded_frame(replay.path, frame) : nullptr, frame > 0 && !is_replay_run_going(),
+					[this]() { export_bundle({test_replay_val}); });
 				dlg.show();
 				if (dlg.replay_to_failure)
 					return launch("-update", {test_replay_val}, frame);
@@ -1423,6 +1446,10 @@ public:
 			case message::PAUSE_PREVIEW:
 				preview_paused = !preview_paused;
 				preview_button->setText(preview_paused ? "Play" : "Pause");
+				return false;
+
+			case message::EXPORT:
+				export_bundle(get_selected());
 				return false;
 
 			case message::CANCEL_RUN:
@@ -1615,6 +1642,66 @@ private:
 		return selected;
 	}
 
+	void export_bundle(std::vector<int32_t> selected)
+	{
+		if (selected.empty())
+			return;
+
+		std::string what = selected.size() == 1 ? "this replay" : fmt::format("these {} replays", selected.size());
+		if (!alert_confirm("Export Bundle", fmt::format("This saves a zip of {} together with the quest file,"
+			"\nso that someone else can play them and see the same thing,"
+			"\nlike when reporting a bug."
+			"\n\nAnyone you share it with can open the quest in the editor.", what)))
+			return;
+		// So the quest in the zip has the changes the replays were last run with.
+		if (!saved && zc_get_config("zquest", "test_mode_auto_save", true))
+			onSave();
+
+		std::string name = std::filesystem::path(filepath).stem().string();
+		name += selected.size() == 1 ? "_" + test_replays[selected[0]].path.stem().string() : "_replays";
+		std::vector<std::filesystem::path> replays;
+		for (int32_t i : selected)
+			replays.push_back(test_replays[i].path);
+
+#ifdef __EMSCRIPTEN__
+		// Made in the browser's own files, then downloaded.
+		std::filesystem::path zip_path = std::filesystem::path("/tmp") / (name + ".zip");
+#else
+		auto initial_path = std::filesystem::path(filepath).parent_path() / (name + ".zip");
+		auto result = prompt_for_new_file("Export Bundle (.zip)", "zip", nullptr, initial_path.string(), true);
+		if (!result)
+			return;
+		std::filesystem::path zip_path = *result;
+		if (zip_path.extension() != ".zip")
+			zip_path += ".zip";
+#endif
+
+		if (auto error = export_test_replay_bundle(replays, filepath, zip_path))
+		{
+			InfoDialog("Export Bundle", *error).show();
+			return;
+		}
+
+		std::error_code ec;
+		auto size = std::filesystem::file_size(zip_path, ec);
+		std::string message;
+#ifdef __EMSCRIPTEN__
+		em_save_file(zip_path.string(), zip_path.filename().string());
+		std::filesystem::remove(zip_path, ec);
+#else
+		message = fmt::format("Saved {} ({:.1f} MB).", zip_path.string(), size / 1024.0 / 1024.0);
+#endif
+		if (size > 10 * 1024 * 1024)
+		{
+			if (!message.empty())
+				message += "\n\n";
+			message += fmt::format("At {:.1f} MB, it's more than some chat apps take, like Discord without"
+				" Nitro (10 MB). A file sharing site can take it instead.", size / 1024.0 / 1024.0);
+		}
+		if (!message.empty())
+			InfoDialog("Export Bundle", message).show();
+	}
+
 	bool launch(const char* mode_switch)
 	{
 		return launch(mode_switch, get_selected());
@@ -1732,4 +1819,24 @@ void call_test_replays_dialog()
 #endif
 	forget_results_if_rerecorded();
 	TestReplaysDialog().show();
+}
+
+std::optional<std::string> export_test_replay_bundle(const std::vector<std::filesystem::path>& replays,
+	const std::filesystem::path& qst_path, const std::filesystem::path& zip_path)
+{
+	std::vector<ReplayBundleEntry> entries;
+	for (const auto& path : replays)
+	{
+		TestReplay replay;
+		replay.path = path;
+		replay.meta = read_replay_meta(path);
+		replay.result = read_replay_result(path.string() + ".result.txt");
+
+		ReplayBundleEntry& entry = entries.emplace_back();
+		entry.replay = path;
+		entry.description = get_replay_label(replay);
+		if (auto failure = describe_replay_failure(replay.result))
+			entry.description += "\n\n" + *failure;
+	}
+	return write_replay_bundle(zip_path, qst_path, entries);
 }
