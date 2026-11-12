@@ -12,6 +12,7 @@ Editor
    /tutorials/using_a_tileset
    /tutorials/message_strings
    /tutorials/z3_user_guide
+   /tutorials/test_replays
    /tutorials/wieldable_bow
 
 .. note::
