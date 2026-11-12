@@ -62,6 +62,8 @@ static const char TypeState = 'S';
 // replays), so they live outside ReplayState and survive its reset.
 static bool snapshot_all_frames;
 static bool exit_when_done;
+// Whether an Update stopped at a frame offers to hand the replay over to the player there.
+static bool take_over_enabled;
 static bool batch_when_done;
 static bool batch_any_failed;
 static std::filesystem::path output_dir;
@@ -1831,6 +1833,38 @@ void replay_continue(std::filesystem::path path)
 	replay_compat_setup_zc_maths();
 }
 
+// Whether this is an Update that offers to hand the replay over to the player at a frame. It
+// plays up to that frame however the replay ends, rather than stopping at its last step.
+static bool will_offer_take_over()
+{
+    return take_over_enabled && rs.mode == ReplayMode::Update && rs.frame_arg != -1 && !is_headless();
+}
+
+// Hands a replay being updated over to the player, who records the rest of it from here. Update
+// records what was played back too, so the recording carries on from that.
+static void take_over_replay()
+{
+    uninstall_keyboard_handlers();
+    // Keys held as the replay left them aren't held by the player. Only the current state is
+    // cleared, so the recording notes them being let go.
+    for (int i = 0; i < KEY_MAX; i++)
+    {
+        _key[i] = 0;
+        key[i] = 0;
+        key_current_frame[i] = 0;
+    }
+    KeyMapReplayStep::stored.run();
+    rs.mode = ReplayMode::Record;
+    rs.frame_arg = -1;
+    rs.did_attempt_input_during_replay = false;
+    replay_log.clear();
+    refresh_control_scheme();
+    // As when a save file's replay continues in a newer version.
+    if (rs.version >= 5 && rs.version != VERSION)
+        replay_step_meta("version", fmt::format("{}", VERSION));
+    replay_compat_setup_zc_maths();
+}
+
 void replay_poll()
 {
     if (rs.mode == ReplayMode::Off)
@@ -1881,16 +1915,39 @@ void replay_poll()
 
     if (rs.frame_arg != -1 && rs.frame_arg <= rs.frame_count && replay_is_replaying())
     {
-        if (rs.mode != ReplayMode::Assert)
+        if (will_offer_take_over())
         {
+            int frame = rs.frame_count;
+            Throttlefps = true;
+            Paused = true;
+            enter_sys_pal();
+            bool record = alert_confirm("Replay", fmt::format("The replay stopped at frame {}, and the game is paused."
+                "\n\nRecord your play from here? When you quit, that replaces the rest of the replay."
+                "\nOtherwise, you can play on without changing it.", frame), "Record", "Just Play");
+            exit_sys_pal();
+            if (record)
+                take_over_replay();
+            else
+            {
+                replay_forget_input();
+                // Stopped partway, so the replay isn't saved.
+                replay_stop(true);
+            }
+        }
+        else if (rs.mode != ReplayMode::Assert)
+        {
+            int frame = rs.frame_count;
             replay_forget_input();
-            replay_stop();
+            // Stopping a replay at a frame in the player's window is for playing on from there,
+            // even with -replay-exit-when-done, the same as stopping it by hand.
+            replay_stop(rs.mode == ReplayMode::Replay && !is_headless());
             if (!is_headless())
             {
                 Throttlefps = true;
                 Paused = true;
                 enter_sys_pal();
-                InfoDialog("Recording", "Replaying stopped at requested frame").show();
+                InfoDialog("Replay", fmt::format("The replay stopped at frame {}, and the game is paused."
+                    " You can play on from here.", frame)).show();
                 exit_sys_pal();
             }
         }
@@ -1922,7 +1979,7 @@ void replay_poll()
         handle_session_seam();
         do_replaying_poll();
         do_recording_poll();
-        if (rs.frame_count == get_frame(replay_log.back()))
+        if (!will_offer_take_over() && rs.frame_count == get_frame(replay_log.back()))
         {
             replay_stop();
             return;
@@ -1992,7 +2049,7 @@ void replay_poll()
     }
 
     // Updating should never modify when screens are loaded.
-    if (rs.mode == ReplayMode::Update)
+    if (rs.mode == ReplayMode::Update && !will_offer_take_over())
     {
         if (rs.frame_count > next_expected_loadscr_frame())
         {
@@ -2744,6 +2801,11 @@ bool replay_is_recording()
 void replay_enable_exit_when_done()
 {
 	exit_when_done = true;
+}
+
+void replay_enable_take_over()
+{
+	take_over_enabled = true;
 }
 
 bool replay_is_exit_when_done()

@@ -68,6 +68,10 @@ struct ReplayRun
 	// Whether it was an Assert or Update, rather than just playing them back. Those run without
 	// opening the player's window.
 	bool checks = false;
+	// A replay played up to where it failed, which the player can record the rest of from
+	// there, and what the replay held when the run started.
+	std::filesystem::path take_over_path;
+	std::string take_over_old_replay;
 };
 static ReplayRun replay_run;
 
@@ -268,14 +272,15 @@ static std::vector<std::filesystem::path> get_test_replay_files(const std::files
 	return files;
 }
 
-// Removes the screenshots zplayer saved of where a replay failed. zplayer doesn't remove those
-// itself, and they'd be mistaken for ones of a new failure.
-static void remove_replay_failure_images(const std::filesystem::path& replay)
+// Removes the result of a replay's last run, along with the screenshots zplayer saved of where
+// it failed. zplayer doesn't remove those itself, and they'd be mistaken for ones of a new failure.
+static void remove_replay_results(const std::filesystem::path& replay, bool include_result)
 {
 	std::vector<std::string> removed;
 	for (const auto& file : get_test_replay_files(replay))
 	{
-		if (file.extension() != ".png" && file.extension() != ".roundtrip")
+		bool is_result = file.filename().string() == replay.filename().string() + ".result.txt";
+		if (file.extension() != ".png" && file.extension() != ".roundtrip" && !(include_result && is_result))
 			continue;
 		std::error_code ec;
 		std::filesystem::remove(file, ec);
@@ -284,6 +289,18 @@ static void remove_replay_failure_images(const std::filesystem::path& replay)
 #ifdef __EMSCRIPTEN__
 	em_remove_persisted_files(removed);
 #endif
+}
+
+// Once a replay played up to where it failed is done, its old results no longer apply if the
+// player recorded the rest of it again.
+static void forget_results_if_rerecorded()
+{
+	if (replay_run.take_over_path.empty() || is_replay_run_going())
+		return;
+	if (util::read_text_file(replay_run.take_over_path) != replay_run.take_over_old_replay)
+		remove_replay_results(replay_run.take_over_path, true);
+	replay_run.take_over_path.clear();
+	replay_run.take_over_old_replay.clear();
 }
 
 // Test replays used to all be saved directly in replays/test/. Move those into the folder
@@ -762,12 +779,15 @@ private:
 class ReplayFailureDialog: public GUI::Dialog<ReplayFailureDialog>
 {
 public:
-	enum class message { CLOSE };
+	enum class message { REPLAY_TO_FAILURE, CLOSE };
 
-	ReplayFailureDialog(std::string details, std::optional<std::filesystem::path> image)
-		: details(std::move(details)), image(std::move(image))
+	ReplayFailureDialog(std::string details, std::optional<std::filesystem::path> image, bool can_replay)
+		: details(std::move(details)), image(std::move(image)), can_replay(can_replay)
 	{
 	}
+
+	// Whether Replay to Failure was clicked.
+	bool replay_to_failure = false;
 
 	std::shared_ptr<GUI::Widget> view() override
 	{
@@ -782,29 +802,43 @@ public:
 
 		return Window(
 			title = "Assert Failed",
+			info = "Replay to Failure plays the replay up to just before it went wrong, and pauses"
+				" there. From there you can look around and play on, or record the rest of the"
+				" replay again, which replaces it when you quit.",
 			onClose = message::CLOSE,
 			Column(
 				Row(
 					Label(text = details, width = 22_em, maxLines = 20, vAlign = 0.0),
 					picture
 				),
-				Button(
-					text = "Close",
-					minwidth = 90_px,
-					focused = true,
-					onClick = message::CLOSE)
+				Row(
+					spacing = 1_em,
+					Button(
+						text = "Replay to Failure",
+						tooltip = "Play the replay up to just before it went wrong, and pause there,"
+							" to play on or record the rest of it again",
+						disabled = !can_replay,
+						onClick = message::REPLAY_TO_FAILURE),
+					Button(
+						text = "Close",
+						minwidth = 90_px,
+						focused = true,
+						onClick = message::CLOSE)
+				)
 			)
 		);
 	}
 
-	bool handleMessage(const GUI::DialogMessage<message>&)
+	bool handleMessage(const GUI::DialogMessage<message>& msg)
 	{
+		replay_to_failure = msg.message == message::REPLAY_TO_FAILURE;
 		return true;
 	}
 
 private:
 	std::string details;
 	std::optional<std::filesystem::path> image;
+	bool can_replay;
 };
 
 // Lists the replays made of the current quest in test mode, and launches them in zplayer.
@@ -859,7 +893,9 @@ public:
 				" the same as when it was recorded. Assert and Update run in the background, and"
 				" the result of the last one is shown at the start of each row."
 				"\n\nIf an Assert fails, Details explains what went wrong, and shows the frame it"
-				" went wrong on."
+				" went wrong on. From there, Replay to Failure plays the replay up to just before"
+				" that, and pauses so you can look around and play on, or record the rest of the"
+				" replay again."
 				"\n\nUpdate accepts changes to how the quest looks, such as new tiles or palettes,"
 				" by saving them into the replay. If a change alters where the hero goes or"
 				" when screens change, Update fails, and you'll need to record a new session."
@@ -951,7 +987,12 @@ public:
 				if (!details)
 					return false;
 
-				ReplayFailureDialog(*details, get_replay_failure_image(replay.path, replay.result)).show();
+				int frame = parse_int<int>(get_or_empty(replay.result, "failing_frame"));
+				ReplayFailureDialog dlg(*details, get_replay_failure_image(replay.path, replay.result),
+					frame > 0 && !is_replay_run_going());
+				dlg.show();
+				if (dlg.replay_to_failure)
+					return launch("-update", {test_replay_val}, frame);
 				return false;
 			}
 
@@ -1090,6 +1131,7 @@ private:
 	void refresh_in_place()
 	{
 		pull_test_replays();
+		forget_results_if_rerecorded();
 		for (auto& replay : test_replays)
 			replay.result = read_replay_result(replay.path.string() + ".result.txt");
 		update_replay_list();
@@ -1163,10 +1205,16 @@ private:
 
 	bool launch(const char* mode_switch)
 	{
-		// Assert and Update run in the background, and show their results in the list.
-		bool checks = strcmp(mode_switch, "-replay");
+		return launch(mode_switch, get_selected());
+	}
 
-		auto selected = get_selected();
+	// With a frame, plays just the one replay in the player's window up to that frame, and then
+	// gives control to the player. With Update, the player can record the rest of it from there.
+	bool launch(const char* mode_switch, std::vector<int32_t> selected, std::optional<int> frame = std::nullopt)
+	{
+		// Assert and Update run in the background, and show their results in the list.
+		bool checks = !frame && strcmp(mode_switch, "-replay");
+
 		if (selected.empty() || is_replay_run_going())
 			return false;
 
@@ -1190,7 +1238,13 @@ private:
 		if (checks)
 		{
 			for (int32_t i : selected)
-				remove_replay_failure_images(test_replays[i].path);
+				remove_replay_results(test_replays[i].path, false);
+		}
+		if (frame)
+		{
+			args.push_back({"-frame", std::to_string(*frame)});
+			if (!strcmp(mode_switch, "-update"))
+				args.push_back({"-replay-take-over"});
 		}
 		if (selected.size() == 1)
 		{
@@ -1230,6 +1284,13 @@ private:
 		replay_run.old_results.clear();
 		replay_run.stopped = false;
 		replay_run.checks = checks;
+		replay_run.take_over_path.clear();
+		replay_run.take_over_old_replay.clear();
+		if (frame && !strcmp(mode_switch, "-update"))
+		{
+			replay_run.take_over_path = test_replays[selected[0]].path;
+			replay_run.take_over_old_replay = util::read_text_file(replay_run.take_over_path);
+		}
 		// The results as they are now, including what a player on web has saved since.
 		pull_test_replays();
 		for (int32_t i : selected)
@@ -1254,5 +1315,6 @@ void call_test_replays_dialog()
 #else
 	migrate_old_test_replays();
 #endif
+	forget_results_if_rerecorded();
 	TestReplaysDialog().show();
 }

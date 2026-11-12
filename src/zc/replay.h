@@ -99,6 +99,9 @@ bool replay_is_replaying();
 bool replay_is_recording();
 void replay_enable_exit_when_done();
 bool replay_is_exit_when_done();
+// With -frame, Update offers to hand the replay over to the player at that frame, recording
+// the rest of it from there.
+void replay_enable_take_over();
 // Batch mode: when a replay finishes, instead of exiting the process, ask the host
 // (via replay_batch_load_next) to load the next replay in the batch. The process only
 // exits once the batch is exhausted. Used to run many replays back-to-back in one
