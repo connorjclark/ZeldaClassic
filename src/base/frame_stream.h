@@ -69,6 +69,41 @@ private:
 	void write_finished_chunks(bool wait);
 };
 
+// Reads the pictures of a file, like to play them back.
+class FrameStreamReader
+{
+public:
+	// Reads the whole file, which is kept in memory.
+	bool open(const std::filesystem::path& path);
+	bool is_open() const { return !chunks.empty(); }
+	// The number of the last frame that has a picture.
+	int last_frame() const { return chunks.empty() ? -1 : chunks.back().last_frame; }
+	// The picture shown at a frame: the last one saved at or before it, or null if there isn't
+	// one. It's fastest going forward a frame at a time, as when playing the pictures back. The
+	// picture stays valid until the next call.
+	const IndexedFrame* at(int frame);
+
+private:
+	struct Chunk
+	{
+		size_t offset = 0;
+		size_t size = 0;
+		size_t raw_size = 0;
+		int first_frame = 0;
+		int last_frame = 0;
+	};
+
+	std::vector<uint8_t> data;
+	std::vector<Chunk> chunks;
+	// The chunk the last picture came from, decompressed, and where its next frame is.
+	int chunk_index = -1;
+	std::vector<uint8_t> raw;
+	size_t pos = 0;
+	// The palette and pixels of the last picture, which the next frame in the chunk is XOR'd with.
+	std::vector<uint8_t> payload;
+	IndexedFrame current;
+};
+
 // Reads the picture shown at a frame: the last one saved at or before it.
 std::optional<IndexedFrame> read_frame_stream(const std::filesystem::path& path, int frame);
 

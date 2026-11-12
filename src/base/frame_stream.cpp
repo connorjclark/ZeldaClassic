@@ -1,4 +1,5 @@
 #include "base/frame_stream.h"
+#include <algorithm>
 #include <cstring>
 #include <zstd.h>
 
@@ -159,59 +160,85 @@ void FrameStreamWriter::close()
 	file = nullptr;
 }
 
-std::optional<IndexedFrame> read_frame_stream(const std::filesystem::path& path, int frame)
+bool FrameStreamReader::open(const std::filesystem::path& path)
 {
+	*this = FrameStreamReader();
 	FILE* file = fopen(path.string().c_str(), "rb");
 	if (!file)
-		return std::nullopt;
-
-	std::optional<IndexedFrame> result;
-	uint8_t header[CHUNK_HEADER_SIZE];
-	char magic[sizeof(MAGIC)];
-	if (fread(magic, 1, sizeof(magic), file) != sizeof(magic) || memcmp(magic, MAGIC, sizeof(MAGIC)) ||
-		fread(header, 1, 4, file) != 4 || get_u32(header) != VERSION)
-	{
-		fclose(file);
-		return std::nullopt;
-	}
-
-	// The last chunk that starts at or before the frame has it. A chunk cut short, like by a
-	// crash, ends the file.
-	long chunk_offset = -1;
-	uint32_t chunk_size = 0, chunk_raw_size = 0;
-	while (fread(header, 1, CHUNK_HEADER_SIZE, file) == CHUNK_HEADER_SIZE)
-	{
-		uint32_t size = get_u32(header);
-		int first = (int32_t)get_u32(header + 8);
-		long offset = ftell(file);
-		if (fseek(file, size, SEEK_CUR) || first > frame)
-			break;
-		chunk_offset = offset;
-		chunk_size = size;
-		chunk_raw_size = get_u32(header + 4);
-	}
-
-	std::vector<uint8_t> data(chunk_size), raw(chunk_raw_size);
-	bool read = chunk_offset != -1 && !fseek(file, chunk_offset, SEEK_SET) &&
-		fread(data.data(), 1, chunk_size, file) == chunk_size;
+		return false;
+	fseek(file, 0, SEEK_END);
+	long file_size = ftell(file);
+	fseek(file, 0, SEEK_SET);
+	data.resize(file_size > 0 ? file_size : 0);
+	bool read = fread(data.data(), 1, data.size(), file) == data.size();
 	fclose(file);
-	if (!read || ZSTD_decompress(raw.data(), raw.size(), data.data(), data.size()) != raw.size())
-		return std::nullopt;
 
-	std::vector<uint8_t> payload;
-	int prev_width = 0, prev_height = 0;
-	size_t pos = 0;
+	size_t pos = sizeof(MAGIC) + 4;
+	if (!read || data.size() < pos || memcmp(data.data(), MAGIC, sizeof(MAGIC)) || get_u32(&data[sizeof(MAGIC)]) != VERSION)
+	{
+		data.clear();
+		return false;
+	}
+
+	// A chunk cut short, like by a crash, ends the file.
+	while (pos + CHUNK_HEADER_SIZE <= data.size())
+	{
+		Chunk chunk;
+		chunk.size = get_u32(&data[pos]);
+		chunk.raw_size = get_u32(&data[pos + 4]);
+		chunk.first_frame = (int32_t)get_u32(&data[pos + 8]);
+		chunk.last_frame = (int32_t)get_u32(&data[pos + 12]);
+		chunk.offset = pos + CHUNK_HEADER_SIZE;
+		if (chunk.offset + chunk.size > data.size())
+			break;
+		chunks.push_back(chunk);
+		pos = chunk.offset + chunk.size;
+	}
+	return !chunks.empty();
+}
+
+const IndexedFrame* FrameStreamReader::at(int frame)
+{
+	// The last chunk that starts at or before the frame has it.
+	auto it = std::upper_bound(chunks.begin(), chunks.end(), frame,
+		[](int frame, const Chunk& chunk) { return frame < chunk.first_frame; });
+	if (it == chunks.begin())
+		return nullptr;
+	int index = it - chunks.begin() - 1;
+
+	if (index != chunk_index)
+	{
+		const Chunk& chunk = chunks[index];
+		raw.resize(chunk.raw_size);
+		if (ZSTD_decompress(raw.data(), raw.size(), &data[chunk.offset], chunk.size) != raw.size())
+		{
+			chunk_index = -1;
+			return nullptr;
+		}
+		chunk_index = index;
+		pos = 0;
+		payload.clear();
+	}
+	// Going back means starting the chunk over, as each frame is stored as its difference from
+	// the one before.
+	else if (current.frame > frame)
+	{
+		pos = 0;
+		payload.clear();
+	}
+
+	bool changed = false;
 	while (pos + FRAME_HEADER_SIZE <= raw.size())
 	{
 		int this_frame = (int32_t)get_u32(&raw[pos]);
 		int width = get_u16(&raw[pos + 4]);
 		int height = get_u16(&raw[pos + 6]);
 		size_t size = 768 + (size_t)width * height;
-		pos += FRAME_HEADER_SIZE;
-		if (this_frame > frame || pos + size > raw.size())
+		if (this_frame > frame || pos + FRAME_HEADER_SIZE + size > raw.size())
 			break;
+		pos += FRAME_HEADER_SIZE;
 
-		bool is_delta = !payload.empty() && width == prev_width && height == prev_height;
+		bool is_delta = !payload.empty() && width == current.width && height == current.height;
 		if (is_delta)
 		{
 			for (size_t i = 0; i < size; i++)
@@ -220,19 +247,29 @@ std::optional<IndexedFrame> read_frame_stream(const std::filesystem::path& path,
 		else
 			payload.assign(raw.begin() + pos, raw.begin() + pos + size);
 		pos += size;
-		prev_width = width;
-		prev_height = height;
 
-		result.emplace();
-		result->frame = this_frame;
-		result->width = width;
-		result->height = height;
+		current.frame = this_frame;
+		current.width = width;
+		current.height = height;
+		changed = true;
 	}
 
-	if (result)
+	if (payload.empty())
+		return nullptr;
+	if (changed)
 	{
-		memcpy(result->palette.data(), payload.data(), 768);
-		result->pixels.assign(payload.begin() + 768, payload.end());
+		memcpy(current.palette.data(), payload.data(), 768);
+		current.pixels.assign(payload.begin() + 768, payload.end());
 	}
-	return result;
+	return &current;
+}
+
+std::optional<IndexedFrame> read_frame_stream(const std::filesystem::path& path, int frame)
+{
+	FrameStreamReader reader;
+	if (!reader.open(path))
+		return std::nullopt;
+	if (const IndexedFrame* picture = reader.at(frame))
+		return *picture;
+	return std::nullopt;
 }

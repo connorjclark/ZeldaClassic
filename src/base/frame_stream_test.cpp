@@ -68,11 +68,48 @@ static void test_round_trip()
 	assertTrue(!read_frame_stream(path, 10).has_value());
 }
 
+// Like playing the pictures back: every frame in order, then over again from the start.
+static void test_play_back()
+{
+	auto path = std::filesystem::temp_directory_path() / "zc_frame_stream_play_test.frames";
+	std::vector<IndexedFrame> frames;
+	for (int i = 0; i < 600; i++)
+		frames.push_back(make_frame(5 + i * 3, i < 450 ? 32 : 16, i < 450 ? 24 : 12));
+	{
+		FrameStreamWriter writer;
+		assertTrue(writer.open(path));
+		for (auto& f : frames)
+			add_frame(writer, f);
+	}
+
+	FrameStreamReader reader;
+	assertTrue(reader.open(path));
+	assertEqual(reader.last_frame(), frames.back().frame);
+	for (int pass = 0; pass < 2; pass++)
+	{
+		assertTrue(reader.at(4) == nullptr);
+		size_t next = 0;
+		for (int frame = 5; frame <= reader.last_frame() + 10; frame++)
+		{
+			while (next + 1 < frames.size() && frames[next + 1].frame <= frame)
+				next++;
+			const IndexedFrame* got = reader.at(frame);
+			assert_same(got ? std::optional(*got) : std::nullopt, frames[next]);
+		}
+	}
+	// Back within the same chunk.
+	assert_same(*reader.at(frames[590].frame), frames[590]);
+	assert_same(*reader.at(frames[500].frame), frames[500]);
+
+	std::filesystem::remove(path);
+}
+
 TestResults test_frame_stream(bool verbose)
 {
 	TestResults tr{};
 	struct { const char* name; void (*fn)(); } tests[] = {
 		{ "round_trip", test_round_trip },
+		{ "play_back", test_play_back },
 	};
 
 	for (auto& test : tests)

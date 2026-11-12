@@ -561,28 +561,28 @@ static std::optional<std::filesystem::path> get_replay_failure_image(const std::
 	return std::nullopt;
 }
 
-// The picture of how a frame of a replay looked when it was recorded, if one was saved with it.
-static ALLEGRO_BITMAP* load_recorded_frame(const std::filesystem::path& replay_path, int frame)
+// Draws a picture of a frame into a bitmap, making a new one if it isn't there yet or is a
+// different size. Returns the bitmap, or null if it couldn't be made.
+static ALLEGRO_BITMAP* draw_picture(const IndexedFrame& picture, ALLEGRO_BITMAP* bmp = nullptr)
 {
-	auto picture = read_frame_stream(replay_path.string() + ".frames", frame);
-	if (!picture)
-		return nullptr;
-
-	ALLEGRO_BITMAP* bmp = al_create_bitmap(picture->width, picture->height);
+	if (bmp && (al_get_bitmap_width(bmp) != picture.width || al_get_bitmap_height(bmp) != picture.height))
+	{
+		al_destroy_bitmap(bmp);
+		bmp = nullptr;
+	}
+	if (!bmp)
+		bmp = al_create_bitmap(picture.width, picture.height);
 	if (!bmp)
 		return nullptr;
 	ALLEGRO_LOCKED_REGION* lr = al_lock_bitmap(bmp, ALLEGRO_PIXEL_FORMAT_ABGR_8888_LE, ALLEGRO_LOCK_WRITEONLY);
 	if (!lr)
-	{
-		al_destroy_bitmap(bmp);
-		return nullptr;
-	}
-	for (int y = 0; y < picture->height; y++)
+		return bmp;
+	for (int y = 0; y < picture.height; y++)
 	{
 		uint8_t* row = (uint8_t*)lr->data + y * lr->pitch;
-		for (int x = 0; x < picture->width; x++)
+		for (int x = 0; x < picture.width; x++)
 		{
-			const uint8_t* color = &picture->palette[picture->pixels[y * picture->width + x] * 3];
+			const uint8_t* color = &picture.palette[picture.pixels[y * picture.width + x] * 3];
 			row[x * 4] = color[0];
 			row[x * 4 + 1] = color[1];
 			row[x * 4 + 2] = color[2];
@@ -591,6 +591,18 @@ static ALLEGRO_BITMAP* load_recorded_frame(const std::filesystem::path& replay_p
 	}
 	al_unlock_bitmap(bmp);
 	return bmp;
+}
+
+static std::filesystem::path get_replay_frames_path(const std::filesystem::path& replay_path)
+{
+	return replay_path.string() + ".frames";
+}
+
+// The picture of how a frame of a replay looked when it was recorded, if one was saved with it.
+static ALLEGRO_BITMAP* load_recorded_frame(const std::filesystem::path& replay_path, int frame)
+{
+	auto picture = read_frame_stream(get_replay_frames_path(replay_path), frame);
+	return picture ? draw_picture(*picture) : nullptr;
 }
 
 // Copies a picture with the pixels that differ from another of the same size marked, and the rest
@@ -781,10 +793,16 @@ class ReplayFrameView: public GUI::Widget
 public:
 	// The bitmap is the caller's, and has to outlive the dialog. It's drawn `scale` times as large.
 	explicit ReplayFrameView(ALLEGRO_BITMAP* bmp, int scale = 1)
-		: bmp(bmp)
+		: ReplayFrameView(al_get_bitmap_width(bmp) * scale, al_get_bitmap_height(bmp) * scale)
 	{
-		setPreferredWidth(GUI::Size::pixels(al_get_bitmap_width(bmp) * scale + 4));
-		setPreferredHeight(GUI::Size::pixels(al_get_bitmap_height(bmp) * scale + 4));
+		this->bmp = bmp;
+	}
+
+	// A box of the given size, which pictures set later are fit into.
+	ReplayFrameView(int width, int height)
+	{
+		setPreferredWidth(GUI::Size::pixels(width + 4));
+		setPreferredHeight(GUI::Size::pixels(height + 4));
 	}
 
 	void setBitmap(ALLEGRO_BITMAP* new_bmp)
@@ -813,9 +831,13 @@ private:
 				{
 					view->rti = add_dlg_layer();
 					view->rti->render_cb = [view, d](RenderTreeItem*, bool) {
-						if (view->bmp && !(d->flags & D_HIDDEN))
-							al_draw_scaled_bitmap(view->bmp, 0, 0, al_get_bitmap_width(view->bmp), al_get_bitmap_height(view->bmp),
-								d->x + 2, d->y + 2, d->w - 4, d->h - 4, 0);
+						if (!view->bmp || (d->flags & D_HIDDEN))
+							return;
+						// As large as fits, keeping its shape, in the middle.
+						float w = al_get_bitmap_width(view->bmp), h = al_get_bitmap_height(view->bmp);
+						float scale = std::min((d->w - 4) / w, (d->h - 4) / h);
+						float x = d->x + 2 + (d->w - 4 - w * scale) / 2, y = d->y + 2 + (d->h - 4 - h * scale) / 2;
+						al_draw_scaled_bitmap(view->bmp, 0, 0, w, h, x, y, w * scale, h * scale, 0);
 					};
 				}
 				break;
@@ -1116,7 +1138,13 @@ private:
 class TestReplaysDialog: public GUI::Dialog<TestReplaysDialog>
 {
 public:
-	enum class message { REFR_INFO, PLAY, ASSERT, UPDATE, DETAILS, RENAME, REMOVE, COPY_PATH, OPEN_FOLDER, CANCEL_RUN, CLOSE };
+	enum class message { REFR_INFO, PLAY, ASSERT, UPDATE, DETAILS, RENAME, REMOVE, COPY_PATH, OPEN_FOLDER, CANCEL_RUN, PAUSE_PREVIEW, CLOSE };
+
+	~TestReplaysDialog()
+	{
+		if (preview_bmp)
+			al_destroy_bitmap(preview_bmp);
+	}
 
 	std::shared_ptr<GUI::Widget> view() override
 	{
@@ -1138,7 +1166,7 @@ public:
 		{
 			content = list_widget = List(
 				data = replay_list,
-				width = 42_em, height = 16_em, fitParent = true,
+				width = 30_em, height = 16_em, fitParent = true,
 				multiSelect = true,
 				focused = true,
 				selectedValue = test_replay_val,
@@ -1146,8 +1174,31 @@ public:
 				{
 					test_replay_val = val;
 					update_details_button();
+					load_preview();
 				},
 				onDClick = message::PLAY
+			);
+		}
+
+		// Plays the pictures of the highlighted replay's frames, if it has them.
+		preview_view = std::make_shared<ReplayFrameView>(256, 232);
+		preview_view->setBitmap(preview_bmp);
+		if (!test_replays.empty())
+		{
+			content = Row(
+				vAlign = 0.0,
+				content,
+				Column(
+					vAlign = 0.0,
+					preview_view,
+					Row(
+						preview_label = Label(width = GUI::Size::pixels(180), maxLines = 3),
+						preview_button = Button(
+							text = preview_paused ? "Play" : "Pause",
+							disabled = !preview_reader.is_open(),
+							onClick = message::PAUSE_PREVIEW)
+					)
+				)
 			);
 		}
 
@@ -1163,6 +1214,8 @@ public:
 				"\n\nPlay shows a replay in the player. Assert also checks that the quest still plays"
 				" the same as when it was recorded. Assert and Update run in the background, and"
 				" the result of the last one is shown at the start of each row."
+				"\n\nNext to the list, the highlighted replay plays back as pictures of its frames,"
+				" if it has them. Replays save them when they're recorded or updated."
 				"\n\nIf an Assert fails, Details explains what went wrong, and shows the frame it"
 				" went wrong on. From there, Replay to Failure plays the replay up to just before"
 				" that, and pauses so you can look around and play on, or record the rest of the"
@@ -1180,6 +1233,7 @@ public:
 				// Show progress while a run goes on, and the results once it's done.
 				if (shown_running && (++ticks % 30 == 0 || !is_replay_run_going()))
 					refresh_in_place();
+				advance_preview();
 				return ONTICK_CONTINUE;
 			},
 			Column(
@@ -1236,6 +1290,9 @@ public:
 		);
 		run_buttons = {replay_button, assert_button, update_button, rename_button, delete_button};
 		update_run_status();
+		// The last replay previewed may be gone, or its pictures changed.
+		preview_path.clear();
+		load_preview();
 		return window;
 	}
 
@@ -1363,6 +1420,11 @@ public:
 				return false;
 			}
 
+			case message::PAUSE_PREVIEW:
+				preview_paused = !preview_paused;
+				preview_button->setText(preview_paused ? "Play" : "Pause");
+				return false;
+
 			case message::CANCEL_RUN:
 				stop_replay_run_player();
 				replay_run.stopped = true;
@@ -1390,6 +1452,82 @@ private:
 	// Whether it shows what went wrong with the last run.
 	bool shown_error = false;
 
+	// The pictures of the highlighted replay's frames, played back on a loop like an animation:
+	// the frame it's up to, and that of the picture shown.
+	FrameStreamReader preview_reader;
+	std::filesystem::path preview_path;
+	std::filesystem::file_time_type preview_time;
+	ALLEGRO_BITMAP* preview_bmp = nullptr;
+	std::shared_ptr<ReplayFrameView> preview_view;
+	std::shared_ptr<GUI::Label> preview_label;
+	std::shared_ptr<GUI::Button> preview_button;
+	int preview_frame = 0;
+	int preview_shown = -1;
+	// How long the replay is, which the pictures may stop short of if it ends on a still screen.
+	int preview_length = 0;
+	bool preview_paused = false;
+
+	// Starts playing the pictures of the highlighted replay, unless they're already playing.
+	void load_preview()
+	{
+		if (!preview_view)
+			return;
+
+		std::filesystem::path path;
+		std::filesystem::file_time_type time;
+		if (test_replay_val < test_replays.size())
+		{
+			path = get_replay_frames_path(test_replays[test_replay_val].path);
+			std::error_code ec;
+			time = std::filesystem::last_write_time(path, ec);
+		}
+		if (path == preview_path && time == preview_time)
+			return;
+
+		preview_path = path;
+		preview_time = time;
+		preview_frame = 0;
+		preview_shown = -1;
+		preview_length = 0;
+		bool has_pictures = !path.empty() && preview_reader.open(path);
+		if (!has_pictures)
+			preview_reader = FrameStreamReader();
+		else
+			preview_length = std::max(preview_reader.last_frame(), parse_int<int>(get_or_empty(test_replays[test_replay_val].meta, "frames")));
+		preview_button->setDisabled(!has_pictures);
+		preview_view->setBitmap(nullptr);
+		if (has_pictures)
+			show_preview_frame();
+		else
+			preview_label->setText("No pictures of this replay yet. Update saves them.");
+	}
+
+	void advance_preview()
+	{
+		if (!preview_reader.is_open() || preview_paused)
+			return;
+		if (++preview_frame > preview_length)
+			preview_frame = 0;
+		show_preview_frame();
+	}
+
+	void show_preview_frame()
+	{
+		// Only redrawn when the picture changes, and the time each second.
+		const IndexedFrame* picture = preview_reader.at(preview_frame);
+		if (picture && picture->frame != preview_shown)
+		{
+			preview_shown = picture->frame;
+			preview_bmp = draw_picture(*picture, preview_bmp);
+			preview_view->setBitmap(preview_bmp);
+		}
+		if (preview_frame % 60 == 0)
+		{
+			int seconds = preview_frame / 60, total = preview_length / 60;
+			preview_label->setText(fmt::format("{}:{:02} / {}:{:02}", seconds / 60, seconds % 60, total / 60, total % 60));
+		}
+	}
+
 	void update_replay_list()
 	{
 		replay_list = GUI::ListData();
@@ -1408,6 +1546,9 @@ private:
 		update_replay_list();
 		if (list_widget)
 			list_widget->setListData(replay_list);
+		// An Update may have saved new pictures.
+		if (!is_replay_run_going())
+			load_preview();
 		bool had_error = shown_error;
 		update_run_status();
 		// An error can take a few lines, which the dialog has to be laid out again to fit.
