@@ -8,7 +8,9 @@ set -e
 
 SERVER=api.zquestclassic.com
 
-ssh root@$SERVER "cd /home/zc/ZQuestClassic && git fetch && git checkout origin/main"
+# The checkout belongs to zc (which runs the api server and the docs cron), so keep root
+# from creating files in it.
+ssh root@$SERVER "cd /home/zc/ZQuestClassic && sudo -u zc -H git fetch && sudo -u zc -H git checkout origin/main"
 
 scp nginx/* root@$SERVER:/etc/nginx/conf.d/
 scp systemd/* root@$SERVER:/etc/systemd/system/
