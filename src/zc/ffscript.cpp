@@ -3791,8 +3791,9 @@ uint32_t allocatemem(int32_t size, bool local, ScriptType type, const uint32_t U
 void do_allocatemem(bool v, const bool local, ScriptType type, const uint32_t UID)
 {
 	int32_t size = SH::get_arg(sarg2, v) / 10000;
-	assert(sarg3 >= 0 && sarg3 <= (int)script_object_type::last);
-	uint32_t id = allocatemem(size, local, type, UID, (script_object_type)sarg3);
+	// The compiler only emits valid types, but a quest file can hold anything.
+	auto object_type = sarg3 >= 0 && sarg3 <= (int)script_object_type::last ? (script_object_type)sarg3 : script_object_type::none;
+	uint32_t id = allocatemem(size, local, type, UID, object_type);
 	set_register(sarg1, id);
 }
 
@@ -11075,8 +11076,7 @@ int32_t run_script_int(JittedScriptInstance* j_instance)
 				FFCore.do_varg_choose();
 				break;
 			case MAKEVARGARRAY:
-				assert(sarg1 >= 0 && sarg1 <= (int)script_object_type::last);
-				FFCore.do_varg_makearray(type, i, (script_object_type)sarg1);
+				FFCore.do_varg_makearray(type, i, sarg1 >= 0 && sarg1 <= (int)script_object_type::last ? (script_object_type)sarg1 : script_object_type::none);
 				break;
 			
 			case PUSHVARGV:

@@ -247,9 +247,13 @@ std::optional<int32_t> user_object_run_command(word command)
 		}
 		case ZCLASS_MARK_TYPE:
 		{
-			CHECK(sargvec);
+			// The compiler always gives this (index, type) pairs, but a quest file can hold anything.
+			if (!sargvec || sargvec->size() % 2)
+			{
+				scripting_log_error_with_context("Invalid ZCLASS_MARK_TYPE");
+				break;
+			}
 			auto& vec = *sargvec;
-			assert(vec.size() % 2 == 0);
 
 			uint32_t id = ri->thiskey;
 			current_zasm_context = "ZCLASS_MARK_TYPE";
@@ -258,7 +262,12 @@ std::optional<int32_t> user_object_run_command(word command)
 				for (size_t i = 0; i < vec.size(); i += 2)
 				{
 					int index = vec[i];
-					assert(vec[i + 1] >= 0 && vec[i + 1] <= (int)script_object_type::last);
+					if (index < 0 || index >= obj->data.size() ||
+						vec[i + 1] < 0 || vec[i + 1] > (int)script_object_type::last)
+					{
+						scripting_log_error_with_context("Invalid ZCLASS_MARK_TYPE");
+						continue;
+					}
 					auto type = (script_object_type)vec[i + 1];
 					if (index >= obj->owned_vars)
 					{
