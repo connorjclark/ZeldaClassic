@@ -12,6 +12,27 @@ read past the end of the table (CVE-2026-111153). Fix as suggested in
 https://github.com/libgme/game-music-emu/issues/164. Remove this part once
 the pinned gme commit fixes that issue.
 
+Also fixes two out-of-bounds reads found by fuzzing (scripts/fuzzing): an SPC
+whose sample directory sits at the top of memory read past the 64K RAM
+instead of wrapping (Spc_Dsp.cpp), and a GBS whose program counter ran past
+$FFFF read past the CPU's page map instead of wrapping (Gb_Cpu.cpp), and a
+VGM PCM seek could point the sample reader anywhere (Vgm_Emu_Impl.cpp). Not reported upstream yet.
+
+diff --git a/gme/Gb_Cpu.cpp b/gme/Gb_Cpu.cpp
+index cea1a6a..a6c64b0 100644
+--- a/gme/Gb_Cpu.cpp
++++ b/gme/Gb_Cpu.cpp
+@@ -124,6 +124,10 @@ bool Gb_Cpu::run( int32_t cycle_count )
+ 
+ loop:
+ 
++	// A jump can land past $FFFF (ex: RST with a high load address, or running off the end of
++	// memory). Wrap it like the hardware does, rather than read past code_map.
++	pc &= 0xFFFF;
++
+ 	check( (unsigned long) pc < 0x10000 );
+ 	check( (unsigned long) sp < 0x10000 );
+ 	check( (flags & ~0xF0) == 0 );
 diff --git a/gme/Nes_Fds_Apu.h b/gme/Nes_Fds_Apu.h
 index b12cf93..ae0ae4f 100644
 --- a/gme/Nes_Fds_Apu.h
@@ -83,6 +104,60 @@ index 796de61..190f8b9 100644
 +
  	for ( int i = 0; i < bank_count; ++i )
  		cpu_write( bank_select_addr + i, initial_banks [i] );
+ 
+diff --git a/gme/Spc_Dsp.cpp b/gme/Spc_Dsp.cpp
+index 6b41ead..dcb3204 100644
+--- a/gme/Spc_Dsp.cpp
++++ b/gme/Spc_Dsp.cpp
+@@ -195,7 +195,7 @@ void Spc_Dsp::run( int clock_count )
+ #ifdef SPC_ISOLATED_ECHO_BUFFER
+ 	uint8_t* const echo_ram = m.echo_ram;
+ #endif
+-	uint8_t const* const dir = &ram [REG(dir) * 0x100];
++	int const dir = REG(dir) * 0x100;
+ 	int const slow_gaussian = (REG(pmon) >> 1) | REG(non);
+ 	int const noise_rate = REG(flg) & 0x1F;
+ 
+@@ -248,7 +248,9 @@ void Spc_Dsp::run( int clock_count )
+ 		int vbit = 1;
+ 		do
+ 		{
+-			#define SAMPLE_PTR(i) GET_LE16A( &dir [VREG(v_regs,srcn) * 4 + i * 2] )
++			// Wraps at 64K like the hardware: a high dir and srcn would otherwise read past ram.
++			#define SAMPLE_PTR(i) (ram [(dir + VREG(v_regs,srcn) * 4 + i * 2) & 0xFFFF] |\
++					ram [(dir + VREG(v_regs,srcn) * 4 + i * 2 + 1) & 0xFFFF] << 8)
+ 
+ 			int brr_header = ram [v->brr_addr];
+ 			int kon_delay = v->kon_delay;
+diff --git a/gme/Vgm_Emu_Impl.cpp b/gme/Vgm_Emu_Impl.cpp
+index 81a3a61..9a2068c 100644
+--- a/gme/Vgm_Emu_Impl.cpp
++++ b/gme/Vgm_Emu_Impl.cpp
+@@ -241,18 +241,22 @@ blip_time_t Vgm_Emu_Impl::run_commands( vgm_time_t end_time )
+ 			break;
+ 		}
+ 
+-		case cmd_pcm_seek:
+-			pcm_pos = pcm_data + pos [3] * 0x1000000L + pos [2] * 0x10000L +
++		case cmd_pcm_seek: {
++			// The offset comes from the file, so keep it within the data.
++			long offset = pos [3] * 0x1000000L + pos [2] * 0x10000L +
+ 					pos [1] * 0x100L + pos [0];
++			pcm_pos = offset < data_end - pcm_data ? pcm_data + offset : data_end;
+ 			pos += 4;
+ 			break;
++		}
+ 
+ 		default:
+ 			int cmd = pos [-1];
+ 			switch ( cmd & 0xF0 )
+ 			{
+ 				case cmd_pcm_delay:
+-					write_pcm( vgm_time, *pcm_pos++ );
++					if ( pcm_pos < data_end )
++						write_pcm( vgm_time, *pcm_pos++ );
+ 					vgm_time += cmd & 0x0F;
+ 					break;
  
 diff --git a/gme/nes_cpu_io.h b/gme/nes_cpu_io.h
 index 6f8b08f..da58fc4 100644
