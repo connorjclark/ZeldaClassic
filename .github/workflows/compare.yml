@@ -44,12 +44,16 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SURGE_TOKEN: ${{ secrets.SURGE_TOKEN }}
           REPLAY_FAILURE_DISCORD_WEBHOOK: ${{ secrets.REPLAY_FAILURE_DISCORD_WEBHOOK }}
+          # The branch name comes from the triggering run, which may be from a
+          # fork, so it must not be pasted into the script.
+          REF_NAME: ${{ github.event.workflow_run.head_branch }}
+          ACTOR: ${{ github.actor }}
         run: >
           bash .github/workflows/run_python.sh .github/workflows/ci.py compare-replays
           --repo ${{ github.repository }}
           --run-id ${{ github.event.workflow_run.id }}
-          --ref-name "${{ github.event.workflow_run.head_branch }}"
-          --actor "${{ github.actor }}"
+          --ref-name "$REF_NAME"
+          --actor "$ACTOR"
 
       # Upload as artifact, so that if publishing to surge fails the report is still accessible.
       - uses: actions/upload-artifact@v7

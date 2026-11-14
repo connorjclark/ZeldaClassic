@@ -34,11 +34,14 @@ jobs:
           fetch-depth: 0
           filter: blob:none
       - id: make-vars
+        env:
+          VERSION_TYPE: ${{ github.event.inputs.version-type }}
+          VERSION_OVERRIDE: ${{ github.event.inputs.version-override }}
         run: |
           python3 .github/workflows/print-release-name-vars.py \
             --github-org=${{ github.repository_owner }} \
-            --version-type=${{ github.event.inputs.version-type }} \
-            --version-override=${{ github.event.inputs.version-override }}
+            --version-type="$VERSION_TYPE" \
+            --version-override="$VERSION_OVERRIDE"
 
       - name: Setup Sentry CLI
         uses: mathieu-bour/setup-sentry-cli@ff4fff773f5e628fa214ebd19e46fb7289454ee2 # v3.0.0
