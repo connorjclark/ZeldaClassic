@@ -275,6 +275,36 @@ static void check_sp(CompilationState& state, a64::Compiler& cc, a64::Gp vStackI
 	cc.bind(label);
 }
 
+// A stack slot whose index the script controls (a register, or SP plus an offset). Quest files
+// can hold any ZASM, so like the interpreter's SH::read_stack and SH::write_stack this checks the
+// index first, and stops the script with a stack overflow if it is out of range.
+static a64::Mem checked_stack_mem(CompilationState& state, a64::Compiler& cc, a64::Gp index, int offset_words = 0)
+{
+	check_sp(state, cc, index, offset_words);
+	return stack_mem(state, cc, index, offset_words);
+}
+
+// The same, but leaves the condition flags alone, for commands that read them after: it only
+// adds (not adds) and tests bits.
+static a64::Mem checked_stack_mem_keep_flags(CompilationState& state, a64::Compiler& cc, a64::Gp index, int offset_words = 0)
+{
+	a64::Gp slot = immutable_add_constant(cc, index, offset_words);
+
+	// In range when slot < MAX_STACK_SIZE (unsigned): bit 31 clear, and slot - MAX_STACK_SIZE
+	// negative.
+	Label L_overflow = cc.newLabel();
+	Label L_ok = cc.newLabel();
+	cc.tbnz(slot, 31, L_overflow);
+	a64::Gp diff = immutable_add_constant(cc, slot, -MAX_STACK_SIZE);
+	cc.tbnz(diff, 31, L_ok);
+	cc.bind(L_overflow);
+	set_ctx_ret_code(state, cc, RUNSCRIPT_JIT_STACK_OVERFLOW);
+	cc.mov(state.vResult, EXEC_RESULT_EXIT);
+	cc.b(state.L_End);
+	cc.bind(L_ok);
+	return a64::ptr(state.ptrStackBase, slot, a64::uxtw(2));
+}
+
 static bool instruction_is_compiled(const ffscript& op);
 
 // Adapter giving the shared D-register cache (jit_codegen_shared.h) its
@@ -761,14 +791,14 @@ static void compile_compare(CompilationState& state, a64::Compiler& cc, int comm
 			case CMP_GT|CMP_LT|CMP_EQ:
 			{
 				a64::Gp value = imm_to_reg(cc, arg1);
-				cc.str(value, stack_mem(state, cc, state.vSp, arg2));
+				cc.str(value, checked_stack_mem(state, cc, state.vSp, arg2));
 				break;
 			}
 			default:
 			{
 				// Note: the loads/stores here must not disturb the comparison
 				// flags; ldr/str/mov do not affect NZCV.
-				a64::Mem mem = stack_mem(state, cc, state.vSp, arg2);
+				a64::Mem mem = checked_stack_mem_keep_flags(state, cc, state.vSp, arg2);
 				a64::Gp tmp = cc.newInt32();
 				a64::Gp value = cc.newInt32();
 				cc.ldr(tmp, mem);
@@ -1171,7 +1201,7 @@ static void compile_single_command(CompilationState& state, a64::Compiler& cc, c
 		case POP:
 		{
 			a64::Gp val = cc.newInt32();
-			cc.ldr(val, stack_mem(state, cc, state.vSp));
+			cc.ldr(val, checked_stack_mem(state, cc, state.vSp));
 			modify_sp(state, cc, state.vSp, 1);
 			set_z_register(state, cc, arg1, val);
 		}
@@ -1203,10 +1233,9 @@ static void compile_single_command(CompilationState& state, a64::Compiler& cc, c
 		break;
 		case STACKWRITEATVV:
 		{
-			// TODO: needs to check for stack overflow.
 			// Write directly value on the stack (arg1 to offset arg2)
 			a64::Gp value = imm_to_reg(cc, arg1);
-			cc.str(value, stack_mem(state, cc, state.vSp, arg2));
+			cc.str(value, checked_stack_mem(state, cc, state.vSp, arg2));
 		}
 		break;
 		case SETV:
@@ -1230,21 +1259,21 @@ static void compile_single_command(CompilationState& state, a64::Compiler& cc, c
 		{
 			// Set register to a value on the stack (offset is arg2 + rSFRAME register).
 			a64::Gp sframe = get_z_register(state, cc, rSFRAME);
-			set_z_register(state, cc, arg1, stack_mem(state, cc, sframe, arg2));
+			set_z_register(state, cc, arg1, checked_stack_mem(state, cc, sframe, arg2));
 		}
 		break;
 		case LOADD:
 		{
 			// Set register to a value on the stack (offset is arg2 + rSFRAME register).
 			a64::Gp offset = compute_stack_offset(state, cc, get_z_register(state, cc, rSFRAME), arg2);
-			set_z_register(state, cc, arg1, stack_mem(state, cc, offset));
+			set_z_register(state, cc, arg1, checked_stack_mem(state, cc, offset));
 		}
 		break;
 		case LOADI:
 		{
 			// Set register to a value on the stack (offset is register at arg2).
 			a64::Gp offset = compute_stack_offset(state, cc, get_z_register(state, cc, arg2), 0);
-			set_z_register(state, cc, arg1, stack_mem(state, cc, offset));
+			set_z_register(state, cc, arg1, checked_stack_mem(state, cc, offset));
 		}
 		break;
 		case REF_REMOVE:
@@ -1263,7 +1292,7 @@ static void compile_single_command(CompilationState& state, a64::Compiler& cc, c
 			// Write from register to a value on the stack (offset is arg2 + rSFRAME register).
 			a64::Gp sframe = get_z_register(state, cc, rSFRAME);
 			a64::Gp val = get_z_register(state, cc, arg1);
-			cc.str(val, stack_mem(state, cc, sframe, arg2));
+			cc.str(val, checked_stack_mem(state, cc, sframe, arg2));
 		}
 		break;
 		case STORE_OBJECT:
@@ -1325,7 +1354,7 @@ static void compile_single_command(CompilationState& state, a64::Compiler& cc, c
 			// Write directly value on the stack (offset is arg2 + rSFRAME register).
 			a64::Gp sframe = get_z_register(state, cc, rSFRAME);
 			a64::Gp val = imm_to_reg(cc, arg1);
-			cc.str(val, stack_mem(state, cc, sframe, arg2));
+			cc.str(val, checked_stack_mem(state, cc, sframe, arg2));
 		}
 		break;
 		case STORED:
@@ -1333,7 +1362,7 @@ static void compile_single_command(CompilationState& state, a64::Compiler& cc, c
 			// Write from register to a value on the stack (offset is arg2 + rSFRAME register).
 			a64::Gp offset = compute_stack_offset(state, cc, get_z_register(state, cc, rSFRAME), arg2);
 			a64::Gp val = get_z_register(state, cc, arg1);
-			cc.str(val, stack_mem(state, cc, offset));
+			cc.str(val, checked_stack_mem(state, cc, offset));
 		}
 		break;
 		case STOREDV:
@@ -1341,7 +1370,7 @@ static void compile_single_command(CompilationState& state, a64::Compiler& cc, c
 			// Write directly value on the stack (offset is arg2 + rSFRAME register).
 			a64::Gp offset = compute_stack_offset(state, cc, get_z_register(state, cc, rSFRAME), arg2);
 			a64::Gp val = imm_to_reg(cc, arg1);
-			cc.str(val, stack_mem(state, cc, offset));
+			cc.str(val, checked_stack_mem(state, cc, offset));
 		}
 		break;
 		case STOREI:
@@ -1349,13 +1378,13 @@ static void compile_single_command(CompilationState& state, a64::Compiler& cc, c
 			// Write from register to a value on the stack (offset is register at arg2).
 			a64::Gp offset = compute_stack_offset(state, cc, get_z_register(state, cc, arg2), 0);
 			a64::Gp val = get_z_register(state, cc, arg1);
-			cc.str(val, stack_mem(state, cc, offset));
+			cc.str(val, checked_stack_mem(state, cc, offset));
 		}
 		break;
 		case PEEK:
 		{
 			a64::Gp val = cc.newInt32();
-			cc.ldr(val, stack_mem(state, cc, state.vSp));
+			cc.ldr(val, checked_stack_mem(state, cc, state.vSp));
 			set_z_register(state, cc, arg1, val);
 		}
 		break;

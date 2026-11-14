@@ -170,6 +170,15 @@ static void check_sp(CompilationState& state, x86::Compiler& cc, x86::Gp vStackI
 	cc.bind(label);
 }
 
+// A stack slot whose index the script controls (a register, or SP plus an offset). Quest files
+// can hold any ZASM, so like the interpreter's SH::read_stack and SH::write_stack this checks the
+// index first, and stops the script with a stack overflow if it is out of range.
+static x86::Mem checked_stack_mem(CompilationState& state, x86::Compiler& cc, x86::Gp index, int offset_words = 0)
+{
+	check_sp(state, cc, index, offset_words);
+	return x86::ptr_32(state.ptrStackBase, index, 2, offset_words * 4);
+}
+
 static void do_stack_push_many(CompilationState& state, x86::Compiler& cc, int offset, int amount, x86::Gp val)
 {
 	// Push onto stack [amount] times.
@@ -857,47 +866,50 @@ static void compile_compare(CompilationState& state, x86::Compiler& cc, int comm
 	}
 	else if (command == STACKWRITEATVV_IF)
 	{
-		// TODO: needs to check for stack overflow.
 		// Write directly value on the stack (arg1 to offset arg2)
-		x86::Gp offset = immutable_add_constant(cc, state.vSp, arg2);
 		auto cmp = arg3 & CMP_FLAGS;
 		switch(cmp) //but only conditionally
 		{
 			case 0:
 				break;
 			case CMP_GT|CMP_LT|CMP_EQ:
-				cc.mov(x86::ptr_32(state.ptrStackBase, offset, 2), arg1);
+				cc.mov(checked_stack_mem(state, cc, state.vSp, arg2), arg1);
 				break;
 			default:
 			{
-				x86::Gp tmp = cc.newInt32();
-				x86::Gp val = cc.newInt32();
-				cc.mov(tmp, x86::ptr_32(state.ptrStackBase, offset, 2));
-				cc.mov(val, arg1);
+				// Take the condition before the stack check, which overwrites the flags.
+				x86::Gp cond = cc.newUInt8();
 				switch(cmp)
 				{
 					case CMP_GT:
-						cc.cmovg(tmp, val);
+						cc.setg(cond);
 						break;
 					case CMP_GT|CMP_EQ:
-						cc.cmovge(tmp, val);
+						cc.setge(cond);
 						break;
 					case CMP_LT:
-						cc.cmovl(tmp, val);
+						cc.setl(cond);
 						break;
 					case CMP_LT|CMP_EQ:
-						cc.cmovle(tmp, val);
+						cc.setle(cond);
 						break;
 					case CMP_EQ:
-						cc.cmove(tmp, val);
+						cc.sete(cond);
 						break;
 					case CMP_GT|CMP_LT:
-						cc.cmovne(tmp, val);
+						cc.setne(cond);
 						break;
 					default:
 						assert(false);
 				}
-				cc.mov(x86::ptr_32(state.ptrStackBase, offset, 2), tmp);
+				x86::Mem mem = checked_stack_mem(state, cc, state.vSp, arg2);
+				x86::Gp tmp = cc.newInt32();
+				x86::Gp val = cc.newInt32();
+				cc.mov(tmp, mem);
+				cc.mov(val, arg1);
+				cc.test(cond, cond);
+				cc.cmovnz(tmp, val);
+				cc.mov(mem, tmp);
 			}
 		}
 	}
@@ -1218,9 +1230,8 @@ static void compile_single_command(CompilationState& state, x86::Compiler& cc, c
 		break;
 		case STACKWRITEATVV:
 		{
-			// TODO: needs to check for stack overflow.
 			// Write directly value on the stack (arg1 to offset arg2)
-			cc.mov(x86::ptr_32(state.ptrStackBase, state.vSp, 2, arg2 * 4), arg1);
+			cc.mov(checked_stack_mem(state, cc, state.vSp, arg2), arg1);
 		}
 		break;
 		case PUSHV:
@@ -1356,21 +1367,21 @@ static void compile_single_command(CompilationState& state, x86::Compiler& cc, c
 		{
 			// Set register to a value on the stack (offset is arg2 + rSFRAME register).
 			x86::Gp sframe = get_z_register(state, cc, rSFRAME);
-			set_z_register(state, cc, arg1, x86::ptr_32(state.ptrStackBase, sframe, 2, arg2 * 4));
+			set_z_register(state, cc, arg1, checked_stack_mem(state, cc, sframe, arg2));
 		}
 		break;
 		case LOADD:
 		{
 			// Set register to a value on the stack (offset is arg2 + rSFRAME register).
 			x86::Gp offset = compute_stack_offset(cc, get_z_register(state, cc, rSFRAME), arg2);
-			set_z_register(state, cc, arg1, x86::ptr_32(state.ptrStackBase, offset, 2));
+			set_z_register(state, cc, arg1, checked_stack_mem(state, cc, offset));
 		}
 		break;
 		case LOADI:
 		{
 			// Set register to a value on the stack (offset is register at arg2).
 			x86::Gp offset = compute_stack_offset(cc, get_z_register(state, cc, arg2), 0);
-			set_z_register(state, cc, arg1, x86::ptr_32(state.ptrStackBase, offset, 2));
+			set_z_register(state, cc, arg1, checked_stack_mem(state, cc, offset));
 		}
 		break;
 		case REF_REMOVE:
@@ -1389,7 +1400,7 @@ static void compile_single_command(CompilationState& state, x86::Compiler& cc, c
 			// Write from register to a value on the stack (offset is arg2 + rSFRAME register).
 			x86::Gp sframe = get_z_register(state, cc, rSFRAME);
 			x86::Gp val = get_z_register(state, cc, arg1);
-			cc.mov(x86::ptr_32(state.ptrStackBase, sframe, 2, arg2 * 4), val);
+			cc.mov(checked_stack_mem(state, cc, sframe, arg2), val);
 		}
 		break;
 		case STORE_OBJECT:
@@ -1457,7 +1468,7 @@ static void compile_single_command(CompilationState& state, x86::Compiler& cc, c
 		{
 			// Write directly value on the stack (offset is arg2 + rSFRAME register).
 			x86::Gp sframe = get_z_register(state, cc, rSFRAME);
-			cc.mov(x86::ptr_32(state.ptrStackBase, sframe, 2, arg2 * 4), arg1);
+			cc.mov(checked_stack_mem(state, cc, sframe, arg2), arg1);
 		}
 		break;
 		case STORED:
@@ -1465,14 +1476,14 @@ static void compile_single_command(CompilationState& state, x86::Compiler& cc, c
 			// Write from register to a value on the stack (offset is arg2 + rSFRAME register).
 			x86::Gp offset = compute_stack_offset(cc, get_z_register(state, cc, rSFRAME), arg2);
 			x86::Gp val = get_z_register(state, cc, arg1);
-			cc.mov(x86::ptr_32(state.ptrStackBase, offset, 2), val);
+			cc.mov(checked_stack_mem(state, cc, offset), val);
 		}
 		break;
 		case STOREDV:
 		{
 			// Write directly value on the stack (offset is arg2 + rSFRAME register).
 			x86::Gp offset = compute_stack_offset(cc, get_z_register(state, cc, rSFRAME), arg2);
-			cc.mov(x86::ptr_32(state.ptrStackBase, offset, 2), arg1);
+			cc.mov(checked_stack_mem(state, cc, offset), arg1);
 		}
 		break;
 		case STOREI:
@@ -1480,7 +1491,7 @@ static void compile_single_command(CompilationState& state, x86::Compiler& cc, c
 			// Write from register to a value on the stack (offset is register at arg2).
 			x86::Gp offset = compute_stack_offset(cc, get_z_register(state, cc, arg2), 0);
 			x86::Gp val = get_z_register(state, cc, arg1);
-			cc.mov(x86::ptr_32(state.ptrStackBase, offset, 2), val);
+			cc.mov(checked_stack_mem(state, cc, offset), val);
 		}
 		break;
 		case READPODARRAYR:
@@ -1740,7 +1751,7 @@ static void compile_single_command(CompilationState& state, x86::Compiler& cc, c
 			}
 
 			x86::Gp val = cc.newInt32();
-			cc.mov(val, x86::ptr_32(state.ptrStackBase, state.vSp, 2));
+			cc.mov(val, checked_stack_mem(state, cc, state.vSp));
 			modify_sp(state, cc, state.vSp, 1);
 			set_z_register(state, cc, arg1, val);
 		}
@@ -1790,7 +1801,7 @@ static void compile_single_command(CompilationState& state, x86::Compiler& cc, c
 			}
 
 			x86::Gp val = cc.newInt32();
-			cc.mov(val, x86::ptr_32(state.ptrStackBase, state.vSp, 2));
+			cc.mov(val, checked_stack_mem(state, cc, state.vSp));
 			set_z_register(state, cc, arg1, val);
 		}
 		break;
