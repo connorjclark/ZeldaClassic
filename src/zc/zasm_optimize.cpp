@@ -134,7 +134,7 @@ static void for_every_side_effect_d_registers_only(const ffscript& instr, T fn)
 		if (!arg_info.is_reg) continue;
 
 		int reg = p_arg[argn];
-		if (reg < 8)
+		if ((unsigned)reg < 8)
 		{
 			if (arg_info.reads)
 				r[reg] = true;

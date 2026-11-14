@@ -26,7 +26,9 @@ void zasm_init_meta_cache()
 	if (command_meta_cache.size())
 		return;
 
-	command_meta_cache.resize(NUMCOMMANDS);
+	// Every 16-bit command gets an entry, since quests can hold any command (unknown ones stop the
+	// script when reached, and read or write nothing).
+	command_meta_cache.resize(0x10000);
 	register_dependency_mask_cache.resize(NUMVARIABLES);
 
 	for (int i = 0; i < NUMCOMMANDS; i++)
@@ -735,7 +737,7 @@ static void instruction_reads_writes(const ffscript& instr, bool suspend_uses_al
 		if (!arg_info.is_reg) continue;
 
 		int reg = p_arg[argn];
-		if (reg < 8)
+		if ((unsigned)reg < 8)
 		{
 			if (arg_info.reads)
 				reads |= (1 << reg);
@@ -743,7 +745,8 @@ static void instruction_reads_writes(const ffscript& instr, bool suspend_uses_al
 				writes |= (1 << reg);
 		}
 
-		reads |= register_dependency_mask_cache[reg];
+		if ((unsigned)reg < register_dependency_mask_cache.size())
+			reads |= register_dependency_mask_cache[reg];
 	}
 
 	if (suspend_uses_all_registers && instruction_is_suspend(instr))
