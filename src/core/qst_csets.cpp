@@ -263,7 +263,7 @@ int32_t readcolordata(PACKFILE *f, miscQdata *Misc, word version, word build, wo
 	{
 		for (int i = 0; i < psTOTAL255; i++)
 		{
-			colordata[i] = _rgb_scale_6[colordata[i]];
+			colordata[i] = _rgb_scale_6[colordata[i] & 63];
 		}
 	}
 
