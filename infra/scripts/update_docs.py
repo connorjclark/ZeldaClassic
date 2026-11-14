@@ -75,7 +75,26 @@ def main():
     print("Extracting...")
     try:
         with tarfile.open(tarball_path, "r:gz") as tar:
-            tar.extractall(path=TMP_BUILD_DIR)
+            if hasattr(tarfile, "data_filter"):
+                tar.extractall(path=TMP_BUILD_DIR, filter="data")
+            else:
+                # Without the extraction filters (Python older than 3.12, unless
+                # it has the 3.8.17/3.9.17/3.10.12/3.11.4 backport), at least
+                # refuse absolute paths and '..' in names or link targets, so
+                # nothing can resolve outside the folder.
+                def is_unsafe(path):
+                    p = Path(path)
+                    return p.is_absolute() or p.anchor or ".." in p.parts
+
+                for member in tar.getmembers():
+                    is_link = member.issym() or member.islnk()
+                    if not (member.isfile() or member.isdir() or is_link):
+                        raise Exception(f"unsupported member in tarball: {member.name}")
+                    if is_unsafe(member.name) or (
+                        is_link and is_unsafe(member.linkname)
+                    ):
+                        raise Exception(f"unsafe path in tarball: {member.name}")
+                tar.extractall(path=TMP_BUILD_DIR)
     except Exception as e:
         print(f"Error extracting tarball: {e}")
         return

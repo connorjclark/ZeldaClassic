@@ -145,13 +145,37 @@ def _download_artifact(gh: GitHub, repo, artifact, dest):
     zip.close()
 
 
+# Artifacts can come from pull requests, so refuse members that would land
+# outside `dest`.
+def safe_extractall(tar: tarfile.TarFile, dest: Path):
+    if hasattr(tarfile, 'data_filter'):
+        tar.extractall(path=dest, filter='data')
+        return
+
+    # Python without the extraction filters (older than 3.12, unless it has
+    # the 3.8.17/3.9.17/3.10.12/3.11.4 backport). With no absolute paths and
+    # no '..' in names or link targets, nothing can resolve outside `dest`.
+    def is_unsafe(path: str):
+        p = Path(path)
+        return p.is_absolute() or p.anchor or '..' in p.parts
+
+    for member in tar.getmembers():
+        if not (member.isfile() or member.isdir() or member.issym() or member.islnk()):
+            raise Exception(f'refusing to extract {member.name}: unsupported type')
+        if is_unsafe(member.name) or (
+            (member.issym() or member.islnk()) and is_unsafe(member.linkname)
+        ):
+            raise Exception(f'refusing to extract {member.name}: outside of {dest}')
+    tar.extractall(path=dest)
+
+
 def extract_tars(dir: Path):
     for tar_path in dir.rglob('*.tar'):
         print(f'extracting from {tar_path}')
         extract_dir = tar_path.with_suffix('')
         if not extract_dir.exists():
             with tarfile.open(tar_path) as tar:
-                tar.extractall(path=extract_dir)
+                safe_extractall(tar, extract_dir)
             tar_path.unlink()
 
 
