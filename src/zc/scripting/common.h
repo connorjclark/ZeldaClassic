@@ -367,6 +367,9 @@ public:
 };
 
 expected<std::string, std::string> parse_user_path(const std::string& user_path, bool is_file);
+// For quests without qr_BITMAP_AND_FILESYSTEM_PATHS_ALWAYS_RELATIVE: the path stays relative to
+// the current directory as it always has been, but must not leave it.
+expected<std::string, std::string> parse_legacy_user_path(std::string user_path, bool is_file_write);
 // Case-insensitive. True for executables, scripts, shortcuts and the like.
 bool has_banned_extension(const std::filesystem::path& path);
 

@@ -5549,8 +5549,11 @@ void FFScript::do_paldata_load_bitmap()
 		}
 		else
 		{
-			str = user_path;
-			util::regulate_path(str);
+			if (auto r = parse_legacy_user_path(user_path, false); !r)
+			{
+				scripting_log_error_with_context("Error: {}", r.error());
+				return;
+			} else str = r.value();
 		}
 
 		if (str.empty())
@@ -7837,7 +7840,11 @@ static void do_drawing_command(int32_t script_command, bool is_screen_draw)
 			}
 			else
 			{
-				util::regulate_path(user_path);
+				if (auto r = parse_legacy_user_path(user_path, false); !r)
+				{
+					scripting_log_error_with_context("Error: {}", r.error());
+					return;
+				} else user_path = r.value();
 			}
 			
 			script_drawing_commands[j].SetString(&user_path);
@@ -7860,7 +7867,11 @@ static void do_drawing_command(int32_t script_command, bool is_screen_draw)
 			}
 			else
 			{
-				util::regulate_path(user_path);
+				if (auto r = parse_legacy_user_path(user_path, true); !r)
+				{
+					scripting_log_error_with_context("Error: {}", r.error());
+					return;
+				} else user_path = r.value();
 			}
 
 			script_drawing_commands[j].SetString(&user_path);
@@ -14987,7 +14998,11 @@ string get_filestr(const bool relative, bool is_file) //Used for 'FileSystem' fu
 		if (last != string::npos)
 			user_path = user_path.substr(0, last + 1);
 
-		return user_path;
+		if (auto r = parse_legacy_user_path(user_path, false); !r)
+		{
+			scripting_log_error_with_context("Error: {}", r.error());
+			return "";
+		} else return r.value();
 	}
 
 	if (auto r = parse_user_path(user_path, is_file); !r)

@@ -134,3 +134,59 @@ expected<std::string, std::string> parse_user_path(const std::string& user_path,
 		return make_unexpected(fmt::format("Bad path: {} - {}", user_path, e.what()));
 	}
 }
+
+expected<std::string, std::string> parse_legacy_user_path(std::string user_path, bool is_file_write)
+{
+	util::regulate_path(user_path);
+
+	if (!util::is_relative_path(user_path) || user_path.find(':') != std::string::npos)
+	{
+		return make_unexpected(fmt::format("Bad path: {} - must be a relative path (or enable the quest rule "
+			"'All bitmap-> and FileSystem-> paths relative to quest 'Files' folder')", user_path));
+	}
+
+	for (unsigned char c : user_path)
+	{
+		if (c < 32)
+			return make_unexpected(fmt::format("Bad path: {} - invalid control character {:#x}", user_path, c));
+	}
+
+	// Lexically resolve "." and "..", and make sure the path never leaves the current directory.
+	int depth = 0;
+	size_t start = 0;
+	while (start <= user_path.size())
+	{
+		size_t end = user_path.find_first_of("/\\", start);
+		if (end == std::string::npos)
+			end = user_path.size();
+		std::string_view part(user_path.data() + start, end - start);
+		if (part == "..")
+		{
+			if (--depth < 0)
+			{
+				return make_unexpected(fmt::format("Bad path: {} - cannot access filesystem outside the "
+					"ZQuest Classic folder (too many ..?)", user_path));
+			}
+		}
+		else if (!part.empty() && part != ".")
+			++depth;
+		start = end + 1;
+	}
+
+	if (is_file_write)
+	{
+		try
+		{
+			std::string utf8_path = user_path;
+			util::legacy_path_to_utf8(utf8_path);
+			if (has_banned_extension(fs::path(utf8_path)))
+				return make_unexpected(fmt::format("Bad path: {} - banned extension", user_path));
+		}
+		catch (const std::system_error& e)
+		{
+			return make_unexpected(fmt::format("Bad path: {} - {}", user_path, e.what()));
+		}
+	}
+
+	return user_path;
+}
