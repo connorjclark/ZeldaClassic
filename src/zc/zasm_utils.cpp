@@ -97,7 +97,11 @@ StructuredZasm zasm_construct_structured(const zasm_script* script)
 	std::set<pc_t> function_calls;
 	std::map<pc_t, pc_t> start_pc_to_function;
 
-	if (zasm_debug_data.exists())
+	// The debug data comes from the quest file, so it is only used if it fits this script: every
+	// function within it, and every script starting at a function. Otherwise the functions are
+	// found from the ZASM instead, as for quests without debug data.
+	bool use_debug_data = zasm_debug_data.exists();
+	if (use_debug_data)
 	{
 		for (const auto& scope : zasm_debug_data.scopes)
 		{
@@ -105,6 +109,12 @@ StructuredZasm zasm_construct_structured(const zasm_script* script)
 			{
 				if (scope.start_pc == 0 && scope.end_pc == 0)
 					continue;
+
+				if (scope.start_pc > scope.end_pc || scope.end_pc >= script->size)
+				{
+					use_debug_data = false;
+					break;
+				}
 
 				functions.push_back({0, zasm_debug_data.getFullScopeName(&scope), scope.start_pc, scope.end_pc});
 			}
@@ -119,6 +129,22 @@ StructuredZasm zasm_construct_structured(const zasm_script* script)
 			functions[i].id = i;
 			start_pc_to_function[functions[i].start_pc] = i;
 		}
+
+		for (auto sd : script->script_datas)
+		{
+			if (!start_pc_to_function.contains(sd->pc))
+				use_debug_data = false;
+		}
+
+		if (!use_debug_data)
+		{
+			functions.clear();
+			start_pc_to_function.clear();
+		}
+	}
+
+	if (use_debug_data)
+	{
 
 		// Find all function calls, and build the call graph (called_by_functions).
 		// The latter is needed by zasm_find_yielding_functions to propagate "may
