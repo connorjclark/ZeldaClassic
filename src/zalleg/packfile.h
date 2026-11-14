@@ -250,11 +250,17 @@ inline bool p_putvar(def_pair<A,B> const& ptr, PACKFILE *f)
 template<uint_type Sz,typename T>
 inline bool p_getbvec(bounded_vec<Sz,T> *cont, PACKFILE *f)
 {
+	// A container's bound (ex: MAXLEVELS) is how many entries the code using it expects, so the
+	// file doesn't get to change it - only a container without one (a temporary) takes its size
+	// from the file. Entries past the bound are skipped.
+	Sz bound = cont->size();
 	cont->clear();
 	Sz sz = 0;
 	if(!p_getvar(&sz,f))
 		return false;
-	cont->resize(sz);
+	if(!bound)
+		bound = sz;
+	cont->resize(bound);
 	if(sz) //cont found
 	{
 		Sz count;
@@ -273,16 +279,18 @@ inline bool p_getbvec(bounded_vec<Sz,T> *cont, PACKFILE *f)
 					return false;
 				if(!p_getvar(&v,f))
 					return false;
-				(*cont)[k] = v;
+				if(k < bound)
+					(*cont)[k] = v;
 			}
 		}
 		else
 		{
-			for(k = 0; k < count; ++k)
+			for(Sz q = 0; q < count; ++q)
 			{
 				if(!p_getvar(&v,f))
 					return false;
-				(*cont)[k] = v;
+				if(q < bound)
+					(*cont)[q] = v;
 			}
 		}
 		cont->normalize();
@@ -332,11 +340,17 @@ inline bool p_putbvec(bounded_vec<Sz,T> const& cont, PACKFILE *f)
 template<uint_type Sz,typename T>
 inline bool p_getbmap(bounded_map<Sz,T> *cont, PACKFILE *f)
 {
+	// A container's bound (ex: MAXLEVELS) is how many entries the code using it expects, so the
+	// file doesn't get to change it - only a container without one (a temporary) takes its size
+	// from the file. Entries past the bound are skipped.
+	Sz bound = cont->size();
 	cont->clear();
 	Sz sz = 0;
 	if(!p_getvar(&sz,f))
 		return false;
-	cont->resize(sz);
+	if(!bound)
+		bound = sz;
+	cont->resize(bound);
 	if(sz) //cont found
 	{
 		Sz count;
@@ -355,16 +369,18 @@ inline bool p_getbmap(bounded_map<Sz,T> *cont, PACKFILE *f)
 					return false;
 				if(!p_getvar(&v,f))
 					return false;
-				(*cont)[k] = v;
+				if(k < bound)
+					(*cont)[k] = v;
 			}
 		}
 		else
 		{
-			for(k = 0; k < count; ++k)
+			for(Sz q = 0; q < count; ++q)
 			{
 				if(!p_getvar(&v,f))
 					return false;
-				(*cont)[k] = v;
+				if(q < bound)
+					(*cont)[q] = v;
 			}
 		}
 		cont->normalize();
