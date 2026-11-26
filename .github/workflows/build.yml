@@ -97,7 +97,7 @@ jobs:
         if: inputs.compiler == 'clang' && runner.os == 'Linux' && runner.arch == 'X64'
         uses: KyleMayes/install-llvm-action@ebc0426251bc40c7cd31162802432c68818ab8f0 # v2.0.9
         with:
-          version: 17.0.2
+          version: 19.1.7
           env: true
 
       # install-llvm-action@v1 only knows x86-64 Linux assets, so on arm64 it
@@ -106,7 +106,7 @@ jobs:
       - name: Install LLVM and Clang (Linux arm64)
         if: inputs.compiler == 'clang' && runner.os == 'Linux' && runner.arch == 'ARM64'
         run: |
-          curl -sL -o llvm.tar.xz https://github.com/llvm/llvm-project/releases/download/llvmorg-17.0.2/clang+llvm-17.0.2-aarch64-linux-gnu.tar.xz
+          curl -sL -o llvm.tar.xz https://github.com/llvm/llvm-project/releases/download/llvmorg-19.1.7/clang+llvm-19.1.7-aarch64-linux-gnu.tar.xz
           mkdir -p "$GITHUB_WORKSPACE/llvm"
           tar -xf llvm.tar.xz -C "$GITHUB_WORKSPACE/llvm" --strip-components=1
           rm llvm.tar.xz

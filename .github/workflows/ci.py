@@ -343,6 +343,8 @@ def install_deps(ctx: CiContext, args):
             "ccache",
             "ninja-build",
             "build-essential",
+            # Ubuntu 22.04's default gcc is 11, which is too old.
+            "g++-12",
             "libx11-dev",
             "freeglut3-dev",
             "mesa-common-dev",
@@ -536,8 +538,8 @@ def build(ctx: CiContext, args):
 
     if ctx.compiler == 'gcc':
         logger.info("Forcing GCC compiler paths.")
-        env['CC'] = 'gcc'
-        env['CXX'] = 'g++'
+        env['CC'] = 'gcc-12'
+        env['CXX'] = 'g++-12'
 
     cmake_toolchain = None
     if ctx.is_windows:

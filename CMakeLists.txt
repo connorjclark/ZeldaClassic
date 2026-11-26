@@ -93,9 +93,40 @@ set(RELEASE_PLATFORM "" CACHE STRING "Release platform. Ex: mac, linux, windows-
 set(RELEASE_CHANNEL "" CACHE STRING "Release channel. Used by updater to find new releases")
 set(REPO "" CACHE STRING "GitHub org/repo")
 
-set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
+
+# The oldest compilers with the parts of C++23 that are used. docs/building.md
+# should be kept in sync.
+if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+	if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS 12)
+		message(FATAL_ERROR "gcc ${CMAKE_CXX_COMPILER_VERSION} is too old. Must use at least gcc 12")
+	endif()
+elseif(CMAKE_CXX_COMPILER_ID STREQUAL "AppleClang")
+	if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS 15)
+		message(FATAL_ERROR "Apple clang ${CMAKE_CXX_COMPILER_VERSION} is too old. Must use at least Xcode 15")
+	endif()
+elseif(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+	# Older versions can't use std::expected from libstdc++.
+	if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS 19)
+		message(FATAL_ERROR "clang ${CMAKE_CXX_COMPILER_VERSION} is too old. Must use at least clang 19")
+	endif()
+	# clang uses the newest libstdc++ that is installed, which may be older than
+	# the one a new enough gcc comes with.
+	include(CheckCXXSourceCompiles)
+	check_cxx_source_compiles("
+		#include <expected>
+		int main() { std::expected<int, int> e = 0; return *e; }
+	" ZC_HAS_STD_EXPECTED)
+	if(NOT ZC_HAS_STD_EXPECTED)
+		message(FATAL_ERROR "The C++ standard library is too old. With libstdc++, must use at least version 12 (on Ubuntu: libstdc++-12-dev)")
+	endif()
+elseif(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+	if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS 19.33)
+		message(FATAL_ERROR "MSVC version ${CMAKE_CXX_COMPILER_VERSION} is too old. Must use at least Visual Studio 2022 version 17.3")
+	endif()
+endif()
 
 if(ZC_OFFICIAL)
 	if(NOT ZC_VERSION)
@@ -604,9 +635,6 @@ if(WIN32)
 	add_definitions(-DNOMINMAX)
 
 	string(REGEX MATCH "MSVC" CMAKE_COMPILER_IS_MSVC "${CMAKE_C_COMPILER_ID}")
-	if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS 19.20.2750.8)
-		message(FATAL_ERROR "MSVC version ${CMAKE_CXX_COMPILER_VERSION} is too old. Must use at least 2019 version 16.0.0")
-	endif()
 endif()
 
 # Turn off warnings for all targets that aren't ours (warnings for our targets are set in Misc. section)
@@ -1044,7 +1072,8 @@ else()
 	FetchContent_MakeAvailable(websocketpp)
 
 	add_library(websocket INTERFACE)
-	target_include_directories(websocket INTERFACE ${websocketpp_SOURCE_DIR})
+	# SYSTEM: websocketpp uses parts of the standard library that C++23 deprecates.
+	target_include_directories(websocket SYSTEM INTERFACE ${websocketpp_SOURCE_DIR})
 	target_compile_definitions(websocket INTERFACE _WEBSOCKETPP_CPP11_STL_ ASIO_STANDALONE)
 	target_link_libraries(websocket INTERFACE asio)
 	if (OpenSSL_FOUND)
@@ -1425,6 +1454,23 @@ set(zc_clang_errors
 )
 if(COMPILER_SUPPORTS_WNO_NAN_INFINITY_DISABLED)
 	list(APPEND zc_clang_errors -Wno-nan-infinity-disabled)
+endif()
+# libstdc++ before 12.4 (Ubuntu 22.04 has 12.3) uses the deprecated
+# std::get_temporary_buffer in std::stable_sort, and clang reports that in our
+# code. Don't make deprecations an error there.
+if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+	include(CheckCXXSourceCompiles)
+	include(CMakePushCheckState)
+	cmake_push_check_state()
+	set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS} -Werror=deprecated-declarations")
+	check_cxx_source_compiles("
+		#include <algorithm>
+		int main() { int v[2] = {1, 0}; std::stable_sort(v, v + 2); }
+	" ZC_STABLE_SORT_HAS_NO_DEPRECATION)
+	cmake_pop_check_state()
+	if(NOT ZC_STABLE_SORT_HAS_NO_DEPRECATION)
+		list(APPEND zc_clang_errors -Wno-error=deprecated-declarations)
+	endif()
 endif()
 set(zc_gcc_errors
 	-Werror=array-bounds

@@ -1,7 +1,8 @@
 Some prerequisites to building from source:
 
 - CMake (3.29 or later)
-- For Windows: Visual Studio 2019 (but later is better)
+- For Windows: Visual Studio 2022 (version 17.3 or later)
+- For macOS: Xcode 15 or later
 
 # Configuring the build
 
@@ -158,16 +159,18 @@ sudo apt install libopengl0
 
 ## Building
 
-Supported compilers: gcc 11.4+, clang 17+
+Supported compilers: gcc 12+, clang 19+ (C++23 is required)
 
 Configure:
 
 ```sh
 # be in the ZQuestClassic git checkout
 
-# configure with clang:
-CC=clang-17 CXX=clang++-17 cmake -G 'Ninja Multi-Config' -B build -S .
-# or configure with gcc:
+# configure with clang (Ubuntu 22.04: clang 19 is at https://apt.llvm.org, and also needs
+# libstdc++-12-dev):
+CC=clang-19 CXX=clang++-19 cmake -G 'Ninja Multi-Config' -B build -S .
+# or configure with gcc (Ubuntu 22.04: the default gcc 11 is too old, so install g++-12 and
+# add CC=gcc-12 CXX=g++-12):
 cmake -G 'Ninja Multi-Config' -B build -S .
 ```
 

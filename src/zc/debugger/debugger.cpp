@@ -1103,7 +1103,7 @@ expected<DebugValue, std::string> Debugger::Evaluate(std::string expression, boo
 
 	auto node = parser.parseExpression();
 	if (!node)
-		return node.get_unexpected();
+		return make_unexpected(node.error());
 
 	try {
 		vm.suppress_errors_in_sandbox = suppress_engine_errors;
