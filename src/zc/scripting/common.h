@@ -1,7 +1,7 @@
 #pragma once
 
 #include "allegro/base.h"
-#include "base/expected.h"
+#include <expected>
 #include "base/general.h"
 #include "core/mapscr.h"
 #include "zc/hero.h"
@@ -364,7 +364,7 @@ public:
 	}
 };
 
-expected<std::string, std::string> parse_user_path(const std::string& user_path, bool is_file);
+std::expected<std::string, std::string> parse_user_path(const std::string& user_path, bool is_file);
 // For quests without qr_BITMAP_AND_FILESYSTEM_PATHS_ALWAYS_RELATIVE: the path stays relative to
 // the current directory as it always has been, but must not leave it.
-expected<std::string, std::string> parse_legacy_user_path(std::string user_path);
+std::expected<std::string, std::string> parse_legacy_user_path(std::string user_path);

@@ -1,5 +1,5 @@
 #include "zc/debugger/vm.h"
-#include "base/expected.h"
+#include <expected>
 #include "core/qst.h"
 #include "core/zdefs.h"
 #include "user_object.h"
@@ -448,7 +448,7 @@ void VM::increaseObjectReference(DebugValue value, [[maybe_unused]] const DebugS
 	script_object_ref_inc(value.raw_value);
 }
 
-expected<int32_t, std::string> VM::executeSandboxed(pc_t start_pc, int this_zasm_var, int this_raw_value, const std::vector<int32_t>& args)
+std::expected<int32_t, std::string> VM::executeSandboxed(pc_t start_pc, int this_zasm_var, int this_raw_value, const std::vector<int32_t>& args)
 {
 	InDebuggerScopeGuard scope_guard(suppress_errors_in_sandbox);
 
@@ -461,7 +461,7 @@ expected<int32_t, std::string> VM::executeSandboxed(pc_t start_pc, int this_zasm
 	// started running scripts (e.g. a saved function-call watch evaluated during the
 	// opening wipe), there is no program to execute against.
 	if (!curscript || !curscript->valid())
-		return make_unexpected("Cannot call functions before scripts have started");
+		return std::unexpected("Cannot call functions before scripts have started");
 
 	// This can run in the middle of a script's instruction (the engine updates the debugger GUI
 	// from within the interpreter loop), so everything the nested run overwrites must be put back -
@@ -496,14 +496,14 @@ expected<int32_t, std::string> VM::executeSandboxed(pc_t start_pc, int this_zasm
 	if (!success)
 	{
 		if (tmp_ri.waitframes)
-			return make_unexpected("Cannot call Waitframe for expressions evaluated in the debugger");
+			return std::unexpected("Cannot call Waitframe for expressions evaluated in the debugger");
 		if (script_engine_result == RUNSCRIPT_INFINITE_LOOP)
-			return make_unexpected("Detected possible infinite loop, aborting function call");
+			return std::unexpected("Detected possible infinite loop, aborting function call");
 		if (tmp_ri.overflow)
-			return make_unexpected("Function call overflowed");
+			return std::unexpected("Function call overflowed");
 		if (script_engine_result == RUNSCRIPT_STOPPED)
-			return make_unexpected("Cannot quit the script from an expression evaluated in the debugger");
-		return make_unexpected(fmt::format("Function call failed for an unknown reason ({})", script_engine_result));
+			return std::unexpected("Cannot quit the script from an expression evaluated in the debugger");
+		return std::unexpected(fmt::format("Function call failed for an unknown reason ({})", script_engine_result));
 	}
 
 	return tmp_ri.d[D(2)];

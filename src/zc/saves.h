@@ -1,7 +1,7 @@
 #pragma once
 
 #include "gamedata.h"
-#include "base/expected.h"
+#include <expected>
 #include <filesystem>
 
 namespace fs = std::filesystem;
@@ -58,21 +58,21 @@ struct save_t
 void saves_init();
 bool saves_load(std::string& err);
 bool saves_write();
-expected<bool, std::string> saves_select(save_t* save);
-expected<save_t*, std::string> saves_select(int32_t index);
+std::expected<bool, std::string> saves_select(save_t* save);
+std::expected<save_t*, std::string> saves_select(int32_t index);
 void saves_unselect();
 void saves_unload(int32_t index);
 int32_t saves_count();
 int32_t saves_current_selection();
 std::string saves_current_path();
 int saves_find_index(std::string path);
-expected<save_t*, std::string> saves_create_slot(gamedata* game, fs::path path = "", bool write_to_disk = true);
-expected<save_t*, std::string> saves_create_slot(fs::path path, bool write_to_disk = true);
-expected<bool, std::string> saves_update_slot(save_t* save, std::string qstpath);
+std::expected<save_t*, std::string> saves_create_slot(gamedata* game, fs::path path = "", bool write_to_disk = true);
+std::expected<save_t*, std::string> saves_create_slot(fs::path path, bool write_to_disk = true);
+std::expected<bool, std::string> saves_update_slot(save_t* save, std::string qstpath);
 save_t* saves_create_test_slot(gamedata* game, fs::path path);
 bool saves_is_slot_loaded(int32_t index, bool full_data = false);
 bool saves_has_error(int32_t index);
-expected<save_t*, std::string> saves_get_slot(int32_t index, bool full_data = false);
+std::expected<save_t*, std::string> saves_get_slot(int32_t index, bool full_data = false);
 bool saves_is_valid_slot(int index);
 bool saves_delete(int32_t index, std::string& err);
 bool saves_copy(int32_t from_index, std::string& err);

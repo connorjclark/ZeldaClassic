@@ -6,7 +6,7 @@
 #include <stdexcept>
 #include <map>
 
-#include "base/expected.h"
+#include <expected>
 #include "base/general.h"
 #include "zalleg/pal_tables.h"
 #include "base/version.h"
@@ -13863,12 +13863,12 @@ static std::time_t to_time_t(TP tp) {
     return system_clock::to_time_t(sctp);
 }
 
-static expected<std::string, std::error_code> get_time_last_modified_string(std::string path)
+static std::expected<std::string, std::error_code> get_time_last_modified_string(std::string path)
 {
 	std::error_code ec;
 	auto write_time = fs::last_write_time(path, ec);
 	if (ec)
-		return make_unexpected(ec);
+		return std::unexpected(ec);
 
 	// TODO: C++20 but not supported yet.
 	// auto tt = std::chrono::clock_cast<std::chrono::system_clock>(write_time);
@@ -13883,7 +13883,7 @@ static expected<std::string, std::error_code> get_time_last_modified_string(std:
 // Returns a path like this:
 //   SomeQuest.qst.backups/YYYY_MM_DD_HH_mm_SS--autosave--v3.0.0--SomeQuest.qst
 //   SomeQuest.qst.backups/YYYY_MM_DD_HH_mm_SS--backup--v3.0.0--SomeQuest.qst
-static expected<std::string, std::error_code> create_path_for_backup(const char* original_filepath, bool is_timed_save = false)
+static std::expected<std::string, std::error_code> create_path_for_backup(const char* original_filepath, bool is_timed_save = false)
 {
 	std::string timestamp;
 	if (is_timed_save)

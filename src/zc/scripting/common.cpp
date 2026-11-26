@@ -1,6 +1,6 @@
 #include "zc/scripting/common.h"
 
-#include "base/expected.h"
+#include <expected>
 #include "base/win_encoding.h"
 #include "zc/zc_sys.h"
 
@@ -44,7 +44,7 @@ static bool has_banned_extension(const fs::path& path)
 	return banned_extensions.contains(ext);
 }
 
-static expected<std::string, std::string> parse_user_path_impl(std::string user_path, bool is_file)
+static std::expected<std::string, std::string> parse_user_path_impl(std::string user_path, bool is_file)
 {
 	// A script's string can be in the ANSI code page (typed or saved before src/windows.manifest),
 	// which std::filesystem::path would throw on.
@@ -54,14 +54,14 @@ static expected<std::string, std::string> parse_user_path_impl(std::string user_
 	static const char* invalid_chars = "<>|?*&^$#\":";
 	if (size_t index = user_path.find_first_of(invalid_chars); index != std::string::npos)
 	{
-		return make_unexpected(fmt::format("Bad path: {} - invalid character {}", user_path, user_path[index]));
+		return std::unexpected(fmt::format("Bad path: {} - invalid character {}", user_path, user_path[index]));
 	}
 	// Unsigned, so characters outside ASCII (UTF-8 bytes >= 0x80) aren't taken for control
 	// characters where char is signed.
 	for (unsigned char c : user_path)
 	{
 		if (c < 32)
-			return make_unexpected(fmt::format("Bad path: {} - invalid control character {:#x}", user_path, c));
+			return std::unexpected(fmt::format("Bad path: {} - invalid control character {:#x}", user_path, c));
 	}
 
 	// Any leading slashes are ignored.
@@ -75,7 +75,7 @@ static expected<std::string, std::string> parse_user_path_impl(std::string user_
 	auto normalized_path = fs::path(path).lexically_normal();
 	if (!normalized_path.empty() && normalized_path.begin()->string() == "..")
 	{
-		return make_unexpected(fmt::format("Bad path: {} (resolved to {}) - cannot access filesystem outside {} (too many ..?)",
+		return std::unexpected(fmt::format("Bad path: {} (resolved to {}) - cannot access filesystem outside {} (too many ..?)",
 			path, normalized_path.string(), files_path.string()));
 	}
 
@@ -89,16 +89,16 @@ static expected<std::string, std::string> parse_user_path_impl(std::string user_
 	bool is_subpath = mismatch_pair.second == files_path.end();
 	if (!is_subpath)
 	{
-		return make_unexpected(fmt::format("Bad path: {} (resolved to {}) - cannot access filesystem outside {}",
+		return std::unexpected(fmt::format("Bad path: {} (resolved to {}) - cannot access filesystem outside {}",
 			user_path, resolved_path.string(), files_path.string()));
 	}
 
 	// Any extension other than banned ones, including no extension, is allowed.
 	if (is_file && has_banned_extension(resolved_path))
-		return make_unexpected(fmt::format("Bad path: {} - banned extension", user_path));
+		return std::unexpected(fmt::format("Bad path: {} - banned extension", user_path));
 
 	if (is_file && !resolved_path.has_filename())
-		return make_unexpected(fmt::format("Bad path: {} - missing filename", user_path));
+		return std::unexpected(fmt::format("Bad path: {} - missing filename", user_path));
 
 	// https://stackoverflow.com/a/31976060/2788187
 	if (is_file)
@@ -121,14 +121,14 @@ static expected<std::string, std::string> parse_user_path_impl(std::string user_
 		banned |= fname.ends_with(".") || fname.ends_with(" ");
 
 		if (banned)
-			return make_unexpected(fmt::format("Bad path: {} - banned filename", user_path));
+			return std::unexpected(fmt::format("Bad path: {} - banned filename", user_path));
 	}
 
 	return resolved_path.string();
 }
 
 // If the path is valid, returns an absolute path under the quest "Files" directory.
-expected<std::string, std::string> parse_user_path(const std::string& user_path, bool is_file)
+std::expected<std::string, std::string> parse_user_path(const std::string& user_path, bool is_file)
 {
 	try
 	{
@@ -138,24 +138,24 @@ expected<std::string, std::string> parse_user_path(const std::string& user_path,
 	// Windows 10 1903 (no UTF-8 code page there).
 	catch (const std::system_error& e)
 	{
-		return make_unexpected(fmt::format("Bad path: {} - {}", user_path, e.what()));
+		return std::unexpected(fmt::format("Bad path: {} - {}", user_path, e.what()));
 	}
 }
 
-expected<std::string, std::string> parse_legacy_user_path(std::string user_path)
+std::expected<std::string, std::string> parse_legacy_user_path(std::string user_path)
 {
 	util::regulate_path(user_path);
 
 	if (!util::is_relative_path(user_path) || user_path.find(':') != std::string::npos)
 	{
-		return make_unexpected(fmt::format("Bad path: {} - must be a relative path (or enable the quest rule "
+		return std::unexpected(fmt::format("Bad path: {} - must be a relative path (or enable the quest rule "
 			"'All bitmap-> and FileSystem-> paths relative to quest 'Files' folder')", user_path));
 	}
 
 	for (unsigned char c : user_path)
 	{
 		if (c < 32)
-			return make_unexpected(fmt::format("Bad path: {} - invalid control character {:#x}", user_path, c));
+			return std::unexpected(fmt::format("Bad path: {} - invalid control character {:#x}", user_path, c));
 	}
 
 	// Lexically resolve "." and "..", and make sure the path never leaves the current directory.
@@ -171,7 +171,7 @@ expected<std::string, std::string> parse_legacy_user_path(std::string user_path)
 		{
 			if (--depth < 0)
 			{
-				return make_unexpected(fmt::format("Bad path: {} - cannot access filesystem outside the "
+				return std::unexpected(fmt::format("Bad path: {} - cannot access filesystem outside the "
 					"ZQuest Classic folder (too many ..?)", user_path));
 			}
 		}

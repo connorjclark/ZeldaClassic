@@ -27,7 +27,7 @@ static size_t _write_callback(char *contents, size_t size, size_t nmemb, void *u
 }
 
 // Cleans up the curl handle, and sets the response's status code.
-static expected<http_response, std::string> finish_request(CURL* curl_handle, CURLcode res, http_response response)
+static std::expected<http_response, std::string> finish_request(CURL* curl_handle, CURLcode res, http_response response)
 {
 	// CURLINFO_RESPONSE_CODE writes a long.
 	long status_code = 0;
@@ -41,20 +41,20 @@ static expected<http_response, std::string> finish_request(CURL* curl_handle, CU
 		// Not fmt::println: it throws when the write fails, which it always does for a
 		// Windows GUI program without a console.
 		fprintf(stderr, "%s\n", error.c_str());
-		return make_unexpected(error);
+		return std::unexpected(error);
 	}
 
 	response.status_code = status_code;
 	return std::move(response);
 }
 
-expected<http_response, std::string> get(std::string url)
+std::expected<http_response, std::string> get(std::string url)
 {
 	http_response response{};
 
 	CURL *curl_handle = curl_easy_init();
 	if (!curl_handle)
-		return make_unexpected("curl: failed to initialize");
+		return std::unexpected("curl: failed to initialize");
 
 	struct curl_slist* headers = NULL;
 	headers = curl_slist_append(headers, VERSION_HEADER.c_str());
@@ -105,7 +105,7 @@ static bool compress_file_to_gzip(const fs::path& input_path, const fs::path& ou
 	return success;
 }
 
-expected<http_response, std::string> upload(std::string url, fs::path path)
+std::expected<http_response, std::string> upload(std::string url, fs::path path)
 {
 	http_response response{};
 
@@ -114,14 +114,14 @@ expected<http_response, std::string> upload(std::string url, fs::path path)
 	if (!compress_file_to_gzip(path, compressed_path))
 	{
 		fs::remove(compressed_path, ec);
-		return make_unexpected("failed to compress file");
+		return std::unexpected("failed to compress file");
 	}
 
 	FILE* fd = fopen(compressed_path.string().c_str(), "rb");
 	if (!fd)
 	{
 		fs::remove(compressed_path, ec);
-		return make_unexpected("can't read compressed file");
+		return std::unexpected("can't read compressed file");
 	}
 
 	struct stat file_info;
@@ -129,7 +129,7 @@ expected<http_response, std::string> upload(std::string url, fs::path path)
 	{
 		fclose(fd);
 		fs::remove(compressed_path, ec);
-		return make_unexpected("can't stat file");
+		return std::unexpected("can't stat file");
 	}
 
 	CURL *curl_handle = curl_easy_init();
@@ -137,7 +137,7 @@ expected<http_response, std::string> upload(std::string url, fs::path path)
 	{
 		fclose(fd);
 		fs::remove(compressed_path, ec);
-		return make_unexpected("curl: failed to initialize");
+		return std::unexpected("curl: failed to initialize");
 	}
 
 	struct curl_slist* headers = NULL;

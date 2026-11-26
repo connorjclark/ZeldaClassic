@@ -2,7 +2,7 @@
 
 #include "allegro/color.h"
 #include "allegro/file.h"
-#include "base/expected.h"
+#include <expected>
 #include "base/general.h"
 #include "zalleg/packfile.h"
 #include "core/misctypes.h"
@@ -2459,13 +2459,13 @@ static void unload_all_but(int index)
 	}
 }
 
-expected<bool, std::string> saves_select(save_t* save)
+std::expected<bool, std::string> saves_select(save_t* save)
 {
 	CHECK(save);
 
 	std::string err;
 	if (!ensure_loaded(save, err))
-		return make_unexpected(err);
+		return std::unexpected(err);
 
 	currgame = save->index;
 	game->Copy(*save->game);
@@ -2473,11 +2473,11 @@ expected<bool, std::string> saves_select(save_t* save)
 	return true;
 }
 
-expected<save_t*, std::string> saves_select(int32_t index)
+std::expected<save_t*, std::string> saves_select(int32_t index)
 {
 	save_t* save;
 	if (auto r = saves_get_slot(index, true); !r)
-		return make_unexpected(r.error());
+		return std::unexpected(r.error());
 	else
 		save = r.value();
 
@@ -2578,13 +2578,13 @@ bool saves_has_error(int32_t index)
 	return false;
 }
 
-expected<save_t*, std::string> saves_get_slot(int32_t index, bool full_data)
+std::expected<save_t*, std::string> saves_get_slot(int32_t index, bool full_data)
 {
 	save_t* save;
 
 	std::string err;
 	if (!get_save(save, index, full_data, err))
-		return make_unexpected(err);
+		return std::unexpected(err);
 
 	return save;
 }
@@ -2666,7 +2666,7 @@ bool saves_copy(int32_t from_index, std::string& err)
 	return true;
 }
 
-expected<save_t*, std::string> saves_create_slot(gamedata* game, fs::path path, bool write_to_disk)
+std::expected<save_t*, std::string> saves_create_slot(gamedata* game, fs::path path, bool write_to_disk)
 {
 	auto& save = saves.emplace_back();
 	save.index = saves.size() - 1;
@@ -2679,16 +2679,16 @@ expected<save_t*, std::string> saves_create_slot(gamedata* game, fs::path path, 
 	if (!initialize_new_save(&save, err))
 	{
 		saves.pop_back();
-		return make_unexpected(err);
+		return std::unexpected(err);
 	}
 
 	return &save;
 }
 
-expected<save_t*, std::string> saves_create_slot(fs::path path, bool write_to_disk)
+std::expected<save_t*, std::string> saves_create_slot(fs::path path, bool write_to_disk)
 {
 	if (!fs::exists(path))
-		return make_unexpected(fmt::format("file not found: {}", path.string()));
+		return std::unexpected(fmt::format("file not found: {}", path.string()));
 
 	auto& save = saves.emplace_back();
 	save.index = saves.size() - 1;
@@ -2698,10 +2698,10 @@ expected<save_t*, std::string> saves_create_slot(fs::path path, bool write_to_di
 	return &save;
 }
 
-expected<bool, std::string> saves_update_slot(save_t* save, std::string qstpath)
+std::expected<bool, std::string> saves_update_slot(save_t* save, std::string qstpath)
 {
 	if (save->header->has_played)
-		return make_unexpected("cannot modify quest path for save file that has been played");
+		return std::unexpected("cannot modify quest path for save file that has been played");
 
 	gamedata* new_game = new gamedata();
 	new_game->header.qstpath = qstpath;
@@ -2721,7 +2721,7 @@ expected<bool, std::string> saves_update_slot(save_t* save, std::string qstpath)
 		std::error_code ec;
 		fs::remove(save->path, ec);
 		if (ec)
-			return make_unexpected(ec.message());
+			return std::unexpected(ec.message());
 
 		save->path = "";
 	}
@@ -2730,7 +2730,7 @@ expected<bool, std::string> saves_update_slot(save_t* save, std::string qstpath)
 	if (!initialize_new_save(save, err))
 	{
 		saves.pop_back();
-		return make_unexpected(err);
+		return std::unexpected(err);
 	}
 
 	return true;

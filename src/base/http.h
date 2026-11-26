@@ -1,6 +1,6 @@
 #pragma once
 
-#include "base/expected.h"
+#include <expected>
 #include <filesystem>
 #include <string>
 
@@ -16,8 +16,8 @@ struct http_response
 	bool success() const;
 };
 
-expected<http_response, std::string> get(std::string url);
+std::expected<http_response, std::string> get(std::string url);
 // Sends a PUT request.
-expected<http_response, std::string> upload(std::string url, fs::path path);
+std::expected<http_response, std::string> upload(std::string url, fs::path path);
 
 };

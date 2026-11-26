@@ -2,7 +2,7 @@
 
 #include "components/zasm/eval.h"
 
-#include "base/expected.h"
+#include <expected>
 #include "components/zasm/debug_data.h"
 #include "components/zasm/defines.h"
 #include <cctype>
@@ -42,7 +42,7 @@ bool ExpressionParser::match(char c)
 	return false;
 }
 
-expected<std::shared_ptr<ExprNode>, std::string> ExpressionParser::parseExpression()
+std::expected<std::shared_ptr<ExprNode>, std::string> ExpressionParser::parseExpression()
 {
 	try {
 		auto node = parseAssignment();
@@ -51,7 +51,7 @@ expected<std::shared_ptr<ExprNode>, std::string> ExpressionParser::parseExpressi
 			throw std::runtime_error("Unexpected input: " + input.substr(pos));
 		return node;
 	} catch (const std::exception& e) {
-		return make_unexpected(e.what());
+		return std::unexpected(e.what());
 	}
 }
 

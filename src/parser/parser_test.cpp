@@ -810,7 +810,7 @@ TestResults test_parser([[maybe_unused]] bool verbose)
 		{
 		}
 
-		expected<int32_t, std::string> executeSandboxed(pc_t start_pc, [[maybe_unused]] int this_zasm_var, [[maybe_unused]] int this_raw_value, const std::vector<int32_t>& args) override
+		std::expected<int32_t, std::string> executeSandboxed(pc_t start_pc, [[maybe_unused]] int this_zasm_var, [[maybe_unused]] int this_raw_value, const std::vector<int32_t>& args) override
 		{
 			if (start_pc == debug_add_int_start_pc)
 			{

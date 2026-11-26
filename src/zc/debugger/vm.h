@@ -1,6 +1,6 @@
 #pragma once
 
-#include "base/expected.h"
+#include <expected>
 #include "components/zasm/eval.h"
 #include "components/zasm/pc.h"
 #include "zc/ffscript.h"
@@ -31,7 +31,7 @@ struct VM : VMInterface
 	bool writeArrayElement(DebugValue array, int32_t index, DebugValue value) override;
 	void decreaseObjectReference(DebugValue value, const DebugSymbol* sym) override;
 	void increaseObjectReference(DebugValue value, const DebugSymbol* sym) override;
-	expected<int32_t, std::string> executeSandboxed(pc_t start_pc, int this_zasm_var, int this_raw_value, const std::vector<int32_t>& args) override;
+	std::expected<int32_t, std::string> executeSandboxed(pc_t start_pc, int this_zasm_var, int this_raw_value, const std::vector<int32_t>& args) override;
 	DebugValue createArray(std::vector<int32_t> args, const DebugType* array_type) override;
 	DebugValue createString(const std::string& str) override;
 	int32_t getThisPointer() override;

@@ -1,7 +1,7 @@
 #pragma once
 
 #include "imgui.h"
-#include "base/expected.h"
+#include <expected>
 #include "components/zasm/eval.h"
 #include "components/zasm/pc.h"
 #include "zc/debugger/vm.h"
@@ -258,7 +258,7 @@ struct Debugger
 	// Variable inspection.
 	void UpdateVariables();
 	void FetchChildren(Variable& var);
-	expected<DebugValue, std::string> Evaluate(std::string expression, bool suppress_engine_errors);
+	std::expected<DebugValue, std::string> Evaluate(std::string expression, bool suppress_engine_errors);
 
 	// Stringify values.
 	std::string ValueToStringSummary(DebugValue value);

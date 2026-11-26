@@ -25,7 +25,7 @@ src/
 │                  opcode table), sound/ (midi, zcmusic, zcmixer), worker_pool/
 ├── dialog/        Dialog boxes used by more than one app, built with gui/ — see dialog/README.md
 ├── gui/           Low-level widget system + declarative builder API — see gui/README.md
-├── base/          General utilities (util, containers, version, http, ints.h, expected.h)
+├── base/          General utilities (util, containers, version, http, ints.h)
 ├── zalleg/        Thin Allegro 5 wrapper (rendering, colors, menus, packfile I/O)
 ├── launcher/      Launcher app (zlauncher)
 └── ...            Other small modules: test_runner, zconsole (logging), zupdater,

@@ -117,14 +117,14 @@ namespace api_client
 	static std::string api_endpoint;
 
 	template <typename T>
-	static auto _parse_response(const expected<http::http_response, std::string>& response) -> expected<api_response<T>, api_error>
+	static auto _parse_response(const std::expected<http::http_response, std::string>& response) -> std::expected<api_response<T>, api_error>
 	{
 		if (!response)
-			return make_unexpected(api_error{0, response.error()});
+			return std::unexpected(api_error{0, response.error()});
 
 		json json = json::parse(response->body, nullptr, false);
 		if (json.is_discarded())
-			return make_unexpected(api_error{response->status_code, "invalid json"});
+			return std::unexpected(api_error{response->status_code, "invalid json"});
 
 		if (!response->success())
 		{
@@ -133,12 +133,12 @@ namespace api_client
 				error = json["error"].template get<std::string>();
 			else
 				error = "server error";
-			return make_unexpected(api_error{response->status_code, error});
+			return std::unexpected(api_error{response->status_code, error});
 		}
 
 		T data;
 		if (auto error = try_deserialize(data, json))
-			return make_unexpected(api_error{response->status_code, *error});
+			return std::unexpected(api_error{response->status_code, *error});
 
 		return api_response<T>{response->status_code, data};
 	}

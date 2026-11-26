@@ -2,7 +2,6 @@
 
 #include "core/qst.h"
 #include "base/util.h"
-#include "nonstd/expected.h"
 #include "components/zasm/debug_data.h"
 #include "components/zasm/eval.h"
 #include "zc/debugger/debugger.h"

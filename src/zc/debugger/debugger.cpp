@@ -1,13 +1,12 @@
 #include "zc/debugger/debugger.h"
 
-#include "base/expected.h"
+#include <expected>
 #include "base/general.h"
 #include "zalleg/new_menu.h"
 #include "core/qst.h"
 #include "base/util.h"
 #include "base/zapp.h"
 #include "core/zdefs.h"
-#include "nonstd/expected.h"
 #include "user_object.h"
 #include "zalleg/zalleg.h"
 #include "components/zasm/debug_data.h"
@@ -1093,7 +1092,7 @@ void Debugger::FetchChildren(Variable& var)
 	}
 }
 
-expected<DebugValue, std::string> Debugger::Evaluate(std::string expression, bool suppress_engine_errors)
+std::expected<DebugValue, std::string> Debugger::Evaluate(std::string expression, bool suppress_engine_errors)
 {
 	extern refInfo *ri;
 
@@ -1103,7 +1102,7 @@ expected<DebugValue, std::string> Debugger::Evaluate(std::string expression, boo
 
 	auto node = parser.parseExpression();
 	if (!node)
-		return make_unexpected(node.error());
+		return std::unexpected(node.error());
 
 	try {
 		vm.suppress_errors_in_sandbox = suppress_engine_errors;
@@ -1112,7 +1111,7 @@ expected<DebugValue, std::string> Debugger::Evaluate(std::string expression, boo
 		return result;
 	} catch (const std::exception& e) {
 		vm.suppress_errors_in_sandbox = true;
-		return make_unexpected(e.what());
+		return std::unexpected(e.what());
 	}
 }
 
