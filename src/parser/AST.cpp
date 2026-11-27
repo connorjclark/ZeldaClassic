@@ -1782,9 +1782,9 @@ std::optional<int32_t> ASTExprNegate::getCompileTimeValue(
 		CompileErrorHandler* errorHandler, Scope* scope)
 {
 	if (!operand) return std::nullopt;
-	if (std::optional<int32_t> value = operand->getCompileTimeValue(errorHandler, scope))
-		return done ? *value : -*value;
-	return std::nullopt;
+	return operand->getCompileTimeValue(errorHandler, scope).transform([&](int32_t value) {
+		return done ? value : -value;
+	});
 }
 
 // ASTExprNot
@@ -1804,9 +1804,9 @@ std::optional<int32_t> ASTExprNot::getCompileTimeValue(
 		CompileErrorHandler* errorHandler, Scope* scope)
 {
 	if (!operand) return std::nullopt;
-	if (std::optional<int32_t> value = operand->getCompileTimeValue(errorHandler, scope))
-		return *value ? 0L : 10000L;
-	return std::nullopt;
+	return operand->getCompileTimeValue(errorHandler, scope).transform([](int32_t value) -> int32_t {
+		return value ? 0L : 10000L;
+	});
 }
 
 // ASTExprBitNot
@@ -1826,13 +1826,11 @@ std::optional<int32_t> ASTExprBitNot::getCompileTimeValue(
 		CompileErrorHandler* errorHandler, Scope* scope)
 {
 	if (!operand) return std::nullopt;
-	if (std::optional<int32_t> value = operand->getCompileTimeValue(errorHandler, scope))
-	{
+	return operand->getCompileTimeValue(errorHandler, scope).transform([&](int32_t value) -> int32_t {
 		if(operand->isLong(scope, errorHandler))
-			return ~*value;
-		return ~(*value / 10000L) * 10000L;
-	}
-	return std::nullopt;
+			return ~value;
+		return ~(value / 10000L) * 10000L;
+	});
 }
 
 // ASTExprIncrement
