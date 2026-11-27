@@ -3,6 +3,7 @@
 #pragma once
 
 #include <type_traits>
+#include <utility>
 
 // This is within a namespace because otherwise these operator overloads would apply to all
 // enum types, which could be problematic for non-flag enums.
@@ -168,23 +169,23 @@ template <typename T, typename = typename std::enable_if<std::is_enum<T>::value,
 inline constexpr T operator&(T lhs, T rhs)
 {
     return static_cast<T>(
-        static_cast<typename std::underlying_type<T>::type>(lhs) &
-        static_cast<typename std::underlying_type<T>::type>(rhs));
+        std::to_underlying(lhs) &
+        std::to_underlying(rhs));
 }
 
 template <typename T, typename = typename std::enable_if<std::is_enum<T>::value, T>::type>
 inline constexpr T operator|(T lhs, T rhs)
 {
     return static_cast<T>(
-        static_cast<typename std::underlying_type<T>::type>(lhs) |
-        static_cast<typename std::underlying_type<T>::type>(rhs));
+        std::to_underlying(lhs) |
+        std::to_underlying(rhs));
 }
 
 template <typename T, typename = typename std::enable_if<std::is_enum<T>::value, T>::type>
 inline constexpr T operator~(const T unary)
 {
     return static_cast<T>(
-        ~static_cast<typename std::underlying_type<T>::type>(unary));
+        ~std::to_underlying(unary));
 }
 
 template <typename T, typename = typename std::enable_if<std::is_enum<T>::value, T>::type>

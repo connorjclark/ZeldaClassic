@@ -949,7 +949,7 @@ int get_screen_for_rpos(rpos_t rpos)
 {
 	int origin_screen_x = cur_screen % 16;
 	int origin_screen_y = cur_screen / 16;
-	int screen = static_cast<int32_t>(rpos) / 176;
+	int screen = std::to_underlying(rpos) / 176;
 	int scr_x = origin_screen_x + screen%cur_region.screen_width;
 	int scr_y = origin_screen_y + screen/cur_region.screen_width;
 	return map_scr_xy_to_index(scr_x, scr_y);
@@ -1293,7 +1293,7 @@ rpos_t COMBOPOS_REGION_B(int32_t x, int32_t y)
 }
 std::pair<int32_t, int32_t> COMBOXY_REGION(rpos_t rpos)
 {
-	int scr_index = static_cast<int32_t>(rpos) / 176;
+	int scr_index = std::to_underlying(rpos) / 176;
 	int scr_dx = scr_index % cur_region.screen_width;
 	int scr_dy = scr_index / cur_region.screen_width;
 	int pos = RPOS_TO_POS(rpos);
@@ -1330,10 +1330,10 @@ rpos_t COMBOPOS_REGION_INDEX(int32_t x, int32_t y)
 }
 std::pair<int32_t, int32_t> COMBOXY_REGION_INDEX(const region_t& region, rpos_t rpos)
 {
-	int scr_index = static_cast<int32_t>(rpos) / 176;
+	int scr_index = std::to_underlying(rpos) / 176;
 	int scr_dx = scr_index % region.screen_width;
 	int scr_dy = scr_index / region.screen_width;
-	int pos = static_cast<int32_t>(rpos) % 176;
+	int pos = std::to_underlying(rpos) % 176;
 	int x = scr_dx*16 + pos%16;
 	int y = scr_dy*11 + pos/16;
 	return {x, y};

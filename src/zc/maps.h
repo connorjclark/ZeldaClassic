@@ -113,7 +113,7 @@ ZC_FORCE_INLINE int get_region_relative_dy(int screen)
 ZC_FORCE_INLINE int32_t RPOS_TO_POS(rpos_t rpos)
 {
 	DCHECK(is_valid_rpos(rpos));
-	return static_cast<int32_t>(rpos)%176;
+	return std::to_underlying(rpos)%176;
 }
 ZC_FORCE_INLINE rpos_t POS_TO_RPOS(int32_t pos, int32_t scr_dx, int32_t scr_dy)
 {

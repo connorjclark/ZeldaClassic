@@ -3,6 +3,7 @@
 #include <cstring>
 #include <stdint.h>
 #include <string>
+#include <utility>
 #include <vector>
 
 struct WasmModule {
@@ -93,7 +94,7 @@ struct WasmWriter {
       code[offset + i] = byte;
     }
   }
-  void emitValType(WasmValType t) { emit(static_cast<uint8_t>(t)); }
+  void emitValType(WasmValType t) { emit(std::to_underlying(t)); }
 };
 
 struct WasmAssembler : public WasmWriter {
@@ -180,7 +181,7 @@ struct WasmAssembler : public WasmWriter {
     AtomicWait32 = 0x01,
     AtomicStore8 = 0x19,
   };
-  void emitOp(Op op) { emit(static_cast<uint8_t>(op)); }
+  void emitOp(Op op) { emit(std::to_underlying(op)); }
 
   size_t emitPatchableI32Const() {
     emitOp(Op::I32Const);
@@ -282,11 +283,11 @@ struct WasmAssembler : public WasmWriter {
   }
   void emitMiscOp(MiscOp op) {
     emitOp(Op::MiscPrefix);
-    emit(static_cast<uint8_t>(op));
+    emit(std::to_underlying(op));
   }
   void emitThreadOp(ThreadsOp op) {
     emitOp(Op::ThreadsPrefix);
-    emit(static_cast<uint8_t>(op));
+    emit(std::to_underlying(op));
   }
   void emitTableGrow(uint32_t idx) {
     emitMiscOp(MiscOp::TableGrow);
@@ -319,25 +320,25 @@ struct WasmAssembler : public WasmWriter {
 
   void emitNop() {
     emitOp(Op::Nop);
-    emit(static_cast<uint8_t>(WasmSimpleBlockType::Void));
+    emit(std::to_underlying(WasmSimpleBlockType::Void));
   }
 
   void emitBlock() {
     emitOp(Op::Block);
-    emit(static_cast<uint8_t>(WasmSimpleBlockType::Void));
+    emit(std::to_underlying(WasmSimpleBlockType::Void));
   }
   void emitBlock(WasmValType blockType) {
     emitOp(Op::Block);
-    emit(static_cast<uint8_t>(blockType));
+    emit(std::to_underlying(blockType));
   }
   void emitLoop() {
     emitOp(Op::Loop);
-    emit(static_cast<uint8_t>(WasmSimpleBlockType::Void));
+    emit(std::to_underlying(WasmSimpleBlockType::Void));
   }
 
   void emitIf(WasmSimpleBlockType type = WasmSimpleBlockType::Void) {
     emitOp(Op::If);
-    emit(static_cast<uint8_t>(type));
+    emit(std::to_underlying(type));
   }
   void emitElse() { emitOp(Op::Else); }
   void emitEnd() { emitOp(Op::End); }
@@ -405,7 +406,7 @@ struct WasmModuleWriter : WasmWriter {
     for (WasmValType t : type)
       emitValType(t);
   }
-  void emitSectionId(SectionId id) { emit(static_cast<uint8_t>(id)); }
+  void emitSectionId(SectionId id) { emit(std::to_underlying(id)); }
   void emitTypeSection(const std::vector<WasmFuncType> &types) {
     emitSectionId(SectionId::Type);
     size_t patchLoc = emitPatchableVarU32();
@@ -422,9 +423,9 @@ struct WasmModuleWriter : WasmWriter {
     emitSectionId(SectionId::Memory);
     emitVarU32(1);
 
-    emit(static_cast<uint8_t>(DefinitionKind::Memory));
-    emit(static_cast<uint8_t>(LimitsFlags::IsShared) |
-         static_cast<uint8_t>(LimitsFlags::HasMaximum));
+    emit(std::to_underlying(DefinitionKind::Memory));
+    emit(std::to_underlying(LimitsFlags::IsShared) |
+         std::to_underlying(LimitsFlags::HasMaximum));
     emitVarU32(1);
     emitVarU32(1);
   }
@@ -459,16 +460,16 @@ struct WasmModuleWriter : WasmWriter {
 
     emitName("env");
     emitName("memory");
-    emit(static_cast<uint8_t>(DefinitionKind::Memory));
-    emit(static_cast<uint8_t>(LimitsFlags::IsShared) |
-         static_cast<uint8_t>(LimitsFlags::HasMaximum));
+    emit(std::to_underlying(DefinitionKind::Memory));
+    emit(std::to_underlying(LimitsFlags::IsShared) |
+         std::to_underlying(LimitsFlags::HasMaximum));
     emitVarU32(1);
     emitVarU32(32768);
 
     for (auto fn : function_imports) {
       emitName("env");
       emitName(fn.second.c_str());
-      emit(static_cast<uint8_t>(DefinitionKind::Function));
+      emit(std::to_underlying(DefinitionKind::Function));
       emitVarU32(fn.first);
     }
 
@@ -483,7 +484,7 @@ struct WasmModuleWriter : WasmWriter {
     emitVarU32(function_exports.size());
     for (auto [funcIdx, name] : function_exports) {
       emitName(name.c_str());
-      emit(static_cast<uint8_t>(DefinitionKind::Function));
+      emit(std::to_underlying(DefinitionKind::Function));
       emitVarU32(funcIdx);
     }
 
@@ -505,7 +506,7 @@ struct WasmModuleWriter : WasmWriter {
     size_t patchLoc = emitPatchableVarU32();
     size_t start = code.size();
     emitVarU32(1);
-    emit(static_cast<uint8_t>(ElemSegmentKind::Passive));
+    emit(std::to_underlying(ElemSegmentKind::Passive));
     emit(0x00); // elemkind: funcref
     emitVarU32(indirectFunctions.size());
     for (auto idx : indirectFunctions)

@@ -85,7 +85,7 @@ struct TitleMenuState
 		if (mode != TitleMenuMode::Normal || target == CursorTarget::SaveSlot)
 			return selected_save_index - get_page_start();
 
-		return static_cast<int>(selected_action);
+		return std::to_underlying(selected_action);
 	}
 
 	void move_up(int total_saves)
@@ -1471,7 +1471,7 @@ static void select_game(bool skip = false)
 		ensure_default_sfx();
 		blit(scrollbuf,framebuf,0,0,0,0,framebuf->w,framebuf->h);
 		list_saves(state.get_page_start());
-		draw_cursor(state.get_ui_pos(), static_cast<int32_t>(state.mode));
+		draw_cursor(state.get_ui_pos(), std::to_underlying(state.mode));
 		advanceframe(true);
 		load_control_state();
 
