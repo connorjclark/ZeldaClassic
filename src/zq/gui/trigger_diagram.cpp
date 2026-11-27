@@ -925,7 +925,7 @@ void TriggerDiagram::layout()
 					std::string joined;
 					for (auto const& line : L.chips[i].lines)
 						joined += line + " ";
-					if (joined.find(name) != std::string::npos)
+					if (joined.contains(name))
 						return L.chips[i].rect.y + L.chips[i].rect.h / 2;
 				}
 				return mid;

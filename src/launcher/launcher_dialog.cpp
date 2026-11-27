@@ -947,7 +947,7 @@ bool LauncherDialog::handleMessage(const GUI::DialogMessage<message>& msg)
 				"-install",
 				"-asset-url", next_asset_url,
 			}, output);
-			success &= output.find("Success!") != std::string::npos;
+			success &= output.contains("Success!");
 			al_trace("%s\n", output.c_str());
 			if (success)
 			{

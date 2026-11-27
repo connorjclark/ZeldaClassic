@@ -85,7 +85,7 @@ std::shared_ptr<GUI::Widget> BrowseNotesDialog::view()
 			{
 				string lowernotes = inf.notes();
 				util::lowerstr(lowernotes);
-				add = lowernotes.find(lowfilter) != string::npos;
+				add = lowernotes.contains(lowfilter);
 			}
 			if(add)
 			{

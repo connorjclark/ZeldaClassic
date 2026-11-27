@@ -139,7 +139,7 @@ static std::string resolve_argv0_path()
 
 	char resolved[PATH_MAX];
 	std::string arg0 = argv[0];
-	if (arg0.find('/') != std::string::npos)
+	if (arg0.contains('/'))
 		return realpath(arg0.c_str(), resolved) ? resolved : "";
 
 	const char* path_env = std::getenv("PATH");

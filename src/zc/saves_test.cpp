@@ -393,7 +393,7 @@ TestResults test_saves([[maybe_unused]] bool verbose)
 		bool loaded = wrote && _load_from_save_file_expect_one(ReadMode::Header, path, too_new, load_err);
 		fs::remove(path);
 
-		if (!wrote || loaded || load_err.find("newer version") == std::string::npos)
+		if (!wrote || loaded || !load_err.contains("newer version"))
 		{
 			printf("failed too-new save test: wrote %d, loaded %d, err: %s\n", wrote, loaded, load_err.c_str());
 			tr.failed++;

@@ -60,14 +60,14 @@ namespace terms
 			for (auto name : names)
 			{
 				util::lowerstr(name);
-				if (name.find(search) != string::npos)
+				if (name.contains(search))
 					return true;
 			}
 			if (check_desc)
 			{
 				auto d = description;
 				util::lowerstr(d);
-				if (d.find(search) != string::npos)
+				if (d.contains(search))
 					return true;
 			}
 			return false;

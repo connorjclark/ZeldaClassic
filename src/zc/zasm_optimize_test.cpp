@@ -210,7 +210,7 @@ void zasm_optimize_run_for_file(std::string path)
 static void TEST(const std::string& test_name, TestResults& tr, const std::function<void()>& body)
 {
 	static auto filter = get_flag_string("-test-filter");
-	if (filter.has_value() && test_name.find(filter.value()) == std::string::npos)
+	if (filter.has_value() && !test_name.contains(filter.value()))
 		return;
 
 	name = test_name;

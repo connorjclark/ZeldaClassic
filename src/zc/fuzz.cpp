@@ -282,7 +282,7 @@ bool is_fuzzable_command(const script_command& sc)
 		"RUNGENFRZSCR", "BREAKPOINT", "SUBDATA_OPEN", "WAVYIN", "WAVYOUT", "ZAPIN", "ZAPOUT",
 		"OPENWIPE", "CLOSEWIPE", "FXWAVY", "FXZAP"})
 	{
-		if (name.find(bad) != std::string_view::npos)
+		if (name.contains(bad))
 			return false;
 	}
 	return true;

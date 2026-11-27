@@ -186,7 +186,7 @@ static void add_breakpoint(Debugger* debugger, std::string path, std::string con
 	int line = 0;
 	for (int i = 0; i < lines.size(); i++)
 	{
-		if (lines[i].find(content) != std::string::npos)
+		if (lines[i].contains(content))
 		{
 			line = i + 1;
 			break;

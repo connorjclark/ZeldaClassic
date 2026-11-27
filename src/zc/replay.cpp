@@ -1262,7 +1262,7 @@ static void save_replay(std::string filename, const std::vector<ReplayStepVarian
     // Compare addresses since record_log and replay_log are statically assigned via std::move if roundtrip checking applies
     bool insert_baseline_annotations =
         rs.has_assert_failed &&
-        filename.find(".roundtrip") != std::string::npos &&
+        filename.contains(".roundtrip") &&
         &log == &record_log;
 
     std::time_t ct = std::time(0);

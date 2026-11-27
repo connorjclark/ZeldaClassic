@@ -1100,7 +1100,7 @@ namespace util
 		{
 			if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9'))
 				continue;
-			if (allowed_punct.find(c) == std::string_view::npos)
+			if (!allowed_punct.contains(c))
 				return false;
 		}
 		return true;

@@ -218,7 +218,7 @@ static std::tuple<std::string, std::string> get_next_release()
 					if (url == asset_json.end() || !url->is_string())
 						continue;
 
-					if (name->get<std::string>().find(platform) != std::string::npos)
+					if (name->get<std::string>().contains(platform))
 					{
 						asset_url = url->get<std::string>();
 						break;
@@ -315,7 +315,7 @@ static bool is_safe_archive_path(const std::string& name)
 		return false;
 	// Zip entries always use '/'. A backslash is a separator on Windows, so an
 	// entry containing one could climb out of the destination folder there.
-	if (name.find('\\') != std::string::npos)
+	if (name.contains('\\'))
 		return false;
 	// Ex: "C:/Windows/...". `dest / name` discards `dest` entirely for these.
 	if (name.size() >= 2 && name[1] == ':')

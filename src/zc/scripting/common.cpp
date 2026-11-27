@@ -146,7 +146,7 @@ std::expected<std::string, std::string> parse_legacy_user_path(std::string user_
 {
 	util::regulate_path(user_path);
 
-	if (!util::is_relative_path(user_path) || user_path.find(':') != std::string::npos)
+	if (!util::is_relative_path(user_path) || user_path.contains(':'))
 	{
 		return std::unexpected(fmt::format("Bad path: {} - must be a relative path (or enable the quest rule "
 			"'All bitmap-> and FileSystem-> paths relative to quest 'Files' folder')", user_path));

@@ -335,7 +335,7 @@ zinitdata *apply_init_data_delta(zinitdata *base, string delta, string& out_erro
 			delta_version = as_int;
 			continue;
 		}
-		bool is_array = kv[0].find('[') != string::npos;
+		bool is_array = kv[0].contains('[');
 		string key = kv[0];
 		vector<int> index;
 		if(is_array)

@@ -59,7 +59,7 @@ std::shared_ptr<GUI::Widget> ZQHotkeyDialog::view()
 		string name = get_hotkey_name(q);
 		string lowername = name;
 		util::lowerstr(lowername);
-		if(lowername.find(lower_search) == std::string::npos)
+		if(!lowername.contains(lower_search))
 		{
 			lbls[q][0].reset();
 			lbls[q][1].reset();

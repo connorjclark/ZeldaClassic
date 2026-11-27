@@ -2132,13 +2132,13 @@ std::shared_ptr<GUI::Widget> QRDialog::view()
 						{
 							std::string tx = itm.text;
 							util::lowerstr(tx);
-							if(tx.find(lower_search) != std::string::npos)
+							if(tx.contains(lower_search))
 								return true;
 							if(info_search)
 							{
 								std::string inf = itm.info;
 								util::lowerstr(inf);
-								if(inf.find(lower_search) != std::string::npos)
+								if(inf.contains(lower_search))
 									return true;
 							}
 							return false;

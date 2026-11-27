@@ -9789,7 +9789,7 @@ void parse_strings_tsv(std::string tsv)
 	}
 
 	int start_index = 1;
-	if (rows[start_index].find("||LOREM IPSUM") != std::string::npos)
+	if (rows[start_index].contains("||LOREM IPSUM"))
 		start_index += 1;
 
 	int num_strings = rows.size() - start_index + 1;
@@ -13944,7 +13944,7 @@ void perform_backup_retention(const fs::path& backup_folder, bool is_timed_save)
 		if (entry.is_regular_file(ec))
 		{
 			std::string filename = entry.path().filename().string();
-			if (filename.find(marker) != std::string::npos)
+			if (filename.contains(marker))
 			{
 				count++;
 				auto write_time = entry.last_write_time(ec);

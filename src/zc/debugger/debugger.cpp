@@ -1469,7 +1469,7 @@ std::string Debugger::ValueToStringHelper(DebugValue value, ValueStringOptions o
 				std::string item = field.name + " = " + field.value_str;
 				if (i < fields.size() - 1) item += ",";
 
-				bool is_multiline = item.find('\n') != std::string::npos;
+				bool is_multiline = item.contains('\n');
 
 				if (!opts.compact_fields || is_multiline || current_line_len == 0)
 				{

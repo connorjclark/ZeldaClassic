@@ -34,7 +34,7 @@ static void test_non_ascii_args()
 	std::string path = to_utf8(fs::temp_directory_path() / u8"Cr\u00e9ateur \u30af\u30a8\u30b9\u30c8" / "missing.qst");
 	std::string output;
 	assertTrue(run_and_get_output(zplayer, {"-headless", "-dump-qrs", path}, output));
-	if (output.find(fmt::format("failed to load {}", path)) == std::string::npos)
+	if (!output.contains(fmt::format("failed to load {}", path)))
 		throw std::runtime_error(fmt::format("expected the path {} in output:\n{}", path, output));
 }
 

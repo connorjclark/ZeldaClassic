@@ -225,7 +225,7 @@ void test_summary_generic_script()
 	trig.clear();
 	trig.trig_genscr = 3;
 	auto effects = trig.summarize_parts(combobuf[0]).effects;
-	expect(effects.find("Run generic script 3 (Three)") != std::string::npos, "script name: " + effects);
+	expect(effects.contains("Run generic script 3 (Three)"), "script name: " + effects);
 	expect_eq(genericmap.size(), size_t(2), "genericmap size");
 	genericmap = old_map;
 }
@@ -239,7 +239,7 @@ void test_summary_pickup_flags()
 	trig.spawnip = ipHOLDUP | ipTIMER;
 	trig.trigger_flags.set(TRIGFLAG_CLEAREWEAPONS, true);
 	auto effects = trig.summarize_parts(combobuf[0]).effects;
-	expect(effects.find("(pickup flag(s): Hold Up, Disappears)") != std::string::npos, "pickup flags: " + effects);
+	expect(effects.contains("(pickup flag(s): Hold Up, Disappears)"), "pickup flags: " + effects);
 }
 
 } // namespace

@@ -235,11 +235,11 @@ static bool has_nintendo_labels(ALLEGRO_JOYSTICK* joy)
 	// 8BitDo: nearly all their pads use Nintendo labels. The Ultimate line
 	// copies Xbox's (Ultimate Wired, Ultimate Wireless, Ultimate 2C,
 	// Ultimate 2 Wireless), except its Switch-oriented Bluetooth models.
-	if (vendor == 0x2dc8 || lname.find("8bitdo") != string::npos)
+	if (vendor == 0x2dc8 || lname.contains("8bitdo"))
 	{
 		if (product == 0x3011 || product == 0x3013 || product == 0x301b)
 			return false;
-		if (lname.find("ultimate") != string::npos && lname.find("bluetooth") == string::npos)
+		if (lname.contains("ultimate") && !lname.contains("bluetooth"))
 			return false;
 		return true;
 	}
